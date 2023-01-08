@@ -1,0 +1,22 @@
+{
+	"private": true,
+	"scripts": {
+		"build": "tsc -b tsconfig.build.json",
+		"build-ci": "tsc -b tsconfig.build-ci.json",
+		"watch": "tsc -b tsconfig.build.json -w",
+		"prerelease": "npm run build && npm run test",
+		"version:test": "lerna version --exact --force-publish --yes --sync-workspace-lock --no-push --no-git-tag-version",
+		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
+		"release:next": "lerna publish --exact --force-publish --yes --sync-workspace-lock --dist-tag next",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"@types/node": "latest",
+		"typescript": "latest",
+		"vite": "latest",
+		"vitest": "0.25.8"
+	},
+	"optionalDependencies": {
+		"@lerna-lite/cli": "latest"
+	}
+}

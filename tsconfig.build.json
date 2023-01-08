@@ -1,0 +1,20 @@
+{
+	"files": [],
+	"include": [],
+	"references": [
+		// Pkgs
+		{
+			"path": "./packages/language-server/tsconfig.build.json"
+		},
+		{
+			"path": "./packages/typescript/tsconfig.build.json"
+		},
+		{
+			"path": "./packages/vscode-language-client/tsconfig.build.json"
+		},
+		// IDE / tests
+		{
+			"path": "./tsconfig.json"
+		},
+	]
+}

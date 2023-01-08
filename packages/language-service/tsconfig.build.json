@@ -1,0 +1,25 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"noEmit": false,
+		"outDir": "out",
+		"rootDir": "src",
+	},
+	"include": [
+		"src"
+	],
+	"references": [
+		{
+			"path": "../language-core/tsconfig.build.json"
+		},
+		{
+			"path": "../shared/tsconfig.build.json"
+		},
+		{
+			"path": "../source-map/tsconfig.build.json"
+		},
+		{
+			"path": "../typescript-faster/tsconfig.build.json"
+		},
+	],
+}

@@ -1,0 +1,9 @@
+{
+	"$schema": "https://raw.githubusercontent.com/lerna/lerna/main/core/lerna/schemas/lerna-schema.json",
+	"npmClient": "pnpm",
+	"packages": [
+		"packages/*",
+		"plugins/*"
+	],
+	"version": "1.0.24"
+}
