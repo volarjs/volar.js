@@ -23,5 +23,5 @@ jobs:
       # install pnpm
       - run: npm i -g pnpm
       - run: pnpm install --frozen-lockfile --no-optional
-      - run: pnpm run build-ci
+      - run: pnpm run build
       - run: pnpm run test

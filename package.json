@@ -2,7 +2,6 @@
 	"private": true,
 	"scripts": {
 		"build": "tsc -b tsconfig.build.json",
-		"build-ci": "tsc -b tsconfig.build-ci.json",
 		"watch": "tsc -b tsconfig.build.json -w",
 		"prerelease": "npm run build && npm run test",
 		"version:test": "lerna version --exact --force-publish --yes --sync-workspace-lock --no-push --no-git-tag-version",
