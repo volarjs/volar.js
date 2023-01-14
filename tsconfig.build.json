@@ -4,38 +4,10 @@
 	"references": [
 		// Pkgs
 		{
-			"path": "./packages/language-server/tsconfig.build.json"
-		},
-		{
 			"path": "./packages/typescript/tsconfig.build.json"
 		},
 		{
 			"path": "./packages/vscode-language-client/tsconfig.build.json"
-		},
-		// plugins
-		{
-			"path": "./plugins/css/tsconfig.build.json"
-		},
-		{
-			"path": "./plugins/emmet/tsconfig.build.json"
-		},
-		{
-			"path": "./plugins/html/tsconfig.build.json"
-		},
-		{
-			"path": "./plugins/json/tsconfig.build.json"
-		},
-		{
-			"path": "./plugins/pug/tsconfig.build.json"
-		},
-		{
-			"path": "./plugins/pug-beautify/tsconfig.build.json"
-		},
-		{
-			"path": "./plugins/typescript/tsconfig.build.json"
-		},
-		{
-			"path": "./plugins/typescript-twoslash-queries/tsconfig.build.json"
 		},
 		// IDE / tests
 		{
