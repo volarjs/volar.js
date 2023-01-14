@@ -10,15 +10,14 @@ export function register(context: LanguageServiceRuntimeContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			file => !!file.capabilities.documentSymbol, // TODO: add color capabilitie setting
+			file => !!file.capabilities.documentSymbol,
 			(plugin, document) => plugin.findDocumentSymbols?.(document),
 			(data, map) => map ? transformer.asSymbolInformations(
 				data,
 				location => {
 					const range = map.toSourceRange(location.range);
 					if (range) {
-						// use document.uri instead of map.sourceDocument.uri to fix https://github.com/johnsoncodehk/volar/issues/1925
-						return vscode.Location.create(uri, range);
+						return vscode.Location.create(map.sourceFileDocument.uri, range);
 					}
 				},
 			) : data,

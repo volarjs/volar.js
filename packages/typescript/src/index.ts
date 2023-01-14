@@ -60,11 +60,11 @@ export function createLanguageService(host: embedded.LanguageServiceHost, mods: 
 		let edits: readonly ts.FileTextChanges[] = [];
 		const file = core.virtualFiles.getSource(args.fileName)?.root;
 		if (file) {
-			embedded.forEachEmbeddedFile(file, embedded => {
-				if (embedded.kind && embedded.capabilities.codeAction) {
+			embedded.forEachEmbeddedFile(file, embeddedFile => {
+				if (embeddedFile.kind === embedded.FileKind.TypeScriptHostFile && embeddedFile.capabilities.codeAction) {
 					edits = edits.concat(ls.organizeImports({
 						...args,
-						fileName: embedded.fileName,
+						fileName: embeddedFile.fileName,
 					}, formatOptions, preferences));
 				}
 			});

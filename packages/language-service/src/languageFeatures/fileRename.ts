@@ -2,7 +2,7 @@ import type { LanguageServiceRuntimeContext } from '../types';
 import { embeddedEditToSourceEdit } from './rename';
 import type * as _ from 'vscode-languageserver-protocol';
 import * as dedupe from '../utils/dedupe';
-import { forEachEmbeddedFile } from '@volar/language-core';
+import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
 
 export function register(context: LanguageServiceRuntimeContext) {
 
@@ -15,7 +15,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 			let tsExt: string | undefined;
 
 			forEachEmbeddedFile(rootFile, embedded => {
-				if (embedded.kind && embedded.fileName.replace(rootFile.fileName, '').match(/^\.(js|ts)x?$/)) {
+				if (embedded.kind === FileKind.TypeScriptHostFile && embedded.fileName.replace(rootFile.fileName, '').match(/^\.(js|ts)x?$/)) {
 					tsExt = embedded.fileName.substring(embedded.fileName.lastIndexOf('.'));
 				}
 			});

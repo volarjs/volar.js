@@ -2,7 +2,7 @@ import * as shared from '@volar/shared';
 import * as vscode from 'vscode-languageserver';
 import type { Workspaces } from '../workspaces';
 import { GetMatchTsConfigRequest, ReloadProjectNotification, WriteVirtualFilesNotification, GetVirtualFileNamesRequest, GetVirtualFileRequest, ReportStats } from '../../protocol';
-import { forEachEmbeddedFile } from '@volar/language-core';
+import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
 
 export function register(
 	connection: vscode.Connection,
@@ -77,7 +77,7 @@ export function register(
 			const rootVirtualFile = project.project?.getLanguageService().context.core.virtualFiles.getSource(shared.uriToFileName(document.uri))?.root;
 			if (rootVirtualFile) {
 				forEachEmbeddedFile(rootVirtualFile, e => {
-					if (e.snapshot.getLength() && e.kind === 1) {
+					if (e.snapshot.getLength() && e.kind === FileKind.TypeScriptHostFile) {
 						fileNames.push(e.fileName);
 					}
 				});

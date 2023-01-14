@@ -1,17 +1,12 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServiceRuntimeContext } from '../types';
-import { getWordRange } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-
-// https://github.com/microsoft/vscode/blob/dcf27391b7dd7c1cece483806af75b4f87188e70/extensions/html/language-configuration.json#L35
-const htmlWordPatterns = /(-?\d*\.\d\w*)|([^\`\~\!\@\$\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\\"\,\.\<\>\/\s]+)/g;
 
 export function register(context: LanguageServiceRuntimeContext) {
 
 	return async (uri: string, position: vscode.Position) => {
 
-		const document = context.getTextDocument(uri);
-		const result = await languageFeatureWorker(
+		return languageFeatureWorker(
 			context,
 			uri,
 			position,
@@ -36,7 +31,5 @@ export function register(context: LanguageServiceRuntimeContext) {
 				return prepares[0];
 			},
 		);
-
-		return result ?? (document ? getWordRange(htmlWordPatterns, position, document) : undefined);
 	};
 }
