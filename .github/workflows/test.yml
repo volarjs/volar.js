@@ -1,0 +1,27 @@
+name: testing
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # install node
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # install pnpm
+      - run: npm i -g pnpm
+      - run: pnpm install --frozen-lockfile --no-optional
+      - run: pnpm run build-ci
+      - run: pnpm run test
