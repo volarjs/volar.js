@@ -1,5 +1,4 @@
 import { configure as configureHttpRequests } from 'request-light';
-import * as ts from 'typescript/lib/tsserverlibrary'; // bundle typescript lib in web
 import * as vscode from 'vscode-languageserver/browser';
 import { startCommonLanguageServer } from '../common/server';
 import { LanguageServerPlugin } from '../types';
@@ -30,7 +29,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				},
 			},
 			loadTypescript() {
-				return ts; // not support load by user config in web
+				return require('typescript'); // force bundle because not support load by user config in web
 			},
 			async loadTypescriptLocalized(tsdk, locale) {
 				try {
