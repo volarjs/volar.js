@@ -34,6 +34,12 @@ export interface RuntimeEnvironment {
 		ts: typeof import('typescript/lib/tsserverlibrary'),
 		capabilities: vscode.ClientCapabilities,
 	) => FileSystemHost,
+	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
+	readonly timer: {
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
+		// Seems not useful
+		// setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): vscode.Disposable;
+	};
 }
 
 export type LanguageServerPlugin<

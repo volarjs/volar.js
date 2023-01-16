@@ -23,6 +23,12 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 		plugins,
 		connection,
 		runtimeEnv: {
+			timer: {
+				setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable {
+					const handle = setTimeout(callback, 0, ...args);
+					return { dispose: () => clearTimeout(handle) };
+				},
+			},
 			loadTypescript() {
 				return ts; // not support load by user config in web
 			},

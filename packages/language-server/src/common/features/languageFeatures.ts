@@ -4,6 +4,7 @@ import { AutoInsertRequest, FindFileReferenceRequest, ShowReferencesNotification
 import { CancellationTokenHost } from '../cancellationPipe';
 import type { Workspaces } from '../workspaces';
 import * as shared from '@volar/shared';
+import { RuntimeEnvironment } from '../../types';
 
 export function register(
 	connection: vscode.Connection,
@@ -11,6 +12,7 @@ export function register(
 	initParams: vscode.InitializeParams,
 	cancelHost: CancellationTokenHost,
 	semanticTokensLegend: vscode.SemanticTokensLegend,
+	runtime: RuntimeEnvironment,
 ) {
 
 	let lastCompleteUri: string;
@@ -19,54 +21,54 @@ export function register(
 	let lastCodeActionLs: embedded.LanguageService;
 	let lastCallHierarchyLs: embedded.LanguageService;
 
-	connection.onDocumentFormatting(async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onDocumentFormatting(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.format(params.textDocument.uri, params.options);
 		});
 	});
-	connection.onDocumentRangeFormatting(async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onDocumentRangeFormatting(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.format(params.textDocument.uri, params.options, params.range);
 		});
 	});
-	connection.onDocumentOnTypeFormatting(async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onDocumentOnTypeFormatting(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.format(params.textDocument.uri, params.options, undefined, params);
 		});
 	});
-	connection.onSelectionRanges(async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onSelectionRanges(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.getSelectionRanges(params.textDocument.uri, params.positions);
 		});
 	});
-	connection.onFoldingRanges(async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onFoldingRanges(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.getFoldingRanges(params.textDocument.uri);
 		});
 	});
-	connection.languages.onLinkedEditingRange(async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.languages.onLinkedEditingRange(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findLinkedEditingRanges(params.textDocument.uri, params.position);
 		});
 	});
-	connection.onDocumentSymbol(async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onDocumentSymbol(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findDocumentSymbols(params.textDocument.uri);
 		});
 	});
-	connection.onDocumentColor(async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onDocumentColor(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findDocumentColors(params.textDocument.uri);
 		});
 	});
-	connection.onColorPresentation(async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onColorPresentation(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.getColorPresentations(params.textDocument.uri, params.color, params.range);
 		});
 	});
 
-	connection.onCompletion(async (params) => {
-		return worker(params.textDocument.uri, async vueLs => {
+	connection.onCompletion(async (params, token) => {
+		return worker(params.textDocument.uri, token, async vueLs => {
 			lastCompleteUri = params.textDocument.uri;
 			lastCompleteLs = vueLs;
 			const list = await vueLs.doComplete(
@@ -89,28 +91,28 @@ export function register(
 		}
 		return item;
 	});
-	connection.onHover(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onHover(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.doHover(params.textDocument.uri, params.position);
 		});
 	});
-	connection.onSignatureHelp(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onSignatureHelp(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.getSignatureHelp(params.textDocument.uri, params.position, params.context);
 		});
 	});
-	connection.onPrepareRename(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onPrepareRename(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.prepareRename(params.textDocument.uri, params.position);
 		});
 	});
-	connection.onRenameRequest(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onRenameRequest(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.doRename(params.textDocument.uri, params.position, params.newName);
 		});
 	});
-	connection.onCodeLens(async (params) => {
-		return worker(params.textDocument.uri, async vueLs => {
+	connection.onCodeLens(async (params, token) => {
+		return worker(params.textDocument.uri, token, async vueLs => {
 			lastCodeLensLs = vueLs;
 			return vueLs.doCodeLens(params.textDocument.uri);
 		});
@@ -126,7 +128,7 @@ export function register(
 				return;
 			}
 
-			return worker(args[0], vueLs => {
+			return worker(args[0], token, vueLs => {
 				return vueLs.doExecuteCommand(params.command, args, {
 					token,
 					workDoneProgress,
@@ -136,8 +138,8 @@ export function register(
 			});
 		}
 	});
-	connection.onCodeAction(async (params) => {
-		return worker(params.textDocument.uri, async vueLs => {
+	connection.onCodeAction(async (params, token) => {
+		return worker(params.textDocument.uri, token, async vueLs => {
 			lastCodeActionLs = vueLs;
 			let codeActions = await vueLs.doCodeActions(params.textDocument.uri, params.range, params.context) ?? [];
 			for (const codeAction of codeActions) {
@@ -157,43 +159,42 @@ export function register(
 	connection.onCodeActionResolve(async (codeAction) => {
 		return await lastCodeActionLs.doCodeActionResolve(codeAction) ?? codeAction;
 	});
-	connection.onReferences(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onReferences(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findReferences(params.textDocument.uri, params.position);
 		});
 	});
-	connection.onRequest(FindFileReferenceRequest.type, async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onRequest(FindFileReferenceRequest.type, async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findFileReferences(params.textDocument.uri);
 		});
 	});
-	connection.onImplementation(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onImplementation(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findImplementations(params.textDocument.uri, params.position);
 		});
 	});
-	connection.onDefinition(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onDefinition(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findDefinition(params.textDocument.uri, params.position);
 		});
 	});
-	connection.onTypeDefinition(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onTypeDefinition(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findTypeDefinition(params.textDocument.uri, params.position);
 		});
 	});
-	connection.onDocumentHighlight(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onDocumentHighlight(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findDocumentHighlights(params.textDocument.uri, params.position);
 		});
 	});
-	connection.onDocumentLinks(async (params) => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onDocumentLinks(async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.findDocumentLinks(params.textDocument.uri);
 		});
 	});
 	connection.onWorkspaceSymbol(async (params, token) => {
-
 
 		let results: vscode.SymbolInformation[] = [];
 
@@ -214,8 +215,8 @@ export function register(
 
 		return results;
 	});
-	connection.languages.callHierarchy.onPrepare(async (params) => {
-		return await worker(params.textDocument.uri, async vueLs => {
+	connection.languages.callHierarchy.onPrepare(async (params, token) => {
+		return await worker(params.textDocument.uri, token, async vueLs => {
 			lastCallHierarchyLs = vueLs;
 			return vueLs.callHierarchy.doPrepare(params.textDocument.uri, params.position);
 		}) ?? [];
@@ -228,8 +229,7 @@ export function register(
 	});
 	connection.languages.semanticTokens.on(async (params, token, _, resultProgress) => {
 		await shared.sleep(200);
-		if (token.isCancellationRequested) return buildTokens([]);
-		return await worker(params.textDocument.uri, async vueLs => {
+		return await worker(params.textDocument.uri, token, async vueLs => {
 
 			const result = await vueLs?.getSemanticTokens(
 				params.textDocument.uri,
@@ -244,8 +244,7 @@ export function register(
 	});
 	connection.languages.semanticTokens.onRange(async (params, token, _, resultProgress) => {
 		await shared.sleep(200);
-		if (token.isCancellationRequested) return buildTokens([]);
-		return await worker(params.textDocument.uri, async vueLs => {
+		return await worker(params.textDocument.uri, token, async vueLs => {
 
 			const result = await vueLs?.getSemanticTokens(
 				params.textDocument.uri,
@@ -259,9 +258,9 @@ export function register(
 		}) ?? buildTokens([]);
 	});
 	connection.languages.diagnostics.on(async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
-		token = cancelHost.createCancellationToken(token);
-		const result = await worker(params.textDocument.uri, vueLs => {
-			return vueLs.doValidation(params.textDocument.uri, token, errors => {
+		const result = await worker(params.textDocument.uri, token, vueLs => {
+			const tsToken = cancelHost.createCancellationToken(token);
+			return vueLs.doValidation(params.textDocument.uri, tsToken, errors => {
 				// resultProgressReporter is undefined in vscode
 				resultProgressReporter?.report({
 					relatedDocuments: {
@@ -278,13 +277,13 @@ export function register(
 			items: result ?? [],
 		};
 	});
-	connection.languages.inlayHint.on(async params => {
-		return worker(params.textDocument.uri, async vueLs => {
+	connection.languages.inlayHint.on(async (params, token) => {
+		return worker(params.textDocument.uri, token, async vueLs => {
 			return vueLs.getInlayHints(params.textDocument.uri, params.range);
 		});
 	});
 	// TODO: connection.languages.inlayHint.resolve
-	connection.workspace.onWillRenameFiles(async params => {
+	connection.workspace.onWillRenameFiles(async (params, token) => {
 
 		const config = await connection.workspace.getConfiguration('volar.updateImportsOnFileMove.enabled');
 		if (!config) {
@@ -292,7 +291,7 @@ export function register(
 		}
 
 		const _edits = await Promise.all(params.files.map(async file => {
-			return await worker(file.oldUri, vueLs => {
+			return await worker(file.oldUri, token, vueLs => {
 				return vueLs.getEditsForFileRename(file.oldUri, file.newUri) ?? null;
 			}) ?? null;
 		}));
@@ -305,22 +304,33 @@ export function register(
 
 		return null;
 	});
-	connection.onRequest(AutoInsertRequest.type, async params => {
-		return worker(params.textDocument.uri, vueLs => {
+	connection.onRequest(AutoInsertRequest.type, async (params, token) => {
+		return worker(params.textDocument.uri, token, vueLs => {
 			return vueLs.doAutoInsert(params.textDocument.uri, params.position, params.options);
 		});
 	});
 
-	async function worker<T>(uri: string, cb: (vueLs: embedded.LanguageService) => T) {
-		const vueLs = await getLanguageService(uri);
-		if (vueLs) {
-			try {
-				return cb(vueLs); // handle for TS cancel throw
-			}
-			catch {
-				return undefined;
-			}
-		}
+	async function worker<T>(uri: string, token: embedded.CancellationToken, cb: (vueLs: embedded.LanguageService) => T) {
+		return new Promise<T>(resolve => {
+			runtime.timer.setImmediate(async () => {
+				if (token.isCancellationRequested) {
+					return;
+				}
+				const vueLs = await getLanguageService(uri);
+				if (vueLs) {
+					try { // handle TS cancel throw
+						const result = await cb(vueLs);
+						if (token.isCancellationRequested) {
+							return;
+						}
+						resolve(result);
+					}
+					catch {
+						return;
+					}
+				}
+			});
+		});
 	}
 	function buildTokens(tokens: embedded.SemanticToken[]) {
 		const builder = new vscode.SemanticTokensBuilder();
