@@ -30,6 +30,7 @@ importers:
       '@volar/language-core': 1.0.24
       '@volar/language-service': 1.0.24
       '@volar/shared': 1.0.24
+      '@vscode/l10n': ^0.0.10
       request-light: ^0.6.0
       typesafe-path: ^0.2.2
       vscode-html-languageservice: ^5.0.3
@@ -41,6 +42,7 @@ importers:
       '@volar/language-core': link:../language-core
       '@volar/language-service': link:../language-service
       '@volar/shared': link:../shared
+      '@vscode/l10n': 0.0.10
       request-light: 0.6.0
       typesafe-path: 0.2.2
       vscode-html-languageservice: 5.0.3

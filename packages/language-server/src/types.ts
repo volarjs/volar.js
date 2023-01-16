@@ -87,6 +87,9 @@ export interface LanguageServerInitializationOptions {
 		// Absolute path to node_modules/typescript/lib
 		tsdk: string;
 	};
+	l10n?: {
+		location: string; // uri
+	};
 	serverMode?: ServerMode;
 	diagnosticModel?: DiagnosticModel;
 	textDocumentSync?: vscode.TextDocumentSyncKind | number;

@@ -6,6 +6,7 @@ import { createConfigurationHost } from './configurationHost';
 import { createDocuments } from './documents';
 import { setupCapabilities } from './utils/registerFeatures';
 import { createWorkspaces } from './workspaces';
+import * as l10n from '@vscode/l10n';
 
 export interface ServerContext {
 	connection: vscode.Connection,
@@ -30,6 +31,10 @@ export function startCommonLanguageServer(context: ServerContext) {
 		initParams = _params;
 		options = initParams.initializationOptions;
 		plugins = context.plugins.map(plugin => plugin(options));
+
+		if (options.l10n) {
+			await l10n.config({ uri: options.l10n.location });
+		}
 
 		if (initParams.capabilities.workspace?.workspaceFolders && initParams.workspaceFolders) {
 			roots = initParams.workspaceFolders.map(folder => URI.parse(folder.uri));
