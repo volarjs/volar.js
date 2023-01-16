@@ -310,7 +310,7 @@ export function register(
 		});
 	});
 
-	async function worker<T>(uri: string, token: embedded.CancellationToken, cb: (vueLs: embedded.LanguageService) => T) {
+	function worker<T>(uri: string, token: embedded.CancellationToken, cb: (vueLs: embedded.LanguageService) => T) {
 		return new Promise<T>(resolve => {
 			runtime.timer.setImmediate(async () => {
 				if (token.isCancellationRequested) {
