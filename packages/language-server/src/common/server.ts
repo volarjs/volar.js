@@ -134,7 +134,14 @@ export function startCommonLanguageServer(context: ServerContext) {
 		}
 
 		(await import('./features/customFeatures')).register(context.connection, projects);
-		(await import('./features/languageFeatures')).register(context.connection, projects, initParams, cancelTokenHost, getSemanticTokensLegend());
+		(await import('./features/languageFeatures')).register(
+			context.connection,
+			projects,
+			initParams,
+			cancelTokenHost,
+			getSemanticTokensLegend(),
+			context.runtimeEnv,
+		);
 
 		for (const plugin of plugins) {
 			plugin.onInitialize?.(context.connection, getLanguageService as any);

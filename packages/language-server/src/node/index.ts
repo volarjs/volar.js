@@ -20,6 +20,12 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 		plugins,
 		connection,
 		runtimeEnv: {
+			timer: {
+				setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable {
+					const handle = setImmediate(callback, ...args);
+					return { dispose: () => clearImmediate(handle) };
+				},
+			},
 			loadTypescript(tsdk) {
 				for (const name of ['./typescript.js', './tsserverlibrary.js', './tsserver.js']) {
 					try {
