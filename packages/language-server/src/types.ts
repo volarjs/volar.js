@@ -48,7 +48,12 @@ export type LanguageServerPlugin<
 	C = embeddedLS.LanguageService
 > = (initOptions: A) => {
 
-	extraFileExtensions?: ts.FileExtensionInfo[];
+	tsconfigExtraFileExtensions: ts.FileExtensionInfo[];
+	diagnosticDocumentSelector: vscode.DocumentSelector;
+	extensions: {
+		fileRenameOperationFilter: string[];
+		fileWatcher: string[];
+	},
 
 	resolveLanguageServiceHost?(
 		ts: typeof import('typescript/lib/tsserverlibrary'),

@@ -123,54 +123,34 @@ export function setupCapabilities(
 		server.inlayHintProvider = true;
 	}
 	if ((!initOptions.respectClientCapabilities || params.textDocument?.diagnostic) && (initOptions.diagnosticModel ?? DiagnosticModel.Push) === DiagnosticModel.Pull) {
-		server.diagnosticProvider = {
-			documentSelector: [
-				{
-					pattern: `**/*.{${[
-						'js',
-						'cjs',
-						'mjs',
-						'ts',
-						'cts',
-						'mts',
-						'jsx',
-						'tsx',
-						// 'json',
-						...plugins.map(plugin => plugin.extraFileExtensions?.map(ext => ext.extension) ?? []).flat(),
-					].join(',')}}`
-				}
-			],
-			interFileDependencies: true,
-			workspaceDiagnostics: false,
-		};
+		const selector = plugins.map(plugin => plugin.diagnosticDocumentSelector ?? []).flat();
+		if (selector) {
+			server.diagnosticProvider = {
+				documentSelector: selector,
+				interFileDependencies: true,
+				workspaceDiagnostics: false,
+			};
+		}
 	}
 
 	// cross file features
 	if (!initOptions.respectClientCapabilities || params.workspace?.fileOperations) {
-		server.workspace = {
-			fileOperations: {
-				willRename: {
-					filters: [
-						{
-							pattern: {
-								glob: `**/*.{${[
-									'js',
-									'cjs',
-									'mjs',
-									'ts',
-									'cts',
-									'mts',
-									'jsx',
-									'tsx',
-									'json',
-									...plugins.map(plugin => plugin.extraFileExtensions?.map(ext => ext.extension) ?? []).flat(),
-								].join(',')}}`
-							}
-						},
-					]
+		const exts = plugins.map(plugin => plugin.extensions.fileRenameOperationFilter).flat();
+		if (exts.length) {
+			server.workspace = {
+				fileOperations: {
+					willRename: {
+						filters: [
+							{
+								pattern: {
+									glob: `**/*.{${exts.join(',')}}`
+								}
+							},
+						]
+					}
 				}
-			}
-		};
+			};
+		}
 	}
 	if (!initOptions.respectClientCapabilities || params.workspace?.symbol) {
 		server.workspaceSymbolProvider = true;

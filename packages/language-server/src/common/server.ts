@@ -95,24 +95,16 @@ export function startCommonLanguageServer(context: ServerContext) {
 			&& !options.disableFileWatcher
 			&& initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration
 		) {
-			context.connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
-				watchers: [
-					{
-						globPattern: `**/*.{${[
-							'js',
-							'cjs',
-							'mjs',
-							'ts',
-							'cts',
-							'mts',
-							'jsx',
-							'tsx',
-							'json',
-							...plugins.map(plugin => plugin.extraFileExtensions?.map(ext => ext.extension) ?? []).flat(),
-						].join(',')}}`
-					},
-				]
-			});
+			const exts = plugins.map(plugin => plugin.extensions.fileWatcher ?? []).flat();
+			if (exts.length) {
+				context.connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
+					watchers: [
+						{
+							globPattern: `**/*.{${exts.join(',')}}`
+						},
+					]
+				});
+			}
 		}
 	});
 	context.connection.onShutdown(async () => {
