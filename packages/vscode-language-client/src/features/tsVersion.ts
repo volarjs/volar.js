@@ -15,16 +15,19 @@ export async function register(
 	resolveStatusText: (text: string) => string,
 ) {
 
+	const subscriptions: vscode.Disposable[] = [];
 	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
 	statusBar.command = cmd;
 
-	context.subscriptions.push({ dispose: () => statusBar.dispose() });
-	context.subscriptions.push(vscode.commands.registerCommand(cmd, onCommand));
+	subscriptions.push({ dispose: () => statusBar.dispose() });
+	subscriptions.push(vscode.commands.registerCommand(cmd, onCommand));
 
-	vscode.workspace.onDidChangeConfiguration(onDidChangeConfiguration, undefined, context.subscriptions);
-	vscode.window.onDidChangeActiveTextEditor(updateStatusBar, undefined, context.subscriptions);
+	vscode.workspace.onDidChangeConfiguration(onDidChangeConfiguration, undefined, subscriptions);
+	vscode.window.onDidChangeActiveTextEditor(updateStatusBar, undefined, subscriptions);
 
 	updateStatusBar();
+
+	return vscode.Disposable.from(...subscriptions);
 
 	async function onCommand() {
 

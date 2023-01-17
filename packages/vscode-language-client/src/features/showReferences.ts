@@ -2,18 +2,22 @@ import * as vscode from 'vscode';
 import { BaseLanguageClient, State } from 'vscode-languageclient';
 import { ShowReferencesNotification } from '@volar/language-server';
 
-export async function register(context: vscode.ExtensionContext, client: BaseLanguageClient) {
+export async function register(client: BaseLanguageClient) {
+
+	const subscriptions: vscode.Disposable[] = [];
 
 	addHandle();
 
-	client.onDidChangeState(() => {
+	subscriptions.push(client.onDidChangeState(() => {
 		if (client.state === State.Running) {
 			addHandle();
 		}
-	});
+	}));
+
+	return vscode.Disposable.from(...subscriptions);
 
 	function addHandle() {
-		context.subscriptions.push(client.onNotification(ShowReferencesNotification.type, params => {
+		subscriptions.push(client.onNotification(ShowReferencesNotification.type, params => {
 			const uri = params.textDocument.uri;
 			const pos = params.position;
 			const refs = params.references;

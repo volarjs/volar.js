@@ -29,7 +29,7 @@ const mappingSelectionDecorationType = vscode.window.createTextEditorDecorationT
 	}
 });
 
-export async function register(cmd: string, context: vscode.ExtensionContext, client: BaseLanguageClient) {
+export async function register(cmd: string, client: BaseLanguageClient) {
 
 	class MappingDataHoverProvider implements vscode.HoverProvider {
 		async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
@@ -57,7 +57,9 @@ export async function register(cmd: string, context: vscode.ExtensionContext, cl
 		}
 	}
 
-	vscode.languages.registerHoverProvider({ scheme }, new MappingDataHoverProvider());
+	const subscriptions: vscode.Disposable[] = [];
+
+	subscriptions.push(vscode.languages.registerHoverProvider({ scheme }, new MappingDataHoverProvider()));
 
 	const sourceUriToVirtualUris = new Map<string, Set<string>>();
 	const virtualUriToSourceEditor = new Map<string, vscode.TextEditor>();
@@ -68,10 +70,10 @@ export async function register(cmd: string, context: vscode.ExtensionContext, cl
 	let updateVirtualDocument: NodeJS.Timeout | undefined;
 	let updateDecorationsTimeout: NodeJS.Timeout | undefined;
 
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateDecorations));
-	context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateDecorations));
-	context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(updateDecorations));
-	context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => {
+	subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateDecorations));
+	subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateDecorations));
+	subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(updateDecorations));
+	subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => {
 		if (sourceUriToVirtualUris.has(e.document.uri.toString())) {
 			const virtualUris = sourceUriToVirtualUris.get(e.document.uri.toString());
 			clearTimeout(updateVirtualDocument);
@@ -82,7 +84,7 @@ export async function register(cmd: string, context: vscode.ExtensionContext, cl
 			}, 100);
 		}
 	}));
-	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
+	subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
 		scheme,
 		{
 			onDidChange: docChangeEvent.event,
@@ -120,7 +122,7 @@ export async function register(cmd: string, context: vscode.ExtensionContext, cl
 			}
 		},
 	));
-	context.subscriptions.push(vscode.commands.registerCommand(cmd, async () => {
+	subscriptions.push(vscode.commands.registerCommand(cmd, async () => {
 		const sourceEditor = vscode.window.activeTextEditor;
 		if (sourceEditor) {
 			const fileNames = await client.sendRequest(GetVirtualFileNamesRequest.type, client.code2ProtocolConverter.asTextDocumentIdentifier(sourceEditor.document));
@@ -132,6 +134,8 @@ export async function register(cmd: string, context: vscode.ExtensionContext, cl
 			}
 		}
 	}));
+
+	return vscode.Disposable.from(...subscriptions);
 
 	function updateDecorations() {
 		for (const [virtualUri, sources] of virtualUriToSourceMap) {

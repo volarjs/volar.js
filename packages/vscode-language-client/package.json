@@ -13,12 +13,18 @@
 		"directory": "packages/language-server"
 	},
 	"dependencies": {
-		"@types/vscode": "1.67.0",
 		"@volar/language-server": "1.1.0-alpha.0",
 		"@volar/shared": "1.1.0-alpha.0",
 		"@volar/source-map": "1.1.0-alpha.0",
 		"typesafe-path": "^0.2.2",
-		"vscode-languageclient": "^8.0.2",
 		"vscode-nls": "^5.2.0"
+	},
+	"devDependencies": {
+		"@types/vscode": "latest",
+		"vscode-languageclient": "latest"
+	},
+	"peerDependencies": {
+		"@types/vscode": "*",
+		"vscode-languageclient": "*"
 	}
 }

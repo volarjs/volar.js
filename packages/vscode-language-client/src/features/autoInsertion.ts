@@ -3,18 +3,19 @@ import type { BaseLanguageClient } from 'vscode-languageclient';
 import { AutoInsertRequest } from '@volar/language-server';
 
 export async function register(
-	context: vscode.ExtensionContext,
 	clients: BaseLanguageClient[],
 	active: (document: vscode.TextDocument) => boolean,
-) {
+){
 
 	let isEnabled = false;
 	let timeout: NodeJS.Timeout | undefined;
 
 	updateEnabledState();
 
-	vscode.workspace.onDidChangeTextDocument(onDidChangeTextDocument, null, context.subscriptions);
-	vscode.window.onDidChangeActiveTextEditor(updateEnabledState, null, context.subscriptions);
+	const d1 = vscode.workspace.onDidChangeTextDocument(onDidChangeTextDocument, null);
+	const d2 = vscode.window.onDidChangeActiveTextEditor(updateEnabledState, null);
+
+	return vscode.Disposable.from(d1, d2);
 
 	function updateEnabledState() {
 		isEnabled = false;

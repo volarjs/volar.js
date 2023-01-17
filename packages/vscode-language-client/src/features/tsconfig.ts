@@ -5,24 +5,26 @@ import * as path from 'typesafe-path';
 
 export async function register(
 	cmd: string,
-	context: vscode.ExtensionContext,
 	client: BaseLanguageClient,
 	shouldStatusBarShow: (document: vscode.TextDocument) => boolean,
 ) {
 
+	const subscriptions: vscode.Disposable[] = [];
 	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
 	let currentTsconfigUri: vscode.Uri | undefined;
 
 	updateStatusBar();
 
-	vscode.window.onDidChangeActiveTextEditor(updateStatusBar, undefined, context.subscriptions);
+	vscode.window.onDidChangeActiveTextEditor(updateStatusBar, undefined, subscriptions);
 
-	context.subscriptions.push(vscode.commands.registerCommand(cmd, async () => {
+	subscriptions.push(vscode.commands.registerCommand(cmd, async () => {
 		if (currentTsconfigUri) {
 			const document = await vscode.workspace.openTextDocument(currentTsconfigUri);
 			await vscode.window.showTextDocument(document);
 		}
 	}));
+
+	subscriptions.push(...subscriptions);
 
 	async function updateStatusBar() {
 		if (

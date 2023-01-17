@@ -5,8 +5,8 @@ import { FindFileReferenceRequest } from '@volar/language-server';
 
 const localize = nls.loadMessageBundle();
 
-export async function register(cmd: string, context: vscode.ExtensionContext, client: BaseLanguageClient) {
-	context.subscriptions.push(vscode.commands.registerCommand(cmd, async (uri?: vscode.Uri) => {
+export async function register(cmd: string, client: BaseLanguageClient) {
+	return vscode.commands.registerCommand(cmd, async (uri?: vscode.Uri) => {
 
 		// https://github.com/microsoft/vscode/blob/main/extensions/typescript-language-features/src/languageFeatures/fileReferences.ts
 		await vscode.window.withProgress({
@@ -14,12 +14,12 @@ export async function register(cmd: string, context: vscode.ExtensionContext, cl
 			title: localize('progress.title', "Finding file references")
 		}, async (_progress) => {
 
-      			if (!uri) {
-      			  const editor = vscode.window.activeTextEditor;
-      			  if (!editor) return;
+			if (!uri) {
+				const editor = vscode.window.activeTextEditor;
+				if (!editor) return;
 
-      			  uri = editor.document.uri;
-      			}
+				uri = editor.document.uri;
+			}
 
 			const response = await client.sendRequest(FindFileReferenceRequest.type, { textDocument: { uri: uri.toString() } });
 			if (!response) {
@@ -37,5 +37,5 @@ export async function register(cmd: string, context: vscode.ExtensionContext, cl
 				await config.update('preferredLocation', existingSetting?.workspaceFolderValue ?? existingSetting?.workspaceValue);
 			}
 		});
-	}));
+	});
 }
