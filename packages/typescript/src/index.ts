@@ -12,7 +12,12 @@ export function createLanguageService(host: embedded.LanguageServiceHost, mods: 
 	} & ts.LanguageService;
 
 	const core = embedded.createLanguageContext(host, mods);
-	const ts = host.getTypeScriptModule()!;
+	const ts = host.getTypeScriptModule?.();
+
+	if (!ts) {
+		throw new Error('TypeScript module not provided.');
+	}
+
 	const ls = ts.createLanguageService(core.typescript.languageServiceHost);
 
 	return new Proxy<Partial<_LanguageService>>({

@@ -24,7 +24,7 @@ export function createVirtualFiles(languageModules: LanguageModule[]) {
 		allSources() {
 			return Array.from(sourceFiles.values());
 		},
-		updateSource(fileName: string, snapshot: ts.IScriptSnapshot) {
+		updateSource(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined) {
 			const key = normalizePath(fileName);
 			const value = sourceFiles.get(key);
 			if (value) {
@@ -34,7 +34,7 @@ export function createVirtualFiles(languageModules: LanguageModule[]) {
 				return value.root; // updated
 			}
 			for (const languageModule of languageModules) {
-				const virtualFile = languageModule.createFile(fileName, snapshot);
+				const virtualFile = languageModule.createFile(fileName, snapshot, languageId);
 				if (virtualFile) {
 					sourceFiles.set(key, { fileName, snapshot, root: virtualFile, languageModule });
 					sourceFilesDirty = true;

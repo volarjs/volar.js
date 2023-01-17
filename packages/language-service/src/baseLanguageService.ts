@@ -51,7 +51,7 @@ export function createLanguageServiceContext(options: {
 	getLanguageService: () => LanguageService,
 }) {
 
-	const ts = options.host.getTypeScriptModule();
+	const ts = options.host.getTypeScriptModule?.();
 	const tsLs = ts?.createLanguageService(options.context.typescript.languageServiceHost, options.documentRegistry);
 
 	if (ts && tsLs) {

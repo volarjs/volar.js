@@ -39,6 +39,10 @@ class IncrementalScriptSnapshot {
 		return this.changes[this.changes.length - 1].version;
 	}
 
+	get languageId() {
+		return this.document.languageId;
+	}
+
 	update(params: vscode.DidChangeTextDocumentParams) {
 		TextDocument.update(this.document, params.contentChanges, params.textDocument.version);
 		this.changes = [

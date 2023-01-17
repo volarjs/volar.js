@@ -128,7 +128,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 			if (edits.length > 0) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-				context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), stringToSnapshot(document.getText()));
+				context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
 				edited = true;
 			}
 
@@ -141,7 +141,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 					if (indentEdits.length > 0) {
 						const newText = TextDocument.applyEdits(document, indentEdits);
 						document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-						context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), stringToSnapshot(document.getText()));
+						context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
 						edited = true;
 					}
 				}
@@ -150,7 +150,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 		if (edited) {
 			// recover
-			context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), originalSnapshot);
+			context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), originalSnapshot, undefined);
 		}
 
 		if (document.getText() === originalDocument.getText())

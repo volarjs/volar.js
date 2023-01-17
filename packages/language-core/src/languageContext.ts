@@ -28,7 +28,7 @@ export function createLanguageContext(
 	let tsProjectVersion = 0;
 
 	const virtualFiles = createVirtualFiles(languageModules);
-	const ts = host.getTypeScriptModule();
+	const ts = host.getTypeScriptModule?.();
 	const scriptSnapshots = new Map<string, [string, ts.IScriptSnapshot]>();
 	const sourceTsFileVersions = new Map<string, string>();
 	const sourceFileVersions = new Map<string, string>();
@@ -58,7 +58,7 @@ export function createLanguageContext(
 					if (!virtualFiles.hasSource(sourceFileName)) {
 						const scriptSnapshot = host.getScriptSnapshot(sourceFileName);
 						if (scriptSnapshot) {
-							virtualFiles.updateSource(sourceFileName, scriptSnapshot);
+							virtualFiles.updateSource(sourceFileName, scriptSnapshot, host.getScriptLanguageId?.(sourceFileName));
 						}
 					}
 				}
@@ -161,7 +161,7 @@ export function createLanguageContext(
 			if (sourceFileVersions.get(fileName) !== newVersion) {
 				// update
 				sourceFileVersions.set(fileName, newVersion);
-				virtualFiles.updateSource(fileName, snapshot);
+				virtualFiles.updateSource(fileName, snapshot, host.getScriptLanguageId?.(fileName));
 				virtualFilesUpdatedNum++;
 			}
 		}
@@ -175,7 +175,7 @@ export function createLanguageContext(
 		for (const fileName of [...remainRootFiles]) {
 			const snapshot = host.getScriptSnapshot(fileName);
 			if (snapshot) {
-				const virtualFile = virtualFiles.updateSource(fileName, snapshot);
+				const virtualFile = virtualFiles.updateSource(fileName, snapshot, host.getScriptLanguageId?.(fileName));
 				if (virtualFile) {
 					remainRootFiles.delete(fileName);
 				}

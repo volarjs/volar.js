@@ -187,8 +187,11 @@ export async function createProject(context: ProjectContext) {
 			getCompilationSettings: () => parsedCommandLine.options,
 			getScriptVersion,
 			getScriptSnapshot,
-			getTypeScriptModule: () => {
-				return context.workspace.workspaces.ts;
+			getTypeScriptModule: context.workspace.workspaces.ts ? () => {
+				return context.workspace.workspaces.ts!;
+			} : undefined,
+			getScriptLanguageId: (fileName) => {
+				return context.workspace.workspaces.documents.data.pathGet(fileName)?.languageId;
 			},
 		};
 

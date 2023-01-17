@@ -85,13 +85,14 @@ export interface VirtualFile {
 }
 
 export interface LanguageModule<T extends VirtualFile = VirtualFile> {
-	createFile(fileName: string, snapshot: ts.IScriptSnapshot): T | undefined;
+	createFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
 	updateFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	deleteFile?(virtualFile: T): void;
 	proxyLanguageServiceHost?(host: LanguageServiceHost): Partial<LanguageServiceHost>;
 }
 
 export interface LanguageServiceHost extends ts.LanguageServiceHost {
-	getTypeScriptModule(): typeof import('typescript/lib/tsserverlibrary') | undefined;
+	getTypeScriptModule?(): typeof import('typescript/lib/tsserverlibrary');
+	getScriptLanguageId?(fileName: string): string | undefined;
 	isTsc?: boolean,
 };
