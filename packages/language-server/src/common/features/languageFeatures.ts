@@ -311,9 +311,10 @@ export function register(
 	});
 
 	function worker<T>(uri: string, token: embedded.CancellationToken, cb: (vueLs: embedded.LanguageService) => T) {
-		return new Promise<T>(resolve => {
+		return new Promise<T | undefined>(resolve => {
 			runtime.timer.setImmediate(async () => {
 				if (token.isCancellationRequested) {
+					resolve(undefined);
 					return;
 				}
 				const vueLs = await getLanguageService(uri);
@@ -321,13 +322,18 @@ export function register(
 					try { // handle TS cancel throw
 						const result = await cb(vueLs);
 						if (token.isCancellationRequested) {
+							resolve(undefined);
 							return;
 						}
 						resolve(result);
 					}
 					catch {
+						resolve(undefined);
 						return;
 					}
+				}
+				else {
+					resolve(undefined);
 				}
 			});
 		});

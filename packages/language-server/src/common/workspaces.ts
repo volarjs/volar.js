@@ -168,7 +168,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 
 	async function getProjectAndTsConfig(uri: string) {
 
-		const rootUris = [...workspaces.keys()]
+		let rootUris = [...workspaces.keys()]
 			.filter(rootUri => isFileInDir(shared.uriToFileName(uri), shared.uriToFileName(rootUri)))
 			.sort((a, b) => sortTsConfigs(shared.uriToFileName(uri), shared.uriToFileName(a), shared.uriToFileName(b)));
 
@@ -180,6 +180,10 @@ export function createWorkspaces(context: WorkspacesContext) {
 					return projectAndTsConfig;
 				}
 			}
+		}
+
+		if (!rootUris.length) {
+			rootUris = [...workspaces.keys()];
 		}
 
 		if (rootUris.length) {
