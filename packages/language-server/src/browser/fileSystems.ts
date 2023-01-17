@@ -290,7 +290,7 @@ export function createWebFileSystemHost(): FileSystemHost {
 			while (pendings.length) {
 				const current = pendings.shift()!;
 				progress?.report(i / pendings.length, URI.parse(shared.fileNameToUri(current[1])).fsPath);
-				await current;
+				await current[2];
 				i++;
 			}
 			progress?.done();
