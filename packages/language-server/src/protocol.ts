@@ -8,19 +8,19 @@ import type { FileRangeCapabilities } from '@volar/language-core';
 
 export namespace ShowReferencesNotification {
 	export type ResponseType = vscode.TextDocumentPositionParams & { references: vscode.Location[]; };
-	export const type = new vscode.NotificationType<ResponseType>('vue.findReferences');
+	export const type = new vscode.NotificationType<ResponseType>('volar/server/showReferences');
 }
 
 export namespace FsStatRequest {
-	export const type = new vscode.RequestType<vscode.DocumentUri, html.FileStat | null | undefined, unknown>('fs/stat');
+	export const type = new vscode.RequestType<vscode.DocumentUri, html.FileStat | null | undefined, unknown>('volar/server/fs/stat');
 }
 
 export namespace FsReadFileRequest {
-	export const type = new vscode.RequestType<vscode.DocumentUri, string | null | undefined, unknown>('fs/readFile');
+	export const type = new vscode.RequestType<vscode.DocumentUri, string | null | undefined, unknown>('volar/server/fs/readFile');
 }
 
 export namespace FsReadDirectoryRequest {
-	export const type = new vscode.RequestType<vscode.DocumentUri, [string, html.FileType][], unknown>('fs/readDirectory');
+	export const type = new vscode.RequestType<vscode.DocumentUri, [string, html.FileType][], unknown>('volar/server/fs/readDirectory');
 }
 
 /**
@@ -33,14 +33,14 @@ export namespace FindFileReferenceRequest {
 	};
 	export type ResponseType = vscode.Location[] | null | undefined;
 	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('vue/findFileReference');
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/findFileReference');
 }
 
 export namespace GetMatchTsConfigRequest {
 	export type ParamsType = vscode.TextDocumentIdentifier;
 	export type ResponseType = { uri: string; } | null | undefined;
 	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/tsconfig');
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/tsconfig');
 }
 
 export namespace AutoInsertRequest {
@@ -56,22 +56,22 @@ export namespace AutoInsertRequest {
 	};
 	export type ResponseType = string | vscode.TextEdit | null | undefined;
 	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('vue/autoInsert');
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/autoInsert');
 }
 
 export namespace WriteVirtualFilesNotification {
-	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar.action.writeVirtualFiles');
+	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar/client/writeVirtualFiles');
 }
 
 export namespace ReloadProjectNotification {
-	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar.action.reloadProject');
+	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar/client/reloadProject');
 }
 
 export namespace GetVirtualFileNamesRequest {
 	export type ParamsType = vscode.TextDocumentIdentifier;
 	export type ResponseType = string[];
 	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('vue/virtualFileNames');
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFileNames');
 }
 
 export namespace GetVirtualFileRequest {
@@ -88,10 +88,10 @@ export namespace GetVirtualFileRequest {
 		}[]>;
 	};
 	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('vue/virtualFile');
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFile');
 }
 
 
 export namespace ReportStats {
-	export const type = new vscode.NotificationType0('vue/stats');
+	export const type = new vscode.NotificationType0('volar/client/stats');
 }
