@@ -205,8 +205,8 @@ export function createWebFileSystemHost(): FileSystemHost {
 
 		async function statAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
 			const uri = shared.fileNameToUri(fsPath);
-			if (uri.startsWith('https://cdn.jsdelivr.net/npm/')) { // stat request always response file type for jsdelivr
-				const text = await readJsdelivrFile(connection, uri);
+			if (uri.startsWith('https://unpkg.com/')) { // stat request always response file type for jsdelivr
+				const text = await readWebFile(connection, uri);
 				if (text !== undefined) {
 					const name = path.basename(fsPath);
 					dir.fileTypes.set(name, FileType.File);
@@ -232,8 +232,8 @@ export function createWebFileSystemHost(): FileSystemHost {
 
 		async function readFileAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
 			const uri = shared.fileNameToUri(fsPath);
-			if (uri.startsWith('https://cdn.jsdelivr.net/npm/')) {
-				const text = await readJsdelivrFile(connection, uri);
+			if (uri.startsWith('https://unpkg.com/')) {
+				const text = await readWebFile(connection, uri);
 				if (text !== undefined) {
 					const name = path.basename(fsPath);
 					dir.fileTexts.set(name, text);
@@ -256,17 +256,10 @@ export function createWebFileSystemHost(): FileSystemHost {
 			}
 		}
 
-		async function readJsdelivrFile(connection: vscode.Connection, uri: string) {
+		async function readWebFile(connection: vscode.Connection, uri: string) {
 			// ignore .js because it's no help for intellisense
 			if (uri.endsWith('.d.ts') || uri.endsWith('.json')) {
-				const text = await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
-				if (
-					text !== undefined
-					// ignore https://cdn.jsdelivr.net/npm/@vue/runtime-dom
-					&& text.indexOf('Minified by jsDelivr') === -1
-				) {
-					return text;
-				}
+				return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
 			}
 		}
 
