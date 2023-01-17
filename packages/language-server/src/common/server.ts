@@ -111,6 +111,13 @@ export function startCommonLanguageServer(context: ServerContext) {
 			});
 		}
 	});
+	context.connection.onShutdown(async () => {
+		if (projects) {
+			for (const workspace of projects.workspaces) {
+				(await workspace[1]).dispose();
+			}
+		}
+	});
 	context.connection.listen();
 
 	async function createLanguageServiceHost() {

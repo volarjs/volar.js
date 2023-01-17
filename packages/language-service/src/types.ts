@@ -19,7 +19,7 @@ export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost 
 	env: {
 		rootUri: URI;
 		configurationHost?: ConfigurationHost;
-		documentContext?: DocumentContext;
+		documentContext: DocumentContext;
 		fileSystemProvider?: FileSystemProvider;
 		schemaRequestService?: SchemaRequestService;
 	};

@@ -5,7 +5,7 @@ import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as html from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
-import { URI } from 'vscode-uri';
+import { URI, Utils } from 'vscode-uri';
 import { FileSystem, LanguageServerPlugin, ServerMode } from '../types';
 import { createUriMap } from './utils/uriMap';
 import { WorkspaceContext } from './workspace';
@@ -92,9 +92,7 @@ export async function createProject(context: ProjectContext) {
 					rootUri: context.rootUri,
 					configurationHost: context.workspace.workspaces.configurationHost,
 					fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
-					documentContext: context.workspace.workspaces.ts
-						? getHTMLDocumentContext(context.workspace.workspaces.ts, languageServiceHost)
-						: undefined,
+					documentContext: getDocumentContext(context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
 					schemaRequestService: async uri => {
 						const protocol = uri.substring(0, uri.indexOf(':'));
 						const builtInHandler = context.workspace.workspaces.server.runtimeEnv.schemaRequestHandlers[protocol];
@@ -308,49 +306,67 @@ function createParsedCommandLine(
 	};
 }
 
-function getHTMLDocumentContext(
-	ts: typeof import('typescript/lib/tsserverlibrary'),
-	host: ts.LanguageServiceHost,
+function getDocumentContext(
+	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
+	host: ts.LanguageServiceHost | undefined,
+	rootUri: string,
 ) {
 	const documentContext: html.DocumentContext = {
-		resolveReference(ref: string, base: string) {
+		resolveReference: (ref: string, base) => {
 
-			const isUri = base.indexOf('://') >= 0;
-			const resolveResult = ts.resolveModuleName(
-				ref,
-				isUri ? shared.uriToFileName(base) : base,
-				host.getCompilationSettings(),
-				host,
-			);
-			const failedLookupLocations: path.PosixPath[] | undefined = typeof resolveResult === 'object' ? (resolveResult as any).failedLookupLocations : [];
-			const dirs = new Set<string>();
+			if (ts && host) { // support tsconfig.json paths
 
-			if (!failedLookupLocations) {
-				console.warn(`[volar] failedLookupLocations not exists, ts: ${ts.version}`);
+				const isUri = base.indexOf('://') >= 0;
+				const resolveResult = ts.resolveModuleName(
+					ref,
+					isUri ? shared.uriToFileName(base) : base,
+					host.getCompilationSettings(),
+					host,
+				);
+				const failedLookupLocations: path.PosixPath[] | undefined = typeof resolveResult === 'object' ? (resolveResult as any).failedLookupLocations : [];
+				const dirs = new Set<string>();
+
+				if (!failedLookupLocations) {
+					console.warn(`[volar] failedLookupLocations not exists, ts: ${ts.version}`);
+				}
+
+				for (let failed of failedLookupLocations ?? []) {
+					const fileName = path.basename(failed);
+					if (fileName === 'index.d.ts' || fileName === '*.d.ts') {
+						dirs.add(path.dirname(failed));
+					}
+					if (failed.endsWith('.d.ts')) {
+						failed = failed.substring(0, failed.length - '.d.ts'.length) as path.PosixPath;
+					}
+					else {
+						continue;
+					}
+					if (host.fileExists(failed)) {
+						return isUri ? shared.fileNameToUri(failed) : failed;
+					}
+				}
+				for (const dir of dirs) {
+					if (host.directoryExists?.(dir) ?? true) {
+						return isUri ? shared.fileNameToUri(dir) : dir;
+					}
+				}
 			}
 
-			for (let failed of failedLookupLocations ?? []) {
-				const fileName = path.basename(failed);
-				if (fileName === 'index.d.ts' || fileName === '*.d.ts') {
-					dirs.add(path.dirname(failed));
-				}
-				if (failed.endsWith('.d.ts')) {
-					failed = failed.substring(0, failed.length - '.d.ts'.length) as path.PosixPath;
-				}
-				else {
-					continue;
-				}
-				if (host.fileExists(failed)) {
-					return isUri ? shared.fileNameToUri(failed) : failed;
-				}
-			}
-			for (const dir of dirs) {
-				if (host.directoryExists?.(dir) ?? true) {
-					return isUri ? shared.fileNameToUri(dir) : dir;
-				}
-			}
+			// original html resolveReference
 
-			return undefined;
+			if (ref.match(/^\w[\w\d+.-]*:/)) {
+				// starts with a schema
+				return ref;
+			}
+			if (ref[0] === '/') { // resolve absolute path against the current workspace folder
+				const folderUri = rootUri;
+				if (folderUri) {
+					return folderUri + ref.substr(1);
+				}
+			}
+			const baseUri = URI.parse(base);
+			const baseUriDir = baseUri.path.endsWith('/') ? baseUri : Utils.dirname(baseUri);
+			return Utils.resolvePath(baseUriDir, ref).toString(true);
 		},
 	};
 	return documentContext;
