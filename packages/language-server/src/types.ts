@@ -64,10 +64,8 @@ export type LanguageServerPlugin<
 		context: LanguageServiceRuntimeContext,
 	): embeddedLS.LanguageServicePlugin[];
 
-	onInitialize?(
-		connection: vscode.Connection,
-		getLanguageService: (uri: string) => Promise<C>,
-	): void;
+	onInitialize?(_: vscode.InitializeResult): void;
+	onInitialized?(getLanguageService: (uri: string) => Promise<C>): void;
 };
 
 export enum ServerMode {

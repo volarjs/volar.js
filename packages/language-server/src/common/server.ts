@@ -66,6 +66,10 @@ export function startCommonLanguageServer(context: ServerContext) {
 			};
 		} catch { }
 
+		for (const plugin of plugins) {
+			plugin.onInitialize?.(result);
+		}
+
 		return result;
 	});
 	context.connection.onInitialized(() => {
@@ -156,7 +160,7 @@ export function startCommonLanguageServer(context: ServerContext) {
 		);
 
 		for (const plugin of plugins) {
-			plugin.onInitialize?.(context.connection, getLanguageService as any);
+			plugin.onInitialized?.(getLanguageService as any);
 		}
 
 		async function getLanguageService(uri: string) {
