@@ -28,6 +28,11 @@ export function getProgram(
 			}
 			return target[property];
 		},
+		set: (_target, property, newValue) => {
+			const program = getProgram();
+			(program as any)[property] = newValue;
+			return true;
+		},
 	});
 
 	function getProgram() {
