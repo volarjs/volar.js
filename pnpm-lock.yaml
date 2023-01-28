@@ -10,12 +10,24 @@ importers:
       vite: latest
       vitest: 0.25.8
     optionalDependencies:
-      '@lerna-lite/cli': 1.13.0
+      '@lerna-lite/cli': 1.14.2
     devDependencies:
       '@types/node': 18.11.18
       typescript: 4.9.4
       vite: 4.0.4_@types+node@18.11.18
       vitest: 0.25.8
+
+  packages/kit:
+    specifiers:
+      '@volar/language-service': 1.1.0-alpha.1
+      '@volar/shared': 1.1.0-alpha.1
+      vscode-languageserver-textdocument: ^1.0.8
+      vscode-uri: ^3.0.7
+    dependencies:
+      '@volar/language-service': link:../language-service
+      '@volar/shared': link:../shared
+      vscode-languageserver-textdocument: 1.0.8
+      vscode-uri: 3.0.7
 
   packages/language-core:
     specifiers:
@@ -361,18 +373,18 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/cli/1.13.0:
-    resolution: {integrity: sha512-UBAl79Y+SHQgpHJw0/yf84hh4U0+bImErQAmtxZyh559Al4O3Z7QPzEiazm6L7eMbyAU3KcSOoDeB7WPK3oG+Q==}
+  /@lerna-lite/cli/1.14.2:
+    resolution: {integrity: sha512-ovvcL85bktZa8w1BEEYSoPfaF2teN1UP/pYun+WXJweSdTU6iCwgsSzHXOb2Z6unlTqNEQINvAiH0uce0/uk1A==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     hasBin: true
     requiresBuild: true
     dependencies:
-      '@lerna-lite/core': 1.13.0
-      '@lerna-lite/info': 1.13.0
-      '@lerna-lite/init': 1.13.0
-      '@lerna-lite/listable': 1.13.0
-      '@lerna-lite/publish': 1.13.0
-      '@lerna-lite/version': 1.13.0
+      '@lerna-lite/core': 1.14.2
+      '@lerna-lite/info': 1.14.2
+      '@lerna-lite/init': 1.14.2
+      '@lerna-lite/listable': 1.14.2
+      '@lerna-lite/publish': 1.14.2
+      '@lerna-lite/version': 1.14.2
       dedent: 0.7.0
       dotenv: 16.0.3
       import-local: 3.1.0
@@ -387,8 +399,8 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/core/1.13.0:
-    resolution: {integrity: sha512-P5b7sQXzjZF4udW3b+/JjTYbRgA/V+AW8wXyshS10zgPeDZANju+yb5Dn+G5KtQiKUzCkK918QofGYz+MSYS9A==}
+  /@lerna-lite/core/1.14.2:
+    resolution: {integrity: sha512-KRYpNOO85QQ7lav/nQcLuTIgqO0jxZSUS8JKnrE5WCmrlT78aoQoYy17nK/SDy1A98Pmutg6Y9AvZK18vBkCOA==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
       '@npmcli/run-script': 6.0.0
@@ -405,7 +417,7 @@ packages:
       cosmiconfig: 8.0.0
       dedent: 0.7.0
       execa: 5.1.1
-      fs-extra: 10.1.0
+      fs-extra: 11.1.0
       get-stream: 6.0.1
       git-url-parse: 13.1.0
       glob-parent: 6.0.2
@@ -416,7 +428,7 @@ packages:
       is-stream: 2.0.1
       load-json-file: 6.2.0
       make-dir: 3.1.0
-      minimatch: 5.1.1
+      minimatch: 5.1.6
       node-fetch: 2.6.7
       npm-package-arg: 10.1.0
       npmlog: 7.0.1
@@ -440,11 +452,11 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/info/1.13.0:
-    resolution: {integrity: sha512-Ks21JuqNdYcetZ/7JNJGXhrfRTNRoluT62Qb3QCl49BYqTCiWKVFrGma9gR/akkpnGJaainy5yZKAsk3poccLA==}
+  /@lerna-lite/info/1.14.2:
+    resolution: {integrity: sha512-Cu0Cc1fpJVYPZW9WKYjMU9rijJQKkuSr26xbwOFIUM+jm8qvytChJXqeZhmfP5K+PwLIiRx8eCYJ0A0xpHKcDQ==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
-      '@lerna-lite/core': 1.13.0
+      '@lerna-lite/core': 1.14.2
       envinfo: 7.8.1
     transitivePeerDependencies:
       - bluebird
@@ -453,12 +465,12 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/init/1.13.0:
-    resolution: {integrity: sha512-pG5fc2iyq2XGIhuv6SNd/7GyD8Nhf+MVDNpp6re9jTdvJDNv7CdOlFjsxof6p/8t0ZF4QTYGPaudFKuPeL0V2g==}
+  /@lerna-lite/init/1.14.2:
+    resolution: {integrity: sha512-QJYJCOkRoISrYa8dRvRTFTIbe7M9+yhs+xKykDlnJ3GLUlUsPIeJEStvU47lQmykikP55KnM6alHRIlmXSV1pQ==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
-      '@lerna-lite/core': 1.13.0
-      fs-extra: 10.1.0
+      '@lerna-lite/core': 1.14.2
+      fs-extra: 11.1.0
       p-map: 4.0.0
       path: 0.12.7
       write-json-file: 4.3.0
@@ -469,11 +481,11 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/listable/1.13.0:
-    resolution: {integrity: sha512-DZj2atIEk5S/HCyQ51tSwS5t9Y6FKoXY8iaQHjvPjXh5z4azOIgbStcL7rOjLtstv4xk72+2O4TeixxkiKQpGw==}
+  /@lerna-lite/listable/1.14.2:
+    resolution: {integrity: sha512-Ojt7VoQ8fq7em06IfJiTTrBH74B88D+1fteH1zuFvtjLHKRrVPf+es0+ottMGJAs6lAJv1L2MAbTgYl4IlLc+w==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
-      '@lerna-lite/core': 1.13.0
+      '@lerna-lite/core': 1.14.2
       chalk: 4.1.2
       columnify: 1.6.0
     transitivePeerDependencies:
@@ -483,17 +495,17 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/publish/1.13.0:
-    resolution: {integrity: sha512-JQlp3FrB1HcarEYfo3mZdAAhi2kQlu2165WRfi4joeTfgKHxxRq0a5v+xbROoJEvMGmXalMr+T6v5/QYvtX6TQ==}
+  /@lerna-lite/publish/1.14.2:
+    resolution: {integrity: sha512-5/24ZpqW7oK4sV0RokTO0Q5ZCbKX93Qt7kjqpfaotjWRi9RI/N+H9Mgr4iMzs2xlZoH8JkrUREZRA/CsA5jgBg==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
-      '@lerna-lite/core': 1.13.0
-      '@lerna-lite/version': 1.13.0
-      '@npmcli/arborist': 6.1.5
+      '@lerna-lite/core': 1.14.2
+      '@lerna-lite/version': 1.14.2
+      '@npmcli/arborist': 6.2.0
       byte-size: 7.0.1
       chalk: 4.1.2
       columnify: 1.6.0
-      fs-extra: 10.1.0
+      fs-extra: 11.1.0
       has-unicode: 2.0.1
       libnpmaccess: 7.0.1
       libnpmpublish: 7.0.6
@@ -517,15 +529,15 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/version/1.13.0:
-    resolution: {integrity: sha512-1AB9HlS3LW1ihc92Kx6Yb2BELEjLL0tS6/Nx+xKxLztl2e41Y86XWq9s6J4rE70LNUzKyx7es6LfOuMfS7gzvg==}
+  /@lerna-lite/version/1.14.2:
+    resolution: {integrity: sha512-W56tkMARMuBPYSbLbd9/2GxHsdSjO6JbxgGkTAvgYwaGP11WG6fcZVNjOYfML8Um+9zY9cNtWdJIhAxKmInaGA==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
-      '@lerna-lite/core': 1.13.0
+      '@lerna-lite/core': 1.14.2
       chalk: 4.1.2
       dedent: 0.7.0
       load-json-file: 6.2.0
-      minimatch: 5.1.1
+      minimatch: 5.1.6
       new-github-release-url: 1.0.0
       npmlog: 7.0.1
       p-map: 4.0.0
@@ -566,8 +578,8 @@ packages:
     dev: false
     optional: true
 
-  /@npmcli/arborist/6.1.5:
-    resolution: {integrity: sha512-bdnvRL1Js6uz+CDf0NdG5dIbuwYzHwzTV4/WS16JCDdfstjsYSa8J69bYHf9osUwza9zzg2HI/C5SSmeMN+yFg==}
+  /@npmcli/arborist/6.2.0:
+    resolution: {integrity: sha512-hFo2SMBI1BeGQ9K9gbTXwr0Cnf4Ua5mrtMvv534T8Xk5jjET9IJKgdMPt8kxAI7nyfBGhkLFQM/p5bcWXuBa9A==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     hasBin: true
     dependencies:
@@ -587,7 +599,7 @@ packages:
       hosted-git-info: 6.1.1
       json-parse-even-better-errors: 3.0.0
       json-stringify-nice: 1.1.4
-      minimatch: 5.1.1
+      minimatch: 5.1.6
       nopt: 7.0.0
       npm-install-checks: 6.0.0
       npm-package-arg: 10.1.0
@@ -661,7 +673,7 @@ packages:
     dependencies:
       '@npmcli/name-from-folder': 2.0.0
       glob: 8.0.3
-      minimatch: 5.1.1
+      minimatch: 5.1.6
       read-package-json-fast: 3.0.2
     dev: false
     optional: true
@@ -1845,9 +1857,9 @@ packages:
     dev: false
     optional: true
 
-  /fs-extra/10.1.0:
-    resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
-    engines: {node: '>=12'}
+  /fs-extra/11.1.0:
+    resolution: {integrity: sha512-0rcTq621PD5jM/e0a3EJoGC/1TC5ZBCERW82LQuwfGnCa1V8w7dpYH1yNu+SLb6E5dkeCBzKEyLGlFrnr+dUyw==}
+    engines: {node: '>=14.14'}
     dependencies:
       graceful-fs: 4.2.10
       jsonfile: 6.1.0
@@ -2034,7 +2046,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 5.1.1
+      minimatch: 5.1.6
       once: 1.4.0
     dev: false
     optional: true
@@ -2187,7 +2199,7 @@ packages:
     resolution: {integrity: sha512-bTf9UWe/UP1yxG3QUrj/KOvEhTAUWPcv+WvbFZ28LcqznXabp7Xu6o9y1JEC18+oqODuS7VhTpekV5XvFwsxJg==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      minimatch: 5.1.1
+      minimatch: 5.1.6
     dev: false
     optional: true
 
@@ -2741,8 +2753,8 @@ packages:
     dependencies:
       brace-expansion: 1.1.11
 
-  /minimatch/5.1.1:
-    resolution: {integrity: sha512-362NP+zlprccbEt/SkxKfRMHnNY85V74mVnpUpNyr3F35covl09Kec7/sEFLt3RA4oXmewtoaanoIf67SE5Y5g==}
+  /minimatch/5.1.6:
+    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1

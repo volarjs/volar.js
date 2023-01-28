@@ -4,6 +4,9 @@
 	"references": [
 		// Pkgs
 		{
+			"path": "./packages/kit/tsconfig.build.json"
+		},
+		{
 			"path": "./packages/typescript/tsconfig.build.json"
 		},
 		{

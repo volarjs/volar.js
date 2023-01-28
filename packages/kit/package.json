@@ -1,5 +1,5 @@
 {
-	"name": "@volar/shared",
+	"name": "@volar/kit",
 	"version": "1.1.0-alpha.1",
 	"main": "out/index.js",
 	"license": "MIT",
@@ -10,10 +10,15 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/volarjs/volar.js.git",
-		"directory": "packages/shared"
+		"directory": "packages/kit"
 	},
 	"dependencies": {
-		"typesafe-path": "^0.2.2",
+		"@volar/language-service": "1.1.0-alpha.1",
+		"@volar/shared": "1.1.0-alpha.1",
+		"vscode-languageserver-textdocument": "^1.0.8",
 		"vscode-uri": "^3.0.7"
+	},
+	"peerDependencies": {
+		"typescript": "*"
 	}
 }
