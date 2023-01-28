@@ -5,7 +5,7 @@ import { AutoInsertRequest } from '@volar/language-server';
 export async function register(
 	clients: BaseLanguageClient[],
 	active: (document: vscode.TextDocument) => boolean,
-){
+) {
 
 	let isEnabled = false;
 	let timeout: NodeJS.Timeout | undefined;
