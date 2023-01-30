@@ -33,6 +33,8 @@ export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost 
 	/** @private */
 	plugins: LanguageServicePluginInstance[];
 	/** @private */
+	rules: { [key: string]: Rule | undefined; };
+	/** @private */
 	getTextDocument(uri: string): TextDocument | undefined;
 };
 
@@ -66,11 +68,14 @@ export interface ExecuteCommandContext {
 	applyEdit(paramOrEdit: vscode.ApplyWorkspaceEditParams | vscode.WorkspaceEdit): Promise<vscode.ApplyWorkspaceEditResult>;
 }
 
-export type LanguageServicePlugin<T = {}> = ((context: LanguageServiceRuntimeContext, service: LanguageService) => LanguageServicePluginInstance & T);
+export interface LanguageServicePlugin<T = {}> {
+	(context: LanguageServiceRuntimeContext, service: LanguageService): LanguageServicePluginInstance & T;
+}
 
 export interface LanguageServicePluginInstance {
 
 	setup?(context: LanguageServiceRuntimeContext): void;
+	resolveRuleContext?(context: RuleContext): void;
 
 	validation?: {
 		onSemantic?(document: TextDocument): NullableResult<vscode.Diagnostic[]>;
@@ -151,6 +156,22 @@ export interface LanguageServicePluginInstance {
 	 * TODO: only support to doCompleteResolve for now
 	 */
 	resolveEmbeddedRange?(range: vscode.Range): vscode.Range | undefined;
+}
 
-	// findMatchingTagPosition?(document: TextDocument, position: vscode.Position, htmlDocument: HTMLDocument): vscode.Position | null;
-};
+export interface Rule {
+	kind?: string;
+	onFormatic?(ctx: RuleContext): NullableResult<vscode.Diagnostic[]>;
+	onSyntactic?(ctx: RuleContext): NullableResult<vscode.Diagnostic[]>;
+	onSemantic?(ctx: RuleContext): NullableResult<vscode.Diagnostic[]>;
+	getCodeActions?(error: vscode.Diagnostic): NullableResult<vscode.CodeAction[]>;
+	resolveCodeAction?(codeAction: vscode.CodeAction): vscode.CodeAction;
+}
+
+export interface RuleContext {
+	document: TextDocument;
+}
+
+export interface LanguageServiceConfig {
+	plugins?: LanguageServicePlugin[];
+	rules?: { [key: string]: Rule | undefined; };
+}

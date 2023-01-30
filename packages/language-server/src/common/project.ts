@@ -9,14 +9,13 @@ import { URI, Utils } from 'vscode-uri';
 import { FileSystem, LanguageServerPlugin, ServerMode } from '../types';
 import { createUriMap } from './utils/uriMap';
 import { WorkspaceContext } from './workspace';
-import { ServerConfig } from './utils/serverConfig';
 
 export interface ProjectContext {
 	workspace: WorkspaceContext;
 	rootUri: URI;
 	tsConfig: path.PosixPath | ts.CompilerOptions,
 	documentRegistry: ts.DocumentRegistry | undefined,
-	serverConfig: ServerConfig | undefined,
+	serverConfig: embeddedLS.LanguageServiceConfig | undefined,
 }
 
 export type Project = ReturnType<typeof createProject>;
@@ -87,6 +86,9 @@ export async function createProject(context: ProjectContext) {
 						...context.serverConfig?.plugins ?? [],
 						...context.workspace.workspaces.plugins.map(plugin => plugin.getLanguageServicePlugins?.(languageServiceHost, languageServiceContext) ?? []).flat(),
 					];
+				},
+				getRules() {
+					return context.serverConfig?.rules ?? {};
 				},
 				env: {
 					rootUri: context.rootUri,

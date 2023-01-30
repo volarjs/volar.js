@@ -94,57 +94,66 @@ function updatePosition(
 	return false;
 }
 
+interface Cache {
+	snapshot?: ts.IScriptSnapshot;
+	document?: TextDocument;
+	errors: vscode.Diagnostic[];
+}
+type CacheMap = Map<
+	number,
+	Map<
+		string,
+		{
+			documentVersion: number,
+			tsProjectVersion: string | undefined,
+			errors: vscode.Diagnostic[] | undefined | null,
+		}
+	>
+>;
+
 export function register(context: LanguageServiceRuntimeContext) {
 
-	interface Cache {
-		snapshot: ts.IScriptSnapshot | undefined;
-		errors: vscode.Diagnostic[];
-	}
-	const responseCache = new Map<
+	const lastResponses = new Map<
 		string,
-		{ [key in 'nonTs' | 'tsSemantic' | 'tsDeclaration' | 'tsSyntactic' | 'tsSuggestion']: Cache }
+		{
+			semantic: Cache,
+			declaration: Cache,
+			syntactic: Cache,
+			suggestion: Cache,
+		}
 	>();
-	const nonTsCache = new Map<
-		number,
-		Map<
-			string,
-			{
-				documentVersion: number,
-				tsProjectVersion: string | undefined,
-				errors: vscode.Diagnostic[] | undefined | null,
-			}
-		>
-	>();
-	const scriptTsCache_semantic: typeof nonTsCache = new Map();
-	const scriptTsCache_declaration: typeof nonTsCache = new Map();
-	const scriptTsCache_syntactic: typeof nonTsCache = new Map();
-	const scriptTsCache_suggestion: typeof nonTsCache = new Map();
+	const cacheMaps = {
+		semantic: new Map() as CacheMap,
+		declaration: new Map() as CacheMap,
+		syntactic: new Map() as CacheMap,
+		suggestion: new Map() as CacheMap,
+	};
 
 	return async (uri: string, token?: vscode.CancellationToken, response?: (result: vscode.Diagnostic[]) => void) => {
 
-		const cache = responseCache.get(uri) ?? responseCache.set(uri, {
-			nonTs: { snapshot: undefined, errors: [] },
-			tsSemantic: { snapshot: undefined, errors: [] },
-			tsDeclaration: { snapshot: undefined, errors: [] },
-			tsSuggestion: { snapshot: undefined, errors: [] },
-			tsSyntactic: { snapshot: undefined, errors: [] },
+		const lastResponse = lastResponses.get(uri) ?? lastResponses.set(uri, {
+			semantic: { errors: [] },
+			declaration: { errors: [] },
+			suggestion: { errors: [] },
+			syntactic: { errors: [] },
 		}).get(uri)!;
 		const newSnapshot = context.host.getScriptSnapshot(shared.uriToFileName(uri));
-		const newDocument = newSnapshot ? TextDocument.create('file://a.txt', 'txt', 0, newSnapshot.getText(0, newSnapshot.getLength())) : undefined;
+		const newDocument = context.getTextDocument(uri);
 
-		let failedToUpdateRange = false;
+		let updateCacheRangeFailed = false;
 		let errorsUpdated = false;
 		let lastCheckCancelAt = 0;
 
-		for (const _cache of Object.values(cache)) {
+		for (const cache of Object.values(lastResponse)) {
 
-			const oldSnapshot = _cache.snapshot;
+			const oldSnapshot = cache.snapshot;
+			const oldDocument = cache.document;
 			const change = oldSnapshot ? newSnapshot?.getChangeRange(oldSnapshot) : undefined;
 
-			_cache.snapshot = newSnapshot;
+			cache.snapshot = newSnapshot;
+			cache.document = newDocument;
 
-			if (!failedToUpdateRange && newDocument && oldSnapshot && newSnapshot && change) {
-				const oldDocument = TextDocument.create('file://a.txt', 'txt', 0, oldSnapshot.getText(0, oldSnapshot.getLength()));
+			if (!updateCacheRangeFailed && newDocument && oldSnapshot && oldDocument && newSnapshot && change) {
 				const changeRange = {
 					range: {
 						start: oldDocument.positionAt(change.span.start),
@@ -152,39 +161,39 @@ export function register(context: LanguageServiceRuntimeContext) {
 					},
 					newEnd: newDocument.positionAt(change.span.start + change.newLength),
 				};
-				for (const error of _cache.errors) {
+				for (const error of cache.errors) {
 					if (!updateRange(error.range, changeRange)) {
-						failedToUpdateRange = true;
+						updateCacheRangeFailed = true;
 						break;
 					}
 				}
 			}
 		}
 
-		await worker('onSyntactic', scriptTsCache_syntactic, cache.tsSyntactic);
+		await worker('onSyntactic', cacheMaps.syntactic, lastResponse.syntactic);
 		doResponse();
-		await worker('onSuggestion', scriptTsCache_suggestion, cache.tsSuggestion);
+		await worker('onSuggestion', cacheMaps.suggestion, lastResponse.suggestion);
 		doResponse();
-		await worker('onSemantic', scriptTsCache_semantic, cache.tsSemantic);
+		await worker('onSemantic', cacheMaps.semantic, lastResponse.semantic);
 		doResponse();
-		await worker('onDeclaration', scriptTsCache_declaration, cache.tsDeclaration);
+		await worker('onDeclaration', cacheMaps.declaration, lastResponse.declaration);
 
-		return getErrors();
+		return collectErrors();
 
 		function doResponse() {
-			if (errorsUpdated && !failedToUpdateRange) {
-				response?.(getErrors());
+			if (errorsUpdated && !updateCacheRangeFailed) {
+				response?.(collectErrors());
 				errorsUpdated = false;
 			}
 		}
 
-		function getErrors() {
-			return Object.values(cache).flatMap(({ errors }) => errors);
+		function collectErrors() {
+			return Object.values(lastResponse).flatMap(({ errors }) => errors);
 		}
 
 		async function worker(
-			mode: 'onSemantic' | 'onSyntactic' | 'onSuggestion' | 'onDeclaration',
-			cacheMap: typeof nonTsCache,
+			api: 'onSemantic' | 'onSyntactic' | 'onSuggestion' | 'onDeclaration',
+			cacheMap: CacheMap,
 			cache: Cache,
 		) {
 			const result = await languageFeatureWorker(
@@ -212,9 +221,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 					const pluginId = context.plugins.indexOf(plugin);
 					const pluginCache = cacheMap.get(pluginId) ?? cacheMap.set(pluginId, new Map()).get(pluginId)!;
 					const cache = pluginCache.get(document.uri);
-					const tsProjectVersion = (mode === 'onDeclaration' || mode === 'onSemantic') ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
+					const tsProjectVersion = (api === 'onDeclaration' || api === 'onSemantic') ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
 
-					if (mode === 'onDeclaration' || mode === 'onSemantic') {
+					if (api === 'onDeclaration' || api === 'onSemantic') {
 						if (cache && cache.documentVersion === document.version && cache.tsProjectVersion === tsProjectVersion) {
 							return cache.errors;
 						}
@@ -225,7 +234,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 						}
 					}
 
-					const errors = await plugin.validation?.[mode]?.(document);
+					const errors = await plugin.validation?.[api]?.(document);
 
 					errorsUpdated = true;
 
@@ -237,7 +246,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 					return errors;
 				},
-				(errors, map) => transformErrorRange(map, errors),
+				transformErrorRange,
 				arr => dedupe.withDiagnostics(arr.flat()),
 			);
 
@@ -248,7 +257,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 		}
 	};
 
-	function transformErrorRange(map: SourceMapWithDocuments<FileRangeCapabilities> | undefined, errors: vscode.Diagnostic[]) {
+	function transformErrorRange(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined) {
 
 		const result: vscode.Diagnostic[] = [];
 

@@ -1,4 +1,4 @@
-import { CodeActionTriggerKind, createDocumentsAndSourceMaps, createLanguageContext, createLanguageService, FormattingOptions, LanguageModule, LanguageServiceHost, LanguageServicePlugin, LanguageServiceRuntimeContext, mergeWorkspaceEdits, DiagnosticSeverity, Diagnostic } from '@volar/language-service';
+import { CodeActionTriggerKind, createDocumentsAndSourceMaps, createLanguageContext, createLanguageService, FormattingOptions, LanguageModule, LanguageServiceHost, LanguageServiceConfig, LanguageServiceRuntimeContext, mergeWorkspaceEdits, DiagnosticSeverity, Diagnostic } from '@volar/language-service';
 import { fileNameToUri, syntaxToLanguageId, uriToFileName } from '@volar/shared';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -8,7 +8,7 @@ import { URI } from 'vscode-uri';
 
 export function create(
 	tsConfigPath: string,
-	plugins: LanguageServicePlugin[],
+	config: LanguageServiceConfig,
 	extraFileExtensions: ts.FileExtensionInfo[] = [],
 	languageModules: LanguageModule[] = [],
 	ts: typeof import('typescript/lib/tsserverlibrary') = require('typescript') as any,
@@ -59,8 +59,9 @@ export function create(
 		core,
 		documents: createDocumentsAndSourceMaps(core.virtualFiles),
 		get plugins() {
-			return plugins.map(plugin => plugin(ctx, service));
+			return config.plugins?.map(plugin => plugin(ctx, service)) ?? [];
 		},
+		rules: config.rules ?? {},
 		getTextDocument(uri: string) {
 			if (!textDocuments.has(uri)) {
 				const snapshot = host.getScriptSnapshot(uriToFileName(uri));

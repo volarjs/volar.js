@@ -1,10 +1,6 @@
-import { LanguageServicePlugin } from '@volar/language-service';
+import { LanguageServiceConfig } from '@volar/language-service';
 
-export interface ServerConfig {
-	plugins?: LanguageServicePlugin[];
-}
-
-export function loadServerConfig(dir: string, configFile: string | undefined): ServerConfig | undefined {
+export function loadServerConfig(dir: string, configFile: string | undefined): LanguageServiceConfig | undefined {
 	let configPath: string | undefined;
 	try {
 		configPath = require.resolve(configFile ?? './volar.config.js', { paths: [dir] });
@@ -12,7 +8,7 @@ export function loadServerConfig(dir: string, configFile: string | undefined): S
 
 	try {
 		if (configPath) {
-			const config: ServerConfig = require(configPath);
+			const config: LanguageServiceConfig = require(configPath);
 			delete require.cache[configPath];
 			return config;
 		}

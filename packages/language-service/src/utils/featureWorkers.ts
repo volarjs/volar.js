@@ -15,10 +15,10 @@ export async function documentFeatureWorker<T>(
 	return languageFeatureWorker(
 		context,
 		uri,
-		true,
+		undefined,
 		(_, map, file) => {
 			if (isValidSourceMap(file, map)) {
-				return [true];
+				return [undefined];
 			}
 			return [];
 		},
