@@ -6,7 +6,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import type { LanguageServiceRuntimeContext } from '../types';
 import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers';
 
 export function updateRange(
 	range: vscode.Range,
@@ -100,7 +100,7 @@ interface Cache {
 	errors: vscode.Diagnostic[];
 }
 type CacheMap = Map<
-	number,
+	number | string,
 	Map<
 		string,
 		{
@@ -120,6 +120,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 			declaration: Cache,
 			syntactic: Cache,
 			suggestion: Cache,
+			semantic_rules: Cache,
+			syntactic_rules: Cache,
+			formatic_rules: Cache,
 		}
 	>();
 	const cacheMaps = {
@@ -127,6 +130,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 		declaration: new Map() as CacheMap,
 		syntactic: new Map() as CacheMap,
 		suggestion: new Map() as CacheMap,
+		semantic_rules: new Map() as CacheMap,
+		syntactic_rules: new Map() as CacheMap,
+		formatic_rules: new Map() as CacheMap,
 	};
 
 	return async (uri: string, token?: vscode.CancellationToken, response?: (result: vscode.Diagnostic[]) => void) => {
@@ -136,6 +142,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 			declaration: { errors: [] },
 			suggestion: { errors: [] },
 			syntactic: { errors: [] },
+			semantic_rules: { errors: [] },
+			syntactic_rules: { errors: [] },
+			formatic_rules: { errors: [] },
 		}).get(uri)!;
 		const newSnapshot = context.host.getScriptSnapshot(shared.uriToFileName(uri));
 		const newDocument = context.getTextDocument(uri);
@@ -174,9 +183,16 @@ export function register(context: LanguageServiceRuntimeContext) {
 		doResponse();
 		await worker('onSuggestion', cacheMaps.suggestion, lastResponse.suggestion);
 		doResponse();
+		await lintWorker('onFormatic', cacheMaps.formatic_rules, lastResponse.formatic_rules);
+		doResponse();
+		await lintWorker('onSyntactic', cacheMaps.syntactic_rules, lastResponse.syntactic_rules);
+		doResponse();
+
 		await worker('onSemantic', cacheMaps.semantic, lastResponse.semantic);
 		doResponse();
 		await worker('onDeclaration', cacheMaps.declaration, lastResponse.declaration);
+		doResponse();
+		await lintWorker('onSemantic', cacheMaps.semantic_rules, lastResponse.semantic_rules);
 
 		return collectErrors();
 
@@ -189,6 +205,65 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 		function collectErrors() {
 			return Object.values(lastResponse).flatMap(({ errors }) => errors);
+		}
+
+		async function lintWorker(
+			api: 'onSyntactic' | 'onSemantic' | 'onFormatic',
+			cacheMap: CacheMap,
+			cache: Cache,
+		) {
+			const result = await ruleWorker(
+				context,
+				uri,
+				file => api === 'onFormatic' ? !!file.capabilities.documentFormatting : !!file.capabilities.diagnostic,
+				async (ruleName, rule, ruleCtx) => {
+
+					if (token) {
+						if (api === 'onSemantic') {
+							if (Date.now() - lastCheckCancelAt >= 5) {
+								await shared.sleep(5); // wait for LSP event polling
+								lastCheckCancelAt = Date.now();
+							}
+						}
+						if (token.isCancellationRequested) {
+							return;
+						}
+					}
+
+					const pluginCache = cacheMap.get(ruleName) ?? cacheMap.set(ruleName, new Map()).get(ruleName)!;
+					const cache = pluginCache.get(ruleCtx.document.uri);
+					const tsProjectVersion = (api === 'onSemantic') ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
+
+					if (api === 'onSemantic') {
+						if (cache && cache.documentVersion === ruleCtx.document.version && cache.tsProjectVersion === tsProjectVersion) {
+							return cache.errors;
+						}
+					}
+					else {
+						if (cache && cache.documentVersion === ruleCtx.document.version) {
+							return cache.errors;
+						}
+					}
+
+					const errors = await rule[api]?.(ruleCtx);
+
+					errorsUpdated = true;
+
+					pluginCache.set(ruleCtx.document.uri, {
+						documentVersion: ruleCtx.document.version,
+						errors,
+						tsProjectVersion,
+					});
+
+					return errors;
+				},
+				transformErrorRange,
+				arr => arr.flat(),
+			);
+			if (result) {
+				cache.errors = result;
+				cache.snapshot = newSnapshot;
+			}
 		}
 
 		async function worker(
@@ -208,14 +283,15 @@ export function register(context: LanguageServiceRuntimeContext) {
 				async (plugin, document) => {
 
 					if (token) {
-
-						if (Date.now() - lastCheckCancelAt >= 5) {
-							await shared.sleep(5); // wait for LSP event polling
-							lastCheckCancelAt = Date.now();
+						if (api === 'onDeclaration' || api === 'onSemantic') {
+							if (Date.now() - lastCheckCancelAt >= 5) {
+								await shared.sleep(5); // wait for LSP event polling
+								lastCheckCancelAt = Date.now();
+							}
 						}
-
-						if (token.isCancellationRequested)
+						if (token.isCancellationRequested) {
 							return;
+						}
 					}
 
 					const pluginId = context.plugins.indexOf(plugin);
@@ -249,7 +325,6 @@ export function register(context: LanguageServiceRuntimeContext) {
 				transformErrorRange,
 				arr => dedupe.withDiagnostics(arr.flat()),
 			);
-
 			if (result) {
 				cache.errors = result;
 				cache.snapshot = newSnapshot;
