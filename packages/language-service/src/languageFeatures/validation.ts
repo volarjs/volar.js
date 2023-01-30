@@ -179,20 +179,20 @@ export function register(context: LanguageServiceRuntimeContext) {
 			}
 		}
 
-		await worker('onSyntactic', cacheMaps.syntactic, lastResponse.syntactic);
-		doResponse();
-		await worker('onSuggestion', cacheMaps.suggestion, lastResponse.suggestion);
-		doResponse();
 		await lintWorker('onFormatic', cacheMaps.formatic_rules, lastResponse.formatic_rules);
 		doResponse();
 		await lintWorker('onSyntactic', cacheMaps.syntactic_rules, lastResponse.syntactic_rules);
 		doResponse();
+		await worker('onSyntactic', cacheMaps.syntactic, lastResponse.syntactic);
+		doResponse();
+		await worker('onSuggestion', cacheMaps.suggestion, lastResponse.suggestion);
+		doResponse();
 
+		await lintWorker('onSemantic', cacheMaps.semantic_rules, lastResponse.semantic_rules);
+		doResponse();
 		await worker('onSemantic', cacheMaps.semantic, lastResponse.semantic);
 		doResponse();
 		await worker('onDeclaration', cacheMaps.declaration, lastResponse.declaration);
-		doResponse();
-		await lintWorker('onSemantic', cacheMaps.semantic_rules, lastResponse.semantic_rules);
 
 		return collectErrors();
 
@@ -246,6 +246,12 @@ export function register(context: LanguageServiceRuntimeContext) {
 					}
 
 					const errors = await rule[api]?.(ruleCtx);
+					if (errors) {
+						for (const error of errors) {
+							error.source ||= 'rules';
+							error.code ||= ruleName;
+						}
+					}
 
 					errorsUpdated = true;
 

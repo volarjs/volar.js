@@ -134,9 +134,7 @@ export async function ruleWorker<T>(
 				return true;
 			}
 
-			const ruleCtx: RuleContext = {
-				document: map.virtualFileDocument,
-			};
+			const ruleCtx: RuleContext = { document: map.virtualFileDocument };
 
 			for (const plugin of context.plugins) {
 				plugin.resolveRuleContext?.(ruleCtx);
