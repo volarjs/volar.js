@@ -179,9 +179,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 			}
 		}
 
-		await lintWorker('onFormatic', cacheMaps.formatic_rules, lastResponse.formatic_rules);
+		await lintWorker('onFormat', cacheMaps.formatic_rules, lastResponse.formatic_rules);
 		doResponse();
-		await lintWorker('onSyntactic', cacheMaps.syntactic_rules, lastResponse.syntactic_rules);
+		await lintWorker('onSyntax', cacheMaps.syntactic_rules, lastResponse.syntactic_rules);
 		doResponse();
 		await worker('onSyntactic', cacheMaps.syntactic, lastResponse.syntactic);
 		doResponse();
@@ -208,14 +208,14 @@ export function register(context: LanguageServiceRuntimeContext) {
 		}
 
 		async function lintWorker(
-			api: 'onSyntactic' | 'onSemantic' | 'onFormatic',
+			api: 'onSyntax' | 'onSemantic' | 'onFormat',
 			cacheMap: CacheMap,
 			cache: Cache,
 		) {
 			const result = await ruleWorker(
 				context,
 				uri,
-				file => api === 'onFormatic' ? !!file.capabilities.documentFormatting : !!file.capabilities.diagnostic,
+				file => api === 'onFormat' ? !!file.capabilities.documentFormatting : !!file.capabilities.diagnostic,
 				async (ruleName, rule, ruleCtx) => {
 
 					if (token) {

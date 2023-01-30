@@ -134,7 +134,10 @@ export async function ruleWorker<T>(
 				return true;
 			}
 
-			const ruleCtx: RuleContext = { document: map.virtualFileDocument };
+			const ruleCtx: RuleContext = {
+				ruleId: '',
+				document: map.virtualFileDocument,
+			};
 
 			for (const plugin of context.plugins) {
 				plugin.resolveRuleContext?.(ruleCtx);
@@ -147,6 +150,7 @@ export async function ruleWorker<T>(
 					continue;
 				}
 
+				ruleCtx.ruleId = ruleName;
 				const embeddedResult = await worker(ruleName, rule, ruleCtx);
 
 				if (!embeddedResult)
@@ -174,7 +178,10 @@ export async function ruleWorker<T>(
 	}
 	else if (document) {
 
-		const ruleCtx: RuleContext = { document };
+		const ruleCtx: RuleContext = {
+			ruleId: '',
+			document,
+		};
 
 		for (const plugin of context.plugins) {
 			plugin.resolveRuleContext?.(ruleCtx);
@@ -187,6 +194,7 @@ export async function ruleWorker<T>(
 				continue;
 			}
 
+			ruleCtx.ruleId = ruleName;
 			const embeddedResult = await worker(ruleName, rule, ruleCtx);
 			if (!embeddedResult)
 				continue;
