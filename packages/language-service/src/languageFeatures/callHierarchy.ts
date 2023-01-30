@@ -8,7 +8,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 export interface PluginCallHierarchyData {
 	uri: string,
 	originalItem: vscode.CallHierarchyItem,
-	pluginId: number,
+	pluginId: string,
 	map: {
 		embeddedDocumentUri: string;
 	} | undefined,
@@ -35,7 +35,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 							data: {
 								uri,
 								originalItem: item,
-								pluginId: context.plugins.indexOf(plugin),
+								pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 								map: map ? {
 									embeddedDocumentUri: map.virtualFileDocument.uri,
 								} : undefined,

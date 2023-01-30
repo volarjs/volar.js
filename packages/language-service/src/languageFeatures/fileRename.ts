@@ -28,7 +28,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 			newUri += tsExt;
 		}
 
-		for (const plugin of context.plugins) {
+		for (const plugin of Object.values(context.plugins)) {
 
 			if (!plugin.doFileRename)
 				continue;

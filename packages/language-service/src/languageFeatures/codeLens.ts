@@ -7,7 +7,7 @@ import { executePluginCommand, ExecutePluginCommandArgs } from './executeCommand
 export interface PluginCodeLensData {
 	uri: string,
 	originalItem: vscode.CodeLens,
-	pluginId: number,
+	pluginId: string,
 }
 
 export function register(context: LanguageServiceRuntimeContext) {
@@ -25,7 +25,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				if (codeLens) {
 					return codeLens.map<vscode.CodeLens>(item => {
-						const commandArgs: ExecutePluginCommandArgs | undefined = item.command ? [uri, context.plugins.indexOf(plugin), item.command] : undefined;
+						const commandArgs: ExecutePluginCommandArgs | undefined = item.command ? [uri, Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!, item.command] : undefined;
 						return {
 							...item,
 							command: item.command && commandArgs ? {
@@ -36,7 +36,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 							data: {
 								uri,
 								originalItem: item,
-								pluginId: context.plugins.indexOf(plugin),
+								pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 							} satisfies PluginCodeLensData,
 						};
 					});

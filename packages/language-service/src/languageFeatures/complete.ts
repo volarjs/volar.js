@@ -8,7 +8,7 @@ import { visitEmbedded } from '../utils/definePlugin';
 export interface PluginCompletionData {
 	uri: string,
 	originalItem: vscode.CompletionItem,
-	pluginId: number,
+	pluginId: string,
 	map: {
 		embeddedDocumentUri: string;
 	} | undefined,
@@ -67,7 +67,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 								(newItem, oldItem) => newItem.data = {
 									uri,
 									originalItem: oldItem,
-									pluginId: context.plugins.indexOf(cacheData.plugin),
+									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
 									map: {
 										embeddedDocumentUri: map.virtualFileDocument.uri,
 									},
@@ -95,7 +95,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 							data: {
 								uri,
 								originalItem: item,
-								pluginId: context.plugins.indexOf(cacheData.plugin),
+								pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
 								map: undefined,
 							} satisfies PluginCompletionData,
 						})),
@@ -120,7 +120,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				await visitEmbedded(context.documents, rootFile, async (_, map) => {
 
-					const plugins = context.plugins.sort(sortPlugins);
+					const plugins = Object.values(context.plugins).sort(sortPlugins);
 
 					let _data: FileRangeCapabilities | undefined;
 
@@ -169,7 +169,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 								(newItem, oldItem) => newItem.data = {
 									uri,
 									originalItem: oldItem,
-									pluginId: context.plugins.indexOf(plugin),
+									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 									map: {
 										embeddedDocumentUri: map.virtualFileDocument.uri,
 									}
@@ -194,7 +194,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 			if (document = context.getTextDocument(uri)) {
 
-				const plugins = context.plugins.sort(sortPlugins);
+				const plugins = Object.values(context.plugins).sort(sortPlugins);
 
 				for (const plugin of plugins) {
 
@@ -234,7 +234,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 									data: {
 										uri,
 										originalItem: item,
-										pluginId: context.plugins.indexOf(plugin),
+										pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 										sourceMap: undefined,
 									},
 								};

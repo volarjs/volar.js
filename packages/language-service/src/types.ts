@@ -31,9 +31,9 @@ export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost 
 	/** @private */
 	documents: DocumentsAndSourceMaps;
 	/** @private */
-	plugins: LanguageServicePluginInstance[];
+	plugins: { [id: string]: LanguageServicePluginInstance; };
 	/** @private */
-	rules: { [key: string]: Rule | undefined; };
+	rules: { [id: string]: Rule | undefined; };
 	/** @private */
 	getTextDocument(uri: string): TextDocument | undefined;
 };
@@ -170,7 +170,9 @@ export interface RuleContext {
 }
 
 export interface LanguageServiceConfig {
-	languages?: LanguageModule[],
-	plugins?: LanguageServicePlugin[];
-	rules?: { [key: string]: Rule | undefined; };
+	languages?: ConfigValue<LanguageModule>,
+	plugins?: ConfigValue<LanguageServicePlugin>;
+	rules?: ConfigValue<Rule>;
 }
+
+type ConfigValue<T> = { [id: string]: T | undefined; };

@@ -48,7 +48,7 @@ export function createLanguageService(
 	env: LanguageServiceRuntimeContext['env'],
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const languageContext = createLanguageContext(host, config.languages ?? []);
+	const languageContext = createLanguageContext(host, Object.values(config.languages ?? {}).filter(shared.notEmpty));
 	const context = createLanguageServiceContext(host, languageContext, config, env, () => languageService, documentRegistry);
 	const languageService = createLanguageServiceBase(context);
 	return languageService;
@@ -70,7 +70,7 @@ function createLanguageServiceContext(
 		tsFaster.decorate(ts, languageContext.typescript.languageServiceHost, tsLs);
 	}
 
-	let plugins: LanguageServicePluginInstance[] | undefined;
+	let plugins: { [id: string]: LanguageServicePluginInstance; };
 
 	const textDocumentMapper = createDocumentsAndSourceMaps(languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
@@ -81,18 +81,19 @@ function createLanguageServiceContext(
 		env: env,
 		get plugins() {
 			if (!plugins) {
-				plugins = []; // avoid infinite loop
-				plugins = config.plugins?.map(plugin => {
+				plugins = {}; // avoid infinite loop
+				for (let pluginId in config.plugins ?? {}) {
+					const plugin = config.plugins?.[pluginId];
 					if (plugin instanceof Function) {
 						const _plugin = plugin(this, getLanguageService());
 						_plugin.setup?.(this);
-						return _plugin;
+						plugins[pluginId] = _plugin;
 					}
 					else {
-						(plugin as LanguageServicePluginInstance).setup?.(this);
-						return plugin;
+						(plugin as unknown as LanguageServicePluginInstance).setup?.(this);
+						plugins[pluginId] = plugin as unknown as LanguageServicePluginInstance;
 					}
-				}) ?? [];
+				}
 			}
 			return plugins;
 		},

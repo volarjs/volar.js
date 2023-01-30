@@ -8,7 +8,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 		const symbolsList: vscode.SymbolInformation[][] = [];
 
-		for (const plugin of context.plugins) {
+		for (const plugin of Object.values(context.plugins)) {
 
 			if (!plugin.findWorkspaceSymbols)
 				continue;

@@ -8,7 +8,7 @@ export const executePluginCommand = `volar.${randomCommandId}.executePluginComma
 
 export type ExecutePluginCommandArgs = [
 	string, // uri
-	number | undefined, // plugin id
+	string | undefined, // plugin id
 	vscode.Command, // original command
 ];
 
@@ -28,7 +28,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 			}
 			else {
 
-				for (const plugin of context.plugins) {
+				for (const plugin of Object.values(context.plugins)) {
 
 					await plugin.doExecuteCommand?.(originalCommand.command, originalCommand.arguments as any, executeCommandContext);
 				}

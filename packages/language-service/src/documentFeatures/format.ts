@@ -224,7 +224,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 				}
 			}
 
-			for (const plugin of context.plugins) {
+			for (const plugin of Object.values(context.plugins)) {
 
 				let edits: vscode.TextEdit[] | null | undefined;
 				let recover: (() => void) | undefined;

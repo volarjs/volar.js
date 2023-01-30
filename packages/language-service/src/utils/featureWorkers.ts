@@ -50,7 +50,7 @@ export async function languageFeatureWorker<T, K>(
 
 			for (const mappedArg of transformArg(arg, map, file)) {
 
-				for (const plugin of context.plugins) {
+				for (const plugin of Object.values(context.plugins)) {
 
 					const embeddedResult = await worker(plugin, map.virtualFileDocument, mappedArg, map, file);
 
@@ -80,7 +80,7 @@ export async function languageFeatureWorker<T, K>(
 	}
 	else if (document) {
 
-		for (const plugin of context.plugins) {
+		for (const plugin of Object.values(context.plugins)) {
 
 			const embeddedResult = await worker(plugin, document, arg, undefined, undefined);
 			if (!embeddedResult)
@@ -139,7 +139,7 @@ export async function ruleWorker<T>(
 				document: map.virtualFileDocument,
 			};
 
-			for (const plugin of context.plugins) {
+			for (const plugin of Object.values(context.plugins)) {
 				plugin.resolveRuleContext?.(ruleCtx);
 			}
 
@@ -183,7 +183,7 @@ export async function ruleWorker<T>(
 			document,
 		};
 
-		for (const plugin of context.plugins) {
+		for (const plugin of Object.values(context.plugins)) {
 			plugin.resolveRuleContext?.(ruleCtx);
 		}
 

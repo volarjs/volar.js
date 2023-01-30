@@ -300,7 +300,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 						}
 					}
 
-					const pluginId = context.plugins.indexOf(plugin);
+					const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!;
 					const pluginCache = cacheMap.get(pluginId) ?? cacheMap.set(pluginId, new Map()).get(pluginId)!;
 					const cache = pluginCache.get(document.uri);
 					const tsProjectVersion = (api === 'onDeclaration' || api === 'onSemantic') ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;

@@ -77,8 +77,8 @@ export async function createProject(context: ProjectContext) {
 	function getLanguageService() {
 		if (!languageService) {
 			const config: LanguageServiceConfig = {
-				languages: [...context.serverConfig?.languages ?? []],
-				plugins: [...context.serverConfig?.plugins ?? []],
+				languages: { ...context.serverConfig?.languages ?? {} },
+				plugins: { ...context.serverConfig?.plugins ?? {} },
 				rules: { ...context.serverConfig?.rules },
 			};
 			const env: LanguageServiceRuntimeContext['env'] = {
