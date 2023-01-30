@@ -5,7 +5,7 @@ import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { createProject, Project } from './project';
 import { getInferredCompilerOptions } from './utils/inferredCompilerOptions';
-import { loadServerConfig } from './utils/serverConfig';
+import { loadConfig } from './utils/serverConfig';
 import { createUriMap } from './utils/uriMap';
 import { isFileInDir } from './utils/isFileInDir';
 import { WorkspacesContext } from './workspaces';
@@ -21,7 +21,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 
 	let inferredProject: Project | undefined;
 
-	const serverConfig = loadServerConfig(shared.uriToFileName(context.rootUri.toString()), context.workspaces.initOptions.configFilePath);
+	const serverConfig = loadConfig(shared.uriToFileName(context.rootUri.toString()), context.workspaces.initOptions.configFilePath);
 	const sys = context.workspaces.fileSystemHost?.getWorkspaceFileSystem(context.rootUri);
 	const documentRegistry = sys ? context.workspaces.ts?.createDocumentRegistry(sys.useCaseSensitiveFileNames, shared.uriToFileName(context.rootUri.toString())) : undefined;
 	const projects = createUriMap<Project>();

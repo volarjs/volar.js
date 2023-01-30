@@ -1,4 +1,5 @@
-import { LanguageContext, LanguageServiceHost } from '@volar/language-core';
+import { LanguageContext, LanguageModule, LanguageServiceHost } from '@volar/language-core';
+import { LanguageService } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { DocumentContext, FileSystemProvider } from 'vscode-html-languageservice';
 import type { SchemaRequestService } from 'vscode-json-languageservice';
@@ -6,7 +7,6 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { DocumentsAndSourceMaps } from './documents';
-import { LanguageService } from '@volar/language-service';
 
 export * from 'vscode-languageserver-protocol';
 
@@ -170,6 +170,7 @@ export interface RuleContext {
 }
 
 export interface LanguageServiceConfig {
+	languages?: LanguageModule[],
 	plugins?: LanguageServicePlugin[];
 	rules?: { [key: string]: Rule | undefined; };
 }

@@ -26,7 +26,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { LanguageServicePlugin, LanguageServicePluginInstance, LanguageServiceRuntimeContext, Rule } from './types';
+import { LanguageServiceConfig, LanguageServicePluginInstance, LanguageServiceRuntimeContext } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -42,53 +42,64 @@ import type * as _ from 'vscode-languageserver-protocol';
 
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
-export function createLanguageServiceContext(options: {
+export function createLanguageService(
 	host: LanguageServiceHost,
-	context: ReturnType<typeof createLanguageContext>,
-	getPlugins(): (LanguageServicePlugin | LanguageServicePluginInstance)[],
-	getRules(): { [key: string]: Rule | undefined },
-	env: LanguageServiceRuntimeContext['env'];
-	documentRegistry: ts.DocumentRegistry | undefined,
-	getLanguageService: () => LanguageService,
-}) {
+	config: LanguageServiceConfig,
+	env: LanguageServiceRuntimeContext['env'],
+	documentRegistry?: ts.DocumentRegistry,
+) {
+	const languageContext = createLanguageContext(host, config.languages ?? []);
+	const context = createLanguageServiceContext(host, languageContext, config, env, () => languageService, documentRegistry);
+	const languageService = createLanguageServiceBase(context);
+	return languageService;
+}
 
-	const ts = options.host.getTypeScriptModule?.();
-	const tsLs = ts?.createLanguageService(options.context.typescript.languageServiceHost, options.documentRegistry);
+function createLanguageServiceContext(
+	host: LanguageServiceHost,
+	languageContext: ReturnType<typeof createLanguageContext>,
+	config: LanguageServiceConfig,
+	env: LanguageServiceRuntimeContext['env'],
+	getLanguageService: () => LanguageService,
+	documentRegistry?: ts.DocumentRegistry,
+) {
+
+	const ts = host.getTypeScriptModule?.();
+	const tsLs = ts?.createLanguageService(languageContext.typescript.languageServiceHost, documentRegistry);
 
 	if (ts && tsLs) {
-		tsFaster.decorate(ts, options.context.typescript.languageServiceHost, tsLs);
+		tsFaster.decorate(ts, languageContext.typescript.languageServiceHost, tsLs);
 	}
 
 	let plugins: LanguageServicePluginInstance[] | undefined;
 
-	const textDocumentMapper = createDocumentsAndSourceMaps(options.context.virtualFiles);
+	const textDocumentMapper = createDocumentsAndSourceMaps(languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
 	const context: LanguageServiceRuntimeContext = {
-		host: options.host,
-		core: options.context,
-		env: options.env,
+		host,
+		core: languageContext,
+		env: env,
 		get plugins() {
 			if (!plugins) {
 				plugins = []; // avoid infinite loop
-				plugins = options.getPlugins().map(plugin => {
+				plugins = config.plugins?.map(plugin => {
 					if (plugin instanceof Function) {
-						const _plugin = plugin(this, options.getLanguageService());
+						const _plugin = plugin(this, getLanguageService());
 						_plugin.setup?.(this);
 						return _plugin;
 					}
 					else {
-						plugin.setup?.(this);
+						(plugin as LanguageServicePluginInstance).setup?.(this);
 						return plugin;
 					}
-				});
+				}) ?? [];
 			}
 			return plugins;
 		},
-		rules: options.getRules(),
+		rules: config.rules ?? {},
 		typescript: ts && tsLs ? {
 			module: ts,
-			languageServiceHost: options.context.typescript.languageServiceHost,
+			languageServiceHost: languageContext.typescript.languageServiceHost,
 			languageService: tsLs,
 		} : undefined,
 		documents: textDocumentMapper,
@@ -100,7 +111,7 @@ export function createLanguageServiceContext(options: {
 	function getTextDocument(uri: string) {
 
 		const fileName = shared.uriToFileName(uri);
-		const scriptSnapshot = options.host.getScriptSnapshot(fileName);
+		const scriptSnapshot = host.getScriptSnapshot(fileName);
 
 		if (scriptSnapshot) {
 
@@ -126,7 +137,7 @@ export function createLanguageServiceContext(options: {
 	}
 }
 
-export function createLanguageService(context: LanguageServiceRuntimeContext) {
+function createLanguageServiceBase(context: LanguageServiceRuntimeContext) {
 
 	return {
 

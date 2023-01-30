@@ -1,5 +1,5 @@
-import { CodeActionTriggerKind, createDocumentsAndSourceMaps, createLanguageContext, createLanguageService, FormattingOptions, LanguageModule, LanguageServiceHost, LanguageServiceConfig, LanguageServiceRuntimeContext, mergeWorkspaceEdits, DiagnosticSeverity, Diagnostic } from '@volar/language-service';
-import { fileNameToUri, syntaxToLanguageId, uriToFileName } from '@volar/shared';
+import { CodeActionTriggerKind, createLanguageService, Diagnostic, DiagnosticSeverity, FormattingOptions, LanguageServiceConfig, LanguageServiceHost, mergeWorkspaceEdits } from '@volar/language-service';
+import { fileNameToUri, uriToFileName } from '@volar/shared';
 import * as fs from 'fs';
 import * as path from 'path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -10,14 +10,12 @@ export function create(
 	tsConfigPath: string,
 	config: LanguageServiceConfig,
 	extraFileExtensions: ts.FileExtensionInfo[] = [],
-	languageModules: LanguageModule[] = [],
 	ts: typeof import('typescript/lib/tsserverlibrary') = require('typescript') as any,
 ) {
 
 	let projectVersion = 0;
 	const scriptVersions = new Map<string, number>();
 	const scriptSnapshots = new Map<string, ts.IScriptSnapshot>();
-	const textDocuments = new Map<string, TextDocument | undefined>();
 	const jsonConfig = ts.readJsonConfigFile(tsConfigPath, ts.sys.readFile);
 	const parsedCommandLine = ts.parseJsonSourceFileConfigFileContent(jsonConfig, ts.sys, path.dirname(tsConfigPath), {}, tsConfigPath, undefined, extraFileExtensions);
 	const host: LanguageServiceHost = {
@@ -40,42 +38,14 @@ export function create(
 		},
 		getTypeScriptModule: () => ts,
 	};
-	const core = createLanguageContext(host, languageModules);
-	const ctx: LanguageServiceRuntimeContext = {
-		typescript: {
-			module: ts,
-			languageServiceHost: core.typescript.languageServiceHost,
-			languageService: ts.createLanguageService(core.typescript.languageServiceHost),
-		},
-		env: {
-			rootUri: URI.file(path.dirname(tsConfigPath)),
-			documentContext: {
-				resolveReference() {
-					return undefined; // TODO
-				},
+	const service = createLanguageService(host, config, {
+		rootUri: URI.file(path.dirname(tsConfigPath)),
+		documentContext: {
+			resolveReference() {
+				return undefined; // TODO
 			},
 		},
-		host,
-		core,
-		documents: createDocumentsAndSourceMaps(core.virtualFiles),
-		get plugins() {
-			return config.plugins?.map(plugin => plugin(ctx, service)) ?? [];
-		},
-		rules: config.rules ?? {},
-		getTextDocument(uri: string) {
-			if (!textDocuments.has(uri)) {
-				const snapshot = host.getScriptSnapshot(uriToFileName(uri));
-				if (snapshot) {
-					textDocuments.set(uri, TextDocument.create(uri, syntaxToLanguageId(uri.substring(uri.lastIndexOf('.') + 1)), 0, snapshot.getText(0, snapshot.getLength())));
-				}
-				else {
-					textDocuments.set(uri, undefined);
-				}
-			}
-			return textDocuments.get(uri);
-		},
-	};
-	const service = createLanguageService(ctx);
+	});
 	const formatHost: ts.FormatDiagnosticsHost = {
 		getCurrentDirectory: () => host.getCurrentDirectory(),
 		getCanonicalFileName: (fileName) => host.useCaseSensitiveFileNames?.() ? fileName : fileName.toLowerCase(),
@@ -90,7 +60,7 @@ export function create(
 
 	async function lint(fileName: string, severity: DiagnosticSeverity = DiagnosticSeverity.Hint, throwLevel: DiagnosticSeverity = 0 as DiagnosticSeverity) {
 		const uri = fileNameToUri(fileName);
-		const document = ctx.getTextDocument(uri);
+		const document = service.context.getTextDocument(uri);
 		let diagnostics: Diagnostic[] = [];
 		if (document) {
 			diagnostics = await service.doValidation(uri);
@@ -114,7 +84,7 @@ export function create(
 			}
 		}
 		return async (crossFileFix = false) => {
-			const document = ctx.getTextDocument(uri);
+			const document = service.context.getTextDocument(uri);
 			if (document) {
 				const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
 				const codeActions = await service.doCodeActions(uri, range, { diagnostics, only: ['source.fixAll'], triggerKind: CodeActionTriggerKind.Invoked });
@@ -130,7 +100,7 @@ export function create(
 							if (uri === document.uri || crossFileFix) {
 								const edits = rootEdit.changes![uri];
 								if (edits.length) {
-									const editDocument = ctx.getTextDocument(uri);
+									const editDocument = service.context.getTextDocument(uri);
 									if (editDocument) {
 										const newString = TextDocument.applyEdits(editDocument, edits);
 										writeFile(uriToFileName(uri), newString);
@@ -149,7 +119,7 @@ export function create(
 
 	async function format(fileName: string, options: FormattingOptions) {
 		const uri = fileNameToUri(fileName);
-		const document = ctx.getTextDocument(uri);
+		const document = service.context.getTextDocument(uri);
 		if (document) {
 			const edits = await service.format(uri, options);
 			if (edits?.length) {

@@ -1,5 +1,6 @@
 import * as embedded from '@volar/language-core';
 import * as embeddedLS from '@volar/language-service';
+import { LanguageServiceConfig, LanguageServiceRuntimeContext } from '@volar/language-service';
 import * as shared from '@volar/shared';
 import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -15,7 +16,7 @@ export interface ProjectContext {
 	rootUri: URI;
 	tsConfig: path.PosixPath | ts.CompilerOptions,
 	documentRegistry: ts.DocumentRegistry | undefined,
-	serverConfig: embeddedLS.LanguageServiceConfig | undefined,
+	serverConfig: LanguageServiceConfig | undefined,
 }
 
 export type Project = ReturnType<typeof createProject>;
@@ -75,39 +76,29 @@ export async function createProject(context: ProjectContext) {
 
 	function getLanguageService() {
 		if (!languageService) {
-
-			const languageModules = context.workspace.workspaces.plugins.map(plugin => plugin.getLanguageModules?.(languageServiceHost) ?? []).flat();
-			const languageContext = embedded.createLanguageContext(languageServiceHost, languageModules);
-			const languageServiceContext = embeddedLS.createLanguageServiceContext({
-				host: languageServiceHost,
-				context: languageContext,
-				getPlugins() {
-					return [
-						...context.serverConfig?.plugins ?? [],
-						...context.workspace.workspaces.plugins.map(plugin => plugin.getLanguageServicePlugins?.(languageServiceHost, languageServiceContext) ?? []).flat(),
-					];
+			const config: LanguageServiceConfig = {
+				languages: [...context.serverConfig?.languages ?? []],
+				plugins: [...context.serverConfig?.plugins ?? []],
+				rules: { ...context.serverConfig?.rules },
+			};
+			const env: LanguageServiceRuntimeContext['env'] = {
+				rootUri: context.rootUri,
+				configurationHost: context.workspace.workspaces.configurationHost,
+				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
+				documentContext: getDocumentContext(context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
+				schemaRequestService: async uri => {
+					const protocol = uri.substring(0, uri.indexOf(':'));
+					const builtInHandler = context.workspace.workspaces.server.runtimeEnv.schemaRequestHandlers[protocol];
+					if (builtInHandler) {
+						return await builtInHandler(uri);
+					}
+					return '';
 				},
-				getRules() {
-					return context.serverConfig?.rules ?? {};
-				},
-				env: {
-					rootUri: context.rootUri,
-					configurationHost: context.workspace.workspaces.configurationHost,
-					fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
-					documentContext: getDocumentContext(context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
-					schemaRequestService: async uri => {
-						const protocol = uri.substring(0, uri.indexOf(':'));
-						const builtInHandler = context.workspace.workspaces.server.runtimeEnv.schemaRequestHandlers[protocol];
-						if (builtInHandler) {
-							return await builtInHandler(uri);
-						}
-						return '';
-					},
-				},
-				documentRegistry: context.documentRegistry,
-				getLanguageService: () => languageService!,
-			});
-			languageService = embeddedLS.createLanguageService(languageServiceContext);
+			};
+			for (const plugin of context.workspace.workspaces.plugins) {
+				plugin.resolveConfig?.(config, context.workspace.workspaces.ts, sys, context.tsConfig, languageServiceHost, env);
+			}
+			languageService = embeddedLS.createLanguageService(languageServiceHost, config, env, context.documentRegistry);
 		}
 		return languageService;
 	}
@@ -208,12 +199,6 @@ export async function createProject(context: ProjectContext) {
 
 		if (context.workspace.workspaces.tsLocalized) {
 			host.getLocalizedDiagnosticMessages = () => context.workspace.workspaces.tsLocalized;
-		}
-
-		for (const plugin of context.workspace.workspaces.plugins) {
-			if (context.workspace.workspaces.ts && plugin.resolveLanguageServiceHost) {
-				host = plugin.resolveLanguageServiceHost(context.workspace.workspaces.ts, sys, context.tsConfig, host);
-			}
 		}
 
 		return host;

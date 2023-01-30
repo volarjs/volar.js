@@ -4,7 +4,7 @@ import type { FileSystemProvider } from 'vscode-html-languageservice';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { LanguageServiceRuntimeContext } from '@volar/language-service';
+import { LanguageServiceConfig, LanguageServiceRuntimeContext } from '@volar/language-service';
 
 export type FileSystemHost = {
 	ready(connection: vscode.Connection): void,
@@ -44,7 +44,6 @@ export interface RuntimeEnvironment {
 
 export type LanguageServerPlugin<
 	A extends LanguageServerInitializationOptions = LanguageServerInitializationOptions,
-	B extends embedded.LanguageServiceHost = embedded.LanguageServiceHost,
 	C = embeddedLS.LanguageService
 > = (initOptions: A) => {
 
@@ -55,19 +54,14 @@ export type LanguageServerPlugin<
 		fileWatcher: string[];
 	},
 
-	resolveLanguageServiceHost?(
-		ts: typeof import('typescript/lib/tsserverlibrary'),
+	resolveConfig?(
+		config: LanguageServiceConfig,
+		ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
 		sys: FileSystem,
 		tsConfig: string | ts.CompilerOptions,
 		host: embedded.LanguageServiceHost,
-	): B;
-
-	getLanguageModules?(host: B): embedded.LanguageModule[];
-
-	getLanguageServicePlugins?(
-		host: B,
-		context: LanguageServiceRuntimeContext,
-	): embeddedLS.LanguageServicePlugin[];
+		env: LanguageServiceRuntimeContext['env'],
+	): void;
 
 	onInitialize?(_: vscode.InitializeResult): void;
 	onInitialized?(getLanguageService: (uri: string) => Promise<C>): void;
