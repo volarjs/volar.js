@@ -135,7 +135,7 @@ export async function ruleWorker<T>(
 				return true;
 			}
 
-			const ruleCtx: RuleContext = {
+			let ruleCtx: RuleContext = {
 				ruleId: '',
 				document: map.virtualFileDocument,
 				uriToFileName: shared.uriToFileName,
@@ -144,7 +144,9 @@ export async function ruleWorker<T>(
 			};
 
 			for (const plugin of Object.values(context.plugins)) {
-				plugin.validation?.resolveRuleContext?.(ruleCtx);
+				if (plugin.validation?.setupRuleContext) {
+					ruleCtx = await plugin.validation.setupRuleContext(ruleCtx);
+				}
 			}
 
 			for (const ruleName in context.rules) {
@@ -182,7 +184,7 @@ export async function ruleWorker<T>(
 	}
 	else if (document) {
 
-		const ruleCtx: RuleContext = {
+		let ruleCtx: RuleContext = {
 			ruleId: '',
 			document,
 			uriToFileName: shared.uriToFileName,
@@ -191,7 +193,9 @@ export async function ruleWorker<T>(
 		};
 
 		for (const plugin of Object.values(context.plugins)) {
-			plugin.validation?.resolveRuleContext?.(ruleCtx);
+			if (plugin.validation?.setupRuleContext) {
+				ruleCtx = await plugin.validation?.setupRuleContext(ruleCtx);
+			}
 		}
 
 		for (const ruleName in context.rules) {

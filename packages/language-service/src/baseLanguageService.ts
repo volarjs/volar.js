@@ -88,12 +88,10 @@ function createLanguageServiceContext(
 					const plugin = config.plugins?.[pluginId];
 					if (plugin instanceof Function) {
 						const _plugin = plugin(this, getLanguageService());
-						_plugin.setup?.(this);
 						plugins[pluginId] = _plugin;
 					}
-					else {
-						(plugin as unknown as LanguageServicePluginInstance).setup?.(this);
-						plugins[pluginId] = plugin as unknown as LanguageServicePluginInstance;
+					else if (plugin) {
+						plugins[pluginId] = plugin;
 					}
 				}
 			}

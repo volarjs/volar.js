@@ -84,10 +84,8 @@ export interface LanguageServicePlugin<T = {}> {
 
 export interface LanguageServicePluginInstance {
 
-	setup?(context: LanguageServiceRuntimeContext): void;
-
 	validation?: {
-		resolveRuleContext?(context: RuleContext): void;
+		setupRuleContext?(context: RuleContext): NotNullableResult<RuleContext>;
 		onSemantic?(document: TextDocument): NullableResult<vscode.Diagnostic[]>;
 		onSyntactic?(document: TextDocument): NullableResult<vscode.Diagnostic[]>;
 		onSuggestion?(document: TextDocument): NullableResult<vscode.Diagnostic[]>;
@@ -201,7 +199,7 @@ export interface RuleFix {
 
 export interface LanguageServiceConfig {
 	languages?: ConfigValue<LanguageModule>,
-	plugins?: ConfigValue<LanguageServicePlugin>;
+	plugins?: ConfigValue<LanguageServicePlugin | LanguageServicePluginInstance>;
 	rules?: ConfigValue<Rule>;
 }
 
