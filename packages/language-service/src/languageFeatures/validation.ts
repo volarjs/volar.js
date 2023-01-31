@@ -94,11 +94,19 @@ function updatePosition(
 	return false;
 }
 
+export interface PluginDiagnosticData {
+	uri: string,
+	originalData: any,
+	type: 'plugin' | 'rule',
+	pluginOrRuleId: string,
+}
+
 interface Cache {
 	snapshot?: ts.IScriptSnapshot;
 	document?: TextDocument;
 	errors: vscode.Diagnostic[];
 }
+
 type CacheMap = Map<
 	number | string,
 	Map<
@@ -252,6 +260,15 @@ export function register(context: LanguageServiceRuntimeContext) {
 					await rule[api]?.(ruleCtx);
 					const errors = reportResults.map(reportResult => reportResult[0]);
 
+					errors?.forEach(error => {
+						error.data = {
+							uri,
+							type: 'rule',
+							pluginOrRuleId: ruleCtx.ruleId,
+							originalData: error.data,
+						}satisfies PluginDiagnosticData;
+					});
+
 					errorsUpdated = true;
 
 					pluginCache.set(ruleCtx.document.uri, {
@@ -314,6 +331,15 @@ export function register(context: LanguageServiceRuntimeContext) {
 					}
 
 					const errors = await plugin.validation?.[api]?.(document);
+
+					errors?.forEach(error => {
+						error.data = {
+							uri,
+							type: 'plugin',
+							pluginOrRuleId: pluginId,
+							originalData: error.data,
+						}satisfies PluginDiagnosticData;
+					});
 
 					errorsUpdated = true;
 

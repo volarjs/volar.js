@@ -6,6 +6,7 @@ import { getOverlapRange } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { embeddedEditToSourceEdit } from './rename';
+import { PluginDiagnosticData } from './validation';
 
 export interface PluginCodeActionData {
 	uri: string,
@@ -74,9 +75,24 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				return [];
 			},
-			async (plugin, document, arg, map) => {
+			async (plugin, document, { range, codeActionContext }, map) => {
 
-				const codeActions = await plugin.codeAction?.on?.(document, arg.range, arg.codeActionContext);
+				const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin);
+				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
+					const data: PluginDiagnosticData | undefined = diagnostic.data;
+					return data?.type === 'plugin' && data?.pluginOrRuleId === pluginId;
+				}).map(diagnostic => {
+					const data: PluginDiagnosticData = diagnostic.data;
+					return {
+						...diagnostic,
+						data: data.originalData,
+					};
+				});
+
+				const codeActions = await plugin.codeAction?.on?.(document, range, {
+					...codeActionContext,
+					diagnostics,
+				});
 
 				return codeActions?.map<vscode.CodeAction>(_codeAction => {
 					return {
