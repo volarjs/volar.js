@@ -4,7 +4,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServiceRuntimeContext, RuleContext } from '../types';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers';
 
@@ -219,11 +219,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 				async (ruleName, rule, ruleCtx) => {
 
 					if (token) {
-						if (api === 'onSemantic') {
-							if (Date.now() - lastCheckCancelAt >= 5) {
-								await shared.sleep(5); // wait for LSP event polling
-								lastCheckCancelAt = Date.now();
-							}
+						if (Date.now() - lastCheckCancelAt >= 5) {
+							await shared.sleep(5); // wait for LSP event polling
+							lastCheckCancelAt = Date.now();
 						}
 						if (token.isCancellationRequested) {
 							return;
@@ -245,13 +243,14 @@ export function register(context: LanguageServiceRuntimeContext) {
 						}
 					}
 
-					const errors = await rule[api]?.(ruleCtx);
-					if (errors) {
-						for (const error of errors) {
-							error.source ||= 'rules';
-							error.code ||= ruleName;
-						}
-					}
+					const reportResults: Parameters<RuleContext['report']>[] = [];
+					ruleCtx.report = (error, ...fixes) => {
+						error.source ||= 'rules';
+						error.code ||= ruleCtx.ruleId;
+						reportResults.push([error, ...fixes]);
+					};
+					await rule[api]?.(ruleCtx);
+					const errors = reportResults.map(reportResult => reportResult[0]);
 
 					errorsUpdated = true;
 
@@ -289,11 +288,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 				async (plugin, document) => {
 
 					if (token) {
-						if (api === 'onDeclaration' || api === 'onSemantic') {
-							if (Date.now() - lastCheckCancelAt >= 5) {
-								await shared.sleep(5); // wait for LSP event polling
-								lastCheckCancelAt = Date.now();
-							}
+						if (Date.now() - lastCheckCancelAt >= 5) {
+							await shared.sleep(5); // wait for LSP event polling
+							lastCheckCancelAt = Date.now();
 						}
 						if (token.isCancellationRequested) {
 							return;

@@ -137,6 +137,7 @@ export async function ruleWorker<T>(
 			const ruleCtx: RuleContext = {
 				ruleId: '',
 				document: map.virtualFileDocument,
+				report: () => { },
 			};
 
 			for (const plugin of Object.values(context.plugins)) {
@@ -181,6 +182,7 @@ export async function ruleWorker<T>(
 		const ruleCtx: RuleContext = {
 			ruleId: '',
 			document,
+			report: () => { },
 		};
 
 		for (const plugin of Object.values(context.plugins)) {

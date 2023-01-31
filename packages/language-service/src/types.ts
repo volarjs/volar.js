@@ -159,14 +159,19 @@ export interface LanguageServicePluginInstance {
 }
 
 export interface Rule {
-	onFormat?(ctx: RuleContext): NullableResult<vscode.Diagnostic[]>;
-	onSyntax?(ctx: RuleContext): NullableResult<vscode.Diagnostic[]>;
-	onSemantic?(ctx: RuleContext): NullableResult<vscode.Diagnostic[]>;
+	onFormat?(ctx: RuleContext): void;
+	onSyntax?(ctx: RuleContext): void;
+	onSemantic?(ctx: RuleContext): void;
 }
 
 export interface RuleContext {
 	ruleId: string;
 	document: TextDocument;
+	report(error: vscode.Diagnostic, ...fixes: {
+		kinds?: string[];
+		getCodeActions(): NullableResult<vscode.CodeAction[]>;
+		resolveCodeAction?(codeAction: vscode.CodeAction): NotNullableResult<vscode.CodeAction>;
+	}[]): void;
 }
 
 export interface LanguageServiceConfig {
