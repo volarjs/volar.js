@@ -7,7 +7,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as html from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI, Utils } from 'vscode-uri';
-import { FileSystem, LanguageServerPlugin, ServerMode } from '../types';
+import { FileSystem, LanguageServerPlugin, LanguageServiceContext, ServerMode } from '../types';
 import { createUriMap } from './utils/uriMap';
 import { WorkspaceContext } from './workspace';
 
@@ -95,8 +95,14 @@ export async function createProject(context: ProjectContext) {
 					return '';
 				},
 			};
+			const lsCtx: LanguageServiceContext = {
+				project: context,
+				env,
+				sys,
+				host: languageServiceHost,
+			};
 			for (const plugin of context.workspace.workspaces.plugins) {
-				plugin.resolveConfig?.(config, context.workspace.workspaces.ts, sys, context.tsConfig, languageServiceHost, env);
+				plugin.resolveConfig?.(config, lsCtx);
 			}
 			languageService = embeddedLS.createLanguageService(languageServiceHost, config, env, context.documentRegistry);
 		}

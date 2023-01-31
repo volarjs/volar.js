@@ -5,6 +5,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { LanguageServiceConfig, LanguageServiceRuntimeContext } from '@volar/language-service';
+import { ProjectContext } from './common/project';
 
 export type FileSystemHost = {
 	ready(connection: vscode.Connection): void,
@@ -42,27 +43,24 @@ export interface RuntimeEnvironment {
 	};
 }
 
+export interface LanguageServiceContext {
+	project: ProjectContext;
+	env: LanguageServiceRuntimeContext['env'];
+	host: embedded.LanguageServiceHost;
+	sys: FileSystem;
+}
+
 export type LanguageServerPlugin<
 	A extends LanguageServerInitializationOptions = LanguageServerInitializationOptions,
 	C = embeddedLS.LanguageService
 > = (initOptions: A) => {
-
 	tsconfigExtraFileExtensions: ts.FileExtensionInfo[];
 	diagnosticDocumentSelector: vscode.DocumentSelector;
 	extensions: {
 		fileRenameOperationFilter: string[];
 		fileWatcher: string[];
 	},
-
-	resolveConfig?(
-		config: LanguageServiceConfig,
-		ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
-		sys: FileSystem,
-		tsConfig: string | ts.CompilerOptions,
-		host: embedded.LanguageServiceHost,
-		env: LanguageServiceRuntimeContext['env'],
-	): void;
-
+	resolveConfig?(config: LanguageServiceConfig, ctx: LanguageServiceContext): void;
 	onInitialize?(_: vscode.InitializeResult): void;
 	onInitialized?(getLanguageService: (uri: string) => Promise<C>): void;
 };
