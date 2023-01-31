@@ -18,7 +18,10 @@ export function register(context: LanguageServiceRuntimeContext) {
 			if (!plugin.codeAction?.resolve)
 				return item;
 
-			const originalItem = data.originalItem;
+			const originalItem: CodeAction = {
+				...item,
+				data: data.originalData,
+			};
 
 			if (data.map) {
 

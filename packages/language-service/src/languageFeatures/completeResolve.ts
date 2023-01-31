@@ -13,13 +13,13 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 			const plugin = context.plugins[data.pluginId];
 
-			if (!plugin)
-				return item;
-
 			if (!plugin.complete?.resolve)
 				return item;
 
-			const originalItem = data.originalItem;
+			const originalItem: vscode.CompletionItem = {
+				...item,
+				data: data.originalData,
+			};
 
 			if (data.map) {
 

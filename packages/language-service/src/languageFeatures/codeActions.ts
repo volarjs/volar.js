@@ -9,7 +9,7 @@ import { embeddedEditToSourceEdit } from './rename';
 
 export interface PluginCodeActionData {
 	uri: string,
-	originalItem: vscode.CodeAction,
+	originalData: any,
 	pluginId: string,
 	map: {
 		embeddedDocumentUri: string;
@@ -83,7 +83,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 						..._codeAction,
 						data: {
 							uri,
-							originalItem: _codeAction,
+							originalData: _codeAction.data,
 							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 							map: map ? {
 								embeddedDocumentUri: map.virtualFileDocument.uri,

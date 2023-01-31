@@ -19,7 +19,10 @@ export function register(context: LanguageServiceRuntimeContext) {
 			if (!plugin.codeLens?.resolve)
 				return item;
 
-			const resolvedOriginalItem = await plugin.codeLens.resolve(data.originalItem);
+			const resolvedOriginalItem = await plugin.codeLens.resolve({
+				...item,
+				data: data.originalData,
+			});
 
 			item = <vscode.CodeLens>{
 				...resolvedOriginalItem,

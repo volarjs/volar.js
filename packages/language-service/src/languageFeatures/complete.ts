@@ -7,7 +7,7 @@ import { visitEmbedded } from '../utils/definePlugin';
 
 export interface PluginCompletionData {
 	uri: string,
-	originalItem: vscode.CompletionItem,
+	originalData: any,
 	pluginId: string,
 	map: {
 		embeddedDocumentUri: string;
@@ -66,7 +66,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 								map.virtualFileDocument,
 								(newItem, oldItem) => newItem.data = {
 									uri,
-									originalItem: oldItem,
+									originalData: oldItem.data,
 									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
 									map: {
 										embeddedDocumentUri: map.virtualFileDocument.uri,
@@ -94,7 +94,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 							...item,
 							data: {
 								uri,
-								originalItem: item,
+								originalData: item.data,
 								pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
 								map: undefined,
 							} satisfies PluginCompletionData,
@@ -168,7 +168,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 								map.virtualFileDocument,
 								(newItem, oldItem) => newItem.data = {
 									uri,
-									originalItem: oldItem,
+									originalData: oldItem.data,
 									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 									map: {
 										embeddedDocumentUri: map.virtualFileDocument.uri,
@@ -233,10 +233,10 @@ export function register(context: LanguageServiceRuntimeContext) {
 									...item,
 									data: {
 										uri,
-										originalItem: item,
+										originalData: item.data,
 										pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
-										sourceMap: undefined,
-									},
+										map: undefined,
+									} satisfies PluginCompletionData,
 								};
 							})
 						},

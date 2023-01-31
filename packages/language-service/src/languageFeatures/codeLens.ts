@@ -6,7 +6,7 @@ import { executePluginCommand, ExecutePluginCommandArgs } from './executeCommand
 
 export interface PluginCodeLensData {
 	uri: string,
-	originalItem: vscode.CodeLens,
+	originalData: any,
 	pluginId: string,
 }
 
@@ -35,7 +35,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 							} : undefined,
 							data: {
 								uri,
-								originalItem: item,
+								originalData: item.data,
 								pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 							} satisfies PluginCodeLensData,
 						};
