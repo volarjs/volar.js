@@ -76,6 +76,8 @@ function createLanguageServiceContext(
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
 	const context: LanguageServiceRuntimeContext = {
+		uriToFileName: shared.uriToFileName,
+		fileNameToUri: shared.fileNameToUri,
 		host,
 		core: languageContext,
 		env: env,

@@ -3,6 +3,7 @@ import { visitEmbedded } from './definePlugin';
 import type { LanguageServicePluginInstance, LanguageServiceRuntimeContext, Rule, RuleContext } from '../types';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-service';
 import { SourceMapWithDocuments } from '../documents';
+import * as shared from '@volar/shared';
 
 export async function documentFeatureWorker<T>(
 	context: LanguageServiceRuntimeContext,
@@ -137,6 +138,8 @@ export async function ruleWorker<T>(
 			const ruleCtx: RuleContext = {
 				ruleId: '',
 				document: map.virtualFileDocument,
+				uriToFileName: shared.uriToFileName,
+				fileNameToUri: shared.fileNameToUri,
 				report: () => { },
 			};
 
@@ -182,6 +185,8 @@ export async function ruleWorker<T>(
 		const ruleCtx: RuleContext = {
 			ruleId: '',
 			document,
+			uriToFileName: shared.uriToFileName,
+			fileNameToUri: shared.fileNameToUri,
 			report: () => { },
 		};
 

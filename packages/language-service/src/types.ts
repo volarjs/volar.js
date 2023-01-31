@@ -23,6 +23,8 @@ export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost 
 		fileSystemProvider?: FileSystemProvider;
 		schemaRequestService?: SchemaRequestService;
 	};
+	uriToFileName(uri: string): string;
+	fileNameToUri(fileName: string): string;
 
 	/** @private */
 	host: Host;
@@ -175,6 +177,8 @@ export interface Rule {
 export interface RuleContext {
 	ruleId: string;
 	document: TextDocument;
+	uriToFileName(uri: string): string;
+	fileNameToUri(fileName: string): string;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
 
