@@ -10,11 +10,18 @@ import { PluginDiagnosticData } from './validation';
 
 export interface PluginCodeActionData {
 	uri: string,
-	original: Pick<vscode.CodeAction, 'data'>,
+	type: 'plugin',
+	original: Pick<vscode.CodeAction, 'data' | 'edit'>,
 	pluginId: string,
-	map: {
-		embeddedDocumentUri: string;
-	} | undefined,
+}
+
+export interface RuleCodeActionData {
+	uri: string,
+	documentUri: string,
+	type: 'rule',
+	ruleId: string,
+	ruleFixIndex: number,
+	index: number,
 }
 
 export function register(context: LanguageServiceRuntimeContext) {
@@ -22,7 +29,6 @@ export function register(context: LanguageServiceRuntimeContext) {
 	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext) => {
 
 		const document = context.getTextDocument(uri);
-
 		if (!document)
 			return;
 
@@ -30,8 +36,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 			start: document.offsetAt(range.start),
 			end: document.offsetAt(range.end),
 		};
-
-		let codeActions = await languageFeatureWorker(
+		const pluginActions = await languageFeatureWorker(
 			context,
 			uri,
 			{ range, codeActionContext },
@@ -75,7 +80,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				return [];
 			},
-			async (plugin, document, { range, codeActionContext }, map) => {
+			async (plugin, document, { range, codeActionContext }) => {
 
 				const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
@@ -94,21 +99,19 @@ export function register(context: LanguageServiceRuntimeContext) {
 					diagnostics,
 				});
 
-				return codeActions?.map<vscode.CodeAction>(_codeAction => {
-					return {
-						..._codeAction,
-						data: {
-							uri,
-							original: {
-								data: _codeAction.data,
-							},
-							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
-							map: map ? {
-								embeddedDocumentUri: map.virtualFileDocument.uri,
-							} : undefined,
-						} satisfies PluginCodeActionData,
-					};
+				codeActions?.forEach(codeAction => {
+					codeAction.data = {
+						uri,
+						type: 'plugin',
+						original: {
+							data: codeAction.data,
+							edit: codeAction.edit,
+						},
+						pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+					} satisfies PluginCodeActionData;
 				});
+
+				return codeActions;
 			},
 			(_codeActions, sourceMap) => _codeActions.map(_codeAction => {
 
@@ -129,11 +132,71 @@ export function register(context: LanguageServiceRuntimeContext) {
 					return _codeAction;
 				}
 			}).filter(shared.notEmpty),
-			arr => arr.flat(),
+			arr => dedupe.withCodeAction(arr.flat()),
 		);
+		const ruleActions: vscode.CodeAction[] = [];
 
-		if (codeActions) {
-			return dedupe.withCodeAction(codeActions);
+		for (const diagnostic of codeActionContext.diagnostics) {
+			const data: PluginDiagnosticData | undefined = diagnostic.data;
+			if (data?.type === 'rule') {
+				const fixes = context.ruleFixes?.[data.documentUri]?.[data.pluginOrRuleId]?.[data.ruleFixIndex];
+				if (fixes) {
+					for (let i = 0; i < fixes[1].length; i++) {
+						const fix = fixes[1][i];
+						const matchKinds: (string | undefined)[] = [];
+						if (!codeActionContext.only) {
+							matchKinds.push(undefined);
+						}
+						else {
+							for (const kind of fix.kinds ?? ['quickfix', 'source.fixAll']) {
+								const matchOnly = matchOnlyKind(codeActionContext.only, kind);
+								if (matchOnly) {
+									matchKinds.push(matchOnly);
+								}
+							}
+						}
+						for (const matchKind of matchKinds) {
+							const action: vscode.CodeAction = {
+								title: fix.title ?? `Fix: ${diagnostic.message}`,
+								kind: matchKind,
+								diagnostics: [diagnostic],
+								data: {
+									uri,
+									type: 'rule',
+									ruleId: data.pluginOrRuleId,
+									documentUri: data.documentUri,
+									ruleFixIndex: data.ruleFixIndex,
+									index: i,
+								} satisfies RuleCodeActionData,
+							};
+							ruleActions.push(action);
+						}
+					}
+				}
+			}
 		}
+
+		return [
+			...pluginActions ?? [],
+			...ruleActions,
+		];
 	};
+}
+
+function matchOnlyKind(only: string[], kind: string) {
+	const b = kind.split('.');
+	for (const onlyKind of only) {
+		const a = onlyKind.split('.');
+		if (a.length <= b.length) {
+			let matchNum = 0;
+			for (let i = 0; i < a.length; i++) {
+				if (a[i] == b[i]) {
+					matchNum++;
+				}
+			}
+			if (matchNum === a.length) {
+				return onlyKind;
+			}
+		}
+	}
 }

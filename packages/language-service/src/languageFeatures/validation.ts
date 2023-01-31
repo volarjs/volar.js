@@ -99,6 +99,8 @@ export interface PluginDiagnosticData {
 	original: Pick<vscode.Diagnostic, 'data'>,
 	type: 'plugin' | 'rule',
 	pluginOrRuleId: string,
+	ruleFixIndex: number,
+	documentUri: string,
 }
 
 interface Cache {
@@ -129,8 +131,8 @@ export function register(context: LanguageServiceRuntimeContext) {
 			syntactic: Cache,
 			suggestion: Cache,
 			semantic_rules: Cache,
-			syntactic_rules: Cache,
-			formatic_rules: Cache,
+			syntax_rules: Cache,
+			format_rules: Cache,
 		}
 	>();
 	const cacheMaps = {
@@ -139,8 +141,8 @@ export function register(context: LanguageServiceRuntimeContext) {
 		syntactic: new Map() as CacheMap,
 		suggestion: new Map() as CacheMap,
 		semantic_rules: new Map() as CacheMap,
-		syntactic_rules: new Map() as CacheMap,
-		formatic_rules: new Map() as CacheMap,
+		syntax_rules: new Map() as CacheMap,
+		format_rules: new Map() as CacheMap,
 	};
 
 	return async (uri: string, token?: vscode.CancellationToken, response?: (result: vscode.Diagnostic[]) => void) => {
@@ -151,8 +153,8 @@ export function register(context: LanguageServiceRuntimeContext) {
 			suggestion: { errors: [] },
 			syntactic: { errors: [] },
 			semantic_rules: { errors: [] },
-			syntactic_rules: { errors: [] },
-			formatic_rules: { errors: [] },
+			syntax_rules: { errors: [] },
+			format_rules: { errors: [] },
 		}).get(uri)!;
 		const newSnapshot = context.host.getScriptSnapshot(shared.uriToFileName(uri));
 		const newDocument = context.getTextDocument(uri);
@@ -187,9 +189,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 			}
 		}
 
-		await lintWorker('onFormat', cacheMaps.formatic_rules, lastResponse.formatic_rules);
+		await lintWorker('onFormat', cacheMaps.format_rules, lastResponse.format_rules);
 		doResponse();
-		await lintWorker('onSyntax', cacheMaps.syntactic_rules, lastResponse.syntactic_rules);
+		await lintWorker('onSyntax', cacheMaps.syntax_rules, lastResponse.syntax_rules);
 		doResponse();
 		await worker('onSyntactic', cacheMaps.syntactic, lastResponse.syntactic);
 		doResponse();
@@ -258,9 +260,13 @@ export function register(context: LanguageServiceRuntimeContext) {
 						reportResults.push([error, ...fixes]);
 					};
 					await rule[api]?.(ruleCtx);
-					const errors = reportResults.map(reportResult => reportResult[0]);
 
-					errors?.forEach(error => {
+					context.ruleFixes ??= {};
+					context.ruleFixes[ruleCtx.document.uri] ??= {};
+					context.ruleFixes[ruleCtx.document.uri][ruleCtx.ruleId] ??= {};
+
+					reportResults?.forEach(([error, ...fixes], index) => {
+						context.ruleFixes![ruleCtx.document.uri][ruleCtx.ruleId][index] = [error, fixes];
 						error.data = {
 							uri,
 							type: 'rule',
@@ -268,10 +274,14 @@ export function register(context: LanguageServiceRuntimeContext) {
 							original: {
 								data: error.data,
 							},
+							ruleFixIndex: index,
+							documentUri: ruleCtx.document.uri,
 						}satisfies PluginDiagnosticData;
 					});
 
 					errorsUpdated = true;
+
+					const errors = reportResults.map(reportResult => reportResult[0]);
 
 					pluginCache.set(ruleCtx.document.uri, {
 						documentVersion: ruleCtx.document.version,
@@ -342,6 +352,8 @@ export function register(context: LanguageServiceRuntimeContext) {
 							original: {
 								data: error.data,
 							},
+							ruleFixIndex: 0,
+							documentUri: document.uri,
 						}satisfies PluginDiagnosticData;
 					});
 

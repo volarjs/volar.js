@@ -36,6 +36,14 @@ export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost 
 	rules: { [id: string]: Rule | undefined; };
 	/** @private */
 	getTextDocument(uri: string): TextDocument | undefined;
+	/** @private */
+	ruleFixes?: {
+		[uri: string]: {
+			[ruleId: string]: {
+				[ruleFixId: number]: [vscode.Diagnostic, RuleFix[]];
+			};
+		};
+	};
 };
 
 export interface ConfigurationHost {
@@ -167,11 +175,24 @@ export interface Rule {
 export interface RuleContext {
 	ruleId: string;
 	document: TextDocument;
-	report(error: vscode.Diagnostic, ...fixes: {
-		kinds?: string[];
-		getCodeActions(): NullableResult<vscode.CodeAction[]>;
-		resolveCodeAction?(codeAction: vscode.CodeAction): NotNullableResult<vscode.CodeAction>;
-	}[]): void;
+	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
+}
+
+export interface RuleFix {
+	kinds?: (
+		''
+		| 'quickfix'
+		| 'refactor'
+		| 'refactor.extract'
+		| 'refactor.inline'
+		| 'refactor.rewrite'
+		| 'source'
+		| 'source.organizeImports'
+		| 'source.fixAll'
+	)[];
+	title?: string;
+	getEdits?(diagnostic: vscode.Diagnostic): NullableResult<vscode.TextEdit[]>;
+	getWorkspaceEdit?(diagnostic: vscode.Diagnostic): NullableResult<vscode.WorkspaceEdit>;
 }
 
 export interface LanguageServiceConfig {
