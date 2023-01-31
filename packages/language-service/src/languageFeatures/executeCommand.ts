@@ -24,13 +24,13 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				const plugin = context.plugins[pluginId];
 
-				await plugin?.doExecuteCommand?.(originalCommand.command, originalCommand.arguments as any, executeCommandContext);
+				await plugin?.doExecuteCommand?.(originalCommand.command, originalCommand.arguments, executeCommandContext);
 			}
 			else {
 
 				for (const plugin of Object.values(context.plugins)) {
 
-					await plugin.doExecuteCommand?.(originalCommand.command, originalCommand.arguments as any, executeCommandContext);
+					await plugin.doExecuteCommand?.(originalCommand.command, originalCommand.arguments, executeCommandContext);
 				}
 			}
 		}

@@ -92,7 +92,7 @@ export interface LanguageServicePluginInstance {
 	findDocumentSymbols?(document: TextDocument): NullableResult<vscode.SymbolInformation[]>;
 	findDocumentSemanticTokens?(document: TextDocument, range: vscode.Range, legend: vscode.SemanticTokensLegend): NullableResult<SemanticToken[]>;
 	findWorkspaceSymbols?(query: string): NullableResult<vscode.SymbolInformation[]>;
-	doExecuteCommand?(command: string, args: any[], context: ExecuteCommandContext): NotNullableResult<void>;
+	doExecuteCommand?(command: string, args: any[] | undefined, context: ExecuteCommandContext): NotNullableResult<void>;
 	findDocumentColors?(document: TextDocument): NullableResult<vscode.ColorInformation[]>;
 	getColorPresentations?(document: TextDocument, color: vscode.Color, range: vscode.Range): NullableResult<vscode.ColorPresentation[]>;
 	doFileRename?(oldUri: string, newUri: string): NullableResult<vscode.WorkspaceEdit>;

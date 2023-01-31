@@ -1,8 +1,9 @@
 import * as shared from '@volar/shared';
-import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServiceRuntimeContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { executePluginCommand, ExecutePluginCommandArgs } from './executeCommand';
+
+import type * as _ from 'vscode-languageserver-protocol';
 
 export interface PluginCodeLensData {
 	uri: string,
@@ -23,24 +24,23 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				const codeLens = await plugin.codeLens?.on?.(document);
 
-				if (codeLens) {
-					return codeLens.map<vscode.CodeLens>(item => {
-						const commandArgs: ExecutePluginCommandArgs | undefined = item.command ? [uri, Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!, item.command] : undefined;
-						return {
-							...item,
-							command: item.command && commandArgs ? {
-								...item.command,
-								command: executePluginCommand,
-								arguments: commandArgs as any,
-							} : undefined,
-							data: {
-								uri,
-								originalData: item.data,
-								pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
-							} satisfies PluginCodeLensData,
+				codeLens?.forEach(codeLens => {
+					const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!;
+					if (codeLens.command) {
+						codeLens.command = {
+							title: codeLens.command.title,
+							command: executePluginCommand,
+							arguments: [uri, pluginId, codeLens.command]satisfies ExecutePluginCommandArgs,
 						};
-					});
-				}
+					}
+					codeLens.data = {
+						uri,
+						originalData: codeLens.data,
+						pluginId,
+					} satisfies PluginCodeLensData;
+				});
+
+				return codeLens;
 			},
 			(data, map) => data.map(codeLens => {
 

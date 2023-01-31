@@ -16,16 +16,13 @@ export function register(context: LanguageServiceRuntimeContext) {
 			if (!plugin.complete?.resolve)
 				return item;
 
-			const originalItem: vscode.CompletionItem = {
-				...item,
-				data: data.originalData,
-			};
+			item.data = data.originalData;
 
 			if (data.map) {
 
 				for (const [_, map] of context.documents.getMapsByVirtualFileUri(data.map.embeddedDocumentUri)) {
 
-					const resolvedItem = await plugin.complete.resolve(originalItem);
+					const resolvedItem = await plugin.complete.resolve(item);
 
 					// fix https://github.com/johnsoncodehk/volar/issues/916
 					if (resolvedItem.additionalTextEdits) {
@@ -53,7 +50,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 				}
 			}
 			else {
-				item = await plugin.complete.resolve(originalItem);
+				item = await plugin.complete.resolve(item);
 			}
 		}
 

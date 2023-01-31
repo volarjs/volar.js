@@ -29,19 +29,18 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 					const items = await plugin.callHierarchy?.prepare(document, position);
 
-					return items?.map<vscode.CallHierarchyItem>(item => {
-						return {
-							...item,
-							data: {
-								uri,
-								originalData: item.data,
-								pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
-								map: map ? {
-									embeddedDocumentUri: map.virtualFileDocument.uri,
-								} : undefined,
-							} satisfies PluginCallHierarchyData,
-						};
+					items?.forEach(item => {
+						item.data = {
+							uri,
+							originalData: item.data,
+							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+							map: map ? {
+								embeddedDocumentUri: map.virtualFileDocument.uri,
+							} : undefined,
+						} satisfies PluginCallHierarchyData;
 					});
+
+					return items;
 				},
 				(data, sourceMap) => !sourceMap ? data : data
 					.map(item => transformCallHierarchyItem(item, [])?.[0])
@@ -59,22 +58,16 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				const plugin = context.plugins[data.pluginId];
 
-				if (!plugin)
-					return incomingItems;
-
 				if (!plugin.callHierarchy)
 					return incomingItems;
 
-				const originalItem: vscode.CallHierarchyItem = {
-					...item,
-					data: data.originalData,
-				};
+				item.data = data.originalData;
 
 				if (data.map) {
 
 					if (context.documents.hasVirtualFileByUri(data.map.embeddedDocumentUri)) {
 
-						const _calls = await plugin.callHierarchy.onIncomingCalls(originalItem);
+						const _calls = await plugin.callHierarchy.onIncomingCalls(item);
 
 						for (const _call of _calls) {
 
@@ -92,7 +85,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 				}
 				else {
 
-					const _calls = await plugin.callHierarchy.onIncomingCalls(originalItem);
+					const _calls = await plugin.callHierarchy.onIncomingCalls(item);
 
 					for (const _call of _calls) {
 
@@ -121,22 +114,16 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				const plugin = context.plugins[data.pluginId];
 
-				if (!plugin)
-					return items;
-
 				if (!plugin.callHierarchy)
 					return items;
 
-				const originalItem: vscode.CallHierarchyItem = {
-					...item,
-					data: data.originalData,
-				};
+				item.data = data.originalData;
 
 				if (data.map) {
 
 					if (context.documents.hasVirtualFileByUri(data.map.embeddedDocumentUri)) {
 
-						const _calls = await plugin.callHierarchy.onOutgoingCalls(originalItem);
+						const _calls = await plugin.callHierarchy.onOutgoingCalls(item);
 
 						for (const call of _calls) {
 
@@ -154,7 +141,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 				}
 				else {
 
-					const _calls = await plugin.callHierarchy.onOutgoingCalls(originalItem);
+					const _calls = await plugin.callHierarchy.onOutgoingCalls(item);
 
 					for (const call of _calls) {
 

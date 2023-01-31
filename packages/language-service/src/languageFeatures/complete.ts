@@ -88,18 +88,14 @@ export function register(context: LanguageServiceRuntimeContext) {
 						continue;
 					}
 
-					cacheData.list = {
-						...completionList,
-						items: completionList.items.map<vscode.CompletionItem>(item => ({
-							...item,
-							data: {
-								uri,
-								originalData: item.data,
-								pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
-								map: undefined,
-							} satisfies PluginCompletionData,
-						})),
-					};
+					completionList.items.forEach(item => {
+						item.data = {
+							uri,
+							originalData: item.data,
+							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
+							map: undefined,
+						} satisfies PluginCompletionData;
+					});
 				}
 			}
 		}
@@ -223,23 +219,19 @@ export function register(context: LanguageServiceRuntimeContext) {
 						cache.mainCompletion = { documentUri: document.uri };
 					}
 
+					completionList.items.forEach(item => {
+						item.data = {
+							uri,
+							originalData: item.data,
+							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+							map: undefined,
+						} satisfies PluginCompletionData;
+					});
+
 					cache.data.push({
 						map: undefined,
 						plugin,
-						list: {
-							...completionList,
-							items: completionList.items.map<vscode.CompletionItem>(item => {
-								return {
-									...item,
-									data: {
-										uri,
-										originalData: item.data,
-										pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
-										map: undefined,
-									} satisfies PluginCompletionData,
-								};
-							})
-						},
+						list: completionList,
 					});
 				}
 			}

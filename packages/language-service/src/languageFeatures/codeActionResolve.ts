@@ -12,22 +12,16 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 			const plugin = context.plugins[data.pluginId];
 
-			if (!plugin)
-				return item;
-
 			if (!plugin.codeAction?.resolve)
 				return item;
 
-			const originalItem: CodeAction = {
-				...item,
-				data: data.originalData,
-			};
+			item.data = data.originalData;
 
 			if (data.map) {
 
 				if (context.documents.hasVirtualFileByUri(data.map.embeddedDocumentUri)) {
 
-					const resolvedItem = await plugin.codeAction?.resolve(originalItem);
+					const resolvedItem = await plugin.codeAction?.resolve(item);
 
 					if (resolvedItem.edit) {
 
@@ -44,7 +38,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 				}
 			}
 			else {
-				return await plugin.codeAction?.resolve(originalItem);
+				return await plugin.codeAction?.resolve(item);
 			}
 		}
 

@@ -13,26 +13,21 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 			const plugin = context.plugins[data.pluginId];
 
-			if (!plugin)
-				return item;
-
 			if (!plugin.codeLens?.resolve)
 				return item;
 
-			const resolvedOriginalItem = await plugin.codeLens.resolve({
-				...item,
-				data: data.originalData,
-			});
+			item.data = data.originalData;
+			item = await plugin.codeLens.resolve(item);
 
-			item = <vscode.CodeLens>{
-				...resolvedOriginalItem,
-				command: resolvedOriginalItem.command ? {
-					...resolvedOriginalItem.command,
+			if (item.command) {
+				item.command = {
+					title: item.command.title,
 					command: executePluginCommand,
-					arguments: <ExecutePluginCommandArgs>[data.uri, Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!, resolvedOriginalItem.command],
-				} : undefined,
-				range: item.range, // range already transformed in codeLens request
-			};
+					arguments: [data.uri, data.pluginId, item.command]satisfies ExecutePluginCommandArgs,
+				};
+			}
+
+			// item.range already transformed in codeLens request
 		}
 
 		return item;
