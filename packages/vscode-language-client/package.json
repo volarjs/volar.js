@@ -1,6 +1,6 @@
 {
 	"name": "@volar/vscode-language-client",
-	"version": "1.1.0-alpha.2",
+	"version": "1.2.0-alpha.1",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,9 +13,9 @@
 		"directory": "packages/language-server"
 	},
 	"dependencies": {
-		"@volar/language-server": "1.1.0-alpha.2",
-		"@volar/shared": "1.1.0-alpha.2",
-		"@volar/source-map": "1.1.0-alpha.2",
+		"@volar/language-server": "1.2.0-alpha.1",
+		"@volar/shared": "1.2.0-alpha.1",
+		"@volar/source-map": "1.2.0-alpha.1",
 		"typesafe-path": "^0.2.2",
 		"vscode-nls": "^5.2.0"
 	},
