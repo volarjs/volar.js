@@ -96,7 +96,7 @@ function updatePosition(
 
 export interface PluginDiagnosticData {
 	uri: string,
-	originalData: any,
+	original: Pick<vscode.Diagnostic, 'data'>,
 	type: 'plugin' | 'rule',
 	pluginOrRuleId: string,
 }
@@ -265,7 +265,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 							uri,
 							type: 'rule',
 							pluginOrRuleId: ruleCtx.ruleId,
-							originalData: error.data,
+							original: {
+								data: error.data,
+							},
 						}satisfies PluginDiagnosticData;
 					});
 
@@ -337,7 +339,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 							uri,
 							type: 'plugin',
 							pluginOrRuleId: pluginId,
-							originalData: error.data,
+							original: {
+								data: error.data,
+							},
 						}satisfies PluginDiagnosticData;
 					});
 

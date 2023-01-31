@@ -7,7 +7,7 @@ import type * as _ from 'vscode-languageserver-protocol';
 
 export interface PluginCodeLensData {
 	uri: string,
-	originalData: any,
+	original: Pick<_.CodeLens, 'data'>,
 	pluginId: string,
 }
 
@@ -35,7 +35,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 					}
 					codeLens.data = {
 						uri,
-						originalData: codeLens.data,
+						original: {
+							data: codeLens.data,
+						},
 						pluginId,
 					} satisfies PluginCodeLensData;
 				});

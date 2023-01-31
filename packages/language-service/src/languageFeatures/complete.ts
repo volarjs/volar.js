@@ -6,12 +6,10 @@ import type { LanguageServicePluginInstance, LanguageServiceRuntimeContext } fro
 import { visitEmbedded } from '../utils/definePlugin';
 
 export interface PluginCompletionData {
-	uri: string,
-	originalData: any,
-	pluginId: string,
-	map: {
-		embeddedDocumentUri: string;
-	} | undefined,
+	uri: string;
+	original: Pick<vscode.CompletionItem, 'additionalTextEdits' | 'textEdit' | 'data'>;
+	pluginId: string;
+	map: { embeddedDocumentUri: string; } | undefined;
 }
 
 export function register(context: LanguageServiceRuntimeContext) {
@@ -66,7 +64,11 @@ export function register(context: LanguageServiceRuntimeContext) {
 								map.virtualFileDocument,
 								(newItem, oldItem) => newItem.data = {
 									uri,
-									originalData: oldItem.data,
+									original: {
+										additionalTextEdits: oldItem.additionalTextEdits,
+										textEdit: oldItem.textEdit,
+										data: oldItem.data,
+									},
 									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
 									map: {
 										embeddedDocumentUri: map.virtualFileDocument.uri,
@@ -91,7 +93,11 @@ export function register(context: LanguageServiceRuntimeContext) {
 					completionList.items.forEach(item => {
 						item.data = {
 							uri,
-							originalData: item.data,
+							original: {
+								additionalTextEdits: item.additionalTextEdits,
+								textEdit: item.textEdit,
+								data: item.data,
+							},
 							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
 							map: undefined,
 						} satisfies PluginCompletionData;
@@ -164,7 +170,11 @@ export function register(context: LanguageServiceRuntimeContext) {
 								map.virtualFileDocument,
 								(newItem, oldItem) => newItem.data = {
 									uri,
-									originalData: oldItem.data,
+									original: {
+										additionalTextEdits: oldItem.additionalTextEdits,
+										textEdit: oldItem.textEdit,
+										data: oldItem.data,
+									},
 									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 									map: {
 										embeddedDocumentUri: map.virtualFileDocument.uri,
@@ -222,7 +232,11 @@ export function register(context: LanguageServiceRuntimeContext) {
 					completionList.items.forEach(item => {
 						item.data = {
 							uri,
-							originalData: item.data,
+							original: {
+								additionalTextEdits: item.additionalTextEdits,
+								textEdit: item.textEdit,
+								data: item.data,
+							},
 							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 							map: undefined,
 						} satisfies PluginCompletionData;

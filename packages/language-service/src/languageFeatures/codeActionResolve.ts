@@ -15,7 +15,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 			if (!plugin.codeAction?.resolve)
 				return item;
 
-			item.data = data.originalData;
+			Object.assign(item, data.original);
 
 			if (data.map) {
 

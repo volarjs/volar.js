@@ -16,7 +16,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 			if (!plugin.codeLens?.resolve)
 				return item;
 
-			item.data = data.originalData;
+			Object.assign(item, data.original);
 			item = await plugin.codeLens.resolve(item);
 
 			if (item.command) {

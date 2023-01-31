@@ -10,7 +10,7 @@ import { PluginDiagnosticData } from './validation';
 
 export interface PluginCodeActionData {
 	uri: string,
-	originalData: any,
+	original: Pick<vscode.CodeAction, 'data'>,
 	pluginId: string,
 	map: {
 		embeddedDocumentUri: string;
@@ -85,7 +85,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 					const data: PluginDiagnosticData = diagnostic.data;
 					return {
 						...diagnostic,
-						data: data.originalData,
+						...data.original,
 					};
 				});
 
@@ -99,7 +99,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 						..._codeAction,
 						data: {
 							uri,
-							originalData: _codeAction.data,
+							original: {
+								data: _codeAction.data,
+							},
 							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
 							map: map ? {
 								embeddedDocumentUri: map.virtualFileDocument.uri,
