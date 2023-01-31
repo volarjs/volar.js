@@ -140,7 +140,7 @@ export async function ruleWorker<T>(
 			};
 
 			for (const plugin of Object.values(context.plugins)) {
-				plugin.resolveRuleContext?.(ruleCtx);
+				plugin.validation?.resolveRuleContext?.(ruleCtx);
 			}
 
 			for (const ruleName in context.rules) {
@@ -184,7 +184,7 @@ export async function ruleWorker<T>(
 		};
 
 		for (const plugin of Object.values(context.plugins)) {
-			plugin.resolveRuleContext?.(ruleCtx);
+			plugin.validation?.resolveRuleContext?.(ruleCtx);
 		}
 
 		for (const ruleName in context.rules) {
