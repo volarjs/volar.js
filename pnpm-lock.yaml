@@ -14,13 +14,13 @@ importers:
     devDependencies:
       '@types/node': 18.11.18
       typescript: 4.9.5
-      vite: 4.0.4_@types+node@18.11.18
+      vite: 4.1.1_@types+node@18.11.18
       vitest: 0.25.8
 
   packages/kit:
     specifiers:
-      '@volar/language-service': 1.2.0-alpha.4
-      '@volar/shared': 1.2.0-alpha.4
+      '@volar/language-service': 1.2.0-alpha.5
+      '@volar/shared': 1.2.0-alpha.5
       vscode-languageserver-textdocument: ^1.0.8
       vscode-uri: ^3.0.7
     dependencies:
@@ -31,7 +31,7 @@ importers:
 
   packages/language-core:
     specifiers:
-      '@volar/source-map': 1.2.0-alpha.4
+      '@volar/source-map': 1.2.0-alpha.5
       muggle-string: ^0.1.0
     dependencies:
       '@volar/source-map': link:../source-map
@@ -39,9 +39,9 @@ importers:
 
   packages/language-server:
     specifiers:
-      '@volar/language-core': 1.2.0-alpha.4
-      '@volar/language-service': 1.2.0-alpha.4
-      '@volar/shared': 1.2.0-alpha.4
+      '@volar/language-core': 1.2.0-alpha.5
+      '@volar/language-service': 1.2.0-alpha.5
+      '@volar/shared': 1.2.0-alpha.5
       '@vscode/l10n': ^0.0.10
       request-light: ^0.6.0
       typesafe-path: ^0.2.2
@@ -65,10 +65,10 @@ importers:
 
   packages/language-service:
     specifiers:
-      '@volar/language-core': 1.2.0-alpha.4
-      '@volar/shared': 1.2.0-alpha.4
-      '@volar/source-map': 1.2.0-alpha.4
-      '@volar/typescript-faster': 1.2.0-alpha.4
+      '@volar/language-core': 1.2.0-alpha.5
+      '@volar/shared': 1.2.0-alpha.5
+      '@volar/source-map': 1.2.0-alpha.5
+      '@volar/typescript-faster': 1.2.0-alpha.5
       vscode-html-languageservice: ^5.0.3
       vscode-json-languageservice: ^5.1.3
       vscode-languageserver-protocol: ^3.17.2
@@ -101,7 +101,7 @@ importers:
 
   packages/typescript:
     specifiers:
-      '@volar/language-core': 1.2.0-alpha.4
+      '@volar/language-core': 1.2.0-alpha.5
     dependencies:
       '@volar/language-core': link:../language-core
 
@@ -117,9 +117,9 @@ importers:
   packages/vscode-language-client:
     specifiers:
       '@types/vscode': latest
-      '@volar/language-server': 1.2.0-alpha.4
-      '@volar/shared': 1.2.0-alpha.4
-      '@volar/source-map': 1.2.0-alpha.4
+      '@volar/language-server': 1.2.0-alpha.5
+      '@volar/shared': 1.2.0-alpha.5
+      '@volar/source-map': 1.2.0-alpha.5
       typesafe-path: ^0.2.2
       vscode-languageclient: latest
       vscode-nls: ^5.2.0
@@ -130,7 +130,7 @@ importers:
       typesafe-path: 0.2.2
       vscode-nls: 5.2.0
     devDependencies:
-      '@types/vscode': 1.74.0
+      '@types/vscode': 1.74.1
       vscode-languageclient: 8.0.2
 
 packages:
@@ -925,8 +925,8 @@ packages:
     resolution: {integrity: sha512-21cFJr9z3g5dW8B0CVI9g2O9beqaThGQ6ZFBqHfwhzLDKUxaqTIy3vnfah/UPkfOiF2pLq+tGz+W8RyCskuslw==}
     dev: true
 
-  /@types/vscode/1.74.0:
-    resolution: {integrity: sha512-LyeCIU3jb9d38w0MXFwta9r0Jx23ugujkAxdwLTNCyspdZTKUc43t7ppPbCiPoQ/Ivd/pnDFZrb4hWd45wrsgA==}
+  /@types/vscode/1.74.1:
+    resolution: {integrity: sha512-/4bwu5Lz2tQIhCDfGyEho36jEBHfEGgbuajgFZgRIfsfK/U0vv8diYIvQRiz8cc9tGlzd7m/NJscEJ7gFExJ4g==}
     dev: true
 
   /@vscode/l10n/0.0.10:
@@ -3411,8 +3411,8 @@ packages:
     dev: false
     optional: true
 
-  /postcss/8.4.20:
-    resolution: {integrity: sha512-6Q04AXR1212bXr5fh03u8aAwbLxAQNGQ/Q1LNa0VfOI06ZAlhPHtQvE4OIdpj4kLThXilalPnmDSOD65DcHt+g==}
+  /postcss/8.4.21:
+    resolution: {integrity: sha512-tP7u/Sn/dVxK2NnruI4H9BG+x+Wxz6oeZ1cJ8P6G/PZY0IKk4k/63TDsQf2kQq3+qoJeLm2kIBUNlZe3zgb4Zg==}
     engines: {node: ^10 || ^12 || >=14}
     dependencies:
       nanoid: 3.3.4
@@ -3669,8 +3669,8 @@ packages:
     dev: false
     optional: true
 
-  /rollup/3.7.5:
-    resolution: {integrity: sha512-z0ZbqHBtS/et2EEUKMrAl2CoSdwN7ZPzL17UMiKN9RjjqHShTlv7F9J6ZJZJNREYjBh3TvBrdfjkFDIXFNeuiQ==}
+  /rollup/3.12.1:
+    resolution: {integrity: sha512-t9elERrz2i4UU9z7AwISj3CQcXP39cWxgRWLdf4Tm6aKm1eYrqHIgjzXBgb67GNY1sZckTFFi0oMozh3/S++Ig==}
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
@@ -4211,8 +4211,8 @@ packages:
     dev: false
     optional: true
 
-  /vite/4.0.4_@types+node@18.11.18:
-    resolution: {integrity: sha512-xevPU7M8FU0i/80DMR+YhgrzR5KS2ORy1B4xcX/cXLsvnUWvfHuqMmVU6N0YiJ4JWGRJJsLCgjEzKjG9/GKoSw==}
+  /vite/4.1.1_@types+node@18.11.18:
+    resolution: {integrity: sha512-LM9WWea8vsxhr782r9ntg+bhSFS06FJgCvvB0+8hf8UWtvaiDagKYWXndjfX6kGl74keHJUcpzrQliDXZlF5yg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
@@ -4238,9 +4238,9 @@ packages:
     dependencies:
       '@types/node': 18.11.18
       esbuild: 0.16.15
-      postcss: 8.4.20
+      postcss: 8.4.21
       resolve: 1.22.1
-      rollup: 3.7.5
+      rollup: 3.12.1
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
@@ -4280,7 +4280,7 @@ packages:
       tinybench: 2.3.1
       tinypool: 0.3.0
       tinyspy: 1.0.2
-      vite: 4.0.4_@types+node@18.11.18
+      vite: 4.1.1_@types+node@18.11.18
     transitivePeerDependencies:
       - less
       - sass
