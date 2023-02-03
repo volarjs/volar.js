@@ -84,7 +84,7 @@ function createLanguageServiceContext(
 		get plugins() {
 			if (!plugins) {
 				plugins = {}; // avoid infinite loop
-				for (let pluginId in config.plugins ?? {}) {
+				for (const pluginId in config.plugins ?? {}) {
 					const plugin = config.plugins?.[pluginId];
 					if (plugin instanceof Function) {
 						const _plugin = plugin(this, getLanguageService());

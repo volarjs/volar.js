@@ -144,8 +144,8 @@ export async function ruleWorker<T>(
 			};
 
 			for (const plugin of Object.values(context.plugins)) {
-				if (plugin.validation?.setupRuleContext) {
-					ruleCtx = await plugin.validation.setupRuleContext(ruleCtx);
+				if (plugin.rules?.prepare) {
+					ruleCtx = await plugin.rules.prepare(ruleCtx);
 				}
 			}
 
@@ -193,8 +193,8 @@ export async function ruleWorker<T>(
 		};
 
 		for (const plugin of Object.values(context.plugins)) {
-			if (plugin.validation?.setupRuleContext) {
-				ruleCtx = await plugin.validation?.setupRuleContext(ruleCtx);
+			if (plugin.rules?.prepare) {
+				ruleCtx = await plugin.rules?.prepare(ruleCtx);
 			}
 		}
 

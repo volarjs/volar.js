@@ -84,13 +84,16 @@ export interface LanguageServicePlugin<T = {}> {
 
 export interface LanguageServicePluginInstance {
 
+	rules?: {
+		prepare?(context: RuleContext): NotNullableResult<RuleContext>;
+	};
+
 	validation?: {
-		setupRuleContext?(context: RuleContext): NotNullableResult<RuleContext>;
 		onSemantic?(document: TextDocument): NullableResult<vscode.Diagnostic[]>;
 		onSyntactic?(document: TextDocument): NullableResult<vscode.Diagnostic[]>;
 		onSuggestion?(document: TextDocument): NullableResult<vscode.Diagnostic[]>;
 		onDeclaration?(document: TextDocument): NullableResult<vscode.Diagnostic[]>;
-	},
+	};
 	doHover?(document: TextDocument, position: vscode.Position): NullableResult<vscode.Hover>,
 	findImplementations?(document: TextDocument, position: vscode.Position): NullableResult<vscode.LocationLink[]>;
 	findReferences?(document: TextDocument, position: vscode.Position): NullableResult<vscode.Location[]>;
@@ -113,40 +116,40 @@ export interface LanguageServicePluginInstance {
 	definition?: {
 		on?(document: TextDocument, position: vscode.Position): NullableResult<vscode.LocationLink[]>;
 		onType?(document: TextDocument, position: vscode.Position): NullableResult<vscode.LocationLink[]>;
-	},
+	};
 
 	complete?: {
 		triggerCharacters?: string[],
 		isAdditional?: boolean,
 		on?(document: TextDocument, position: vscode.Position, context?: vscode.CompletionContext): NullableResult<vscode.CompletionList>,
 		resolve?(item: vscode.CompletionItem): NotNullableResult<vscode.CompletionItem>,
-	},
+	};
 
 	rename?: {
 		prepare?(document: TextDocument, position: vscode.Position): NullableResult<vscode.Range | vscode.ResponseError<void>>;
 		on?(document: TextDocument, position: vscode.Position, newName: string): NullableResult<vscode.WorkspaceEdit>;
-	},
+	};
 
 	codeAction?: {
 		on?(document: TextDocument, range: vscode.Range, context: vscode.CodeActionContext): NullableResult<vscode.CodeAction[]>;
 		resolve?(codeAction: vscode.CodeAction): NotNullableResult<vscode.CodeAction>;
-	},
+	};
 
 	codeLens?: {
 		on?(document: TextDocument): NullableResult<vscode.CodeLens[]>;
 		resolve?(codeLens: vscode.CodeLens): NotNullableResult<vscode.CodeLens>;
-	},
+	};
 
 	callHierarchy?: {
 		prepare(document: TextDocument, position: vscode.Position): NullableResult<vscode.CallHierarchyItem[]>;
 		onIncomingCalls(item: vscode.CallHierarchyItem): NotNullableResult<vscode.CallHierarchyIncomingCall[]>;
 		onOutgoingCalls(item: vscode.CallHierarchyItem): NotNullableResult<vscode.CallHierarchyOutgoingCall[]>;
-	},
+	};
 
 	inlayHints?: {
 		on?(document: TextDocument, range: vscode.Range): NullableResult<vscode.InlayHint[]>,
 		// TODO: resolve
-	},
+	};
 
 	// html
 	findLinkedEditingRanges?(document: TextDocument, position: vscode.Position): NullableResult<vscode.LinkedEditingRanges>;
@@ -157,7 +160,7 @@ export interface LanguageServicePluginInstance {
 			rangeOffset: number;
 			rangeLength: number;
 			text: string;
-		},
+		};
 	}): NullableResult<string | vscode.TextEdit>;
 
 	/**
