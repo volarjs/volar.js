@@ -143,6 +143,7 @@ export async function ruleWorker<T>(
 				locale: context.env.locale,
 				getConfiguration: context.env.configurationHost?.getConfiguration,
 				onDidChangeConfiguration: context.env.configurationHost?.onDidChangeConfiguration,
+				settings: context.rulesSettings,
 				// document context
 				ruleId: '',
 				document: map.virtualFileDocument,
@@ -198,6 +199,7 @@ export async function ruleWorker<T>(
 			locale: context.env.locale,
 			getConfiguration: context.env.configurationHost?.getConfiguration,
 			onDidChangeConfiguration: context.env.configurationHost?.onDidChangeConfiguration,
+			settings: context.rulesSettings,
 			// document context
 			ruleId: '',
 			document,

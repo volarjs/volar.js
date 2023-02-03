@@ -38,6 +38,8 @@ export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost 
 	/** @private */
 	rules: { [id: string]: Rule | undefined; };
 	/** @private */
+	rulesSettings: RulesSettings;
+	/** @private */
 	getTextDocument(uri: string): TextDocument | undefined;
 	/** @private */
 	ruleFixes?: {
@@ -176,7 +178,7 @@ export interface _Rule {
 	onFormat?(ctx: RuleContext): void;
 	onSyntax?(ctx: RuleContext): void;
 	onSemantic?(ctx: RuleContext): void;
-};
+}
 
 export interface RuleContext {
 	// env context
@@ -187,11 +189,14 @@ export interface RuleContext {
 	rootUri: URI;
 	getConfiguration?: ConfigurationHost['getConfiguration'];
 	onDidChangeConfiguration?: ConfigurationHost['onDidChangeConfiguration'];
+	settings: RulesSettings;
 	// document context
 	ruleId: string;
 	document: TextDocument;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
+
+export interface RulesSettings { }
 
 export interface RuleFix {
 	kinds?: (
@@ -214,4 +219,5 @@ export interface Config {
 	languages?: { [id: string]: LanguageModule | undefined; },
 	plugins?: { [id: string]: LanguageServicePlugin | LanguageServicePluginInstance | undefined; },
 	rules?: { [id: string]: Rule | undefined; };
+	rulesSettings?: RulesSettings;
 }
