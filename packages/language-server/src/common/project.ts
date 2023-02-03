@@ -1,6 +1,6 @@
 import * as embedded from '@volar/language-core';
 import * as embeddedLS from '@volar/language-service';
-import { LanguageServiceConfig, LanguageServiceRuntimeContext } from '@volar/language-service';
+import { Config, LanguageServiceRuntimeContext } from '@volar/language-service';
 import * as shared from '@volar/shared';
 import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -16,7 +16,7 @@ export interface ProjectContext {
 	rootUri: URI;
 	tsConfig: path.PosixPath | ts.CompilerOptions,
 	documentRegistry: ts.DocumentRegistry | undefined,
-	serverConfig: LanguageServiceConfig | undefined,
+	serverConfig: Config | undefined,
 }
 
 export type Project = ReturnType<typeof createProject>;
@@ -76,7 +76,7 @@ export async function createProject(context: ProjectContext) {
 
 	function getLanguageService() {
 		if (!languageService) {
-			const config: LanguageServiceConfig = {
+			const config: Config = {
 				languages: { ...context.serverConfig?.languages },
 				plugins: { ...context.serverConfig?.plugins },
 				rules: { ...context.serverConfig?.rules },

@@ -1,4 +1,4 @@
-import { CodeActionTriggerKind, createLanguageService, Diagnostic, DiagnosticSeverity, FormattingOptions, LanguageServiceConfig, LanguageServiceHost, mergeWorkspaceEdits } from '@volar/language-service';
+import { CodeActionTriggerKind, createLanguageService, Diagnostic, DiagnosticSeverity, FormattingOptions, Config, LanguageServiceHost, mergeWorkspaceEdits } from '@volar/language-service';
 import { fileNameToUri, uriToFileName } from '@volar/shared';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -8,7 +8,7 @@ import { URI } from 'vscode-uri';
 
 export function create(
 	tsConfigPath: string,
-	config: LanguageServiceConfig,
+	config: Config,
 	extraFileExtensions: ts.FileExtensionInfo[] = [],
 	ts: typeof import('typescript/lib/tsserverlibrary') = require('typescript') as any,
 ) {

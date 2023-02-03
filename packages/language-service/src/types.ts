@@ -200,10 +200,8 @@ export interface RuleFix {
 	getWorkspaceEdit?(diagnostic: vscode.Diagnostic): NullableResult<vscode.WorkspaceEdit>;
 }
 
-export interface LanguageServiceConfig {
-	languages?: ConfigValue<LanguageModule>,
-	plugins?: ConfigValue<LanguageServicePlugin | LanguageServicePluginInstance>;
-	rules?: ConfigValue<Rule>;
+export interface Config {
+	languages?: { [id: string]: LanguageModule | undefined; },
+	plugins?: { [id: string]: LanguageServicePlugin | LanguageServicePluginInstance | undefined; },
+	rules?: { [id: string]: Rule | undefined; };
 }
-
-type ConfigValue<T> = { [id: string]: T | undefined; };

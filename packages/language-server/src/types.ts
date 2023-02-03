@@ -4,7 +4,7 @@ import type { FileSystemProvider } from 'vscode-html-languageservice';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { LanguageServiceConfig, LanguageServiceRuntimeContext } from '@volar/language-service';
+import { Config, LanguageServiceRuntimeContext } from '@volar/language-service';
 import { ProjectContext } from './common/project';
 
 export type FileSystemHost = {
@@ -60,7 +60,7 @@ export type LanguageServerPlugin<
 		fileRenameOperationFilter: string[];
 		fileWatcher: string[];
 	},
-	resolveConfig?(config: LanguageServiceConfig, ctx: LanguageServiceContext): void;
+	resolveConfig?(config: Config, ctx: LanguageServiceContext): void;
 	onInitialize?(_: vscode.InitializeResult): void;
 	onInitialized?(getLanguageService: (uri: string) => Promise<C>): void;
 };

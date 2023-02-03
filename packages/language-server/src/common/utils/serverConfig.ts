@@ -1,6 +1,6 @@
-import { LanguageServiceConfig } from "@volar/language-service";
+import { Config } from "@volar/language-service";
 
-export function loadConfig(dir: string, configFile: string | undefined): LanguageServiceConfig | undefined {
+export function loadConfig(dir: string, configFile: string | undefined): Config | undefined {
 	let configPath: string | undefined;
 	try {
 		configPath = require.resolve(configFile ?? './volar.config.js', { paths: [dir] });
@@ -8,7 +8,7 @@ export function loadConfig(dir: string, configFile: string | undefined): Languag
 
 	try {
 		if (configPath) {
-			const config: LanguageServiceConfig = require(configPath);
+			const config: Config = require(configPath);
 			delete require.cache[configPath];
 			return config;
 		}

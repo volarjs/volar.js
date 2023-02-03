@@ -26,7 +26,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { LanguageServiceConfig, LanguageServicePluginInstance, LanguageServiceRuntimeContext } from './types';
+import { Config, LanguageServicePluginInstance, LanguageServiceRuntimeContext } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -44,7 +44,7 @@ export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
 	host: LanguageServiceHost,
-	config: LanguageServiceConfig,
+	config: Config,
 	env: LanguageServiceRuntimeContext['env'],
 	documentRegistry?: ts.DocumentRegistry,
 ) {
@@ -57,7 +57,7 @@ export function createLanguageService(
 function createLanguageServiceContext(
 	host: LanguageServiceHost,
 	languageContext: ReturnType<typeof createLanguageContext>,
-	config: LanguageServiceConfig,
+	config: Config,
 	env: LanguageServiceRuntimeContext['env'],
 	getLanguageService: () => LanguageService,
 	documentRegistry?: ts.DocumentRegistry,
