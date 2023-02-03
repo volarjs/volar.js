@@ -5,17 +5,17 @@ export function transform(ranges: vscode.FoldingRange[], getOtherRange: (range: 
 	const result: vscode.FoldingRange[] = [];
 
 	for (const range of ranges) {
-		const vueRange = getOtherRange({
+		const otherRange = getOtherRange({
 			start: { line: range.startLine, character: range.startCharacter ?? 0 },
 			end: { line: range.endLine, character: range.endCharacter ?? 0 },
 		});
-		if (vueRange) {
-			range.startLine = vueRange.start.line;
-			range.endLine = vueRange.end.line;
+		if (otherRange) {
+			range.startLine = otherRange.start.line;
+			range.endLine = otherRange.end.line;
 			if (range.startCharacter !== undefined)
-				range.startCharacter = vueRange.start.character;
+				range.startCharacter = otherRange.start.character;
 			if (range.endCharacter !== undefined)
-				range.endCharacter = vueRange.end.character;
+				range.endCharacter = otherRange.end.character;
 			result.push(range);
 		}
 	}

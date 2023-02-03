@@ -178,7 +178,7 @@ export function mergeWorkspaceEdits(original: vscode.WorkspaceEdit, ...others: v
 
 export function embeddedEditToSourceEdit(
 	tsResult: vscode.WorkspaceEdit,
-	vueDocuments: DocumentsAndSourceMaps,
+	documents: DocumentsAndSourceMaps,
 ) {
 
 	const sourceResult: vscode.WorkspaceEdit = {};
@@ -190,11 +190,11 @@ export function embeddedEditToSourceEdit(
 
 		const tsAnno = tsResult.changeAnnotations[tsUri];
 
-		if (!vueDocuments.hasVirtualFileByUri(tsUri)) {
+		if (!documents.hasVirtualFileByUri(tsUri)) {
 			sourceResult.changeAnnotations[tsUri] = tsAnno;
 		}
 		else {
-			for (const [_, map] of vueDocuments.getMapsByVirtualFileUri(tsUri)) {
+			for (const [_, map] of documents.getMapsByVirtualFileUri(tsUri)) {
 				// TODO: check capability?
 				const uri = map.sourceFileDocument.uri;
 				sourceResult.changeAnnotations[uri] = tsAnno;
@@ -205,12 +205,12 @@ export function embeddedEditToSourceEdit(
 
 		sourceResult.changes ??= {};
 
-		if (!vueDocuments.hasVirtualFileByUri(tsUri)) {
+		if (!documents.hasVirtualFileByUri(tsUri)) {
 			sourceResult.changes[tsUri] = tsResult.changes[tsUri];
 			hasResult = true;
 			continue;
 		}
-		for (const [_, map] of vueDocuments.getMapsByVirtualFileUri(tsUri)) {
+		for (const [_, map] of documents.getMapsByVirtualFileUri(tsUri)) {
 			const tsEdits = tsResult.changes[tsUri];
 			for (const tsEdit of tsEdits) {
 				let _data: FileRangeCapabilities | undefined;
@@ -239,8 +239,8 @@ export function embeddedEditToSourceEdit(
 
 			let sourceEdit: typeof tsDocEdit | undefined;
 			if (vscode.TextDocumentEdit.is(tsDocEdit)) {
-				if (vueDocuments.hasVirtualFileByUri(tsDocEdit.textDocument.uri)) {
-					for (const [_, map] of vueDocuments.getMapsByVirtualFileUri(tsDocEdit.textDocument.uri)) {
+				if (documents.hasVirtualFileByUri(tsDocEdit.textDocument.uri)) {
+					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.textDocument.uri)) {
 						sourceEdit = vscode.TextDocumentEdit.create(
 							{
 								uri: map.sourceFileDocument.uri,
@@ -281,22 +281,22 @@ export function embeddedEditToSourceEdit(
 				sourceEdit = tsDocEdit; // TODO: remove .ts?
 			}
 			else if (vscode.RenameFile.is(tsDocEdit)) {
-				if (!vueDocuments.hasVirtualFileByUri(tsDocEdit.oldUri)) {
+				if (!documents.hasVirtualFileByUri(tsDocEdit.oldUri)) {
 					sourceEdit = tsDocEdit;
 				}
 				else {
-					for (const [_, map] of vueDocuments.getMapsByVirtualFileUri(tsDocEdit.oldUri)) {
+					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.oldUri)) {
 						// TODO: check capability?
 						sourceEdit = vscode.RenameFile.create(map.sourceFileDocument.uri, tsDocEdit.newUri /* TODO: remove .ts? */, tsDocEdit.options, tsDocEdit.annotationId);
 					}
 				}
 			}
 			else if (vscode.DeleteFile.is(tsDocEdit)) {
-				if (!vueDocuments.hasVirtualFileByUri(tsDocEdit.uri)) {
+				if (!documents.hasVirtualFileByUri(tsDocEdit.uri)) {
 					sourceEdit = tsDocEdit;
 				}
 				else {
-					for (const [_, map] of vueDocuments.getMapsByVirtualFileUri(tsDocEdit.uri)) {
+					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.uri)) {
 						// TODO: check capability?
 						sourceEdit = vscode.DeleteFile.create(map.sourceFileDocument.uri, tsDocEdit.options, tsDocEdit.annotationId);
 					}

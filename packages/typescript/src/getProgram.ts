@@ -161,7 +161,20 @@ export function getProgram(
 					}
 				}
 				else {
-					file = ts.createSourceFile(fileName, docText, fileName.endsWith('.vue') || fileName.endsWith('.md') || fileName.endsWith('.html') ? ts.ScriptTarget.JSON : ts.ScriptTarget.Latest);
+					let scriptTarget = ts.ScriptTarget.JSON;
+					if (
+						fileName.endsWith('.js')
+						|| fileName.endsWith('.ts')
+						|| fileName.endsWith('.jsx')
+						|| fileName.endsWith('.tsx')
+						|| fileName.endsWith('.mjs')
+						|| fileName.endsWith('.mts')
+						|| fileName.endsWith('.cjs')
+						|| fileName.endsWith('.cts')
+					) {
+						scriptTarget = ts.ScriptTarget.Latest;
+					}
+					file = ts.createSourceFile(fileName, docText, scriptTarget);
 				}
 			}
 			const newDiagnostic: T = {
