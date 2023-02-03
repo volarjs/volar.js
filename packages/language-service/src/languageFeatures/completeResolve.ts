@@ -22,24 +22,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				for (const [_, map] of context.documents.getMapsByVirtualFileUri(data.map.embeddedDocumentUri)) {
 
-					const resolvedItem = await plugin.complete.resolve(item);
-
-					// fix https://github.com/johnsoncodehk/volar/issues/916
-					if (resolvedItem.additionalTextEdits) {
-						for (const edit of resolvedItem.additionalTextEdits) {
-							if (
-								edit.range.start.line === 0
-								&& edit.range.start.character === 0
-								&& edit.range.end.line === 0
-								&& edit.range.end.character === 0
-							) {
-								edit.newText = '\n' + edit.newText;
-							}
-						}
-					}
-
+					item = await plugin.complete.resolve(item);
 					item = transformer.asCompletionItem(
-						resolvedItem,
+						item,
 						embeddedRange => {
 							let range = plugin.resolveEmbeddedRange?.(embeddedRange);
 							if (range) return range;
