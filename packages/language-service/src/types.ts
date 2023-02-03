@@ -18,6 +18,7 @@ export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost 
 	} | undefined;
 	env: {
 		rootUri: URI;
+		locale?: string;
 		configurationHost?: ConfigurationHost;
 		documentContext: DocumentContext;
 		fileSystemProvider?: FileSystemProvider;
@@ -176,10 +177,17 @@ export interface Rule {
 }
 
 export interface RuleContext {
-	ruleId: string;
-	document: TextDocument;
+	// env context
+	locale?: string;
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
+	// project context
+	rootUri: URI;
+	getConfiguration?: ConfigurationHost['getConfiguration'];
+	onDidChangeConfiguration?: ConfigurationHost['onDidChangeConfiguration'];
+	// document context
+	ruleId: string;
+	document: TextDocument;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
 

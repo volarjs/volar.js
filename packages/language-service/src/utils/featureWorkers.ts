@@ -136,10 +136,16 @@ export async function ruleWorker<T>(
 			}
 
 			let ruleCtx: RuleContext = {
-				ruleId: '',
-				document: map.virtualFileDocument,
+				// project context
 				uriToFileName: shared.uriToFileName,
 				fileNameToUri: shared.fileNameToUri,
+				rootUri: context.env.rootUri,
+				locale: context.env.locale,
+				getConfiguration: context.env.configurationHost?.getConfiguration,
+				onDidChangeConfiguration: context.env.configurationHost?.onDidChangeConfiguration,
+				// document context
+				ruleId: '',
+				document: map.virtualFileDocument,
 				report: () => { },
 			};
 
@@ -185,10 +191,16 @@ export async function ruleWorker<T>(
 	else if (document) {
 
 		let ruleCtx: RuleContext = {
-			ruleId: '',
-			document,
+			// project context
 			uriToFileName: shared.uriToFileName,
 			fileNameToUri: shared.fileNameToUri,
+			rootUri: context.env.rootUri,
+			locale: context.env.locale,
+			getConfiguration: context.env.configurationHost?.getConfiguration,
+			onDidChangeConfiguration: context.env.configurationHost?.onDidChangeConfiguration,
+			// document context
+			ruleId: '',
+			document,
 			report: () => { },
 		};
 

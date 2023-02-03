@@ -83,6 +83,7 @@ export async function createProject(context: ProjectContext) {
 			};
 			const env: LanguageServiceRuntimeContext['env'] = {
 				rootUri: context.rootUri,
+				locale: context.workspace.workspaces.initParams.locale,
 				configurationHost: context.workspace.workspaces.configurationHost,
 				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
 				documentContext: getDocumentContext(context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
