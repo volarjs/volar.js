@@ -170,11 +170,13 @@ export interface LanguageServicePluginInstance {
 	resolveEmbeddedRange?(range: vscode.Range): vscode.Range | undefined;
 }
 
-export interface Rule {
+export type Rule = _Rule | NonNullable<_Rule['onSyntax']>;
+
+export interface _Rule {
 	onFormat?(ctx: RuleContext): void;
 	onSyntax?(ctx: RuleContext): void;
 	onSemantic?(ctx: RuleContext): void;
-}
+};
 
 export interface RuleContext {
 	// env context

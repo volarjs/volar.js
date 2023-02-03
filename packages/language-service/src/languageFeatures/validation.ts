@@ -259,7 +259,14 @@ export function register(context: LanguageServiceRuntimeContext) {
 						error.code ||= ruleCtx.ruleId;
 						reportResults.push([error, ...fixes]);
 					};
-					await rule[api]?.(ruleCtx);
+					if (typeof rule === 'function') {
+						if (api === 'onSyntax') {
+							await rule(ruleCtx);
+						}
+					}
+					else {
+						await rule[api]?.(ruleCtx);
+					}
 
 					context.ruleFixes ??= {};
 					context.ruleFixes[ruleCtx.document.uri] ??= {};
