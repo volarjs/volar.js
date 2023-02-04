@@ -254,11 +254,20 @@ export function register(context: LanguageServiceRuntimeContext) {
 					}
 
 					const reportResults: Parameters<RuleContext['report']>[] = [];
+
 					ruleCtx.report = (error, ...fixes) => {
+
 						error.source ||= 'rules';
 						error.code ||= ruleCtx.ruleId;
+
+						const severity = context.config.rulesSeverity?.[ruleCtx.ruleId];
+						if (severity !== undefined) {
+							error.severity = severity;
+						}
+
 						reportResults.push([error, ...fixes]);
 					};
+
 					if (typeof rule === 'function') {
 						if (api === 'onSyntax') {
 							await rule(ruleCtx);

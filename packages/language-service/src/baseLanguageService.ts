@@ -97,8 +97,7 @@ function createLanguageServiceContext(
 			}
 			return plugins;
 		},
-		rules: config.rules ?? {},
-		rulesSettings: config.rulesSettings ?? {},
+		config,
 		typescript: ts && tsLs ? {
 			module: ts,
 			languageServiceHost: languageContext.typescript.languageServiceHost,

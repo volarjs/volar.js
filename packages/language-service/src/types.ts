@@ -11,6 +11,7 @@ import { DocumentsAndSourceMaps } from './documents';
 export * from 'vscode-languageserver-protocol';
 
 export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost = LanguageServiceHost> {
+	config: Config;
 	typescript: {
 		module: typeof import('typescript/lib/tsserverlibrary');
 		languageServiceHost: ts.LanguageServiceHost;
@@ -35,10 +36,6 @@ export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost 
 	documents: DocumentsAndSourceMaps;
 	/** @private */
 	plugins: { [id: string]: LanguageServicePluginInstance; };
-	/** @private */
-	rules: { [id: string]: Rule | undefined; };
-	/** @private */
-	rulesSettings: RulesSettings;
 	/** @private */
 	getTextDocument(uri: string): TextDocument | undefined;
 	/** @private */
@@ -230,8 +227,9 @@ export interface RuleFix {
 }
 
 export interface Config {
-	languages?: { [id: string]: LanguageModule | undefined; },
-	plugins?: { [id: string]: LanguageServicePlugin | LanguageServicePluginInstance | undefined; },
+	languages?: { [id: string]: LanguageModule | undefined; };
+	plugins?: { [id: string]: LanguageServicePlugin | LanguageServicePluginInstance | undefined; };
 	rules?: { [id: string]: Rule | undefined; };
+	rulesSeverity?: { [id: string]: vscode.DiagnosticSeverity; };
 	rulesSettings?: RulesSettings;
 }
