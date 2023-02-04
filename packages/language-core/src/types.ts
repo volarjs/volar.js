@@ -4,9 +4,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 export interface FileCapabilities {
 	diagnostic?: boolean,
 	foldingRange?: boolean,
-	documentFormatting?: boolean | {
-		initialIndentBracket?: [string, string],
-	},
+	documentFormatting?: boolean,
 	documentSymbol?: boolean,
 	codeAction?: boolean,
 	inlayHint?: boolean,

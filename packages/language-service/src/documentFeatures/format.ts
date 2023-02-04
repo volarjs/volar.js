@@ -26,14 +26,13 @@ export function register(context: LanguageServiceRuntimeContext) {
 		const source = context.documents.getSourceByUri(document.uri);
 		if (!source) {
 			return onTypeParams
-				? await tryFormat(document, onTypeParams.position, undefined, onTypeParams.ch)
-				: await tryFormat(document, range, undefined);
+				? await tryFormat(false, document, onTypeParams.position, onTypeParams.ch)
+				: await tryFormat(false, document, range, undefined);
 		}
 
 		const originalSnapshot = source.snapshot;
 		const rootVirtualFile = source.root;
 		const originalDocument = document;
-		const initialIndentLanguageId = await context.env.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 
 		let level = 0;
 		let edited = false;
@@ -57,10 +56,6 @@ export function register(context: LanguageServiceRuntimeContext) {
 				if (!map)
 					continue;
 
-				const initialIndentBracket = typeof embedded.capabilities.documentFormatting === 'object' && initialIndentLanguageId[map.virtualFileDocument.languageId]
-					? embedded.capabilities.documentFormatting.initialIndentBracket
-					: undefined;
-
 				let _edits: vscode.TextEdit[] | undefined;
 
 				if (onTypeParams) {
@@ -69,9 +64,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 					if (embeddedPosition) {
 						_edits = await tryFormat(
+							true,
 							map.virtualFileDocument,
 							embeddedPosition,
-							initialIndentBracket,
 							onTypeParams.ch,
 						);
 					}
@@ -99,11 +94,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 						toPatchIndentUri = map.virtualFileDocument.uri;
 
-						_edits = await tryFormat(
-							map.virtualFileDocument,
-							genRange,
-							initialIndentBracket,
-						);
+						_edits = await tryFormat(true, map.virtualFileDocument, genRange);
 					}
 				}
 
@@ -181,44 +172,18 @@ export function register(context: LanguageServiceRuntimeContext) {
 		}
 
 		async function tryFormat(
+			isEmbedded: boolean,
 			document: TextDocument,
 			range: vscode.Range | vscode.Position,
-			initialIndentBracket: [string, string] | undefined,
 			ch?: string,
 		) {
 
 			let formatDocument = document;
 			let formatRange = range;
 
-			if (initialIndentBracket) {
-				formatDocument = TextDocument.create(
-					document.uri,
-					document.languageId,
-					document.version,
-					initialIndentBracket[0] + document.getText() + initialIndentBracket[1],
-				);
-				if (vscode.Position.is(range)) {
-					formatRange = formatDocument.positionAt(document.offsetAt(range) + initialIndentBracket[0].length);
-				}
-				else {
-					const startOffset = document.offsetAt(range.start);
-					const endOffset = document.offsetAt(range.end);
-					if (startOffset === 0 && endOffset === document.getText().length) {
-						// full format
-						formatRange = {
-							start: formatDocument.positionAt(0),
-							end: formatDocument.positionAt(formatDocument.getText().length),
-						};
-					}
-					else {
-						// range format
-						formatRange = {
-							start: formatDocument.positionAt(startOffset + initialIndentBracket[0].length),
-							end: formatDocument.positionAt(endOffset + initialIndentBracket[0].length),
-						};
-					}
-				}
-			}
+			const initialIndentLanguageId = isEmbedded
+				? (await context.env.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true })
+				: {};
 
 			for (const plugin of Object.values(context.plugins)) {
 
@@ -259,7 +224,10 @@ export function register(context: LanguageServiceRuntimeContext) {
 						edits = await plugin.formatOnType?.(formatDocument, formatRange, ch, options);
 					}
 					else if (ch === undefined && vscode.Range.is(formatRange)) {
-						edits = await plugin.format?.(formatDocument, formatRange, options);
+						edits = await plugin.format?.(formatDocument, formatRange, {
+							...options,
+							initialIndent: !!initialIndentLanguageId[formatDocument.languageId],
+						});
 					}
 				}
 				catch (err) {
@@ -270,29 +238,6 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 				if (!edits)
 					continue;
-
-				if (!edits.length)
-					return edits;
-
-				if (initialIndentBracket) {
-					let newText = TextDocument.applyEdits(formatDocument, edits);
-					newText = newText.substring(
-						newText.indexOf(initialIndentBracket[0]) + initialIndentBracket[0].length,
-						newText.lastIndexOf(initialIndentBracket[1]),
-					);
-					if (newText === document.getText()) {
-						edits = [];
-					}
-					else {
-						edits = [{
-							newText,
-							range: {
-								start: document.positionAt(0),
-								end: document.positionAt(document.getText().length),
-							},
-						}];
-					}
-				}
 
 				return edits;
 			}
