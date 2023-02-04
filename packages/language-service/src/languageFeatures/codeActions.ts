@@ -148,7 +148,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 							matchKinds.push(undefined);
 						}
 						else {
-							for (const kind of fix.kinds ?? ['quickfix', 'source.fixAll']) {
+							for (const kind of fix.kinds ?? ['quickfix']) {
 								const matchOnly = matchOnlyKind(codeActionContext.only, kind);
 								if (matchOnly) {
 									matchKinds.push(matchOnly);

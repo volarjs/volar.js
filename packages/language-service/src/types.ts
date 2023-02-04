@@ -199,6 +199,11 @@ export interface RuleContext {
 export interface RulesSettings { }
 
 export interface RuleFix {
+	/**
+	 * Code action kind, like `quickfix` or `refactor`.
+	 * 
+	 * See https://code.visualstudio.com/api/references/vscode-api#CodeActionKind
+	 */
 	kinds?: (
 		''
 		| 'quickfix'
@@ -210,8 +215,17 @@ export interface RuleFix {
 		| 'source.organizeImports'
 		| 'source.fixAll'
 	)[];
+	/**
+	 * Title of the code action.
+	 */
 	title?: string;
+	/**
+	 * Edit to apply to the document.
+	 */
 	getEdits?(diagnostic: vscode.Diagnostic): NullableResult<vscode.TextEdit[]>;
+	/**
+	 * Cross-file edits to apply to the workspace.
+	 */
 	getWorkspaceEdit?(diagnostic: vscode.Diagnostic): NullableResult<vscode.WorkspaceEdit>;
 }
 
