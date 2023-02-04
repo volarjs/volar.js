@@ -45,9 +45,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 				break;
 
 			let edits: vscode.TextEdit[] = [];
-			let toPatchIndent: {
-				sourceMapEmbeddedDocumentUri: string,
-			} | undefined;
+			let toPatchIndentUri: string | undefined;
 
 			for (const embedded of embeddedFiles) {
 
@@ -99,9 +97,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 					if (genRange) {
 
-						toPatchIndent = {
-							sourceMapEmbeddedDocumentUri: map.virtualFileDocument.uri,
-						};
+						toPatchIndentUri = map.virtualFileDocument.uri;
 
 						_edits = await tryFormat(
 							map.virtualFileDocument,
@@ -132,9 +128,9 @@ export function register(context: LanguageServiceRuntimeContext) {
 				edited = true;
 			}
 
-			if (toPatchIndent) {
+			if (toPatchIndentUri) {
 
-				for (const [_, map] of context.documents.getMapsByVirtualFileUri(toPatchIndent?.sourceMapEmbeddedDocumentUri)) {
+				for (const [_, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri)) {
 
 					const indentEdits = patchInterpolationIndent(document, map.map);
 
@@ -310,48 +306,35 @@ function patchInterpolationIndent(document: TextDocument, map: SourceMap) {
 
 	for (const mapped of map.mappings) {
 
-		const textRange = {
-			start: document.positionAt(mapped.sourceRange[0]),
-			end: document.positionAt(mapped.sourceRange[1]),
-		};
-		const text = document.getText(textRange);
-
-		if (text.indexOf('\n') === -1)
+		const baseIndent = getBaseIndent(mapped.sourceRange[0]);
+		if (baseIndent === '') {
 			continue;
+		}
+
+		const text = document.getText().substring(mapped.sourceRange[0], mapped.sourceRange[1]);
+		if (text.indexOf('\n') === -1) {
+			continue;
+		}
 
 		const lines = text.split('\n');
-		const removeIndent = getRemoveIndent(lines);
-		const baseIndent = getBaseIndent(mapped.sourceRange[0]);
-
-		if (removeIndent === baseIndent)
-			continue;
-
 		for (let i = 1; i < lines.length; i++) {
-			const line = lines[i];
-			if (line.startsWith(removeIndent)) {
-				lines[i] = line.replace(removeIndent, baseIndent);
-			}
-			else {
-				lines[i] = baseIndent.replace(removeIndent, '') + line;
-			}
+			lines[i] = baseIndent + lines[i];
 		}
 
 		indentTextEdits.push({
 			newText: lines.join('\n'),
-			range: textRange,
+			range: {
+				start: document.positionAt(mapped.sourceRange[0]),
+				end: document.positionAt(mapped.sourceRange[1]),
+			},
 		});
 	}
 
 	return indentTextEdits;
 
-	function getRemoveIndent(lines: string[]) {
-		const lastLine = lines[lines.length - 1];
-		return lastLine.substring(0, lastLine.length - lastLine.trimStart().length);
-	}
-
 	function getBaseIndent(pos: number) {
 		const startPos = document.positionAt(pos);
-		const startLineText = document.getText({ start: startPos, end: { line: startPos.line, character: 0 } });
+		const startLineText = document.getText({ start: { line: startPos.line, character: 0 }, end: startPos });
 		return startLineText.substring(0, startLineText.length - startLineText.trimStart().length);
 	}
 }
