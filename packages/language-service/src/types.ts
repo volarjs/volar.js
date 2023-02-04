@@ -1,5 +1,4 @@
 import { LanguageContext, LanguageModule, LanguageServiceHost } from '@volar/language-core';
-import { LanguageService } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { DocumentContext, FileSystemProvider } from 'vscode-html-languageservice';
 import type { SchemaRequestService } from 'vscode-json-languageservice';
@@ -61,25 +60,8 @@ export type NotNullableResult<T> = T | Thenable<T>;
 export type NullableResult<T> = NotNullableResult<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
-export interface ExecuteCommandContext {
-	token: vscode.CancellationToken;
-	workDoneProgress: {
-		begin(title: string, percentage?: number, message?: string, cancellable?: boolean): void;
-		report(percentage: number): void;
-		report(message: string): void;
-		report(percentage: number, message: string): void;
-		done(): void;
-	};
-	showReferences(params: {
-		textDocument: vscode.TextDocumentIdentifier,
-		position: vscode.Position,
-		references: vscode.Location[],
-	}): Promise<void>;
-	applyEdit(paramOrEdit: vscode.ApplyWorkspaceEditParams | vscode.WorkspaceEdit): Promise<vscode.ApplyWorkspaceEditResult>;
-}
-
 export interface LanguageServicePlugin<T = {}> {
-	(context: LanguageServiceRuntimeContext, service: LanguageService): LanguageServicePluginInstance & T;
+	(context: LanguageServiceRuntimeContext): LanguageServicePluginInstance & T;
 }
 
 export interface LanguageServicePluginInstance {
@@ -103,14 +85,13 @@ export interface LanguageServicePluginInstance {
 	findDocumentSymbols?(document: TextDocument): NullableResult<vscode.SymbolInformation[]>;
 	findDocumentSemanticTokens?(document: TextDocument, range: vscode.Range, legend: vscode.SemanticTokensLegend): NullableResult<SemanticToken[]>;
 	findWorkspaceSymbols?(query: string): NullableResult<vscode.SymbolInformation[]>;
-	doExecuteCommand?(command: string, args: any[] | undefined, context: ExecuteCommandContext): NotNullableResult<void>;
 	findDocumentColors?(document: TextDocument): NullableResult<vscode.ColorInformation[]>;
 	getColorPresentations?(document: TextDocument, color: vscode.Color, range: vscode.Range): NullableResult<vscode.ColorPresentation[]>;
 	doFileRename?(oldUri: string, newUri: string): NullableResult<vscode.WorkspaceEdit>;
 	getFoldingRanges?(document: TextDocument): NullableResult<vscode.FoldingRange[]>;
 	getSelectionRanges?(document: TextDocument, positions: vscode.Position[]): NullableResult<vscode.SelectionRange[]>;
 	getSignatureHelp?(document: TextDocument, position: vscode.Position, context?: vscode.SignatureHelpContext): NullableResult<vscode.SignatureHelp>;
-	format?(document: TextDocument, range: vscode.Range, options: vscode.FormattingOptions & { initialIndent: boolean }): NullableResult<vscode.TextEdit[]>;
+	format?(document: TextDocument, range: vscode.Range, options: vscode.FormattingOptions & { initialIndent: boolean; }): NullableResult<vscode.TextEdit[]>;
 	formatOnType?(document: TextDocument, position: vscode.Position, key: string, options: vscode.FormattingOptions): NullableResult<vscode.TextEdit[]>;
 
 	definition?: {
@@ -138,6 +119,11 @@ export interface LanguageServicePluginInstance {
 	codeLens?: {
 		on?(document: TextDocument): NullableResult<vscode.CodeLens[]>;
 		resolve?(codeLens: vscode.CodeLens): NotNullableResult<vscode.CodeLens>;
+	};
+
+	referencesCodeLens?: {
+		on?(document: TextDocument): NullableResult<vscode.Location[]>;
+		resolve?(document: TextDocument, location: vscode.Location, references: vscode.Location[]): NotNullableResult<vscode.Location[]>;
 	};
 
 	callHierarchy?: {

@@ -15,7 +15,6 @@ import * as definition from './languageFeatures/definition';
 import * as documentHighlight from './languageFeatures/documentHighlights';
 import * as documentLink from './languageFeatures/documentLinks';
 import * as semanticTokens from './languageFeatures/documentSemanticTokens';
-import * as executeCommand from './languageFeatures/executeCommand';
 import * as fileReferences from './languageFeatures/fileReferences';
 import * as fileRename from './languageFeatures/fileRename';
 import * as hover from './languageFeatures/hover';
@@ -49,9 +48,8 @@ export function createLanguageService(
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 	const languageContext = createLanguageContext(host, Object.values(config.languages ?? {}).filter(shared.notEmpty));
-	const context = createLanguageServiceContext(host, languageContext, config, env, () => languageService, documentRegistry);
-	const languageService = createLanguageServiceBase(context);
-	return languageService;
+	const context = createLanguageServiceContext(host, languageContext, config, env, documentRegistry);
+	return createLanguageServiceBase(context);
 }
 
 function createLanguageServiceContext(
@@ -59,7 +57,6 @@ function createLanguageServiceContext(
 	languageContext: ReturnType<typeof createLanguageContext>,
 	config: Config,
 	env: LanguageServiceRuntimeContext['env'],
-	getLanguageService: () => LanguageService,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 
@@ -87,7 +84,7 @@ function createLanguageServiceContext(
 				for (const pluginId in config.plugins ?? {}) {
 					const plugin = config.plugins?.[pluginId];
 					if (plugin instanceof Function) {
-						const _plugin = plugin(this, getLanguageService());
+						const _plugin = plugin(this);
 						plugins[pluginId] = _plugin;
 					}
 					else if (plugin) {
@@ -172,7 +169,6 @@ function createLanguageServiceBase(context: LanguageServiceRuntimeContext) {
 		findDocumentLinks: documentLink.register(context),
 		findWorkspaceSymbols: workspaceSymbol.register(context),
 		doAutoInsert: autoInsert.register(context),
-		doExecuteCommand: executeCommand.register(context),
 		getInlayHints: inlayHints.register(context),
 		callHierarchy: callHierarchy.register(context),
 		dispose: () => context.typescript?.languageService.dispose(),

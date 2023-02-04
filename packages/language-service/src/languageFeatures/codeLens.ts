@@ -1,13 +1,19 @@
 import * as shared from '@volar/shared';
 import type { LanguageServiceRuntimeContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import { executePluginCommand, ExecutePluginCommandArgs } from './executeCommand';
-
-import type * as _ from 'vscode-languageserver-protocol';
+import * as vscode from 'vscode-languageserver-protocol';
 
 export interface PluginCodeLensData {
+	kind: 'normal',
 	uri: string,
-	original: Pick<_.CodeLens, 'data'>,
+	original: Pick<vscode.CodeLens, 'data'>,
+	pluginId: string,
+}
+
+export interface PluginReferencesCodeLensData {
+	kind: 'references',
+	uri: string,
+	location: vscode.Location,
 	pluginId: string,
 }
 
@@ -23,17 +29,11 @@ export function register(context: LanguageServiceRuntimeContext) {
 			async (plugin, document) => {
 
 				const codeLens = await plugin.codeLens?.on?.(document);
+				const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!;
 
 				codeLens?.forEach(codeLens => {
-					const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!;
-					if (codeLens.command) {
-						codeLens.command = {
-							title: codeLens.command.title,
-							command: executePluginCommand,
-							arguments: [uri, pluginId, codeLens.command]satisfies ExecutePluginCommandArgs,
-						};
-					}
 					codeLens.data = {
+						kind: 'normal',
 						uri,
 						original: {
 							data: codeLens.data,
@@ -42,7 +42,18 @@ export function register(context: LanguageServiceRuntimeContext) {
 					} satisfies PluginCodeLensData;
 				});
 
-				return codeLens;
+				const referencesCodeLensLocs = await plugin.referencesCodeLens?.on?.(document);
+				const referencesCodeLens = referencesCodeLensLocs?.map(loc => vscode.CodeLens.create(loc.range, {
+					kind: 'references',
+					uri,
+					location: loc,
+					pluginId,
+				} satisfies PluginReferencesCodeLensData));
+
+				return [
+					...codeLens ?? [],
+					...referencesCodeLens ?? [],
+				];
 			},
 			(data, map) => data.map(codeLens => {
 

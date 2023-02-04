@@ -93,8 +93,8 @@ export function setupCapabilities(
 		server.codeLensProvider = {
 			resolveProvider: true,
 		};
-		server.executeCommandProvider = { commands: [...server.executeCommandProvider?.commands ?? []] };
-		server.executeCommandProvider.commands.push(embedded.executePluginCommand);
+		server.executeCommandProvider ??= { commands: [] };
+		server.executeCommandProvider.commands.push(embedded.showReferencesCommand);
 	}
 	if (!initOptions.respectClientCapabilities || params.textDocument?.semanticTokens) {
 		server.semanticTokensProvider = {

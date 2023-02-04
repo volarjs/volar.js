@@ -120,21 +120,20 @@ export function register(
 	connection.onCodeLensResolve(async (codeLens) => {
 		return await lastCodeLensLs?.doCodeLensResolve(codeLens) ?? codeLens;
 	});
-	connection.onExecuteCommand(async (params, token, workDoneProgress) => {
-		if (params.command === embedded.executePluginCommand) {
+	connection.onExecuteCommand(async (params) => {
+		if (
+			params.command === embedded.showReferencesCommand
+			&& params.arguments
+		) {
 
-			const args = params.arguments as embedded.ExecutePluginCommandArgs | undefined;
-			if (!args) {
-				return;
-			}
+			const args = params.arguments as embedded.ShowReferencesCommandData;
 
-			return worker(args[0], token, service => {
-				return service.doExecuteCommand(params.command, args, {
-					token,
-					workDoneProgress,
-					applyEdit: (paramOrEdit) => connection.workspace.applyEdit(paramOrEdit),
-					showReferences: (params) => connection.sendNotification(ShowReferencesNotification.type, params),
-				});
+			await connection.sendNotification(ShowReferencesNotification.type, {
+				textDocument: {
+					uri: args[0],
+				},
+				position: args[1],
+				references: args[2],
 			});
 		}
 	});
