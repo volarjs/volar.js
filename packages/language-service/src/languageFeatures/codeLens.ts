@@ -21,6 +21,8 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 	return async (uri: string) => {
 
+		const referencesCodeLendsEnabled = await context.env.configurationHost?.getConfiguration<boolean>('volar.codeLens.references') ?? true;
+
 		return await languageFeatureWorker(
 			context,
 			uri,
@@ -28,7 +30,8 @@ export function register(context: LanguageServiceRuntimeContext) {
 			(arg) => [arg],
 			async (plugin, document) => {
 
-				const codeLens = await plugin.codeLens?.on?.(document);
+				let codeLens = await plugin.codeLens?.on?.(document);
+
 				const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!;
 
 				codeLens?.forEach(codeLens => {
@@ -42,18 +45,23 @@ export function register(context: LanguageServiceRuntimeContext) {
 					} satisfies PluginCodeLensData;
 				});
 
-				const referencesCodeLensLocs = await plugin.referencesCodeLens?.on?.(document);
-				const referencesCodeLens = referencesCodeLensLocs?.map(loc => vscode.CodeLens.create(loc.range, {
-					kind: 'references',
-					uri,
-					location: loc,
-					pluginId,
-				} satisfies PluginReferencesCodeLensData));
+				if (referencesCodeLendsEnabled) {
 
-				return [
-					...codeLens ?? [],
-					...referencesCodeLens ?? [],
-				];
+					const referencesCodeLensLocs = await plugin.referencesCodeLens?.on?.(document);
+					const referencesCodeLens = referencesCodeLensLocs?.map(loc => vscode.CodeLens.create(loc.range, {
+						kind: 'references',
+						uri,
+						location: loc,
+						pluginId,
+					} satisfies PluginReferencesCodeLensData));
+
+					codeLens = [
+						...codeLens ?? [],
+						...referencesCodeLens ?? [],
+					];
+				}
+
+				return codeLens;
 			},
 			(data, map) => data.map(codeLens => {
 
