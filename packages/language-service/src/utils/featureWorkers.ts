@@ -137,6 +137,7 @@ export async function ruleWorker<T>(
 
 			let ruleCtx: RuleContext = {
 				// project context
+				modules: { typescript: context.typescript?.module },
 				uriToFileName: shared.uriToFileName,
 				fileNameToUri: shared.fileNameToUri,
 				rootUri: context.env.rootUri,
@@ -193,6 +194,7 @@ export async function ruleWorker<T>(
 
 		let ruleCtx: RuleContext = {
 			// project context
+			modules: { typescript: context.typescript?.module },
 			uriToFileName: shared.uriToFileName,
 			fileNameToUri: shared.fileNameToUri,
 			rootUri: context.env.rootUri,

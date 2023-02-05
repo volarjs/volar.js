@@ -163,6 +163,12 @@ export interface Rule {
 
 export interface RuleContext {
 	/**
+	 * Shared modules.
+	 */
+	modules: {
+		typescript?: typeof import('typescript/lib/tsserverlibrary');
+	},
+	/**
 	 * IDE or user define locale.
 	 * You can use it to localize your rule.
 	 */
