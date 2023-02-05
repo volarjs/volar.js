@@ -181,6 +181,7 @@ export function embeddedEditToSourceEdit(
 	tsResult: vscode.WorkspaceEdit,
 	documents: DocumentsAndSourceMaps,
 	mode: 'fileName' | 'rename' | 'codeAction' | 'format',
+	versions: Record<string, number> = {},
 ) {
 
 	const sourceResult: vscode.WorkspaceEdit = {};
@@ -254,8 +255,7 @@ export function embeddedEditToSourceEdit(
 						sourceEdit = vscode.TextDocumentEdit.create(
 							{
 								uri: map.sourceFileDocument.uri,
-								// version: map.sourceDocument.version,
-								version: null, // fix https://github.com/johnsoncodehk/volar/issues/1490
+								version: versions[map.sourceFileDocument.uri] ?? null,
 							},
 							[],
 						);

@@ -10,6 +10,7 @@ import { PluginDiagnosticData } from './validation';
 
 export interface PluginCodeActionData {
 	uri: string,
+	version: number,
 	type: 'plugin',
 	original: Pick<vscode.CodeAction, 'data' | 'edit'>,
 	pluginId: string,
@@ -17,6 +18,7 @@ export interface PluginCodeActionData {
 
 export interface RuleCodeActionData {
 	uri: string,
+	version: number,
 	documentUri: string,
 	type: 'rule',
 	isFormat: boolean,
@@ -103,6 +105,7 @@ export function register(context: LanguageServicePluginContext) {
 				codeActions?.forEach(codeAction => {
 					codeAction.data = {
 						uri,
+						version: document.version,
 						type: 'plugin',
 						original: {
 							data: codeAction.data,
@@ -164,6 +167,7 @@ export function register(context: LanguageServicePluginContext) {
 								diagnostics: [diagnostic],
 								data: {
 									uri,
+									version: document.version,
 									type: 'rule',
 									isFormat: data.isFormat,
 									ruleId: data.pluginOrRuleId,

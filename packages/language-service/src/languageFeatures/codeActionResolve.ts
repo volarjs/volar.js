@@ -23,6 +23,7 @@ export function register(context: LanguageServicePluginContext) {
 					item.edit,
 					context.documents,
 					'codeAction',
+					{ [data.uri]: data.version },
 				);
 			}
 		}
@@ -36,7 +37,13 @@ export function register(context: LanguageServicePluginContext) {
 					const edits = await fix.getEdits?.(fixes[0]);
 					if (edits) {
 						edit = {
-							changes: { [data.documentUri]: edits },
+							documentChanges: [{
+								textDocument: {
+									uri: data.documentUri,
+									version: null
+								},
+								edits,
+							}],
 						};
 					}
 				}
@@ -45,6 +52,7 @@ export function register(context: LanguageServicePluginContext) {
 						edit,
 						context.documents,
 						data.isFormat ? 'format' : 'codeAction',
+						{ [data.uri]: data.version }, // not working for vscode
 					);
 				}
 			}
