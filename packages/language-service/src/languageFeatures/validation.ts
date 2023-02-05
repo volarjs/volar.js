@@ -263,6 +263,12 @@ export function register(context: LanguageServicePluginContext) {
 
 					ruleCtx.report = (error, ...fixes) => {
 
+						if (!vscode.Diagnostic.is(error)) {
+							console.warn('[volar/rules-api] report() error must be a Diagnostic.')
+							return;
+						}
+
+						error.message ||= 'No message.';
 						error.source ||= 'rules';
 						error.code ||= ruleCtx.ruleId;
 
@@ -274,7 +280,13 @@ export function register(context: LanguageServicePluginContext) {
 						reportResults.push([error, ...fixes]);
 					};
 
-					await rule[api]?.(ruleCtx);
+					try {
+						await rule[api]?.(ruleCtx);
+					}
+					catch (err) {
+						console.warn(`[volar/rules-api] ${ruleName} ${api} error.`);
+						console.warn(err);
+					}
 
 					context.ruleFixes ??= {};
 					context.ruleFixes[ruleCtx.document.uri] ??= {};
