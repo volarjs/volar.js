@@ -1,12 +1,12 @@
 import type { VirtualFile } from '@volar/language-core';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import * as shared from '@volar/shared';
 import { SourceMap } from '@volar/source-map';
 import { stringToSnapshot } from '../utils/common';
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	return async (
 		uri: string,
@@ -23,6 +23,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 
 		range ??= vscode.Range.create(document.positionAt(0), document.positionAt(document.getText().length));
 
+		const initialIndentLanguageId = await context.env.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 		const source = context.documents.getSourceByUri(document.uri);
 		if (!source) {
 			return onTypeParams
@@ -181,10 +182,6 @@ export function register(context: LanguageServiceRuntimeContext) {
 			let formatDocument = document;
 			let formatRange = range;
 
-			const initialIndentLanguageId = isEmbedded
-				? (await context.env.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true })
-				: {};
-
 			for (const plugin of Object.values(context.plugins)) {
 
 				let edits: vscode.TextEdit[] | null | undefined;
@@ -226,7 +223,7 @@ export function register(context: LanguageServiceRuntimeContext) {
 					else if (ch === undefined && vscode.Range.is(formatRange)) {
 						edits = await plugin.format?.(formatDocument, formatRange, {
 							...options,
-							initialIndent: !!initialIndentLanguageId[formatDocument.languageId],
+							initialIndent: isEmbedded ? !!initialIndentLanguageId[formatDocument.languageId] : false,
 						});
 					}
 				}
@@ -284,7 +281,7 @@ function patchInterpolationIndent(document: TextDocument, map: SourceMap) {
 	}
 }
 
-export function isTsDocument(document: TextDocument) {
+function isTsDocument(document: TextDocument) {
 	return document.languageId === 'javascript' ||
 		document.languageId === 'typescript' ||
 		document.languageId === 'javascriptreact' ||

@@ -1,5 +1,5 @@
 import * as shared from '@volar/shared';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as vscode from 'vscode-languageserver-protocol';
 
@@ -17,7 +17,7 @@ export interface PluginReferencesCodeLensData {
 	pluginId: string,
 }
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	return async (uri: string) => {
 

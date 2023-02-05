@@ -1,5 +1,5 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import * as shared from '@volar/shared';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
@@ -8,7 +8,7 @@ import { FileRangeCapabilities, MirrorBehaviorCapabilities } from '@volar/langua
 import { SourceMapWithDocuments } from '../documents';
 
 export function register(
-	context: LanguageServiceRuntimeContext,
+	context: LanguageServicePluginContext,
 	api: 'findDefinition' | 'findTypeDefinition' | 'findImplementations',
 	isValidMapping: (data: FileRangeCapabilities) => boolean,
 	isValidMirrorPosition: (mirrorData: MirrorBehaviorCapabilities) => boolean,

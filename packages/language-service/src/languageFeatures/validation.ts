@@ -4,7 +4,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
-import type { LanguageServiceRuntimeContext, RuleContext } from '../types';
+import type { LanguageServicePluginContext, RuleContext } from '../types';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers';
 
@@ -121,7 +121,7 @@ type CacheMap = Map<
 	>
 >;
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	const lastResponses = new Map<
 		string,

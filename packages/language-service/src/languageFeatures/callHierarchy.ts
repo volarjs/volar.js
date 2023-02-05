@@ -1,7 +1,7 @@
 import * as shared from '@volar/shared';
 import { posix as path } from 'path';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
@@ -14,7 +14,7 @@ export interface PluginCallHierarchyData {
 	} | undefined,
 }
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	return {
 

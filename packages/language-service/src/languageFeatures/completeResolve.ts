@@ -1,9 +1,9 @@
 import * as transformer from '../transformer';
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import { PluginCompletionData } from './complete';
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	return async (item: vscode.CompletionItem) => {
 

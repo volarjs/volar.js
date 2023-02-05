@@ -1,5 +1,5 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import { PluginCodeLensData, PluginReferencesCodeLensData } from './codeLens';
 import * as references from './references';
 
@@ -7,7 +7,7 @@ export const showReferencesCommand = `volar.${Math.random().toString(36).slice(2
 
 export type ShowReferencesCommandData = [string, vscode.Position, vscode.Location[]];
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	const findReferences = references.register(context);
 

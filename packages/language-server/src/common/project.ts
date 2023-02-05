@@ -1,6 +1,6 @@
 import * as embedded from '@volar/language-core';
 import * as embeddedLS from '@volar/language-service';
-import { Config, LanguageServiceRuntimeContext } from '@volar/language-service';
+import { Config, LanguageServicePluginContext } from '@volar/language-service';
 import * as shared from '@volar/shared';
 import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -81,7 +81,7 @@ export async function createProject(context: ProjectContext) {
 				plugins: { ...context.serverConfig?.plugins },
 				rules: { ...context.serverConfig?.rules },
 			};
-			const env: LanguageServiceRuntimeContext['env'] = {
+			const env: LanguageServicePluginContext['env'] = {
 				rootUri: context.rootUri,
 				locale: context.workspace.workspaces.initParams.locale,
 				configurationHost: context.workspace.workspaces.configurationHost,

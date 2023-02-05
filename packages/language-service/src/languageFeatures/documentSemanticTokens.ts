@@ -1,10 +1,10 @@
 import * as shared from '@volar/shared';
 import * as vscode from 'vscode-languageserver-protocol';
 import { SemanticToken } from '@volar/language-service';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	return (
 		uri: string,

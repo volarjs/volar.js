@@ -9,7 +9,7 @@ import { DocumentsAndSourceMaps } from './documents';
 
 export * from 'vscode-languageserver-protocol';
 
-export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost = LanguageServiceHost> {
+export interface LanguageServicePluginContext {
 	config: Config;
 	typescript: {
 		module: typeof import('typescript/lib/tsserverlibrary');
@@ -28,7 +28,7 @@ export interface LanguageServiceRuntimeContext<Host extends LanguageServiceHost 
 	fileNameToUri(fileName: string): string;
 
 	/** @private */
-	host: Host;
+	host: LanguageServiceHost;
 	/** @private */
 	core: LanguageContext;
 	/** @private */
@@ -61,7 +61,7 @@ export type NullableResult<T> = NotNullableResult<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
 export interface LanguageServicePlugin<T = {}> {
-	(context: LanguageServiceRuntimeContext): LanguageServicePluginInstance & T;
+	(context: LanguageServicePluginContext): LanguageServicePluginInstance & T;
 }
 
 export interface LanguageServicePluginInstance {

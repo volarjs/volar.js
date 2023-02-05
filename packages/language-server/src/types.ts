@@ -4,7 +4,7 @@ import type { FileSystemProvider } from 'vscode-html-languageservice';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { Config, LanguageServiceRuntimeContext } from '@volar/language-service';
+import { Config, LanguageServicePluginContext } from '@volar/language-service';
 import { ProjectContext } from './common/project';
 
 export type FileSystemHost = {
@@ -45,7 +45,7 @@ export interface RuntimeEnvironment {
 
 export interface LanguageServiceContext {
 	project: ProjectContext;
-	env: LanguageServiceRuntimeContext['env'];
+	env: LanguageServicePluginContext['env'];
 	host: embedded.LanguageServiceHost;
 	sys: FileSystem;
 }

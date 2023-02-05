@@ -1,12 +1,12 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { visitEmbedded } from './definePlugin';
-import type { LanguageServicePluginInstance, LanguageServiceRuntimeContext, Rule, RuleContext } from '../types';
+import type { LanguageServicePluginInstance, LanguageServicePluginContext, Rule, RuleContext } from '../types';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-service';
 import { SourceMapWithDocuments } from '../documents';
 import * as shared from '@volar/shared';
 
 export async function documentFeatureWorker<T>(
-	context: LanguageServiceRuntimeContext,
+	context: LanguageServicePluginContext,
 	uri: string,
 	isValidSourceMap: (file: VirtualFile, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>) => boolean,
 	worker: (plugin: LanguageServicePluginInstance, document: TextDocument) => T,
@@ -30,7 +30,7 @@ export async function documentFeatureWorker<T>(
 }
 
 export async function languageFeatureWorker<T, K>(
-	context: LanguageServiceRuntimeContext,
+	context: LanguageServicePluginContext,
 	uri: string,
 	arg: K,
 	transformArg: (arg: K, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>, file: VirtualFile) => Generator<K> | K[],
@@ -113,7 +113,7 @@ export async function languageFeatureWorker<T, K>(
 }
 
 export async function ruleWorker<T>(
-	context: LanguageServiceRuntimeContext,
+	context: LanguageServicePluginContext,
 	uri: string,
 	isValidSourceMap: (file: VirtualFile) => boolean,
 	worker: (ruleName: string, rule: Rule, ruleCtx: RuleContext) => T,

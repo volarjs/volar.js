@@ -1,8 +1,8 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginInstance, LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginInstance, LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	return (uri: string, position: vscode.Position, autoInsertContext: Parameters<NonNullable<LanguageServicePluginInstance['doAutoInsert']>>[2]) => {
 

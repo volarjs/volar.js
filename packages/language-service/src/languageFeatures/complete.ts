@@ -2,7 +2,7 @@ import * as transformer from '../transformer';
 import type { FileRangeCapabilities } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { LanguageServicePluginInstance, LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginInstance, LanguageServicePluginContext } from '../types';
 import { visitEmbedded } from '../utils/definePlugin';
 
 export interface PluginCompletionData {
@@ -12,7 +12,7 @@ export interface PluginCompletionData {
 	map: { embeddedDocumentUri: string; } | undefined;
 }
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	let cache: {
 		uri: string,

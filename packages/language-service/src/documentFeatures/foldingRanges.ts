@@ -1,9 +1,9 @@
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import * as transformer from '../transformer';
 import type * as _ from 'vscode-languageserver-protocol';
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	return (uri: string) => {
 

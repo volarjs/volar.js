@@ -25,7 +25,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { Config, LanguageServicePluginInstance, LanguageServiceRuntimeContext } from './types';
+import { Config, LanguageServicePluginInstance, LanguageServicePluginContext } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -44,7 +44,7 @@ export type LanguageService = ReturnType<typeof createLanguageService>;
 export function createLanguageService(
 	host: LanguageServiceHost,
 	config: Config,
-	env: LanguageServiceRuntimeContext['env'],
+	env: LanguageServicePluginContext['env'],
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 	const languageContext = createLanguageContext(host, Object.values(config.languages ?? {}).filter(shared.notEmpty));
@@ -56,7 +56,7 @@ function createLanguageServiceContext(
 	host: LanguageServiceHost,
 	languageContext: ReturnType<typeof createLanguageContext>,
 	config: Config,
-	env: LanguageServiceRuntimeContext['env'],
+	env: LanguageServicePluginContext['env'],
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 
@@ -72,7 +72,7 @@ function createLanguageServiceContext(
 	const textDocumentMapper = createDocumentsAndSourceMaps(languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
-	const context: LanguageServiceRuntimeContext = {
+	const context: LanguageServicePluginContext = {
 		uriToFileName: shared.uriToFileName,
 		fileNameToUri: shared.fileNameToUri,
 		host,
@@ -135,7 +135,7 @@ function createLanguageServiceContext(
 	}
 }
 
-function createLanguageServiceBase(context: LanguageServiceRuntimeContext) {
+function createLanguageServiceBase(context: LanguageServicePluginContext) {
 
 	return {
 

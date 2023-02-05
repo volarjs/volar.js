@@ -1,11 +1,11 @@
 import * as shared from '@volar/shared';
 import * as transformer from '../transformer';
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import { getOverlapRange } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 
 	return async (uri: string, range: vscode.Range) => {
 

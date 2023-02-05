@@ -1,9 +1,9 @@
 import type { CodeAction } from 'vscode-languageserver-protocol';
-import type { LanguageServiceRuntimeContext } from '../types';
+import type { LanguageServicePluginContext } from '../types';
 import { PluginCodeActionData, RuleCodeActionData } from './codeActions';
 import { embeddedEditToSourceEdit } from './rename';
 
-export function register(context: LanguageServiceRuntimeContext) {
+export function register(context: LanguageServicePluginContext) {
 	return async (item: CodeAction) => {
 
 		const data: PluginCodeActionData | RuleCodeActionData | undefined = item.data;
