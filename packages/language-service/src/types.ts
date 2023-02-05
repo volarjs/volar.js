@@ -162,16 +162,28 @@ export interface Rule {
 }
 
 export interface RuleContext {
-	// env context
+	/**
+	 * IDE or user define locale.
+	 * You can use it to localize your rule.
+	 */
 	locale?: string;
+	/**
+	 * Project root path.
+	 */
+	rootUri: URI;
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
-	// project context
-	rootUri: URI;
-	getConfiguration?: ConfigurationHost['getConfiguration'];
-	onDidChangeConfiguration?: ConfigurationHost['onDidChangeConfiguration'];
+	/**
+	 * Get configuration from IDE.
+	 * 
+	 * For VSCode, it's .vscode/settings.json
+	 */
+	getConfiguration?: <T> (section: string) => Promise<T | undefined>;
+	onDidChangeConfiguration?: (cb: () => void) => void;
+	/**
+	 * Global settings from config.
+	 */
 	settings: RulesSettings;
-	// document context
 	ruleId: string;
 	document: TextDocument;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
