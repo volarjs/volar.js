@@ -4,9 +4,14 @@ import { PluginCodeActionData, RuleCodeActionData } from './codeActions';
 import { embeddedEditToSourceEdit } from './rename';
 
 export function register(context: LanguageServicePluginContext) {
+
 	return async (item: CodeAction) => {
 
 		const data: PluginCodeActionData | RuleCodeActionData | undefined = item.data;
+
+		if (isOutdated(data)) {
+			return item;
+		}
 
 		if (data?.type === 'plugin') {
 
@@ -58,6 +63,21 @@ export function register(context: LanguageServicePluginContext) {
 			}
 		}
 
+		if (isOutdated(data)) {
+			item.edit = undefined;
+		}
+
 		return item;
+
+		function isOutdated(data: any) {
+			if (data) {
+				const document = context.getTextDocument(data.uri);
+				if (!document || document.version !== data.version) {
+					// console.warn('Code action is outdated, please try again.');
+					return true;
+				}
+			}
+			return false;
+		}
 	};
 }

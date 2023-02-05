@@ -150,20 +150,10 @@ export function createWorkspaces(context: WorkspacesContext) {
 
 		const languageService = project.getLanguageService();
 		const errors = await languageService.doValidation(uri, cancel, result => {
-			context.server.connection.sendDiagnostics({ uri: uri, diagnostics: result.map(addVersion), version });
+			context.server.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});
 
-		context.server.connection.sendDiagnostics({ uri: uri, diagnostics: errors.map(addVersion), version });
-
-		function addVersion(error: vscode.Diagnostic) {
-			if (error.data === undefined) {
-				error.data = { version };
-			}
-			else if (typeof error.data === 'object') {
-				error.data.version = version;
-			}
-			return error;
-		}
+		context.server.connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
 	}
 
 	async function getProjectAndTsConfig(uri: string) {

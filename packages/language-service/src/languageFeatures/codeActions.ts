@@ -88,6 +88,9 @@ export function register(context: LanguageServicePluginContext) {
 				const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
 					const data: PluginDiagnosticData | undefined = diagnostic.data;
+					if (data && data.version !== document.version) {
+						return false;
+					}
 					return data?.type === 'plugin' && data?.pluginOrRuleId === pluginId;
 				}).map(diagnostic => {
 					const data: PluginDiagnosticData = diagnostic.data;
@@ -143,6 +146,10 @@ export function register(context: LanguageServicePluginContext) {
 
 		for (const diagnostic of codeActionContext.diagnostics) {
 			const data: PluginDiagnosticData | undefined = diagnostic.data;
+			if (data && data.version !== document.version) {
+				// console.warn('diagnostic version mismatch', data.version, document.version);
+				continue;
+			}
 			if (data?.type === 'rule') {
 				const fixes = context.ruleFixes?.[data.documentUri]?.[data.pluginOrRuleId]?.[data.ruleFixIndex];
 				if (fixes) {
@@ -167,8 +174,8 @@ export function register(context: LanguageServicePluginContext) {
 								diagnostics: [diagnostic],
 								data: {
 									uri,
-									version: document.version,
 									type: 'rule',
+									version: data.version,
 									isFormat: data.isFormat,
 									ruleId: data.pluginOrRuleId,
 									documentUri: data.documentUri,

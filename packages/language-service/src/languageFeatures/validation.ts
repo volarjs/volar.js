@@ -96,6 +96,7 @@ function updatePosition(
 
 export interface PluginDiagnosticData {
 	uri: string,
+	version: number,
 	original: Pick<vscode.Diagnostic, 'data'>,
 	type: 'plugin' | 'rule',
 	isFormat: boolean,
@@ -148,6 +149,11 @@ export function register(context: LanguageServicePluginContext) {
 
 	return async (uri: string, token?: vscode.CancellationToken, response?: (result: vscode.Diagnostic[]) => void) => {
 
+		const newDocument = context.getTextDocument(uri);
+		if (!newDocument) {
+			return [];
+		}
+
 		const lastResponse = lastResponses.get(uri) ?? lastResponses.set(uri, {
 			semantic: { errors: [] },
 			declaration: { errors: [] },
@@ -158,7 +164,6 @@ export function register(context: LanguageServicePluginContext) {
 			format_rules: { errors: [] },
 		}).get(uri)!;
 		const newSnapshot = context.host.getScriptSnapshot(shared.uriToFileName(uri));
-		const newDocument = context.getTextDocument(uri);
 
 		let updateCacheRangeFailed = false;
 		let errorsUpdated = false;
@@ -279,6 +284,7 @@ export function register(context: LanguageServicePluginContext) {
 						context.ruleFixes![ruleCtx.document.uri][ruleCtx.ruleId][index] = [error, fixes];
 						error.data = {
 							uri,
+							version: newDocument!.version,
 							type: 'rule',
 							isFormat: api === 'onFormat',
 							pluginOrRuleId: ruleCtx.ruleId,
@@ -358,6 +364,7 @@ export function register(context: LanguageServicePluginContext) {
 					errors?.forEach(error => {
 						error.data = {
 							uri,
+							version: newDocument!.version,
 							type: 'plugin',
 							pluginOrRuleId: pluginId,
 							isFormat: false,
