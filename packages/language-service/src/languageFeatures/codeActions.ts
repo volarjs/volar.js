@@ -31,13 +31,13 @@ export function register(context: LanguageServicePluginContext) {
 
 	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext) => {
 
-		const document = context.getTextDocument(uri);
-		if (!document)
+		const sourceDocument = context.getTextDocument(uri);
+		if (!sourceDocument)
 			return;
 
 		const offsetRange = {
-			start: document.offsetAt(range.start),
-			end: document.offsetAt(range.end),
+			start: sourceDocument.offsetAt(range.start),
+			end: sourceDocument.offsetAt(range.end),
 		};
 		const pluginActions = await languageFeatureWorker(
 			context,
@@ -88,7 +88,8 @@ export function register(context: LanguageServicePluginContext) {
 				const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
 					const data: PluginDiagnosticData | undefined = diagnostic.data;
-					if (data && data.version !== document.version) {
+					if (data && data.version !== sourceDocument.version) {
+						console.warn('[volar/plugin-api] diagnostic version mismatch', data.version, sourceDocument.version);
 						return false;
 					}
 					return data?.type === 'plugin' && data?.pluginOrRuleId === pluginId;
@@ -146,8 +147,8 @@ export function register(context: LanguageServicePluginContext) {
 
 		for (const diagnostic of codeActionContext.diagnostics) {
 			const data: PluginDiagnosticData | undefined = diagnostic.data;
-			if (data && data.version !== document.version) {
-				// console.warn('diagnostic version mismatch', data.version, document.version);
+			if (data && data.version !== sourceDocument.version) {
+				console.warn('[volar/rules-api] diagnostic version mismatch', data.version, sourceDocument.version);
 				continue;
 			}
 			if (data?.type === 'rule') {
