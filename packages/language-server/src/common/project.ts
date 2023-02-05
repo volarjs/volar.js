@@ -79,7 +79,10 @@ export async function createProject(context: ProjectContext) {
 			const config: Config = {
 				languages: { ...context.serverConfig?.languages },
 				plugins: { ...context.serverConfig?.plugins },
-				rules: { ...context.serverConfig?.rules },
+				lint: {
+					...context.serverConfig?.lint,
+					rules: { ...context.serverConfig?.lint?.rules },
+				},
 			};
 			const env: LanguageServicePluginContext['env'] = {
 				rootUri: context.rootUri,

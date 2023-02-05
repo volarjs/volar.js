@@ -143,7 +143,7 @@ export async function ruleWorker<T>(
 				locale: context.env.locale,
 				getConfiguration: context.env.configurationHost?.getConfiguration,
 				onDidChangeConfiguration: context.env.configurationHost?.onDidChangeConfiguration,
-				settings: context.config.rulesSettings ?? {},
+				settings: context.config.lint?.settings ?? {},
 				// document context
 				ruleId: '',
 				document: map.virtualFileDocument,
@@ -156,9 +156,9 @@ export async function ruleWorker<T>(
 				}
 			}
 
-			for (const ruleName in context.config.rules) {
+			for (const ruleName in context.config.lint?.rules) {
 
-				const rule = context.config.rules[ruleName];
+				const rule = context.config.lint?.rules[ruleName];
 				if (!rule) {
 					continue;
 				}
@@ -199,7 +199,7 @@ export async function ruleWorker<T>(
 			locale: context.env.locale,
 			getConfiguration: context.env.configurationHost?.getConfiguration,
 			onDidChangeConfiguration: context.env.configurationHost?.onDidChangeConfiguration,
-			settings: context.config.rulesSettings ?? {},
+			settings: context.config.lint?.settings ?? {},
 			// document context
 			ruleId: '',
 			document,
@@ -212,9 +212,9 @@ export async function ruleWorker<T>(
 			}
 		}
 
-		for (const ruleName in context.config.rules) {
+		for (const ruleName in context.config.lint?.rules) {
 
-			const rule = context.config.rules[ruleName];
+			const rule = context.config.lint?.rules[ruleName];
 			if (!rule) {
 				continue;
 			}

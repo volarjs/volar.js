@@ -261,7 +261,7 @@ export function register(context: LanguageServicePluginContext) {
 						error.source ||= 'rules';
 						error.code ||= ruleCtx.ruleId;
 
-						const severity = context.config.rulesSeverity?.[ruleCtx.ruleId];
+						const severity = context.config.lint?.severities?.[ruleCtx.ruleId];
 						if (severity !== undefined) {
 							error.severity = severity;
 						}
