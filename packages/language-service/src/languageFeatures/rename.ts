@@ -126,6 +126,7 @@ export function register(context: LanguageServicePluginContext) {
 				return embeddedEditToSourceEdit(
 					data,
 					context.documents,
+					'rename',
 				);
 			},
 			(workspaceEdits) => {
@@ -179,6 +180,7 @@ export function mergeWorkspaceEdits(original: vscode.WorkspaceEdit, ...others: v
 export function embeddedEditToSourceEdit(
 	tsResult: vscode.WorkspaceEdit,
 	documents: DocumentsAndSourceMaps,
+	mode: 'fileName' | 'rename' | 'codeAction' | 'format',
 ) {
 
 	const sourceResult: vscode.WorkspaceEdit = {};
@@ -213,21 +215,29 @@ export function embeddedEditToSourceEdit(
 		for (const [_, map] of documents.getMapsByVirtualFileUri(tsUri)) {
 			const tsEdits = tsResult.changes[tsUri];
 			for (const tsEdit of tsEdits) {
-				let _data: FileRangeCapabilities | undefined;
-				const range = map.toSourceRange(tsEdit.range, data => {
-					_data = data;
-					return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
-				});
-				if (range) {
-					let newText = tsEdit.newText;
-					if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
-						newText = _data.rename.apply(tsEdit.newText);
+				if (mode === 'rename') {
+					let _data: FileRangeCapabilities | undefined;
+					const range = map.toSourceRange(tsEdit.range, data => {
+						_data = data;
+						return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
+					});
+					if (range) {
+						let newText = tsEdit.newText;
+						if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
+							newText = _data.rename.apply(tsEdit.newText);
+						}
+						sourceResult.changes[map.sourceFileDocument.uri] ??= [];
+						sourceResult.changes[map.sourceFileDocument.uri].push({ newText, range });
+						hasResult = true;
 					}
-					if (!sourceResult.changes[map.sourceFileDocument.uri]) {
-						sourceResult.changes[map.sourceFileDocument.uri] = [];
+				}
+				else {
+					const range = map.toSourceRange(tsEdit.range);
+					if (range) {
+						sourceResult.changes[map.sourceFileDocument.uri] ??= [];
+						sourceResult.changes[map.sourceFileDocument.uri].push({ newText: tsEdit.newText, range });
+						hasResult = true;
 					}
-					sourceResult.changes[map.sourceFileDocument.uri].push({ newText, range });
-					hasResult = true;
 				}
 			}
 		}
@@ -250,22 +260,34 @@ export function embeddedEditToSourceEdit(
 							[],
 						);
 						for (const tsEdit of tsDocEdit.edits) {
-							let _data: FileRangeCapabilities | undefined;
-							const range = map.toSourceRange(tsEdit.range, data => {
-								_data = data;
-								// fix https://github.com/johnsoncodehk/volar/issues/1091
-								return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
-							});
-							if (range) {
-								let newText = tsEdit.newText;
-								if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
-									newText = _data.rename.apply(tsEdit.newText);
-								}
-								sourceEdit.edits.push({
-									annotationId: vscode.AnnotatedTextEdit.is(tsEdit.range) ? tsEdit.range.annotationId : undefined,
-									newText,
-									range,
+							if (mode === 'rename') {
+								let _data: FileRangeCapabilities | undefined;
+								const range = map.toSourceRange(tsEdit.range, data => {
+									_data = data;
+									// fix https://github.com/johnsoncodehk/volar/issues/1091
+									return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
 								});
+								if (range) {
+									let newText = tsEdit.newText;
+									if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
+										newText = _data.rename.apply(tsEdit.newText);
+									}
+									sourceEdit.edits.push({
+										annotationId: vscode.AnnotatedTextEdit.is(tsEdit.range) ? tsEdit.range.annotationId : undefined,
+										newText,
+										range,
+									});
+								}
+							}
+							else {
+								const range = map.toSourceRange(tsEdit.range);
+								if (range) {
+									sourceEdit.edits.push({
+										annotationId: vscode.AnnotatedTextEdit.is(tsEdit.range) ? tsEdit.range.annotationId : undefined,
+										newText: tsEdit.newText,
+										range,
+									});
+								}
 							}
 						}
 						if (!sourceEdit.edits.length) {

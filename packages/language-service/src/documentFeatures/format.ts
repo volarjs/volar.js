@@ -179,59 +179,26 @@ export function register(context: LanguageServicePluginContext) {
 			ch?: string,
 		) {
 
-			let formatDocument = document;
 			let formatRange = range;
 
 			for (const plugin of Object.values(context.plugins)) {
 
 				let edits: vscode.TextEdit[] | null | undefined;
-				let recover: (() => void) | undefined;
-
-				if (formatDocument !== document && isTsDocument(formatDocument) && context.typescript) {
-					const formatFileName = shared.uriToFileName(formatDocument.uri);
-					const formatSnapshot = stringToSnapshot(formatDocument.getText());
-					const host = context.typescript.languageServiceHost;
-					const original = {
-						getProjectVersion: host.getProjectVersion,
-						getScriptVersion: host.getScriptVersion,
-						getScriptSnapshot: host.getScriptSnapshot,
-					};
-					host.getProjectVersion = () => original.getProjectVersion?.() + '-' + formatDocument.version;
-					host.getScriptVersion = (fileName) => {
-						if (fileName === formatFileName) {
-							return original.getScriptVersion?.(fileName) + '-' + formatDocument.version.toString();
-						}
-						return original.getScriptVersion?.(fileName);
-					};
-					host.getScriptSnapshot = (fileName) => {
-						if (fileName === formatFileName) {
-							return formatSnapshot;
-						}
-						return original.getScriptSnapshot?.(fileName);
-					};
-					recover = () => {
-						host.getProjectVersion = original.getProjectVersion;
-						host.getScriptVersion = original.getScriptVersion;
-						host.getScriptSnapshot = original.getScriptSnapshot;
-					};
-				}
 
 				try {
 					if (ch !== undefined && vscode.Position.is(formatRange)) {
-						edits = await plugin.formatOnType?.(formatDocument, formatRange, ch, options);
+						edits = await plugin.formatOnType?.(document, formatRange, ch, options);
 					}
 					else if (ch === undefined && vscode.Range.is(formatRange)) {
-						edits = await plugin.format?.(formatDocument, formatRange, {
+						edits = await plugin.format?.(document, formatRange, {
 							...options,
-							initialIndent: isEmbedded ? !!initialIndentLanguageId[formatDocument.languageId] : false,
+							initialIndent: isEmbedded ? !!initialIndentLanguageId[document.languageId] : false,
 						});
 					}
 				}
 				catch (err) {
 					console.error(err);
 				}
-
-				recover?.();
 
 				if (!edits)
 					continue;
@@ -279,11 +246,4 @@ function patchInterpolationIndent(document: TextDocument, map: SourceMap) {
 		const startLineText = document.getText({ start: { line: startPos.line, character: 0 }, end: startPos });
 		return startLineText.substring(0, startLineText.length - startLineText.trimStart().length);
 	}
-}
-
-function isTsDocument(document: TextDocument) {
-	return document.languageId === 'javascript' ||
-		document.languageId === 'typescript' ||
-		document.languageId === 'javascriptreact' ||
-		document.languageId === 'typescriptreact';
 }

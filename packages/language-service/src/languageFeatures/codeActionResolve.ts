@@ -22,6 +22,7 @@ export function register(context: LanguageServicePluginContext) {
 				item.edit = embeddedEditToSourceEdit(
 					item.edit,
 					context.documents,
+					'codeAction',
 				);
 			}
 		}
@@ -40,7 +41,11 @@ export function register(context: LanguageServicePluginContext) {
 					}
 				}
 				if (edit) {
-					item.edit = embeddedEditToSourceEdit(edit, context.documents);
+					item.edit = embeddedEditToSourceEdit(
+						edit,
+						context.documents,
+						data.isFormat ? 'format' : 'codeAction',
+					);
 				}
 			}
 		}

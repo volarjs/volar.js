@@ -98,6 +98,7 @@ export interface PluginDiagnosticData {
 	uri: string,
 	original: Pick<vscode.Diagnostic, 'data'>,
 	type: 'plugin' | 'rule',
+	isFormat: boolean,
 	pluginOrRuleId: string,
 	ruleFixIndex: number,
 	documentUri: string,
@@ -286,6 +287,7 @@ export function register(context: LanguageServicePluginContext) {
 						error.data = {
 							uri,
 							type: 'rule',
+							isFormat: api === 'onFormat',
 							pluginOrRuleId: ruleCtx.ruleId,
 							original: {
 								data: error.data,
@@ -307,7 +309,7 @@ export function register(context: LanguageServicePluginContext) {
 
 					return errors;
 				},
-				transformErrorRange,
+				api === 'onFormat' ? transformFormatErrorRange : transformErrorRange,
 				arr => arr.flat(),
 			);
 			if (result) {
@@ -365,6 +367,7 @@ export function register(context: LanguageServicePluginContext) {
 							uri,
 							type: 'plugin',
 							pluginOrRuleId: pluginId,
+							isFormat: false,
 							original: {
 								data: error.data,
 							},
@@ -392,6 +395,29 @@ export function register(context: LanguageServicePluginContext) {
 			}
 		}
 	};
+
+	function transformFormatErrorRange(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined) {
+
+		const result: vscode.Diagnostic[] = [];
+
+		for (const error of errors) {
+
+			// clone it to avoid modify cache
+			let _error: vscode.Diagnostic = { ...error };
+
+			if (map) {
+				const range = map.toSourceRange(error.range);
+				if (!range) {
+					continue;
+				}
+				_error.range = range;
+			}
+
+			result.push(_error);
+		}
+
+		return result;
+	}
 
 	function transformErrorRange(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined) {
 

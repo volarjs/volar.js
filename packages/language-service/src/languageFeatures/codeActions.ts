@@ -19,6 +19,7 @@ export interface RuleCodeActionData {
 	uri: string,
 	documentUri: string,
 	type: 'rule',
+	isFormat: boolean,
 	ruleId: string,
 	ruleFixIndex: number,
 	index: number,
@@ -122,6 +123,7 @@ export function register(context: LanguageServicePluginContext) {
 					const edit = embeddedEditToSourceEdit(
 						_codeAction.edit,
 						context.documents,
+						'codeAction',
 					);
 					if (edit) {
 						_codeAction.edit = edit;
@@ -163,6 +165,7 @@ export function register(context: LanguageServicePluginContext) {
 								data: {
 									uri,
 									type: 'rule',
+									isFormat: data.isFormat,
 									ruleId: data.pluginOrRuleId,
 									documentUri: data.documentUri,
 									ruleFixIndex: data.ruleFixIndex,

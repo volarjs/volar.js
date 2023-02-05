@@ -40,6 +40,7 @@ export function register(context: LanguageServicePluginContext) {
 				const result = embeddedEditToSourceEdit(
 					workspaceEdit,
 					context.documents,
+					'fileName',
 				);
 
 				if (result?.documentChanges) {
