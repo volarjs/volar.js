@@ -189,13 +189,11 @@ export interface RuleContext {
 	/**
 	 * Global settings from config.
 	 */
-	settings: RulesSettings;
+	settings: any;
 	ruleId: string;
 	document: TextDocument;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
-
-export interface RulesSettings { }
 
 export interface RuleFix {
 	/**
@@ -203,17 +201,7 @@ export interface RuleFix {
 	 * 
 	 * See https://code.visualstudio.com/api/references/vscode-api#CodeActionKind
 	 */
-	kinds?: (
-		''
-		| 'quickfix'
-		| 'refactor'
-		| 'refactor.extract'
-		| 'refactor.inline'
-		| 'refactor.rewrite'
-		| 'source'
-		| 'source.organizeImports'
-		| 'source.fixAll'
-	)[];
+	kinds?: vscode.CodeActionKind[];
 	/**
 	 * Title of the code action.
 	 */
@@ -234,6 +222,6 @@ export interface Config {
 	lint?: {
 		rules?: { [id: string]: Rule | undefined; };
 		severities?: { [id: string]: vscode.DiagnosticSeverity; };
-		settings?: RulesSettings;
+		settings?: any;
 	};
 }
