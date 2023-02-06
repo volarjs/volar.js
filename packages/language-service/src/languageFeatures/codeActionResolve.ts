@@ -9,10 +9,6 @@ export function register(context: LanguageServicePluginContext) {
 
 		const data: PluginCodeActionData | RuleCodeActionData | undefined = item.data;
 
-		if (isOutdated(data)) {
-			return item;
-		}
-
 		if (data?.type === 'plugin') {
 
 			const plugin = context.plugins[data.pluginId];
@@ -57,27 +53,12 @@ export function register(context: LanguageServicePluginContext) {
 						edit,
 						context.documents,
 						data.isFormat ? 'format' : 'codeAction',
-						{ [data.uri]: data.version }, // not working for vscode
+						{ [data.uri]: data.version },
 					);
 				}
 			}
 		}
 
-		if (isOutdated(data)) {
-			item.edit = undefined;
-		}
-
 		return item;
-
-		function isOutdated(data: any) {
-			if (data) {
-				const document = context.getTextDocument(data.uri);
-				if (!document || document.version !== data.version) {
-					// console.warn('Code action is outdated, please try again.');
-					return true;
-				}
-			}
-			return false;
-		}
 	};
 }
