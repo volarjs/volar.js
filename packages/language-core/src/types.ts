@@ -5,6 +5,7 @@ export interface FileCapabilities {
 	diagnostic?: boolean;
 	foldingRange?: boolean;
 	documentFormatting?: boolean | {
+		onType?: boolean;
 		insertFirstNewline?: boolean;
 		insertFinalNewline?: boolean;
 	};
@@ -44,6 +45,7 @@ export namespace FileCapabilities {
 		diagnostic: true,
 		foldingRange: true,
 		documentFormatting: {
+			onType: true,
 			insertFirstNewline: true,
 			insertFinalNewline: true,
 		},

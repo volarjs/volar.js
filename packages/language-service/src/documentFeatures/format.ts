@@ -4,7 +4,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { LanguageServicePluginContext } from '../types';
 import * as shared from '@volar/shared';
 import { SourceMap } from '@volar/source-map';
-import { stringToSnapshot } from '../utils/common';
+import { isInsideRange, stringToSnapshot } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -52,6 +52,10 @@ export function register(context: LanguageServicePluginContext) {
 				if (!embedded.capabilities.documentFormatting)
 					continue;
 
+				const enabledOnType = typeof embedded.capabilities.documentFormatting === 'object' ? !!embedded.capabilities.documentFormatting.onType : true;
+				if (onTypeParams && !enabledOnType)
+					continue;
+
 				const maps = [...context.documents.getMapsByVirtualFileName(embedded.fileName)];
 				const map = maps.find(map => map[1].sourceFileDocument.uri === document!.uri)?.[1];
 				if (!map)
@@ -72,34 +76,16 @@ export function register(context: LanguageServicePluginContext) {
 					}
 				}
 				else {
-
-					let virtualCodeRange = map.toGeneratedRange(range);
-
-					if (!virtualCodeRange) {
-						const firstMapping = map.map.mappings.sort((a, b) => a.sourceRange[0] - b.sourceRange[0])[0];
-						const lastMapping = map.map.mappings.sort((a, b) => b.sourceRange[0] - a.sourceRange[0])[0];
-						if (
-							firstMapping && document.offsetAt(range.start) < firstMapping.sourceRange[0]
-							&& lastMapping && document.offsetAt(range.end) > lastMapping.sourceRange[1]
-						) {
-							virtualCodeRange = {
-								start: map.virtualFileDocument.positionAt(firstMapping.generatedRange[0]),
-								end: map.virtualFileDocument.positionAt(lastMapping.generatedRange[1]),
-							};
-						}
-					}
-
-					if (virtualCodeRange) {
-						virtualCodeEdits = await tryFormat(map.virtualFileDocument, virtualCodeRange);
-					}
-
-					if (virtualCodeEdits) {
-						toPatchIndentUris.push(map.virtualFileDocument.uri);
-					}
+					virtualCodeEdits = await tryFormat(map.virtualFileDocument, {
+						start: map.virtualFileDocument.positionAt(0),
+						end: map.virtualFileDocument.positionAt(map.virtualFileDocument.getText().length),
+					});
 				}
 
 				if (!virtualCodeEdits)
 					continue;
+
+				toPatchIndentUris.push(map.virtualFileDocument.uri);
 
 				for (const textEdit of virtualCodeEdits) {
 					const range = map.toSourceRange(textEdit.range);
@@ -111,6 +97,8 @@ export function register(context: LanguageServicePluginContext) {
 					}
 				}
 			}
+
+			edits = edits.filter(edit => isInsideRange(range!, edit.range));
 
 			if (edits.length > 0) {
 				const newText = TextDocument.applyEdits(document, edits);
@@ -127,12 +115,14 @@ export function register(context: LanguageServicePluginContext) {
 
 					for (const [file, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri)) {
 
-						const indentEdits = patchInterpolationIndent(
+						let indentEdits = patchInterpolationIndent(
 							document,
 							map.map,
 							initialIndentLanguageId[map.virtualFileDocument.languageId] ? baseIndent : '',
 							file.capabilities.documentFormatting,
 						);
+
+						indentEdits = indentEdits.filter(edit => isInsideRange(range!, edit.range));
 
 						if (indentEdits.length > 0) {
 							const newText = TextDocument.applyEdits(document, indentEdits);
@@ -224,35 +214,55 @@ function patchInterpolationIndent(document: TextDocument, map: SourceMap, initia
 
 		const mapping = map.mappings[i];
 		const firstLineIndent = getBaseIndent(mapping.sourceRange[0]);
-		const oldText = document.getText().substring(mapping.sourceRange[0], mapping.sourceRange[1]);
-		if (oldText.indexOf('\n') === -1) {
+		const text = document.getText().substring(mapping.sourceRange[0], mapping.sourceRange[1]);
+		if (text.indexOf('\n') === -1) {
 			continue;
 		}
 
-		let newText = oldText;
+		const lines = text.split('\n');
+		const baseIndent = firstLineIndent + initialIndent;
+		let lineOffset = lines[0].length + 1;
 
-		if (insertFirstNewline && i === 0 && !newText.startsWith('\n')) {
-			newText = '\n' + newText;
-		}
-		if (insertFinalNewline && i === map.mappings.length - 1 && !newText.endsWith('\n')) {
-			newText = newText + '\n';
-		}
-
-		const lines = newText.split('\n');
-		for (let i = 1; i < lines.length - 1; i++) {
-			if (lines[i] !== '') {
-				lines[i] = firstLineIndent + initialIndent + lines[i];
-			}
-		}
-		lines[lines.length - 1] = firstLineIndent + lines[lines.length - 1];
-
-		newText = lines.join('\n');
-
-		if (newText !== oldText) {
+		if (insertFirstNewline && i === 0 && !text.startsWith('\n')) {
 			indentTextEdits.push({
-				newText,
+				newText: '\n' + baseIndent,
 				range: {
 					start: document.positionAt(mapping.sourceRange[0]),
+					end: document.positionAt(mapping.sourceRange[0]),
+				},
+			});
+		}
+
+		if (baseIndent) {
+			for (let i = 1; i < lines.length - 1; i++) {
+				if (lines[i] !== '') {
+					indentTextEdits.push({
+						newText: baseIndent,
+						range: {
+							start: document.positionAt(mapping.sourceRange[0] + lineOffset),
+							end: document.positionAt(mapping.sourceRange[0] + lineOffset),
+						},
+					});
+				}
+				lineOffset += lines[i].length + 1;
+			}
+		}
+
+		if (firstLineIndent) {
+			indentTextEdits.push({
+				newText: firstLineIndent,
+				range: {
+					start: document.positionAt(mapping.sourceRange[0] + lineOffset),
+					end: document.positionAt(mapping.sourceRange[0] + lineOffset),
+				},
+			});
+		}
+
+		if (insertFinalNewline && i === map.mappings.length - 1 && !text.endsWith('\n')) {
+			indentTextEdits.push({
+				newText: '\n',
+				range: {
+					start: document.positionAt(mapping.sourceRange[1]),
 					end: document.positionAt(mapping.sourceRange[1]),
 				},
 			});
