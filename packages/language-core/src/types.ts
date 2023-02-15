@@ -4,7 +4,10 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 export interface FileCapabilities {
 	diagnostic?: boolean;
 	foldingRange?: boolean;
-	documentFormatting?: boolean;
+	documentFormatting?: boolean | {
+		insertFirstNewline?: boolean;
+		insertFinalNewline?: boolean;
+	};
 	documentSymbol?: boolean;
 	codeAction?: boolean;
 	inlayHint?: boolean;
@@ -40,7 +43,10 @@ export namespace FileCapabilities {
 	export const full: FileCapabilities = {
 		diagnostic: true,
 		foldingRange: true,
-		documentFormatting: true,
+		documentFormatting: {
+			insertFirstNewline: true,
+			insertFinalNewline: true,
+		},
 		documentSymbol: true,
 		codeAction: true,
 		inlayHint: true,

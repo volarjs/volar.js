@@ -1,4 +1,4 @@
-import type { VirtualFile } from '@volar/language-core';
+import type { FileCapabilities, VirtualFile } from '@volar/language-core';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { LanguageServicePluginContext } from '../types';
@@ -125,12 +125,13 @@ export function register(context: LanguageServicePluginContext) {
 
 				for (const toPatchIndentUri of toPatchIndentUris) {
 
-					for (const [_, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri)) {
+					for (const [file, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri)) {
 
 						const indentEdits = patchInterpolationIndent(
 							document,
 							map.map,
 							initialIndentLanguageId[map.virtualFileDocument.languageId] ? baseIndent : '',
+							file.capabilities.documentFormatting,
 						);
 
 						if (indentEdits.length > 0) {
@@ -213,23 +214,31 @@ export function register(context: LanguageServicePluginContext) {
 	};
 }
 
-function patchInterpolationIndent(document: TextDocument, map: SourceMap, initialIndent: string) {
+function patchInterpolationIndent(document: TextDocument, map: SourceMap, initialIndent: string, data: FileCapabilities['documentFormatting']) {
 
+	const insertFirstNewline = typeof data === 'object' ? data.insertFirstNewline : false;
+	const insertFinalNewline = typeof data === 'object' ? data.insertFinalNewline : false;
 	const indentTextEdits: vscode.TextEdit[] = [];
 
-	for (const mapped of map.mappings) {
+	for (let i = 0; i < map.mappings.length; i++) {
 
-		const firstLineIndent = getBaseIndent(mapped.sourceRange[0]);
-		if (firstLineIndent + initialIndent === '') {
+		const mapping = map.mappings[i];
+		const firstLineIndent = getBaseIndent(mapping.sourceRange[0]);
+		const oldText = document.getText().substring(mapping.sourceRange[0], mapping.sourceRange[1]);
+		if (oldText.indexOf('\n') === -1) {
 			continue;
 		}
 
-		const text = document.getText().substring(mapped.sourceRange[0], mapped.sourceRange[1]);
-		if (text.indexOf('\n') === -1) {
-			continue;
+		let newText = oldText;
+
+		if (insertFirstNewline && i === 0 && !newText.startsWith('\n')) {
+			newText = '\n' + newText;
+		}
+		if (insertFinalNewline && i === map.mappings.length - 1 && !newText.endsWith('\n')) {
+			newText = newText + '\n';
 		}
 
-		const lines = text.split('\n');
+		const lines = newText.split('\n');
 		for (let i = 1; i < lines.length - 1; i++) {
 			if (lines[i] !== '') {
 				lines[i] = firstLineIndent + initialIndent + lines[i];
@@ -237,13 +246,17 @@ function patchInterpolationIndent(document: TextDocument, map: SourceMap, initia
 		}
 		lines[lines.length - 1] = firstLineIndent + lines[lines.length - 1];
 
-		indentTextEdits.push({
-			newText: lines.join('\n'),
-			range: {
-				start: document.positionAt(mapped.sourceRange[0]),
-				end: document.positionAt(mapped.sourceRange[1]),
-			},
-		});
+		newText = lines.join('\n');
+
+		if (newText !== oldText) {
+			indentTextEdits.push({
+				newText,
+				range: {
+					start: document.positionAt(mapping.sourceRange[0]),
+					end: document.positionAt(mapping.sourceRange[1]),
+				},
+			});
+		}
 	}
 
 	return indentTextEdits;
