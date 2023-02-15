@@ -67,7 +67,10 @@ export interface LanguageServicePlugin<T = {}> {
 export interface LanguageServicePluginInstance {
 
 	rules?: {
-		prepare?(context: RuleContext): NotNullableResult<RuleContext>;
+		onAny?(context: RuleContext): NotNullableResult<RuleContext>;
+		onFormat?(context: RuleContext): NotNullableResult<RuleContext>;
+		onSyntax?(context: RuleContext): NotNullableResult<RuleContext>;
+		onSemantic?(context: RuleContext): NotNullableResult<RuleContext>;
 	};
 
 	validation?: {

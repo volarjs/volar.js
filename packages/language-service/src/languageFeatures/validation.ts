@@ -230,6 +230,7 @@ export function register(context: LanguageServicePluginContext) {
 		) {
 			const result = await ruleWorker(
 				context,
+				api,
 				uri,
 				file => api === 'onFormat' ? !!file.capabilities.documentFormatting : !!file.capabilities.diagnostic,
 				async (ruleName, rule, ruleCtx) => {

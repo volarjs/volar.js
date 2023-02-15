@@ -114,6 +114,7 @@ export async function languageFeatureWorker<T, K>(
 
 export async function ruleWorker<T>(
 	context: LanguageServicePluginContext,
+	api: 'onSyntax' | 'onSemantic' | 'onFormat',
 	uri: string,
 	isValidSourceMap: (file: VirtualFile) => boolean,
 	worker: (ruleName: string, rule: Rule, ruleCtx: RuleContext) => T,
@@ -152,8 +153,12 @@ export async function ruleWorker<T>(
 			};
 
 			for (const plugin of Object.values(context.plugins)) {
-				if (plugin.rules?.prepare) {
-					ruleCtx = await plugin.rules.prepare(ruleCtx);
+				const fn = plugin.rules?.[api];
+				if (fn) {
+					ruleCtx = await fn(ruleCtx);
+				}
+				else if (plugin.rules?.onAny) {
+					ruleCtx = await plugin.rules.onAny(ruleCtx);
 				}
 			}
 
@@ -209,8 +214,12 @@ export async function ruleWorker<T>(
 		};
 
 		for (const plugin of Object.values(context.plugins)) {
-			if (plugin.rules?.prepare) {
-				ruleCtx = await plugin.rules?.prepare(ruleCtx);
+			const fn = plugin.rules?.[api];
+			if (fn) {
+				ruleCtx = await fn(ruleCtx);
+			}
+			else if (plugin.rules?.onAny) {
+				ruleCtx = await plugin.rules.onAny(ruleCtx);
 			}
 		}
 
