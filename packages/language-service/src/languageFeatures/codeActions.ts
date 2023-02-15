@@ -89,7 +89,7 @@ export function register(context: LanguageServicePluginContext) {
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
 					const data: PluginDiagnosticData | undefined = diagnostic.data;
 					if (data && data.version !== sourceDocument.version) {
-						console.warn('[volar/plugin-api] diagnostic version mismatch', data.version, sourceDocument.version);
+						// console.warn('[volar/plugin-api] diagnostic version mismatch', data.version, sourceDocument.version);
 						return false;
 					}
 					return data?.type === 'plugin' && data?.pluginOrRuleId === pluginId;
@@ -148,7 +148,7 @@ export function register(context: LanguageServicePluginContext) {
 		for (const diagnostic of codeActionContext.diagnostics) {
 			const data: PluginDiagnosticData | undefined = diagnostic.data;
 			if (data && data.version !== sourceDocument.version) {
-				console.warn('[volar/rules-api] diagnostic version mismatch', data.version, sourceDocument.version);
+				// console.warn('[volar/rules-api] diagnostic version mismatch', data.version, sourceDocument.version);
 				continue;
 			}
 			if (data?.type === 'rule') {
