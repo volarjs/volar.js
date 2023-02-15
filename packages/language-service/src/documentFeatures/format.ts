@@ -23,14 +23,14 @@ export function register(context: LanguageServicePluginContext) {
 
 		range ??= vscode.Range.create(document.positionAt(0), document.positionAt(document.getText().length));
 
-		const initialIndentLanguageId = await context.env.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 		const source = context.documents.getSourceByUri(document.uri);
 		if (!source) {
 			return onTypeParams
-				? await tryFormat(false, document, onTypeParams.position, onTypeParams.ch)
-				: await tryFormat(false, document, range, undefined);
+				? await tryFormat(document, onTypeParams.position, onTypeParams.ch)
+				: await tryFormat(document, range, undefined);
 		}
 
+		const initialIndentLanguageId = await context.env.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 		const originalSnapshot = source.snapshot;
 		const rootVirtualFile = source.root;
 		const originalDocument = document;
@@ -45,7 +45,7 @@ export function register(context: LanguageServicePluginContext) {
 				break;
 
 			let edits: vscode.TextEdit[] = [];
-			let toPatchIndentUri: string | undefined;
+			const toPatchIndentUris: string[] = [];
 
 			for (const embedded of embeddedFiles) {
 
@@ -57,52 +57,51 @@ export function register(context: LanguageServicePluginContext) {
 				if (!map)
 					continue;
 
-				let _edits: vscode.TextEdit[] | undefined;
+				let virtualCodeEdits: vscode.TextEdit[] | undefined;
 
 				if (onTypeParams) {
 
 					const embeddedPosition = map.toGeneratedPosition(onTypeParams.position);
 
 					if (embeddedPosition) {
-						_edits = await tryFormat(
-							true,
+						virtualCodeEdits = await tryFormat(
 							map.virtualFileDocument,
 							embeddedPosition,
 							onTypeParams.ch,
 						);
 					}
 				}
-
 				else {
 
-					let genRange = map.toGeneratedRange(range);
+					let virtualCodeRange = map.toGeneratedRange(range);
 
-					if (!genRange) {
+					if (!virtualCodeRange) {
 						const firstMapping = map.map.mappings.sort((a, b) => a.sourceRange[0] - b.sourceRange[0])[0];
 						const lastMapping = map.map.mappings.sort((a, b) => b.sourceRange[0] - a.sourceRange[0])[0];
 						if (
 							firstMapping && document.offsetAt(range.start) < firstMapping.sourceRange[0]
 							&& lastMapping && document.offsetAt(range.end) > lastMapping.sourceRange[1]
 						) {
-							genRange = {
+							virtualCodeRange = {
 								start: map.virtualFileDocument.positionAt(firstMapping.generatedRange[0]),
 								end: map.virtualFileDocument.positionAt(lastMapping.generatedRange[1]),
 							};
 						}
 					}
 
-					if (genRange) {
+					if (virtualCodeRange) {
+						virtualCodeEdits = await tryFormat(map.virtualFileDocument, virtualCodeRange);
+					}
 
-						toPatchIndentUri = map.virtualFileDocument.uri;
-
-						_edits = await tryFormat(true, map.virtualFileDocument, genRange);
+					if (virtualCodeEdits) {
+						toPatchIndentUris.push(map.virtualFileDocument.uri);
 					}
 				}
 
-				if (!_edits)
+				if (!virtualCodeEdits)
 					continue;
 
-				for (const textEdit of _edits) {
+				for (const textEdit of virtualCodeEdits) {
 					const range = map.toSourceRange(textEdit.range);
 					if (range) {
 						edits.push({
@@ -120,17 +119,26 @@ export function register(context: LanguageServicePluginContext) {
 				edited = true;
 			}
 
-			if (toPatchIndentUri) {
+			if (level > 1) {
 
-				for (const [_, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri)) {
+				const baseIndent = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
 
-					const indentEdits = patchInterpolationIndent(document, map.map);
+				for (const toPatchIndentUri of toPatchIndentUris) {
 
-					if (indentEdits.length > 0) {
-						const newText = TextDocument.applyEdits(document, indentEdits);
-						document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-						context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
-						edited = true;
+					for (const [_, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri)) {
+
+						const indentEdits = patchInterpolationIndent(
+							document,
+							map.map,
+							initialIndentLanguageId[map.virtualFileDocument.languageId] ? baseIndent : '',
+						);
+
+						if (indentEdits.length > 0) {
+							const newText = TextDocument.applyEdits(document, indentEdits);
+							document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
+							context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
+							edited = true;
+						}
 					}
 				}
 			}
@@ -173,7 +181,6 @@ export function register(context: LanguageServicePluginContext) {
 		}
 
 		async function tryFormat(
-			isEmbedded: boolean,
 			document: TextDocument,
 			range: vscode.Range | vscode.Position,
 			ch?: string,
@@ -190,14 +197,11 @@ export function register(context: LanguageServicePluginContext) {
 						edits = await plugin.formatOnType?.(document, formatRange, ch, options);
 					}
 					else if (ch === undefined && vscode.Range.is(formatRange)) {
-						edits = await plugin.format?.(document, formatRange, {
-							...options,
-							initialIndent: isEmbedded ? !!initialIndentLanguageId[document.languageId] : false,
-						});
+						edits = await plugin.format?.(document, formatRange, options);
 					}
 				}
 				catch (err) {
-					console.error(err);
+					console.warn(err);
 				}
 
 				if (!edits)
@@ -209,14 +213,14 @@ export function register(context: LanguageServicePluginContext) {
 	};
 }
 
-function patchInterpolationIndent(document: TextDocument, map: SourceMap) {
+function patchInterpolationIndent(document: TextDocument, map: SourceMap, initialIndent: string) {
 
 	const indentTextEdits: vscode.TextEdit[] = [];
 
 	for (const mapped of map.mappings) {
 
-		const baseIndent = getBaseIndent(mapped.sourceRange[0]);
-		if (baseIndent === '') {
+		const firstLineIndent = getBaseIndent(mapped.sourceRange[0]);
+		if (firstLineIndent + initialIndent === '') {
 			continue;
 		}
 
@@ -226,9 +230,12 @@ function patchInterpolationIndent(document: TextDocument, map: SourceMap) {
 		}
 
 		const lines = text.split('\n');
-		for (let i = 1; i < lines.length; i++) {
-			lines[i] = baseIndent + lines[i];
+		for (let i = 1; i < lines.length - 1; i++) {
+			if (lines[i] !== '') {
+				lines[i] = firstLineIndent + initialIndent + lines[i];
+			}
 		}
+		lines[lines.length - 1] = firstLineIndent + lines[lines.length - 1];
 
 		indentTextEdits.push({
 			newText: lines.join('\n'),

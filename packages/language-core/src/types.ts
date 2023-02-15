@@ -2,38 +2,38 @@ import { Mapping } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export interface FileCapabilities {
-	diagnostic?: boolean,
-	foldingRange?: boolean,
-	documentFormatting?: boolean,
-	documentSymbol?: boolean,
-	codeAction?: boolean,
-	inlayHint?: boolean,
+	diagnostic?: boolean;
+	foldingRange?: boolean;
+	documentFormatting?: boolean;
+	documentSymbol?: boolean;
+	codeAction?: boolean;
+	inlayHint?: boolean;
 }
 
 export interface FileRangeCapabilities {
-	hover?: boolean,
-	references?: boolean,
-	definition?: boolean,
+	hover?: boolean;
+	references?: boolean;
+	definition?: boolean;
 	rename?: boolean | {
-		normalize?(newName: string): string,
-		apply?(newName: string): string,
-	},
+		normalize?(newName: string): string;
+		apply?(newName: string): string;
+	};
 	completion?: boolean | {
-		additional?: boolean,
-		autoImportOnly?: boolean,
-	},
-	diagnostic?: boolean,
-	semanticTokens?: boolean,
+		additional?: boolean;
+		autoImportOnly?: boolean;
+	};
+	diagnostic?: boolean;
+	semanticTokens?: boolean;
 
 	// TODO
-	referencesCodeLens?: boolean,
-	displayWithLink?: boolean,
+	referencesCodeLens?: boolean;
+	displayWithLink?: boolean;
 }
 
 export interface MirrorBehaviorCapabilities {
-	references?: boolean,
-	definition?: boolean,
-	rename?: boolean,
+	references?: boolean;
+	definition?: boolean;
+	rename?: boolean;
 }
 
 export namespace FileCapabilities {
