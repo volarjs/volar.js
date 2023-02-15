@@ -1,4 +1,4 @@
-import { SegmentWithData, SegmentWithoutData } from 'muggle-string';
+import { Segment } from 'muggle-string';
 
 export * from 'muggle-string';
 
@@ -166,7 +166,7 @@ export class SourceMap<Data = any> {
 	}
 }
 
-export function buildMappings<T>(chunks: SegmentWithoutData[] | SegmentWithData<T>[]) {
+export function buildMappings<T>(chunks: Segment<T>[]) {
 	let length = 0;
 	const mappings: Mapping<T>[] = [];
 	for (const segment of chunks) {

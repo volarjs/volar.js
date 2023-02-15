@@ -13,7 +13,6 @@
 		"directory": "packages/language-core"
 	},
 	"dependencies": {
-		"@volar/source-map": "1.2.0-alpha.9",
-		"muggle-string": "^0.1.0"
+		"@volar/source-map": "1.2.0-alpha.9"
 	}
 }

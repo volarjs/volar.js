@@ -37,21 +37,29 @@ export async function register(cmd: string, client: BaseLanguageClient) {
 			const maps = virtualUriToSourceMap.get(document.uri.toString());
 			if (!maps) return;
 
-			const data: [string, FileRangeCapabilities][] = [];
+			const data: {
+				uri: string,
+				mapping: any,
+			}[] = [];
 
 			for (const [sourceUri, _, map] of maps) {
 				const source = map.toSourceOffset(document.offsetAt(position));
 				if (source) {
-					data.push([sourceUri, source[1].data]);
+					data.push({
+						uri: sourceUri,
+						mapping: source,
+					});
 				}
 			}
 
 			if (data.length === 0) return;
 
-			return new vscode.Hover(data.map(([uri, data]) => [
-				uri,
+			return new vscode.Hover(data.map((data) => [
+				data.uri,
+				'',
+				'',
 				'```json',
-				JSON.stringify(data, null, 2),
+				JSON.stringify(data.mapping, null, 2),
 				'```',
 			].join('\n')));
 		}
