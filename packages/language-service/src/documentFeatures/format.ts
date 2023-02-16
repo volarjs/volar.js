@@ -230,6 +230,9 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 		let lineOffset = lines[0].length + 1;
 		let insertedFinalNewLine = false;
 
+		if (!text.trim())
+			continue;
+
 		if (isCodeBlock && text.trimStart().length === text.length) {
 			indentTextEdits.push({
 				newText: '\n' + baseIndent,
