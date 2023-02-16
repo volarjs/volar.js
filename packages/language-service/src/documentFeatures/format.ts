@@ -80,12 +80,14 @@ export function register(context: LanguageServicePluginContext) {
 						start: map.virtualFileDocument.positionAt(0),
 						end: map.virtualFileDocument.positionAt(map.virtualFileDocument.getText().length),
 					});
+
+					if (virtualCodeEdits) {
+						toPatchIndentUris.push(map.virtualFileDocument.uri);
+					}
 				}
 
 				if (!virtualCodeEdits)
 					continue;
-
-				toPatchIndentUris.push(map.virtualFileDocument.uri);
 
 				for (const textEdit of virtualCodeEdits) {
 					const range = map.toSourceRange(textEdit.range);
