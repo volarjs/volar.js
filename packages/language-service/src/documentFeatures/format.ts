@@ -223,7 +223,7 @@ function patchInterpolationIndent(document: TextDocument, map: SourceMap, initia
 		const baseIndent = firstLineIndent + initialIndent;
 		let lineOffset = lines[0].length + 1;
 
-		if (insertFirstNewline && i === 0 && !text.startsWith('\n')) {
+		if (insertFirstNewline && i === 0 && !text.startsWith('\n') && !text.startsWith('\r\n')) {
 			indentTextEdits.push({
 				newText: '\n' + baseIndent,
 				range: {
