@@ -1,4 +1,4 @@
-import type { FileCapabilities, VirtualFile } from '@volar/language-core';
+import type { VirtualFile } from '@volar/language-core';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { LanguageServicePluginContext } from '../types';
@@ -45,15 +45,18 @@ export function register(context: LanguageServicePluginContext) {
 				break;
 
 			let edits: vscode.TextEdit[] = [];
-			const toPatchIndentUris: string[] = [];
+			const toPatchIndentUris: {
+				uri: string;
+				isCodeBlock: boolean;
+			}[] = [];
 
 			for (const embedded of embeddedFiles) {
 
 				if (!embedded.capabilities.documentFormatting)
 					continue;
 
-				const enabledOnType = typeof embedded.capabilities.documentFormatting === 'object' ? !!embedded.capabilities.documentFormatting.onType : true;
-				if (onTypeParams && !enabledOnType)
+				const isCodeBlock = embedded.mappings.length === 1 && embedded.mappings[0].generatedRange[0] === 0 && embedded.mappings[0].generatedRange[1] === embedded.snapshot.getLength();
+				if (onTypeParams && !isCodeBlock)
 					continue;
 
 				const maps = [...context.documents.getMapsByVirtualFileName(embedded.fileName)];
@@ -82,7 +85,10 @@ export function register(context: LanguageServicePluginContext) {
 					});
 
 					if (virtualCodeEdits) {
-						toPatchIndentUris.push(map.virtualFileDocument.uri);
+						toPatchIndentUris.push({
+							uri: map.virtualFileDocument.uri,
+							isCodeBlock,
+						});
 					}
 				}
 
@@ -115,14 +121,13 @@ export function register(context: LanguageServicePluginContext) {
 
 				for (const toPatchIndentUri of toPatchIndentUris) {
 
-					for (const [file, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri)) {
+					for (const [_, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri.uri)) {
 
 						let indentEdits = patchIndents(
 							document,
-							file.snapshot.getLength(),
+							toPatchIndentUri.isCodeBlock,
 							map.map,
 							initialIndentLanguageId[map.virtualFileDocument.languageId] ? baseIndent : '',
-							file.capabilities.documentFormatting,
 						);
 
 						indentEdits = indentEdits.filter(edit => isInsideRange(range!, edit.range));
@@ -207,12 +212,9 @@ export function register(context: LanguageServicePluginContext) {
 	};
 }
 
-function patchIndents(document: TextDocument, virtualCodeLength: number, map: SourceMap, initialIndent: string, data: FileCapabilities['documentFormatting']) {
+function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceMap, initialIndent: string) {
 
-	const insertFirstNewline = typeof data === 'object' ? data.insertFirstNewline : false;
-	const insertFinalNewline = typeof data === 'object' ? data.insertFinalNewline : false;
 	const indentTextEdits: vscode.TextEdit[] = [];
-	const isCodeBlock = map.mappings.length === 1 && map.mappings[0].generatedRange[0] === 0 && map.mappings[0].generatedRange[1] === virtualCodeLength;
 
 	if (!isCodeBlock) {
 		initialIndent = '';
@@ -228,7 +230,7 @@ function patchIndents(document: TextDocument, virtualCodeLength: number, map: So
 		let lineOffset = lines[0].length + 1;
 		let insertedFinalNewLine = false;
 
-		if (insertFirstNewline && isCodeBlock && text.trimStart().length === text.length) {
+		if (isCodeBlock && text.trimStart().length === text.length) {
 			indentTextEdits.push({
 				newText: '\n' + baseIndent,
 				range: {
@@ -238,7 +240,7 @@ function patchIndents(document: TextDocument, virtualCodeLength: number, map: So
 			});
 		}
 
-		if (insertFinalNewline && isCodeBlock && text.trimEnd().length === text.length) {
+		if (isCodeBlock && text.trimEnd().length === text.length) {
 			indentTextEdits.push({
 				newText: '\n',
 				range: {
