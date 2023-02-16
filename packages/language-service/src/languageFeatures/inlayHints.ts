@@ -59,7 +59,7 @@ export function register(context: LanguageServicePluginContext) {
 			(plugin, document, arg) => {
 				return plugin.inlayHints?.on?.(document, arg);
 			},
-			(inlayHints, map) => inlayHints.map(_inlayHint => {
+			(inlayHints, map) => inlayHints.map((_inlayHint): vscode.InlayHint | undefined => {
 
 				if (!map)
 					return _inlayHint;
@@ -73,7 +73,7 @@ export function register(context: LanguageServicePluginContext) {
 					return {
 						..._inlayHint,
 						position,
-						edits,
+						textEdits: edits,
 					};
 				}
 			}).filter(shared.notEmpty),
