@@ -228,7 +228,7 @@ function patchIndents(document: TextDocument, virtualCodeLength: number, map: So
 		let lineOffset = lines[0].length + 1;
 		let insertedFinalNewLine = false;
 
-		if (insertFirstNewline && mapping.generatedRange[0] === 0 && text.trimStart().length === text.length) {
+		if (insertFirstNewline && isCodeBlock && text.trimStart().length === text.length) {
 			indentTextEdits.push({
 				newText: '\n' + baseIndent,
 				range: {
@@ -238,7 +238,7 @@ function patchIndents(document: TextDocument, virtualCodeLength: number, map: So
 			});
 		}
 
-		if (insertFinalNewline && mapping.generatedRange[1] === virtualCodeLength && text.trimEnd().length === text.length) {
+		if (insertFinalNewline && isCodeBlock && text.trimEnd().length === text.length) {
 			indentTextEdits.push({
 				newText: '\n',
 				range: {
@@ -252,8 +252,9 @@ function patchIndents(document: TextDocument, virtualCodeLength: number, map: So
 		if (baseIndent && lines.length > 1) {
 			for (let i = 1; i < lines.length; i++) {
 				if (lines[i] !== '' || i === lines.length - 1) {
+					const isLastLine = i === lines.length - 1 && !insertedFinalNewLine;
 					indentTextEdits.push({
-						newText: (i === lines.length - 1 && !insertedFinalNewLine) ? firstLineIndent : baseIndent,
+						newText: isLastLine ? firstLineIndent : baseIndent,
 						range: {
 							start: document.positionAt(mapping.sourceRange[0] + lineOffset),
 							end: document.positionAt(mapping.sourceRange[0] + lineOffset),
