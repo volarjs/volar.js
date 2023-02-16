@@ -117,8 +117,9 @@ export function register(context: LanguageServicePluginContext) {
 
 					for (const [file, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri)) {
 
-						let indentEdits = patchInterpolationIndent(
+						let indentEdits = patchIndents(
 							document,
+							file.snapshot.getLength(),
 							map.map,
 							initialIndentLanguageId[map.virtualFileDocument.languageId] ? baseIndent : '',
 							file.capabilities.documentFormatting,
@@ -206,26 +207,28 @@ export function register(context: LanguageServicePluginContext) {
 	};
 }
 
-function patchInterpolationIndent(document: TextDocument, map: SourceMap, initialIndent: string, data: FileCapabilities['documentFormatting']) {
+function patchIndents(document: TextDocument, virtualCodeLength: number, map: SourceMap, initialIndent: string, data: FileCapabilities['documentFormatting']) {
 
 	const insertFirstNewline = typeof data === 'object' ? data.insertFirstNewline : false;
 	const insertFinalNewline = typeof data === 'object' ? data.insertFinalNewline : false;
 	const indentTextEdits: vscode.TextEdit[] = [];
+	const isCodeBlock = map.mappings.length === 1 && map.mappings[0].generatedRange[0] === 0 && map.mappings[0].generatedRange[1] === virtualCodeLength;
+
+	if (!isCodeBlock) {
+		initialIndent = '';
+	}
 
 	for (let i = 0; i < map.mappings.length; i++) {
 
 		const mapping = map.mappings[i];
 		const firstLineIndent = getBaseIndent(mapping.sourceRange[0]);
 		const text = document.getText().substring(mapping.sourceRange[0], mapping.sourceRange[1]);
-		if (text.indexOf('\n') === -1) {
-			continue;
-		}
-
 		const lines = text.split('\n');
 		const baseIndent = firstLineIndent + initialIndent;
 		let lineOffset = lines[0].length + 1;
+		let insertedFinalNewLine = false;
 
-		if (insertFirstNewline && i === 0 && !text.startsWith('\n') && !text.startsWith('\r\n')) {
+		if (insertFirstNewline && mapping.generatedRange[0] === 0 && text.trimStart().length === text.length) {
 			indentTextEdits.push({
 				newText: '\n' + baseIndent,
 				range: {
@@ -235,11 +238,22 @@ function patchInterpolationIndent(document: TextDocument, map: SourceMap, initia
 			});
 		}
 
-		if (baseIndent) {
-			for (let i = 1; i < lines.length - 1; i++) {
-				if (lines[i] !== '') {
+		if (insertFinalNewline && mapping.generatedRange[1] === virtualCodeLength && text.trimEnd().length === text.length) {
+			indentTextEdits.push({
+				newText: '\n',
+				range: {
+					start: document.positionAt(mapping.sourceRange[1]),
+					end: document.positionAt(mapping.sourceRange[1]),
+				},
+			});
+			insertedFinalNewLine = true;
+		}
+
+		if (baseIndent && lines.length > 1) {
+			for (let i = 1; i < lines.length; i++) {
+				if (lines[i] !== '' || i === lines.length - 1) {
 					indentTextEdits.push({
-						newText: baseIndent,
+						newText: (i === lines.length - 1 && !insertedFinalNewLine) ? firstLineIndent : baseIndent,
 						range: {
 							start: document.positionAt(mapping.sourceRange[0] + lineOffset),
 							end: document.positionAt(mapping.sourceRange[0] + lineOffset),
@@ -248,26 +262,6 @@ function patchInterpolationIndent(document: TextDocument, map: SourceMap, initia
 				}
 				lineOffset += lines[i].length + 1;
 			}
-		}
-
-		if (firstLineIndent) {
-			indentTextEdits.push({
-				newText: firstLineIndent,
-				range: {
-					start: document.positionAt(mapping.sourceRange[0] + lineOffset),
-					end: document.positionAt(mapping.sourceRange[0] + lineOffset),
-				},
-			});
-		}
-
-		if (insertFinalNewline && i === map.mappings.length - 1 && !text.endsWith('\n')) {
-			indentTextEdits.push({
-				newText: '\n',
-				range: {
-					start: document.positionAt(mapping.sourceRange[1]),
-					end: document.positionAt(mapping.sourceRange[1]),
-				},
-			});
 		}
 	}
 
