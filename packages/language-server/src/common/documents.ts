@@ -186,6 +186,10 @@ export function createDocuments(connection: vscode.Connection) {
 	const onDidCloses = new Set<(params: vscode.DidCloseTextDocumentParams) => void>();
 
 	connection.onDidOpenTextDocument(params => {
+
+		if (params.textDocument.uri.startsWith('git:/'))
+			return;
+
 		snapshots.uriSet(params.textDocument.uri, new IncrementalScriptSnapshot(
 			params.textDocument.uri,
 			params.textDocument.languageId,
@@ -197,6 +201,10 @@ export function createDocuments(connection: vscode.Connection) {
 		}
 	});
 	connection.onDidChangeTextDocument(params => {
+
+		if (params.textDocument.uri.startsWith('git:/'))
+			return;
+
 		const incrementalSnapshot = snapshots.uriGet(params.textDocument.uri);
 		if (incrementalSnapshot) {
 			if (params.contentChanges.every(vscode.TextDocumentContentChangeEvent.isIncremental)) {
@@ -219,6 +227,10 @@ export function createDocuments(connection: vscode.Connection) {
 		}
 	});
 	connection.onDidCloseTextDocument(params => {
+
+		if (params.textDocument.uri.startsWith('git:/'))
+			return;
+
 		snapshots.uriDelete(params.textDocument.uri);
 		for (const cb of onDidCloses) {
 			cb(params);
