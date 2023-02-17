@@ -28,11 +28,12 @@ export function getProgram(
 			}
 			return target[property];
 		},
-		set: (_target, property, newValue) => {
-			const program = getProgram();
-			(program as any)[property] = newValue;
-			return true;
-		},
+		// commented out because it causes https://github.com/vuejs/language-tools/issues/2403
+		// set: (_target, property, newValue) => {
+		// 	const program = getProgram();
+		// 	(program as any)[property] = newValue;
+		// 	return true;
+		// },
 	});
 
 	function getProgram() {
