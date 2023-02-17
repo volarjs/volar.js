@@ -83,17 +83,15 @@ export function register(context: LanguageServicePluginContext) {
 						start: map.virtualFileDocument.positionAt(0),
 						end: map.virtualFileDocument.positionAt(map.virtualFileDocument.getText().length),
 					});
-
-					if (virtualCodeEdits) {
-						toPatchIndentUris.push({
-							uri: map.virtualFileDocument.uri,
-							isCodeBlock,
-						});
-					}
 				}
 
 				if (!virtualCodeEdits)
 					continue;
+
+				toPatchIndentUris.push({
+					uri: map.virtualFileDocument.uri,
+					isCodeBlock,
+				});
 
 				for (const textEdit of virtualCodeEdits) {
 					const range = map.toSourceRange(textEdit.range);
@@ -118,6 +116,15 @@ export function register(context: LanguageServicePluginContext) {
 			if (level > 1) {
 
 				const baseIndent = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
+				const editLines = new Set<number>();
+
+				if (onTypeParams) {
+					for (const edit of edits) {
+						for (let line = edit.range.start.line; line <= edit.range.end.line; line++) {
+							editLines.add(line);
+						}
+					}
+				}
 
 				for (const toPatchIndentUri of toPatchIndentUris) {
 
@@ -129,6 +136,16 @@ export function register(context: LanguageServicePluginContext) {
 							map.map,
 							initialIndentLanguageId[map.virtualFileDocument.languageId] ? baseIndent : '',
 						);
+
+						if (onTypeParams) {
+							indentEdits = indentEdits.filter(edit => {
+								for (let line = edit.range.start.line; line <= edit.range.end.line; line++) {
+									if (!editLines.has(line))
+										return false;
+								}
+								return true;
+							});
+						}
 
 						indentEdits = indentEdits.filter(edit => isInsideRange(range!, edit.range));
 
