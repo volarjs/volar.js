@@ -10,7 +10,7 @@ export function register(context: LanguageServicePluginContext) {
 			context,
 			uri,
 			position,
-			(position, map) => map.toGeneratedPositions(position, data => typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename),
+			(position, map) => map.toGeneratedPositions(position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename),
 			(plugin, document, position) => plugin.rename?.prepare?.(document, position),
 			(item, map) => {
 				if (!map) {
@@ -19,6 +19,7 @@ export function register(context: LanguageServicePluginContext) {
 				if (vscode.Range.is(item)) {
 					return map.toSourceRange(item);
 				}
+				return item;
 			},
 			prepares => {
 
@@ -28,7 +29,13 @@ export function register(context: LanguageServicePluginContext) {
 					}
 				}
 
-				return prepares[0];
+				const error = prepares[0] as vscode.ResponseError;
+				const newError = new vscode.ResponseError(error.code, error.message);
+
+				newError.name = error.name;
+				newError.stack = error.stack;
+
+				return newError;
 			},
 		);
 	};
