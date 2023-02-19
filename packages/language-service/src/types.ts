@@ -96,6 +96,7 @@ export interface LanguageServicePluginInstance {
 	getSignatureHelp?(document: TextDocument, position: vscode.Position, context?: vscode.SignatureHelpContext): NullableResult<vscode.SignatureHelp>;
 	format?(document: TextDocument, range: vscode.Range, options: vscode.FormattingOptions): NullableResult<vscode.TextEdit[]>;
 	formatOnType?(document: TextDocument, position: vscode.Position, key: string, options: vscode.FormattingOptions): NullableResult<vscode.TextEdit[]>;
+	getIndentSensitiveLines?(document: TextDocument): NullableResult<number[]>;
 
 	definition?: {
 		on?(document: TextDocument, position: vscode.Position): NullableResult<vscode.LocationLink[]>;

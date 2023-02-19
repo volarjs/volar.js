@@ -130,6 +130,19 @@ export function register(context: LanguageServicePluginContext) {
 
 					for (const [_, map] of context.documents.getMapsByVirtualFileUri(toPatchIndentUri.uri)) {
 
+						const indentSensitiveLines = new Set<number>();
+
+						for (const plugin of Object.values(context.plugins)) {
+							if (plugin.getIndentSensitiveLines) {
+								const lines = await plugin.getIndentSensitiveLines(map.virtualFileDocument);
+								if (lines) {
+									for (const line of lines) {
+										indentSensitiveLines.add(line);
+									}
+								}
+							}
+						}
+
 						let indentEdits = patchIndents(
 							document,
 							toPatchIndentUri.isCodeBlock,
@@ -137,17 +150,20 @@ export function register(context: LanguageServicePluginContext) {
 							initialIndentLanguageId[map.virtualFileDocument.languageId] ? baseIndent : '',
 						);
 
-						if (onTypeParams) {
-							indentEdits = indentEdits.filter(edit => {
-								for (let line = edit.range.start.line; line <= edit.range.end.line; line++) {
-									if (!editLines.has(line))
-										return false;
+						indentEdits = indentEdits.filter(edit => {
+							for (let line = edit.range.start.line; line <= edit.range.end.line; line++) {
+								if (indentSensitiveLines.has(line) && !edit.newText.includes('\n')) {
+									return false;
 								}
-								return true;
-							});
-						}
-
-						indentEdits = indentEdits.filter(edit => isInsideRange(range!, edit.range));
+								if (onTypeParams && !editLines.has(line)) {
+									return false;
+								}
+								if (!isInsideRange(range!, edit.range)) {
+									return false;
+								}
+							}
+							return true;
+						});
 
 						if (indentEdits.length > 0) {
 							const newText = TextDocument.applyEdits(document, indentEdits);
