@@ -1,7 +1,7 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
 import * as shared from '@volar/shared';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { documentFeatureWorker } from '../utils/featureWorkers';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
@@ -10,11 +10,10 @@ export function register(context: LanguageServicePluginContext) {
 
 	return async (uri: string) => {
 
-		const pluginLinks = await languageFeatureWorker(
+		const pluginLinks = await documentFeatureWorker(
 			context,
 			uri,
-			undefined,
-			(arg) => [arg],
+			file => !!file.capabilities.documentSymbol,
 			(plugin, document) => plugin.findDocumentLinks?.(document),
 			(data, map) => data.map(link => {
 
