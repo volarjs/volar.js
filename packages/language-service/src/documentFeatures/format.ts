@@ -289,7 +289,7 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 
 		if (baseIndent && lines.length > 1) {
 			for (let i = 1; i < lines.length; i++) {
-				if (lines[i] !== '' || i === lines.length - 1) {
+				if (lines[i].trim() || i === lines.length - 1) {
 					const isLastLine = i === lines.length - 1 && !insertedFinalNewLine;
 					indentTextEdits.push({
 						newText: isLastLine ? firstLineIndent : baseIndent,
