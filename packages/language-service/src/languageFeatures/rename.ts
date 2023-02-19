@@ -216,7 +216,7 @@ export function embeddedEditToSourceEdit(
 		for (const [_, map] of documents.getMapsByVirtualFileUri(tsUri)) {
 			const tsEdits = tsResult.changes[tsUri];
 			for (const tsEdit of tsEdits) {
-				if (mode === 'rename') {
+				if (mode === 'rename' || mode === 'fileName') {
 					let _data: FileRangeCapabilities | undefined;
 					const range = map.toSourceRange(tsEdit.range, data => {
 						_data = data;
@@ -260,7 +260,7 @@ export function embeddedEditToSourceEdit(
 							[],
 						);
 						for (const tsEdit of tsDocEdit.edits) {
-							if (mode === 'rename') {
+							if (mode === 'rename' || mode === 'fileName') {
 								let _data: FileRangeCapabilities | undefined;
 								const range = map.toSourceRange(tsEdit.range, data => {
 									_data = data;
