@@ -86,11 +86,13 @@ export function register(
 			if (!initOptions.fullCompletionList && document) {
 				list.items = list.items.filter(item => {
 					const range = item.textEdit ? (
-						vscode.InsertReplaceEdit.is(item.textEdit) ? item.textEdit.replace :
-							item.textEdit.range
+						vscode.InsertReplaceEdit.is(item.textEdit)
+							? item.textEdit.replace
+							: item.textEdit.range
 					) : list.itemDefaults?.editRange ? (
-						vscode.Range.is(list.itemDefaults.editRange) ? list.itemDefaults.editRange :
-							list.itemDefaults.editRange.replace
+						vscode.Range.is(list.itemDefaults.editRange)
+							? list.itemDefaults.editRange
+							: list.itemDefaults.editRange.replace
 					) : undefined;
 					if (range) {
 						const sourceText = document.getText(range).toLowerCase();
@@ -104,8 +106,8 @@ export function register(
 								filterText = filterText.slice(index + 1);
 							}
 						}
-						return true;
 					}
+					return true;
 				});
 			}
 			return list;
