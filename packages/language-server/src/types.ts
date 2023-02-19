@@ -88,6 +88,12 @@ export interface LanguageServerInitializationOptions {
 	serverMode?: ServerMode;
 	diagnosticModel?: DiagnosticModel;
 	textDocumentSync?: vscode.TextDocumentSyncKind | number;
+	/**
+	 * For better JSON parsing performance language server will filter CompletionList.
+	 * 
+	 * Enable this option if you want to get complete CompletionList in language client.
+	 */
+	fullCompletionList?: boolean;
 	// for resolve https://github.com/sublimelsp/LSP-volar/issues/114
 	ignoreTriggerCharacters?: string[];
 	/**

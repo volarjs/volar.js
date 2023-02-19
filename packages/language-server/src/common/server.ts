@@ -146,9 +146,11 @@ export function startCommonLanguageServer(context: ServerContext) {
 			context.connection,
 			projects,
 			initParams,
+			options,
 			cancelTokenHost,
 			getSemanticTokensLegend(),
 			context.runtimeEnv,
+			documents,
 		);
 
 		for (const plugin of plugins) {
