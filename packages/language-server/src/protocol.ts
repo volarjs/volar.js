@@ -1,6 +1,6 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type * as html from 'vscode-html-languageservice';
-import type { FileRangeCapabilities } from '@volar/language-core';
+import type { FileKind, FileRangeCapabilities } from '@volar/language-core';
 
 /**
  * Server request client
@@ -68,7 +68,7 @@ export namespace ReloadProjectNotification {
 }
 
 export namespace GetVirtualFileNamesRequest {
-	export type ParamsType = vscode.TextDocumentIdentifier;
+	export type ParamsType = vscode.TextDocumentIdentifier & { fileKinds?: FileKind[] };
 	export type ResponseType = string[];
 	export type ErrorType = never;
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFileNames');

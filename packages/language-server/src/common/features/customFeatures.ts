@@ -76,8 +76,9 @@ export function register(
 		if (project) {
 			const rootVirtualFile = project.project?.getLanguageService().context.core.virtualFiles.getSource(shared.uriToFileName(document.uri))?.root;
 			if (rootVirtualFile) {
+				const kinds = document.fileKinds ?? [FileKind.TypeScriptHostFile];
 				forEachEmbeddedFile(rootVirtualFile, e => {
-					if (e.snapshot.getLength() && e.kind === FileKind.TypeScriptHostFile && e.capabilities.diagnostic) {
+					if (e.snapshot.getLength() && kinds.includes(e.kind)) {
 						fileNames.push(e.fileName);
 					}
 				});
