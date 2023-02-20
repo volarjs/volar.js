@@ -40,11 +40,6 @@ export function create(
 	};
 	const service = createLanguageService(host, config, {
 		rootUri: URI.file(path.dirname(tsConfigPath)),
-		documentContext: {
-			resolveReference() {
-				return undefined; // TODO
-			},
-		},
 	});
 	const formatHost: ts.FormatDiagnosticsHost = {
 		getCurrentDirectory: () => host.getCurrentDirectory(),
