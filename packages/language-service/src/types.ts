@@ -20,7 +20,7 @@ export interface LanguageServicePluginContext {
 		rootUri: URI;
 		locale?: string;
 		configurationHost?: ConfigurationHost;
-		documentContext: DocumentContext;
+		documentContext?: DocumentContext;
 		fileSystemProvider?: FileSystemProvider;
 		schemaRequestService?: SchemaRequestService;
 	};
