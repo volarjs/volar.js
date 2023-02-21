@@ -14,13 +14,13 @@ importers:
     devDependencies:
       '@types/node': 18.14.0
       typescript: 4.9.5
-      vite: 4.1.3_@types+node@18.14.0
+      vite: 4.1.4_@types+node@18.14.0
       vitest: 0.25.8
 
   packages/kit:
     specifiers:
-      '@volar/language-service': 1.2.0-alpha.17
-      '@volar/shared': 1.2.0-alpha.17
+      '@volar/language-service': 1.2.0-alpha.18
+      '@volar/shared': 1.2.0-alpha.18
       vscode-languageserver-textdocument: ^1.0.8
       vscode-uri: ^3.0.7
     dependencies:
@@ -31,15 +31,15 @@ importers:
 
   packages/language-core:
     specifiers:
-      '@volar/source-map': 1.2.0-alpha.17
+      '@volar/source-map': 1.2.0-alpha.18
     dependencies:
       '@volar/source-map': link:../source-map
 
   packages/language-server:
     specifiers:
-      '@volar/language-core': 1.2.0-alpha.17
-      '@volar/language-service': 1.2.0-alpha.17
-      '@volar/shared': 1.2.0-alpha.17
+      '@volar/language-core': 1.2.0-alpha.18
+      '@volar/language-service': 1.2.0-alpha.18
+      '@volar/shared': 1.2.0-alpha.18
       '@vscode/l10n': ^0.0.11
       request-light: ^0.7.0
       typesafe-path: ^0.2.2
@@ -63,10 +63,10 @@ importers:
 
   packages/language-service:
     specifiers:
-      '@volar/language-core': 1.2.0-alpha.17
-      '@volar/shared': 1.2.0-alpha.17
-      '@volar/source-map': 1.2.0-alpha.17
-      '@volar/typescript-faster': 1.2.0-alpha.17
+      '@volar/language-core': 1.2.0-alpha.18
+      '@volar/shared': 1.2.0-alpha.18
+      '@volar/source-map': 1.2.0-alpha.18
+      '@volar/typescript-faster': 1.2.0-alpha.18
       vscode-html-languageservice: ^5.0.4
       vscode-json-languageservice: ^5.2.0
       vscode-languageserver-protocol: ^3.17.3
@@ -99,7 +99,7 @@ importers:
 
   packages/typescript:
     specifiers:
-      '@volar/language-core': 1.2.0-alpha.17
+      '@volar/language-core': 1.2.0-alpha.18
     dependencies:
       '@volar/language-core': link:../language-core
 
@@ -115,9 +115,9 @@ importers:
   packages/vscode-language-client:
     specifiers:
       '@types/vscode': latest
-      '@volar/language-server': 1.2.0-alpha.17
-      '@volar/shared': 1.2.0-alpha.17
-      '@volar/source-map': 1.2.0-alpha.17
+      '@volar/language-server': 1.2.0-alpha.18
+      '@volar/shared': 1.2.0-alpha.18
+      '@volar/source-map': 1.2.0-alpha.18
       typesafe-path: ^0.2.2
       vscode-languageclient: latest
       vscode-nls: ^5.2.0
@@ -4212,8 +4212,8 @@ packages:
     dev: false
     optional: true
 
-  /vite/4.1.3_@types+node@18.14.0:
-    resolution: {integrity: sha512-0Zqo4/Fr/swSOBmbl+HAAhOjrqNwju+yTtoe4hQX9UsARdcuc9njyOdr6xU0DDnV7YP0RT6mgTTOiRtZgxfCxA==}
+  /vite/4.1.4_@types+node@18.14.0:
+    resolution: {integrity: sha512-3knk/HsbSTKEin43zHu7jTwYWv81f8kgAL99G5NWBcA1LKvtvcVAC4JjBH1arBunO9kQka+1oGbrMKOjk4ZrBg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
@@ -4281,7 +4281,7 @@ packages:
       tinybench: 2.3.1
       tinypool: 0.3.0
       tinyspy: 1.0.2
-      vite: 4.1.3_@types+node@18.14.0
+      vite: 4.1.4_@types+node@18.14.0
     transitivePeerDependencies:
       - less
       - sass
