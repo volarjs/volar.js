@@ -139,6 +139,8 @@ function createLanguageServiceBase(context: LanguageServicePluginContext) {
 
 	return {
 
+		triggerCharacters: Object.values(context.plugins).map(plugin => plugin.complete?.triggerCharacters ?? []).flat(),
+
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),
 		getSelectionRanges: selectionRanges.register(context),

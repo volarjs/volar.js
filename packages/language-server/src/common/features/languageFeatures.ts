@@ -224,7 +224,7 @@ export function register(
 	});
 	connection.onWorkspaceSymbol(async (params, token) => {
 
-		let results: vscode.SymbolInformation[] = [];
+		let results: vscode.WorkspaceSymbol[] = [];
 
 		for (const _workspace of projects.workspaces.values()) {
 			const workspace = await _workspace;

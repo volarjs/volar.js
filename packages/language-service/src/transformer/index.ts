@@ -6,6 +6,6 @@ export { transform as asLocation } from './locationLike';
 export { transform as asLocations } from './locationsLike';
 export { transform as asSelectionRange } from './selectionRange';
 export { transform as asSelectionRanges } from './selectionRanges';
-export { transform as asSymbolInformation } from './symbolInformation';
-export { transform as asSymbolInformations } from './symbolInformations';
 export { transform as asTextEdit } from './textEdit';
+export { transform as asDocumentSymbol } from './documentSymbol';
+export { transform as asWorkspaceSymbol } from './workspaceSymbol';
