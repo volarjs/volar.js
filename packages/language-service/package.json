@@ -1,6 +1,6 @@
 {
 	"name": "@volar/language-service",
-	"version": "1.2.0-alpha.18",
+	"version": "1.2.0-alpha.19",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,10 +13,10 @@
 		"directory": "packages/language-service"
 	},
 	"dependencies": {
-		"@volar/language-core": "1.2.0-alpha.18",
-		"@volar/shared": "1.2.0-alpha.18",
-		"@volar/source-map": "1.2.0-alpha.18",
-		"@volar/typescript-faster": "1.2.0-alpha.18",
+		"@volar/language-core": "1.2.0-alpha.19",
+		"@volar/shared": "1.2.0-alpha.19",
+		"@volar/source-map": "1.2.0-alpha.19",
+		"@volar/typescript-faster": "1.2.0-alpha.19",
 		"vscode-html-languageservice": "^5.0.4",
 		"vscode-json-languageservice": "^5.2.0",
 		"vscode-languageserver-protocol": "^3.17.3",
