@@ -3,6 +3,7 @@ import { documentFeatureWorker } from '../utils/featureWorkers';
 import * as transformer from '../transformer';
 import * as shared from '@volar/shared';
 import * as vscode from 'vscode-languageserver-protocol';
+import { isInsideRange } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -38,7 +39,24 @@ export function register(context: LanguageServicePluginContext) {
 					))
 					.filter(shared.notEmpty)
 				: data,
-			arr => arr.flat(),
+			results => {
+				for (let i = 0; i < results.length; i++) {
+					for (let j = 0; j < results.length; j++) {
+						if (i === j) continue;
+						results[i] = results[i].filter(child => {
+							for (const parent of results[j]) {
+								if (isInsideRange(parent.range, child.range)) {
+									parent.children ??= [];
+									parent.children.push(child);
+									return false;
+								}
+							}
+							return true;
+						});
+					}
+				}
+				return results.flat();
+			},
 		);
 	};
 }
