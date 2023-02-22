@@ -13,24 +13,7 @@ export function register(context: LanguageServicePluginContext) {
 			context,
 			uri,
 			file => !!file.capabilities.documentSymbol,
-			async (plugin, document) => {
-				const symbols = await plugin.findDocumentSymbols?.(document);
-				if (!symbols?.length) {
-					return symbols as vscode.DocumentSymbol[];
-				}
-				if (vscode.DocumentSymbol.is(symbols[0])) {
-					return symbols as vscode.DocumentSymbol[];
-				}
-				return (symbols as vscode.SymbolInformation[]).map(symbol => {
-					return vscode.DocumentSymbol.create(
-						symbol.name,
-						undefined,
-						symbol.kind,
-						symbol.location.range,
-						symbol.location.range,
-					);
-				});
-			},
+			async (plugin, document) => plugin.findDocumentSymbols?.(document),
 			(data, map) => map
 				? data
 					.map(symbol => transformer.asDocumentSymbol(
