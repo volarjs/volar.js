@@ -12,6 +12,9 @@
 		{
 			"path": "./packages/vscode-language-client/tsconfig.build.json"
 		},
+		{
+			"path": "./packages/monaco/tsconfig.build.json"
+		},
 		// IDE / tests
 		{
 			"path": "./tsconfig.json"
