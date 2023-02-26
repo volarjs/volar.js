@@ -24,11 +24,12 @@ export function createLanguageService(options: {
 	const ts: typeof import('typescript/lib/tsserverlibrary') | undefined = options.typescript ? options.typescript.module : undefined;
 	const config = options.config ?? {};
 	const compilerOptions = options.typescript?.compilerOptions ?? {};
+	const autoFetchTypesCdn =
+		typeof options.typescript?.autoFetchTypes === 'object'
+			&& options.typescript.autoFetchTypes.cdn
+			? options.typescript.autoFetchTypes.cdn
+			: 'https://unpkg.com/';
 
-	let autoFetchTypesCdn = 'https://unpkg.com/';
-	if (typeof options.typescript?.autoFetchTypes === 'object' && options.typescript.autoFetchTypes.cdn) {
-		autoFetchTypesCdn = options.typescript.autoFetchTypes.cdn;
-	}
 	const autoTypeFetchHost = options.typescript?.autoFetchTypes ? createAutoTypesFetchingHost(autoFetchTypesCdn) : undefined;
 
 	let host = createLanguageServiceHost();
@@ -172,7 +173,7 @@ export function createLanguageService(options: {
 			},
 			getDefaultLibFileName(options) {
 				if (ts) {
-					return '/node_modules/typescript/lib/' + ts.getDefaultLibFileName(options);
+					return `/node_modules/typescript@${ts.version}/lib/${ts.getDefaultLibFileName(options)}`;
 				}
 				return '';
 			},
