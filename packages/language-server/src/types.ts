@@ -51,10 +51,7 @@ export interface LanguageServiceContext {
 	sys: FileSystem;
 }
 
-export type LanguageServerPlugin<
-	A extends LanguageServerInitializationOptions = LanguageServerInitializationOptions,
-	C = embeddedLS.LanguageService
-> = (initOptions: A) => {
+export type LanguageServerPlugin = (initOptions: LanguageServerInitializationOptions) => {
 	tsconfigExtraFileExtensions: ts.FileExtensionInfo[];
 	diagnosticDocumentSelector: vscode.DocumentSelector;
 	extensions: {
@@ -63,7 +60,7 @@ export type LanguageServerPlugin<
 	},
 	resolveConfig?(config: Config, ctx: LanguageServiceContext): void;
 	onInitialize?(_: vscode.InitializeResult): void;
-	onInitialized?(getLanguageService: (uri: string) => Promise<C>): void;
+	onInitialized?(getLanguageService: (uri: string) => Promise<embeddedLS.LanguageService>): void;
 };
 
 export enum ServerMode {
