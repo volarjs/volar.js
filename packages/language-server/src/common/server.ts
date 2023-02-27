@@ -24,7 +24,7 @@ export function startCommonLanguageServer(context: ServerContext) {
 	let configurationHost: ReturnType<typeof createConfigurationHost> | undefined;
 	let plugins: ReturnType<LanguageServerPlugin>[];
 
-	const documents = createDocuments(context.connection);
+	const documents = createDocuments(context.runtimeEnv, context.connection);
 
 	context.connection.onInitialize(async _params => {
 
@@ -67,7 +67,7 @@ export function startCommonLanguageServer(context: ServerContext) {
 		} catch { }
 
 		for (const plugin of plugins) {
-			plugin.onInitialize?.(result);
+			plugin.onInitialize?.(result, context.runtimeEnv);
 		}
 
 		return result;
@@ -141,7 +141,7 @@ export function startCommonLanguageServer(context: ServerContext) {
 			projects.add(root);
 		}
 
-		(await import('./features/customFeatures')).register(context.connection, projects);
+		(await import('./features/customFeatures')).register(context.connection, projects, context.runtimeEnv);
 		(await import('./features/languageFeatures')).register(
 			context.connection,
 			projects,
@@ -154,7 +154,7 @@ export function startCommonLanguageServer(context: ServerContext) {
 		);
 
 		for (const plugin of plugins) {
-			plugin.onInitialized?.(getLanguageService as any);
+			plugin.onInitialized?.(getLanguageService, context.runtimeEnv);
 		}
 
 		async function getLanguageService(uri: string) {

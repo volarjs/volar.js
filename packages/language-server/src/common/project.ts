@@ -1,7 +1,6 @@
 import * as embedded from '@volar/language-core';
 import * as embeddedLS from '@volar/language-service';
-import { Config, LanguageServicePluginContext } from '@volar/language-service';
-import * as shared from '@volar/shared';
+import { Config, LanguageServiceOptions } from '@volar/language-service';
 import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as html from 'vscode-html-languageservice';
@@ -23,6 +22,9 @@ export type Project = ReturnType<typeof createProject>;
 
 export async function createProject(context: ProjectContext) {
 
+	const uriToFileName = context.workspace.workspaces.server.runtimeEnv.uriToFileName;
+	const fileNameToUri = context.workspace.workspaces.server.runtimeEnv.fileNameToUri;
+
 	const sys: FileSystem = context.workspace.workspaces.initOptions.serverMode === ServerMode.Syntactic || !context.workspace.workspaces.fileSystemHost
 		? {
 			newLine: '\n',
@@ -40,14 +42,20 @@ export async function createProject(context: ProjectContext) {
 	let projectVersion = 0;
 	let projectVersionUpdateTime = context.workspace.workspaces.cancelTokenHost.getMtime();
 	let languageService: embeddedLS.LanguageService | undefined;
-	let parsedCommandLine = createParsedCommandLine(context.workspace.workspaces.ts, sys, shared.uriToFileName(context.rootUri.toString()), context.tsConfig, context.workspace.workspaces.plugins);
+	let parsedCommandLine = createParsedCommandLine(
+		context.workspace.workspaces.ts,
+		sys,
+		uriToFileName(context.rootUri.toString()) as path.PosixPath,
+		context.tsConfig,
+		context.workspace.workspaces.plugins,
+	);
 
 	const scripts = createUriMap<{
 		version: number,
 		fileName: string,
 		snapshot: ts.IScriptSnapshot | undefined,
 		snapshotVersion: number | undefined,
-	}>();
+	}>(fileNameToUri);
 	const languageServiceHost = createLanguageServiceHost();
 	const disposeWatchEvent = context.workspace.workspaces.fileSystemHost?.onDidChangeWatchedFiles(params => {
 		onWorkspaceFilesChanged(params.changes);
@@ -84,12 +92,16 @@ export async function createProject(context: ProjectContext) {
 					rules: { ...context.serverConfig?.lint?.rules },
 				},
 			};
-			const env: LanguageServicePluginContext['env'] = {
+			const options: LanguageServiceOptions = {
+				uriToFileName,
+				fileNameToUri,
 				rootUri: context.rootUri,
+				host: languageServiceHost,
+				config,
 				locale: context.workspace.workspaces.initParams.locale,
 				configurationHost: context.workspace.workspaces.configurationHost,
 				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
-				documentContext: getDocumentContext(context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
+				documentContext: getDocumentContext(fileNameToUri, uriToFileName, context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
 				schemaRequestService: async uri => {
 					const protocol = uri.substring(0, uri.indexOf(':'));
 					const builtInHandler = context.workspace.workspaces.server.runtimeEnv.schemaRequestHandlers[protocol];
@@ -101,14 +113,14 @@ export async function createProject(context: ProjectContext) {
 			};
 			const lsCtx: LanguageServiceContext = {
 				project: context,
-				env,
+				options,
 				sys,
 				host: languageServiceHost,
 			};
 			for (const plugin of context.workspace.workspaces.plugins) {
 				plugin.resolveConfig?.(config, lsCtx);
 			}
-			languageService = embeddedLS.createLanguageService(languageServiceHost, config, env, context.documentRegistry);
+			languageService = embeddedLS.createLanguageService(options, context.documentRegistry);
 		}
 		return languageService;
 	}
@@ -141,7 +153,7 @@ export async function createProject(context: ProjectContext) {
 		const deletes = changes.filter(change => change.type === vscode.FileChangeType.Deleted);
 
 		if (creates.length || deletes.length) {
-			parsedCommandLine = createParsedCommandLine(context.workspace.workspaces.ts, sys, shared.uriToFileName(context.rootUri.toString()), context.tsConfig, context.workspace.workspaces.plugins);
+			parsedCommandLine = createParsedCommandLine(context.workspace.workspaces.ts, sys, uriToFileName(context.rootUri.toString()) as path.PosixPath, context.tsConfig, context.workspace.workspaces.plugins);
 			projectVersion++;
 			typeRootVersion++;
 		}
@@ -169,7 +181,7 @@ export async function createProject(context: ProjectContext) {
 			readDirectory: sys.readDirectory,
 			realpath: sys.realpath,
 			fileExists: sys.fileExists,
-			getCurrentDirectory: () => shared.uriToFileName(context.rootUri.toString()),
+			getCurrentDirectory: () => uriToFileName(context.rootUri.toString()),
 			getProjectReferences: () => parsedCommandLine.projectReferences, // if circular, broken with provide `getParsedCommandLine: () => parsedCommandLine`
 			getCancellationToken: () => token,
 			// custom
@@ -292,7 +304,7 @@ function createParsedCommandLine(
 			// https://github.com/microsoft/TypeScript/issues/30457
 			// patching ts server broke with outDir + rootDir + composite/incremental
 			content.options.outDir = undefined;
-			content.fileNames = content.fileNames.map(shared.normalizeFileName);
+			content.fileNames = content.fileNames.map(fileName => fileName.replace(/\\/g, '/'));
 			return content;
 		}
 		catch {
@@ -307,6 +319,8 @@ function createParsedCommandLine(
 }
 
 function getDocumentContext(
+	fileNameToUri: LanguageServiceOptions['fileNameToUri'],
+	uriToFileName: LanguageServiceOptions['uriToFileName'],
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
 	host: ts.LanguageServiceHost | undefined,
 	rootUri: string,
@@ -319,7 +333,7 @@ function getDocumentContext(
 				const isUri = base.indexOf('://') >= 0;
 				const resolveResult = ts.resolveModuleName(
 					ref,
-					isUri ? shared.uriToFileName(base) : base,
+					isUri ? uriToFileName(base) : base,
 					host.getCompilationSettings(),
 					host,
 				);
@@ -342,12 +356,12 @@ function getDocumentContext(
 						continue;
 					}
 					if (host.fileExists(failed)) {
-						return isUri ? shared.fileNameToUri(failed) : failed;
+						return isUri ? fileNameToUri(failed) : failed;
 					}
 				}
 				for (const dir of dirs) {
 					if (host.directoryExists?.(dir) ?? true) {
-						return isUri ? shared.fileNameToUri(dir) : dir;
+						return isUri ? fileNameToUri(dir) : dir;
 					}
 				}
 			}

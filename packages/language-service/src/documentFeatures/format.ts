@@ -2,7 +2,6 @@ import type { VirtualFile } from '@volar/language-core';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { LanguageServicePluginContext } from '../types';
-import * as shared from '@volar/shared';
 import { SourceMap } from '@volar/source-map';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
 
@@ -30,7 +29,7 @@ export function register(context: LanguageServicePluginContext) {
 				: await tryFormat(document, range, undefined);
 		}
 
-		const initialIndentLanguageId = await context.env.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
+		const initialIndentLanguageId = await context.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 		const originalSnapshot = source.snapshot;
 		const rootVirtualFile = source.root;
 		const originalDocument = document;
@@ -109,7 +108,7 @@ export function register(context: LanguageServicePluginContext) {
 			if (edits.length > 0) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-				context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
+				context.core.virtualFiles.updateSource(context.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
 				edited = true;
 			}
 
@@ -168,7 +167,7 @@ export function register(context: LanguageServicePluginContext) {
 						if (indentEdits.length > 0) {
 							const newText = TextDocument.applyEdits(document, indentEdits);
 							document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-							context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
+							context.core.virtualFiles.updateSource(context.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
 							edited = true;
 						}
 					}
@@ -178,7 +177,7 @@ export function register(context: LanguageServicePluginContext) {
 
 		if (edited) {
 			// recover
-			context.core.virtualFiles.updateSource(shared.uriToFileName(document.uri), originalSnapshot, undefined);
+			context.core.virtualFiles.updateSource(context.uriToFileName(document.uri), originalSnapshot, undefined);
 		}
 
 		if (document.getText() === originalDocument.getText())

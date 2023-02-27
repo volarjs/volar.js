@@ -21,7 +21,7 @@ export function register(context: LanguageServicePluginContext) {
 
 	return async (uri: string) => {
 
-		const referencesCodeLendsEnabled = await context.env.configurationHost?.getConfiguration<boolean>('volar.codeLens.references') ?? true;
+		const referencesCodeLendsEnabled = await context.configurationHost?.getConfiguration<boolean>('volar.codeLens.references') ?? true;
 
 		return await languageFeatureWorker(
 			context,

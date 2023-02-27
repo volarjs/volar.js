@@ -3,7 +3,6 @@ import { visitEmbedded } from './definePlugin';
 import type { LanguageServicePluginInstance, LanguageServicePluginContext, Rule, RuleContext } from '../types';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-service';
 import { SourceMapWithDocuments } from '../documents';
-import * as shared from '@volar/shared';
 
 export async function documentFeatureWorker<T>(
 	context: LanguageServicePluginContext,
@@ -144,12 +143,12 @@ export async function ruleWorker<T>(
 			let ruleCtx: RuleContext = {
 				// project context
 				modules: { typescript: context.typescript?.module },
-				uriToFileName: shared.uriToFileName,
-				fileNameToUri: shared.fileNameToUri,
-				rootUri: context.env.rootUri,
-				locale: context.env.locale,
-				getConfiguration: context.env.configurationHost?.getConfiguration,
-				onDidChangeConfiguration: context.env.configurationHost?.onDidChangeConfiguration,
+				uriToFileName: context.uriToFileName,
+				fileNameToUri: context.fileNameToUri,
+				rootUri: context.rootUri,
+				locale: context.locale,
+				getConfiguration: context.configurationHost?.getConfiguration,
+				onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
 				settings: context.config.lint?.settings ?? {},
 				// document context
 				ruleId: '',
@@ -211,12 +210,12 @@ export async function ruleWorker<T>(
 		let ruleCtx: RuleContext = {
 			// project context
 			modules: { typescript: context.typescript?.module },
-			uriToFileName: shared.uriToFileName,
-			fileNameToUri: shared.fileNameToUri,
-			rootUri: context.env.rootUri,
-			locale: context.env.locale,
-			getConfiguration: context.env.configurationHost?.getConfiguration,
-			onDidChangeConfiguration: context.env.configurationHost?.onDidChangeConfiguration,
+			uriToFileName: context.uriToFileName,
+			fileNameToUri: context.fileNameToUri,
+			rootUri: context.rootUri,
+			locale: context.locale,
+			getConfiguration: context.configurationHost?.getConfiguration,
+			onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
 			settings: context.config.lint?.settings ?? {},
 			// document context
 			ruleId: '',

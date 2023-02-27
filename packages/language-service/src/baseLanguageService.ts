@@ -1,4 +1,4 @@
-import { createLanguageContext, LanguageServiceHost } from '@volar/language-core';
+import { createLanguageContext } from '@volar/language-core';
 import * as shared from '@volar/shared';
 import * as tsFaster from '@volar/typescript-faster';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -25,7 +25,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { Config, LanguageServicePluginInstance, LanguageServicePluginContext } from './types';
+import { LanguageServicePluginInstance, LanguageServicePluginContext, LanguageServiceOptions } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -42,25 +42,21 @@ import type * as _ from 'vscode-languageserver-protocol';
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
-	host: LanguageServiceHost,
-	config: Config,
-	env: LanguageServicePluginContext['env'],
+	ctx: LanguageServiceOptions,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const languageContext = createLanguageContext(host, Object.values(config.languages ?? {}).filter(shared.notEmpty));
-	const context = createLanguageServiceContext(host, languageContext, config, env, documentRegistry);
+	const languageContext = createLanguageContext(ctx.host, Object.values(ctx.config.languages ?? {}).filter(shared.notEmpty));
+	const context = createLanguageServiceContext(ctx, languageContext, documentRegistry);
 	return createLanguageServiceBase(context);
 }
 
 function createLanguageServiceContext(
-	host: LanguageServiceHost,
+	ctx: LanguageServiceOptions,
 	languageContext: ReturnType<typeof createLanguageContext>,
-	config: Config,
-	env: LanguageServicePluginContext['env'],
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 
-	const ts = host.getTypeScriptModule?.();
+	const ts = ctx.host.getTypeScriptModule?.();
 	const tsLs = ts?.createLanguageService(languageContext.typescript.languageServiceHost, documentRegistry);
 
 	if (ts && tsLs) {
@@ -69,20 +65,17 @@ function createLanguageServiceContext(
 
 	let plugins: { [id: string]: LanguageServicePluginInstance; };
 
-	const textDocumentMapper = createDocumentsAndSourceMaps(languageContext.virtualFiles);
+	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
 	const context: LanguageServicePluginContext = {
-		uriToFileName: shared.uriToFileName,
-		fileNameToUri: shared.fileNameToUri,
-		host,
+		...ctx,
 		core: languageContext,
-		env: env,
 		get plugins() {
 			if (!plugins) {
 				plugins = {}; // avoid infinite loop
-				for (const pluginId in config.plugins ?? {}) {
-					const plugin = config.plugins?.[pluginId];
+				for (const pluginId in ctx.config.plugins ?? {}) {
+					const plugin = ctx.config.plugins?.[pluginId];
 					if (plugin instanceof Function) {
 						const _plugin = plugin(this);
 						plugins[pluginId] = _plugin;
@@ -94,7 +87,6 @@ function createLanguageServiceContext(
 			}
 			return plugins;
 		},
-		config,
 		typescript: ts && tsLs ? {
 			module: ts,
 			languageServiceHost: languageContext.typescript.languageServiceHost,
@@ -108,8 +100,8 @@ function createLanguageServiceContext(
 
 	function getTextDocument(uri: string) {
 
-		const fileName = shared.uriToFileName(uri);
-		const scriptSnapshot = host.getScriptSnapshot(fileName);
+		const fileName = ctx.uriToFileName(uri);
+		const scriptSnapshot = ctx.host.getScriptSnapshot(fileName);
 
 		if (scriptSnapshot) {
 

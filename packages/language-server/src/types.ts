@@ -1,10 +1,10 @@
-import * as embeddedLS from '@volar/language-service';
+import { LanguageService, LanguageServiceOptions } from '@volar/language-service';
 import * as embedded from '@volar/language-core';
 import type { FileSystemProvider } from 'vscode-html-languageservice';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { Config, LanguageServicePluginContext } from '@volar/language-service';
+import { Config } from '@volar/language-service';
 import { ProjectContext } from './common/project';
 
 export type FileSystemHost = {
@@ -26,6 +26,8 @@ export type FileSystem = Pick<ts.System,
 > & Partial<ts.System>;
 
 export interface RuntimeEnvironment {
+	uriToFileName: (uri: string) => string,
+	fileNameToUri: (fileName: string) => string,
 	loadTypescript: (tsdk: string) => typeof import('typescript/lib/tsserverlibrary'),
 	loadTypescriptLocalized: (tsdk: string, locale: string) => Promise<{} | undefined>,
 	schemaRequestHandlers: { [schema: string]: undefined | ((uri: string, encoding?: BufferEncoding) => Promise<string | undefined>); },
@@ -46,7 +48,7 @@ export interface RuntimeEnvironment {
 
 export interface LanguageServiceContext {
 	project: ProjectContext;
-	env: LanguageServicePluginContext['env'];
+	options: LanguageServiceOptions;
 	host: embedded.LanguageServiceHost;
 	sys: FileSystem;
 }
@@ -60,8 +62,8 @@ export interface LanguageServerPlugin {
 			fileWatcher: string[];
 		},
 		resolveConfig?(config: Config, ctx: LanguageServiceContext): void;
-		onInitialize?(_: vscode.InitializeResult): void;
-		onInitialized?(getLanguageService: (uri: string) => Promise<embeddedLS.LanguageService>): void;
+		onInitialize?(_: vscode.InitializeResult, env: RuntimeEnvironment): void;
+		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};
 }
 

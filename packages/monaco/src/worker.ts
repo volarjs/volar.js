@@ -33,11 +33,13 @@ export function createLanguageService(options: {
 	const autoTypeFetchHost = options.typescript?.autoFetchTypes ? createAutoTypesFetchingHost(autoFetchTypesCdn) : undefined;
 
 	let host = createLanguageServiceHost();
-	let languageService = _createLanguageService(
+	let languageService = _createLanguageService({
 		host,
 		config,
-		{ rootUri: URI.file('/') },
-	);
+		uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
+		fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
+		rootUri: URI.file('/'),
+	});
 	let webFilesNumOfLanguageService = autoTypeFetchHost?.files.size ?? 0;
 	const syncedFiles = new Set<string>();
 
@@ -68,11 +70,14 @@ export function createLanguageService(options: {
 				if (autoTypeFetchHost.files.size > webFilesNumOfLanguageService) {
 					webFilesNumOfLanguageService = autoTypeFetchHost.files.size;
 					languageService.dispose();
-					languageService = _createLanguageService(
+					languageService = _createLanguageService({
 						host,
 						config,
-						{ rootUri: URI.file('/') },
-					);
+						rootUri: URI.file('/'),
+						uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
+						fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
+
+					});
 				}
 				result = await (languageService as any)[api](...args);
 				await autoTypeFetchHost.wait();

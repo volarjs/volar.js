@@ -1,18 +1,18 @@
-import * as shared from '@volar/shared';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { createUriMap } from '../common/utils/uriMap';
-import { FileSystem, FileSystemHost } from '../types';
+import { FileSystem, FileSystemHost, RuntimeEnvironment } from '../types';
 
 let currentCwd = '';
 
 export function createNodeFileSystemHost(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	capabilities: vscode.ClientCapabilities,
+	env: RuntimeEnvironment,
 ): FileSystemHost {
 
-	const instances = createUriMap<[FileSystem, Map<string, any>[]]>();
+	const instances = createUriMap<[FileSystem, Map<string, any>[]]>(env.fileNameToUri);
 	const onDidChangeWatchedFilesCb = new Set<(params: vscode.DidChangeWatchedFilesParams) => void>();
 
 	return {
@@ -55,7 +55,7 @@ export function createNodeFileSystemHost(
 		rootUri: URI,
 	): [FileSystem, Map<string, any>[]] {
 
-		const rootPath = shared.uriToFileName(rootUri.toString());
+		const rootPath = env.uriToFileName(rootUri.toString());
 		const workspaceSys = new Proxy(ts.sys, {
 			get(target, prop) {
 				const fn = target[prop as keyof typeof target];

@@ -9,6 +9,7 @@ import { createDocuments } from './documents';
 import { ServerContext } from './server';
 import { createWorkspace, rootTsConfigNames, sortTsConfigs } from './workspace';
 import { isFileInDir } from './utils/isFileInDir';
+import * as path from 'typesafe-path';
 
 export interface WorkspacesContext {
 	server: ServerContext;
@@ -26,6 +27,8 @@ export interface WorkspacesContext {
 export interface Workspaces extends ReturnType<typeof createWorkspaces> { }
 
 export function createWorkspaces(context: WorkspacesContext) {
+
+	const uriToFileName = context.server.runtimeEnv.uriToFileName;
 
 	const workspaces = new Map<string, ReturnType<typeof createWorkspace>>();
 
@@ -159,8 +162,8 @@ export function createWorkspaces(context: WorkspacesContext) {
 	async function getProjectAndTsConfig(uri: string) {
 
 		let rootUris = [...workspaces.keys()]
-			.filter(rootUri => isFileInDir(shared.uriToFileName(uri), shared.uriToFileName(rootUri)))
-			.sort((a, b) => sortTsConfigs(shared.uriToFileName(uri), shared.uriToFileName(a), shared.uriToFileName(b)));
+			.filter(rootUri => isFileInDir(uriToFileName(uri) as path.PosixPath, uriToFileName(rootUri) as path.PosixPath))
+			.sort((a, b) => sortTsConfigs(uriToFileName(uri) as path.PosixPath, uriToFileName(a) as path.PosixPath, uriToFileName(b) as path.PosixPath));
 
 		if (context.initOptions.serverMode !== ServerMode.Syntactic) {
 			for (const rootUri of rootUris) {
@@ -178,7 +181,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 
 		if (rootUris.length) {
 			const project = await (await workspaces.get(rootUris[0]))?.getInferredProject();
-			project?.tryAddFile(shared.uriToFileName(uri));
+			project?.tryAddFile(uriToFileName(uri));
 			return {
 				tsconfig: undefined,
 				project,

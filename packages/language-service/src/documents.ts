@@ -4,6 +4,7 @@ import { Mapping, SourceMap } from '@volar/source-map';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type * as ts from 'typescript/lib/tsserverlibrary';
+import { LanguageServiceOptions } from './types';
 
 export type DocumentsAndSourceMaps = ReturnType<typeof createDocumentsAndSourceMaps>;
 
@@ -152,7 +153,10 @@ export class MirrorMapWithDocument extends SourceMapWithDocuments<[MirrorBehavio
 	}
 }
 
-export function createDocumentsAndSourceMaps(mapper: VirtualFiles) {
+export function createDocumentsAndSourceMaps(
+	ctx: LanguageServiceOptions,
+	mapper: VirtualFiles,
+) {
 
 	let version = 0;
 
@@ -162,16 +166,16 @@ export function createDocumentsAndSourceMaps(mapper: VirtualFiles) {
 
 	return {
 		getSourceByUri(sourceFileUri: string) {
-			return mapper.getSource(shared.uriToFileName(sourceFileUri));
+			return mapper.getSource(ctx.uriToFileName(sourceFileUri));
 		},
 		hasVirtualFileByUri(virtualFileUri: string) {
-			return mapper.hasVirtualFile(shared.uriToFileName(virtualFileUri));
+			return mapper.hasVirtualFile(ctx.uriToFileName(virtualFileUri));
 		},
 		getVirtualFileByUri(virtualFileUri: string) {
-			return mapper.getVirtualFile(shared.uriToFileName(virtualFileUri));
+			return mapper.getVirtualFile(ctx.uriToFileName(virtualFileUri));
 		},
 		getMirrorMapByUri(virtualFileUri: string) {
-			const fileName = shared.uriToFileName(virtualFileUri);
+			const fileName = ctx.uriToFileName(virtualFileUri);
 			const [virtualFile] = mapper.getVirtualFile(fileName);
 			if (virtualFile) {
 				const map = mapper.getMirrorMap(virtualFile);
@@ -187,7 +191,7 @@ export function createDocumentsAndSourceMaps(mapper: VirtualFiles) {
 			}
 		},
 		getMapsBySourceFileUri(uri: string) {
-			return this.getMapsBySourceFileName(shared.uriToFileName(uri));
+			return this.getMapsBySourceFileName(ctx.uriToFileName(uri));
 		},
 		getMapsBySourceFileName(fileName: string) {
 			const source = mapper.getSource(fileName);
@@ -219,7 +223,7 @@ export function createDocumentsAndSourceMaps(mapper: VirtualFiles) {
 			}
 		},
 		getMapsByVirtualFileUri(virtualFileUri: string) {
-			return this.getMapsByVirtualFileName(shared.uriToFileName(virtualFileUri));
+			return this.getMapsByVirtualFileName(ctx.uriToFileName(virtualFileUri));
 		},
 		*getMapsByVirtualFileName(virtualFileName: string): IterableIterator<[VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>]> {
 			const [virtualFile] = mapper.getVirtualFile(virtualFileName);
@@ -242,7 +246,7 @@ export function createDocumentsAndSourceMaps(mapper: VirtualFiles) {
 			}
 		},
 		getDocumentByUri(snapshot: ts.IScriptSnapshot, uri: string) {
-			return this.getDocumentByFileName(snapshot, shared.uriToFileName(uri));
+			return this.getDocumentByFileName(snapshot, ctx.uriToFileName(uri));
 		},
 		getDocumentByFileName,
 	};
@@ -254,7 +258,7 @@ export function createDocumentsAndSourceMaps(mapper: VirtualFiles) {
 		const map = _documents.get(snapshot)!;
 		if (!map.has(fileName)) {
 			map.set(fileName, TextDocument.create(
-				shared.fileNameToUri(fileName),
+				ctx.fileNameToUri(fileName),
 				shared.syntaxToLanguageId(fileName.substring(fileName.lastIndexOf('.') + 1)),
 				version++,
 				snapshot.getText(0, snapshot.getLength()),

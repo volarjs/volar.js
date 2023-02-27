@@ -1,10 +1,12 @@
 import { CodeActionTriggerKind, createLanguageService, Diagnostic, DiagnosticSeverity, FormattingOptions, Config, LanguageServiceHost, mergeWorkspaceEdits } from '@volar/language-service';
-import { fileNameToUri, uriToFileName } from '@volar/shared';
 import * as fs from 'fs';
 import * as path from 'path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
+
+const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
+const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
 
 export function create(
 	tsConfigPath: string,
@@ -38,7 +40,11 @@ export function create(
 		},
 		getTypeScriptModule: () => ts,
 	};
-	const service = createLanguageService(host, config, {
+	const service = createLanguageService({
+		host,
+		config,
+		uriToFileName,
+		fileNameToUri,
 		rootUri: URI.file(path.dirname(tsConfigPath)),
 	});
 	const formatHost: ts.FormatDiagnosticsHost = {

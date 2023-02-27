@@ -1,4 +1,3 @@
-import * as shared from '@volar/shared';
 import * as fs from 'fs';
 import { configure as configureHttpRequests } from 'request-light';
 import * as html from 'vscode-html-languageservice';
@@ -8,6 +7,7 @@ import fileSchemaRequestHandler from '../common/schemaRequestHandlers/file';
 import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
 import { createNodeFileSystemHost } from './fileSystem';
 import { LanguageServerPlugin } from '../types';
+import { URI } from 'vscode-uri';
 
 export * from '../index';
 
@@ -16,10 +16,16 @@ export function createConnection() {
 }
 
 export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
+
+	const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
+	const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
+
 	startCommonLanguageServer({
 		plugins,
 		connection,
 		runtimeEnv: {
+			uriToFileName,
+			fileNameToUri,
 			timer: {
 				setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable {
 					const handle = setImmediate(callback, ...args);
@@ -52,7 +58,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			fileSystemProvide: {
 				stat: (uri) => {
 					return new Promise<html.FileStat>((resolve, reject) => {
-						fs.stat(shared.uriToFileName(uri), (err, stats) => {
+						fs.stat(uriToFileName(uri), (err, stats) => {
 							if (stats) {
 								resolve({
 									type: stats.isFile() ? html.FileType.File
@@ -72,7 +78,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				},
 				readDirectory: (uri) => {
 					return new Promise<[string, html.FileType][]>((resolve, reject) => {
-						fs.readdir(shared.uriToFileName(uri), (err, files) => {
+						fs.readdir(uriToFileName(uri), (err, files) => {
 							if (files) {
 								resolve(files.map(file => [file, html.FileType.File]));
 							}

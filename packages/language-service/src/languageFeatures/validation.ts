@@ -163,7 +163,7 @@ export function register(context: LanguageServicePluginContext) {
 			syntax_rules: { errors: [] },
 			format_rules: { errors: [] },
 		}).get(uri)!;
-		const newSnapshot = context.host.getScriptSnapshot(shared.uriToFileName(uri));
+		const newSnapshot = context.host.getScriptSnapshot(context.uriToFileName(uri));
 
 		let updateCacheRangeFailed = false;
 		let errorsUpdated = false;
@@ -265,7 +265,7 @@ export function register(context: LanguageServicePluginContext) {
 					ruleCtx.report = (error, ...fixes) => {
 
 						if (!vscode.Diagnostic.is(error)) {
-							console.warn('[volar/rules-api] report() error must be a Diagnostic.')
+							console.warn('[volar/rules-api] report() error must be a Diagnostic.');
 							return;
 						}
 

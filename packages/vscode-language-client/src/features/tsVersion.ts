@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import { BaseLanguageClient } from 'vscode-languageclient';
 import { quickPick } from '../common';
 import { LanguageServerInitializationOptions } from '@volar/language-server';
-import * as shared from '@volar/shared';
 
 const defaultTsdkPath = 'node_modules/typescript/lib' as path.PosixPath;
 
@@ -33,23 +32,22 @@ export async function register(
 
 		const tsdk = getTsdk(context);
 		const configTsdkPath = getConfigTsdkPath();
-		const vscodeTsdkUri = getVScodeTsdkUri();
-		const isWeb = vscodeTsdkUri.scheme !== 'file';
+		const vscodeTsdk = getVScodeTsdk();
 		const select = await quickPick([
 			{
 				useVSCodeTsdk: {
 					label: (!tsdk.isWorkspacePath ? '• ' : '') + "Use VS Code's Version",
-					description: await getTsVersion(vscodeTsdkUri),
-					detail: isWeb ? vscodeTsdkUri.toString(true) : undefined,
+					description: vscodeTsdk.version,
+					detail: vscodeTsdk.isWeb ? vscode.Uri.file(vscodeTsdk.path).toString(true) : undefined,
 				},
-				useConfigWorkspaceTsdk: configTsdkPath && !isWeb ? {
+				useConfigWorkspaceTsdk: configTsdkPath && !vscodeTsdk.isWeb ? {
 					label: (tsdk.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',
-					description: await getTsVersion(vscode.Uri.file(resolveWorkspaceTsdk(configTsdkPath) ?? '/')) ?? 'Could not load the TypeScript version at this path',
+					description: await getTsVersion(resolveWorkspaceTsdk(configTsdkPath) ?? '/') ?? 'Could not load the TypeScript version at this path',
 					detail: configTsdkPath,
 				} : undefined,
-				useDefaultWorkspaceTsdk: configTsdkPath !== defaultTsdkPath && !isWeb ? {
+				useDefaultWorkspaceTsdk: configTsdkPath !== defaultTsdkPath && !vscodeTsdk.isWeb ? {
 					label: (tsdk.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',
-					description: await getTsVersion(vscode.Uri.file(resolveWorkspaceTsdk(defaultTsdkPath) ?? '/')) ?? 'Could not load the TypeScript version at this path',
+					description: await getTsVersion(resolveWorkspaceTsdk(defaultTsdkPath) ?? '/') ?? 'Could not load the TypeScript version at this path',
 					detail: defaultTsdkPath,
 				} : undefined,
 			},
@@ -92,7 +90,7 @@ export async function register(
 			statusBar.hide();
 		}
 		else {
-			const tsVersion = await getTsVersion(getTsdk(context).uri);
+			const tsVersion = getTsdk(context).version;
 			statusBar.text = tsVersion ?? 'x.x.x';
 			statusBar.text = resolveStatusText(statusBar.text);
 			statusBar.show();
@@ -116,15 +114,15 @@ export function getTsdk(context: vscode.ExtensionContext) {
 		if (resolvedTsdk) {
 			return {
 				tsdk: resolvedTsdk,
-				uri: vscode.Uri.file(resolvedTsdk),
+				version: getTsVersion(resolvedTsdk),
 				isWorkspacePath: true,
 			};
 		}
 	}
-	const vscodeTsdkUri = getVScodeTsdkUri();
+	const tsdk = getVScodeTsdk();
 	return {
-		tsdk: shared.uriToFileName(vscodeTsdkUri.toString()),
-		uri: vscodeTsdkUri,
+		tsdk: tsdk.path,
+		version: tsdk.version,
 		isWorkspacePath: false,
 	};
 }
@@ -148,23 +146,37 @@ function resolveWorkspaceTsdk(tsdk: path.OsPath | path.PosixPath) {
 	}
 }
 
-function getVScodeTsdkUri() {
+function getVScodeTsdk() {
 
 	const nightly = vscode.extensions.getExtension('ms-vscode.vscode-typescript-next');
 	if (nightly) {
-		return vscode.Uri.parse(nightly.extensionUri.toString() + '/node_modules/typescript/lib');
+		const path = nightly.extensionPath.toString() + '/node_modules/typescript/lib';
+		return {
+			path,
+			version: getTsVersion(path),
+			isWeb: false,
+		};
 	}
 
 	if (vscode.env.appRoot) {
-		return vscode.Uri.file(path.join(
+		const libPath = path.join(
 			vscode.env.appRoot as path.OsPath,
 			'extensions/node_modules/typescript/lib' as path.PosixPath,
-		));
+		);
+		return {
+			path: libPath,
+			version: getTsVersion(libPath),
+			isWeb: false,
+		};
 	}
 
 	// web
 	const version = require('typescript/package.json').version;
-	return vscode.Uri.parse(shared.fileNameToUri(`/__uri__/node_modules/typescript@${version}/lib`));
+	return {
+		path: `/node_modules/typescript@${version}/lib`,
+		version,
+		isWeb: true,
+	};
 }
 
 function getConfigTsdkPath() {
@@ -175,19 +187,13 @@ function isUseWorkspaceTsdk(context: vscode.ExtensionContext) {
 	return context.workspaceState.get('typescript.useWorkspaceTsdk', false);
 }
 
-async function getTsVersion(libUri: vscode.Uri): Promise<string | undefined> {
+async function getTsVersion(libPath: string): Promise<string | undefined> {
 
-	const isWeb = libUri.scheme !== 'file';
-
-	if (isWeb) {
-		return require('typescript/package.json').version;
-	}
-
-	const p = libUri.toString().split('/');
+	const p = libPath.toString().split('/');
 	const p2 = p.slice(0, -1);
-	const moduleUri = p2.join('/');
-	const fileUri = vscode.Uri.parse(moduleUri + '/package.json');
-	const contents = await readFile(fileUri);
+	const modulePath = p2.join('/');
+	const filePath = modulePath + '/package.json';
+	const contents = await readFile(filePath);
 
 	if (contents === undefined) {
 		return;
@@ -206,9 +212,9 @@ async function getTsVersion(libUri: vscode.Uri): Promise<string | undefined> {
 	return desc.version;
 }
 
-async function readFile(uri: vscode.Uri) {
+async function readFile(path: string) {
 	try {
-		const data = await vscode.workspace.fs.readFile(uri);
+		const data = await vscode.workspace.fs.readFile(vscode.Uri.file(path));
 		return new TextDecoder('utf8').decode(data);
 	}
 	catch { }

@@ -1,12 +1,13 @@
-import * as shared from '@volar/shared';
 import * as vscode from 'vscode-languageserver';
 import type { Workspaces } from '../workspaces';
 import { GetMatchTsConfigRequest, ReloadProjectNotification, WriteVirtualFilesNotification, GetVirtualFileNamesRequest, GetVirtualFileRequest, ReportStats } from '../../protocol';
 import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
+import { RuntimeEnvironment } from '../../types';
 
 export function register(
 	connection: vscode.Connection,
 	projects: Workspaces,
+	env: RuntimeEnvironment,
 ) {
 	connection.onNotification(ReportStats.type, async () => {
 		for (const [rootUri, _workspace] of projects.workspaces) {
@@ -67,14 +68,14 @@ export function register(
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const project = (await projects.getProject(params.uri));
 		if (project?.tsconfig) {
-			return { uri: shared.fileNameToUri(project.tsconfig) };
+			return { uri: env.fileNameToUri(project.tsconfig) };
 		}
 	});
 	connection.onRequest(GetVirtualFileNamesRequest.type, async document => {
 		const project = await projects.getProject(document.uri);
 		const fileNames: string[] = [];
 		if (project) {
-			const rootVirtualFile = project.project?.getLanguageService().context.core.virtualFiles.getSource(shared.uriToFileName(document.uri))?.root;
+			const rootVirtualFile = project.project?.getLanguageService().context.core.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
 			if (rootVirtualFile) {
 				const kinds = document.fileKinds ?? [FileKind.TypeScriptHostFile];
 				forEachEmbeddedFile(rootVirtualFile, e => {
@@ -93,7 +94,7 @@ export function register(
 			if (virtualFile && source) {
 				const mappings: Record<string, any[]> = {};
 				for (const mapping of virtualFile.mappings) {
-					const sourceUri = shared.fileNameToUri(mapping.source ?? source.fileName);
+					const sourceUri = env.fileNameToUri(mapping.source ?? source.fileName);
 					mappings[sourceUri] ??= [];
 					mappings[sourceUri].push(mapping);
 				}

@@ -1,6 +1,4 @@
 import { URI } from 'vscode-uri';
-import * as shared from '@volar/shared';
-
 export * as _ from 'vscode-uri';
 
 interface Options<T> {
@@ -12,7 +10,10 @@ interface Options<T> {
 	values(): IterableIterator<T>;
 }
 
-export function createUriMap<T>(map: Options<T> = new Map<string, T>()) {
+export function createUriMap<T>(
+	fileNameToUri: (fileName: string) => string,
+	map: Options<T> = new Map<string, T>()
+) {
 
 	const uriToUri = new Map<string, string>();
 	const pathToUri = new Map<string, string>();
@@ -37,7 +38,7 @@ export function createUriMap<T>(map: Options<T> = new Map<string, T>()) {
 	}
 	function getUriByPath(path: string) {
 		if (!pathToUri.has(path)) {
-			pathToUri.set(path, shared.fileNameToUri(path).toLowerCase());
+			pathToUri.set(path, fileNameToUri(path).toLowerCase());
 		}
 		return pathToUri.get(path)!;
 	}

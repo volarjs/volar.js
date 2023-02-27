@@ -9,26 +9,27 @@ import { DocumentsAndSourceMaps } from './documents';
 
 export * from 'vscode-languageserver-protocol';
 
-export interface LanguageServicePluginContext {
+export interface LanguageServiceOptions {
+	host: LanguageServiceHost;
 	config: Config;
+	uriToFileName(uri: string): string;
+	fileNameToUri(fileName: string): string;
+	rootUri: URI;
+	locale?: string;
+	configurationHost?: ConfigurationHost;
+	documentContext?: DocumentContext;
+	fileSystemProvider?: FileSystemProvider;
+	schemaRequestService?: SchemaRequestService;
+}
+
+export interface LanguageServicePluginContext extends LanguageServiceOptions {
+
 	typescript: {
 		module: typeof import('typescript/lib/tsserverlibrary');
 		languageServiceHost: ts.LanguageServiceHost;
 		languageService: ts.LanguageService;
 	} | undefined;
-	env: {
-		rootUri: URI;
-		locale?: string;
-		configurationHost?: ConfigurationHost;
-		documentContext?: DocumentContext;
-		fileSystemProvider?: FileSystemProvider;
-		schemaRequestService?: SchemaRequestService;
-	};
-	uriToFileName(uri: string): string;
-	fileNameToUri(fileName: string): string;
 
-	/** @private */
-	host: LanguageServiceHost;
 	/** @private */
 	core: LanguageContext;
 	/** @private */
