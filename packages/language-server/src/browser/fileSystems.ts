@@ -3,7 +3,7 @@ import { FileType } from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '../protocol';
-import { FileSystem, FileSystemHost, RuntimeEnvironment } from '../types';
+import { FileSystem, FileSystemHost } from '../types';
 import { matchFiles } from './typescript/utilities';
 import { createUriMap } from '../common/utils/uriMap';
 import * as shared from '@volar/shared';
@@ -17,7 +17,7 @@ interface Dir {
 	searched: boolean,
 }
 
-export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironment): FileSystemHost {
+export function createWebFileSystemHost(): FileSystemHost {
 
 	const instances = createUriMap<FileSystem>();
 	const onDidChangeWatchedFilesCb = new Set<(params: vscode.DidChangeWatchedFilesParams) => void>();
@@ -29,7 +29,7 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 	};
 	const fetchTasks: [string, string, Promise<void>][] = [];
 	const changes: vscode.FileEvent[] = [];
-	const onReadys: ((connection: vscode.Connection) => void)[] = [];
+	const onReadyCb: ((connection: vscode.Connection) => void)[] = [];
 
 	let loading = false;
 	let connection: vscode.Connection | undefined;
@@ -55,10 +55,10 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 				}
 				fireChanges(params);
 			});
-			for (const cb of onReadys) {
+			for (const cb of onReadyCb) {
 				cb(connection);
 			}
-			onReadys.length = 0;
+			onReadyCb.length = 0;
 		},
 		reload() {
 			root.dirs.clear();
@@ -114,10 +114,10 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 			}
 			dir.fileTypes.set(name, undefined);
 			if (connection) {
-				addPending('Stat', fsPath, statAsync(connection, fsPath, dir));
+				fetch('Stat', fsPath, statAsync(connection, fsPath, dir));
 			}
 			else {
-				onReadys.push((connection) => addPending('Stat', fsPath, statAsync(connection, fsPath, dir)));
+				onReadyCb.push((connection) => fetch('Stat', fsPath, statAsync(connection, fsPath, dir)));
 			}
 			return false;
 		}
@@ -131,10 +131,10 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 			}
 			dir.fileTexts.set(name, '');
 			if (connection) {
-				addPending('Read', fsPath, readFileAsync(connection, fsPath, dir));
+				fetch('Read', fsPath, readFileAsync(connection, fsPath, dir));
 			}
 			else {
-				onReadys.push((connection) => addPending('Read', fsPath, readFileAsync(connection, fsPath, dir)));
+				onReadyCb.push((connection) => fetch('Read', fsPath, readFileAsync(connection, fsPath, dir)));
 			}
 			return '';
 		}
@@ -166,10 +166,10 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 					if (!dir.searched) {
 						dir.searched = true;
 						if (connection) {
-							addPending('List', dirPath, readDirectoryAsync(connection, dirPath, dir));
+							fetch('List', dirPath, readDirectoryAsync(connection, dirPath, dir));
 						}
 						else {
-							onReadys.push((connection) => addPending('List', dirPath, readDirectoryAsync(connection, dirPath, dir)));
+							onReadyCb.push((connection) => fetch('List', dirPath, readDirectoryAsync(connection, dirPath, dir)));
 						}
 					}
 
@@ -193,10 +193,10 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 			if (!dir.searched) {
 				dir.searched = true;
 				if (connection) {
-					addPending('Read Directory', fsPath, readDirectoryAsync(connection, fsPath, dir));
+					fetch('Read Directory', fsPath, readDirectoryAsync(connection, fsPath, dir));
 				}
 				else {
-					onReadys.push((connection) => addPending('Read Directory', fsPath, readDirectoryAsync(connection, fsPath, dir)));
+					onReadyCb.push((connection) => fetch('Read Directory', fsPath, readDirectoryAsync(connection, fsPath, dir)));
 				}
 			}
 
@@ -205,7 +205,7 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 
 		async function statAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
 			const uri = shared.fileNameToUri(fsPath);
-			if (uri.startsWith('https://unpkg.com/')) { // stat request always response file type for jsdelivr
+			if (uri.startsWith('https://unpkg.com/')) { // stat request always response file type from jsdelivr
 				const text = await readWebFile(connection, uri);
 				if (text !== undefined) {
 					const name = path.basename(fsPath);
@@ -260,13 +260,8 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 		async function readWebFile(connection: vscode.Connection, uri: string) {
 			// ignore .js because it's no help for intellisense
 			if (uri.endsWith('.d.ts') || uri.endsWith('.json')) {
-				const schema = URI.parse(uri).scheme;
-				const handle = env.schemaRequestHandlers[schema];
-				if (handle) {
-					return await handle?.(uri);
-				}
-				else {
-					const data = await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
+				const data = await connection.sendRequest(FsReadFileRequest.type, uri);
+				if (data) {
 					return new TextDecoder('utf8').decode(data);
 				}
 			}
@@ -287,17 +282,20 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 		}
 	}
 
-	async function addPending(action: string, fileName: string, p: Promise<any>) {
+	async function fetch(action: string, fileName: string, p: Promise<any>) {
 
 		fetchTasks.push([action, fileName, p]);
 
 		if (loading === false) {
+
+			let toUpdate: NodeJS.Timeout | undefined;
+
 			loading = true;
 			const progress = await connection?.window.createWorkDoneProgress();
 			progress?.begin('');
 			while (fetchTasks.length) {
 				const current = fetchTasks.shift()!;
-				progress?.report(current[0] + ': ' + URI.parse(shared.fileNameToUri(current[1])).fsPath);
+				updateProgress(current[0] + ': ' + URI.parse(shared.fileNameToUri(current[1])).fsPath);
 				await current[2];
 			}
 			progress?.done();
@@ -306,6 +304,14 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 				changes.length = 0;
 			}
 			loading = false;
+
+			function updateProgress(text: string) {
+				clearTimeout(toUpdate);
+				toUpdate = setTimeout(() => {
+					progress?.report(text);
+					toUpdate = undefined;
+				}, 0);
+			}
 		}
 	}
 
