@@ -48,10 +48,11 @@ export function createWebFileSystemHost(): FileSystemHost {
 						dir.fileTypes.set(name, FileType.File);
 					}
 					else if (change.type === vscode.FileChangeType.Changed) {
+						dir.fileTypes.set(name, FileType.File);
 						dir.fileTexts.delete(name);
 					}
-					else {
-						dir.fileTypes.delete(name);
+					else if (change.type === vscode.FileChangeType.Deleted) {
+						dir.fileTypes.set(name, undefined);
 						dir.fileTexts.delete(name);
 					}
 				}
@@ -110,6 +111,9 @@ export function createWebFileSystemHost(): FileSystemHost {
 
 		function fileExists(fsPath: path.OsPath): boolean {
 			fsPath = resolvePath(fsPath);
+			if (shouldPrefetch(shared.fileNameToUri(fsPath))) {
+				return !!readFile(fsPath);
+			}
 			const dir = getDir(path.dirname(fsPath));
 			const name = path.basename(fsPath);
 			if (dir.fileTypes.has(name)) {
@@ -218,7 +222,7 @@ export function createWebFileSystemHost(): FileSystemHost {
 				runningStat = true;
 				while (statRequests.length) {
 					const requests = [...statRequests];
-					await shared.sleep(100);
+					await shared.sleep(0);
 					if (requests.length !== statRequests.length) {
 						continue;
 					}
@@ -268,7 +272,14 @@ export function createWebFileSystemHost(): FileSystemHost {
 
 		function shouldSkip(uri: string) {
 			// ignore .js because it's no help for intellisense
-			return uri.startsWith('https://unpkg.com/') && !(uri.endsWith('.d.ts') || uri.endsWith('.json'));
+			return (uri.startsWith('https://') || uri.startsWith('http://'))
+				&& !(uri.endsWith('.d.ts') || uri.endsWith('.json'));
+		}
+
+		function shouldPrefetch(uri: string) {
+			// ignore .js because it's no help for intellisense
+			return (uri.startsWith('https://') || uri.startsWith('http://'))
+				&& (uri.endsWith('.d.ts') || uri.endsWith('.json'));
 		}
 
 		async function readDirectoryAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {

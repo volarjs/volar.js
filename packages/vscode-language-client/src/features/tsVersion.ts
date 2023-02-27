@@ -164,7 +164,7 @@ function getVScodeTsdkUri() {
 
 	// web
 	const version = require('typescript/package.json').version;
-	return vscode.Uri.parse(`https://unpkg.com/typescript@${version}/lib`);
+	return vscode.Uri.parse(shared.fileNameToUri(`/__uri__/node_modules/typescript@${version}/lib`));
 }
 
 function getConfigTsdkPath() {
