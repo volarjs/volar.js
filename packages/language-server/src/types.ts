@@ -28,12 +28,13 @@ export type FileSystem = Pick<ts.System,
 export interface RuntimeEnvironment {
 	loadTypescript: (tsdk: string) => typeof import('typescript/lib/tsserverlibrary'),
 	loadTypescriptLocalized: (tsdk: string, locale: string) => Promise<{} | undefined>,
-	schemaRequestHandlers: { [schema: string]: (uri: string, encoding?: BufferEncoding) => Promise<string>; },
+	schemaRequestHandlers: { [schema: string]: undefined | ((uri: string, encoding?: BufferEncoding) => Promise<string | undefined>); },
 	onDidChangeConfiguration?: (settings: any) => void,
 	fileSystemProvide: FileSystemProvider | undefined,
 	createFileSystemHost: (
 		ts: typeof import('typescript/lib/tsserverlibrary'),
 		capabilities: vscode.ClientCapabilities,
+		env: RuntimeEnvironment,
 	) => FileSystemHost,
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
 	readonly timer: {

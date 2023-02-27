@@ -119,7 +119,7 @@ export function startCommonLanguageServer(context: ServerContext) {
 	async function createLanguageServiceHost() {
 
 		const ts = options.typescript ? context.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined;
-		fsHost = ts ? context.runtimeEnv.createFileSystemHost(ts, initParams.capabilities) : undefined;
+		fsHost = ts ? context.runtimeEnv.createFileSystemHost(ts, initParams.capabilities, context.runtimeEnv) : undefined;
 
 		const tsLocalized = options.typescript && initParams.locale ? await context.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale) : undefined;
 		const cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);

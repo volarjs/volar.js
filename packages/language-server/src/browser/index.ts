@@ -35,7 +35,9 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				try {
 					const uri = shared.fileNameToUri(`${tsdk}/${locale}/diagnosticMessages.generated.json`);
 					const json = await httpSchemaRequestHandler(uri);
-					return JSON.parse(json);
+					if (json) {
+						return JSON.parse(json);
+					}
 				}
 				catch { }
 			},

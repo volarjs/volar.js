@@ -3,7 +3,7 @@ import { FileType } from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '../protocol';
-import { FileSystem, FileSystemHost } from '../types';
+import { FileSystem, FileSystemHost, RuntimeEnvironment } from '../types';
 import { matchFiles } from './typescript/utilities';
 import { createUriMap } from '../common/utils/uriMap';
 import * as shared from '@volar/shared';
@@ -17,7 +17,7 @@ interface Dir {
 	searched: boolean,
 }
 
-export function createWebFileSystemHost(): FileSystemHost {
+export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironment): FileSystemHost {
 
 	const instances = createUriMap<FileSystem>();
 	const onDidChangeWatchedFilesCb = new Set<(params: vscode.DidChangeWatchedFilesParams) => void>();
@@ -206,9 +206,8 @@ export function createWebFileSystemHost(): FileSystemHost {
 		async function statAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
 			const uri = shared.fileNameToUri(fsPath);
 			if (uri.startsWith('https://unpkg.com/')) { // stat request always response file type for jsdelivr
-				const data = await readWebFile(connection, uri);
-				if (data !== undefined) {
-					const text = new TextDecoder('utf8').decode(data);
+				const text = await readWebFile(connection, uri);
+				if (text !== undefined) {
 					const name = path.basename(fsPath);
 					dir.fileTypes.set(name, FileType.File);
 					dir.fileTexts.set(name, text);
@@ -234,9 +233,8 @@ export function createWebFileSystemHost(): FileSystemHost {
 		async function readFileAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
 			const uri = shared.fileNameToUri(fsPath);
 			if (uri.startsWith('https://unpkg.com/')) {
-				const data = await readWebFile(connection, uri);
-				if (data !== undefined) {
-					const text = new TextDecoder('utf8').decode(data);
+				const text = await readWebFile(connection, uri);
+				if (text !== undefined) {
 					const name = path.basename(fsPath);
 					dir.fileTexts.set(name, text);
 					changes.push({
@@ -262,7 +260,15 @@ export function createWebFileSystemHost(): FileSystemHost {
 		async function readWebFile(connection: vscode.Connection, uri: string) {
 			// ignore .js because it's no help for intellisense
 			if (uri.endsWith('.d.ts') || uri.endsWith('.json')) {
-				return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
+				const schema = URI.parse(uri).scheme;
+				const handle = env.schemaRequestHandlers[schema];
+				if (handle) {
+					return await handle?.(uri);
+				}
+				else {
+					const data = await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
+					return new TextDecoder('utf8').decode(data);
+				}
 			}
 		}
 
@@ -291,7 +297,7 @@ export function createWebFileSystemHost(): FileSystemHost {
 			progress?.begin('');
 			while (fetchTasks.length) {
 				const current = fetchTasks.shift()!;
-				progress?.report(action + ': ' + URI.parse(shared.fileNameToUri(current[1])).fsPath);
+				progress?.report(current[0] + ': ' + URI.parse(shared.fileNameToUri(current[1])).fsPath);
 				await current[2];
 			}
 			progress?.done();

@@ -94,7 +94,7 @@ export async function createProject(context: ProjectContext) {
 					const protocol = uri.substring(0, uri.indexOf(':'));
 					const builtInHandler = context.workspace.workspaces.server.runtimeEnv.schemaRequestHandlers[protocol];
 					if (builtInHandler) {
-						return await builtInHandler(uri);
+						return await builtInHandler(uri) ?? '';
 					}
 					return '';
 				},
