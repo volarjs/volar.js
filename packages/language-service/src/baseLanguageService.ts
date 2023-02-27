@@ -25,7 +25,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { LanguageServicePluginInstance, LanguageServicePluginContext, LanguageServiceOptions } from './types';
+import { LanguageServicePluginContext, LanguageServiceOptions } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -63,30 +63,13 @@ function createLanguageServiceContext(
 		tsFaster.decorate(ts, languageContext.typescript.languageServiceHost, tsLs);
 	}
 
-	let plugins: { [id: string]: LanguageServicePluginInstance; };
-
 	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
 	const context: LanguageServicePluginContext = {
 		...ctx,
 		core: languageContext,
-		get plugins() {
-			if (!plugins) {
-				plugins = {}; // avoid infinite loop
-				for (const pluginId in ctx.config.plugins ?? {}) {
-					const plugin = ctx.config.plugins?.[pluginId];
-					if (plugin instanceof Function) {
-						const _plugin = plugin(this);
-						plugins[pluginId] = _plugin;
-					}
-					else if (plugin) {
-						plugins[pluginId] = plugin;
-					}
-				}
-			}
-			return plugins;
-		},
+		plugins: {},
 		typescript: ts && tsLs ? {
 			module: ts,
 			languageServiceHost: languageContext.typescript.languageServiceHost,
@@ -95,6 +78,17 @@ function createLanguageServiceContext(
 		documents: textDocumentMapper,
 		getTextDocument,
 	};
+
+	for (const pluginId in ctx.config.plugins ?? {}) {
+		const plugin = ctx.config.plugins?.[pluginId];
+		if (plugin instanceof Function) {
+			const _plugin = plugin(context);
+			context.plugins[pluginId] = _plugin;
+		}
+		else if (plugin) {
+			context.plugins[pluginId] = plugin;
+		}
+	}
 
 	return context;
 
