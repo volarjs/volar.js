@@ -144,7 +144,11 @@ export async function createProject(context: ProjectContext) {
 				scripts.uriDelete(change.uri);
 			}
 
-			if (script) {
+			if (
+				script
+				|| change.uri.endsWith('.d.ts')
+				|| change.uri.endsWith('/package.json')
+			) {
 				projectVersion++;
 			}
 		}

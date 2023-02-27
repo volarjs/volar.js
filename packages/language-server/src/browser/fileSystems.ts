@@ -138,10 +138,10 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 			}
 			dir.fileTexts.set(name, '');
 			if (connection) {
-				fetch('Read', fsPath, readFileAsync(connection, fsPath, dir));
+				fetch('load', fsPath, readFileAsync(connection, fsPath, dir));
 			}
 			else {
-				onReadyCb.push((connection) => fetch('Read', fsPath, readFileAsync(connection, fsPath, dir)));
+				onReadyCb.push((connection) => fetch('load', fsPath, readFileAsync(connection, fsPath, dir)));
 			}
 			return '';
 		}
@@ -173,10 +173,10 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 					if (!dir.searched) {
 						dir.searched = true;
 						if (connection) {
-							fetch('List', dirPath, readDirectoryAsync(connection, dirPath, dir));
+							fetch('directory', dirPath, readDirectoryAsync(connection, dirPath, dir));
 						}
 						else {
-							onReadyCb.push((connection) => fetch('List', dirPath, readDirectoryAsync(connection, dirPath, dir)));
+							onReadyCb.push((connection) => fetch('directory', dirPath, readDirectoryAsync(connection, dirPath, dir)));
 						}
 					}
 
@@ -200,10 +200,10 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 			if (!dir.searched) {
 				dir.searched = true;
 				if (connection) {
-					fetch('Read Directory', fsPath, readDirectoryAsync(connection, fsPath, dir));
+					fetch('directory', fsPath, readDirectoryAsync(connection, fsPath, dir));
 				}
 				else {
-					onReadyCb.push((connection) => fetch('Read Directory', fsPath, readDirectoryAsync(connection, fsPath, dir)));
+					onReadyCb.push((connection) => fetch('directory', fsPath, readDirectoryAsync(connection, fsPath, dir)));
 				}
 			}
 
@@ -220,6 +220,8 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 			if (!runningStat) {
 
 				runningStat = true;
+				const progress = await connection?.window.createWorkDoneProgress();
+				progress?.begin('');
 				while (statRequests.length) {
 					const requests = [...statRequests];
 					await shared.sleep(0);
@@ -227,6 +229,7 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 						continue;
 					}
 					statRequests.length = 0;
+					progress?.report(`stat ${requests.length} files`);
 					const result = await connection.sendRequest(FsStatRequest.type, requests);
 					for (let i = 0; i < requests.length; i++) {
 						const uri = requests[i];
@@ -236,6 +239,7 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 						}
 					}
 				}
+				progress.done();
 				runningStat = false;
 
 				fireChanges();
@@ -273,13 +277,13 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 		function shouldSkip(uri: string) {
 			// ignore .js because it's no help for intellisense
 			return (uri.startsWith('https://') || uri.startsWith('http://'))
-				&& !(uri.endsWith('.d.ts') || uri.endsWith('.json'));
+				&& !(uri.endsWith('.d.ts') || uri.endsWith('/package.json'));
 		}
 
 		function shouldPrefetch(uri: string) {
 			// ignore .js because it's no help for intellisense
 			return (uri.startsWith('https://') || uri.startsWith('http://'))
-				&& (uri.endsWith('.d.ts') || uri.endsWith('.json'));
+				&& (uri.endsWith('.d.ts') || uri.endsWith('/package.json'));
 		}
 
 		async function readDirectoryAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
@@ -310,7 +314,7 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 			progress?.begin('');
 			while (fetchTasks.length) {
 				const current = fetchTasks.shift()!;
-				updateProgress(current[0] + ': ' + URI.parse(env.fileNameToUri(current[1])).fsPath);
+				updateProgress(current[0] + ' ' + URI.parse(env.fileNameToUri(current[1])).fsPath);
 				await current[2];
 			}
 			progress?.done();

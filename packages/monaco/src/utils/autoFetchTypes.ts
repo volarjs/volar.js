@@ -36,7 +36,7 @@ export function createAutoTypesFetchingHost(cdn: string) {
 
 	async function readWebFile(uri: string) {
 		// ignore .js because it's no help for intellisense
-		if (uri.endsWith('.d.ts') || uri.endsWith('.json')) {
+		if (uri.endsWith('.d.ts') || uri.endsWith('/package.json')) {
 			try {
 				return (await axios.get(uri, {
 					transformResponse: (res) => {

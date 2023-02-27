@@ -31,9 +31,8 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			return URI.parse(fileName.replace('/node_modules/', 'https://unpkg.com/')).toString();
 		}
 		const parts = fileName.split('/');
-		if (parts.length < 2) {
-			console.error('Invalid file name', fileName);
-			return URI.file(fileName).toString();
+		if (parts.length <= 1) {
+			return URI.from({ scheme: '', path: '' }).toString();
 		}
 		const firstParts = parts[1].split('@');
 		return URI.from({
