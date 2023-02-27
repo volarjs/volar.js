@@ -20,21 +20,27 @@ export function createConnection() {
 export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
 
 	const uriToFileName = (uri: string) => {
-		if (uri.startsWith('https://unpkg.com/')) {
-			return uri.replace('https://unpkg.com/', '/node_modules/');
-		}
 		const parsed = URI.parse(uri);
-		return `/${parsed.scheme}/${parsed.fsPath}`;
+		if (uri.startsWith('https://unpkg.com/')) {
+			return parsed.toString(true).replace('https://unpkg.com/', '/node_modules/');
+		}
+		return `/${parsed.scheme}${parsed.authority ? '@' + parsed.authority : ''}${parsed.path}`;
 	};
 	const fileNameToUri = (fileName: string) => {
 		if (fileName.startsWith('/node_modules/')) {
-			return fileName.replace('/node_modules/', 'https://unpkg.com/');
+			return URI.parse(fileName.replace('/node_modules/', 'https://unpkg.com/')).toString();
 		}
 		const parts = fileName.split('/');
-		if (parts.length < 3) {
+		if (parts.length < 2) {
+			console.error('Invalid file name', fileName);
 			return URI.file(fileName).toString();
 		}
-		return URI.from({ scheme: parts[1], path: parts.slice(2).join('/') }).toString();
+		const firstParts = parts[1].split('@');
+		return URI.from({
+			scheme: firstParts[0],
+			authority: firstParts.length > 1 ? firstParts[1] : undefined,
+			path: '/' + parts.slice(2).join('/'),
+		}).toString();
 	};
 
 	startCommonLanguageServer({

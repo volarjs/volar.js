@@ -17,6 +17,8 @@ export async function register(
 		}
 	}));
 
+	console.log('skips:', context.globalState.keys().filter(key => key.startsWith('http')).length);
+
 	return vscode.Disposable.from(...subscriptions);
 
 	function addHandle() {
@@ -30,7 +32,7 @@ export async function register(
 				}
 				catch {
 					if (['http', 'https'].includes(uri.split(':')[0])) {
-						console.log('remember skip', uri);
+						console.log('remember skip:', uri);
 						context.globalState.update(uri, false);
 					}
 				}
@@ -46,7 +48,7 @@ export async function register(
 			}
 			catch (err) {
 				if (['http', 'https'].includes(uri.split(':')[0])) {
-					console.log('remember skip', uri);
+					console.log('remember skip:', uri);
 					context.globalState.update(uri, false);
 				}
 			}
