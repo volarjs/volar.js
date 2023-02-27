@@ -37,6 +37,7 @@ export interface RuntimeEnvironment {
 		ts: typeof import('typescript/lib/tsserverlibrary'),
 		capabilities: vscode.ClientCapabilities,
 		env: RuntimeEnvironment,
+		initOptions: LanguageServerInitializationOptions,
 	) => FileSystemHost,
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
 	readonly timer: {
@@ -83,6 +84,19 @@ export interface LanguageServerInitializationOptions {
 	typescript?: {
 		// Absolute path to node_modules/typescript/lib
 		tsdk: string;
+		/**
+		 * Dependencies versions.
+		 * @example
+		 * {
+		 * 	'@vue/compiler-sfc': '3.0.0',
+		 * 	'typescript': '4.0.0',
+		 * }
+		 */
+		versions?: Record<string, string>,
+		/**
+		 * CDN url for dependencies.
+		 */
+		cdn?: string;
 	};
 	l10n?: {
 		location: string; // uri

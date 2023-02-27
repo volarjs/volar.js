@@ -20,75 +20,77 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 	const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
 	const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
 
-	startCommonLanguageServer({
-		plugins,
-		connection,
-		runtimeEnv: {
-			uriToFileName,
-			fileNameToUri,
-			timer: {
-				setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable {
-					const handle = setImmediate(callback, ...args);
-					return { dispose: () => clearImmediate(handle) };
+	startCommonLanguageServer(connection, () => {
+		return {
+			plugins,
+			connection,
+			runtimeEnv: {
+				uriToFileName,
+				fileNameToUri,
+				timer: {
+					setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable {
+						const handle = setImmediate(callback, ...args);
+						return { dispose: () => clearImmediate(handle) };
+					},
 				},
-			},
-			loadTypescript(tsdk) {
-				for (const name of ['./typescript.js', './tsserverlibrary.js', './tsserver.js']) {
+				loadTypescript(tsdk) {
+					for (const name of ['./typescript.js', './tsserverlibrary.js', './tsserver.js']) {
+						try {
+							const path = require.resolve(name, { paths: [tsdk] });
+							return require(path);
+						} catch { }
+					}
+				},
+				async loadTypescriptLocalized(tsdk, locale) {
 					try {
-						const path = require.resolve(name, { paths: [tsdk] });
+						const path = require.resolve(`./${locale}/diagnosticMessages.generated.json`, { paths: [tsdk] });
 						return require(path);
 					} catch { }
-				}
-			},
-			async loadTypescriptLocalized(tsdk, locale) {
-				try {
-					const path = require.resolve(`./${locale}/diagnosticMessages.generated.json`, { paths: [tsdk] });
-					return require(path);
-				} catch { }
-			},
-			schemaRequestHandlers: {
-				file: fileSchemaRequestHandler,
-				http: httpSchemaRequestHandler,
-				https: httpSchemaRequestHandler,
-			},
-			onDidChangeConfiguration(settings) {
-				configureHttpRequests(settings.http && settings.http.proxy, settings.http && settings.http.proxyStrictSSL);
-			},
-			createFileSystemHost: createNodeFileSystemHost,
-			fileSystemProvide: {
-				stat: (uri) => {
-					return new Promise<html.FileStat>((resolve, reject) => {
-						fs.stat(uriToFileName(uri), (err, stats) => {
-							if (stats) {
-								resolve({
-									type: stats.isFile() ? html.FileType.File
-										: stats.isDirectory() ? html.FileType.Directory
-											: stats.isSymbolicLink() ? html.FileType.SymbolicLink
-												: html.FileType.Unknown,
-									ctime: stats.ctimeMs,
-									mtime: stats.mtimeMs,
-									size: stats.size,
-								});
-							}
-							else {
-								reject(err);
-							}
-						});
-					});
 				},
-				readDirectory: (uri) => {
-					return new Promise<[string, html.FileType][]>((resolve, reject) => {
-						fs.readdir(uriToFileName(uri), (err, files) => {
-							if (files) {
-								resolve(files.map(file => [file, html.FileType.File]));
-							}
-							else {
-								reject(err);
-							}
+				schemaRequestHandlers: {
+					file: fileSchemaRequestHandler,
+					http: httpSchemaRequestHandler,
+					https: httpSchemaRequestHandler,
+				},
+				onDidChangeConfiguration(settings) {
+					configureHttpRequests(settings.http && settings.http.proxy, settings.http && settings.http.proxyStrictSSL);
+				},
+				createFileSystemHost: createNodeFileSystemHost,
+				fileSystemProvide: {
+					stat: (uri) => {
+						return new Promise<html.FileStat>((resolve, reject) => {
+							fs.stat(uriToFileName(uri), (err, stats) => {
+								if (stats) {
+									resolve({
+										type: stats.isFile() ? html.FileType.File
+											: stats.isDirectory() ? html.FileType.Directory
+												: stats.isSymbolicLink() ? html.FileType.SymbolicLink
+													: html.FileType.Unknown,
+										ctime: stats.ctimeMs,
+										mtime: stats.mtimeMs,
+										size: stats.size,
+									});
+								}
+								else {
+									reject(err);
+								}
+							});
 						});
-					});
+					},
+					readDirectory: (uri) => {
+						return new Promise<[string, html.FileType][]>((resolve, reject) => {
+							fs.readdir(uriToFileName(uri), (err, files) => {
+								if (files) {
+									resolve(files.map(file => [file, html.FileType.File]));
+								}
+								else {
+									reject(err);
+								}
+							});
+						});
+					},
 				},
 			},
-		},
+		};
 	});
 }

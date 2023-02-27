@@ -3,7 +3,7 @@ import { FileStat, FileType } from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '../protocol';
-import { FileSystem, FileSystemHost, RuntimeEnvironment } from '../types';
+import { FileSystem, FileSystemHost, LanguageServerInitializationOptions, RuntimeEnvironment } from '../types';
 import { matchFiles } from './typescript/utilities';
 import { createUriMap } from '../common/utils/uriMap';
 import * as shared from '@volar/shared';
@@ -17,7 +17,12 @@ interface Dir {
 	searched: boolean,
 }
 
-export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironment): FileSystemHost {
+export function createWebFileSystemHost(
+	_0: any,
+	_1: any,
+	env: RuntimeEnvironment,
+	initOptions: LanguageServerInitializationOptions,
+): FileSystemHost {
 
 	const instances = createUriMap<FileSystem>(env.fileNameToUri);
 	const onDidChangeWatchedFilesCb = new Set<(params: vscode.DidChangeWatchedFilesParams) => void>();
@@ -230,7 +235,7 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 					}
 					statRequests.length = 0;
 					progress?.report(`stat ${requests.length} files`);
-					const result = await connection.sendRequest(FsStatRequest.type, requests);
+					const result = await connection.sendRequest(FsStatRequest.type, requests.map(resolveUrl));
 					for (let i = 0; i < requests.length; i++) {
 						const uri = requests[i];
 						const stat = result[i];
@@ -262,7 +267,7 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 			if (shouldSkip(uri)) {
 				return;
 			}
-			const data = await connection.sendRequest(FsReadFileRequest.type, uri);
+			const data = await connection.sendRequest(FsReadFileRequest.type, resolveUrl(uri));
 			if (data) {
 				const text = new TextDecoder('utf8').decode(data);
 				const name = path.basename(fsPath);
@@ -288,7 +293,7 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 
 		async function readDirectoryAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
 			const uri = env.fileNameToUri(fsPath);
-			const result = await connection.sendRequest(FsReadDirectoryRequest.type, uri);
+			const result = await connection.sendRequest(FsReadDirectoryRequest.type, resolveUrl(uri));
 			for (const [name, fileType] of result) {
 				if (dir.fileTypes.get(name) !== fileType && (fileType === FileType.File || fileType === FileType.SymbolicLink)) {
 					changes.push({
@@ -330,6 +335,19 @@ export function createWebFileSystemHost(_0: any, _1: any, env: RuntimeEnvironmen
 				}, 0);
 			}
 		}
+	}
+
+	function resolveUrl(uri: string) {
+		if (initOptions.typescript?.cdn && uri.startsWith(initOptions.typescript.cdn)) {
+			let fileName = env.uriToFileName(uri);
+			for (const [key, version] of Object.entries(initOptions.typescript.versions || {})) {
+				if (fileName.startsWith(`/node_modules/${key}/`)) {
+					fileName = fileName.replace(`/node_modules/${key}/`, `/node_modules/${key}@${version}/`);
+					return env.fileNameToUri(fileName);
+				}
+			}
+		}
+		return uri;
 	}
 
 	async function fireChanges() {

@@ -14,7 +14,7 @@ export interface ServerContext {
 	plugins: LanguageServerPlugin[],
 }
 
-export function startCommonLanguageServer(context: ServerContext) {
+export function startCommonLanguageServer(connection: vscode.Connection, getCtx: (initOptions: LanguageServerInitializationOptions) => ServerContext) {
 
 	let initParams: vscode.InitializeParams;
 	let options: LanguageServerInitializationOptions;
@@ -23,14 +23,16 @@ export function startCommonLanguageServer(context: ServerContext) {
 	let projects: ReturnType<typeof createWorkspaces> | undefined;
 	let configurationHost: ReturnType<typeof createConfigurationHost> | undefined;
 	let plugins: ReturnType<LanguageServerPlugin>[];
+	let documents: ReturnType<typeof createDocuments>;
+	let context: ServerContext;
 
-	const documents = createDocuments(context.runtimeEnv, context.connection);
-
-	context.connection.onInitialize(async _params => {
+	connection.onInitialize(async _params => {
 
 		initParams = _params;
 		options = initParams.initializationOptions;
+		context = getCtx(options);
 		plugins = context.plugins.map(plugin => plugin(options));
+		documents = createDocuments(context.runtimeEnv, connection);
 
 		if (options.l10n) {
 			await l10n.config({ uri: options.l10n.location });
@@ -52,7 +54,7 @@ export function startCommonLanguageServer(context: ServerContext) {
 			},
 		};
 
-		configurationHost = initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, context.connection) : undefined;
+		configurationHost = initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, connection) : undefined;
 
 		setupCapabilities(initParams.capabilities, result.capabilities, options, plugins, getSemanticTokensLegend());
 		await createLanguageServiceHost();
@@ -72,13 +74,13 @@ export function startCommonLanguageServer(context: ServerContext) {
 
 		return result;
 	});
-	context.connection.onInitialized(() => {
+	connection.onInitialized(() => {
 
-		fsHost?.ready(context.connection);
+		fsHost?.ready(connection);
 		configurationHost?.ready();
 
 		if (initParams.capabilities.workspace?.workspaceFolders) {
-			context.connection.workspace.onDidChangeWorkspaceFolders(e => {
+			connection.workspace.onDidChangeWorkspaceFolders(e => {
 
 				for (const folder of e.added) {
 					projects?.add(URI.parse(folder.uri));
@@ -97,7 +99,7 @@ export function startCommonLanguageServer(context: ServerContext) {
 		) {
 			const exts = plugins.map(plugin => plugin.extensions.fileWatcher ?? []).flat();
 			if (exts.length) {
-				context.connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
+				connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
 					watchers: [
 						{
 							globPattern: `**/*.{${exts.join(',')}}`
@@ -107,19 +109,19 @@ export function startCommonLanguageServer(context: ServerContext) {
 			}
 		}
 	});
-	context.connection.onShutdown(async () => {
+	connection.onShutdown(async () => {
 		if (projects) {
 			for (const workspace of projects.workspaces) {
 				(await workspace[1]).dispose();
 			}
 		}
 	});
-	context.connection.listen();
+	connection.listen();
 
 	async function createLanguageServiceHost() {
 
 		const ts = options.typescript ? context.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined;
-		fsHost = ts ? context.runtimeEnv.createFileSystemHost(ts, initParams.capabilities, context.runtimeEnv) : undefined;
+		fsHost = ts ? context.runtimeEnv.createFileSystemHost(ts, initParams.capabilities, context.runtimeEnv, options) : undefined;
 
 		const tsLocalized = options.typescript && initParams.locale ? await context.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale) : undefined;
 		const cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
@@ -141,9 +143,9 @@ export function startCommonLanguageServer(context: ServerContext) {
 			projects.add(root);
 		}
 
-		(await import('./features/customFeatures')).register(context.connection, projects, context.runtimeEnv);
+		(await import('./features/customFeatures')).register(connection, projects, context.runtimeEnv);
 		(await import('./features/languageFeatures')).register(
-			context.connection,
+			connection,
 			projects,
 			initParams,
 			options,
