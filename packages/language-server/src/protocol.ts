@@ -16,7 +16,7 @@ export namespace FsStatRequest {
 }
 
 export namespace FsReadFileRequest {
-	export const type = new vscode.RequestType<vscode.DocumentUri, string | null | undefined, unknown>('volar/server/fs/readFile');
+	export const type = new vscode.RequestType<vscode.DocumentUri, Uint8Array | null | undefined, unknown>('volar/server/fs/readFile');
 }
 
 export namespace FsReadDirectoryRequest {

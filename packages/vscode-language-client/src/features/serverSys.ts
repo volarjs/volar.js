@@ -22,17 +22,16 @@ export async function register(client: BaseLanguageClient) {
 				return await vscode.workspace.fs.stat(client.protocol2CodeConverter.asUri(uri));
 			}
 			catch {
-				return undefined;
+				return;
 			}
 		}));
 
 		subscriptions.push(client.onRequest(FsReadFileRequest.type, async uri => {
 			try {
-				const data = await vscode.workspace.fs.readFile(client.protocol2CodeConverter.asUri(uri));
-				return new TextDecoder('utf8').decode(data);
+				return await vscode.workspace.fs.readFile(client.protocol2CodeConverter.asUri(uri));
 			}
 			catch {
-				return undefined;
+				return;
 			}
 		}));
 

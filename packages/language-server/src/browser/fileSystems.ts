@@ -27,7 +27,7 @@ export function createWebFileSystemHost(): FileSystemHost {
 		fileTypes: new Map(),
 		searched: false,
 	};
-	const pendings: [string, string, Promise<void>][] = [];
+	const fetchTasks: [string, string, Promise<void>][] = [];
 	const changes: vscode.FileEvent[] = [];
 	const onReadys: ((connection: vscode.Connection) => void)[] = [];
 
@@ -131,10 +131,10 @@ export function createWebFileSystemHost(): FileSystemHost {
 			}
 			dir.fileTexts.set(name, '');
 			if (connection) {
-				addPending('Read File', fsPath, readFileAsync(connection, fsPath, dir));
+				addPending('Read', fsPath, readFileAsync(connection, fsPath, dir));
 			}
 			else {
-				onReadys.push((connection) => addPending('Read File', fsPath, readFileAsync(connection, fsPath, dir)));
+				onReadys.push((connection) => addPending('Read', fsPath, readFileAsync(connection, fsPath, dir)));
 			}
 			return '';
 		}
@@ -166,10 +166,10 @@ export function createWebFileSystemHost(): FileSystemHost {
 					if (!dir.searched) {
 						dir.searched = true;
 						if (connection) {
-							addPending('Read Directory', dirPath, readDirectoryAsync(connection, dirPath, dir));
+							addPending('List', dirPath, readDirectoryAsync(connection, dirPath, dir));
 						}
 						else {
-							onReadys.push((connection) => addPending('Read Directory', dirPath, readDirectoryAsync(connection, dirPath, dir)));
+							onReadys.push((connection) => addPending('List', dirPath, readDirectoryAsync(connection, dirPath, dir)));
 						}
 					}
 
@@ -206,8 +206,9 @@ export function createWebFileSystemHost(): FileSystemHost {
 		async function statAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
 			const uri = shared.fileNameToUri(fsPath);
 			if (uri.startsWith('https://unpkg.com/')) { // stat request always response file type for jsdelivr
-				const text = await readWebFile(connection, uri);
-				if (text !== undefined) {
+				const data = await readWebFile(connection, uri);
+				if (data !== undefined) {
+					const text = new TextDecoder('utf8').decode(data);
 					const name = path.basename(fsPath);
 					dir.fileTypes.set(name, FileType.File);
 					dir.fileTexts.set(name, text);
@@ -233,8 +234,9 @@ export function createWebFileSystemHost(): FileSystemHost {
 		async function readFileAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
 			const uri = shared.fileNameToUri(fsPath);
 			if (uri.startsWith('https://unpkg.com/')) {
-				const text = await readWebFile(connection, uri);
-				if (text !== undefined) {
+				const data = await readWebFile(connection, uri);
+				if (data !== undefined) {
+					const text = new TextDecoder('utf8').decode(data);
 					const name = path.basename(fsPath);
 					dir.fileTexts.set(name, text);
 					changes.push({
@@ -244,8 +246,9 @@ export function createWebFileSystemHost(): FileSystemHost {
 				}
 			}
 			else {
-				const text = await connection.sendRequest(FsReadFileRequest.type, uri);
-				if (text) {
+				const data = await connection.sendRequest(FsReadFileRequest.type, uri);
+				if (data) {
+					const text = new TextDecoder('utf8').decode(data);
 					const name = path.basename(fsPath);
 					dir.fileTexts.set(name, text);
 					changes.push({
@@ -280,18 +283,16 @@ export function createWebFileSystemHost(): FileSystemHost {
 
 	async function addPending(action: string, fileName: string, p: Promise<any>) {
 
-		pendings.push([action, fileName, p]);
+		fetchTasks.push([action, fileName, p]);
 
 		if (loading === false) {
 			loading = true;
 			const progress = await connection?.window.createWorkDoneProgress();
-			progress?.begin(action);
-			let i = 0;
-			while (pendings.length) {
-				const current = pendings.shift()!;
-				progress?.report(i / pendings.length, URI.parse(shared.fileNameToUri(current[1])).fsPath);
+			progress?.begin('');
+			while (fetchTasks.length) {
+				const current = fetchTasks.shift()!;
+				progress?.report(action + ': ' + URI.parse(shared.fileNameToUri(current[1])).fsPath);
 				await current[2];
-				i++;
 			}
 			progress?.done();
 			if (changes.length) {
