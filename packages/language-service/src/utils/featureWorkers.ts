@@ -51,10 +51,12 @@ export async function languageFeatureWorker<T, K>(
 
 			for (const mappedArg of transformArg(arg, map, file)) {
 
-				for (const plugin of Object.values(context.plugins)) {
+				for (const [pluginId, plugin] of Object.entries(context.plugins)) {
 
-					const embeddedResult = await worker(plugin, map.virtualFileDocument, mappedArg, map, file);
-
+					const embeddedResult = await safeCall(
+						() => worker(plugin, map.virtualFileDocument, mappedArg, map, file),
+						'plugin ' + pluginId + ' crashed on ' + map.virtualFileDocument.uri,
+					);
 					if (!embeddedResult)
 						continue;
 
@@ -81,9 +83,12 @@ export async function languageFeatureWorker<T, K>(
 	}
 	else if (document) {
 
-		for (const plugin of Object.values(context.plugins)) {
+		for (const [pluginId, plugin] of Object.entries(context.plugins)) {
 
-			const embeddedResult = await worker(plugin, document, arg, undefined, undefined);
+			const embeddedResult = await safeCall(
+				() => worker(plugin, document, arg, undefined, undefined),
+				'plugin ' + pluginId + ' crashed on ' + uri,
+			);
 			if (!embeddedResult)
 				continue;
 
@@ -154,11 +159,16 @@ export async function ruleWorker<T>(
 
 			for (const plugin of Object.values(context.plugins)) {
 				const fn = plugin.rules?.[api];
-				if (fn) {
-					ruleCtx = await fn(ruleCtx);
+				try {
+					if (fn) {
+						ruleCtx = await fn(ruleCtx);
+					}
+					else if (plugin.rules?.onAny) {
+						ruleCtx = await plugin.rules.onAny(ruleCtx);
+					}
 				}
-				else if (plugin.rules?.onAny) {
-					ruleCtx = await plugin.rules.onAny(ruleCtx);
+				catch (err) {
+					console.warn('plugin rule context setup crashed on ' + map.virtualFileDocument.uri + ': ' + err);
 				}
 			}
 
@@ -170,13 +180,14 @@ export async function ruleWorker<T>(
 				}
 
 				ruleCtx.ruleId = ruleName;
-				const embeddedResult = await worker(ruleName, rule, ruleCtx);
-
+				const embeddedResult = await safeCall(
+					() => worker(ruleName, rule, ruleCtx),
+					'rule ' + ruleName + ' crashed on ' + map.virtualFileDocument.uri,
+				);
 				if (!embeddedResult)
 					continue;
 
 				const result = transform(embeddedResult!, map);
-
 				if (!result)
 					continue;
 
@@ -215,11 +226,16 @@ export async function ruleWorker<T>(
 
 		for (const plugin of Object.values(context.plugins)) {
 			const fn = plugin.rules?.[api];
-			if (fn) {
-				ruleCtx = await fn(ruleCtx);
+			try {
+				if (fn) {
+					ruleCtx = await fn(ruleCtx);
+				}
+				else if (plugin.rules?.onAny) {
+					ruleCtx = await plugin.rules.onAny(ruleCtx);
+				}
 			}
-			else if (plugin.rules?.onAny) {
-				ruleCtx = await plugin.rules.onAny(ruleCtx);
+			catch (err) {
+				console.warn('plugin rule context setup crashed on ' + document.uri + ': ' + err);
 			}
 		}
 
@@ -231,7 +247,10 @@ export async function ruleWorker<T>(
 			}
 
 			ruleCtx.ruleId = ruleName;
-			const embeddedResult = await worker(ruleName, rule, ruleCtx);
+			const embeddedResult = await safeCall(
+				() => worker(ruleName, rule, ruleCtx),
+				'rule ' + ruleName + ' crashed on ' + document.uri,
+			);
 			if (!embeddedResult)
 				continue;
 
@@ -257,5 +276,14 @@ export async function ruleWorker<T>(
 	}
 	else if (results.length > 0) {
 		return results[0];
+	}
+}
+
+export async function safeCall<T>(cb: () => Promise<T> | T, errorMsg?: string) {
+	try {
+		return await cb();
+	}
+	catch (err) {
+		console.warn(errorMsg, err);
 	}
 }
