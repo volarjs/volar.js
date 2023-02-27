@@ -51,17 +51,19 @@ export interface LanguageServiceContext {
 	sys: FileSystem;
 }
 
-export type LanguageServerPlugin = (initOptions: LanguageServerInitializationOptions) => {
-	tsconfigExtraFileExtensions: ts.FileExtensionInfo[];
-	diagnosticDocumentSelector: vscode.DocumentSelector;
-	extensions: {
-		fileRenameOperationFilter: string[];
-		fileWatcher: string[];
-	},
-	resolveConfig?(config: Config, ctx: LanguageServiceContext): void;
-	onInitialize?(_: vscode.InitializeResult): void;
-	onInitialized?(getLanguageService: (uri: string) => Promise<embeddedLS.LanguageService>): void;
-};
+export interface LanguageServerPlugin {
+	(initOptions: LanguageServerInitializationOptions): {
+		tsconfigExtraFileExtensions: ts.FileExtensionInfo[];
+		diagnosticDocumentSelector: vscode.DocumentSelector;
+		extensions: {
+			fileRenameOperationFilter: string[];
+			fileWatcher: string[];
+		},
+		resolveConfig?(config: Config, ctx: LanguageServiceContext): void;
+		onInitialize?(_: vscode.InitializeResult): void;
+		onInitialized?(getLanguageService: (uri: string) => Promise<embeddedLS.LanguageService>): void;
+	};
+}
 
 export enum ServerMode {
 	Semantic = 0,
