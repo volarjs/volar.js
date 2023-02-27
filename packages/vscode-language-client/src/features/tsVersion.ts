@@ -12,6 +12,8 @@ export async function register(
 	client: BaseLanguageClient,
 	shouldStatusBarShow: (document: vscode.TextDocument) => boolean,
 	resolveStatusText: (text: string) => string,
+	disableTakeOverMode: boolean,
+	cdn = 'https://unpkg.com/',
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];
@@ -38,7 +40,7 @@ export async function register(
 				useVSCodeTsdk: {
 					label: (!tsdk.isWorkspacePath ? '• ' : '') + "Use VS Code's Version",
 					description: vscodeTsdk.version,
-					detail: vscodeTsdk.isWeb ? vscode.Uri.file(vscodeTsdk.path).toString(true) : undefined,
+					detail: vscodeTsdk.isWeb ? vscodeTsdk.path.replace('/node_modules/', cdn) : undefined,
 				},
 				useConfigWorkspaceTsdk: configTsdkPath && !vscodeTsdk.isWeb ? {
 					label: (tsdk.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',
@@ -51,11 +53,11 @@ export async function register(
 					detail: defaultTsdkPath,
 				} : undefined,
 			},
-			{
+			...(disableTakeOverMode ? [] : [{
 				takeover: {
 					label: 'What is Takeover Mode?',
 				},
-			}
+			}])
 		]);
 
 		if (select === undefined) {
