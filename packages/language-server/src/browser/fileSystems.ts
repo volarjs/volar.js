@@ -1,5 +1,5 @@
 import * as path from 'typesafe-path';
-import { FileType } from 'vscode-html-languageservice';
+import { FileStat, FileType } from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '../protocol';
@@ -30,8 +30,10 @@ export function createWebFileSystemHost(): FileSystemHost {
 	const fetchTasks: [string, string, Promise<void>][] = [];
 	const changes: vscode.FileEvent[] = [];
 	const onReadyCb: ((connection: vscode.Connection) => void)[] = [];
+	const statRequests: string[] = [];
 
-	let loading = false;
+	let runningRead = false;
+	let runningStat = false;
 	let connection: vscode.Connection | undefined;
 
 	return {
@@ -53,7 +55,8 @@ export function createWebFileSystemHost(): FileSystemHost {
 						dir.fileTexts.delete(name);
 					}
 				}
-				fireChanges(params);
+				changes.push(...params.changes);
+				fireChanges();
 			});
 			for (const cb of onReadyCb) {
 				cb(connection);
@@ -114,10 +117,10 @@ export function createWebFileSystemHost(): FileSystemHost {
 			}
 			dir.fileTypes.set(name, undefined);
 			if (connection) {
-				fetch('Stat', fsPath, statAsync(connection, fsPath, dir));
+				statAsync(connection, fsPath);
 			}
 			else {
-				onReadyCb.push((connection) => fetch('Stat', fsPath, statAsync(connection, fsPath, dir)));
+				onReadyCb.push((connection) => statAsync(connection, fsPath));
 			}
 			return false;
 		}
@@ -203,68 +206,69 @@ export function createWebFileSystemHost(): FileSystemHost {
 			return files.filter(file => file[1] === FileType.Directory).map(file => file[0]);
 		}
 
-		async function statAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
+		async function statAsync(connection: vscode.Connection, fsPath: path.OsPath) {
 			const uri = shared.fileNameToUri(fsPath);
-			if (uri.startsWith('https://unpkg.com/')) { // stat request always response file type from jsdelivr
-				const text = await readWebFile(connection, uri);
-				if (text !== undefined) {
-					const name = path.basename(fsPath);
-					dir.fileTypes.set(name, FileType.File);
-					dir.fileTexts.set(name, text);
-					changes.push({
-						uri: uri,
-						type: vscode.FileChangeType.Created,
-					});
-				}
+			if (shouldSkip(uri)) {
+				return;
 			}
-			else {
-				const result = await connection.sendRequest(FsStatRequest.type, uri);
-				if (result?.type === FileType.File || result?.type === FileType.SymbolicLink) {
-					const name = path.basename(fsPath);
-					dir.fileTypes.set(name, result.type);
-					changes.push({
-						uri: uri,
-						type: vscode.FileChangeType.Created,
-					});
+			statRequests.push(uri);
+
+			if (!runningStat) {
+
+				runningStat = true;
+				while (statRequests.length) {
+					const requests = [...statRequests];
+					await shared.sleep(100);
+					if (requests.length !== statRequests.length) {
+						continue;
+					}
+					statRequests.length = 0;
+					const result = await connection.sendRequest(FsStatRequest.type, requests);
+					for (let i = 0; i < requests.length; i++) {
+						const uri = requests[i];
+						const stat = result[i];
+						if (stat?.type === FileType.File || stat?.type === FileType.SymbolicLink) {
+							updateStat(uri, stat);
+						}
+					}
 				}
+				runningStat = false;
+
+				fireChanges();
 			}
+		}
+
+		function updateStat(uri: string, stat: FileStat) {
+			const fsPath = shared.uriToFileName(uri);
+			const name = path.basename(fsPath);
+			const dir = getDir(path.dirname(fsPath));
+			dir.fileTypes.set(name, stat.type);
+			changes.push({
+				uri: uri,
+				type: vscode.FileChangeType.Created,
+			});
 		}
 
 		async function readFileAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
 			const uri = shared.fileNameToUri(fsPath);
-			if (uri.startsWith('https://unpkg.com/')) {
-				const text = await readWebFile(connection, uri);
-				if (text !== undefined) {
-					const name = path.basename(fsPath);
-					dir.fileTexts.set(name, text);
-					changes.push({
-						uri: uri,
-						type: vscode.FileChangeType.Changed,
-					});
-				}
+			if (shouldSkip(uri)) {
+				return;
 			}
-			else {
-				const data = await connection.sendRequest(FsReadFileRequest.type, uri);
-				if (data) {
-					const text = new TextDecoder('utf8').decode(data);
-					const name = path.basename(fsPath);
-					dir.fileTexts.set(name, text);
-					changes.push({
-						uri: uri,
-						type: vscode.FileChangeType.Changed,
-					});
-				}
+			const data = await connection.sendRequest(FsReadFileRequest.type, uri);
+			if (data) {
+				const text = new TextDecoder('utf8').decode(data);
+				const name = path.basename(fsPath);
+				dir.fileTexts.set(name, text);
+				changes.push({
+					uri: uri,
+					type: vscode.FileChangeType.Changed,
+				});
 			}
 		}
 
-		async function readWebFile(connection: vscode.Connection, uri: string) {
+		function shouldSkip(uri: string) {
 			// ignore .js because it's no help for intellisense
-			if (uri.endsWith('.d.ts') || uri.endsWith('.json')) {
-				const data = await connection.sendRequest(FsReadFileRequest.type, uri);
-				if (data) {
-					return new TextDecoder('utf8').decode(data);
-				}
-			}
+			return uri.startsWith('https://unpkg.com/') && !(uri.endsWith('.d.ts') || uri.endsWith('.json'));
 		}
 
 		async function readDirectoryAsync(connection: vscode.Connection, fsPath: path.OsPath, dir: Dir) {
@@ -286,11 +290,11 @@ export function createWebFileSystemHost(): FileSystemHost {
 
 		fetchTasks.push([action, fileName, p]);
 
-		if (loading === false) {
+		if (runningRead === false) {
 
 			let toUpdate: NodeJS.Timeout | undefined;
 
-			loading = true;
+			runningRead = true;
 			const progress = await connection?.window.createWorkDoneProgress();
 			progress?.begin('');
 			while (fetchTasks.length) {
@@ -299,11 +303,9 @@ export function createWebFileSystemHost(): FileSystemHost {
 				await current[2];
 			}
 			progress?.done();
-			if (changes.length) {
-				fireChanges({ changes: [...changes] });
-				changes.length = 0;
-			}
-			loading = false;
+			runningRead = false;
+
+			fireChanges();
 
 			function updateProgress(text: string) {
 				clearTimeout(toUpdate);
@@ -315,10 +317,15 @@ export function createWebFileSystemHost(): FileSystemHost {
 		}
 	}
 
-	async function fireChanges(params: vscode.DidChangeWatchedFilesParams) {
+	async function fireChanges() {
+		if (runningRead || runningStat) {
+			return;
+		}
+		const _changes = [...changes];
+		changes.length = 0;
 		for (const cb of [...onDidChangeWatchedFilesCb]) {
 			if (onDidChangeWatchedFilesCb.has(cb)) {
-				await cb(params);
+				await cb({ changes: _changes });
 			}
 		}
 	}

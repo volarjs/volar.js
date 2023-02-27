@@ -20,19 +20,21 @@ export async function register(
 	return vscode.Disposable.from(...subscriptions);
 
 	function addHandle() {
-		subscriptions.push(client.onRequest(FsStatRequest.type, async uri => {
-			if (context.globalState.get(uri) === false) {
-				return;
-			}
-			try {
-				return await vscode.workspace.fs.stat(client.protocol2CodeConverter.asUri(uri));
-			}
-			catch {
-				if (['http', 'https'].includes(uri.split(':')[0])) {
-					console.log('remember skip', uri);
-					context.globalState.update(uri, false);
+		subscriptions.push(client.onRequest(FsStatRequest.type, async uris => {
+			return await Promise.all(uris.map(async uri => {
+				if (context.globalState.get(uri) === false) {
+					return;
 				}
-			}
+				try {
+					return await vscode.workspace.fs.stat(client.protocol2CodeConverter.asUri(uri));
+				}
+				catch {
+					if (['http', 'https'].includes(uri.split(':')[0])) {
+						console.log('remember skip', uri);
+						context.globalState.update(uri, false);
+					}
+				}
+			}));
 		}));
 
 		subscriptions.push(client.onRequest(FsReadFileRequest.type, async uri => {
