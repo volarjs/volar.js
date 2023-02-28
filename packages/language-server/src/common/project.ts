@@ -195,7 +195,11 @@ export async function createProject(context: ProjectContext) {
 						return context.workspace.workspaces.ts.getDefaultLibFilePath(options);
 					} catch {
 						// web
-						return context.workspace.workspaces.initOptions.typescript.tsdk + '/' + context.workspace.workspaces.ts.getDefaultLibFileName(options);
+						let tsdk = context.workspace.workspaces.initOptions.typescript.tsdk;
+						if (context.workspace.workspaces.initOptions.typescript.tsdkUri) {
+							tsdk = uriToFileName(context.workspace.workspaces.initOptions.typescript.tsdkUri);
+						}
+						return tsdk + '/' + context.workspace.workspaces.ts.getDefaultLibFileName(options);
 					}
 				}
 				return '';

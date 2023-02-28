@@ -11,10 +11,6 @@ export namespace ShowReferencesNotification {
 	export const type = new vscode.NotificationType<ResponseType>('volar/server/showReferences');
 }
 
-export namespace FsStatRequest {
-	export const type = new vscode.RequestType<vscode.DocumentUri[], (html.FileStat | null | undefined)[], unknown>('volar/server/fs/stat');
-}
-
 export namespace FsReadFileRequest {
 	export const type = new vscode.RequestType<vscode.DocumentUri, Uint8Array | null | undefined, unknown>('volar/server/fs/readFile');
 }

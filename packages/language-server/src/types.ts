@@ -82,8 +82,11 @@ export enum DiagnosticModel {
 
 export interface LanguageServerInitializationOptions {
 	typescript?: {
-		// Absolute path to node_modules/typescript/lib
+		/**
+		 * Absolute path to node_modules/typescript/lib
+		 */
 		tsdk: string;
+		tsdkUri?: string;
 		/**
 		 * Dependencies versions.
 		 * @example
