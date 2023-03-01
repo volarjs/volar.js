@@ -122,10 +122,7 @@ export function createWebFileSystemHost(
 			const uri = env.fileNameToUri(fsPath);
 			const dirPath = path.dirname(fsPath);
 
-			if (
-				(initOptions.typescript?.cdn && uri.startsWith(initOptions.typescript.cdn))
-				|| (initOptions.typescript?.tsdkUri && uri.startsWith(initOptions.typescript.tsdkUri))
-			) {
+			if (initOptions.typescript?.cdn && uri.startsWith(initOptions.typescript.cdn)) {
 				if (!(uri.endsWith('.d.ts') || uri.endsWith('/package.json'))) {
 					return false;
 				}

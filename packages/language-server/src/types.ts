@@ -86,7 +86,6 @@ export interface LanguageServerInitializationOptions {
 		 * Absolute path to node_modules/typescript/lib
 		 */
 		tsdk: string;
-		tsdkUri?: string;
 		/**
 		 * Dependencies versions.
 		 * @example
