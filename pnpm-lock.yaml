@@ -12,15 +12,15 @@ importers:
     optionalDependencies:
       '@lerna-lite/cli': 1.15.1
     devDependencies:
-      '@types/node': 18.14.2
+      '@types/node': 18.14.4
       typescript: 4.9.5
-      vite: 4.1.4_@types+node@18.14.2
+      vite: 4.1.4_@types+node@18.14.4
       vitest: 0.25.8
 
   packages/kit:
     specifiers:
-      '@volar/language-service': 1.3.0-alpha.1
-      '@volar/shared': 1.3.0-alpha.1
+      '@volar/language-service': 1.3.0-alpha.2
+      '@volar/shared': 1.3.0-alpha.2
       vscode-languageserver-textdocument: ^1.0.8
       vscode-uri: ^3.0.7
     dependencies:
@@ -31,15 +31,15 @@ importers:
 
   packages/language-core:
     specifiers:
-      '@volar/source-map': 1.3.0-alpha.1
+      '@volar/source-map': 1.3.0-alpha.2
     dependencies:
       '@volar/source-map': link:../source-map
 
   packages/language-server:
     specifiers:
-      '@volar/language-core': 1.3.0-alpha.1
-      '@volar/language-service': 1.3.0-alpha.1
-      '@volar/shared': 1.3.0-alpha.1
+      '@volar/language-core': 1.3.0-alpha.2
+      '@volar/language-service': 1.3.0-alpha.2
+      '@volar/shared': 1.3.0-alpha.2
       '@vscode/l10n': ^0.0.11
       request-light: ^0.7.0
       typesafe-path: ^0.2.2
@@ -63,10 +63,10 @@ importers:
 
   packages/language-service:
     specifiers:
-      '@volar/language-core': 1.3.0-alpha.1
-      '@volar/shared': 1.3.0-alpha.1
-      '@volar/source-map': 1.3.0-alpha.1
-      '@volar/typescript-faster': 1.3.0-alpha.1
+      '@volar/language-core': 1.3.0-alpha.2
+      '@volar/shared': 1.3.0-alpha.2
+      '@volar/source-map': 1.3.0-alpha.2
+      '@volar/typescript-faster': 1.3.0-alpha.2
       vscode-html-languageservice: ^5.0.4
       vscode-json-languageservice: ^5.2.0
       vscode-languageserver-protocol: ^3.17.3
@@ -85,7 +85,7 @@ importers:
 
   packages/monaco:
     specifiers:
-      '@volar/language-service': 1.3.0-alpha.1
+      '@volar/language-service': 1.3.0-alpha.2
       axios: ^1.3.4
       monaco-editor-core: ^0.36.0
       vscode-languageserver-protocol: ^3.17.3
@@ -113,7 +113,7 @@ importers:
 
   packages/typescript:
     specifiers:
-      '@volar/language-core': 1.3.0-alpha.1
+      '@volar/language-core': 1.3.0-alpha.2
     dependencies:
       '@volar/language-core': link:../language-core
 
@@ -129,9 +129,9 @@ importers:
   packages/vscode-language-client:
     specifiers:
       '@types/vscode': latest
-      '@volar/language-server': 1.3.0-alpha.1
-      '@volar/shared': 1.3.0-alpha.1
-      '@volar/source-map': 1.3.0-alpha.1
+      '@volar/language-server': 1.3.0-alpha.2
+      '@volar/shared': 1.3.0-alpha.2
+      '@volar/source-map': 1.3.0-alpha.2
       typesafe-path: ^0.2.2
       vscode-languageclient: latest
       vscode-nls: ^5.2.0
@@ -918,8 +918,8 @@ packages:
     dev: false
     optional: true
 
-  /@types/node/18.14.2:
-    resolution: {integrity: sha512-1uEQxww3DaghA0RxqHx0O0ppVlo43pJhepY51OxuQIKHpjbnYLA7vcdwioNPzIqmC2u3I/dmylcqjlh0e7AyUA==}
+  /@types/node/18.14.4:
+    resolution: {integrity: sha512-VhCw7I7qO2X49+jaKcAUwi3rR+hbxT5VcYF493+Z5kMLI0DL568b7JI4IDJaxWFH0D/xwmGJNoXisyX+w7GH/g==}
     dev: true
 
   /@types/normalize-package-data/2.4.1:
@@ -4291,7 +4291,7 @@ packages:
     dev: false
     optional: true
 
-  /vite/4.1.4_@types+node@18.14.2:
+  /vite/4.1.4_@types+node@18.14.4:
     resolution: {integrity: sha512-3knk/HsbSTKEin43zHu7jTwYWv81f8kgAL99G5NWBcA1LKvtvcVAC4JjBH1arBunO9kQka+1oGbrMKOjk4ZrBg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
@@ -4316,7 +4316,7 @@ packages:
       terser:
         optional: true
     dependencies:
-      '@types/node': 18.14.2
+      '@types/node': 18.14.4
       esbuild: 0.16.15
       postcss: 8.4.21
       resolve: 1.22.1
@@ -4349,7 +4349,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
-      '@types/node': 18.14.2
+      '@types/node': 18.14.4
       acorn: 8.8.1
       acorn-walk: 8.2.0
       chai: 4.3.7
@@ -4360,7 +4360,7 @@ packages:
       tinybench: 2.3.1
       tinypool: 0.3.0
       tinyspy: 1.0.2
-      vite: 4.1.4_@types+node@18.14.2
+      vite: 4.1.4_@types+node@18.14.4
     transitivePeerDependencies:
       - less
       - sass

@@ -1,6 +1,6 @@
 {
 	"name": "@volar/kit",
-	"version": "1.3.0-alpha.1",
+	"version": "1.3.0-alpha.2",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,8 +13,8 @@
 		"directory": "packages/kit"
 	},
 	"dependencies": {
-		"@volar/language-service": "1.3.0-alpha.1",
-		"@volar/shared": "1.3.0-alpha.1",
+		"@volar/language-service": "1.3.0-alpha.2",
+		"@volar/shared": "1.3.0-alpha.2",
 		"vscode-languageserver-textdocument": "^1.0.8",
 		"vscode-uri": "^3.0.7"
 	},
