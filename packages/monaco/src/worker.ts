@@ -6,32 +6,22 @@ import {
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { URI } from 'vscode-uri';
-import { createAutoTypesFetchingHost } from './utils/autoFetchTypes';
+import axios from 'axios';
 
 export function createLanguageService(options: {
 	workerContext: monaco.worker.IWorkerContext<any>,
+	dtsHost?: ReturnType<typeof createDtsHost>,
 	config: Config,
 	typescript?: {
 		module: typeof import('typescript/lib/tsserverlibrary'),
 		compilerOptions: ts.CompilerOptions,
-		autoFetchTypes?: boolean | {
-			onFetchTypesFiles?(files: Record<string, string>): void,
-			cdn?: string,
-		},
 	},
 }) {
 
+	const dtsClient = options.dtsHost ? createDtsClient(options.dtsHost) : undefined;
 	const ts: typeof import('typescript/lib/tsserverlibrary') | undefined = options.typescript ? options.typescript.module : undefined;
 	const config = options.config ?? {};
 	const compilerOptions = options.typescript?.compilerOptions ?? {};
-	const autoFetchTypesCdn =
-		typeof options.typescript?.autoFetchTypes === 'object'
-			&& options.typescript.autoFetchTypes.cdn
-			? options.typescript.autoFetchTypes.cdn
-			: 'https://unpkg.com/';
-
-	const autoTypeFetchHost = options.typescript?.autoFetchTypes ? createAutoTypesFetchingHost(autoFetchTypesCdn) : undefined;
-
 	let host = createLanguageServiceHost();
 	let languageService = _createLanguageService({
 		host,
@@ -40,8 +30,7 @@ export function createLanguageService(options: {
 		fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
 		rootUri: URI.file('/'),
 	});
-	let webFilesNumOfLanguageService = autoTypeFetchHost?.files.size ?? 0;
-	const syncedFiles = new Set<string>();
+	let dtsVersion = 0;
 
 	class InnocentRabbit { };
 
@@ -55,20 +44,18 @@ export function createLanguageService(options: {
 
 		(InnocentRabbit.prototype as any)[api] = async (...args: any[]) => {
 
-			if (!autoTypeFetchHost) {
+			if (!dtsClient) {
 				return (languageService as any)[api](...args);
 			}
 
-			let shouldSync = false;
-			let webFilesNumOfThisCall = autoTypeFetchHost.files.size;
+			let oldVersion = await dtsClient.getVersion();
 			let result = await (languageService as any)[api](...args);
-			await autoTypeFetchHost.wait();
+			let newVersion = await dtsClient.getVersion();
 
-			while (autoTypeFetchHost.files.size > webFilesNumOfThisCall) {
-				shouldSync = true;
-				webFilesNumOfThisCall = autoTypeFetchHost.files.size;
-				if (autoTypeFetchHost.files.size > webFilesNumOfLanguageService) {
-					webFilesNumOfLanguageService = autoTypeFetchHost.files.size;
+			while (newVersion !== oldVersion) {
+				oldVersion = newVersion;
+				if (newVersion !== dtsVersion) {
+					dtsVersion = newVersion;
 					languageService.dispose();
 					languageService = _createLanguageService({
 						host,
@@ -80,19 +67,7 @@ export function createLanguageService(options: {
 					});
 				}
 				result = await (languageService as any)[api](...args);
-				await autoTypeFetchHost.wait();
-			}
-
-			if (shouldSync && typeof options.typescript?.autoFetchTypes === 'object' && options.typescript.autoFetchTypes.onFetchTypesFiles) {
-				const files = autoTypeFetchHost.files;
-				const syncFiles: Record<string, string> = {};
-				for (const [fileName, text] of files) {
-					if (!syncedFiles.has(fileName) && text !== undefined) {
-						syncFiles[fileName] = text;
-						syncedFiles.add(fileName);
-					}
-				}
-				options.typescript.autoFetchTypes.onFetchTypesFiles(syncFiles);
+				newVersion = await dtsClient.getVersion();
 			}
 
 			return result;
@@ -132,8 +107,8 @@ export function createLanguageService(options: {
 				if (model) {
 					return model.version.toString();
 				}
-				if (autoTypeFetchHost) {
-					const dts = autoTypeFetchHost.readFile(fileName);
+				if (dtsClient) {
+					const dts = dtsClient.readFile(fileName);
 					if (dts) {
 						return dts.length.toString();
 					}
@@ -158,8 +133,8 @@ export function createLanguageService(options: {
 				if (webFileSnapshot.has(fileName)) {
 					return webFileSnapshot.get(fileName);
 				}
-				if (autoTypeFetchHost) {
-					const webFileText = autoTypeFetchHost.readFile(fileName);
+				if (dtsClient) {
+					const webFileText = dtsClient.readFile(fileName);
 					if (webFileText !== undefined) {
 						webFileSnapshot.set(fileName, {
 							getText: (start, end) => webFileText.substring(start, end),
@@ -187,8 +162,8 @@ export function createLanguageService(options: {
 				if (model) {
 					return model.getValue();
 				}
-				if (autoTypeFetchHost) {
-					return autoTypeFetchHost.readFile(fileName);
+				if (dtsClient) {
+					return dtsClient.readFile(fileName);
 				}
 			},
 			fileExists(fileName) {
@@ -196,8 +171,8 @@ export function createLanguageService(options: {
 				if (model) {
 					return true;
 				}
-				if (autoTypeFetchHost) {
-					return autoTypeFetchHost.fileExists(fileName);
+				if (dtsClient) {
+					return dtsClient.readFile(fileName) !== undefined;
 				}
 				return false;
 			},
@@ -205,5 +180,83 @@ export function createLanguageService(options: {
 		};
 
 		return host;
+	}
+}
+
+export function createDtsHost(cdn: string, onFetch?: (fileName: string, text: string) => void) {
+	return new CdnDtsHost(cdn, onFetch);
+}
+
+class CdnDtsHost {
+
+	files = new Map<string, Promise<string | undefined> | string | undefined>();
+	lastUpdateFilesSize = 0;
+
+	constructor(
+		private cdn: string,
+		private onFetch?: (fileName: string, text: string) => void,
+	) { }
+
+	async getVersion() {
+		while (this.files.size !== this.lastUpdateFilesSize) {
+			this.lastUpdateFilesSize = this.files.size;
+			await Promise.all(this.files.values());
+		}
+		return this.files.size;
+	}
+
+	readFile(fileName: string) {
+		if (!this.files.has(fileName)) {
+			this.files.set(fileName, undefined);
+			if (
+				fileName.startsWith('/node_modules/')
+				// ignore .js because it's no help for intellisense
+				&& (fileName.endsWith('.d.ts') || fileName.endsWith('/package.json'))
+			) {
+				const url = this.cdn + fileName.slice('/node_modules/'.length);
+				this.files.set(fileName, this.fetch(fileName, url));
+			}
+		}
+		return this.files.get(fileName)!;
+	}
+
+	async fetch(fileName: string, url: string) {
+		try {
+			const text = (await axios.get(url, {
+				transformResponse: (res) => {
+					// avoid parse to json object
+					return res;
+				},
+			})).data as string ?? undefined;
+			this.onFetch?.(fileName, text);
+			return text;
+		} catch {
+			// ignore
+		}
+	}
+}
+
+function createDtsClient(server: ReturnType<typeof createDtsHost>) {
+
+	const fetchTasks: [string, Promise<void>][] = [];
+	const files = new Map<string, string | undefined>();
+
+	return {
+		readFile,
+		getVersion: () => server.getVersion(),
+		readFileAsync,
+	};
+
+	function readFile(fileName: string) {
+		if (!files.has(fileName)) {
+			files.set(fileName, undefined);
+			fetchTasks.push([fileName, readFileAsync(fileName)]);
+		}
+		return files.get(fileName);
+	}
+
+	async function readFileAsync(fileName: string) {
+		const text = await server.readFile(fileName);
+		files.set(fileName, text);
 	}
 }

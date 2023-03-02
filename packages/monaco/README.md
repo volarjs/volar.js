@@ -39,7 +39,7 @@ self.onmessage = () => {
 #### TypeScript Support
 
 ```ts
-import { createLanguageService } from '@volar/monaco/worker';
+import { createLanguageService, createDtsHost } from '@volar/monaco/worker';
 import * as ts from 'typescript';
 
 createLanguageService({
@@ -49,9 +49,9 @@ createLanguageService({
 		compilerOptions: {
 			// ...tsconfig options
 		},
-		// Enable auto fetch node_modules types
-		autoFetchTypes: true,
 	},
+	// Enable auto fetch node_modules types
+	dtsHost: createDtsHost('https://unpkg.com/'),
 });
 ```
 
