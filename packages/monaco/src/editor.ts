@@ -14,6 +14,7 @@ export namespace editor {
 		worker: _editor.MonacoWebWorker<LanguageService>,
 		languages: string[],
 		markersOwn: string,
+		getSyncUris: () => Uri[],
 		editor: typeof import('monaco-editor-core').editor,
 	): IDisposable {
 
@@ -91,7 +92,7 @@ export namespace editor {
 				return;
 			}
 
-			const languageService = await getLanguageService(model.uri);
+			const languageService = await worker.withSyncedResources(getSyncUris());
 			const diagnostics = await languageService.doValidation(model.uri.toString());
 			const result = diagnostics.map(error => {
 				const marker = protocol2monaco.asMarkerData(error);
@@ -100,11 +101,6 @@ export namespace editor {
 			});
 
 			editor.setModelMarkers(model, markersOwn, result);
-		}
-
-		async function getLanguageService(...uris: Uri[]) {
-			await worker.withSyncedResources(uris);
-			return worker.getProxy();
 		}
 	}
 }
