@@ -38,10 +38,6 @@ export async function register(
 		if (document !== activeDocument) {
 			return;
 		}
-		if (timeout) {
-			clearTimeout(timeout);
-			timeout = undefined;
-		}
 
 		const lastChange = contentChanges[contentChanges.length - 1];
 
@@ -80,9 +76,13 @@ export async function register(
 		lastChange: vscode.TextDocumentContentChangeEvent,
 		provider: (document: vscode.TextDocument, position: vscode.Position, lastChange: vscode.TextDocumentContentChangeEvent, isCancel: () => boolean) => Thenable<string | vscode.TextEdit | null | undefined>,
 	) {
-		const rangeStart = lastChange.range.start;
+		if (timeout) {
+			clearTimeout(timeout);
+			timeout = undefined;
+		}
 		const version = document.version;
 		timeout = setTimeout(() => {
+			const rangeStart = lastChange.range.start;
 			const position = new vscode.Position(rangeStart.line, rangeStart.character + lastChange.text.length);
 			provider(document, position, lastChange, () => vscode.window.activeTextEditor?.document.version !== version).then(text => {
 				if (text && isEnabled) {
