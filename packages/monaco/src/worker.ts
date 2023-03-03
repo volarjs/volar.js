@@ -206,18 +206,19 @@ class CdnDtsHost {
 	}
 
 	readFile(fileName: string) {
-		if (!this.files.has(fileName)) {
-			this.files.set(fileName, undefined);
-			if (
-				fileName.startsWith('/node_modules/')
-				// ignore .js because it's no help for intellisense
-				&& (fileName.endsWith('.d.ts') || fileName.endsWith('/package.json'))
-			) {
+		if (
+			fileName.startsWith('/node_modules/')
+			// ignore .js because it's no help for intellisense
+			&& (fileName.endsWith('.d.ts') || fileName.endsWith('/package.json'))
+		) {
+			if (!this.files.has(fileName)) {
+				this.files.set(fileName, undefined);
 				const url = this.cdn + fileName.slice('/node_modules/'.length);
 				this.files.set(fileName, this.fetch(fileName, url));
 			}
+			return this.files.get(fileName)!;
 		}
-		return this.files.get(fileName)!;
+		return undefined;
 	}
 
 	async fetch(fileName: string, url: string) {
