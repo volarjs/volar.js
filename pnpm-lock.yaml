@@ -10,17 +10,17 @@ importers:
       vite: latest
       vitest: 0.25.8
     optionalDependencies:
-      '@lerna-lite/cli': 1.15.1
+      '@lerna-lite/cli': 1.16.0
     devDependencies:
-      '@types/node': 18.14.4
+      '@types/node': 18.14.5
       typescript: 4.9.5
-      vite: 4.1.4_@types+node@18.14.4
+      vite: 4.1.4_@types+node@18.14.5
       vitest: 0.25.8
 
   packages/kit:
     specifiers:
-      '@volar/language-service': 1.3.0-alpha.2
-      '@volar/shared': 1.3.0-alpha.2
+      '@volar/language-service': 1.3.0-alpha.3
+      '@volar/shared': 1.3.0-alpha.3
       vscode-languageserver-textdocument: ^1.0.8
       vscode-uri: ^3.0.7
     dependencies:
@@ -31,15 +31,15 @@ importers:
 
   packages/language-core:
     specifiers:
-      '@volar/source-map': 1.3.0-alpha.2
+      '@volar/source-map': 1.3.0-alpha.3
     dependencies:
       '@volar/source-map': link:../source-map
 
   packages/language-server:
     specifiers:
-      '@volar/language-core': 1.3.0-alpha.2
-      '@volar/language-service': 1.3.0-alpha.2
-      '@volar/shared': 1.3.0-alpha.2
+      '@volar/language-core': 1.3.0-alpha.3
+      '@volar/language-service': 1.3.0-alpha.3
+      '@volar/shared': 1.3.0-alpha.3
       '@vscode/l10n': ^0.0.11
       request-light: ^0.7.0
       typesafe-path: ^0.2.2
@@ -63,10 +63,10 @@ importers:
 
   packages/language-service:
     specifiers:
-      '@volar/language-core': 1.3.0-alpha.2
-      '@volar/shared': 1.3.0-alpha.2
-      '@volar/source-map': 1.3.0-alpha.2
-      '@volar/typescript-faster': 1.3.0-alpha.2
+      '@volar/language-core': 1.3.0-alpha.3
+      '@volar/shared': 1.3.0-alpha.3
+      '@volar/source-map': 1.3.0-alpha.3
+      '@volar/typescript-faster': 1.3.0-alpha.3
       vscode-html-languageservice: ^5.0.4
       vscode-json-languageservice: ^5.2.0
       vscode-languageserver-protocol: ^3.17.3
@@ -85,7 +85,7 @@ importers:
 
   packages/monaco:
     specifiers:
-      '@volar/language-service': 1.3.0-alpha.2
+      '@volar/language-service': 1.3.0-alpha.3
       axios: ^1.3.4
       monaco-editor-core: ^0.36.0
       vscode-languageserver-protocol: ^3.17.3
@@ -113,7 +113,7 @@ importers:
 
   packages/typescript:
     specifiers:
-      '@volar/language-core': 1.3.0-alpha.2
+      '@volar/language-core': 1.3.0-alpha.3
     dependencies:
       '@volar/language-core': link:../language-core
 
@@ -129,9 +129,9 @@ importers:
   packages/vscode-language-client:
     specifiers:
       '@types/vscode': latest
-      '@volar/language-server': 1.3.0-alpha.2
-      '@volar/shared': 1.3.0-alpha.2
-      '@volar/source-map': 1.3.0-alpha.2
+      '@volar/language-server': 1.3.0-alpha.3
+      '@volar/shared': 1.3.0-alpha.3
+      '@volar/source-map': 1.3.0-alpha.3
       typesafe-path: ^0.2.2
       vscode-languageclient: latest
       vscode-nls: ^5.2.0
@@ -385,24 +385,24 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/cli/1.15.1:
-    resolution: {integrity: sha512-tpR/NPdX65AzprU6F1IH3hsAullmnYaO4MJOk3f6HCEfxcqUchbTLtzBonSYFNTgEc005Bt8EfejLz+o4zlKyQ==}
+  /@lerna-lite/cli/1.16.0:
+    resolution: {integrity: sha512-9Z8KIMpxGfw4uvvqPumSy9shftdfXgV+gQtiYqjBDL1dPWzcFCWVAym1VQlCV3NeFm8uCzpsXUHST9Siao4bIA==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     hasBin: true
     requiresBuild: true
     dependencies:
-      '@lerna-lite/core': 1.15.1
-      '@lerna-lite/init': 1.15.1
-      '@lerna-lite/listable': 1.15.1
-      '@lerna-lite/publish': 1.15.1
-      '@lerna-lite/version': 1.15.1
+      '@lerna-lite/core': 1.16.0
+      '@lerna-lite/init': 1.16.0
+      '@lerna-lite/listable': 1.16.0
+      '@lerna-lite/publish': 1.16.0
+      '@lerna-lite/version': 1.16.0
       dedent: 0.7.0
       dotenv: 16.0.3
       import-local: 3.1.0
       load-json-file: 6.2.0
       npmlog: 7.0.1
       path: 0.12.7
-      yargs: 17.6.2
+      yargs: 17.7.1
     transitivePeerDependencies:
       - bluebird
       - encoding
@@ -410,8 +410,8 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/core/1.15.1:
-    resolution: {integrity: sha512-NRg2OZ44j+RHtWFC6tqzweO3gB+c1kU7EYsh5OCDUid0/U3+2OAxbq/WLaq/u0GUnLeXqVmCcb3231vi1noSCg==}
+  /@lerna-lite/core/1.16.0:
+    resolution: {integrity: sha512-xWIWNe3XbkggsIdkQkjJNUuFHriKHTLvT43Axw1PiAQ9G+OErlcp6JzGQwhMamOlckXGbSqfpVbVP4OyLoF+wg==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
       '@npmcli/run-script': 6.0.0
@@ -427,7 +427,7 @@ packages:
       inquirer: 8.2.5
       is-ci: 3.0.1
       load-json-file: 6.2.0
-      minimatch: 6.2.0
+      minimatch: 7.4.2
       npm-package-arg: 10.1.0
       npmlog: 7.0.1
       p-map: 4.0.0
@@ -446,11 +446,11 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/init/1.15.1:
-    resolution: {integrity: sha512-DOPTGT8tU9pETTjDgzBLVrKksC5CHiKnccIcurShHZ53SiA2t59MTD7dQ9rvnh4UQNyfnuAkWy+gNKnqR1IL5Q==}
+  /@lerna-lite/init/1.16.0:
+    resolution: {integrity: sha512-6nSFJYebMoMlJLCHZ5L5rfhHbbu0KdBw9gAzKrJFXUd5htOzGRmgnv/zCoF0fuVOCWCZHsu5WcviQZs25FSzow==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
-      '@lerna-lite/core': 1.15.1
+      '@lerna-lite/core': 1.16.0
       fs-extra: 11.1.0
       p-map: 4.0.0
       path: 0.12.7
@@ -461,11 +461,11 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/listable/1.15.1:
-    resolution: {integrity: sha512-XXBYjYDLVX/AZ92mu9RuJaXTjk/ly5SMSIezGiN1s7DwYGJO0bBK27Ev2xdn0H7TfXnptkT+G2k0cl8GMVVbhA==}
+  /@lerna-lite/listable/1.16.0:
+    resolution: {integrity: sha512-sWoZmQTaLDobKXtN7eZuPPjWTcsxmNMWYUeDLedGuHQQnsHHLSpz7lSjJWcqJKpbTn8zURAFlR5Qzq15pkQl5w==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
-      '@lerna-lite/core': 1.15.1
+      '@lerna-lite/core': 1.16.0
       chalk: 4.1.2
       columnify: 1.6.0
     transitivePeerDependencies:
@@ -474,13 +474,13 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/publish/1.15.1:
-    resolution: {integrity: sha512-QlkElCvFTXN++gXjBRigGpWfOihNUJs4+O49Rhk2hvHzjw66VEYCGuXogGASbbuPz5tCNbH/toIqEM6664KtAg==}
+  /@lerna-lite/publish/1.16.0:
+    resolution: {integrity: sha512-X3dGiK6Bhe87Q8lwvyT8FvD9iXzJAmaf7sXsvLOXd0Mf5+JcsnCVWCN0FfMeGnnNzSz1zMMBXI7pgfhYbJ0mOw==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
-      '@lerna-lite/core': 1.15.1
-      '@lerna-lite/version': 1.15.1
-      '@npmcli/arborist': 6.2.2
+      '@lerna-lite/core': 1.16.0
+      '@lerna-lite/version': 1.16.0
+      '@npmcli/arborist': 6.2.4
       byte-size: 7.0.1
       chalk: 4.1.2
       columnify: 1.6.0
@@ -488,14 +488,14 @@ packages:
       glob: 7.2.3
       has-unicode: 2.0.1
       libnpmaccess: 7.0.2
-      libnpmpublish: 7.0.8
+      libnpmpublish: 7.1.0
       npm-package-arg: 10.1.0
       npm-packlist: 7.0.4
       npm-registry-fetch: 14.0.3
       npmlog: 7.0.1
       p-map: 4.0.0
       p-pipe: 3.1.0
-      pacote: 15.0.8
+      pacote: 15.1.1
       path: 0.12.7
       pify: 5.0.0
       read-package-json: 6.0.0
@@ -510,11 +510,11 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/version/1.15.1:
-    resolution: {integrity: sha512-jFrGdPEeqAILsqbSX7H96qP0XUBSdCgM6xDo4hj6dWSyMbm3ekhtkUOMrQpoEXSYRWylVQTzhXDJH46lTO/Ylw==}
+  /@lerna-lite/version/1.16.0:
+    resolution: {integrity: sha512-myTVttd5Szyw4edJQ28Kqi2xYTordlQzDWklXxZ4oj637Bhjhr3cWtzLuJWPMko4B7ZdD+CZTteKwKVDlyfUmg==}
     engines: {node: '>=14.17.0', npm: '>=8.0.0'}
     dependencies:
-      '@lerna-lite/core': 1.15.1
+      '@lerna-lite/core': 1.16.0
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 19.0.7
       chalk: 4.1.2
@@ -531,7 +531,7 @@ packages:
       is-stream: 2.0.1
       load-json-file: 6.2.0
       make-dir: 3.1.0
-      minimatch: 6.2.0
+      minimatch: 7.4.2
       new-github-release-url: 1.0.0
       node-fetch: 2.6.7
       npm-package-arg: 10.1.0
@@ -577,14 +577,14 @@ packages:
     dev: false
     optional: true
 
-  /@npmcli/arborist/6.2.2:
-    resolution: {integrity: sha512-cjK9CuA1cEovr4E1ljdgYU1UBdKJb4KvvULAEYOM1/qU0Que2X4DKyjIDBEy8MSWRY6PyaQ8oLGhwYIh8gUEEA==}
+  /@npmcli/arborist/6.2.4:
+    resolution: {integrity: sha512-8nwyvv/WyGupcD9CRm3SOyFVgysHehMbkFgNXwz6db8Dd4hCkG8bptgPL5dveJzRUiA2AGKaGhX5CQsXaCyI/g==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     hasBin: true
     dependencies:
       '@isaacs/string-locale-compare': 1.1.0
       '@npmcli/fs': 3.1.0
-      '@npmcli/installed-package-contents': 2.0.1
+      '@npmcli/installed-package-contents': 2.0.2
       '@npmcli/map-workspaces': 3.0.2
       '@npmcli/metavuln-calculator': 5.0.0
       '@npmcli/name-from-folder': 2.0.0
@@ -605,7 +605,7 @@ packages:
       npm-pick-manifest: 8.0.1
       npm-registry-fetch: 14.0.3
       npmlog: 7.0.1
-      pacote: 15.0.8
+      pacote: 15.1.1
       parse-conflict-json: 3.0.0
       proc-log: 3.0.0
       promise-all-reject-late: 1.0.1
@@ -666,6 +666,16 @@ packages:
     dev: false
     optional: true
 
+  /@npmcli/installed-package-contents/2.0.2:
+    resolution: {integrity: sha512-xACzLPhnfD51GKvTOOuNX2/V4G4mz9/1I2MfDoye9kBM3RYe5g2YbscsaGoTlaWqkxeiapBWyseULVKpSVHtKQ==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    hasBin: true
+    dependencies:
+      npm-bundled: 3.0.0
+      npm-normalize-package-bin: 3.0.0
+    dev: false
+    optional: true
+
   /@npmcli/map-workspaces/3.0.2:
     resolution: {integrity: sha512-bCEC4PG7HbadtAYkW/TTUVNEOSr5Dhfmv6yGLgByJgCvdCqq7teq09cjvJ1LhzJU/euWjvYMcQxsfj7yDD2ikg==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -683,7 +693,7 @@ packages:
     dependencies:
       cacache: 17.0.4
       json-parse-even-better-errors: 3.0.0
-      pacote: 15.0.8
+      pacote: 15.1.1
       semver: 7.3.8
     transitivePeerDependencies:
       - bluebird
@@ -903,6 +913,14 @@ packages:
     dev: false
     optional: true
 
+  /@tufjs/models/1.0.0:
+    resolution: {integrity: sha512-RRMu4uMxWnZlxaIBxahSb2IssFZiu188sndesZflWOe1cA/qUqtemSIoBWbuVKPvvdktapImWNnKpBcc+VrCQw==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    dependencies:
+      minimatch: 6.2.0
+    dev: false
+    optional: true
+
   /@types/chai-subset/1.3.3:
     resolution: {integrity: sha512-frBecisrNGz+F4T6bcc+NLeolfiojh5FxW2klu669+8BARtyQv2C/GkNW6FUodVe4BroGMP/wER/YDGc7rEllw==}
     dependencies:
@@ -918,8 +936,8 @@ packages:
     dev: false
     optional: true
 
-  /@types/node/18.14.4:
-    resolution: {integrity: sha512-VhCw7I7qO2X49+jaKcAUwi3rR+hbxT5VcYF493+Z5kMLI0DL568b7JI4IDJaxWFH0D/xwmGJNoXisyX+w7GH/g==}
+  /@types/node/18.14.5:
+    resolution: {integrity: sha512-CRT4tMK/DHYhw1fcCEBwME9CSaZNclxfzVMe7GsO6ULSwsttbj70wSiX6rZdIjGblu93sTJxLdhNIT85KKI7Qw==}
     dev: true
 
   /@types/normalize-package-data/2.4.1:
@@ -2562,14 +2580,16 @@ packages:
     dev: false
     optional: true
 
-  /libnpmpublish/7.0.8:
-    resolution: {integrity: sha512-HvcZbqt5z7bOdzaYjb46DkIWeAHb1E9UWTHHFdMIZJKrYAY6TEY1luI1PZ70/BL3mPfmjpZpsGsfP0Du1kMUPA==}
+  /libnpmpublish/7.1.0:
+    resolution: {integrity: sha512-AAw/84u6aLo6IzXFhf3s+VCg5/eqICRZFJgRfBpnbCjubRY33WXJh57aWYP0WPlqnFI3E2M1adIqQDbYVyRwgA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
+      ci-info: 3.7.0
       normalize-package-data: 5.0.0
       npm-package-arg: 10.1.0
       npm-registry-fetch: 14.0.3
       semver: 7.3.8
+      sigstore: 1.0.0
       ssri: 10.0.1
     transitivePeerDependencies:
       - bluebird
@@ -2821,6 +2841,14 @@ packages:
 
   /minimatch/6.2.0:
     resolution: {integrity: sha512-sauLxniAmvnhhRjFwPNnJKaPFYyddAgbYdeUpHULtCT/GhzdCx/MDNy+Y40lBxTQUrMzDE8e0S43Z5uqfO0REg==}
+    engines: {node: '>=10'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: false
+    optional: true
+
+  /minimatch/7.4.2:
+    resolution: {integrity: sha512-xy4q7wou3vUoC9k1xGTXc+awNdGaGVHtFUaey8tiX4H1QRc04DZ/rmDFwNm2EBsuYEhAZ6SgMmYf3InGY6OauA==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
@@ -3297,8 +3325,8 @@ packages:
     dev: false
     optional: true
 
-  /pacote/15.0.8:
-    resolution: {integrity: sha512-UlcumB/XS6xyyIMwg/WwMAyUmga+RivB5KgkRwA1hZNtrx+0Bt41KxHCvg1kr0pZ/ZeD8qjhW4fph6VaYRCbLw==}
+  /pacote/15.1.1:
+    resolution: {integrity: sha512-eeqEe77QrA6auZxNHIp+1TzHQ0HBKf5V6c8zcaYZ134EJe1lCi+fjXATkNiEEfbG+e50nu02GLvUtmZcGOYabQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     hasBin: true
     dependencies:
@@ -3317,6 +3345,7 @@ packages:
       promise-retry: 2.0.1
       read-package-json: 6.0.0
       read-package-json-fast: 3.0.2
+      sigstore: 1.0.0
       ssri: 10.0.1
       tar: 6.1.13
     transitivePeerDependencies:
@@ -3837,6 +3866,19 @@ packages:
     dev: false
     optional: true
 
+  /sigstore/1.0.0:
+    resolution: {integrity: sha512-e+qfbn/zf1+rCza/BhIA//Awmf0v1pa5HQS8Xk8iXrn9bgytytVLqYD0P7NSqZ6IELTgq+tcDvLPkQjNHyWLNg==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    hasBin: true
+    dependencies:
+      make-fetch-happen: 11.0.2
+      tuf-js: 1.1.0
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+    dev: false
+    optional: true
+
   /slash/3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
@@ -4149,6 +4191,18 @@ packages:
     dev: false
     optional: true
 
+  /tuf-js/1.1.0:
+    resolution: {integrity: sha512-Tsqlm419OAlrkCE6rsf1WuPvww44vfK1ZHz+Uq9Mpq5JiV5qnJ9LLItvsbM9OipIIeSG3rydVBS4BmD40ts2uA==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    dependencies:
+      '@tufjs/models': 1.0.0
+      make-fetch-happen: 11.0.2
+    transitivePeerDependencies:
+      - bluebird
+      - supports-color
+    dev: false
+    optional: true
+
   /type-detect/4.0.8:
     resolution: {integrity: sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g==}
     engines: {node: '>=4'}
@@ -4291,7 +4345,7 @@ packages:
     dev: false
     optional: true
 
-  /vite/4.1.4_@types+node@18.14.4:
+  /vite/4.1.4_@types+node@18.14.5:
     resolution: {integrity: sha512-3knk/HsbSTKEin43zHu7jTwYWv81f8kgAL99G5NWBcA1LKvtvcVAC4JjBH1arBunO9kQka+1oGbrMKOjk4ZrBg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
@@ -4316,7 +4370,7 @@ packages:
       terser:
         optional: true
     dependencies:
-      '@types/node': 18.14.4
+      '@types/node': 18.14.5
       esbuild: 0.16.15
       postcss: 8.4.21
       resolve: 1.22.1
@@ -4349,7 +4403,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
-      '@types/node': 18.14.4
+      '@types/node': 18.14.5
       acorn: 8.8.1
       acorn-walk: 8.2.0
       chai: 4.3.7
@@ -4360,7 +4414,7 @@ packages:
       tinybench: 2.3.1
       tinypool: 0.3.0
       tinyspy: 1.0.2
-      vite: 4.1.4_@types+node@18.14.4
+      vite: 4.1.4_@types+node@18.14.5
     transitivePeerDependencies:
       - less
       - sass
@@ -4605,8 +4659,8 @@ packages:
     dev: false
     optional: true
 
-  /yargs/17.6.2:
-    resolution: {integrity: sha512-1/9UrdHjDZc0eOU0HxOHoS78C69UD3JRMvzlJ7S79S2nTaWRA/whGCTV8o9e/N/1Va9YIV7Q4sOxD8VV4pCWOw==}
+  /yargs/17.7.1:
+    resolution: {integrity: sha512-cwiTb08Xuv5fqF4AovYacTFNxk62th7LKJ6BL9IGUpTJrWoU7/7WdQGTP2SjKf1dUNBGzDd28p/Yfs/GI6JrLw==}
     engines: {node: '>=12'}
     dependencies:
       cliui: 8.0.1
