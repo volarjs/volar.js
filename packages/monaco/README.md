@@ -89,7 +89,15 @@ languages.onLanguage('my-lang', () => {
 		worker,
 		['my-lang'],
 		'my-lang-markers-owner',
-		// root files
+		// sync files
+		() => [Uri.file('/Foo.my-lang'), Uri.file('/Bar.my-lang')],
+		editor
+	);
+	// auto close tags
+	VolarMonaco.editor.activateAutoInsertion(
+		worker,
+		['my-lang'],
+		// sync files
 		() => [Uri.file('/Foo.my-lang'), Uri.file('/Bar.my-lang')],
 		editor
 	);
