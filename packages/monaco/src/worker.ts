@@ -183,8 +183,12 @@ export function createLanguageService(options: {
 	}
 }
 
-export function createDtsHost(cdn: string, onFetch?: (fileName: string, text: string) => void) {
-	return new CdnDtsHost(cdn, onFetch);
+export function createDtsHost(
+	cdn: string,
+	versions: Record<string, string> = {},
+	onFetch?: (fileName: string, text: string) => void,
+) {
+	return new CdnDtsHost(cdn, versions, onFetch);
 }
 
 class CdnDtsHost {
@@ -193,8 +197,9 @@ class CdnDtsHost {
 	lastUpdateFilesSize = 0;
 
 	constructor(
-		private cdn: string,
-		private onFetch?: (fileName: string, text: string) => void,
+		public cdn: string,
+		public versions: Record<string, string> = {},
+		public onFetch?: (fileName: string, text: string) => void,
 	) { }
 
 	async getVersion() {
@@ -213,15 +218,16 @@ class CdnDtsHost {
 		) {
 			if (!this.files.has(fileName)) {
 				this.files.set(fileName, undefined);
-				const url = this.cdn + fileName.slice('/node_modules/'.length);
-				this.files.set(fileName, this.fetch(fileName, url));
+				this.files.set(fileName, this.fetch(fileName));
 			}
 			return this.files.get(fileName)!;
 		}
 		return undefined;
 	}
 
-	async fetch(fileName: string, url: string) {
+	async fetch(fileName: string) {
+		const requestFileName = this.resolveRequestFileName(fileName);
+		const url = this.cdn + requestFileName.slice('/node_modules/'.length);
 		try {
 			const text = (await axios.get(url, {
 				transformResponse: (res) => {
@@ -234,6 +240,16 @@ class CdnDtsHost {
 		} catch {
 			// ignore
 		}
+	}
+
+	resolveRequestFileName(fileName: string) {
+		for (const [key, version] of Object.entries(this.versions)) {
+			if (fileName.startsWith(`/node_modules/${key}/`)) {
+				fileName = fileName.replace(`/node_modules/${key}/`, `/node_modules/${key}@${version}/`);
+				return fileName;
+			}
+		}
+		return fileName;
 	}
 
 	/**

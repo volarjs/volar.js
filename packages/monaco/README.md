@@ -51,7 +51,7 @@ createLanguageService({
 		},
 	},
 	// Enable auto fetch node_modules types
-	dtsHost: createDtsHost('https://unpkg.com/'),
+	dtsHost: createDtsHost('https://unpkg.com/', { typescript: '4.9.5' }),
 });
 ```
 
