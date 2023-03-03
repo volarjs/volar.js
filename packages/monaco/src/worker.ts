@@ -234,6 +234,24 @@ class CdnDtsHost {
 			// ignore
 		}
 	}
+
+	/**
+	 * save / load with json
+	 */
+
+	async toJson() {
+		const json: Record<string, string | null> = {};
+		for (const [fileName, file] of this.files) {
+			json[fileName] = (await file) ?? null;
+		}
+		return json;
+	}
+
+	fromJson(json: Record<string, string | null>) {
+		for (const [fileName, file] of Object.entries(json)) {
+			this.files.set(fileName, file ?? undefined);
+		}
+	}
 }
 
 function createDtsClient(server: ReturnType<typeof createDtsHost>) {
