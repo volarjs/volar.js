@@ -18,7 +18,7 @@ export function createLanguageService(options: {
 	},
 }) {
 
-	const dtsClient = options.dtsHost ? createDtsClient(options.dtsHost) : undefined;
+	const dtsFiles = new Map<string, string | undefined>();
 	const ts: typeof import('typescript/lib/tsserverlibrary') | undefined = options.typescript ? options.typescript.module : undefined;
 	const config = options.config ?? {};
 	const compilerOptions = options.typescript?.compilerOptions ?? {};
@@ -44,13 +44,13 @@ export function createLanguageService(options: {
 
 		(InnocentRabbit.prototype as any)[api] = async (...args: any[]) => {
 
-			if (!dtsClient) {
+			if (!options.dtsHost) {
 				return (languageService as any)[api](...args);
 			}
 
-			let oldVersion = await dtsClient.getVersion();
+			let oldVersion = await options.dtsHost.getVersion();
 			let result = await (languageService as any)[api](...args);
-			let newVersion = await dtsClient.getVersion();
+			let newVersion = await options.dtsHost.getVersion();
 
 			while (newVersion !== oldVersion) {
 				oldVersion = newVersion;
@@ -67,7 +67,7 @@ export function createLanguageService(options: {
 					});
 				}
 				result = await (languageService as any)[api](...args);
-				newVersion = await dtsClient.getVersion();
+				newVersion = await options.dtsHost.getVersion();
 			}
 
 			return result;
@@ -81,7 +81,7 @@ export function createLanguageService(options: {
 		let projectVersion = 0;
 
 		const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
-		const webFileSnapshot = new Map<string, ts.IScriptSnapshot>();
+		const dtsFileSnapshot = new Map<string, ts.IScriptSnapshot>();
 		const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
 		const host: LanguageServiceHost = {
 			getProjectVersion() {
@@ -107,11 +107,9 @@ export function createLanguageService(options: {
 				if (model) {
 					return model.version.toString();
 				}
-				if (dtsClient) {
-					const dts = dtsClient.readFile(fileName);
-					if (dts) {
-						return dts.length.toString();
-					}
+				const dts = readDtsFile(fileName);
+				if (dts) {
+					return dts.length.toString();
 				}
 				return '';
 			},
@@ -130,19 +128,17 @@ export function createLanguageService(options: {
 					}]);
 					return modelSnapshot.get(model)?.[1];
 				}
-				if (webFileSnapshot.has(fileName)) {
-					return webFileSnapshot.get(fileName);
+				if (dtsFileSnapshot.has(fileName)) {
+					return dtsFileSnapshot.get(fileName);
 				}
-				if (dtsClient) {
-					const webFileText = dtsClient.readFile(fileName);
-					if (webFileText !== undefined) {
-						webFileSnapshot.set(fileName, {
-							getText: (start, end) => webFileText.substring(start, end),
-							getLength: () => webFileText.length,
-							getChangeRange: () => undefined,
-						});
-						return webFileSnapshot.get(fileName);
-					}
+				const dtsFileText = readDtsFile(fileName);
+				if (dtsFileText !== undefined) {
+					dtsFileSnapshot.set(fileName, {
+						getText: (start, end) => dtsFileText.substring(start, end),
+						getLength: () => dtsFileText.length,
+						getChangeRange: () => undefined,
+					});
+					return dtsFileSnapshot.get(fileName);
 				}
 			},
 			getCompilationSettings() {
@@ -162,24 +158,32 @@ export function createLanguageService(options: {
 				if (model) {
 					return model.getValue();
 				}
-				if (dtsClient) {
-					return dtsClient.readFile(fileName);
-				}
+				return readDtsFile(fileName);
 			},
 			fileExists(fileName) {
 				const model = options.workerContext.getMirrorModels().find(model => model.uri.fsPath === fileName);
 				if (model) {
 					return true;
 				}
-				if (dtsClient) {
-					return dtsClient.readFile(fileName) !== undefined;
-				}
-				return false;
+				return readDtsFile(fileName) !== undefined;
 			},
 			getTypeScriptModule: ts ? (() => ts) : undefined,
 		};
 
 		return host;
+	}
+
+	function readDtsFile(fileName: string) {
+		if (!dtsFiles.has(fileName) && options.dtsHost) {
+			dtsFiles.set(fileName, undefined);
+			readDtsFileAsync(fileName);
+		}
+		return dtsFiles.get(fileName);
+	}
+
+	async function readDtsFileAsync(fileName: string) {
+		const text = await options.dtsHost?.readFile(fileName);
+		dtsFiles.set(fileName, text);
 	}
 }
 
@@ -268,30 +272,5 @@ class CdnDtsHost {
 		for (const [fileName, file] of Object.entries(json)) {
 			this.files.set(fileName, file ?? undefined);
 		}
-	}
-}
-
-function createDtsClient(server: ReturnType<typeof createDtsHost>) {
-
-	const fetchTasks: [string, Promise<void>][] = [];
-	const files = new Map<string, string | undefined>();
-
-	return {
-		readFile,
-		getVersion: () => server.getVersion(),
-		readFileAsync,
-	};
-
-	function readFile(fileName: string) {
-		if (!files.has(fileName)) {
-			files.set(fileName, undefined);
-			fetchTasks.push([fileName, readFileAsync(fileName)]);
-		}
-		return files.get(fileName);
-	}
-
-	async function readFileAsync(fileName: string) {
-		const text = await server.readFile(fileName);
-		files.set(fileName, text);
 	}
 }
