@@ -6,7 +6,7 @@ import { LanguageServerInitializationOptions } from '@volar/language-server';
 
 const defaultTsdkPath = 'node_modules/typescript/lib' as path.PosixPath;
 
-export async function register(
+export async function activate(
 	cmd: string,
 	context: vscode.ExtensionContext,
 	client: BaseLanguageClient,

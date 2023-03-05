@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { BaseLanguageClient, State } from 'vscode-languageclient';
 import { FsReadDirectoryRequest, FsReadFileRequest } from '@volar/language-server';
 
-export async function register(
+export async function activate(
 	context: vscode.ExtensionContext,
 	client: BaseLanguageClient,
 	cdn: string | undefined,

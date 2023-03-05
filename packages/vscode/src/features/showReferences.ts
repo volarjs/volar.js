@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { BaseLanguageClient, State } from 'vscode-languageclient';
 import { ShowReferencesNotification } from '@volar/language-server';
 
-export async function register(client: BaseLanguageClient) {
+export async function activate(client: BaseLanguageClient) {
 
 	const subscriptions: vscode.Disposable[] = [];
 

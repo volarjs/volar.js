@@ -29,7 +29,7 @@ const mappingSelectionDecorationType = vscode.window.createTextEditorDecorationT
 	}
 });
 
-export async function register(cmd: string, client: BaseLanguageClient) {
+export async function activate(cmd: string, client: BaseLanguageClient) {
 
 	class MappingDataHoverProvider implements vscode.HoverProvider {
 		async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {

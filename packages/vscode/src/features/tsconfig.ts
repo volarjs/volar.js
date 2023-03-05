@@ -3,7 +3,7 @@ import { BaseLanguageClient } from 'vscode-languageclient';
 import { GetMatchTsConfigRequest } from '@volar/language-server';
 import * as path from 'typesafe-path';
 
-export async function register(
+export async function activate(
 	cmd: string,
 	client: BaseLanguageClient,
 	shouldStatusBarShow: (document: vscode.TextDocument) => boolean,

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import { AutoInsertRequest } from '@volar/language-server';
 
-export async function register(
+export async function activate(
 	clients: BaseLanguageClient[],
 	active: (document: vscode.TextDocument) => boolean,
 ) {
