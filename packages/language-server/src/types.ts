@@ -66,7 +66,7 @@ export interface LanguageServerPlugin {
 			config: Config,
 			modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
 			ctx?: LanguageServiceContext,
-		): void;
+		): Config;
 		onInitialize?(_: vscode.InitializeResult, env: RuntimeEnvironment): void;
 		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};

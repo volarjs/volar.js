@@ -62,9 +62,11 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 		const ts = options.typescript ? context.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined;
 		for (const root of roots) {
 			if (root.scheme === 'file') {
-				const config = loadConfig(root.path, options.configFilePath) ?? {};
+				let config = loadConfig(root.path, options.configFilePath) ?? {};
 				for (const plugin of plugins) {
-					plugin.resolveConfig?.(config, { typescript: ts });
+					if (plugin.resolveConfig) {
+						config = plugin.resolveConfig(config, { typescript: ts });
+					}
 				}
 				if (config.plugins) {
 					lsPlugins = {

@@ -84,7 +84,7 @@ export async function createProject(context: ProjectContext) {
 
 	function getLanguageService() {
 		if (!languageService) {
-			const config = (
+			let config = (
 				context.workspace.rootUri.scheme === 'file' ? loadConfig(
 					context.workspace.rootUri.path,
 					context.workspace.workspaces.initOptions.configFilePath,
@@ -95,7 +95,9 @@ export async function createProject(context: ProjectContext) {
 				fileNameToUri,
 				rootUri: context.rootUri,
 				host: languageServiceHost,
-				config,
+				get config() {
+					return config;
+				},
 				locale: context.workspace.workspaces.initParams.locale,
 				configurationHost: context.workspace.workspaces.configurationHost,
 				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
@@ -116,7 +118,9 @@ export async function createProject(context: ProjectContext) {
 				host: languageServiceHost,
 			};
 			for (const plugin of context.workspace.workspaces.plugins) {
-				plugin.resolveConfig?.(config, { typescript: lsCtx.project.workspace.workspaces.ts }, lsCtx);
+				if (plugin.resolveConfig) {
+					config = plugin.resolveConfig(config, { typescript: lsCtx.project.workspace.workspaces.ts }, lsCtx);
+				}
 			}
 			languageService = embeddedLS.createLanguageService(options, context.documentRegistry);
 		}
