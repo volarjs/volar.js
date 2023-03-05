@@ -111,7 +111,7 @@ export function register(context: LanguageServicePluginContext) {
 				codeActions?.forEach(codeAction => {
 					codeAction.data = {
 						uri,
-						version: document.version,
+						version: sourceDocument.version,
 						type: 'plugin',
 						original: {
 							data: codeAction.data,
