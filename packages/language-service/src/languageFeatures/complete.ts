@@ -28,7 +28,11 @@ export function register(context: LanguageServicePluginContext) {
 		} | undefined,
 	} | undefined;
 
-	return async (uri: string, position: vscode.Position, completionContext?: vscode.CompletionContext) => {
+	return async (uri: string, position: vscode.Position, completionContext: vscode.CompletionContext | undefined, token: vscode.CancellationToken) => {
+
+		completionContext ??= {
+			triggerKind: vscode.CompletionTriggerKind.Invoked,
+		};
 
 		let document: TextDocument | undefined;
 
@@ -48,10 +52,10 @@ export function register(context: LanguageServicePluginContext) {
 
 						for (const mapped of map.toGeneratedPositions(position, data => !!data.completion)) {
 
-							if (!cacheData.plugin.complete?.on)
+							if (!cacheData.plugin.provideCompletionItems)
 								continue;
 
-							const embeddedCompletionList = await cacheData.plugin.complete.on(map.virtualFileDocument, mapped, completionContext);
+							const embeddedCompletionList = await cacheData.plugin.provideCompletionItems(map.virtualFileDocument, mapped, completionContext, token);
 
 							if (!embeddedCompletionList) {
 								cacheData.list.isIncomplete = false;
@@ -80,10 +84,10 @@ export function register(context: LanguageServicePluginContext) {
 				}
 				else if (document = context.getTextDocument(uri)) {
 
-					if (!cacheData.plugin.complete?.on)
+					if (!cacheData.plugin.provideCompletionItems)
 						continue;
 
-					const completionList = await cacheData.plugin.complete.on(document, position, completionContext);
+					const completionList = await cacheData.plugin.provideCompletionItems(document, position, completionContext, token);
 
 					if (!completionList) {
 						cacheData.list.isIncomplete = false;
@@ -133,25 +137,28 @@ export function register(context: LanguageServicePluginContext) {
 
 						for (const plugin of plugins) {
 
-							if (!plugin.complete?.on)
+							if (token.isCancellationRequested)
+								break;
+
+							if (!plugin.provideCompletionItems)
 								continue;
 
-							if (plugin.complete.isAdditional && !isFirstMapping)
+							if (plugin.isAdditionalCompletion && !isFirstMapping)
 								continue;
 
 							if (completionContext?.triggerCharacter && !plugin.triggerCharacters?.includes(completionContext.triggerCharacter))
 								continue;
 
-							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.additional || plugin.complete.isAdditional;
+							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.additional || plugin.isAdditionalCompletion;
 
 							if (cache!.mainCompletion && (!isAdditional || cache?.mainCompletion.documentUri !== map.virtualFileDocument.uri))
 								continue;
 
 							// avoid duplicate items with .vue and .vue.html
-							if (plugin.complete.isAdditional && cache?.data.some(data => data.plugin === plugin))
+							if (plugin.isAdditionalCompletion && cache?.data.some(data => data.plugin === plugin))
 								continue;
 
-							const embeddedCompletionList = await plugin.complete.on(map.virtualFileDocument, mapped, completionContext);
+							const embeddedCompletionList = await plugin.provideCompletionItems(map.virtualFileDocument, mapped, completionContext!, token);
 
 							if (!embeddedCompletionList || !embeddedCompletionList.items.length)
 								continue;
@@ -204,28 +211,31 @@ export function register(context: LanguageServicePluginContext) {
 
 				for (const plugin of plugins) {
 
-					if (!plugin.complete?.on)
+					if (token.isCancellationRequested)
+						break;
+
+					if (!plugin.provideCompletionItems)
 						continue;
 
-					if (plugin.complete.isAdditional && !isFirstMapping)
+					if (plugin.isAdditionalCompletion && !isFirstMapping)
 						continue;
 
 					if (completionContext?.triggerCharacter && !plugin.triggerCharacters?.includes(completionContext.triggerCharacter))
 						continue;
 
-					if (cache.mainCompletion && (!plugin.complete.isAdditional || cache.mainCompletion.documentUri !== document.uri))
+					if (cache.mainCompletion && (!plugin.isAdditionalCompletion || cache.mainCompletion.documentUri !== document.uri))
 						continue;
 
 					// avoid duplicate items with .vue and .vue.html
-					if (plugin.complete.isAdditional && cache?.data.some(data => data.plugin === plugin))
+					if (plugin.isAdditionalCompletion && cache?.data.some(data => data.plugin === plugin))
 						continue;
 
-					const completionList = await plugin.complete.on(document, position, completionContext);
+					const completionList = await plugin.provideCompletionItems(document, position, completionContext, token);
 
 					if (!completionList || !completionList.items.length)
 						continue;
 
-					if (!plugin.complete.isAdditional) {
+					if (!plugin.isAdditionalCompletion) {
 						cache.mainCompletion = { documentUri: document.uri };
 					}
 
@@ -254,7 +264,7 @@ export function register(context: LanguageServicePluginContext) {
 		return combineCompletionList(cache.data.map(cacheData => cacheData.list));
 
 		function sortPlugins(a: LanguageServicePluginInstance, b: LanguageServicePluginInstance) {
-			return (b.complete?.isAdditional ? -1 : 1) - (a.complete?.isAdditional ? -1 : 1);
+			return (b.isAdditionalCompletion ? -1 : 1) - (a.isAdditionalCompletion ? -1 : 1);
 		}
 
 		function combineCompletionList(lists: vscode.CompletionList[]): vscode.CompletionList {

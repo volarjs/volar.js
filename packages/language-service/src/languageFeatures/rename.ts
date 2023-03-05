@@ -8,7 +8,7 @@ import { FileRangeCapabilities } from '@volar/language-core';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position, newName: string) => {
+	return (uri: string, position: vscode.Position, newName: string, token: vscode.CancellationToken) => {
 
 		let _data: FileRangeCapabilities | undefined;
 
@@ -33,6 +33,9 @@ export function register(context: LanguageServicePluginContext) {
 			},
 			async (plugin, document, arg) => {
 
+				if (token.isCancellationRequested)
+					return;
+
 				const recursiveChecker = dedupe.createLocationSet();
 				let result: vscode.WorkspaceEdit | undefined;
 
@@ -42,7 +45,7 @@ export function register(context: LanguageServicePluginContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position, newName: string) {
 
-					if (!plugin.rename?.on)
+					if (!plugin.provideRenameEdits)
 						return;
 
 					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
@@ -50,7 +53,7 @@ export function register(context: LanguageServicePluginContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const workspaceEdit = await plugin.rename.on(document, position, newName);
+					const workspaceEdit = await plugin.provideRenameEdits(document, position, newName, token);
 
 					if (!workspaceEdit)
 						return;

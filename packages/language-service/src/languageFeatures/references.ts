@@ -6,7 +6,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position) => {
+	return (uri: string, position: vscode.Position, token: vscode.CancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -14,6 +14,9 @@ export function register(context: LanguageServicePluginContext) {
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => !!data.references),
 			async (plugin, document, position) => {
+
+				if (token.isCancellationRequested)
+					return;
 
 				const recursiveChecker = dedupe.createLocationSet();
 				const result: vscode.Location[] = [];
@@ -24,7 +27,7 @@ export function register(context: LanguageServicePluginContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position) {
 
-					if (!plugin.findReferences)
+					if (!plugin.provideReferences)
 						return;
 
 					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
@@ -32,7 +35,7 @@ export function register(context: LanguageServicePluginContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const references = await plugin.findReferences(document, position) ?? [];
+					const references = await plugin.provideReferences(document, position, token) ?? [];
 
 					for (const reference of references) {
 

@@ -10,11 +10,12 @@ export function register(context: LanguageServicePluginContext) {
 	return async (
 		uri: string,
 		options: vscode.FormattingOptions,
-		range?: vscode.Range,
-		onTypeParams?: {
+		range: vscode.Range | undefined,
+		onTypeParams: {
 			ch: string,
 			position: vscode.Position,
-		},
+		} | undefined,
+		token: vscode.CancellationToken
 	) => {
 
 		let document = context.getTextDocument(uri);
@@ -132,8 +133,12 @@ export function register(context: LanguageServicePluginContext) {
 						const indentSensitiveLines = new Set<number>();
 
 						for (const plugin of Object.values(context.plugins)) {
-							if (plugin.getIndentSensitiveLines) {
-								const lines = await plugin.getIndentSensitiveLines(map.virtualFileDocument);
+
+							if (token.isCancellationRequested)
+								break;
+
+							if (plugin.provideFormattingIndentSensitiveLines) {
+								const lines = await plugin.provideFormattingIndentSensitiveLines(map.virtualFileDocument, token);
 								if (lines) {
 									for (const line of lines) {
 										indentSensitiveLines.add(line);
@@ -221,16 +226,19 @@ export function register(context: LanguageServicePluginContext) {
 
 			for (const plugin of Object.values(context.plugins)) {
 
+				if (token.isCancellationRequested)
+					break;
+
 				let edits: vscode.TextEdit[] | null | undefined;
 
 				try {
 					if (ch !== undefined && vscode.Position.is(formatRange)) {
 						if (plugin.autoFormatTriggerCharacters?.includes(ch)) {
-							edits = await plugin.formatOnType?.(document, formatRange, ch, options);
+							edits = await plugin.provideOnTypeFormattingEdits?.(document, formatRange, ch, options, token);
 						}
 					}
 					else if (ch === undefined && vscode.Range.is(formatRange)) {
-						edits = await plugin.format?.(document, formatRange, options);
+						edits = await plugin.provideDocumentFormattingEdits?.(document, formatRange, options, token);
 					}
 				}
 				catch (err) {

@@ -1,4 +1,4 @@
-import type { LanguageService } from '@volar/language-service';
+import { LanguageService, Event } from '@volar/language-service';
 import { editor as _editor, IDisposable, Position, Uri } from 'monaco-editor-core';
 import { markers } from './utils/markers';
 import * as protocol2monaco from './utils/protocol2monaco';
@@ -93,8 +93,17 @@ export namespace editor {
 				return;
 			}
 
+			const version = model.getVersionId();
 			const languageService = await worker.withSyncedResources(getSyncUris());
-			const diagnostics = await languageService.doValidation(model.uri.toString());
+			const diagnostics = await languageService.doValidation(
+				model.uri.toString(),
+				{
+					get isCancellationRequested() {
+						return model.getVersionId() !== version;
+					},
+					onCancellationRequested: Event.None,
+				},
+			);
 			const result = diagnostics.map(error => {
 				const marker = protocol2monaco.asMarkerData(error);
 				markers.set(marker, error);
@@ -182,14 +191,24 @@ export namespace editor {
 					}
 					const position = new Position(lastChange.range.startLineNumber, lastChange.range.startColumn + lastChange.text.length);
 					const languageService = await worker.withSyncedResources(getSyncUris());
-					const edit = await languageService.doAutoInsert(model.uri.toString(), monaco2protocol.asPosition(position), {
-						lastChange: {
-							range: monaco2protocol.asRange(lastChange.range),
-							rangeLength: lastChange.rangeLength,
-							text: lastChange.text,
-							rangeOffset: lastChange.rangeOffset,
+					const edit = await languageService.doAutoInsert(
+						model.uri.toString(),
+						monaco2protocol.asPosition(position),
+						{
+							lastChange: {
+								range: monaco2protocol.asRange(lastChange.range),
+								rangeLength: lastChange.rangeLength,
+								text: lastChange.text,
+								rangeOffset: lastChange.rangeOffset,
+							},
 						},
-					});
+						{
+							get isCancellationRequested() {
+								return model.getVersionId() !== version;
+							},
+							onCancellationRequested: Event.None,
+						}
+					);
 					const codeEditor = editor.getEditors().find((e) => e.getModel() === model);
 					if (codeEditor && edit && model.getVersionId() === version) {
 						if (typeof edit === 'string') {

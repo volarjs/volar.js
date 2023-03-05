@@ -8,13 +8,17 @@ import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (uri: string) => {
+	return async (uri: string, token: vscode.CancellationToken) => {
 
 		const pluginLinks = await documentFeatureWorker(
 			context,
 			uri,
 			file => !!file.capabilities.documentSymbol,
-			(plugin, document) => plugin.findDocumentLinks?.(document),
+			(plugin, document) => {
+				if (token.isCancellationRequested)
+					return;
+				return plugin.provideLinks?.(document, token);
+			},
 			(data, map) => data.map(link => {
 
 				if (!map)

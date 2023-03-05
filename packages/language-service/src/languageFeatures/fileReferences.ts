@@ -7,7 +7,7 @@ import { NullableResult } from '@volar/language-service';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string): NullableResult<vscode.Location[]> => {
+	return (uri: string, token: vscode.CancellationToken): NullableResult<vscode.Location[]> => {
 
 		return languageFeatureWorker(
 			context,
@@ -17,7 +17,11 @@ export function register(context: LanguageServicePluginContext) {
 				yield _;
 			},
 			async (plugin, document) => {
-				return await plugin.findFileReferences?.(document) ?? [];
+
+				if (token.isCancellationRequested)
+					return;
+
+				return await plugin.provideFileReferences?.(document, token) ?? [];
 			},
 			(data) => data.map(reference => {
 

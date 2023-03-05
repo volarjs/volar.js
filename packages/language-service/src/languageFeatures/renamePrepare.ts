@@ -4,14 +4,20 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position) => {
+	return (uri: string, position: vscode.Position, token: vscode.CancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
 			uri,
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename),
-			(plugin, document, position) => plugin.rename?.prepare?.(document, position),
+			(plugin, document, position) => {
+
+				if (token.isCancellationRequested)
+					return;
+
+				return plugin.prepareRename?.(document, position, token);
+			},
 			(item, map) => {
 				if (!map) {
 					return item;

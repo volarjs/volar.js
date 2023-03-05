@@ -5,7 +5,7 @@ import { PluginCompletionData } from './complete';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (item: vscode.CompletionItem) => {
+	return async (item: vscode.CompletionItem, token: vscode.CancellationToken) => {
 
 		const data: PluginCompletionData | undefined = item.data;
 
@@ -13,7 +13,7 @@ export function register(context: LanguageServicePluginContext) {
 
 			const plugin = context.plugins[data.pluginId];
 
-			if (!plugin.complete?.resolve)
+			if (!plugin.resolveCompletionItem)
 				return item;
 
 			item = Object.assign(item, data.original);
@@ -22,7 +22,7 @@ export function register(context: LanguageServicePluginContext) {
 
 				for (const [_, map] of context.documents.getMapsByVirtualFileUri(data.map.embeddedDocumentUri)) {
 
-					item = await plugin.complete.resolve(item);
+					item = await plugin.resolveCompletionItem(item, token);
 					item = transformer.asCompletionItem(
 						item,
 						embeddedRange => {
@@ -35,7 +35,7 @@ export function register(context: LanguageServicePluginContext) {
 				}
 			}
 			else {
-				item = await plugin.complete.resolve(item);
+				item = await plugin.resolveCompletionItem(item, token);
 			}
 		}
 

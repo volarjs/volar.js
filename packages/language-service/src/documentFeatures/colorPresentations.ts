@@ -5,7 +5,7 @@ import * as shared from '@volar/shared';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, color: vscode.Color, range: vscode.Range) => {
+	return (uri: string, color: vscode.Color, range: vscode.Range, token: vscode.CancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -16,7 +16,13 @@ export function register(context: LanguageServicePluginContext) {
 					return map.toGeneratedRanges(range);
 				return [];
 			},
-			(plugin, document, range) => plugin.getColorPresentations?.(document, color, range),
+			(plugin, document, range) => {
+
+				if (token.isCancellationRequested)
+					return;
+
+				return plugin.provideColorPresentations?.(document, color, range, token);
+			},
 			(data, map) => map ? data.map(cp => {
 
 				if (cp.textEdit) {

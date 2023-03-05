@@ -5,14 +5,20 @@ import * as shared from '@volar/shared';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position) => {
+	return (uri: string, position: vscode.Position, token: vscode.CancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
 			uri,
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => !!data.completion),
-			(plugin, document, position) => plugin.findLinkedEditingRanges?.(document, position),
+			(plugin, document, position) => {
+
+				if (token.isCancellationRequested)
+					return;
+
+				return plugin.provideLinkedEditingRanges?.(document, position, token);
+			},
 			(data, map) => map ? ({
 				wordPattern: data.wordPattern,
 				ranges: data.ranges.map(range => map.toSourceRange(range)).filter(shared.notEmpty),

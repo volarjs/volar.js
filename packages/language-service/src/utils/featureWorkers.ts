@@ -157,13 +157,12 @@ export async function ruleWorker<T>(
 			};
 
 			for (const plugin of Object.values(context.plugins)) {
-				const fn = plugin.rules?.[api];
 				try {
-					if (fn) {
-						ruleCtx = await fn(ruleCtx);
-					}
-					else if (plugin.rules?.onAny) {
-						ruleCtx = await plugin.rules.onAny(ruleCtx);
+					if (plugin.resolveRuleContext) {
+						ruleCtx = await plugin.resolveRuleContext(
+							ruleCtx,
+							api === 'onFormat' ? 'format' : api === 'onSyntax' ? 'syntax' : 'semantic',
+						);
 					}
 				}
 				catch (err) {
@@ -224,13 +223,12 @@ export async function ruleWorker<T>(
 		};
 
 		for (const plugin of Object.values(context.plugins)) {
-			const fn = plugin.rules?.[api];
 			try {
-				if (fn) {
-					ruleCtx = await fn(ruleCtx);
-				}
-				else if (plugin.rules?.onAny) {
-					ruleCtx = await plugin.rules.onAny(ruleCtx);
+				if (plugin.resolveRuleContext) {
+					ruleCtx = await plugin.resolveRuleContext(
+						ruleCtx,
+						api === 'onFormat' ? 'format' : api === 'onSyntax' ? 'syntax' : 'semantic',
+					);
 				}
 			}
 			catch (err) {
