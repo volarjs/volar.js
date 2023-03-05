@@ -4,7 +4,12 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position, signatureHelpContext?: vscode.SignatureHelpContext) => {
+	return (uri: string, position: vscode.Position, signatureHelpContext: vscode.SignatureHelpContext | undefined, token: vscode.CancellationToken) => {
+
+		signatureHelpContext ??= {
+			triggerKind: vscode.SignatureHelpTriggerKind.Invoked,
+			isRetrigger: false,
+		};
 
 		return languageFeatureWorker(
 			context,
@@ -12,6 +17,8 @@ export function register(context: LanguageServicePluginContext) {
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => !!data.completion),
 			(plugin, document, position) => {
+				if (token.isCancellationRequested)
+					return;
 				if (
 					signatureHelpContext?.triggerKind === vscode.SignatureHelpTriggerKind.TriggerCharacter
 					&& signatureHelpContext.triggerCharacter
@@ -23,7 +30,7 @@ export function register(context: LanguageServicePluginContext) {
 				) {
 					return;
 				}
-				return plugin.getSignatureHelp?.(document, position, signatureHelpContext);
+				return plugin.provideSignatureHelp?.(document, position, signatureHelpContext!, token);
 			},
 			(data) => data,
 		);

@@ -11,31 +11,31 @@ export function register(context: LanguageServicePluginContext) {
 
 	const findReferences = references.register(context);
 
-	return async (item: vscode.CodeLens) => {
+	return async (item: vscode.CodeLens, token: vscode.CancellationToken) => {
 
 		const data: PluginCodeLensData | PluginReferencesCodeLensData | undefined = item.data;
 
 		if (data?.kind === 'normal') {
 
 			const plugin = context.plugins[data.pluginId];
-			if (!plugin.codeLens?.resolve)
+			if (!plugin.resolveCodeLens)
 				return item;
 
 			Object.assign(item, data.original);
-			item = await plugin.codeLens.resolve(item);
+			item = await plugin.resolveCodeLens(item, token);
 
 			// item.range already transformed in codeLens request
 		}
 
 		if (data?.kind === 'references') {
 
-			let references = await findReferences(data.uri, item.range.start) ?? [];
+			let references = await findReferences(data.uri, item.range.start, token) ?? [];
 
 			const plugin = context.plugins[data.pluginId];
 			const document = context.getTextDocument(data.uri);
 
-			if (document && plugin.referencesCodeLens?.resolve) {
-				references = await plugin.referencesCodeLens.resolve(document, data.location, references);
+			if (document && plugin.resolveReferencesCodeLens) {
+				references = await plugin.resolveReferencesCodeLens(document, data.location, references, token);
 			}
 
 			item.command = {

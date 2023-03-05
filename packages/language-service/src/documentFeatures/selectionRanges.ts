@@ -6,7 +6,7 @@ import * as shared from '@volar/shared';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, positions: vscode.Position[]) => {
+	return (uri: string, positions: vscode.Position[], token: vscode.CancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -23,7 +23,13 @@ export function register(context: LanguageServicePluginContext) {
 				}
 				return [];
 			},
-			(plugin, document, positions) => plugin.getSelectionRanges?.(document, positions),
+			(plugin, document, positions) => {
+
+				if (token.isCancellationRequested)
+					return;
+
+				return plugin.provideSelectionRanges?.(document, positions, token);
+			},
 			(item, map) => map ? transformer.asSelectionRanges(item, range => map.toSourceRange(range)) : item,
 			results => {
 				for (let i = 0; i < results[0].length; i++) {

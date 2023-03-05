@@ -18,7 +18,7 @@ export function register(context: LanguageServicePluginContext) {
 
 	return {
 
-		doPrepare(uri: string, position: vscode.Position) {
+		doPrepare(uri: string, position: vscode.Position, token: vscode.CancellationToken) {
 
 			return languageFeatureWorker(
 				context,
@@ -27,7 +27,10 @@ export function register(context: LanguageServicePluginContext) {
 				(position, map) => map.toGeneratedPositions(position, data => !!data.references),
 				async (plugin, document, position, map) => {
 
-					const items = await plugin.callHierarchy?.prepare(document, position);
+					if (token.isCancellationRequested)
+						return;
+
+					const items = await plugin.provideCallHierarchyItems?.(document, position, token);
 
 					items?.forEach(item => {
 						item.data = {
@@ -51,7 +54,7 @@ export function register(context: LanguageServicePluginContext) {
 			);
 		},
 
-		async getIncomingCalls(item: vscode.CallHierarchyItem) {
+		async getIncomingCalls(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
 
 			const data: PluginCallHierarchyData | undefined = item.data;
 			let incomingItems: vscode.CallHierarchyIncomingCall[] = [];
@@ -60,7 +63,7 @@ export function register(context: LanguageServicePluginContext) {
 
 				const plugin = context.plugins[data.pluginId];
 
-				if (!plugin.callHierarchy)
+				if (!plugin.provideCallHierarchyIncomingCalls)
 					return incomingItems;
 
 				Object.assign(item, data.original);
@@ -69,7 +72,7 @@ export function register(context: LanguageServicePluginContext) {
 
 					if (context.documents.hasVirtualFileByUri(data.map.embeddedDocumentUri)) {
 
-						const _calls = await plugin.callHierarchy.onIncomingCalls(item);
+						const _calls = await plugin.provideCallHierarchyIncomingCalls(item, token);
 
 						for (const _call of _calls) {
 
@@ -87,7 +90,7 @@ export function register(context: LanguageServicePluginContext) {
 				}
 				else {
 
-					const _calls = await plugin.callHierarchy.onIncomingCalls(item);
+					const _calls = await plugin.provideCallHierarchyIncomingCalls(item, token);
 
 					for (const _call of _calls) {
 
@@ -107,7 +110,7 @@ export function register(context: LanguageServicePluginContext) {
 			return dedupe.withCallHierarchyIncomingCalls(incomingItems);
 		},
 
-		async getOutgoingCalls(item: vscode.CallHierarchyItem) {
+		async getOutgoingCalls(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
 
 			const data: PluginCallHierarchyData | undefined = item.data;
 			let items: vscode.CallHierarchyOutgoingCall[] = [];
@@ -116,7 +119,7 @@ export function register(context: LanguageServicePluginContext) {
 
 				const plugin = context.plugins[data.pluginId];
 
-				if (!plugin.callHierarchy)
+				if (!plugin.provideCallHierarchyOutgoingCalls)
 					return items;
 
 				Object.assign(item, data.original);
@@ -125,7 +128,7 @@ export function register(context: LanguageServicePluginContext) {
 
 					if (context.documents.hasVirtualFileByUri(data.map.embeddedDocumentUri)) {
 
-						const _calls = await plugin.callHierarchy.onOutgoingCalls(item);
+						const _calls = await plugin.provideCallHierarchyOutgoingCalls(item, token);
 
 						for (const call of _calls) {
 
@@ -143,7 +146,7 @@ export function register(context: LanguageServicePluginContext) {
 				}
 				else {
 
-					const _calls = await plugin.callHierarchy.onOutgoingCalls(item);
+					const _calls = await plugin.provideCallHierarchyOutgoingCalls(item, token);
 
 					for (const call of _calls) {
 

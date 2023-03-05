@@ -7,7 +7,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (uri: string, range: vscode.Range) => {
+	return async (uri: string, range: vscode.Range, token: vscode.CancellationToken) => {
 
 		const document = context.getTextDocument(uri);
 
@@ -57,7 +57,11 @@ export function register(context: LanguageServicePluginContext) {
 				return [];
 			},
 			(plugin, document, arg) => {
-				return plugin.inlayHints?.on?.(document, arg);
+
+				if (token.isCancellationRequested)
+					return;
+
+				return plugin.provideInlayHints?.(document, arg, token);
 			},
 			(inlayHints, map) => inlayHints.map((_inlayHint): vscode.InlayHint | undefined => {
 

@@ -1,17 +1,23 @@
 import type { LanguageServicePluginContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import * as transformer from '../transformer';
-import type * as _ from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string) => {
+	return (uri: string, token: vscode.CancellationToken) => {
 
 		return documentFeatureWorker(
 			context,
 			uri,
 			file => !!file.capabilities.foldingRange,
-			(plugin, document) => plugin.getFoldingRanges?.(document),
+			(plugin, document) => {
+
+				if (token.isCancellationRequested)
+					return;
+
+				return plugin.provideFoldingRanges?.(document, token);
+			},
 			(data, map) => map ? transformer.asFoldingRanges(data, range => map.toSourceRange(range)) : data,
 			arr => arr.flat(),
 		);

@@ -5,14 +5,20 @@ import { isInsideRange } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position) => {
+	return (uri: string, position: vscode.Position, token: vscode.CancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
 			uri,
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => !!data.hover),
-			(plugin, document, position) => plugin.doHover?.(document, position),
+			(plugin, document, position) => {
+
+				if (token.isCancellationRequested)
+					return;
+
+				return plugin.provideHover?.(document, position, token);
+			},
 			(item, map) => {
 
 				if (!map || !item.range)

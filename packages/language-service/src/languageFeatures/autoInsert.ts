@@ -1,10 +1,10 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginInstance, LanguageServicePluginContext } from '../types';
+import type { LanguageServicePluginContext, AutoInsertionContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position, autoInsertContext: Parameters<NonNullable<LanguageServicePluginInstance['doAutoInsert']>>[2]) => {
+	return (uri: string, position: vscode.Position, autoInsertContext: AutoInsertionContext, token: vscode.CancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -31,7 +31,11 @@ export function register(context: LanguageServicePluginContext) {
 					}
 				}
 			},
-			(plugin, document, arg) => plugin.doAutoInsert?.(document, arg.position, arg.autoInsertContext),
+			(plugin, document, arg) => {
+				if (token.isCancellationRequested)
+					return;
+				return plugin.provideAutoInsertionEdit?.(document, arg.position, arg.autoInsertContext, token);
+			},
 			(item, map) => {
 
 				if (!map || typeof item === 'string')

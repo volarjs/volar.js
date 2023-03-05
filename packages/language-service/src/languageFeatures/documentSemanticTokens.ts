@@ -10,7 +10,7 @@ export function register(context: LanguageServicePluginContext) {
 		uri: string,
 		range: vscode.Range | undefined,
 		legend: vscode.SemanticTokensLegend,
-		cancelToken: vscode.CancellationToken,
+		token: vscode.CancellationToken,
 		reportProgress?: (tokens: SemanticToken[],) => void,
 	) => {
 
@@ -32,9 +32,6 @@ export function register(context: LanguageServicePluginContext) {
 			uri,
 			offsetRange,
 			function* (offsetRange, map) {
-
-				if (cancelToken?.isCancellationRequested)
-					return;
 
 				let range: [number, number] | undefined;
 
@@ -59,11 +56,18 @@ export function register(context: LanguageServicePluginContext) {
 					yield range;
 				}
 			},
-			(plugin, document, offsetRange) => plugin.findDocumentSemanticTokens?.(
-				document,
-				vscode.Range.create(document.positionAt(offsetRange[0]), document.positionAt(offsetRange[1])),
-				legend,
-			),
+			(plugin, document, offsetRange) => {
+
+				if (token?.isCancellationRequested)
+					return;
+
+				return plugin.provideDocumentSemanticTokens?.(
+					document,
+					vscode.Range.create(document.positionAt(offsetRange[0]), document.positionAt(offsetRange[1])),
+					legend,
+					token,
+				);
+			},
 			(tokens, map) => tokens.map<SemanticToken | undefined>(_token => {
 
 				if (!map)

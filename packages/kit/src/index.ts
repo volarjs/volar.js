@@ -1,4 +1,4 @@
-import { CodeActionTriggerKind, createLanguageService, Diagnostic, DiagnosticSeverity, FormattingOptions, Config, LanguageServiceHost, mergeWorkspaceEdits } from '@volar/language-service';
+import { CodeActionTriggerKind, createLanguageService, Diagnostic, DiagnosticSeverity, FormattingOptions, Config, LanguageServiceHost, mergeWorkspaceEdits, CancellationToken } from '@volar/language-service';
 import * as fs from 'fs';
 import * as path from 'path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -64,7 +64,7 @@ export function create(
 		const document = service.context.getTextDocument(uri);
 		let diagnostics: Diagnostic[] = [];
 		if (document) {
-			diagnostics = await service.doValidation(uri);
+			diagnostics = await service.doValidation(uri, CancellationToken.None);
 			diagnostics = diagnostics.filter(diagnostic => (diagnostic.severity ?? 1) <= severity);
 			const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
 				category: diagnostic.severity === DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
@@ -88,10 +88,10 @@ export function create(
 			const document = service.context.getTextDocument(uri);
 			if (document) {
 				const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
-				const codeActions = await service.doCodeActions(uri, range, { diagnostics, only: ['source.fixAll'], triggerKind: CodeActionTriggerKind.Invoked });
+				const codeActions = await service.doCodeActions(uri, range, { diagnostics, only: ['source.fixAll'], triggerKind: CodeActionTriggerKind.Invoked }, CancellationToken.None);
 				if (codeActions) {
 					for (let i = 0; i < codeActions.length; i++) {
-						codeActions[i] = await service.doCodeActionResolve(codeActions[i]);
+						codeActions[i] = await service.doCodeActionResolve(codeActions[i], CancellationToken.None);
 					}
 					const edits = codeActions.map(codeAction => codeAction.edit).filter((edit): edit is NonNullable<typeof edit> => !!edit);
 					if (edits.length) {
@@ -122,7 +122,7 @@ export function create(
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri);
 		if (document) {
-			const edits = await service.format(uri, options);
+			const edits = await service.format(uri, options, undefined, undefined, CancellationToken.None);
 			if (edits?.length) {
 				const newString = TextDocument.applyEdits(document, edits);
 				writeFile(fileName, newString);

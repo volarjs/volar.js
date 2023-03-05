@@ -29,7 +29,7 @@ export interface RuleCodeActionData {
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext) => {
+	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token: vscode.CancellationToken) => {
 
 		const sourceDocument = context.getTextDocument(uri);
 		if (!sourceDocument)
@@ -85,6 +85,9 @@ export function register(context: LanguageServicePluginContext) {
 			},
 			async (plugin, document, { range, codeActionContext }) => {
 
+				if (token.isCancellationRequested)
+					return;
+
 				const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
 					const data: PluginDiagnosticData | undefined = diagnostic.data;
@@ -101,10 +104,10 @@ export function register(context: LanguageServicePluginContext) {
 					};
 				});
 
-				const codeActions = await plugin.codeAction?.on?.(document, range, {
+				const codeActions = await plugin.provideCodeActions?.(document, range, {
 					...codeActionContext,
 					diagnostics,
-				});
+				}, token);
 
 				codeActions?.forEach(codeAction => {
 					codeAction.data = {

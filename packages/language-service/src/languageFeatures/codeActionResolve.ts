@@ -1,23 +1,23 @@
-import type { CodeAction } from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
 import { PluginCodeActionData, RuleCodeActionData } from './codeActions';
 import { embeddedEditToSourceEdit } from './rename';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (item: CodeAction) => {
+	return async (item: vscode.CodeAction, token: vscode.CancellationToken) => {
 
 		const data: PluginCodeActionData | RuleCodeActionData | undefined = item.data;
 
 		if (data?.type === 'plugin') {
 
 			const plugin = context.plugins[data.pluginId];
-			if (!plugin.codeAction?.resolve)
+			if (!plugin.resolveCodeAction)
 				return item;
 
 			Object.assign(item, data.original);
 
-			item = await plugin.codeAction.resolve(item);
+			item = await plugin.resolveCodeAction(item, token);
 
 			if (item.edit) {
 				item.edit = embeddedEditToSourceEdit(

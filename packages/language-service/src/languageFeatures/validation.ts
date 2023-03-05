@@ -147,7 +147,7 @@ export function register(context: LanguageServicePluginContext) {
 		format_rules: new Map() as CacheMap,
 	};
 
-	return async (uri: string, token?: vscode.CancellationToken, response?: (result: vscode.Diagnostic[]) => void) => {
+	return async (uri: string, token: vscode.CancellationToken, response?: (result: vscode.Diagnostic[]) => void) => {
 
 		const newDocument = context.getTextDocument(uri);
 		if (!newDocument) {
@@ -199,16 +199,12 @@ export function register(context: LanguageServicePluginContext) {
 		doResponse();
 		await lintWorker('onSyntax', cacheMaps.syntax_rules, lastResponse.syntax_rules);
 		doResponse();
-		await worker('onSyntactic', cacheMaps.syntactic, lastResponse.syntactic);
-		doResponse();
-		await worker('onSuggestion', cacheMaps.suggestion, lastResponse.suggestion);
+		await worker('provideSyntacticDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
 		doResponse();
 
 		await lintWorker('onSemantic', cacheMaps.semantic_rules, lastResponse.semantic_rules);
 		doResponse();
-		await worker('onSemantic', cacheMaps.semantic, lastResponse.semantic);
-		doResponse();
-		await worker('onDeclaration', cacheMaps.declaration, lastResponse.declaration);
+		await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
 
 		return collectErrors();
 
@@ -331,7 +327,7 @@ export function register(context: LanguageServicePluginContext) {
 		}
 
 		async function worker(
-			api: 'onSemantic' | 'onSyntactic' | 'onSuggestion' | 'onDeclaration',
+			api: 'provideSyntacticDiagnostics' | 'provideSemanticDiagnostics',
 			cacheMap: CacheMap,
 			cache: Cache,
 		) {
@@ -348,7 +344,7 @@ export function register(context: LanguageServicePluginContext) {
 
 					if (token) {
 						if (Date.now() - lastCheckCancelAt >= 5) {
-							await shared.sleep(5); // wait for LSP event polling
+							await shared.sleep(5); // waiting LSP event polling
 							lastCheckCancelAt = Date.now();
 						}
 						if (token.isCancellationRequested) {
@@ -359,9 +355,9 @@ export function register(context: LanguageServicePluginContext) {
 					const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!;
 					const pluginCache = cacheMap.get(pluginId) ?? cacheMap.set(pluginId, new Map()).get(pluginId)!;
 					const cache = pluginCache.get(document.uri);
-					const tsProjectVersion = (api === 'onDeclaration' || api === 'onSemantic') ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
+					const tsProjectVersion = api === 'provideSemanticDiagnostics' ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
 
-					if (api === 'onDeclaration' || api === 'onSemantic') {
+					if (api === 'provideSemanticDiagnostics') {
 						if (cache && cache.documentVersion === document.version && cache.tsProjectVersion === tsProjectVersion) {
 							return cache.errors;
 						}
@@ -372,7 +368,7 @@ export function register(context: LanguageServicePluginContext) {
 						}
 					}
 
-					const errors = await plugin.validation?.[api]?.(document);
+					const errors = await plugin[api]?.(document, token);
 
 					errors?.forEach(error => {
 						error.data = {

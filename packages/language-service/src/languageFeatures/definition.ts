@@ -9,12 +9,12 @@ import { SourceMapWithDocuments } from '../documents';
 
 export function register(
 	context: LanguageServicePluginContext,
-	api: 'findDefinition' | 'findTypeDefinition' | 'findImplementations',
+	apiName: 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
 	isValidMapping: (data: FileRangeCapabilities) => boolean,
 	isValidMirrorPosition: (mirrorData: MirrorBehaviorCapabilities) => boolean,
 ) {
 
-	return (uri: string, position: vscode.Position) => {
+	return (uri: string, position: vscode.Position, token: vscode.CancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -22,6 +22,9 @@ export function register(
 			position,
 			(position, map) => map.toGeneratedPositions(position, isValidMapping),
 			async (plugin, document, position) => {
+
+				if (token.isCancellationRequested)
+					return;
 
 				const recursiveChecker = dedupe.createLocationSet();
 				const result: vscode.LocationLink[] = [];
@@ -32,12 +35,8 @@ export function register(
 
 				async function withMirrors(document: TextDocument, position: vscode.Position, originDefinition: vscode.LocationLink | undefined) {
 
-					const _api = api === 'findDefinition' ? plugin.definition?.on :
-						api === 'findTypeDefinition' ? plugin.definition?.onType :
-							api === 'findImplementations' ? plugin.findImplementations :
-								undefined;
-
-					if (!_api)
+					const api = plugin[apiName];
+					if (!api)
 						return;
 
 					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
@@ -45,7 +44,7 @@ export function register(
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const definitions = await _api?.(document, position) ?? [];
+					const definitions = await api?.(document, position, token) ?? [];
 
 					for (const definition of definitions) {
 

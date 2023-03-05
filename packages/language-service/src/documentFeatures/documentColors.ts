@@ -5,13 +5,19 @@ import * as shared from '@volar/shared';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string) => {
+	return (uri: string, token: vscode.CancellationToken) => {
 
 		return documentFeatureWorker(
 			context,
 			uri,
 			file => !!file.capabilities.documentSymbol, // TODO: add color capability setting
-			(plugin, document) => plugin.findDocumentColors?.(document),
+			(plugin, document) => {
+
+				if (token.isCancellationRequested)
+					return;
+
+				return plugin.provideDocumentColors?.(document, token);
+			},
 			(data, map) => map ? data.map(color => {
 
 				const range = map.toSourceRange(color.range);

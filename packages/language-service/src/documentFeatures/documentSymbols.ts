@@ -7,13 +7,19 @@ import { isInsideRange } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string): Promise<vscode.DocumentSymbol[] | undefined> => {
+	return (uri: string, token: vscode.CancellationToken): Promise<vscode.DocumentSymbol[] | undefined> => {
 
 		return documentFeatureWorker(
 			context,
 			uri,
 			file => !!file.capabilities.documentSymbol,
-			async (plugin, document) => plugin.findDocumentSymbols?.(document),
+			async (plugin, document) => {
+
+				if (token.isCancellationRequested)
+					return;
+
+				return plugin.provideDocumentSymbols?.(document, token);
+			},
 			(data, map) => map
 				? data
 					.map(symbol => transformer.asDocumentSymbol(

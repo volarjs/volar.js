@@ -5,16 +5,19 @@ import * as shared from '@volar/shared';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (query: string) => {
+	return async (query: string, token: vscode.CancellationToken) => {
 
 		const symbolsList: vscode.WorkspaceSymbol[][] = [];
 
 		for (const plugin of Object.values(context.plugins)) {
 
-			if (!plugin.findWorkspaceSymbols)
+			if (token.isCancellationRequested)
+				break;
+
+			if (!plugin.provideWorkspaceSymbols)
 				continue;
 
-			const embeddedSymbols = await plugin.findWorkspaceSymbols(query);
+			const embeddedSymbols = await plugin.provideWorkspaceSymbols(query, token);
 			if (!embeddedSymbols)
 				continue;
 

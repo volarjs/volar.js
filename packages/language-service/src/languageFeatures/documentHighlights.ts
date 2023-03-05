@@ -7,7 +7,7 @@ import * as dedupe from '../utils/dedupe';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position) => {
+	return (uri: string, position: vscode.Position, token: vscode.CancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -19,6 +19,9 @@ export function register(context: LanguageServicePluginContext) {
 			),
 			async (plugin, document, position) => {
 
+				if (token.isCancellationRequested)
+					return;
+
 				const recursiveChecker = dedupe.createLocationSet();
 				const result: vscode.DocumentHighlight[] = [];
 
@@ -28,7 +31,7 @@ export function register(context: LanguageServicePluginContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position) {
 
-					if (!plugin.findDocumentHighlights)
+					if (!plugin.provideDocumentHighlights)
 						return;
 
 					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
@@ -36,7 +39,7 @@ export function register(context: LanguageServicePluginContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const references = await plugin.findDocumentHighlights(document, position) ?? [];
+					const references = await plugin.provideDocumentHighlights(document, position, token) ?? [];
 
 					for (const reference of references) {
 
