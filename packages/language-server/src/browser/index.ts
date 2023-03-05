@@ -1,6 +1,6 @@
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver/browser';
-import { startCommonLanguageServer } from '../common/server';
+import { ServerContext, startCommonLanguageServer } from '../common/server';
 import { LanguageServerPlugin } from '../types';
 import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
 import { createWebFileSystemHost } from './fileSystems';
@@ -18,7 +18,7 @@ export function createConnection() {
 }
 
 export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
-	startCommonLanguageServer(connection, options => {
+	startCommonLanguageServer(connection, (options): ServerContext => {
 
 		return {
 			plugins,

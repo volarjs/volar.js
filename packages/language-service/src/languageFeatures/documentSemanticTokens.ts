@@ -3,16 +3,17 @@ import * as vscode from 'vscode-languageserver-protocol';
 import { SemanticToken } from '@volar/language-service';
 import type { LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
+import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (
+	return async (
 		uri: string,
 		range: vscode.Range | undefined,
 		legend: vscode.SemanticTokensLegend,
 		token: vscode.CancellationToken,
-		reportProgress?: (tokens: SemanticToken[],) => void,
-	) => {
+		reportProgress?: (tokens: vscode.SemanticTokens) => void,
+	): Promise<vscode.SemanticTokens | undefined> => {
 
 		const document = context.getTextDocument(uri);
 
@@ -27,7 +28,7 @@ export function register(context: LanguageServicePluginContext) {
 			document.getText().length,
 		];
 
-		return languageFeatureWorker(
+		const tokens = await languageFeatureWorker(
 			context,
 			uri,
 			offsetRange,
@@ -82,7 +83,19 @@ export function register(context: LanguageServicePluginContext) {
 				}
 			}).filter(shared.notEmpty),
 			tokens => tokens.flat(),
-			reportProgress, // TODO: this has no effect in LSP
+			tokens => reportProgress?.(buildTokens(tokens)), // TODO: this has no effect with LSP
 		);
+		if (tokens) {
+			return buildTokens(tokens);
+		}
 	};
+}
+
+function buildTokens(tokens: SemanticToken[]) {
+	const builder = new SemanticTokensBuilder();
+	const sortedTokens = tokens.sort((a, b) => a[0] - b[0] === 0 ? a[1] - b[1] : a[0] - b[0]);
+	for (const token of sortedTokens) {
+		builder.push(...token);
+	}
+	return builder.build();
 }

@@ -126,6 +126,9 @@ function createLanguageServiceBase(context: LanguageServicePluginContext) {
 	return {
 
 		triggerCharacters: Object.values(context.plugins).map(plugin => plugin?.triggerCharacters ?? []).flat(),
+		autoFormatTriggerCharacters: Object.values(context.plugins).map(plugin => plugin?.autoFormatTriggerCharacters ?? []).flat(),
+		signatureHelpTriggerCharacters: Object.values(context.plugins).map(plugin => plugin?.signatureHelpTriggerCharacters ?? []).flat(),
+		signatureHelpRetriggerCharacters: Object.values(context.plugins).map(plugin => plugin?.signatureHelpRetriggerCharacters ?? []).flat(),
 
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),

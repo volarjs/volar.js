@@ -259,32 +259,26 @@ export function register(
 	connection.languages.semanticTokens.on(async (params, token, _, resultProgress) => {
 		await shared.sleep(200);
 		return await worker(params.textDocument.uri, token, async service => {
-
-			const result = await service?.getSemanticTokens(
+			return await service?.getSemanticTokens(
 				params.textDocument.uri,
 				undefined,
 				semanticTokensLegend,
 				token,
-				tokens => resultProgress?.report(buildTokens(tokens)),
-			) ?? [];
-
-			return buildTokens(result);
-		}) ?? buildTokens([]);
+				tokens => resultProgress?.report(tokens),
+			);
+		}) ?? { data: [] };
 	});
 	connection.languages.semanticTokens.onRange(async (params, token, _, resultProgress) => {
 		await shared.sleep(200);
 		return await worker(params.textDocument.uri, token, async service => {
-
-			const result = await service?.getSemanticTokens(
+			return await service?.getSemanticTokens(
 				params.textDocument.uri,
 				params.range,
 				semanticTokensLegend,
 				token,
-				tokens => resultProgress?.report(buildTokens(tokens)),
-			) ?? [];
-
-			return buildTokens(result);
-		}) ?? buildTokens([]);
+				tokens => resultProgress?.report(tokens),
+			);
+		}) ?? { data: [] };
 	});
 	connection.languages.diagnostics.on(async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
 		const result = await worker(params.textDocument.uri, token, service => {
@@ -366,14 +360,6 @@ export function register(
 				}
 			});
 		});
-	}
-	function buildTokens(tokens: embedded.SemanticToken[]) {
-		const builder = new vscode.SemanticTokensBuilder();
-		const sortedTokens = tokens.sort((a, b) => a[0] - b[0] === 0 ? a[1] - b[1] : a[0] - b[0]);
-		for (const token of sortedTokens) {
-			builder.push(...token);
-		}
-		return builder.build();
 	}
 	async function getLanguageService(uri: string) {
 		const project = (await projects.getProject(uri))?.project;

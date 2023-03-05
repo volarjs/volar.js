@@ -1,4 +1,4 @@
-import type { LanguageService } from '@volar/language-service';
+import { LanguageService, standardSemanticTokensLegend } from '@volar/language-service';
 import type { editor, languages, Uri } from 'monaco-editor-core';
 import * as vscode from 'vscode-languageserver-protocol';
 import { markers } from './markers';
@@ -18,8 +18,8 @@ export async function createLanguageFeaturesProvider(
 	languages.ImplementationProvider &
 	languages.CodeLensProvider &
 	languages.CodeActionProvider &
-	Omit<languages.DocumentFormattingEditProvider, 'displayName'> &
-	Omit<languages.DocumentRangeFormattingEditProvider, 'displayName'> &
+	languages.DocumentFormattingEditProvider &
+	languages.DocumentRangeFormattingEditProvider &
 	languages.OnTypeFormattingEditProvider &
 	languages.LinkProvider &
 	languages.CompletionItemProvider &
@@ -30,7 +30,9 @@ export async function createLanguageFeaturesProvider(
 	languages.RenameProvider &
 	languages.ReferenceProvider &
 	languages.SelectionRangeProvider &
-	languages.InlayHintsProvider
+	languages.InlayHintsProvider &
+	languages.DocumentSemanticTokensProvider &
+	languages.DocumentRangeSemanticTokensProvider
 > {
 
 	const completionItems = new WeakMap<languages.CompletionItem, vscode.CompletionItem>();
@@ -42,10 +44,39 @@ export async function createLanguageFeaturesProvider(
 	return {
 
 		triggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<typeof languageService.triggerCharacters>)(),
-		// TODO
-		autoFormatTriggerCharacters: ['}', ';', '\n'],
-		signatureHelpTriggerCharacters: ['(', ','],
+		autoFormatTriggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<typeof languageService.autoFormatTriggerCharacters>)(),
+		signatureHelpTriggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<typeof languageService.signatureHelpTriggerCharacters>)(),
+		signatureHelpRetriggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<typeof languageService.signatureHelpRetriggerCharacters>)(),
 
+		getLegend() {
+			return standardSemanticTokensLegend;
+		},
+		async provideDocumentSemanticTokens(model, _lastResultId, token) {
+			const languageService = await worker.withSyncedResources(getSyncUris());
+			const codeResult = await languageService.getSemanticTokens(
+				model.uri.toString(),
+				undefined,
+				standardSemanticTokensLegend,
+				token,
+			);
+			if (codeResult) {
+				return {
+					resultId: codeResult.resultId,
+					data: Uint32Array.from(codeResult.data),
+				};
+			}
+		},
+		async provideDocumentRangeSemanticTokens(model, range, token) {
+			const languageService = await worker.withSyncedResources(getSyncUris());
+			const codeResult = await languageService.getSemanticTokens(model.uri.toString(), monaco2protocol.asRange(range), standardSemanticTokensLegend, token);
+			if (codeResult) {
+				return {
+					resultId: codeResult.resultId,
+					data: Uint32Array.from(codeResult.data),
+				};
+			}
+		},
+		releaseDocumentSemanticTokens() { },
 		async provideDocumentSymbols(model, token) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findDocumentSymbols(model.uri.toString(), token);

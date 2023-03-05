@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { configure as configureHttpRequests } from 'request-light';
 import * as html from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver/node';
-import { startCommonLanguageServer } from '../common/server';
+import { ServerContext, startCommonLanguageServer } from '../common/server';
 import fileSchemaRequestHandler from '../common/schemaRequestHandlers/file';
 import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
 import { createNodeFileSystemHost } from './fileSystem';
@@ -20,7 +20,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 	const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
 	const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
 
-	startCommonLanguageServer(connection, () => {
+	startCommonLanguageServer(connection, (): ServerContext => {
 		return {
 			plugins,
 			connection,
@@ -34,7 +34,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 					},
 				},
 				loadTypescript(tsdk) {
-					for (const name of ['./typescript.js', './tsserverlibrary.js', './tsserver.js']) {
+					for (const name of ['./typescript.js', './tsserverlibrary.js']) {
 						try {
 							const path = require.resolve(name, { paths: [tsdk] });
 							return require(path);
