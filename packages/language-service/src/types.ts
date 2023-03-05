@@ -46,7 +46,7 @@ export interface LanguageServicePluginContext extends LanguageServiceOptions {
 			};
 		};
 	};
-};
+}
 
 export interface ConfigurationHost {
 	getConfiguration: (<T> (section: string, scopeUri?: string) => Promise<T | undefined>),
@@ -61,11 +61,16 @@ export type NotNullableResult<T> = T | Thenable<T>;
 export type NullableResult<T> = NotNullableResult<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
-export interface LanguageServicePlugin<T = {}> {
-	(context: LanguageServicePluginContext): LanguageServicePluginInstance & T;
+export interface LanguageServicePlugin {
+	(context?: LanguageServicePluginContext): LanguageServicePluginInstance;
 }
 
 export interface LanguageServicePluginInstance {
+
+	triggerCharacters?: string[];
+	signatureHelpTriggerCharacters?: string[];
+	signatureHelpRetriggerCharacters?: string[];
+	autoFormatTriggerCharacters?: string[];
 
 	rules?: {
 		onAny?(context: RuleContext): NotNullableResult<RuleContext>;
@@ -105,7 +110,6 @@ export interface LanguageServicePluginInstance {
 	};
 
 	complete?: {
-		triggerCharacters?: string[],
 		isAdditional?: boolean,
 		on?(document: TextDocument, position: vscode.Position, context?: vscode.CompletionContext): NullableResult<vscode.CompletionList>,
 		resolve?(item: vscode.CompletionItem): NotNullableResult<vscode.CompletionItem>,

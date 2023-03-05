@@ -225,7 +225,9 @@ export function register(context: LanguageServicePluginContext) {
 
 				try {
 					if (ch !== undefined && vscode.Position.is(formatRange)) {
-						edits = await plugin.formatOnType?.(document, formatRange, ch, options);
+						if (plugin.autoFormatTriggerCharacters?.includes(ch)) {
+							edits = await plugin.formatOnType?.(document, formatRange, ch, options);
+						}
 					}
 					else if (ch === undefined && vscode.Range.is(formatRange)) {
 						edits = await plugin.format?.(document, formatRange, options);

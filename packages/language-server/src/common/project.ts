@@ -1,12 +1,13 @@
 import * as embedded from '@volar/language-core';
 import * as embeddedLS from '@volar/language-service';
-import { Config, LanguageServiceOptions } from '@volar/language-service';
+import { LanguageServiceOptions } from '@volar/language-service';
 import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as html from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI, Utils } from 'vscode-uri';
 import { FileSystem, LanguageServerPlugin, LanguageServiceContext, ServerMode } from '../types';
+import { loadConfig } from './utils/serverConfig';
 import { createUriMap } from './utils/uriMap';
 import { WorkspaceContext } from './workspace';
 
@@ -15,7 +16,6 @@ export interface ProjectContext {
 	rootUri: URI;
 	tsConfig: path.PosixPath | ts.CompilerOptions,
 	documentRegistry: ts.DocumentRegistry | undefined,
-	serverConfig: Config | undefined,
 }
 
 export type Project = ReturnType<typeof createProject>;
@@ -84,14 +84,12 @@ export async function createProject(context: ProjectContext) {
 
 	function getLanguageService() {
 		if (!languageService) {
-			const config: Config = {
-				languages: { ...context.serverConfig?.languages },
-				plugins: { ...context.serverConfig?.plugins },
-				lint: {
-					...context.serverConfig?.lint,
-					rules: { ...context.serverConfig?.lint?.rules },
-				},
-			};
+			const config = (
+				context.workspace.rootUri.scheme === 'file' ? loadConfig(
+					context.workspace.rootUri.path,
+					context.workspace.workspaces.initOptions.configFilePath,
+				) : {}
+			) ?? {};
 			const options: LanguageServiceOptions = {
 				uriToFileName,
 				fileNameToUri,
@@ -118,7 +116,7 @@ export async function createProject(context: ProjectContext) {
 				host: languageServiceHost,
 			};
 			for (const plugin of context.workspace.workspaces.plugins) {
-				plugin.resolveConfig?.(config, lsCtx);
+				plugin.resolveConfig?.(config, { typescript: lsCtx.project.workspace.workspaces.ts }, lsCtx);
 			}
 			languageService = embeddedLS.createLanguageService(options, context.documentRegistry);
 		}

@@ -30,7 +30,8 @@ export async function createLanguageFeaturesProvider(
 	languages.RenameProvider &
 	languages.ReferenceProvider &
 	languages.SelectionRangeProvider &
-	languages.InlayHintsProvider> {
+	languages.InlayHintsProvider
+> {
 
 	const completionItems = new WeakMap<languages.CompletionItem, vscode.CompletionItem>();
 	const codeLens = new WeakMap<languages.CodeLens, vscode.CodeLens>();
@@ -40,7 +41,7 @@ export async function createLanguageFeaturesProvider(
 
 	return {
 
-		triggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<string[]>)(),
+		triggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<typeof languageService.triggerCharacters>)(),
 		// TODO
 		autoFormatTriggerCharacters: ['}', ';', '\n'],
 		signatureHelpTriggerCharacters: ['(', ','],

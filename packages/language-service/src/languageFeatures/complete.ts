@@ -139,7 +139,7 @@ export function register(context: LanguageServicePluginContext) {
 							if (plugin.complete.isAdditional && !isFirstMapping)
 								continue;
 
-							if (completionContext?.triggerCharacter && !plugin.complete.triggerCharacters?.includes(completionContext.triggerCharacter))
+							if (completionContext?.triggerCharacter && !plugin.triggerCharacters?.includes(completionContext.triggerCharacter))
 								continue;
 
 							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.additional || plugin.complete.isAdditional;
@@ -210,7 +210,7 @@ export function register(context: LanguageServicePluginContext) {
 					if (plugin.complete.isAdditional && !isFirstMapping)
 						continue;
 
-					if (completionContext?.triggerCharacter && !plugin.complete.triggerCharacters?.includes(completionContext.triggerCharacter))
+					if (completionContext?.triggerCharacter && !plugin.triggerCharacters?.includes(completionContext.triggerCharacter))
 						continue;
 
 					if (cache.mainCompletion && (!plugin.complete.isAdditional || cache.mainCompletion.documentUri !== document.uri))

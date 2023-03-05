@@ -62,7 +62,11 @@ export interface LanguageServerPlugin {
 			fileRenameOperationFilter: string[];
 			fileWatcher: string[];
 		},
-		resolveConfig?(config: Config, ctx: LanguageServiceContext): void;
+		resolveConfig?(
+			config: Config,
+			modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
+			ctx?: LanguageServiceContext,
+		): void;
 		onInitialize?(_: vscode.InitializeResult, env: RuntimeEnvironment): void;
 		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};

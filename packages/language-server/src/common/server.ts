@@ -1,3 +1,5 @@
+import type { Config } from '@volar/language-service';
+import * as l10n from '@vscode/l10n';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { FileSystemHost, LanguageServerInitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types';
@@ -5,8 +7,8 @@ import { createCancellationTokenHost } from './cancellationPipe';
 import { createConfigurationHost } from './configurationHost';
 import { createDocuments } from './documents';
 import { setupCapabilities } from './utils/registerFeatures';
+import { loadConfig } from './utils/serverConfig';
 import { createWorkspaces } from './workspaces';
-import * as l10n from '@vscode/l10n';
 
 export interface ServerContext {
 	connection: vscode.Connection,
@@ -56,7 +58,32 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 
 		configurationHost = initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, connection) : undefined;
 
-		setupCapabilities(initParams.capabilities, result.capabilities, options, plugins, getSemanticTokensLegend());
+		let lsPlugins: Config['plugins'] = {};
+		const ts = options.typescript ? context.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined;
+		for (const root of roots) {
+			if (root.scheme === 'file') {
+				const config = loadConfig(root.path, options.configFilePath) ?? {};
+				for (const plugin of plugins) {
+					plugin.resolveConfig?.(config, { typescript: ts });
+				}
+				if (config.plugins) {
+					lsPlugins = {
+						...lsPlugins,
+						...config.plugins,
+					};
+				}
+			}
+		}
+
+		setupCapabilities(
+			initParams.capabilities,
+			result.capabilities,
+			options,
+			plugins,
+			getSemanticTokensLegend(),
+			lsPlugins,
+		);
+
 		await createLanguageServiceHost();
 
 		try {

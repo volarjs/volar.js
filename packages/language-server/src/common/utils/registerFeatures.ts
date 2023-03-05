@@ -2,6 +2,7 @@ import * as embedded from '@volar/language-service';
 import { DiagnosticModel, LanguageServerPlugin, LanguageServerInitializationOptions } from '../../types';
 import * as vscode from 'vscode-languageserver';
 import { ClientCapabilities } from 'vscode-languageserver';
+import { Config } from '@volar/language-service';
 
 export function setupCapabilities(
 	params: ClientCapabilities,
@@ -9,7 +10,12 @@ export function setupCapabilities(
 	initOptions: LanguageServerInitializationOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],
 	semanticTokensLegend: vscode.SemanticTokensLegend,
+	lsPlugins: NonNullable<Config['plugins']>,
 ) {
+
+	const lsPluginInstances = Object.values(lsPlugins)
+		.map(plugin => typeof plugin === 'function' ? plugin() : plugin)
+		.filter((plugin): plugin is NonNullable<typeof plugin> => !!plugin);
 
 	// Syntactic
 	if (!initOptions.respectClientCapabilities || params.textDocument?.selectionRange) {
@@ -34,11 +40,13 @@ export function setupCapabilities(
 		server.documentRangeFormattingProvider = true;
 	}
 	if (!initOptions.respectClientCapabilities || params.textDocument?.onTypeFormatting) {
-		// https://github.com/microsoft/vscode/blob/ce119308e8fd4cd3f992d42b297588e7abe33a0c/extensions/typescript-language-features/src/languageFeatures/formatting.ts#L99
-		server.documentOnTypeFormattingProvider = {
-			firstTriggerCharacter: ';',
-			moreTriggerCharacter: ['}', '\n'],
-		};
+		const characters = [...new Set(lsPluginInstances.map(plugin => plugin.autoFormatTriggerCharacters ?? []).flat())];
+		if (characters.length) {
+			server.documentOnTypeFormattingProvider = {
+				firstTriggerCharacter: characters[0],
+				moreTriggerCharacter: characters.slice(1),
+			};
+		}
 	}
 
 	// Semantic
@@ -67,13 +75,13 @@ export function setupCapabilities(
 	}
 	if (!initOptions.respectClientCapabilities || params.textDocument?.signatureHelp) {
 		server.signatureHelpProvider = {
-			triggerCharacters: ['(', ',', '<'],
-			retriggerCharacters: [')'],
+			triggerCharacters: [...new Set(lsPluginInstances.map(plugin => plugin.signatureHelpTriggerCharacters ?? []).flat())],
+			retriggerCharacters: [...new Set(lsPluginInstances.map(plugin => plugin.signatureHelpRetriggerCharacters ?? []).flat())],
 		};
 	}
 	if (!initOptions.respectClientCapabilities || params.textDocument?.completion) {
 		server.completionProvider = {
-			triggerCharacters: '!@#$%^&*()_+-=`~{}|[]\:";\'<>?,./ '.split(''), // all symbols on keyboard
+			triggerCharacters: [...new Set(lsPluginInstances.map(plugin => plugin.triggerCharacters ?? []).flat())],
 			resolveProvider: true,
 		};
 		if (initOptions.ignoreTriggerCharacters) {
