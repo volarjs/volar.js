@@ -118,7 +118,6 @@ export async function createLanguageFeaturesProvider(
 				monaco2protocol.asPosition(position),
 				token,
 			);
-			// TODO: can't show if only one result from libs
 			if (codeResult) {
 				return codeResult.map(protocol2monaco.asLocation);
 			}
@@ -394,7 +393,6 @@ export async function createLanguageFeaturesProvider(
 				monaco2protocol.asPosition(position),
 				token,
 			);
-			// TODO: can't show if only one result from libs
 			if (codeResult) {
 				return codeResult.map(protocol2monaco.asLocation);
 			}
