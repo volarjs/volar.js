@@ -4,7 +4,7 @@ import { AutoInsertRequest, FindFileReferenceRequest, ShowReferencesNotification
 import { CancellationTokenHost } from '../cancellationPipe';
 import type { Workspaces } from '../workspaces';
 import * as shared from '@volar/shared';
-import { RuntimeEnvironment, LanguageServerInitializationOptions } from '../../types';
+import { RuntimeEnvironment, LanguageServerInitializationOptions, ServerMode } from '../../types';
 import { createDocuments } from '../documents';
 
 export function register(
@@ -283,17 +283,25 @@ export function register(
 	connection.languages.diagnostics.on(async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
 		const result = await worker(params.textDocument.uri, token, service => {
 			const tsToken = cancelHost.createCancellationToken(token);
-			return service.doValidation(params.textDocument.uri, tsToken, errors => {
-				// resultProgressReporter is undefined in vscode
-				resultProgressReporter?.report({
-					relatedDocuments: {
-						[params.textDocument.uri]: {
-							kind: vscode.DocumentDiagnosticReportKind.Full,
-							items: errors,
+			const mode = initOptions.serverMode === ServerMode.PartialSemantic ? 'semantic' as const
+				: initOptions.serverMode === ServerMode.Syntactic ? 'syntactic' as const
+					: 'all' as const;
+			return service.doValidation(
+				params.textDocument.uri,
+				tsToken,
+				mode,
+				errors => {
+					// resultProgressReporter is undefined in vscode
+					resultProgressReporter?.report({
+						relatedDocuments: {
+							[params.textDocument.uri]: {
+								kind: vscode.DocumentDiagnosticReportKind.Full,
+								items: errors,
+							},
 						},
-					},
-				});
-			});
+					});
+				},
+			);
 		});
 		return {
 			kind: vscode.DocumentDiagnosticReportKind.Full,

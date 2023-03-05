@@ -152,7 +152,10 @@ export function createWorkspaces(context: WorkspacesContext) {
 		if (!project) return;
 
 		const languageService = project.getLanguageService();
-		const errors = await languageService.doValidation(uri, cancel, result => {
+		const mode = context.initOptions.serverMode === ServerMode.PartialSemantic ? 'semantic' as const
+			: context.initOptions.serverMode === ServerMode.Syntactic ? 'syntactic' as const
+				: 'all' as const;
+		const errors = await languageService.doValidation(uri, cancel, mode, result => {
 			context.server.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});
 

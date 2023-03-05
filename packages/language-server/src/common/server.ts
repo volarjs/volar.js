@@ -78,7 +78,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 		}
 
 		setupCapabilities(
-			initParams.capabilities,
 			result.capabilities,
 			options,
 			plugins,

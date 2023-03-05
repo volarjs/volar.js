@@ -16,7 +16,7 @@ export function register(context: LanguageServicePluginContext) {
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.prepareRename?.(document, position, token);
+				return plugin.provideRenameRange?.(document, position, token);
 			},
 			(item, map) => {
 				if (!map) {

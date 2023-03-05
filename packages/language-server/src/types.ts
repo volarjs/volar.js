@@ -69,7 +69,7 @@ export interface LanguageServerPlugin {
 
 export enum ServerMode {
 	Semantic = 0,
-	// PartialSemantic = 1, // not support yet
+	PartialSemantic = 1,
 	Syntactic = 2,
 }
 
@@ -120,10 +120,6 @@ export interface LanguageServerInitializationOptions {
 	noProjectReferences?: boolean;
 	reverseConfigFilePriority?: boolean;
 	disableFileWatcher?: boolean;
-	/**
-	 * Enable this option to make language server setup server capabilities based on client capabilities to support multiple servers.
-	 */
-	respectClientCapabilities?: boolean;
 	maxFileSize?: number;
 	configFilePath?: string;
 	/**

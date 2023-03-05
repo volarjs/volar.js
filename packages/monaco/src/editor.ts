@@ -103,6 +103,7 @@ export namespace editor {
 					},
 					onCancellationRequested: Event.None,
 				},
+				'all',
 			);
 			const result = diagnostics.map(error => {
 				const marker = protocol2monaco.asMarkerData(error);

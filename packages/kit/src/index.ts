@@ -64,7 +64,7 @@ export function create(
 		const document = service.context.getTextDocument(uri);
 		let diagnostics: Diagnostic[] = [];
 		if (document) {
-			diagnostics = await service.doValidation(uri, CancellationToken.None);
+			diagnostics = await service.doValidation(uri, CancellationToken.None, 'all');
 			diagnostics = diagnostics.filter(diagnostic => (diagnostic.severity ?? 1) <= severity);
 			const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
 				category: diagnostic.severity === DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,

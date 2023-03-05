@@ -129,9 +129,7 @@ export function register(context: LanguageServicePluginContext) {
 		string,
 		{
 			semantic: Cache,
-			declaration: Cache,
 			syntactic: Cache,
-			suggestion: Cache,
 			semantic_rules: Cache,
 			syntax_rules: Cache,
 			format_rules: Cache,
@@ -139,15 +137,18 @@ export function register(context: LanguageServicePluginContext) {
 	>();
 	const cacheMaps = {
 		semantic: new Map() as CacheMap,
-		declaration: new Map() as CacheMap,
 		syntactic: new Map() as CacheMap,
-		suggestion: new Map() as CacheMap,
 		semantic_rules: new Map() as CacheMap,
 		syntax_rules: new Map() as CacheMap,
 		format_rules: new Map() as CacheMap,
 	};
 
-	return async (uri: string, token: vscode.CancellationToken, response?: (result: vscode.Diagnostic[]) => void) => {
+	return async (
+		uri: string,
+		token: vscode.CancellationToken,
+		mode: 'all' | 'semantic' | 'syntactic',
+		response?: (result: vscode.Diagnostic[]) => void,
+	) => {
 
 		const newDocument = context.getTextDocument(uri);
 		if (!newDocument) {
@@ -156,8 +157,6 @@ export function register(context: LanguageServicePluginContext) {
 
 		const lastResponse = lastResponses.get(uri) ?? lastResponses.set(uri, {
 			semantic: { errors: [] },
-			declaration: { errors: [] },
-			suggestion: { errors: [] },
 			syntactic: { errors: [] },
 			semantic_rules: { errors: [] },
 			syntax_rules: { errors: [] },
@@ -195,16 +194,20 @@ export function register(context: LanguageServicePluginContext) {
 			}
 		}
 
-		await lintWorker('onFormat', cacheMaps.format_rules, lastResponse.format_rules);
-		doResponse();
-		await lintWorker('onSyntax', cacheMaps.syntax_rules, lastResponse.syntax_rules);
-		doResponse();
-		await worker('provideSyntacticDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
-		doResponse();
+		if (mode === 'all' || mode === 'syntactic') {
+			await lintWorker('onFormat', cacheMaps.format_rules, lastResponse.format_rules);
+			doResponse();
+			await lintWorker('onSyntax', cacheMaps.syntax_rules, lastResponse.syntax_rules);
+			doResponse();
+			await worker('provideSyntacticDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
+			doResponse();
+		}
 
-		await lintWorker('onSemantic', cacheMaps.semantic_rules, lastResponse.semantic_rules);
-		doResponse();
-		await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
+		if (mode === 'all' || mode === 'semantic') {
+			await lintWorker('onSemantic', cacheMaps.semantic_rules, lastResponse.semantic_rules);
+			doResponse();
+			await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
+		}
 
 		return collectErrors();
 
