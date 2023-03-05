@@ -1,5 +1,5 @@
 import { createLanguageContext } from '@volar/language-core';
-import * as tsFaster from '@volar/typescript-faster';
+import * as tsFaster from 'typescript-auto-import-cache';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createDocumentsAndSourceMaps } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
