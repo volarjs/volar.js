@@ -1,7 +1,7 @@
 import type { LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as vscode from 'vscode-languageserver-protocol';
-import * as shared from '@volar/shared';
+import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -21,7 +21,7 @@ export function register(context: LanguageServicePluginContext) {
 			},
 			(data, map) => map ? ({
 				wordPattern: data.wordPattern,
-				ranges: data.ranges.map(range => map.toSourceRange(range)).filter(shared.notEmpty),
+				ranges: data.ranges.map(range => map.toSourceRange(range)).filter(notEmpty),
 			}) : data,
 		);
 	};

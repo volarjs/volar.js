@@ -1,7 +1,7 @@
 import type { LanguageServicePluginContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import * as vscode from 'vscode-languageserver-protocol';
-import * as shared from '@volar/shared';
+import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -24,7 +24,7 @@ export function register(context: LanguageServicePluginContext) {
 				if (range) {
 					return vscode.ColorInformation.create(range, color.color);
 				}
-			}).filter(shared.notEmpty) : data,
+			}).filter(notEmpty) : data,
 			arr => arr.flat(),
 		);
 	};

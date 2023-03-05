@@ -1,9 +1,8 @@
 import type { LanguageServicePluginContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import * as transformer from '../transformer';
-import * as shared from '@volar/shared';
 import * as vscode from 'vscode-languageserver-protocol';
-import { isInsideRange } from '../utils/common';
+import { isInsideRange, notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -26,7 +25,7 @@ export function register(context: LanguageServicePluginContext) {
 						symbol,
 						range => map.toSourceRange(range),
 					))
-					.filter(shared.notEmpty)
+					.filter(notEmpty)
 				: data,
 			results => {
 				for (let i = 0; i < results.length; i++) {

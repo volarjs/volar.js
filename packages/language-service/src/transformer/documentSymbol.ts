@@ -1,5 +1,5 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import * as shared from '@volar/shared';
+import { notEmpty } from '../utils/common';
 
 export function transform(symbol: vscode.DocumentSymbol, getOtherRange: (range: vscode.Range) => vscode.Range | undefined): vscode.DocumentSymbol | undefined {
 	const range = getOtherRange(symbol.range);
@@ -16,6 +16,6 @@ export function transform(symbol: vscode.DocumentSymbol, getOtherRange: (range: 
 		selectionRange,
 		children: symbol.children
 			?.map(child => transform(child, getOtherRange))
-			.filter(shared.notEmpty),
+			.filter(notEmpty),
 	};
 }

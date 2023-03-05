@@ -12,20 +12,18 @@ importers:
     optionalDependencies:
       '@lerna-lite/cli': 1.16.0
     devDependencies:
-      '@types/node': 18.14.5
+      '@types/node': 18.14.6
       typescript: 4.9.5
-      vite: 4.1.4_@types+node@18.14.5
+      vite: 4.1.4_@types+node@18.14.6
       vitest: 0.25.8
 
   packages/kit:
     specifiers:
       '@volar/language-service': 1.3.0-alpha.3
-      '@volar/shared': 1.3.0-alpha.3
       vscode-languageserver-textdocument: ^1.0.8
       vscode-uri: ^3.0.7
     dependencies:
       '@volar/language-service': link:../language-service
-      '@volar/shared': link:../shared
       vscode-languageserver-textdocument: 1.0.8
       vscode-uri: 3.0.7
 
@@ -39,7 +37,6 @@ importers:
     specifiers:
       '@volar/language-core': 1.3.0-alpha.3
       '@volar/language-service': 1.3.0-alpha.3
-      '@volar/shared': 1.3.0-alpha.3
       '@vscode/l10n': ^0.0.11
       request-light: ^0.7.0
       typesafe-path: ^0.2.2
@@ -51,7 +48,6 @@ importers:
     dependencies:
       '@volar/language-core': link:../language-core
       '@volar/language-service': link:../language-service
-      '@volar/shared': link:../shared
       '@vscode/l10n': 0.0.11
       request-light: 0.7.0
       typesafe-path: 0.2.2
@@ -64,7 +60,6 @@ importers:
   packages/language-service:
     specifiers:
       '@volar/language-core': 1.3.0-alpha.3
-      '@volar/shared': 1.3.0-alpha.3
       '@volar/source-map': 1.3.0-alpha.3
       '@volar/typescript-faster': 1.3.0-alpha.3
       vscode-html-languageservice: ^5.0.4
@@ -74,7 +69,6 @@ importers:
       vscode-uri: ^3.0.7
     dependencies:
       '@volar/language-core': link:../language-core
-      '@volar/shared': link:../shared
       '@volar/source-map': link:../source-map
       '@volar/typescript-faster': link:../typescript-faster
       vscode-html-languageservice: 5.0.4
@@ -95,14 +89,6 @@ importers:
       axios: 1.3.4
       monaco-editor-core: 0.36.0
       vscode-languageserver-protocol: 3.17.3
-      vscode-uri: 3.0.7
-
-  packages/shared:
-    specifiers:
-      typesafe-path: ^0.2.2
-      vscode-uri: ^3.0.7
-    dependencies:
-      typesafe-path: 0.2.2
       vscode-uri: 3.0.7
 
   packages/source-map:
@@ -130,14 +116,12 @@ importers:
     specifiers:
       '@types/vscode': latest
       '@volar/language-server': 1.3.0-alpha.3
-      '@volar/shared': 1.3.0-alpha.3
       '@volar/source-map': 1.3.0-alpha.3
       typesafe-path: ^0.2.2
       vscode-languageclient: latest
       vscode-nls: ^5.2.0
     dependencies:
       '@volar/language-server': link:../language-server
-      '@volar/shared': link:../shared
       '@volar/source-map': link:../source-map
       typesafe-path: 0.2.2
       vscode-nls: 5.2.0
@@ -656,16 +640,6 @@ packages:
     dev: false
     optional: true
 
-  /@npmcli/installed-package-contents/2.0.1:
-    resolution: {integrity: sha512-GIykAFdOVK31Q1/zAtT5MbxqQL2vyl9mvFJv+OGu01zxbhL3p0xc8gJjdNGX1mWmUT43aEKVO2L6V/2j4TOsAA==}
-    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
-    hasBin: true
-    dependencies:
-      npm-bundled: 3.0.0
-      npm-normalize-package-bin: 3.0.0
-    dev: false
-    optional: true
-
   /@npmcli/installed-package-contents/2.0.2:
     resolution: {integrity: sha512-xACzLPhnfD51GKvTOOuNX2/V4G4mz9/1I2MfDoye9kBM3RYe5g2YbscsaGoTlaWqkxeiapBWyseULVKpSVHtKQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -936,8 +910,8 @@ packages:
     dev: false
     optional: true
 
-  /@types/node/18.14.5:
-    resolution: {integrity: sha512-CRT4tMK/DHYhw1fcCEBwME9CSaZNclxfzVMe7GsO6ULSwsttbj70wSiX6rZdIjGblu93sTJxLdhNIT85KKI7Qw==}
+  /@types/node/18.14.6:
+    resolution: {integrity: sha512-93+VvleD3mXwlLI/xASjw0FzKcwzl3OdTCzm1LaRfqgS21gfFtK3zDXM5Op9TeeMsJVOaJ2VRDpT9q4Y3d0AvA==}
     dev: true
 
   /@types/normalize-package-data/2.4.1:
@@ -3331,7 +3305,7 @@ packages:
     hasBin: true
     dependencies:
       '@npmcli/git': 4.0.3
-      '@npmcli/installed-package-contents': 2.0.1
+      '@npmcli/installed-package-contents': 2.0.2
       '@npmcli/promise-spawn': 6.0.2
       '@npmcli/run-script': 6.0.0
       cacache: 17.0.4
@@ -4345,7 +4319,7 @@ packages:
     dev: false
     optional: true
 
-  /vite/4.1.4_@types+node@18.14.5:
+  /vite/4.1.4_@types+node@18.14.6:
     resolution: {integrity: sha512-3knk/HsbSTKEin43zHu7jTwYWv81f8kgAL99G5NWBcA1LKvtvcVAC4JjBH1arBunO9kQka+1oGbrMKOjk4ZrBg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
@@ -4370,7 +4344,7 @@ packages:
       terser:
         optional: true
     dependencies:
-      '@types/node': 18.14.5
+      '@types/node': 18.14.6
       esbuild: 0.16.15
       postcss: 8.4.21
       resolve: 1.22.1
@@ -4403,7 +4377,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.4
       '@types/chai-subset': 1.3.3
-      '@types/node': 18.14.5
+      '@types/node': 18.14.6
       acorn: 8.8.1
       acorn-walk: 8.2.0
       chai: 4.3.7
@@ -4414,7 +4388,7 @@ packages:
       tinybench: 2.3.1
       tinypool: 0.3.0
       tinyspy: 1.0.2
-      vite: 4.1.4_@types+node@18.14.5
+      vite: 4.1.4_@types+node@18.14.6
     transitivePeerDependencies:
       - less
       - sass

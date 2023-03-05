@@ -1,5 +1,4 @@
 import { ConfigurationHost } from '@volar/language-service';
-import * as shared from '@volar/shared';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
@@ -101,7 +100,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 		await updateDiagnostics();
 
 		const delay = await context.configurationHost?.getConfiguration<number>('volar.diagnostics.delay') ?? 200;
-		await shared.sleep(delay);
+		await sleep(delay);
 
 		if (req === semanticTokensReq) {
 			if (context.initParams.capabilities.textDocument?.semanticTokens) {
@@ -130,7 +129,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 		const otherDocs = [...context.documents.data.values()].filter(doc => doc !== changeDoc);
 
 		if (changeDoc) {
-			await shared.sleep(delay);
+			await sleep(delay);
 			if (cancel.isCancellationRequested) {
 				return;
 			}
@@ -138,7 +137,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 		}
 
 		for (const doc of otherDocs) {
-			await shared.sleep(delay);
+			await sleep(delay);
 			if (cancel.isCancellationRequested) {
 				break;
 			}
@@ -191,4 +190,8 @@ export function createWorkspaces(context: WorkspacesContext) {
 			};
 		}
 	}
+}
+
+export function sleep(ms: number) {
+	return new Promise(resolve => setTimeout(resolve, ms));
 }

@@ -1,5 +1,4 @@
 import { createLanguageContext } from '@volar/language-core';
-import * as shared from '@volar/shared';
 import * as tsFaster from '@volar/typescript-faster';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createDocumentsAndSourceMaps } from './documents';
@@ -38,6 +37,7 @@ import * as selectionRanges from './documentFeatures/selectionRanges';
 
 // fix build
 import type * as _ from 'vscode-languageserver-protocol';
+import { notEmpty, syntaxToLanguageId } from './utils/common';
 
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
@@ -45,7 +45,7 @@ export function createLanguageService(
 	ctx: LanguageServiceOptions,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const languageContext = createLanguageContext(ctx.host, Object.values(ctx.config.languages ?? {}).filter(shared.notEmpty));
+	const languageContext = createLanguageContext(ctx.host, Object.values(ctx.config.languages ?? {}).filter(notEmpty));
 	const context = createLanguageServiceContext(ctx, languageContext, documentRegistry);
 	return createLanguageServiceBase(context);
 }
@@ -109,7 +109,7 @@ function createLanguageServiceContext(
 
 				document = TextDocument.create(
 					uri,
-					shared.syntaxToLanguageId(uri.substring(uri.lastIndexOf('.') + 1)),
+					syntaxToLanguageId(uri.substring(uri.lastIndexOf('.') + 1)),
 					newVersion,
 					scriptSnapshot.getText(0, scriptSnapshot.getLength()),
 				);

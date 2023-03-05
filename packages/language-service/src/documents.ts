@@ -1,10 +1,10 @@
 import { VirtualFiles, VirtualFile, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, forEachEmbeddedFile } from '@volar/language-core';
-import * as shared from '@volar/shared';
 import { Mapping, SourceMap } from '@volar/source-map';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { LanguageServiceOptions } from './types';
+import { syntaxToLanguageId } from './utils/common';
 
 export type DocumentsAndSourceMaps = ReturnType<typeof createDocumentsAndSourceMaps>;
 
@@ -259,7 +259,7 @@ export function createDocumentsAndSourceMaps(
 		if (!map.has(fileName)) {
 			map.set(fileName, TextDocument.create(
 				ctx.fileNameToUri(fileName),
-				shared.syntaxToLanguageId(fileName.substring(fileName.lastIndexOf('.') + 1)),
+				syntaxToLanguageId(fileName.substring(fileName.lastIndexOf('.') + 1)),
 				version++,
 				snapshot.getText(0, snapshot.getLength()),
 			));

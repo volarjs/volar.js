@@ -1,8 +1,7 @@
-import * as shared from '@volar/shared';
 import * as transformer from '../transformer';
 import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
-import { getOverlapRange } from '../utils/common';
+import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { embeddedEditToSourceEdit } from './rename';
@@ -143,7 +142,7 @@ export function register(context: LanguageServicePluginContext) {
 				else {
 					return _codeAction;
 				}
-			}).filter(shared.notEmpty),
+			}).filter(notEmpty),
 			arr => dedupe.withCodeAction(arr.flat()),
 		);
 		const ruleActions: vscode.CodeAction[] = [];

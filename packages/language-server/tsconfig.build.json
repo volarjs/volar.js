@@ -10,9 +10,6 @@
 	],
 	"references": [
 		{
-			"path": "../shared/tsconfig.build.json"
-		},
-		{
 			"path": "../language-core/tsconfig.build.json"
 		},
 		{

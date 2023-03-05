@@ -1,7 +1,7 @@
-import * as shared from '@volar/shared';
 import type { LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as vscode from 'vscode-languageserver-protocol';
+import { notEmpty } from '../utils/common';
 
 export interface PluginCodeLensData {
 	kind: 'normal',
@@ -78,7 +78,7 @@ export function register(context: LanguageServicePluginContext) {
 						range,
 					};
 				}
-			}).filter(shared.notEmpty),
+			}).filter(notEmpty),
 			arr => arr.flat(),
 		) ?? [];
 	};

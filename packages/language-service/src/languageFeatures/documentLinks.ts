@@ -1,10 +1,10 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
-import * as shared from '@volar/shared';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
+import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -31,7 +31,7 @@ export function register(context: LanguageServicePluginContext) {
 						range,
 					};
 				}
-			}).filter(shared.notEmpty),
+			}).filter(notEmpty),
 			arr => arr.flat(),
 		) ?? [];
 		const maps = context.documents.getMapsBySourceFileUri(uri);

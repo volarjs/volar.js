@@ -1,10 +1,10 @@
 import { FileRangeCapabilities } from '@volar/language-core';
-import * as shared from '@volar/shared';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import type { LanguageServicePluginContext, RuleContext } from '../types';
+import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers';
 
@@ -236,7 +236,7 @@ export function register(context: LanguageServicePluginContext) {
 
 					if (token) {
 						if (Date.now() - lastCheckCancelAt >= 5) {
-							await shared.sleep(5); // wait for LSP event polling
+							await sleep(5); // wait for LSP event polling
 							lastCheckCancelAt = Date.now();
 						}
 						if (token.isCancellationRequested) {
@@ -347,7 +347,7 @@ export function register(context: LanguageServicePluginContext) {
 
 					if (token) {
 						if (Date.now() - lastCheckCancelAt >= 5) {
-							await shared.sleep(5); // waiting LSP event polling
+							await sleep(5); // waiting LSP event polling
 							lastCheckCancelAt = Date.now();
 						}
 						if (token.isCancellationRequested) {

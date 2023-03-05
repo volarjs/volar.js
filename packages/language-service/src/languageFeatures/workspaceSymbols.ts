@@ -1,7 +1,7 @@
 import * as transformer from '../transformer';
 import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
-import * as shared from '@volar/shared';
+import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -33,7 +33,7 @@ export function register(context: LanguageServicePluginContext) {
 				else {
 					return loc;
 				}
-			})).filter(shared.notEmpty);
+			})).filter(notEmpty);
 
 			symbolsList.push(symbols);
 		}

@@ -1,11 +1,11 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
-import * as shared from '@volar/shared';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { FileRangeCapabilities, MirrorBehaviorCapabilities } from '@volar/language-core';
 import { SourceMapWithDocuments } from '../documents';
+import { notEmpty } from '../utils/common';
 
 export function register(
 	context: LanguageServicePluginContext,
@@ -119,7 +119,7 @@ export function register(
 				}
 
 				return link;
-			}).filter(shared.notEmpty),
+			}).filter(notEmpty),
 			arr => dedupe.withLocationLinks(arr.flat()),
 		);
 	};

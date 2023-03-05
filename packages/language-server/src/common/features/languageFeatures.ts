@@ -3,7 +3,6 @@ import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest, ShowReferencesNotification } from '../../protocol';
 import { CancellationTokenHost } from '../cancellationPipe';
 import type { Workspaces } from '../workspaces';
-import * as shared from '@volar/shared';
 import { RuntimeEnvironment, LanguageServerInitializationOptions, ServerMode } from '../../types';
 import { createDocuments } from '../documents';
 
@@ -257,7 +256,7 @@ export function register(
 		return await lastCallHierarchyLs?.callHierarchy.getOutgoingCalls(params.item, token) ?? [];
 	});
 	connection.languages.semanticTokens.on(async (params, token, _, resultProgress) => {
-		await shared.sleep(200);
+		await sleep(200);
 		return await worker(params.textDocument.uri, token, async service => {
 			return await service?.getSemanticTokens(
 				params.textDocument.uri,
@@ -269,7 +268,7 @@ export function register(
 		}) ?? { data: [] };
 	});
 	connection.languages.semanticTokens.onRange(async (params, token, _, resultProgress) => {
-		await shared.sleep(200);
+		await sleep(200);
 		return await worker(params.textDocument.uri, token, async service => {
 			return await service?.getSemanticTokens(
 				params.textDocument.uri,
@@ -326,7 +325,7 @@ export function register(
 				return service.getEditsForFileRename(file.oldUri, file.newUri, token) ?? null;
 			}) ?? null;
 		}));
-		const edits = _edits.filter(shared.notEmpty);
+		const edits = _edits.filter((edit): edit is NonNullable<typeof edit> => !!edit);
 
 		if (edits.length) {
 			embedded.mergeWorkspaceEdits(edits[0], ...edits.slice(1));
@@ -381,4 +380,8 @@ export function register(
 			}
 		}
 	}
+}
+
+export function sleep(ms: number) {
+	return new Promise(resolve => setTimeout(resolve, ms));
 }

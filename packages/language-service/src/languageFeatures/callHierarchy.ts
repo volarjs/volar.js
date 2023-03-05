@@ -1,7 +1,7 @@
-import * as shared from '@volar/shared';
 import { posix as path } from 'path';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
+import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
@@ -49,7 +49,7 @@ export function register(context: LanguageServicePluginContext) {
 				},
 				(data, sourceMap) => !sourceMap ? data : data
 					.map(item => transformCallHierarchyItem(item, [])?.[0])
-					.filter(shared.notEmpty),
+					.filter(notEmpty),
 				arr => dedupe.withLocations(arr.flat()),
 			);
 		},
@@ -187,7 +187,7 @@ export function register(context: LanguageServicePluginContext) {
 			if (!selectionRange)
 				continue;
 
-			const vueRanges = tsRanges.map(tsRange => map.toSourceRange(tsRange)).filter(shared.notEmpty);
+			const vueRanges = tsRanges.map(tsRange => map.toSourceRange(tsRange)).filter(notEmpty);
 			const vueItem: vscode.CallHierarchyItem = {
 				...tsItem,
 				name: tsItem.name === path.basename(context.uriToFileName(map.virtualFileDocument.uri)) ? path.basename(context.uriToFileName(map.sourceFileDocument.uri)) : tsItem.name,

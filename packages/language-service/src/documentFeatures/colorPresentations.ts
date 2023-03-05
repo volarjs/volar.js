@@ -1,7 +1,7 @@
 import type { LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as vscode from 'vscode-languageserver-protocol';
-import * as shared from '@volar/shared';
+import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -41,7 +41,7 @@ export function register(context: LanguageServicePluginContext) {
 					}
 				}
 				return cp;
-			}).filter(shared.notEmpty) : data,
+			}).filter(notEmpty) : data,
 		);
 	};
 }

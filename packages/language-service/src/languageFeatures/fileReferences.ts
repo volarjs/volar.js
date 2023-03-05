@@ -1,9 +1,9 @@
 import type { LanguageServicePluginContext } from '../types';
-import * as shared from '@volar/shared';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import * as vscode from 'vscode-languageserver-protocol';
 import { NullableResult } from '@volar/language-service';
+import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -37,7 +37,7 @@ export function register(context: LanguageServicePluginContext) {
 						return reference;
 					}
 				}
-			}).filter(shared.notEmpty),
+			}).filter(notEmpty),
 			arr => dedupe.withLocations(arr.flat()),
 		);
 	};

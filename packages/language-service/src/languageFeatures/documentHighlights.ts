@@ -1,9 +1,9 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
-import * as shared from '@volar/shared';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as dedupe from '../utils/dedupe';
+import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -71,19 +71,19 @@ export function register(context: LanguageServicePluginContext) {
 					}
 				}
 			},
-			(data, map) => data.map(highlisht => {
+			(data, map) => data.map(highlight => {
 
 				if (!map)
-					return highlisht;
+					return highlight;
 
-				const range = map.toSourceRange(highlisht.range);
+				const range = map.toSourceRange(highlight.range);
 				if (range) {
 					return {
-						...highlisht,
+						...highlight,
 						range,
 					};
 				}
-			}).filter(shared.notEmpty),
+			}).filter(notEmpty),
 			arr => arr.flat(),
 		);
 	};

@@ -1,9 +1,9 @@
-import * as shared from '@volar/shared';
 import * as vscode from 'vscode-languageserver-protocol';
 import { SemanticToken } from '@volar/language-service';
 import type { LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
+import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -81,7 +81,7 @@ export function register(context: LanguageServicePluginContext) {
 				if (range) {
 					return [range.start.line, range.start.character, _token[2], _token[3], _token[4]];
 				}
-			}).filter(shared.notEmpty),
+			}).filter(notEmpty),
 			tokens => tokens.flat(),
 			tokens => reportProgress?.(buildTokens(tokens)), // TODO: this has no effect with LSP
 		);

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode-languageserver-protocol';
+import { notEmpty } from '../utils/common';
 import { transform as transformTextEdit } from './textEdit';
-import * as shared from '@volar/shared';
 
 export function transform<T extends vscode.CompletionItem>(
 	item: T,
@@ -11,7 +11,7 @@ export function transform<T extends vscode.CompletionItem>(
 		...item,
 		additionalTextEdits: item.additionalTextEdits
 			?.map(edit => transformTextEdit(edit, getOtherRange, document))
-			.filter(shared.notEmpty),
+			.filter(notEmpty),
 		textEdit: item.textEdit
 			? transformTextEdit(item.textEdit, getOtherRange, document)
 			: undefined,

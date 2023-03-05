@@ -13,9 +13,6 @@
 			"path": "../language-core/tsconfig.build.json"
 		},
 		{
-			"path": "../shared/tsconfig.build.json"
-		},
-		{
 			"path": "../source-map/tsconfig.build.json"
 		},
 		{

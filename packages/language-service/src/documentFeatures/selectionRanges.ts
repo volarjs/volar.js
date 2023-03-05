@@ -2,7 +2,7 @@ import type { LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as transformer from '../transformer';
 import * as vscode from 'vscode-languageserver-protocol';
-import * as shared from '@volar/shared';
+import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
@@ -16,7 +16,7 @@ export function register(context: LanguageServicePluginContext) {
 				if (file.capabilities.documentFormatting) {
 					const result = positions
 						.map(position => map.toGeneratedPosition(position))
-						.filter(shared.notEmpty);
+						.filter(notEmpty);
 					if (result.length) {
 						return [result];
 					}
