@@ -6,7 +6,6 @@ import {
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { URI } from 'vscode-uri';
-import axios from 'axios';
 
 export function createLanguageService(options: {
 	workerContext: monaco.worker.IWorkerContext<any>,
@@ -222,23 +221,18 @@ class CdnDtsHost {
 		) {
 			if (!this.files.has(fileName)) {
 				this.files.set(fileName, undefined);
-				this.files.set(fileName, this.fetch(fileName));
+				this.files.set(fileName, this.fetchFile(fileName));
 			}
 			return this.files.get(fileName)!;
 		}
 		return undefined;
 	}
 
-	async fetch(fileName: string) {
+	async fetchFile(fileName: string) {
 		const requestFileName = this.resolveRequestFileName(fileName);
 		const url = this.cdn + requestFileName.slice('/node_modules/'.length);
 		try {
-			const text = (await axios.get(url, {
-				transformResponse: (res) => {
-					// avoid parse to json object
-					return res;
-				},
-			})).data as string ?? undefined;
+			const text = await (await fetch(url)).text();
 			this.onFetch?.(fileName, text);
 			return text;
 		} catch {
