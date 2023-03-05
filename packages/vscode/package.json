@@ -1,5 +1,5 @@
 {
-	"name": "@volar/vscode-language-client",
+	"name": "@volar/vscode",
 	"version": "1.3.0-alpha.3",
 	"main": "out/index.js",
 	"license": "MIT",
@@ -10,7 +10,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/volarjs/volar.js.git",
-		"directory": "packages/language-language-client"
+		"directory": "packages/vscode"
 	},
 	"dependencies": {
 		"@volar/language-server": "1.3.0-alpha.3",

@@ -10,7 +10,7 @@
 			"path": "./packages/typescript/tsconfig.build.json"
 		},
 		{
-			"path": "./packages/vscode-language-client/tsconfig.build.json"
+			"path": "./packages/vscode/tsconfig.build.json"
 		},
 		{
 			"path": "./packages/monaco/tsconfig.build.json"
