@@ -131,19 +131,15 @@ export function setupCapabilities(
 		server.inlayHintProvider = true;
 	}
 	if ((!initOptions.respectClientCapabilities || params.textDocument?.diagnostic) && (initOptions.diagnosticModel ?? DiagnosticModel.Push) === DiagnosticModel.Pull) {
-		const selector = plugins.map(plugin => plugin.diagnosticDocumentSelector ?? []).flat();
-		if (selector) {
-			server.diagnosticProvider = {
-				documentSelector: selector,
-				interFileDependencies: true,
-				workspaceDiagnostics: false,
-			};
-		}
+		server.diagnosticProvider = {
+			interFileDependencies: true,
+			workspaceDiagnostics: false,
+		};
 	}
 
 	// cross file features
 	if (!initOptions.respectClientCapabilities || params.workspace?.fileOperations) {
-		const exts = plugins.map(plugin => plugin.extensions.fileRenameOperationFilter).flat();
+		const exts = plugins.map(plugin => plugin.watchFileExtensions).flat();
 		if (exts.length) {
 			server.workspace = {
 				fileOperations: {

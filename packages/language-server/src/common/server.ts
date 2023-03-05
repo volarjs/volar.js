@@ -97,10 +97,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 			};
 		} catch { }
 
-		for (const plugin of plugins) {
-			plugin.onInitialize?.(result, context.runtimeEnv);
-		}
-
 		return result;
 	});
 	connection.onInitialized(() => {
@@ -126,7 +122,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 			&& !options.disableFileWatcher
 			&& initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration
 		) {
-			const exts = plugins.map(plugin => plugin.extensions.fileWatcher ?? []).flat();
+			const exts = plugins.map(plugin => plugin.watchFileExtensions).flat();
 			if (exts.length) {
 				connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
 					watchers: [

@@ -296,7 +296,7 @@ function createParsedCommandLine(
 	tsConfig: path.PosixPath | ts.CompilerOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],
 ): ts.ParsedCommandLine {
-	const extraFileExtensions = plugins.map(plugin => plugin.tsconfigExtraFileExtensions ?? []).flat();
+	const extraFileExtensions = plugins.map(plugin => plugin.extraFileExtensions ?? []).flat();
 	if (ts) {
 		try {
 			let content: ts.ParsedCommandLine;

@@ -56,18 +56,13 @@ export interface LanguageServiceContext {
 
 export interface LanguageServerPlugin {
 	(initOptions: LanguageServerInitializationOptions): {
-		tsconfigExtraFileExtensions: ts.FileExtensionInfo[];
-		diagnosticDocumentSelector: vscode.DocumentSelector;
-		extensions: {
-			fileRenameOperationFilter: string[];
-			fileWatcher: string[];
-		},
+		extraFileExtensions?: ts.FileExtensionInfo[];
+		watchFileExtensions?: string[];
 		resolveConfig?(
 			config: Config,
 			modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
 			ctx?: LanguageServiceContext,
 		): Config;
-		onInitialize?(_: vscode.InitializeResult, env: RuntimeEnvironment): void;
 		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};
 }
@@ -75,7 +70,7 @@ export interface LanguageServerPlugin {
 export enum ServerMode {
 	Semantic = 0,
 	// PartialSemantic = 1, // not support yet
-	Syntactic = 2
+	Syntactic = 2,
 }
 
 export enum DiagnosticModel {
