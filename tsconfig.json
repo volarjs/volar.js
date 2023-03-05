@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"target": "ES2016",
+		"target": "ES2021",
 		"lib": [
 			"WebWorker",
 			"ES2021",
