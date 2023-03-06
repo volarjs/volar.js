@@ -28,7 +28,7 @@ export interface RuleCodeActionData {
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token: vscode.CancellationToken) => {
+	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = vscode.CancellationToken.None) => {
 
 		const sourceDocument = context.getTextDocument(uri);
 		if (!sourceDocument)

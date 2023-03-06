@@ -6,7 +6,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (uri: string, range: vscode.Range, token: vscode.CancellationToken) => {
+	return async (uri: string, range: vscode.Range, token = vscode.CancellationToken.None) => {
 
 		const document = context.getTextDocument(uri);
 

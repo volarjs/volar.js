@@ -1,11 +1,11 @@
-import type * as vscode from 'vscode-languageserver-protocol';
+import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
 import { PluginCodeActionData, RuleCodeActionData } from './codeActions';
 import { embeddedEditToSourceEdit } from './rename';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (item: vscode.CodeAction, token: vscode.CancellationToken) => {
+	return async (item: vscode.CodeAction, token = vscode.CancellationToken.None) => {
 
 		const data: PluginCodeActionData | RuleCodeActionData | undefined = item.data;
 

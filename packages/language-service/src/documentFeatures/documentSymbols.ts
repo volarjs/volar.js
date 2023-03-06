@@ -6,7 +6,7 @@ import { isInsideRange, notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, token: vscode.CancellationToken): Promise<vscode.DocumentSymbol[] | undefined> => {
+	return (uri: string, token = vscode.CancellationToken.None): Promise<vscode.DocumentSymbol[] | undefined> => {
 
 		return documentFeatureWorker(
 			context,

@@ -5,7 +5,7 @@ import { PluginCompletionData } from './complete';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (item: vscode.CompletionItem, token: vscode.CancellationToken) => {
+	return async (item: vscode.CompletionItem, token = vscode.CancellationToken.None) => {
 
 		const data: PluginCompletionData | undefined = item.data;
 

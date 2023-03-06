@@ -1,5 +1,5 @@
 import { posix as path } from 'path';
-import type * as vscode from 'vscode-languageserver-protocol';
+import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
 import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
@@ -18,7 +18,7 @@ export function register(context: LanguageServicePluginContext) {
 
 	return {
 
-		doPrepare(uri: string, position: vscode.Position, token: vscode.CancellationToken) {
+		doPrepare(uri: string, position: vscode.Position, token = vscode.CancellationToken.None) {
 
 			return languageFeatureWorker(
 				context,

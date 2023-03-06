@@ -5,7 +5,7 @@ import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position, token: vscode.CancellationToken) => {
+	return (uri: string, position: vscode.Position, token = vscode.CancellationToken.None) => {
 
 		return languageFeatureWorker(
 			context,

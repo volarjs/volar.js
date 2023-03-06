@@ -11,7 +11,7 @@ export function register(context: LanguageServicePluginContext) {
 		uri: string,
 		range: vscode.Range | undefined,
 		legend: vscode.SemanticTokensLegend,
-		token: vscode.CancellationToken,
+		token = vscode.CancellationToken.None,
 		reportProgress?: (tokens: vscode.SemanticTokens) => void,
 	): Promise<vscode.SemanticTokens | undefined> => {
 

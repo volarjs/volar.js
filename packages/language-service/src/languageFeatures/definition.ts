@@ -14,7 +14,7 @@ export function register(
 	isValidMirrorPosition: (mirrorData: MirrorBehaviorCapabilities) => boolean,
 ) {
 
-	return (uri: string, position: vscode.Position, token: vscode.CancellationToken) => {
+	return (uri: string, position: vscode.Position, token = vscode.CancellationToken.None) => {
 
 		return languageFeatureWorker(
 			context,

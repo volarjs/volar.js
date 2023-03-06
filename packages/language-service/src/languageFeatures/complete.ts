@@ -28,11 +28,12 @@ export function register(context: LanguageServicePluginContext) {
 		} | undefined,
 	} | undefined;
 
-	return async (uri: string, position: vscode.Position, completionContext: vscode.CompletionContext | undefined, token: vscode.CancellationToken) => {
-
-		completionContext ??= {
-			triggerKind: vscode.CompletionTriggerKind.Invoked,
-		};
+	return async (
+		uri: string,
+		position: vscode.Position,
+		completionContext: vscode.CompletionContext = { triggerKind: vscode.CompletionTriggerKind.Invoked, },
+		token = vscode.CancellationToken.None,
+	) => {
 
 		let document: TextDocument | undefined;
 

@@ -145,8 +145,8 @@ export function register(context: LanguageServicePluginContext) {
 
 	return async (
 		uri: string,
-		token: vscode.CancellationToken,
 		mode: 'all' | 'semantic' | 'syntactic',
+		token = vscode.CancellationToken.None,
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
 

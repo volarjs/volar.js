@@ -5,7 +5,7 @@ import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (query: string, token: vscode.CancellationToken) => {
+	return async (query: string, token = vscode.CancellationToken.None) => {
 
 		const symbolsList: vscode.WorkspaceSymbol[][] = [];
 

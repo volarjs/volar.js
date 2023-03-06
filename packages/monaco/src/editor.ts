@@ -1,4 +1,4 @@
-import { LanguageService, Event } from '@volar/language-service';
+import { LanguageService } from '@volar/language-service';
 import { editor as _editor, IDisposable, Position, Uri } from 'monaco-editor-core';
 import { markers } from './utils/markers';
 import * as protocol2monaco from './utils/protocol2monaco';
@@ -97,14 +97,11 @@ export namespace editor {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const diagnostics = await languageService.doValidation(
 				model.uri.toString(),
-				{
-					get isCancellationRequested() {
-						return model.getVersionId() !== version;
-					},
-					onCancellationRequested: Event.None,
-				},
 				'all',
 			);
+			if (model.getVersionId() !== version) {
+				return;
+			}
 			const result = diagnostics.map(error => {
 				const marker = protocol2monaco.asMarkerData(error);
 				markers.set(marker, error);
@@ -203,13 +200,10 @@ export namespace editor {
 								rangeOffset: lastChange.rangeOffset,
 							},
 						},
-						{
-							get isCancellationRequested() {
-								return model.getVersionId() !== version;
-							},
-							onCancellationRequested: Event.None,
-						}
 					);
+					if (model.getVersionId() !== version) {
+						return;
+					}
 					const codeEditor = editor.getEditors().find((e) => e.getModel() === model);
 					if (codeEditor && edit && model.getVersionId() === version) {
 						if (typeof edit === 'string') {

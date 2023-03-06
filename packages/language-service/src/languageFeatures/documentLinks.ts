@@ -8,7 +8,7 @@ import { notEmpty } from '../utils/common';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (uri: string, token: vscode.CancellationToken) => {
+	return async (uri: string, token = vscode.CancellationToken.None) => {
 
 		const pluginLinks = await documentFeatureWorker(
 			context,

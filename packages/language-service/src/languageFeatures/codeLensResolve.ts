@@ -11,7 +11,7 @@ export function register(context: LanguageServicePluginContext) {
 
 	const findReferences = references.register(context);
 
-	return async (item: vscode.CodeLens, token: vscode.CancellationToken) => {
+	return async (item: vscode.CodeLens, token = vscode.CancellationToken.None) => {
 
 		const data: PluginCodeLensData | PluginReferencesCodeLensData | undefined = item.data;
 

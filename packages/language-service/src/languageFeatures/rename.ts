@@ -8,7 +8,7 @@ import { FileRangeCapabilities } from '@volar/language-core';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position, newName: string, token: vscode.CancellationToken) => {
+	return (uri: string, position: vscode.Position, newName: string, token = vscode.CancellationToken.None) => {
 
 		let _data: FileRangeCapabilities | undefined;
 

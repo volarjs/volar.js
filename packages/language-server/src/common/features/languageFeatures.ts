@@ -287,8 +287,8 @@ export function register(
 					: 'all' as const;
 			return service.doValidation(
 				params.textDocument.uri,
-				tsToken,
 				mode,
+				tsToken,
 				errors => {
 					// resultProgressReporter is undefined in vscode
 					resultProgressReporter?.report({

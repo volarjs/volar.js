@@ -1,11 +1,11 @@
 import type { LanguageServicePluginContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import * as transformer from '../transformer';
-import type * as vscode from 'vscode-languageserver-protocol';
+import * as vscode from 'vscode-languageserver-protocol';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, token: vscode.CancellationToken) => {
+	return (uri: string, token = vscode.CancellationToken.None) => {
 
 		return documentFeatureWorker(
 			context,

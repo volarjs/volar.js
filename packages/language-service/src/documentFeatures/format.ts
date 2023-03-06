@@ -15,7 +15,7 @@ export function register(context: LanguageServicePluginContext) {
 			ch: string,
 			position: vscode.Position,
 		} | undefined,
-		token: vscode.CancellationToken
+		token = vscode.CancellationToken.None
 	) => {
 
 		let document = context.getTextDocument(uri);

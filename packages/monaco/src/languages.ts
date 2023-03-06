@@ -40,6 +40,8 @@ export namespace languages {
 			languages.registerDeclarationProvider(language, provider),
 			languages.registerSelectionRangeProvider(language, provider),
 			languages.registerInlayHintsProvider(language, provider),
+			languages.registerDocumentSemanticTokensProvider(language, provider),
+			languages.registerDocumentRangeSemanticTokensProvider(language, provider),
 		];
 
 		return { dispose: () => disposables.forEach((d) => d.dispose()) };

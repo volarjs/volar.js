@@ -3,11 +3,11 @@ import { embeddedEditToSourceEdit } from './rename';
 import type * as _ from 'vscode-languageserver-protocol';
 import * as dedupe from '../utils/dedupe';
 import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
-import type * as vscode from 'vscode-languageserver-protocol';
+import * as vscode from 'vscode-languageserver-protocol';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return async (oldUri: string, newUri: string, token: vscode.CancellationToken) => {
+	return async (oldUri: string, newUri: string, token = vscode.CancellationToken.None) => {
 
 		const rootFile = context.documents.getSourceByUri(oldUri)?.root;
 

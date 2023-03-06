@@ -4,7 +4,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position, autoInsertContext: AutoInsertionContext, token: vscode.CancellationToken) => {
+	return (uri: string, position: vscode.Position, autoInsertContext: AutoInsertionContext, token = vscode.CancellationToken.None) => {
 
 		return languageFeatureWorker(
 			context,

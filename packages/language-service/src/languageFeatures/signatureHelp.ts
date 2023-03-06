@@ -4,12 +4,15 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position, signatureHelpContext: vscode.SignatureHelpContext | undefined, token: vscode.CancellationToken) => {
-
-		signatureHelpContext ??= {
+	return (
+		uri: string,
+		position: vscode.Position,
+		signatureHelpContext: vscode.SignatureHelpContext = {
 			triggerKind: vscode.SignatureHelpTriggerKind.Invoked,
 			isRetrigger: false,
-		};
+		},
+		token = vscode.CancellationToken.None,
+	) => {
 
 		return languageFeatureWorker(
 			context,
