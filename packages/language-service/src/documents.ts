@@ -112,12 +112,7 @@ export class SourceMapWithDocuments<Data = any> {
 			if (!filter(mapped[1].data)) {
 				continue;
 			}
-			let offset = mapped[0];
-			const mapping = mapped[1];
-			if (baseOffset === 'right') {
-				offset += (mapping.sourceRange[1] - mapping.sourceRange[0]) - (mapping.generatedRange[1] - mapping.generatedRange[0]);
-			}
-			yield [toDoc.positionAt(offset), mapping] as const;
+			yield [toDoc.positionAt(mapped[0]), mapped[1]] as const;
 		}
 	}
 

@@ -137,7 +137,9 @@ export class SourceMap<Data = any> {
 			if (baseOnRight) {
 				offset += (mappedToRange[1] - mappedToRange[0]) - (mappedFromRange[1] - mappedFromRange[0]);
 			}
-			return offset;
+			if (offset >= mappedToRange[0] && offset <= mappedToRange[1]) {
+				return offset;
+			}
 		}
 	}
 
