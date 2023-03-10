@@ -32,9 +32,9 @@ export async function activate(
 
 	async function onCommand() {
 
-		const tsdk = getTsdk(context);
+		const tsdk = await getTsdk(context);
 		const configTsdkPath = getConfigTsdkPath();
-		const vscodeTsdk = getVScodeTsdk();
+		const vscodeTsdk = await getVScodeTsdk();
 		const select = await quickPick([
 			{
 				useVSCodeTsdk: {
@@ -92,7 +92,7 @@ export async function activate(
 			statusBar.hide();
 		}
 		else {
-			const tsVersion = getTsdk(context).version;
+			const tsVersion = (await getTsdk(context)).version;
 			statusBar.text = tsVersion ?? 'x.x.x';
 			statusBar.text = resolveStatusText(statusBar.text);
 			statusBar.show();
@@ -110,18 +110,18 @@ export async function activate(
 	}
 }
 
-export function getTsdk(context: vscode.ExtensionContext) {
+export async function getTsdk(context: vscode.ExtensionContext) {
 	if (isUseWorkspaceTsdk(context)) {
 		const resolvedTsdk = resolveWorkspaceTsdk(getConfigTsdkPath() || defaultTsdkPath);
 		if (resolvedTsdk) {
 			return {
 				tsdk: resolvedTsdk,
-				version: getTsVersion(resolvedTsdk),
+				version: await getTsVersion(resolvedTsdk),
 				isWorkspacePath: true,
 			};
 		}
 	}
-	const tsdk = getVScodeTsdk();
+	const tsdk = await getVScodeTsdk();
 	return {
 		tsdk: tsdk.path,
 		version: tsdk.version,
@@ -148,14 +148,14 @@ function resolveWorkspaceTsdk(tsdk: path.OsPath | path.PosixPath) {
 	}
 }
 
-function getVScodeTsdk() {
+async function getVScodeTsdk() {
 
 	const nightly = vscode.extensions.getExtension('ms-vscode.vscode-typescript-next');
 	if (nightly) {
 		const path = nightly.extensionPath.toString() + '/node_modules/typescript/lib';
 		return {
 			path,
-			version: getTsVersion(path),
+			version: await getTsVersion(path),
 			isWeb: false,
 		};
 	}
@@ -167,13 +167,13 @@ function getVScodeTsdk() {
 		);
 		return {
 			path: libPath,
-			version: getTsVersion(libPath),
+			version: await getTsVersion(libPath),
 			isWeb: false,
 		};
 	}
 
 	// web
-	const version = require('typescript/package.json').version;
+	const version: string = require('typescript/package.json').version;
 	return {
 		path: `/node_modules/typescript@${version}/lib`,
 		version,

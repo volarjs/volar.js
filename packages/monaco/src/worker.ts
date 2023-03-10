@@ -223,7 +223,7 @@ class CdnDtsHost {
 				this.files.set(fileName, undefined);
 				this.files.set(fileName, this.fetchFile(fileName));
 			}
-			return this.files.get(fileName)!;
+			return this.files.get(fileName);
 		}
 		return undefined;
 	}
