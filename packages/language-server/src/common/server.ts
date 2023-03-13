@@ -54,6 +54,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 			capabilities: {
 				textDocumentSync: (options.textDocumentSync as vscode.TextDocumentSyncKind) ?? vscode.TextDocumentSyncKind.Incremental,
 				workspace: {
+					// #18
 					workspaceFolders: {
 						supported: true,
 						changeNotifications: true,
