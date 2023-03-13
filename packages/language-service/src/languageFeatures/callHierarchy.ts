@@ -70,7 +70,7 @@ export function register(context: LanguageServicePluginContext) {
 
 				if (data.map) {
 
-					if (context.documents.hasVirtualFileByUri(data.map.embeddedDocumentUri)) {
+					if (context.documents.isVirtualFileUri(data.map.embeddedDocumentUri)) {
 
 						const _calls = await plugin.provideCallHierarchyIncomingCalls(item, token);
 
@@ -126,7 +126,7 @@ export function register(context: LanguageServicePluginContext) {
 
 				if (data.map) {
 
-					if (context.documents.hasVirtualFileByUri(data.map.embeddedDocumentUri)) {
+					if (context.documents.isVirtualFileUri(data.map.embeddedDocumentUri)) {
 
 						const _calls = await plugin.provideCallHierarchyOutgoingCalls(item, token);
 
@@ -169,7 +169,7 @@ export function register(context: LanguageServicePluginContext) {
 
 	function transformCallHierarchyItem(tsItem: vscode.CallHierarchyItem, tsRanges: vscode.Range[]): [vscode.CallHierarchyItem, vscode.Range[]] | undefined {
 
-		if (!context.documents.hasVirtualFileByUri(tsItem.uri))
+		if (!context.documents.isVirtualFileUri(tsItem.uri))
 			return [tsItem, tsRanges];
 
 		for (const [_, map] of context.documents.getMapsByVirtualFileUri(tsItem.uri)) {

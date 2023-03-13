@@ -3,10 +3,6 @@ import type { LanguageServicePluginContext } from '../types';
 import { PluginCodeLensData, PluginReferencesCodeLensData } from './codeLens';
 import * as references from './references';
 
-export const showReferencesCommand = `volar.${Math.random().toString(36).slice(2)}.show-references`;
-
-export type ShowReferencesCommandData = [string, vscode.Position, vscode.Location[]];
-
 export function register(context: LanguageServicePluginContext) {
 
 	const findReferences = references.register(context);
@@ -38,11 +34,7 @@ export function register(context: LanguageServicePluginContext) {
 				references = await plugin.resolveReferencesCodeLensLocations(document, data.range, references, token);
 			}
 
-			item.command = {
-				title: references.length === 1 ? '1 reference' : `${references.length} references`,
-				command: showReferencesCommand,
-				arguments: [data.uri, data.range.start, references]satisfies ShowReferencesCommandData,
-			};
+			item.command = context.commands.createShowReferencesCommand(data.uri, data.range.start, references);
 		}
 
 		return item;

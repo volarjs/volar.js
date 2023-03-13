@@ -25,6 +25,11 @@ export interface LanguageServiceOptions {
 	schemaRequestService?: SchemaRequestService;
 }
 
+export interface Commands {
+	createShowReferencesCommand(uri: string, position: vscode.Position, locations: vscode.Location[]): vscode.Command | undefined;
+	createRenameCommand(uri: string, position: vscode.Position): vscode.Command | undefined;
+}
+
 export interface LanguageServicePluginContext extends LanguageServiceOptions {
 
 	typescript: {
@@ -32,6 +37,7 @@ export interface LanguageServicePluginContext extends LanguageServiceOptions {
 		languageServiceHost: ts.LanguageServiceHost;
 		languageService: ts.LanguageService;
 	} | undefined;
+	commands: Commands;
 
 	/** @private */
 	core: LanguageContext;

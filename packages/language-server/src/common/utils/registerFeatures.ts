@@ -1,4 +1,3 @@
-import * as embedded from '@volar/language-service';
 import { DiagnosticModel, LanguageServerPlugin, LanguageServerInitializationOptions, ServerMode } from '../../types';
 import * as vscode from 'vscode-languageserver';
 import { Config } from '@volar/language-service';
@@ -61,8 +60,6 @@ export function setupCapabilities(
 		server.codeLensProvider = {
 			resolveProvider: true,
 		};
-		server.executeCommandProvider ??= { commands: [] };
-		server.executeCommandProvider.commands.push(embedded.showReferencesCommand);
 		server.semanticTokensProvider = {
 			range: true,
 			full: false,

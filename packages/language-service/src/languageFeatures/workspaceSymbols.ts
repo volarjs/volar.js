@@ -22,7 +22,7 @@ export function register(context: LanguageServicePluginContext) {
 				continue;
 
 			const symbols = embeddedSymbols.map(symbol => transformer.asWorkspaceSymbol(symbol, loc => {
-				if (context.documents.hasVirtualFileByUri(loc.uri)) {
+				if (context.documents.isVirtualFileUri(loc.uri)) {
 					for (const [_, map] of context.documents.getMapsByVirtualFileUri(loc.uri)) {
 						const range = map.toSourceRange(loc.range);
 						if (range) {

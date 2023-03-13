@@ -6,11 +6,6 @@ import type { FileKind, FileRangeCapabilities } from '@volar/language-core';
  * Server request client
  */
 
-export namespace ShowReferencesNotification {
-	export type ResponseType = vscode.TextDocumentPositionParams & { references: vscode.Location[]; };
-	export const type = new vscode.NotificationType<ResponseType>('volar/server/showReferences');
-}
-
 export namespace FsReadFileRequest {
 	export const type = new vscode.RequestType<vscode.DocumentUri, Uint8Array | null | undefined, unknown>('volar/server/fs/readFile');
 }

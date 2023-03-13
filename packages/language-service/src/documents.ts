@@ -181,7 +181,7 @@ export function createDocumentsAndSourceMaps(
 		getSourceByUri(sourceFileUri: string) {
 			return mapper.getSource(ctx.uriToFileName(sourceFileUri));
 		},
-		hasVirtualFileByUri(virtualFileUri: string) {
+		isVirtualFileUri(virtualFileUri: string) {
 			return mapper.hasVirtualFile(ctx.uriToFileName(virtualFileUri));
 		},
 		getVirtualFileByUri(virtualFileUri: string) {

@@ -196,7 +196,7 @@ export function embeddedEditToSourceEdit(
 
 		const tsAnno = tsResult.changeAnnotations[tsUri];
 
-		if (!documents.hasVirtualFileByUri(tsUri)) {
+		if (!documents.isVirtualFileUri(tsUri)) {
 			sourceResult.changeAnnotations[tsUri] = tsAnno;
 		}
 		else {
@@ -211,7 +211,7 @@ export function embeddedEditToSourceEdit(
 
 		sourceResult.changes ??= {};
 
-		if (!documents.hasVirtualFileByUri(tsUri)) {
+		if (!documents.isVirtualFileUri(tsUri)) {
 			sourceResult.changes[tsUri] = tsResult.changes[tsUri];
 			hasResult = true;
 			continue;
@@ -253,7 +253,7 @@ export function embeddedEditToSourceEdit(
 
 			let sourceEdit: typeof tsDocEdit | undefined;
 			if (vscode.TextDocumentEdit.is(tsDocEdit)) {
-				if (documents.hasVirtualFileByUri(tsDocEdit.textDocument.uri)) {
+				if (documents.isVirtualFileUri(tsDocEdit.textDocument.uri)) {
 					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.textDocument.uri)) {
 						sourceEdit = vscode.TextDocumentEdit.create(
 							{
@@ -306,7 +306,7 @@ export function embeddedEditToSourceEdit(
 				sourceEdit = tsDocEdit; // TODO: remove .ts?
 			}
 			else if (vscode.RenameFile.is(tsDocEdit)) {
-				if (!documents.hasVirtualFileByUri(tsDocEdit.oldUri)) {
+				if (!documents.isVirtualFileUri(tsDocEdit.oldUri)) {
 					sourceEdit = tsDocEdit;
 				}
 				else {
@@ -317,7 +317,7 @@ export function embeddedEditToSourceEdit(
 				}
 			}
 			else if (vscode.DeleteFile.is(tsDocEdit)) {
-				if (!documents.hasVirtualFileByUri(tsDocEdit.uri)) {
+				if (!documents.isVirtualFileUri(tsDocEdit.uri)) {
 					sourceEdit = tsDocEdit;
 				}
 				else {

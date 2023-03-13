@@ -123,25 +123,24 @@ export function register(context: LanguageServicePluginContext) {
 
 				return codeActions;
 			},
-			(_codeActions, sourceMap) => _codeActions.map(_codeAction => {
+			(actions, map) => actions.map(action => {
 
-				if (!sourceMap)
-					return _codeAction;
+				if (!map)
+					return action;
 
-				if (_codeAction.edit) {
+				if (action.edit) {
 					const edit = embeddedEditToSourceEdit(
-						_codeAction.edit,
+						action.edit,
 						context.documents,
 						'codeAction',
 					);
-					if (edit) {
-						_codeAction.edit = edit;
-						return _codeAction;
+					if (!edit) {
+						return;
 					}
+					action.edit = edit;
 				}
-				else {
-					return _codeAction;
-				}
+
+				return action;
 			}).filter(notEmpty),
 			arr => dedupe.withCodeAction(arr.flat()),
 		);

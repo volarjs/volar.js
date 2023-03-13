@@ -1,6 +1,6 @@
 import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
-import { AutoInsertRequest, FindFileReferenceRequest, ShowReferencesNotification } from '../../protocol';
+import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
 import { CancellationTokenHost } from '../cancellationPipe';
 import type { Workspaces } from '../workspaces';
 import { RuntimeEnvironment, LanguageServerInitializationOptions, ServerMode } from '../../types';
@@ -148,23 +148,6 @@ export function register(
 	});
 	connection.onCodeLensResolve(async (codeLens, token) => {
 		return await lastCodeLensLs?.doCodeLensResolve(codeLens, token) ?? codeLens;
-	});
-	connection.onExecuteCommand(async (params) => {
-		if (
-			params.command === embedded.showReferencesCommand
-			&& params.arguments
-		) {
-
-			const args = params.arguments as embedded.ShowReferencesCommandData;
-
-			await connection.sendNotification(ShowReferencesNotification.type, {
-				textDocument: {
-					uri: args[0],
-				},
-				position: args[1],
-				references: args[2],
-			});
-		}
 	});
 	connection.onCodeAction(async (params, token) => {
 		return worker(params.textDocument.uri, token, async service => {

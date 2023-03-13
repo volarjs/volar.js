@@ -1,4 +1,4 @@
-import { createLanguageContext } from '@volar/language-core';
+import { createLanguageContext, FileRangeCapabilities } from '@volar/language-core';
 import * as tsFaster from 'typescript-auto-import-cache';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createDocumentsAndSourceMaps } from './documents';
@@ -34,9 +34,9 @@ import * as foldingRanges from './documentFeatures/foldingRanges';
 import * as format from './documentFeatures/format';
 import * as linkedEditingRanges from './documentFeatures/linkedEditingRanges';
 import * as selectionRanges from './documentFeatures/selectionRanges';
+import * as vscode from 'vscode-languageserver-protocol';
 
 // fix build
-import type * as _ from 'vscode-languageserver-protocol';
 import { notEmpty, syntaxToLanguageId } from './utils/common';
 
 export type LanguageService = ReturnType<typeof createLanguageService>;
@@ -76,6 +76,47 @@ function createLanguageServiceContext(
 			languageService: tsLs,
 		} : undefined,
 		documents: textDocumentMapper,
+		commands: {
+			createRenameCommand(uri, position) {
+				const source = toSourceLocation(uri, position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename);
+				if (!source) {
+					return;
+				}
+				return vscode.Command.create(
+					'',
+					'editor.action.rename',
+					source.uri,
+					source.position,
+				);
+			},
+			createShowReferencesCommand(uri, position, locations) {
+				const source = toSourceLocation(uri, position);
+				if (!source) {
+					return;
+				}
+				const sourceReferences: vscode.Location[] = [];
+				for (const reference of locations) {
+					if (context.documents.isVirtualFileUri(reference.uri)) {
+						for (const [_, map] of context.documents.getMapsByVirtualFileUri(reference.uri)) {
+							const range = map.toSourceRange(reference.range);
+							if (range) {
+								sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
+							}
+						}
+					}
+					else {
+						sourceReferences.push(reference);
+					}
+				}
+				return vscode.Command.create(
+					locations.length === 1 ? '1 reference' : `${locations.length} references`,
+					'editor.action.showReferences',
+					source.uri,
+					source.position,
+					sourceReferences,
+				);
+			},
+		},
 		getTextDocument,
 	};
 
@@ -91,6 +132,24 @@ function createLanguageServiceContext(
 	}
 
 	return context;
+
+	function toSourceLocation(uri: string, position: vscode.Position, filter?: (data: FileRangeCapabilities) => boolean) {
+		if (!textDocumentMapper.isVirtualFileUri(uri)) {
+			return { uri, position };
+		}
+		const map = textDocumentMapper.getVirtualFileByUri(uri);
+		if (map) {
+			for (const [_, map] of context.documents.getMapsByVirtualFileUri(uri)) {
+				const sourcePosition = map.toSourcePosition(position, filter);
+				if (sourcePosition) {
+					return {
+						uri: map.sourceFileDocument.uri,
+						position: sourcePosition,
+					};
+				}
+			}
+		}
+	}
 
 	function getTextDocument(uri: string) {
 
