@@ -28,7 +28,8 @@ export function getProgram(
 			}
 			return target[property];
 		},
-		
+		// #17
+		// notice: https://github.com/vuejs/language-tools/issues/2403
 		set: (target, property, newValue) => {
 			const program = getProgram() as any;
 			target[property] = program[property] = newValue;
