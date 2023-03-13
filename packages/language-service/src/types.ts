@@ -110,14 +110,14 @@ export interface LanguageServicePluginInstance {
 	provideSyntacticDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.Diagnostic[]>;
 	provideSemanticDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.Diagnostic[]>;
 	provideFileReferences?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.Location[]>; // volar specific
-	provideReferencesCodeLenses?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.Location[]>; // volar specific
+	provideReferencesCodeLensRanges?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.Range[]>; // volar specific
 	provideAutoInsertionEdit?(document: TextDocument, position: vscode.Position, context: AutoInsertionContext, token: vscode.CancellationToken): NullableResult<string | vscode.TextEdit>; // volar specific
 	provideFileRenameEdits?(oldUri: string, newUri: string, token: vscode.CancellationToken): NullableResult<vscode.WorkspaceEdit>; // volar specific
 	provideFormattingIndentSensitiveLines?(document: TextDocument, token: vscode.CancellationToken): NullableResult<number[]>; // volar specific
 	resolveCodeLens?(codeLens: vscode.CodeLens, token: vscode.CancellationToken): Result<vscode.CodeLens>;
 	resolveCodeAction?(codeAction: vscode.CodeAction, token: vscode.CancellationToken): Result<vscode.CodeAction>;
 	resolveCompletionItem?(item: vscode.CompletionItem, token: vscode.CancellationToken): Result<vscode.CompletionItem>,
-	resolveReferencesCodeLens?(document: TextDocument, location: vscode.Location, references: vscode.Location[], token: vscode.CancellationToken): Result<vscode.Location[]>; // volar specific
+	resolveReferencesCodeLensLocations?(document: TextDocument, range: vscode.Range, references: vscode.Location[], token: vscode.CancellationToken): Result<vscode.Location[]>; // volar specific
 	resolveRuleContext?(context: RuleContext, ruleType: 'format' | 'syntax' | 'semantic'): Result<RuleContext>; // volar specific
 	resolveEmbeddedRange?(range: vscode.Range): vscode.Range | undefined; // volar specific, only support in resolveCompletionItem for now
 	// resolveLink

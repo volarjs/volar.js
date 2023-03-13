@@ -34,14 +34,14 @@ export function register(context: LanguageServicePluginContext) {
 			const plugin = context.plugins[data.pluginId];
 			const document = context.getTextDocument(data.uri);
 
-			if (document && plugin.resolveReferencesCodeLens) {
-				references = await plugin.resolveReferencesCodeLens(document, data.location, references, token);
+			if (document && plugin.resolveReferencesCodeLensLocations) {
+				references = await plugin.resolveReferencesCodeLensLocations(document, data.range, references, token);
 			}
 
 			item.command = {
 				title: references.length === 1 ? '1 reference' : `${references.length} references`,
 				command: showReferencesCommand,
-				arguments: [data.uri, data.location.range.start, references]satisfies ShowReferencesCommandData,
+				arguments: [data.uri, data.range.start, references]satisfies ShowReferencesCommandData,
 			};
 		}
 

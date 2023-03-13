@@ -13,7 +13,7 @@ export interface PluginCodeLensData {
 export interface PluginReferencesCodeLensData {
 	kind: 'references',
 	uri: string,
-	location: vscode.Location,
+	range: vscode.Range,
 	pluginId: string,
 }
 
@@ -50,11 +50,11 @@ export function register(context: LanguageServicePluginContext) {
 
 				if (referencesCodeLendsEnabled) {
 
-					const referencesCodeLensLocs = await plugin.provideReferencesCodeLenses?.(document, token);
-					const referencesCodeLens = referencesCodeLensLocs?.map(loc => vscode.CodeLens.create(loc.range, {
+					const ranges = await plugin.provideReferencesCodeLensRanges?.(document, token);
+					const referencesCodeLens = ranges?.map(range => vscode.CodeLens.create(range, {
 						kind: 'references',
 						uri,
-						location: loc,
+						range,
 						pluginId,
 					} satisfies PluginReferencesCodeLensData));
 
