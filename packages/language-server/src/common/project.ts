@@ -93,12 +93,13 @@ export async function createProject(context: ProjectContext) {
 			const options: LanguageServiceOptions = {
 				uriToFileName,
 				fileNameToUri,
+				locale: context.workspace.workspaces.initParams.locale,
 				rootUri: context.rootUri,
+				capabilities: context.workspace.workspaces.initParams.capabilities,
 				host: languageServiceHost,
 				get config() {
 					return config;
 				},
-				locale: context.workspace.workspaces.initParams.locale,
 				configurationHost: context.workspace.workspaces.configurationHost,
 				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
 				documentContext: getDocumentContext(fileNameToUri, uriToFileName, context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),

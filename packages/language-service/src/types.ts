@@ -10,12 +10,15 @@ import { DocumentsAndSourceMaps } from './documents';
 export * from 'vscode-languageserver-protocol';
 
 export interface LanguageServiceOptions {
+	// InitializeParams
+	locale?: string;
+	rootUri: URI;
+	capabilities?: vscode.ClientCapabilities;
+
 	host: LanguageServiceHost;
 	config: Config;
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
-	rootUri: URI;
-	locale?: string;
 	configurationHost?: ConfigurationHost;
 	documentContext?: DocumentContext;
 	fileSystemProvider?: FileSystemProvider;

@@ -62,7 +62,6 @@ export function createLanguageService(options: {
 						rootUri: URI.file('/'),
 						uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
 						fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
-
 					});
 				}
 				result = await (languageService as any)[api](...args);
