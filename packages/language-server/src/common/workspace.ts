@@ -1,4 +1,4 @@
-import * as path from 'typesafe-path';
+import * as path from 'typesafe-path/posix';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
@@ -25,7 +25,8 @@ export async function createWorkspace(context: WorkspaceContext) {
 	const sys = context.workspaces.fileSystemHost?.getWorkspaceFileSystem(context.rootUri);
 	const documentRegistry = sys ? context.workspaces.ts?.createDocumentRegistry(sys.useCaseSensitiveFileNames, uriToFileName(context.rootUri.toString())) : undefined;
 	const projects = createUriMap<Project>(fileNameToUri);
-	const rootTsConfigs = new Set(sys?.readDirectory(uriToFileName(context.rootUri.toString()), rootTsConfigNames, undefined, ['**/*']).map(fileName => fileName.replace(/\\/g, '/') as path.PosixPath));
+	const rootTsConfigs = new Set<path.PosixPath>();
+	const searchedDirs = new Set<path.PosixPath>();
 	const disposeTsConfigWatch = context.workspaces.fileSystemHost?.onDidChangeWatchedFiles(({ changes }) => {
 		for (const change of changes) {
 			if (rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1))) {
@@ -97,6 +98,26 @@ export async function createWorkspace(context: WorkspaceContext) {
 	}
 	async function findMatchConfigs(uri: URI) {
 
+		const filePath = uriToFileName(uri.toString()) as path.PosixPath;
+		let dir = path.dirname(filePath);
+
+		while (true) {
+			if (searchedDirs.has(dir)) {
+				break;
+			}
+			searchedDirs.add(dir);
+			const tsconfigPaths = [
+				path.join(dir, 'tsconfig.json' as path.PosixPath),
+				path.join(dir, 'jsconfig.json' as path.PosixPath),
+			];
+			for (const tsconfigPath of tsconfigPaths) {
+				if (sys?.fileExists(tsconfigPath)) {
+					rootTsConfigs.add(tsconfigPath);
+				}
+			}
+			dir = path.dirname(dir);
+		}
+
 		await prepareClosestootParsedCommandLine();
 
 		return await findDirectIncludeTsconfig() ?? await findIndirectReferenceTsconfig();
@@ -139,7 +160,6 @@ export async function createWorkspace(context: WorkspaceContext) {
 
 			const checked = new Set<string>();
 
-
 			for (const rootTsConfig of [...rootTsConfigs].sort((a, b) => sortTsConfigs(uriToFileName(uri.toString()) as path.PosixPath, a, b))) {
 				const project = await projects.pathGet(rootTsConfig);
 				if (project) {
@@ -175,12 +195,12 @@ export async function createWorkspace(context: WorkspaceContext) {
 
 				for (const projectReference of parsedCommandLine.projectReferences) {
 
-					let tsConfigPath = projectReference.path;
+					let tsConfigPath = projectReference.path.replace(/\\/g, '/') as path.PosixPath;
 
 					// fix https://github.com/johnsoncodehk/volar/issues/712
 					if (sys && !sys.fileExists(tsConfigPath)) {
-						const newTsConfigPath = path.join(tsConfigPath as path.OsPath, 'tsconfig.json' as path.PosixPath);
-						const newJsConfigPath = path.join(tsConfigPath as path.OsPath, 'jsconfig.json' as path.PosixPath);
+						const newTsConfigPath = path.join(tsConfigPath, 'tsconfig.json' as path.PosixPath);
+						const newJsConfigPath = path.join(tsConfigPath, 'jsconfig.json' as path.PosixPath);
 						if (sys.fileExists(newTsConfigPath)) {
 							tsConfigPath = newTsConfigPath;
 						}
