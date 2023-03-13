@@ -13,6 +13,9 @@
 			"path": "./packages/vscode/tsconfig.build.json"
 		},
 		{
+			"path": "./packages/coc.nvim/tsconfig.build.json"
+		},
+		{
 			"path": "./packages/monaco/tsconfig.build.json"
 		},
 		// IDE / tests
