@@ -29,6 +29,9 @@ export const middleware: lsp.Middleware = {
 			if (action.command) {
 				action.command = parseServerCommand(action.command);
 			}
+			if (action.edit) {
+				action.edit = normalizeCodeActionEdit(document, action.edit) ?? action.edit;
+			}
 			return action;
 		});
 		return actions;
@@ -84,3 +87,15 @@ export function parseServerCommand(command: vscode.Command) {
 	}
 	return command;
 }
+
+export const normalizeCodeActionEdit = (document: vscode.TextDocument, edit: vscode.WorkspaceEdit) => {
+	const editor = vscode.window.visibleTextEditors.find(editor => editor.document.fileName === document.fileName);
+	if (!editor) return;
+	const { options: { insertSpaces, tabSize } } = editor;
+	if (!insertSpaces) return;
+	const newEdit = new vscode.WorkspaceEdit();
+	for (const [uri, edits] of edit.entries()) {
+		newEdit.set(uri, edits.map(edit => new vscode.TextEdit(edit.range, edit.newText.replaceAll('\t', ' '.repeat(tabSize as number)))));
+	}
+	return newEdit;
+};
