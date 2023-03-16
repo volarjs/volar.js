@@ -94,16 +94,20 @@ export const normalizeCodeActionEdit = (document: vscode.TextDocument, action: v
 	if (!editor) return;
 	const { options: { insertSpaces, tabSize } } = editor;
 	if (!insertSpaces) return;
+
 	const newEdit = new vscode.WorkspaceEdit();
 	const renamePos = action.command?.command === 'editor.action.rename' && action.command.arguments![0][1] as vscode.Position;
+
 	for (const [uri, edits] of action.edit.entries()) {
 		newEdit.set(uri, edits.map(edit => {
+			// #region patch renameLocation for extract symbol actions
 			if (edit.newText.startsWith('\t') && renamePos) {
 				const endPos = document.positionAt(document.offsetAt(edit.range.start) + edit.newText.length);
 				if (new vscode.Range(edit.range.start, endPos).contains(renamePos)) {
 					action.command!.arguments![0][1] = renamePos.translate(0,);
 				}
 			}
+			// #endregion
 			return new vscode.TextEdit(edit.range, edit.newText.replaceAll('\t', ' '.repeat(tabSize as number)));
 		}));
 	}
