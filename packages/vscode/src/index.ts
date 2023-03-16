@@ -30,7 +30,7 @@ export const middleware: lsp.Middleware = {
 				action.command = parseServerCommand(action.command);
 			}
 			if (action.edit) {
-				action.edit = normalizeCodeActionEdit(document, action.edit) ?? action.edit;
+				normalizeCodeActionEdit(document, action);
 			}
 			return action;
 		});
@@ -88,14 +88,24 @@ export function parseServerCommand(command: vscode.Command) {
 	return command;
 }
 
-export const normalizeCodeActionEdit = (document: vscode.TextDocument, edit: vscode.WorkspaceEdit) => {
+export const normalizeCodeActionEdit = (document: vscode.TextDocument, action: vscode.CodeAction) => {
+	if (!action.edit) return;
 	const editor = vscode.window.visibleTextEditors.find(editor => editor.document.fileName === document.fileName);
 	if (!editor) return;
 	const { options: { insertSpaces, tabSize } } = editor;
 	if (!insertSpaces) return;
 	const newEdit = new vscode.WorkspaceEdit();
-	for (const [uri, edits] of edit.entries()) {
-		newEdit.set(uri, edits.map(edit => new vscode.TextEdit(edit.range, edit.newText.replaceAll('\t', ' '.repeat(tabSize as number)))));
+	const renamePos = action.command?.command === 'editor.action.rename' && action.command.arguments![0][1] as vscode.Position;
+	for (const [uri, edits] of action.edit.entries()) {
+		newEdit.set(uri, edits.map(edit => {
+			if (edit.newText.startsWith('\t') && renamePos) {
+				const endPos = document.positionAt(document.offsetAt(edit.range.start) + edit.newText.length);
+				if (new vscode.Range(edit.range.start, endPos).contains(renamePos)) {
+					action.command!.arguments![0][1] = renamePos.translate(0,);
+				}
+			}
+			return new vscode.TextEdit(edit.range, edit.newText.replaceAll('\t', ' '.repeat(tabSize as number)));
+		}));
 	}
-	return newEdit;
+	action.edit = newEdit;
 };
