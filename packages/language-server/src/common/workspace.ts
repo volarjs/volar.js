@@ -106,11 +106,8 @@ export async function createWorkspace(context: WorkspaceContext) {
 				break;
 			}
 			searchedDirs.add(dir);
-			const tsconfigPaths = [
-				path.join(dir, 'tsconfig.json' as path.PosixPath),
-				path.join(dir, 'jsconfig.json' as path.PosixPath),
-			];
-			for (const tsconfigPath of tsconfigPaths) {
+			for (const tsConfigName of rootTsConfigNames) {
+				const tsconfigPath = path.join(dir, tsConfigName as path.PosixPath);
 				if (sys?.fileExists(tsconfigPath)) {
 					rootTsConfigs.add(tsconfigPath);
 				}

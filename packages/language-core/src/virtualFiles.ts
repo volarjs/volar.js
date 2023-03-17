@@ -1,6 +1,7 @@
 import { SourceMap } from '@volar/source-map';
+import type * as ts from 'typescript/lib/tsserverlibrary';
 import { MirrorMap } from './sourceMaps';
-import type { LanguageModule, FileRangeCapabilities, VirtualFile } from './types';
+import type { FileRangeCapabilities, LanguageModule, VirtualFile } from './types';
 
 export type VirtualFiles = ReturnType<typeof createVirtualFiles>;
 
