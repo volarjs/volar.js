@@ -19,7 +19,7 @@ importers:
 
   packages/coc.nvim:
     specifiers:
-      '@volar/language-server': 1.4.0-alpha.3
+      '@volar/language-server': 1.4.0-alpha.4
       coc.nvim: latest
     dependencies:
       '@volar/language-server': link:../language-server
@@ -28,7 +28,7 @@ importers:
 
   packages/kit:
     specifiers:
-      '@volar/language-service': 1.4.0-alpha.3
+      '@volar/language-service': 1.4.0-alpha.4
       vscode-languageserver-textdocument: ^1.0.8
       vscode-uri: ^3.0.7
     dependencies:
@@ -38,14 +38,14 @@ importers:
 
   packages/language-core:
     specifiers:
-      '@volar/source-map': 1.4.0-alpha.3
+      '@volar/source-map': 1.4.0-alpha.4
     dependencies:
       '@volar/source-map': link:../source-map
 
   packages/language-server:
     specifiers:
-      '@volar/language-core': 1.4.0-alpha.3
-      '@volar/language-service': 1.4.0-alpha.3
+      '@volar/language-core': 1.4.0-alpha.4
+      '@volar/language-service': 1.4.0-alpha.4
       '@vscode/l10n': ^0.0.11
       request-light: ^0.7.0
       typesafe-path: ^0.2.2
@@ -68,8 +68,8 @@ importers:
 
   packages/language-service:
     specifiers:
-      '@volar/language-core': 1.4.0-alpha.3
-      '@volar/source-map': 1.4.0-alpha.3
+      '@volar/language-core': 1.4.0-alpha.4
+      '@volar/source-map': 1.4.0-alpha.4
       typescript-auto-import-cache: ^0.0.1
       vscode-html-languageservice: ^5.0.4
       vscode-json-languageservice: ^5.2.0
@@ -88,7 +88,7 @@ importers:
 
   packages/monaco:
     specifiers:
-      '@volar/language-service': 1.4.0-alpha.3
+      '@volar/language-service': 1.4.0-alpha.4
       monaco-editor-core: ^0.36.0
       vscode-languageserver-protocol: ^3.17.3
       vscode-uri: ^3.0.7
@@ -106,15 +106,15 @@ importers:
 
   packages/typescript:
     specifiers:
-      '@volar/language-core': 1.4.0-alpha.3
+      '@volar/language-core': 1.4.0-alpha.4
     dependencies:
       '@volar/language-core': link:../language-core
 
   packages/vscode:
     specifiers:
       '@types/vscode': latest
-      '@volar/language-server': 1.4.0-alpha.3
-      '@volar/source-map': 1.4.0-alpha.3
+      '@volar/language-server': 1.4.0-alpha.4
+      '@volar/source-map': 1.4.0-alpha.4
       typesafe-path: ^0.2.2
       vscode-languageclient: latest
       vscode-nls: ^5.2.0
