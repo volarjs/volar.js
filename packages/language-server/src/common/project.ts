@@ -2,7 +2,7 @@ import * as embedded from '@volar/language-core';
 import * as embeddedLS from '@volar/language-service';
 import { LanguageServiceOptions } from '@volar/language-service';
 import * as path from 'typesafe-path';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import * as ts from 'typescript/lib/tsserverlibrary';
 import * as html from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI, Utils } from 'vscode-uri';
@@ -12,6 +12,7 @@ import { createUriMap } from './utils/uriMap';
 import { WorkspaceContext } from './workspace';
 
 export interface ProjectContext {
+	projectService: ts.server.ProjectService | undefined;
 	workspace: WorkspaceContext;
 	rootUri: URI;
 	tsConfig: path.PosixPath | ts.CompilerOptions,
@@ -41,7 +42,6 @@ export async function createProject(context: ProjectContext) {
 	let typeRootVersion = 0;
 	let projectVersion = 0;
 	let projectVersionUpdateTime = context.workspace.workspaces.cancelTokenHost.getMtime();
-	let languageService: embeddedLS.LanguageService | undefined;
 	let parsedCommandLine = createParsedCommandLine(
 		context.workspace.workspaces.ts,
 		sys,
@@ -56,7 +56,17 @@ export async function createProject(context: ProjectContext) {
 		snapshot: ts.IScriptSnapshot | undefined,
 		snapshotVersion: number | undefined,
 	}>(fileNameToUri);
-	const languageServiceHost = createLanguageServiceHost();
+
+	const project = createTSProject();
+	const languageServiceHost = new Proxy(createLanguageServiceHost(), { 
+		get(target, key) {
+			if (key === 'resolveModuleNames') return (target as any)[key];
+			return (target as any)[key] ?? (project as any)[key];
+	    }
+	});
+	const languageService = createLanguageService();
+	initTSProject();
+
 	const disposeWatchEvent = context.workspace.workspaces.fileSystemHost?.onDidChangeWatchedFiles(params => {
 		onWorkspaceFilesChanged(params.changes);
 	});
@@ -69,7 +79,7 @@ export async function createProject(context: ProjectContext) {
 		tsConfig: context.tsConfig,
 		scripts,
 		languageServiceHost,
-		getLanguageService,
+		getLanguageService: () => languageService,
 		getLanguageServiceDontCreate: () => languageService,
 		getParsedCommandLine: () => parsedCommandLine,
 		tryAddFile: (fileName: string) => {
@@ -80,10 +90,48 @@ export async function createProject(context: ProjectContext) {
 			}
 		},
 		dispose,
-	};
+	}
+	
+	function createTSProject(): ts.server.Project | undefined {
+		const ts = context.workspace.workspaces.ts;
+		if (!ts || !context.documentRegistry || !context.projectService || !ts.server.Project) return undefined;
 
-	function getLanguageService() {
-		if (!languageService) {
+		return new (ts.server.Project as any)(context.rootUri.path /* projectName */,
+			ts.server.ProjectKind.Inferred /* ProjectKind */,
+			context.projectService /* ProjectService */,
+			context.documentRegistry /* DocumentRegistry */,
+			false /* hasExplicitListOfFiles */,
+			false /* lastFileExceededProgramSize */,
+			{} /* CompilerOptions */,
+			false /* compileOnSaveEnabled */,
+			undefined /* WatchOptions | undefined */,
+			ts.sys /* DirectoryStructureHost */,
+			context.rootUri.path /* currentDirectory */
+		);
+	}
+
+	function initTSProject() {
+		if (!project) return
+
+		// dispose of created language server
+		project.getLanguageService().dispose()
+
+		// set language server provided by volar
+		// @ts-expect-error
+		project.languageService = languageService
+
+		// @ts-expect-error
+		project.getLanguageService = () => languageService
+
+		// default to true so we don't need to open files in the project service
+		// @ts-expect-error
+		project.isDefaultProjectForOpenFiles = () => true
+
+		// initial project by updating the graph
+		project.updateGraph()	
+	}
+	
+	function createLanguageService() {
 			let config = (
 				context.workspace.rootUri.scheme === 'file' ? loadConfig(
 					context.workspace.rootUri.path,
@@ -123,9 +171,7 @@ export async function createProject(context: ProjectContext) {
 					config = plugin.resolveConfig(config, { typescript: lsCtx.project.workspace.workspaces.ts }, lsCtx);
 				}
 			}
-			languageService = embeddedLS.createLanguageService(options, context.documentRegistry);
-		}
-		return languageService;
+			return embeddedLS.createLanguageService(options, context.documentRegistry);
 	}
 	async function onWorkspaceFilesChanged(changes: vscode.FileEvent[]) {
 
@@ -170,7 +216,6 @@ export async function createProject(context: ProjectContext) {
 		}
 	}
 	function createLanguageServiceHost() {
-
 		const token: ts.CancellationToken = {
 			isCancellationRequested() {
 				return context.workspace.workspaces.cancelTokenHost.getMtime() !== projectVersionUpdateTime;
@@ -231,7 +276,7 @@ export async function createProject(context: ProjectContext) {
 			host.getLocalizedDiagnosticMessages = () => context.workspace.workspaces.tsLocalized;
 		}
 
-		return host;
+		return host
 
 		function getScriptVersion(fileName: string) {
 

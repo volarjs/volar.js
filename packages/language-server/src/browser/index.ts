@@ -33,7 +33,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 					},
 				},
 				loadTypescript() {
-					return require('typescript'); // force bundle because not support load by user config in web
+					return require('typescript/lib/tsserverlibrary'); // force bundle because not support load by user config in web
 				},
 				async loadTypescriptLocalized(tsdk, locale) {
 					try {

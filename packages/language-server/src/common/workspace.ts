@@ -7,6 +7,7 @@ import { getInferredCompilerOptions } from './utils/inferredCompilerOptions';
 import { createUriMap } from './utils/uriMap';
 import { isFileInDir } from './utils/isFileInDir';
 import { WorkspacesContext } from './workspaces';
+import { createProjectService } from './projectService';
 
 export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
@@ -27,6 +28,10 @@ export async function createWorkspace(context: WorkspaceContext) {
 	const projects = createUriMap<Project>(fileNameToUri);
 	const rootTsConfigs = new Set<path.PosixPath>();
 	const searchedDirs = new Set<path.PosixPath>();
+	const projectService = createProjectService({
+		ts: context.workspaces.ts,
+		serverMode: context.workspaces.initOptions.serverMode
+	});
 	const disposeTsConfigWatch = context.workspaces.fileSystemHost?.onDidChangeWatchedFiles(({ changes }) => {
 		for (const change of changes) {
 			if (rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1))) {
@@ -87,6 +92,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 			inferredProject = (async () => {
 				const inferOptions = await getInferredCompilerOptions(context.workspaces.configurationHost);
 				return createProject({
+					projectService,
 					workspace: context,
 					rootUri: context.rootUri,
 					tsConfig: inferOptions,
@@ -236,6 +242,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 		let project = projects.pathGet(tsConfig);
 		if (!project && documentRegistry) {
 			project = createProject({
+				projectService,
 				workspace: context,
 				rootUri: URI.parse(fileNameToUri(path.dirname(tsConfig))),
 				tsConfig,

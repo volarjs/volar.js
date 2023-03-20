@@ -34,7 +34,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 					},
 				},
 				loadTypescript(tsdk) {
-					for (const name of ['./typescript.js', './tsserverlibrary.js']) {
+					for (const name of ['./tsserverlibrary.js', './typescript.js']) {
 						try {
 							const path = require.resolve(name, { paths: [tsdk] });
 							return require(path);

@@ -1,5 +1,4 @@
 import { createLanguageContext, FileRangeCapabilities } from '@volar/language-core';
-import * as tsFaster from 'typescript-auto-import-cache';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createDocumentsAndSourceMaps } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
@@ -58,10 +57,6 @@ function createLanguageServiceContext(
 
 	const ts = ctx.host.getTypeScriptModule?.();
 	const tsLs = ts?.createLanguageService(languageContext.typescript.languageServiceHost, documentRegistry);
-
-	if (ts && tsLs) {
-		tsFaster.decorate(ts, languageContext.typescript.languageServiceHost, tsLs);
-	}
 
 	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
@@ -222,6 +217,8 @@ function createLanguageServiceBase(context: LanguageServicePluginContext) {
 		getInlayHints: inlayHints.register(context),
 		callHierarchy: callHierarchy.register(context),
 		dispose: () => context.typescript?.languageService.dispose(),
+		getProgram: () => context.typescript?.languageService.getProgram(),
+		getCurrentProgram: () => context.typescript?.languageService.getProgram(),
 		context,
 	};
 }
