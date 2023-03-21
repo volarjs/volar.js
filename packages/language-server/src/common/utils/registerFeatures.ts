@@ -13,8 +13,9 @@ export function setupCapabilities(
 	const lsPluginInstances = Object.values(lsPlugins)
 		.map(plugin => typeof plugin === 'function' ? plugin() : plugin)
 		.filter((plugin): plugin is NonNullable<typeof plugin> => !!plugin);
+	const serverMode = initOptions.serverMode ?? ServerMode.Semantic;
 
-	if (initOptions.serverMode === ServerMode.Semantic || initOptions.serverMode === ServerMode.Syntactic) {
+	if (serverMode === ServerMode.Semantic || serverMode === ServerMode.Syntactic) {
 		server.selectionRangeProvider = true;
 		server.foldingRangeProvider = true;
 		server.linkedEditingRangeProvider = true;
@@ -31,7 +32,7 @@ export function setupCapabilities(
 		}
 	}
 
-	if (initOptions.serverMode === ServerMode.Semantic || initOptions.serverMode === ServerMode.PartialSemantic) {
+	if (serverMode === ServerMode.Semantic || serverMode === ServerMode.PartialSemantic) {
 		server.referencesProvider = true;
 		server.implementationProvider = true;
 		server.definitionProvider = true;

@@ -409,29 +409,14 @@ export function register(context: LanguageServicePluginContext) {
 	};
 
 	function transformFormatErrorRange(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined) {
-
-		const result: vscode.Diagnostic[] = [];
-
-		for (const error of errors) {
-
-			// clone it to avoid modify cache
-			let _error: vscode.Diagnostic = { ...error };
-
-			if (map) {
-				const range = map.toSourceRange(error.range);
-				if (!range) {
-					continue;
-				}
-				_error.range = range;
-			}
-
-			result.push(_error);
-		}
-
-		return result;
+		return transformErrorRangeBase(errors, map, () => true);
 	}
 
 	function transformErrorRange(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined) {
+		return transformErrorRangeBase(errors, map, data => !!data.diagnostic);
+	}
+
+	function transformErrorRangeBase(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined, filter: (data: FileRangeCapabilities) => boolean) {
 
 		const result: vscode.Diagnostic[] = [];
 
@@ -441,7 +426,7 @@ export function register(context: LanguageServicePluginContext) {
 			let _error: vscode.Diagnostic = { ...error };
 
 			if (map) {
-				const range = map.toSourceRange(error.range, data => !!data.diagnostic);
+				const range = map.toSourceRange(error.range, filter);
 				if (!range) {
 					continue;
 				}
@@ -455,7 +440,7 @@ export function register(context: LanguageServicePluginContext) {
 				for (const info of _error.relatedInformation) {
 					if (context.documents.isVirtualFileUri(info.location.uri)) {
 						for (const [_, map] of context.documents.getMapsByVirtualFileUri(info.location.uri)) {
-							const range = map.toSourceRange(info.location.range, data => !!data.diagnostic);
+							const range = map.toSourceRange(info.location.range, filter);
 							if (range) {
 								relatedInfos.push({
 									location: {

@@ -1,6 +1,6 @@
 {
 	"name": "@volar/vscode",
-	"version": "1.4.0-alpha.3",
+	"version": "1.4.0-alpha.4",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,8 +13,8 @@
 		"directory": "packages/vscode"
 	},
 	"dependencies": {
-		"@volar/language-server": "1.4.0-alpha.3",
-		"@volar/source-map": "1.4.0-alpha.3",
+		"@volar/language-server": "1.4.0-alpha.4",
+		"@volar/source-map": "1.4.0-alpha.4",
 		"typesafe-path": "^0.2.2",
 		"vscode-nls": "^5.2.0"
 	},
