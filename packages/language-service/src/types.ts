@@ -28,6 +28,7 @@ export interface LanguageServiceOptions {
 export interface Commands {
 	createShowReferencesCommand(uri: string, position: vscode.Position, locations: vscode.Location[]): vscode.Command | undefined;
 	createRenameCommand(uri: string, position: vscode.Position): vscode.Command | undefined;
+	createSetSelectionCommand(position: vscode.Position): vscode.Command | undefined;
 }
 
 export interface LanguageServicePluginContext extends LanguageServiceOptions {

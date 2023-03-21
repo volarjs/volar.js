@@ -116,6 +116,20 @@ function createLanguageServiceContext(
 					sourceReferences,
 				);
 			},
+			createSetSelectionCommand(position: vscode.Position) {
+				return vscode.Command.create(
+					'',
+					'setSelection',
+					{
+						selection: {
+							selectionStartLineNumber: position.line + 1,
+							positionLineNumber: position.line + 1,
+							selectionStartColumn: position.character + 1,
+							positionColumn: position.character + 1,
+						},
+					},
+				);
+			},
 		},
 		getTextDocument,
 	};
