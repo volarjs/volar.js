@@ -104,7 +104,6 @@ export interface LanguageServerInitializationOptions {
 	};
 	serverMode?: ServerMode;
 	diagnosticModel?: DiagnosticModel;
-	textDocumentSync?: vscode.TextDocumentSyncKind | number;
 	/**
 	 * For better JSON parsing performance language server will filter CompletionList.
 	 * 
