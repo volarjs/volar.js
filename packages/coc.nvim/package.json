@@ -1,6 +1,6 @@
 {
 	"name": "@volar/coc.nvim",
-	"version": "1.4.0-alpha.4",
+	"version": "1.4.0-alpha.5",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,7 +13,7 @@
 		"directory": "packages/coc.nvim"
 	},
 	"dependencies": {
-		"@volar/language-server": "1.4.0-alpha.4"
+		"@volar/language-server": "1.4.0-alpha.5"
 	},
 	"devDependencies": {
 		"coc.nvim": "latest"
