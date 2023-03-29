@@ -1,7 +1,7 @@
 import type { VirtualFile } from '@volar/language-core';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { LanguageServicePluginContext } from '../types';
+import type { LanguageServicePluginContext, LanguageServicePluginInstance } from '../types';
 import { SourceMap } from '@volar/source-map';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
 
@@ -26,8 +26,8 @@ export function register(context: LanguageServicePluginContext) {
 		const source = context.documents.getSourceByUri(document.uri);
 		if (!source) {
 			return onTypeParams
-				? await tryFormat(document, onTypeParams.position, onTypeParams.ch)
-				: await tryFormat(document, range, undefined);
+				? (await tryFormat(document, onTypeParams.position, onTypeParams.ch))?.edits
+				: (await tryFormat(document, range, undefined))?.edits;
 		}
 
 		const initialIndentLanguageId = await context.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
@@ -48,6 +48,7 @@ export function register(context: LanguageServicePluginContext) {
 			const toPatchIndentUris: {
 				uri: string;
 				isCodeBlock: boolean;
+				plugin: LanguageServicePluginInstance;
 			}[] = [];
 
 			for (const embedded of embeddedFiles) {
@@ -64,14 +65,14 @@ export function register(context: LanguageServicePluginContext) {
 				if (!map)
 					continue;
 
-				let virtualCodeEdits: vscode.TextEdit[] | undefined;
+				let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
 
 				if (onTypeParams) {
 
 					const embeddedPosition = map.toGeneratedPosition(onTypeParams.position);
 
 					if (embeddedPosition) {
-						virtualCodeEdits = await tryFormat(
+						embeddedCodeResult = await tryFormat(
 							map.virtualFileDocument,
 							embeddedPosition,
 							onTypeParams.ch,
@@ -79,21 +80,22 @@ export function register(context: LanguageServicePluginContext) {
 					}
 				}
 				else {
-					virtualCodeEdits = await tryFormat(map.virtualFileDocument, {
+					embeddedCodeResult = await tryFormat(map.virtualFileDocument, {
 						start: map.virtualFileDocument.positionAt(0),
 						end: map.virtualFileDocument.positionAt(map.virtualFileDocument.getText().length),
 					});
 				}
 
-				if (!virtualCodeEdits)
+				if (!embeddedCodeResult)
 					continue;
 
 				toPatchIndentUris.push({
 					uri: map.virtualFileDocument.uri,
 					isCodeBlock,
+					plugin: embeddedCodeResult.plugin,
 				});
 
-				for (const textEdit of virtualCodeEdits) {
+				for (const textEdit of embeddedCodeResult.edits) {
 					const range = map.toSourceRange(textEdit.range);
 					if (range) {
 						edits.push({
@@ -132,7 +134,7 @@ export function register(context: LanguageServicePluginContext) {
 
 						const indentSensitiveLines = new Set<number>();
 
-						for (const plugin of Object.values(context.plugins)) {
+						for (const plugin of toPatchIndentUri.plugin.provideFormattingIndentSensitiveLines ? [toPatchIndentUri.plugin] : Object.values(context.plugins)) {
 
 							if (token.isCancellationRequested)
 								break;
@@ -248,7 +250,10 @@ export function register(context: LanguageServicePluginContext) {
 				if (!edits)
 					continue;
 
-				return edits;
+				return {
+					plugin,
+					edits,
+				};
 			}
 		}
 	};
