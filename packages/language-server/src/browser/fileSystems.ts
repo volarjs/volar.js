@@ -7,8 +7,6 @@ import { FileSystem, FileSystemHost, LanguageServerInitializationOptions, Runtim
 import { matchFiles } from './typescript/utilities';
 import { createUriMap } from '../common/utils/uriMap';
 
-let currentCwd = '/';
-
 interface File {
 	text?: string;
 	exists?: boolean;
@@ -109,10 +107,6 @@ export function createWebFileSystemHost(
 		};
 
 		function resolvePath(fsPath: path.OsPath) {
-			if (currentCwd !== rootPath) {
-				process.chdir(rootPath);
-				currentCwd = rootPath;
-			}
 			return path.resolve(fsPath);
 		}
 

@@ -64,8 +64,13 @@ export function createNodeFileSystemHost(
 					return new Proxy(fn, {
 						apply(target, thisArg, args) {
 							if (currentCwd !== rootPath) {
-								if (ts.sys.directoryExists(rootPath)) { // #2234, #2039
-									process.chdir(rootPath);
+								// https://github.com/vuejs/language-tools/issues/2039
+								// https://github.com/vuejs/language-tools/issues/2234
+								if (ts.sys.directoryExists(rootPath)) {
+									// https://github.com/vuejs/language-tools/issues/2480
+									try {
+										process.chdir(rootPath);
+									} catch { }
 								}
 								currentCwd = rootPath;
 							}
