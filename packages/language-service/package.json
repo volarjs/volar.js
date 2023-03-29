@@ -15,7 +15,7 @@
 	"dependencies": {
 		"@volar/language-core": "1.4.0-alpha.5",
 		"@volar/source-map": "1.4.0-alpha.5",
-		"typescript-auto-import-cache": "^0.0.1",
+		"typescript-auto-import-cache": "^0.1.0",
 		"vscode-html-languageservice": "^5.0.4",
 		"vscode-json-languageservice": "^5.2.0",
 		"vscode-languageserver-protocol": "^3.17.3",

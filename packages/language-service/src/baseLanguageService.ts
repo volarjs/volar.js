@@ -55,13 +55,16 @@ function createLanguageServiceContext(
 	languageContext: ReturnType<typeof createLanguageContext>,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-
 	const ts = ctx.host.getTypeScriptModule?.();
-	const tsLs = ts?.createLanguageService(languageContext.typescript.languageServiceHost, documentRegistry);
-
-	if (ts && tsLs) {
-		tsFaster.decorate(ts, languageContext.typescript.languageServiceHost, tsLs);
-	}
+	const tsLs = ts ? tsFaster.createLanguageService(
+		ts,
+		languageContext.typescript.languageServiceHost, 
+		(proxiedHost) => {
+			languageContext.typescript.languageServiceHost = proxiedHost
+			return ts.createLanguageService(proxiedHost, documentRegistry)
+		}, 
+		ctx.rootUri.path
+	) : undefined
 
 	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
