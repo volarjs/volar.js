@@ -18,9 +18,9 @@ export function register(context: LanguageServicePluginContext) {
 
 			item = Object.assign(item, data.original);
 
-			if (data.map) {
+			if (data.virtualDocumentUri) {
 
-				for (const [_, map] of context.documents.getMapsByVirtualFileUri(data.map.embeddedDocumentUri)) {
+				for (const [_, map] of context.documents.getMapsByVirtualFileUri(data.virtualDocumentUri)) {
 
 					item = await plugin.resolveCompletionItem(item, token);
 					item = transformer.asCompletionItem(

@@ -9,9 +9,7 @@ export interface PluginCallHierarchyData {
 	uri: string,
 	original: Pick<vscode.CallHierarchyItem, 'data'>,
 	pluginId: string,
-	map: {
-		embeddedDocumentUri: string;
-	} | undefined,
+	virtualDocumentUri: string | undefined,
 }
 
 export function register(context: LanguageServicePluginContext) {
@@ -39,9 +37,7 @@ export function register(context: LanguageServicePluginContext) {
 								data: item.data,
 							},
 							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
-							map: map ? {
-								embeddedDocumentUri: map.virtualFileDocument.uri,
-							} : undefined,
+							virtualDocumentUri: map?.virtualFileDocument.uri,
 						} satisfies PluginCallHierarchyData;
 					});
 
@@ -68,9 +64,9 @@ export function register(context: LanguageServicePluginContext) {
 
 				Object.assign(item, data.original);
 
-				if (data.map) {
+				if (data.virtualDocumentUri) {
 
-					if (context.documents.isVirtualFileUri(data.map.embeddedDocumentUri)) {
+					if (context.documents.isVirtualFileUri(data.virtualDocumentUri)) {
 
 						const _calls = await plugin.provideCallHierarchyIncomingCalls(item, token);
 
@@ -124,9 +120,9 @@ export function register(context: LanguageServicePluginContext) {
 
 				Object.assign(item, data.original);
 
-				if (data.map) {
+				if (data.virtualDocumentUri) {
 
-					if (context.documents.isVirtualFileUri(data.map.embeddedDocumentUri)) {
+					if (context.documents.isVirtualFileUri(data.virtualDocumentUri)) {
 
 						const _calls = await plugin.provideCallHierarchyOutgoingCalls(item, token);
 
