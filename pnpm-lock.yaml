@@ -13,7 +13,7 @@ importers:
         version: 18.15.11
       typescript:
         specifier: latest
-        version: 5.0.2
+        version: 5.0.3
       vite:
         specifier: latest
         version: 4.2.1(@types/node@18.15.11)
@@ -24,7 +24,7 @@ importers:
   packages/coc.nvim:
     dependencies:
       '@volar/language-server':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../language-server
     devDependencies:
       coc.nvim:
@@ -34,7 +34,7 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../language-service
       typescript:
         specifier: '*'
@@ -49,16 +49,16 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../language-core
       '@volar/language-service':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../language-service
       '@vscode/l10n':
         specifier: ^0.0.11
@@ -88,10 +88,10 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../language-core
       '@volar/source-map':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../source-map
       typescript-auto-import-cache:
         specifier: ^0.0.1
@@ -115,7 +115,7 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../language-service
       monaco-editor-core:
         specifier: ^0.36.0
@@ -136,16 +136,16 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../language-core
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../language-server
       '@volar/source-map':
-        specifier: 1.4.0-alpha.5
+        specifier: 1.4.0-alpha.6
         version: link:../source-map
       typesafe-path:
         specifier: ^0.2.2
@@ -156,7 +156,7 @@ importers:
     devDependencies:
       '@types/vscode':
         specifier: latest
-        version: 1.76.0
+        version: 1.77.0
       vscode-languageclient:
         specifier: latest
         version: 8.1.0
@@ -955,8 +955,8 @@ packages:
     dev: false
     optional: true
 
-  /@types/vscode@1.76.0:
-    resolution: {integrity: sha512-CQcY3+Fe5hNewHnOEAVYj4dd1do/QHliXaknAEYSXx2KEHUzFibDZSKptCon+HPgK55xx20pR+PBJjf0MomnBA==}
+  /@types/vscode@1.77.0:
+    resolution: {integrity: sha512-MWFN5R7a33n8eJZJmdVlifjig3LWUNRrPeO1xemIcZ0ae0TEQuRc7G2xV0LUX78RZFECY1plYBn+dP/Acc3L0Q==}
     dev: true
 
   /@vscode/l10n@0.0.11:
@@ -4219,6 +4219,13 @@ packages:
     resolution: {integrity: sha512-wVORMBGO/FAs/++blGNeAVdbNKtIh1rbBL2EyQ1+J9lClJ93KiiKe8PmFIVdXhHcyv44SL9oglmfeSsndo0jRw==}
     engines: {node: '>=12.20'}
     hasBin: true
+    dev: false
+
+  /typescript@5.0.3:
+    resolution: {integrity: sha512-xv8mOEDnigb/tN9PSMTwSEqAnUvkoXMQlicOb0IUVDBSQCgBSaAAROUZYy2IcUy5qU6XajK5jjjO7TMWqBTKZA==}
+    engines: {node: '>=12.20'}
+    hasBin: true
+    dev: true
 
   /uglify-js@3.17.4:
     resolution: {integrity: sha512-T9q82TJI9e/C1TAxYvfb16xO120tMVFZrGA3f9/P4424DNu6ypK103y0GPFVa17yotwSyZW5iYXgjYHkGrJW/g==}
