@@ -218,15 +218,6 @@ export async function createProject(context: ProjectContext) {
 			},
 		};
 
-		if (context.workspace.workspaces.initOptions.noProjectReferences) {
-			host.getProjectReferences = undefined;
-			host.getCompilationSettings = () => ({
-				...parsedCommandLine.options,
-				rootDir: undefined,
-				composite: false,
-			});
-		}
-
 		if (context.workspace.workspaces.tsLocalized) {
 			host.getLocalizedDiagnosticMessages = () => context.workspace.workspaces.tsLocalized;
 		}
