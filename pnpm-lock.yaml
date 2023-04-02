@@ -94,8 +94,8 @@ importers:
         specifier: 1.4.0-alpha.6
         version: link:../source-map
       typescript-auto-import-cache:
-        specifier: ^0.0.1
-        version: 0.0.1
+        specifier: ^0.1.0
+        version: 0.1.0
       vscode-html-languageservice:
         specifier: ^5.0.4
         version: 5.0.4
@@ -4209,8 +4209,8 @@ packages:
     resolution: {integrity: sha512-OJabfkAg1WLZSqJAJ0Z6Sdt3utnbzr/jh+NAHoyWHJe8CMSy79Gm085094M9nvTPy22KzTVn5Zq5mbapCI/hPA==}
     dev: false
 
-  /typescript-auto-import-cache@0.0.1:
-    resolution: {integrity: sha512-8gOZHgm/o05PDzvpJvIuqDN0xwQttawz9uFSJwWE0UtKeST7zJi5Ik94L2y7QaM3qD3WGhvuJVGUd+dOx9gFLw==}
+  /typescript-auto-import-cache@0.1.0:
+    resolution: {integrity: sha512-lzBAiBPthEDU12dM+h+nDUJbjOinn9v7XqDgicj8Ki8+boXEI/Jbs45J6iilnUoQKQM7OiaQALPrmWhXyH1ptA==}
     dependencies:
       semver: 7.3.8
     dev: false

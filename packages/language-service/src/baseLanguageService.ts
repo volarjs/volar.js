@@ -39,32 +39,52 @@ import * as vscode from 'vscode-languageserver-protocol';
 // fix build
 import { notEmpty, syntaxToLanguageId } from './utils/common';
 
-export type LanguageService = ReturnType<typeof createLanguageService>;
+export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
 export function createLanguageService(
 	ctx: LanguageServiceOptions,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 	const languageContext = createLanguageContext(ctx.host, Object.values(ctx.config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServiceContext(ctx, languageContext, documentRegistry);
+	const context = createLanguageServicePluginContext(ctx, languageContext, documentRegistry);
 	return createLanguageServiceBase(context);
 }
 
-function createLanguageServiceContext(
+function createLanguageServicePluginContext(
 	ctx: LanguageServiceOptions,
 	languageContext: ReturnType<typeof createLanguageContext>,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 	const ts = ctx.host.getTypeScriptModule?.();
-	const tsLs = ts ? tsFaster.createLanguageService(
-		ts,
-		languageContext.typescript.languageServiceHost, 
-		(proxiedHost) => {
-			languageContext.typescript.languageServiceHost = proxiedHost
-			return ts.createLanguageService(proxiedHost, documentRegistry)
-		}, 
-		ctx.rootUri.path
-	) : undefined
+	let tsLs: ts.LanguageService | undefined;
+
+	if (ts) {
+		const created = tsFaster.createLanguageService(
+			ts,
+			languageContext.typescript.languageServiceHost,
+			(proxiedHost) => {
+				languageContext.typescript.languageServiceHost = proxiedHost;
+				return ts.createLanguageService(proxiedHost, documentRegistry);
+			},
+			ctx.rootUri.path,
+		);
+		tsLs = created.languageService;
+
+		if (created.setPreferences && ctx.configurationHost) {
+
+			const configHost = ctx.configurationHost;
+
+			updatePreferences();
+			ctx.configurationHost?.onDidChangeConfiguration?.(updatePreferences);
+
+			async function updatePreferences() {
+				const preferences = await configHost.getConfiguration<ts.UserPreferences>('typescript.preferences');
+				if (preferences) {
+					created.setPreferences?.(preferences);
+				}
+			}
+		}
+	}
 
 	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
