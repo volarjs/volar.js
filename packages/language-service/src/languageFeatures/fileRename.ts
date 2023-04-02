@@ -31,7 +31,7 @@ export function register(context: LanguageServicePluginContext) {
 
 		for (const plugin of Object.values(context.plugins)) {
 
-			if (!token.isCancellationRequested)
+			if (token.isCancellationRequested)
 				break;
 
 			if (!plugin.provideFileRenameEdits)
