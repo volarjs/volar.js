@@ -9,7 +9,7 @@ export interface PluginCompletionData {
 	uri: string;
 	original: Pick<vscode.CompletionItem, 'additionalTextEdits' | 'textEdit' | 'data'>;
 	pluginId: string;
-	map: { embeddedDocumentUri: string; } | undefined;
+	virtualDocumentUri: string | undefined;
 }
 
 export function register(context: LanguageServicePluginContext) {
@@ -17,9 +17,7 @@ export function register(context: LanguageServicePluginContext) {
 	let cache: {
 		uri: string,
 		data: {
-			map: {
-				embeddedDocumentUri: string;
-			} | undefined,
+			virtualDocumentUri: string | undefined,
 			plugin: LanguageServicePluginInstance,
 			list: vscode.CompletionList,
 		}[],
@@ -47,9 +45,9 @@ export function register(context: LanguageServicePluginContext) {
 				if (!cacheData.list.isIncomplete)
 					continue;
 
-				if (cacheData.map) {
+				if (cacheData.virtualDocumentUri) {
 
-					for (const [_, map] of context.documents.getMapsByVirtualFileUri(cacheData.map.embeddedDocumentUri)) {
+					for (const [_, map] of context.documents.getMapsByVirtualFileUri(cacheData.virtualDocumentUri)) {
 
 						for (const mapped of map.toGeneratedPositions(position, data => !!data.completion)) {
 
@@ -75,9 +73,7 @@ export function register(context: LanguageServicePluginContext) {
 										data: oldItem.data,
 									},
 									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
-									map: {
-										embeddedDocumentUri: map.virtualFileDocument.uri,
-									},
+									virtualDocumentUri: map.virtualFileDocument.uri,
 								} satisfies PluginCompletionData,
 							);
 						}
@@ -104,7 +100,7 @@ export function register(context: LanguageServicePluginContext) {
 								data: item.data,
 							},
 							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
-							map: undefined,
+							virtualDocumentUri: undefined,
 						} satisfies PluginCompletionData;
 					});
 				}
@@ -184,16 +180,12 @@ export function register(context: LanguageServicePluginContext) {
 										data: oldItem.data,
 									},
 									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
-									map: {
-										embeddedDocumentUri: map.virtualFileDocument.uri,
-									}
+									virtualDocumentUri: map.virtualFileDocument.uri,
 								} satisfies PluginCompletionData,
 							);
 
 							cache!.data.push({
-								map: {
-									embeddedDocumentUri: map.virtualFileDocument.uri,
-								},
+								virtualDocumentUri: map.virtualFileDocument.uri,
 								plugin,
 								list: completionList,
 							});
@@ -249,12 +241,12 @@ export function register(context: LanguageServicePluginContext) {
 								data: item.data,
 							},
 							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
-							map: undefined,
+							virtualDocumentUri: undefined,
 						} satisfies PluginCompletionData;
 					});
 
 					cache.data.push({
-						map: undefined,
+						virtualDocumentUri: undefined,
 						plugin,
 						list: completionList,
 					});

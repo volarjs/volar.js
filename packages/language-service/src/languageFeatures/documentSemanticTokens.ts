@@ -79,7 +79,7 @@ export function register(context: LanguageServicePluginContext) {
 					end: { line: _token[0], character: _token[1] + _token[2] },
 				}, data => !!data.semanticTokens);
 				if (range) {
-					return [range.start.line, range.start.character, _token[2], _token[3], _token[4]];
+					return [range.start.line, range.start.character, range.end.character - range.start.character, _token[3], _token[4]];
 				}
 			}).filter(notEmpty),
 			tokens => tokens.flat(),
