@@ -13,7 +13,7 @@ importers:
         version: 18.15.11
       typescript:
         specifier: latest
-        version: 5.0.3
+        version: 5.0.4
       vite:
         specifier: latest
         version: 4.2.1(@types/node@18.15.11)
@@ -29,16 +29,13 @@ importers:
     devDependencies:
       coc.nvim:
         specifier: latest
-        version: 0.0.83-next.9(@types/node@14.18.42)
+        version: 0.0.83-next.9(@types/node@18.15.11)
 
   packages/kit:
     dependencies:
       '@volar/language-service':
         specifier: 1.4.0-alpha.7
         version: link:../language-service
-      typescript:
-        specifier: '*'
-        version: 5.0.3
       vscode-languageserver-textdocument:
         specifier: ^1.0.8
         version: 1.0.8
@@ -942,10 +939,6 @@ packages:
     dev: false
     optional: true
 
-  /@types/node@14.18.42:
-    resolution: {integrity: sha512-xefu+RBie4xWlK8hwAzGh3npDz/4VhF6icY/shU+zv/1fNn+ZVG7T7CRwe9LId9sAYRPxI+59QBPuKL3WpyGRg==}
-    dev: true
-
   /@types/node@18.15.11:
     resolution: {integrity: sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==}
     dev: true
@@ -1396,13 +1389,13 @@ packages:
     dev: false
     optional: true
 
-  /coc.nvim@0.0.83-next.9(@types/node@14.18.42):
+  /coc.nvim@0.0.83-next.9(@types/node@18.15.11):
     resolution: {integrity: sha512-ek5+EgA9N92/6Wt07TAYpavmBgXZto4Dmwmm56oyBl/w4wy3Tod7LfpCp4k9M4xCxhxPtrflIcxvhdDUPIeMuw==}
     engines: {node: '>=14.14.0'}
     peerDependencies:
       '@types/node': ^14.14.0
     dependencies:
-      '@types/node': 14.18.42
+      '@types/node': 18.15.11
     dev: true
 
   /color-convert@1.9.3:
@@ -4215,10 +4208,11 @@ packages:
       semver: 7.3.8
     dev: false
 
-  /typescript@5.0.3:
-    resolution: {integrity: sha512-xv8mOEDnigb/tN9PSMTwSEqAnUvkoXMQlicOb0IUVDBSQCgBSaAAROUZYy2IcUy5qU6XajK5jjjO7TMWqBTKZA==}
+  /typescript@5.0.4:
+    resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
     engines: {node: '>=12.20'}
     hasBin: true
+    dev: true
 
   /uglify-js@3.17.4:
     resolution: {integrity: sha512-T9q82TJI9e/C1TAxYvfb16xO120tMVFZrGA3f9/P4424DNu6ypK103y0GPFVa17yotwSyZW5iYXgjYHkGrJW/g==}
