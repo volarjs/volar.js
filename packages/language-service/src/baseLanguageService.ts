@@ -63,7 +63,8 @@ function createLanguageServicePluginContext(
 			ts,
 			languageContext.typescript.languageServiceHost,
 			(proxiedHost) => {
-				languageContext.typescript.languageServiceHost = proxiedHost;
+				// commented out for fixed write virtual files not working
+				// languageContext.typescript.languageServiceHost = proxiedHost;
 				return ts.createLanguageService(proxiedHost, documentRegistry);
 			},
 			ctx.rootUri.path,
