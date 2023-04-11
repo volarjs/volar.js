@@ -83,8 +83,12 @@ function createLanguageServicePluginContext(
 		}
 
 		if (created.projectUpdated) {
+			let scriptFileNames = new Set(ctx.host.getScriptFileNames())
 			ctx.fileSystemHost?.onDidChangeWatchedFiles((params) => {
-				const scriptFileNames = new Set(tsLs?.getProgram()?.getRootFileNames() ?? [])
+				if (params.changes.some(change => change.type !== vscode.FileChangeType.Changed)) {
+					scriptFileNames = new Set(ctx.host.getScriptFileNames())
+				}
+
 				for (const change of params.changes) {
 					if (scriptFileNames.has(ctx.uriToFileName(change.uri))) {
 						created.projectUpdated?.(ctx.uriToFileName(context.rootUri.fsPath))
