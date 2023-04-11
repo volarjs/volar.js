@@ -36,10 +36,18 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				loadTypescript(tsdk) {
 					for (const name of ['./typescript.js', './tsserverlibrary.js']) {
 						try {
-							const path = require.resolve(name, { paths: [tsdk] });
-							return require(path);
+							return require(require.resolve(name, { paths: [tsdk] }));
 						} catch { }
 					}
+
+					// for bun
+					for (const name of ['typescript.js', 'tsserverlibrary.js']) {
+						try {
+							return require(tsdk + '/' + name);
+						} catch { }
+					}
+
+					throw new Error(`Can't find typescript.js or tsserverlibrary.js in ${tsdk}`);
 				},
 				async loadTypescriptLocalized(tsdk, locale) {
 					try {
