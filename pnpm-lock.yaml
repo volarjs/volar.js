@@ -7,6 +7,9 @@ importers:
       '@lerna-lite/cli':
         specifier: latest
         version: 1.17.0
+      '@lerna-lite/publish':
+        specifier: latest
+        version: 1.17.0
     devDependencies:
       '@types/node':
         specifier: latest
@@ -29,7 +32,7 @@ importers:
     devDependencies:
       coc.nvim:
         specifier: latest
-        version: 0.0.83-next.9(@types/node@18.15.11)
+        version: 0.0.83-next.9
 
   packages/kit:
     dependencies:
@@ -1389,13 +1392,11 @@ packages:
     dev: false
     optional: true
 
-  /coc.nvim@0.0.83-next.9(@types/node@18.15.11):
+  /coc.nvim@0.0.83-next.9:
     resolution: {integrity: sha512-ek5+EgA9N92/6Wt07TAYpavmBgXZto4Dmwmm56oyBl/w4wy3Tod7LfpCp4k9M4xCxhxPtrflIcxvhdDUPIeMuw==}
     engines: {node: '>=14.14.0'}
     peerDependencies:
       '@types/node': ^14.14.0
-    dependencies:
-      '@types/node': 18.15.11
     dev: true
 
   /color-convert@1.9.3:

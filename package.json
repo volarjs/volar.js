@@ -15,6 +15,7 @@
 		"vitest": "0.25.8"
 	},
 	"optionalDependencies": {
-		"@lerna-lite/cli": "latest"
+		"@lerna-lite/cli": "latest",
+		"@lerna-lite/publish": "latest"
 	}
 }
