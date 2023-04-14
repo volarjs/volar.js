@@ -59,6 +59,10 @@ function createLanguageServicePluginContext(
 	let tsLs: ts.LanguageService | undefined;
 
 	if (ts) {
+		tsLs = ts.createLanguageService(languageContext.typescript.languageServiceHost, documentRegistry);
+		tsFaster.decorate(ts, languageContext.typescript.languageServiceHost, tsLs);
+
+		/* for typescript-auto-import-cache@0.1.0
 		const created = tsFaster.createLanguageService(
 			ts,
 			languageContext.typescript.languageServiceHost,
@@ -85,6 +89,7 @@ function createLanguageServicePluginContext(
 				}
 			}
 		}
+		*/
 	}
 
 	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);
