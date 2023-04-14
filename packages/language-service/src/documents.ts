@@ -4,7 +4,7 @@ import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { LanguageServiceOptions } from './types';
-import { syntaxToLanguageId } from './utils/common';
+import { resolveCommonLanguageId } from './utils/common';
 
 export type DocumentsAndSourceMaps = ReturnType<typeof createDocumentsAndSourceMaps>;
 
@@ -270,9 +270,10 @@ export function createDocumentsAndSourceMaps(
 		}
 		const map = _documents.get(snapshot)!;
 		if (!map.has(fileName)) {
+			const uri = ctx.fileNameToUri(fileName);
 			map.set(fileName, TextDocument.create(
-				ctx.fileNameToUri(fileName),
-				syntaxToLanguageId(fileName.substring(fileName.lastIndexOf('.') + 1)),
+				uri,
+				ctx.getOpenedTextDocumentLanguageId?.(uri) ?? resolveCommonLanguageId(uri),
 				version++,
 				snapshot.getText(0, snapshot.getLength()),
 			));

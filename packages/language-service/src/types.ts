@@ -23,6 +23,8 @@ export interface LanguageServiceOptions {
 	documentContext?: DocumentContext;
 	fileSystemProvider?: FileSystemProvider;
 	schemaRequestService?: SchemaRequestService;
+	// IDE specific: prefer languageId from opened text document
+	getOpenedTextDocumentLanguageId?(uri: string): string | undefined;
 }
 
 export interface Commands {

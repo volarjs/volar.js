@@ -36,8 +36,9 @@ export function stringToSnapshot(str: string): ts.IScriptSnapshot {
 	};
 }
 
-export function syntaxToLanguageId(syntax: string) {
-	switch (syntax) {
+export function resolveCommonLanguageId(uri: string) {
+	const ext = uri.split('.').pop()!;
+	switch (ext) {
 		case 'js': return 'javascript';
 		case 'cjs': return 'javascript';
 		case 'mjs': return 'javascript';
@@ -49,7 +50,7 @@ export function syntaxToLanguageId(syntax: string) {
 		case 'pug': return 'jade';
 		case 'md': return 'markdown';
 	}
-	return syntax;
+	return ext;
 }
 
 export function sleep(ms: number) {

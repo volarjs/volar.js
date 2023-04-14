@@ -37,7 +37,7 @@ import * as selectionRanges from './documentFeatures/selectionRanges';
 import * as vscode from 'vscode-languageserver-protocol';
 
 // fix build
-import { notEmpty, syntaxToLanguageId } from './utils/common';
+import { notEmpty, resolveCommonLanguageId } from './utils/common';
 
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
@@ -211,7 +211,7 @@ function createLanguageServicePluginContext(
 
 				document = TextDocument.create(
 					uri,
-					syntaxToLanguageId(uri.substring(uri.lastIndexOf('.') + 1)),
+					ctx.getOpenedTextDocumentLanguageId?.(uri) ?? resolveCommonLanguageId(uri),
 					newVersion,
 					scriptSnapshot.getText(0, scriptSnapshot.getLength()),
 				);
