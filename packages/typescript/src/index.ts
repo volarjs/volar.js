@@ -1,4 +1,4 @@
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import * as ts from 'typescript/lib/tsserverlibrary'; // this is a peer dependency
 import { getProgram } from './getProgram';
 import * as embedded from '@volar/language-core';
 
@@ -11,8 +11,7 @@ export function createLanguageService(host: embedded.LanguageServiceHost, mods: 
 		};
 	} & ts.LanguageService;
 
-	const core = embedded.createLanguageContext(host, mods);
-	const ts = host.getTypeScriptModule?.();
+	const core = embedded.createLanguageContext(host, { typescript: ts }, mods);
 
 	if (!ts) {
 		throw new Error('TypeScript module not provided.');

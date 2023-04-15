@@ -7,6 +7,9 @@ export type LanguageContext = ReturnType<typeof createLanguageContext>;
 
 export function createLanguageContext(
 	host: LanguageServiceHost,
+	modules: {
+		typescript?: typeof import('typescript/lib/tsserverlibrary'),
+	},
 	languageModules: LanguageModule[],
 ) {
 
@@ -28,7 +31,7 @@ export function createLanguageContext(
 	let tsProjectVersion = 0;
 
 	const virtualFiles = createVirtualFiles(languageModules);
-	const ts = host.getTypeScriptModule?.();
+	const ts = modules.typescript;
 	const scriptSnapshots = new Map<string, [string, ts.IScriptSnapshot]>();
 	const sourceTsFileVersions = new Map<string, string>();
 	const sourceFileVersions = new Map<string, string>();

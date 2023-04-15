@@ -38,9 +38,9 @@ export function create(
 			}
 			return scriptSnapshots.get(fileName);
 		},
-		getTypeScriptModule: () => ts,
 	};
 	const service = createLanguageService({
+		modules: { typescript: ts },
 		host,
 		config,
 		uriToFileName,

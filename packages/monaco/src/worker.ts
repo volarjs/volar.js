@@ -17,12 +17,13 @@ export function createLanguageService(options: {
 	},
 }) {
 
+	const ts = options.typescript?.module;
 	const dtsFiles = new Map<string, string | undefined>();
-	const ts: typeof import('typescript/lib/tsserverlibrary') | undefined = options.typescript ? options.typescript.module : undefined;
 	const config = options.config ?? {};
 	const compilerOptions = options.typescript?.compilerOptions ?? {};
 	let host = createLanguageServiceHost();
 	let languageService = _createLanguageService({
+		modules: { typescript: ts },
 		host,
 		config,
 		uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
@@ -57,6 +58,7 @@ export function createLanguageService(options: {
 					dtsVersion = newVersion;
 					languageService.dispose();
 					languageService = _createLanguageService({
+						modules: { typescript: ts },
 						host,
 						config,
 						rootUri: URI.file('/'),
@@ -165,7 +167,6 @@ export function createLanguageService(options: {
 				}
 				return readDtsFile(fileName) !== undefined;
 			},
-			getTypeScriptModule: ts ? (() => ts) : undefined,
 		};
 
 		return host;

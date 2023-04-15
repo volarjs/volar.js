@@ -14,5 +14,8 @@
 	},
 	"dependencies": {
 		"@volar/language-core": "1.4.0-alpha.8"
+	},
+	"peerDependencies": {
+		"typescript": "*"
 	}
 }

@@ -11,6 +11,9 @@ export * from 'vscode-languageserver-protocol';
 
 export interface LanguageServiceOptions {
 	// InitializeParams
+	modules: {
+		typescript?: typeof import('typescript/lib/tsserverlibrary');
+	};
 	locale?: string;
 	rootUri: URI;
 	capabilities?: vscode.ClientCapabilities;

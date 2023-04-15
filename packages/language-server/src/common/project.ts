@@ -91,6 +91,7 @@ export async function createProject(context: ProjectContext) {
 				) : {}
 			) ?? {};
 			const options: LanguageServiceOptions = {
+				modules: { typescript: context.workspace.workspaces.ts },
 				uriToFileName,
 				fileNameToUri,
 				getOpenedTextDocumentLanguageId: uri => {
@@ -214,9 +215,6 @@ export async function createProject(context: ProjectContext) {
 			getCompilationSettings: () => parsedCommandLine.options,
 			getScriptVersion,
 			getScriptSnapshot,
-			getTypeScriptModule: context.workspace.workspaces.ts ? () => {
-				return context.workspace.workspaces.ts!;
-			} : undefined,
 			getScriptLanguageId: (fileName) => {
 				return context.workspace.workspaces.documents.data.pathGet(fileName)?.languageId;
 			},

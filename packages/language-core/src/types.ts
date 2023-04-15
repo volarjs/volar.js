@@ -90,7 +90,6 @@ export interface LanguageModule<T extends VirtualFile = VirtualFile> {
 }
 
 export interface LanguageServiceHost extends ts.LanguageServiceHost {
-	getTypeScriptModule?(): typeof import('typescript/lib/tsserverlibrary');
 	getScriptLanguageId?(fileName: string): string | undefined;
 	isTsc?: boolean,
 };

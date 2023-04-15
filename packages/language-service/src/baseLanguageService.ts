@@ -45,7 +45,7 @@ export function createLanguageService(
 	ctx: LanguageServiceOptions,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const languageContext = createLanguageContext(ctx.host, Object.values(ctx.config.languages ?? {}).filter(notEmpty));
+	const languageContext = createLanguageContext(ctx.host, ctx.modules, Object.values(ctx.config.languages ?? {}).filter(notEmpty));
 	const context = createLanguageServicePluginContext(ctx, languageContext, documentRegistry);
 	return createLanguageServiceBase(context);
 }
@@ -55,7 +55,7 @@ function createLanguageServicePluginContext(
 	languageContext: ReturnType<typeof createLanguageContext>,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const ts = ctx.host.getTypeScriptModule?.();
+	const ts = ctx.modules.typescript;
 	let tsLs: ts.LanguageService | undefined;
 
 	if (ts) {
