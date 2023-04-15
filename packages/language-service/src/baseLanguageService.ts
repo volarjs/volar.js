@@ -83,18 +83,18 @@ function createLanguageServicePluginContext(
 		}
 
 		if (created.projectUpdated) {
-			let scriptFileNames = new Set(ctx.host.getScriptFileNames())
+			let scriptFileNames = new Set(ctx.host.getScriptFileNames());
 			ctx.fileSystemHost?.onDidChangeWatchedFiles((params) => {
 				if (params.changes.some(change => change.type !== vscode.FileChangeType.Changed)) {
-					scriptFileNames = new Set(ctx.host.getScriptFileNames())
+					scriptFileNames = new Set(ctx.host.getScriptFileNames());
 				}
 
 				for (const change of params.changes) {
 					if (scriptFileNames.has(ctx.uriToFileName(change.uri))) {
-						created.projectUpdated?.(ctx.uriToFileName(context.rootUri.fsPath))
+						created.projectUpdated?.(ctx.uriToFileName(context.rootUri.fsPath));
 					}
 				}
-			})
+			});
 		}
 	}
 
