@@ -4,7 +4,7 @@
 		"build": "tsc -b tsconfig.build.json",
 		"watch": "tsc -b tsconfig.build.json -w",
 		"prerelease": "npm run build && npm run test",
-		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
+		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock --no-push",
 		"release:next": "npm run release -- --dist-tag next",
 		"test": "vitest run"
 	},
