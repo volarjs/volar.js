@@ -59,18 +59,10 @@ function createLanguageServicePluginContext(
 	let tsLs: ts.LanguageService | undefined;
 
 	if (ts) {
-		tsLs = ts.createLanguageService(languageContext.typescript.languageServiceHost, documentRegistry);
-		tsFaster.decorate(ts, languageContext.typescript.languageServiceHost, tsLs);
-
-		/* for typescript-auto-import-cache@0.1.0
 		const created = tsFaster.createLanguageService(
 			ts,
 			languageContext.typescript.languageServiceHost,
-			(proxiedHost) => {
-				// commented out for fixed write virtual files not working
-				// languageContext.typescript.languageServiceHost = proxiedHost;
-				return ts.createLanguageService(proxiedHost, documentRegistry);
-			},
+			proxiedHost => ts.createLanguageService(proxiedHost, documentRegistry),
 			ctx.rootUri.path,
 		);
 		tsLs = created.languageService;
@@ -89,7 +81,21 @@ function createLanguageServicePluginContext(
 				}
 			}
 		}
-		*/
+
+		if (created.projectUpdated) {
+			let scriptFileNames = new Set(ctx.host.getScriptFileNames())
+			ctx.fileSystemHost?.onDidChangeWatchedFiles((params) => {
+				if (params.changes.some(change => change.type !== vscode.FileChangeType.Changed)) {
+					scriptFileNames = new Set(ctx.host.getScriptFileNames())
+				}
+
+				for (const change of params.changes) {
+					if (scriptFileNames.has(ctx.uriToFileName(change.uri))) {
+						created.projectUpdated?.(ctx.uriToFileName(context.rootUri.fsPath))
+					}
+				}
+			})
+		}
 	}
 
 	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);

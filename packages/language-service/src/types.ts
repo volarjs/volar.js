@@ -22,9 +22,14 @@ export interface LanguageServiceOptions {
 	configurationHost?: ConfigurationHost;
 	documentContext?: DocumentContext;
 	fileSystemProvider?: FileSystemProvider;
+	fileSystemHost?: FileSystemHost;
 	schemaRequestService?: SchemaRequestService;
 	// IDE specific: prefer languageId from opened text document
 	getOpenedTextDocumentLanguageId?(uri: string): string | undefined;
+}
+
+interface FileSystemHost {
+	onDidChangeWatchedFiles(cb: (params: vscode.DidChangeWatchedFilesParams) => void): () => void,
 }
 
 export interface Commands {

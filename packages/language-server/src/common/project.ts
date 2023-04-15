@@ -105,6 +105,7 @@ export async function createProject(context: ProjectContext) {
 				},
 				configurationHost: context.workspace.workspaces.configurationHost,
 				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
+				fileSystemHost: context.workspace.workspaces.fileSystemHost,
 				documentContext: getDocumentContext(fileNameToUri, uriToFileName, context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
 				schemaRequestService: async uri => {
 					const protocol = uri.substring(0, uri.indexOf(':'));
