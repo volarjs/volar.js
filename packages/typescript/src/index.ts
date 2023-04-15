@@ -44,7 +44,7 @@ export function createLanguageService(host: embedded.LanguageServiceHost, mods: 
 		// getApplicableRefactors: tsLanguageService.rawLs.getApplicableRefactors,
 		// getEditsForRefactor: tsLanguageService.rawLs.getEditsForRefactor,
 
-		getProgram: () => getProgram(ts, core, ls),
+		getProgram: () => getProgram(ts as any, core, ls),
 
 		__internal__: {
 			context: core,

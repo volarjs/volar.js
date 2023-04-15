@@ -27,8 +27,6 @@ export interface LanguageServiceOptions {
 	fileSystemProvider?: FileSystemProvider;
 	fileSystemHost?: FileSystemHost;
 	schemaRequestService?: SchemaRequestService;
-	// IDE specific: prefer languageId from opened text document
-	getOpenedTextDocumentLanguageId?(uri: string): string | undefined;
 }
 
 interface FileSystemHost {

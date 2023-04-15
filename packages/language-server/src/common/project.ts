@@ -94,9 +94,6 @@ export async function createProject(context: ProjectContext) {
 				modules: { typescript: context.workspace.workspaces.ts },
 				uriToFileName,
 				fileNameToUri,
-				getOpenedTextDocumentLanguageId: uri => {
-					return context.workspace.workspaces.documents.data.uriGet(uri)?.languageId;
-				},
 				locale: context.workspace.workspaces.initParams.locale,
 				rootUri: context.rootUri,
 				capabilities: context.workspace.workspaces.initParams.capabilities,

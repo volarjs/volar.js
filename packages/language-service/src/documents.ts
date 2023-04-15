@@ -273,7 +273,7 @@ export function createDocumentsAndSourceMaps(
 			const uri = ctx.fileNameToUri(fileName);
 			map.set(fileName, TextDocument.create(
 				uri,
-				ctx.getOpenedTextDocumentLanguageId?.(uri) ?? resolveCommonLanguageId(uri),
+				ctx.host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 				version++,
 				snapshot.getText(0, snapshot.getLength()),
 			));
