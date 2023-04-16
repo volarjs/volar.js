@@ -13,6 +13,7 @@ import * as completionResolve from './languageFeatures/completeResolve';
 import * as definition from './languageFeatures/definition';
 import * as documentHighlight from './languageFeatures/documentHighlights';
 import * as documentLink from './languageFeatures/documentLinks';
+import * as documentLinkResolve from './languageFeatures/documentLinkResolve';
 import * as semanticTokens from './languageFeatures/documentSemanticTokens';
 import * as fileReferences from './languageFeatures/fileReferences';
 import * as fileRename from './languageFeatures/fileRename';
@@ -266,6 +267,7 @@ function createLanguageServiceBase(context: LanguageServicePluginContext) {
 		doCodeLensResolve: codeLensResolve.register(context),
 		findDocumentHighlights: documentHighlight.register(context),
 		findDocumentLinks: documentLink.register(context),
+		doDocumentLinkResolve: documentLinkResolve.register(context),
 		findWorkspaceSymbols: workspaceSymbol.register(context),
 		doAutoInsert: autoInsert.register(context),
 		getInlayHints: inlayHints.register(context),

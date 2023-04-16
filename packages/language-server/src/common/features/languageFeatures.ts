@@ -22,6 +22,7 @@ export function register(
 	let lastCodeLensLs: embedded.LanguageService;
 	let lastCodeActionLs: embedded.LanguageService;
 	let lastCallHierarchyLs: embedded.LanguageService;
+	let lastDocumentLinkLs: embedded.LanguageService;
 
 	connection.onDocumentFormatting(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
@@ -204,6 +205,9 @@ export function register(
 		return await worker(params.textDocument.uri, token, service => {
 			return service.findDocumentLinks(params.textDocument.uri, token);
 		});
+	});
+	connection.onDocumentLinkResolve(async (link, token) => {
+		return await lastDocumentLinkLs.doDocumentLinkResolve(link, token);
 	});
 	connection.onWorkspaceSymbol(async (params, token) => {
 

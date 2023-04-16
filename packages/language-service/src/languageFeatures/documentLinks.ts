@@ -6,6 +6,12 @@ import { SourceMapWithDocuments } from '../documents';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
 import { notEmpty } from '../utils/common';
 
+export interface DocumentLinkData {
+	uri: string,
+	original: Pick<vscode.DocumentLink, 'data'>,
+	pluginId: string,
+}
+
 export function register(context: LanguageServicePluginContext) {
 
 	return async (uri: string, token = vscode.CancellationToken.None) => {
@@ -14,12 +20,26 @@ export function register(context: LanguageServicePluginContext) {
 			context,
 			uri,
 			file => !!file.capabilities.documentSymbol,
-			(plugin, document) => {
+			async (plugin, document) => {
+
 				if (token.isCancellationRequested)
 					return;
-				return plugin.provideLinks?.(document, token);
+
+				const links = await plugin.provideDocumentLinks?.(document, token);
+
+				links?.forEach(link => {
+					link.data = {
+						uri,
+						original: {
+							data: link.data,
+						},
+						pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+					} satisfies DocumentLinkData;
+				});
+
+				return links;
 			},
-			(data, map) => data.map(link => {
+			(links, map) => links.map(link => {
 
 				if (!map)
 					return link;

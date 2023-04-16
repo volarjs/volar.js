@@ -39,6 +39,7 @@ export async function createLanguageFeaturesProvider(
 	const codeLens = new WeakMap<languages.CodeLens, vscode.CodeLens>();
 	const codeActions = new WeakMap<languages.CodeAction, vscode.CodeAction>();
 	const colorInfos = new WeakMap<languages.IColorInformation, vscode.ColorInformation>();
+	const documentLinks = new WeakMap<languages.ILink, vscode.DocumentLink>();
 	const languageService = await worker.getProxy();
 
 	return {
@@ -251,9 +252,21 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.findDocumentLinks(model.uri.toString());
 			if (codeResult) {
 				return {
-					links: codeResult.map(protocol2monaco.asLink),
+					links: codeResult.map(link => {
+						const monacoLink = protocol2monaco.asLink(link);
+						documentLinks.set(monacoLink, link);
+						return monacoLink;
+					}),
 				};
 			}
+		},
+		async resolveLink(link) {
+			let codeResult = documentLinks.get(link);
+			if (codeResult) {
+				codeResult = await languageService.doDocumentLinkResolve(codeResult);
+				return protocol2monaco.asLink(codeResult);
+			}
+			return link;
 		},
 		async provideCompletionItems(model, position, context) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
