@@ -27,7 +27,7 @@ importers:
   packages/coc.nvim:
     dependencies:
       '@volar/language-server':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../language-server
     devDependencies:
       coc.nvim:
@@ -37,7 +37,7 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../language-service
       vscode-languageserver-textdocument:
         specifier: ^1.0.8
@@ -49,16 +49,16 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../language-core
       '@volar/language-service':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../language-service
       '@vscode/l10n':
         specifier: ^0.0.11
@@ -88,10 +88,10 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../language-core
       '@volar/source-map':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../source-map
       typescript-auto-import-cache:
         specifier: ^0.2.1
@@ -115,7 +115,7 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../language-service
       monaco-editor-core:
         specifier: ^0.36.0
@@ -136,16 +136,16 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../language-core
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../language-server
       '@volar/source-map':
-        specifier: 1.4.0-alpha.9
+        specifier: 1.4.0-alpha.10
         version: link:../source-map
       typesafe-path:
         specifier: ^0.2.2
