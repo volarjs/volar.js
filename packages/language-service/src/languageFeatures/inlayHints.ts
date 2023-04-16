@@ -4,6 +4,12 @@ import type { LanguageServicePluginContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
+export interface InlayHintData {
+	uri: string,
+	original: Pick<vscode.CodeAction, 'data' | 'edit'>,
+	pluginId: string,
+}
+
 export function register(context: LanguageServicePluginContext) {
 
 	return async (uri: string, range: vscode.Range, token = vscode.CancellationToken.None) => {
@@ -55,12 +61,23 @@ export function register(context: LanguageServicePluginContext) {
 
 				return [];
 			},
-			(plugin, document, arg) => {
+			async (plugin, document, arg) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.provideInlayHints?.(document, arg, token);
+				const hints = await plugin.provideInlayHints?.(document, arg, token);
+				hints?.forEach(link => {
+					link.data = {
+						uri,
+						original: {
+							data: link.data,
+						},
+						pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+					} satisfies InlayHintData;
+				});
+
+				return hints;
 			},
 			(inlayHints, map) => inlayHints.map((_inlayHint): vscode.InlayHint | undefined => {
 

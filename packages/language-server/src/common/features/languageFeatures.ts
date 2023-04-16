@@ -23,6 +23,7 @@ export function register(
 	let lastCodeActionLs: embedded.LanguageService;
 	let lastCallHierarchyLs: embedded.LanguageService;
 	let lastDocumentLinkLs: embedded.LanguageService;
+	let lastInlayHintLs: embedded.LanguageService;
 
 	connection.onDocumentFormatting(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
@@ -203,6 +204,7 @@ export function register(
 	});
 	connection.onDocumentLinks(async (params, token) => {
 		return await worker(params.textDocument.uri, token, service => {
+			lastDocumentLinkLs = service;
 			return service.findDocumentLinks(params.textDocument.uri, token);
 		});
 	});
@@ -296,10 +298,13 @@ export function register(
 	});
 	connection.languages.inlayHint.on(async (params, token) => {
 		return worker(params.textDocument.uri, token, async service => {
+			lastInlayHintLs = service;
 			return service.getInlayHints(params.textDocument.uri, params.range, token);
 		});
 	});
-	// TODO: connection.languages.inlayHint.resolve
+	connection.languages.inlayHint.resolve(async (hint, token) => {
+		return await lastInlayHintLs.doInlayHintResolve(hint, token);
+	});
 	connection.workspace.onWillRenameFiles(async (params, token) => {
 
 		const config = await connection.workspace.getConfiguration('volar.updateImportsOnFileMove.enabled');

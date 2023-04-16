@@ -40,6 +40,7 @@ export async function createLanguageFeaturesProvider(
 	const codeActions = new WeakMap<languages.CodeAction, vscode.CodeAction>();
 	const colorInfos = new WeakMap<languages.IColorInformation, vscode.ColorInformation>();
 	const documentLinks = new WeakMap<languages.ILink, vscode.DocumentLink>();
+	const inlayHints = new WeakMap<languages.InlayHint, vscode.InlayHint>();
 	const languageService = await worker.getProxy();
 
 	return {
@@ -401,10 +402,23 @@ export async function createLanguageFeaturesProvider(
 			);
 			if (codeResult) {
 				return {
-					hints: codeResult.map(protocol2monaco.asInlayHint),
+					hints: codeResult.map(hint => {
+						const monacoHint = protocol2monaco.asInlayHint(hint);
+						inlayHints.set(monacoHint, hint);
+						return monacoHint;
+					}),
 					dispose: () => { },
 				};
 			}
+		},
+		async resolveInlayHint(hint) {
+			const languageService = await worker.withSyncedResources(getSyncUris());
+			const codeHint = inlayHints.get(hint);
+			if (codeHint) {
+				const resolvedCodeHint = await languageService.doInlayHintResolve(codeHint);
+				return protocol2monaco.asInlayHint(resolvedCodeHint);
+			}
+			return hint;
 		},
 		async provideHover(model, position) {
 			const languageService = await worker.withSyncedResources(getSyncUris());

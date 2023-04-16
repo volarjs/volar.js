@@ -19,6 +19,7 @@ import * as fileReferences from './languageFeatures/fileReferences';
 import * as fileRename from './languageFeatures/fileRename';
 import * as hover from './languageFeatures/hover';
 import * as inlayHints from './languageFeatures/inlayHints';
+import * as inlayHintResolve from './languageFeatures/inlayHintResolve';
 import * as references from './languageFeatures/references';
 import * as rename from './languageFeatures/rename';
 import * as renamePrepare from './languageFeatures/renamePrepare';
@@ -271,6 +272,7 @@ function createLanguageServiceBase(context: LanguageServicePluginContext) {
 		findWorkspaceSymbols: workspaceSymbol.register(context),
 		doAutoInsert: autoInsert.register(context),
 		getInlayHints: inlayHints.register(context),
+		doInlayHintResolve: inlayHintResolve.register(context),
 		callHierarchy: callHierarchy.register(context),
 		dispose: () => context.typescript?.languageService.dispose(),
 		context,
