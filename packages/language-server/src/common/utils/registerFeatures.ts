@@ -56,7 +56,7 @@ export function setupCapabilities(
 		}
 		server.documentHighlightProvider = true;
 		server.documentLinkProvider = {
-			resolveProvider: false, // TODO
+			resolveProvider: true,
 		};
 		server.codeLensProvider = {
 			resolveProvider: true,
@@ -80,7 +80,9 @@ export function setupCapabilities(
 			],
 			resolveProvider: true,
 		};
-		server.inlayHintProvider = true;
+		server.inlayHintProvider = {
+			resolveProvider: true,
+		};
 		const exts = plugins.map(plugin => plugin.watchFileExtensions).flat();
 		if (exts.length) {
 			server.workspace = {
