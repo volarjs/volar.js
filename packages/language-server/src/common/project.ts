@@ -122,7 +122,7 @@ export async function createProject(context: ProjectContext) {
 			};
 			for (const plugin of context.workspace.workspaces.plugins) {
 				if (plugin.resolveConfig) {
-					config = plugin.resolveConfig(config, { typescript: lsCtx.project.workspace.workspaces.ts }, lsCtx);
+					config = plugin.resolveConfig(config, lsCtx);
 				}
 			}
 			languageService = embeddedLS.createLanguageService(options, context.documentRegistry);

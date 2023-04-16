@@ -33,7 +33,9 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 		initParams = _params;
 		options = initParams.initializationOptions;
 		context = getCtx(options);
-		plugins = context.plugins.map(plugin => plugin(options));
+		plugins = context.plugins.map(plugin => plugin(options, {
+			typescript: options.typescript ? context.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined
+		}));
 		documents = createDocuments(context.runtimeEnv, connection);
 
 		if (options.l10n) {
@@ -66,13 +68,12 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 		configurationHost = initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, connection) : undefined;
 
 		let lsPlugins: Config['plugins'] = {};
-		const ts = options.typescript ? context.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined;
 		for (const root of roots) {
 			if (root.scheme === 'file') {
 				let config = loadConfig(root.path, options.configFilePath) ?? {};
 				for (const plugin of plugins) {
 					if (plugin.resolveConfig) {
-						config = plugin.resolveConfig(config, { typescript: ts });
+						config = plugin.resolveConfig(config, undefined);
 					}
 				}
 				if (config.plugins) {

@@ -55,13 +55,12 @@ export interface LanguageServiceContext {
 }
 
 export interface LanguageServerPlugin {
-	(initOptions: LanguageServerInitializationOptions): {
+	(initOptions: LanguageServerInitializationOptions, modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); }): {
 		extraFileExtensions?: ts.FileExtensionInfo[];
 		watchFileExtensions?: string[];
 		resolveConfig?(
 			config: Config,
-			modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
-			ctx?: LanguageServiceContext,
+			ctx: LanguageServiceContext | undefined,
 		): Config;
 		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};
