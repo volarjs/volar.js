@@ -143,7 +143,10 @@ export function register(context: LanguageServicePluginContext) {
 								const lines = await plugin.provideFormattingIndentSensitiveLines(map.virtualFileDocument, token);
 								if (lines) {
 									for (const line of lines) {
-										indentSensitiveLines.add(line);
+										const sourceLine = map.toSourcePosition({ line: line, character: 0 })?.line;
+										if (sourceLine !== undefined) {
+											indentSensitiveLines.add(sourceLine);
+										}
 									}
 								}
 							}
