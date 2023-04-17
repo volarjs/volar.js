@@ -371,10 +371,7 @@ function getDocumentContext(
 				return ref;
 			}
 			if (ref[0] === '/') { // resolve absolute path against the current workspace folder
-				const folderUri = rootUri;
-				if (folderUri) {
-					return folderUri + ref.substr(1);
-				}
+				return rootUri + ref;
 			}
 			const baseUri = URI.parse(base);
 			const baseUriDir = baseUri.path.endsWith('/') ? baseUri : Utils.dirname(baseUri);
