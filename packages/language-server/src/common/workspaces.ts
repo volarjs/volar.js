@@ -99,7 +99,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 
 		await updateDiagnostics();
 
-		const delay = await context.configurationHost?.getConfiguration<number>('volar.diagnostics.delay') ?? 200;
+		const delay = 250;
 		await sleep(delay);
 
 		if (req === semanticTokensReq) {
@@ -118,7 +118,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 			return;
 
 		const req = ++documentUpdatedReq;
-		const delay = await context.configurationHost?.getConfiguration<number>('volar.diagnostics.delay') ?? 200;
+		const delay = 250;
 		const cancel = context.cancelTokenHost.createCancellationToken({
 			get isCancellationRequested() {
 				return req !== documentUpdatedReq;

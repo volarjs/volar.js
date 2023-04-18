@@ -307,11 +307,6 @@ export function register(
 	});
 	connection.workspace.onWillRenameFiles(async (params, token) => {
 
-		const config = await connection.workspace.getConfiguration('volar.updateImportsOnFileMove.enabled');
-		if (!config) {
-			return null;
-		}
-
 		const _edits = await Promise.all(params.files.map(async (file) => {
 			return await worker(file.oldUri, token, service => {
 				return service.getEditsForFileRename(file.oldUri, file.newUri, token) ?? null;

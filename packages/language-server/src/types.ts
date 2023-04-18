@@ -116,7 +116,6 @@ export interface LanguageServerInitializationOptions {
 	 */
 	cancellationPipeName?: string;
 	reverseConfigFilePriority?: boolean;
-	disableFileWatcher?: boolean;
 	maxFileSize?: number;
 	configFilePath?: string;
 	/**
