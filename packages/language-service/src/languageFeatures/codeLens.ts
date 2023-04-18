@@ -21,8 +21,6 @@ export function register(context: LanguageServicePluginContext) {
 
 	return async (uri: string, token = vscode.CancellationToken.None) => {
 
-		const referencesCodeLendsEnabled = await context.configurationHost?.getConfiguration<boolean>('volar.codeLens.references') ?? true;
-
 		return await languageFeatureWorker(
 			context,
 			uri,
@@ -48,21 +46,18 @@ export function register(context: LanguageServicePluginContext) {
 					} satisfies PluginCodeLensData;
 				});
 
-				if (referencesCodeLendsEnabled) {
+				const ranges = await plugin.provideReferencesCodeLensRanges?.(document, token);
+				const referencesCodeLens = ranges?.map(range => vscode.CodeLens.create(range, {
+					kind: 'references',
+					uri,
+					range,
+					pluginId,
+				} satisfies PluginReferencesCodeLensData));
 
-					const ranges = await plugin.provideReferencesCodeLensRanges?.(document, token);
-					const referencesCodeLens = ranges?.map(range => vscode.CodeLens.create(range, {
-						kind: 'references',
-						uri,
-						range,
-						pluginId,
-					} satisfies PluginReferencesCodeLensData));
-
-					codeLens = [
-						...codeLens ?? [],
-						...referencesCodeLens ?? [],
-					];
-				}
+				codeLens = [
+					...codeLens ?? [],
+					...referencesCodeLens ?? [],
+				];
 
 				return codeLens;
 			},

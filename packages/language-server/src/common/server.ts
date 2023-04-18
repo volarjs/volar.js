@@ -126,7 +126,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 
 		if (
 			options.serverMode !== ServerMode.Syntactic
-			&& !options.disableFileWatcher
 			&& initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration
 		) {
 			const exts = plugins.map(plugin => plugin.watchFileExtensions).flat();
