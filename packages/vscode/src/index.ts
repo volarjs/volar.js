@@ -20,6 +20,16 @@ export function takeOverModeActive(context: vscode.ExtensionContext) {
 import * as lsp from 'vscode-languageclient';
 
 export const middleware: lsp.Middleware = {
+	async provideHover(document, position, token, next) {
+		const hover = await next(document, position, token);
+		for (const content of hover?.contents ?? []) {
+			if (content instanceof vscode.MarkdownString) {
+				content.isTrusted = true;
+				content.supportHtml = true;
+			}
+		}
+		return hover;
+	},
 	async provideCodeActions(document, range, context, token, next) {
 		let actions = await next(document, range, context, token);
 		actions = actions?.map(action => {

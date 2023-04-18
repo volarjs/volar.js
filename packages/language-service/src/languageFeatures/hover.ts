@@ -2,12 +2,13 @@ import * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServicePluginContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { isInsideRange } from '../utils/common';
+import { errorMarkups } from './validation';
 
 export function register(context: LanguageServicePluginContext) {
 
-	return (uri: string, position: vscode.Position, token = vscode.CancellationToken.None) => {
+	return async (uri: string, position: vscode.Position, token = vscode.CancellationToken.None) => {
 
-		return languageFeatureWorker(
+		let hover = await languageFeatureWorker(
 			context,
 			uri,
 			position,
@@ -31,10 +32,40 @@ export function register(context: LanguageServicePluginContext) {
 				}
 			},
 			hovers => ({
-				contents: hovers.map(getHoverTexts).flat(),
+				contents: {
+					kind: vscode.MarkupKind.Markdown,
+					value: hovers.map(getHoverTexts).flat().join('\n\n---\n\n'),
+				},
 				range: hovers.find(hover => hover.range && isInsideRange(hover.range, { start: position, end: position }))?.range ?? hovers[0].range,
 			}),
 		);
+
+		const markups = errorMarkups[uri];
+		if (markups) {
+			for (const errorAndMarkup of markups) {
+				if (isInsideRange(errorAndMarkup.error.range, { start: position, end: position })) {
+					hover ??= {
+						contents: {
+							kind: vscode.MarkupKind.Markdown,
+							value: '',
+						},
+					};
+					hover.range = errorAndMarkup.error.range;
+					if (!vscode.MarkupContent.is(hover.contents)) {
+						hover.contents = {
+							kind: vscode.MarkupKind.Markdown,
+							value: hover.contents as string,
+						};
+					}
+					if (hover.contents.value) {
+						hover.contents.value += '\n\n---\n\n';
+					}
+					hover.contents.value += errorAndMarkup.markup.value;
+				}
+			}
+		}
+
+		return hover;
 	};
 }
 

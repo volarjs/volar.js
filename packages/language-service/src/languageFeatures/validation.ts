@@ -123,6 +123,11 @@ type CacheMap = Map<
 	>
 >;
 
+export const errorMarkups: Record<string, {
+	error: vscode.Diagnostic,
+	markup: vscode.MarkupContent,
+}[]> = {};
+
 export function register(context: LanguageServicePluginContext) {
 
 	const lastResponses = new Map<
@@ -196,30 +201,40 @@ export function register(context: LanguageServicePluginContext) {
 
 		if (mode === 'all' || mode === 'syntactic') {
 			await lintWorker('onFormat', cacheMaps.format_rules, lastResponse.format_rules);
-			doResponse();
+			await doResponse();
 			await lintWorker('onSyntax', cacheMaps.syntax_rules, lastResponse.syntax_rules);
-			doResponse();
+			await doResponse();
 			await worker('provideSyntacticDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
-			doResponse();
+			await doResponse();
 		}
 
 		if (mode === 'all' || mode === 'semantic') {
 			await lintWorker('onSemantic', cacheMaps.semantic_rules, lastResponse.semantic_rules);
-			doResponse();
+			await doResponse();
 			await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
 		}
 
-		return collectErrors();
+		return await collectErrors();
 
-		function doResponse() {
+		async function doResponse() {
 			if (errorsUpdated && !updateCacheRangeFailed) {
-				response?.(collectErrors());
+				response?.(await collectErrors());
 				errorsUpdated = false;
 			}
 		}
 
-		function collectErrors() {
-			return Object.values(lastResponse).flatMap(({ errors }) => errors);
+		async function collectErrors() {
+			const errors = Object.values(lastResponse).flatMap(({ errors }) => errors);
+			errorMarkups[uri] = [];
+			for (const error of errors) {
+				for (const plugin of Object.values(context.plugins)) {
+					const markup = await plugin.provideDiagnosticMarkupContent?.(error, token);
+					if (markup) {
+						errorMarkups[uri].push({ error, markup });
+					}
+				}
+			}
+			return errors;
 		}
 
 		async function lintWorker(
@@ -305,7 +320,7 @@ export function register(context: LanguageServicePluginContext) {
 							},
 							ruleFixIndex: index,
 							documentUri: ruleCtx.document.uri,
-						}satisfies PluginDiagnosticData;
+						} satisfies PluginDiagnosticData;
 					});
 
 					errorsUpdated = true;
@@ -385,7 +400,7 @@ export function register(context: LanguageServicePluginContext) {
 							},
 							ruleFixIndex: 0,
 							documentUri: document.uri,
-						}satisfies PluginDiagnosticData;
+						} satisfies PluginDiagnosticData;
 					});
 
 					errorsUpdated = true;
