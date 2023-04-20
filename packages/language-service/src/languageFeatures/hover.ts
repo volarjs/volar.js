@@ -69,8 +69,8 @@ export function register(context: LanguageServicePluginContext) {
 	};
 }
 
-function getHoverTexts(hover?: vscode.Hover) {
-	if (!hover) {
+function getHoverTexts(hover: vscode.Hover): string[] {
+	if (!hover.contents) {
 		return [];
 	}
 	if (typeof hover.contents === 'string') {
@@ -80,7 +80,12 @@ function getHoverTexts(hover?: vscode.Hover) {
 		return [hover.contents.value];
 	}
 	if (Array.isArray(hover.contents)) {
-		return hover.contents;
+		return hover.contents.map(content => {
+			if (typeof content === 'string') {
+				return content;
+			}
+			return `\`\`\`${content.language}\n${content.value}\n\`\`\``;
+		});
 	}
-	return [hover.contents.value];
+	return [`\`\`\`${hover.contents.language}\n${hover.contents.value}\n\`\`\``];
 }
