@@ -115,6 +115,16 @@ export function register(
 				}
 
 				if (context.documents.isVirtualFileUri(link.targetUri) && !foundTargetSelectionRange) {
+					for (const [_, targetMap] of context.documents.getMapsByVirtualFileUri(link.targetUri)) {
+						if (targetMap && targetMap.sourceFileDocument.uri !== uri) {
+							return {
+								...link,
+								targetUri: targetMap.sourceFileDocument.uri,
+								targetRange: vscode.Range.create(0, 0, 0, 0),
+								targetSelectionRange: vscode.Range.create(0, 0, 0, 0),
+							};
+						}
+					}
 					return;
 				}
 
