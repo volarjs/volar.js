@@ -70,9 +70,6 @@ export function register(context: LanguageServicePluginContext) {
 }
 
 function getHoverTexts(hover: vscode.Hover): string[] {
-	if (!hover.contents) {
-		return [];
-	}
 	if (typeof hover.contents === 'string') {
 		return [hover.contents];
 	}

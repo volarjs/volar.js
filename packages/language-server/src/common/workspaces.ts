@@ -150,11 +150,16 @@ export function createWorkspaces(context: WorkspacesContext) {
 		const project = (await getProjectAndTsConfig(uri))?.project;
 		if (!project) return;
 
+		// fix https://github.com/vuejs/language-tools/issues/2627
+		if (context.initOptions.serverMode === ServerMode.Syntactic) {
+			return;
+		}
+		// const mode = context.initOptions.serverMode === ServerMode.PartialSemantic ? 'semantic' as const
+		// 	: context.initOptions.serverMode === ServerMode.Syntactic ? 'syntactic' as const
+		// 		: 'all' as const;
+
 		const languageService = project.getLanguageService();
-		const mode = context.initOptions.serverMode === ServerMode.PartialSemantic ? 'semantic' as const
-			: context.initOptions.serverMode === ServerMode.Syntactic ? 'syntactic' as const
-				: 'all' as const;
-		const errors = await languageService.doValidation(uri, mode, cancel, result => {
+		const errors = await languageService.doValidation(uri, 'all', cancel, result => {
 			context.server.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});
 
