@@ -133,7 +133,7 @@ function resolveWorkspaceTsdk(tsdk: path.OsPath | path.PosixPath) {
 	if (path.isAbsolute(tsdk)) {
 		try {
 			if (require.resolve('./typescript.js', { paths: [tsdk] })) {
-				return tsdk;
+				return tsdk.replace(/\\/g, '/') as path.PosixPath;
 			}
 		} catch { }
 	}
@@ -142,7 +142,7 @@ function resolveWorkspaceTsdk(tsdk: path.OsPath | path.PosixPath) {
 		const _path = path.join(folder, tsdk);
 		try {
 			if (require.resolve('./typescript.js', { paths: [_path] })) {
-				return _path;
+				return _path.replace(/\\/g, '/') as path.PosixPath;
 			}
 		} catch { }
 	}
