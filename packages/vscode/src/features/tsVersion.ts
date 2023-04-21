@@ -100,7 +100,7 @@ export async function activate(
 	}
 
 	async function reloadServers() {
-		const tsPaths = getTsdk(context);
+		const tsPaths = await getTsdk(context);
 		const newInitOptions: LanguageServerInitializationOptions = {
 			...client.clientOptions.initializationOptions,
 			typescript: tsPaths,
@@ -152,10 +152,13 @@ async function getVScodeTsdk() {
 
 	const nightly = vscode.extensions.getExtension('ms-vscode.vscode-typescript-next');
 	if (nightly) {
-		const path = nightly.extensionPath.toString() + '/node_modules/typescript/lib';
+		const libPath = path.join(
+			nightly.extensionPath as path.OsPath,
+			'extensions/node_modules/typescript/lib' as path.PosixPath,
+		).replace(/\\/g, '/') as path.PosixPath;
 		return {
-			path,
-			version: await getTsVersion(path),
+			path: libPath,
+			version: await getTsVersion(libPath),
 			isWeb: false,
 		};
 	}
@@ -164,7 +167,7 @@ async function getVScodeTsdk() {
 		const libPath = path.join(
 			vscode.env.appRoot as path.OsPath,
 			'extensions/node_modules/typescript/lib' as path.PosixPath,
-		);
+		).replace(/\\/g, '/') as path.PosixPath;
 		return {
 			path: libPath,
 			version: await getTsVersion(libPath),
