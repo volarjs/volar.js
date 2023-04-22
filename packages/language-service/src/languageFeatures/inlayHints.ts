@@ -84,7 +84,7 @@ export function register(context: LanguageServicePluginContext) {
 				if (!map)
 					return _inlayHint;
 
-				const position = map.toSourcePosition(_inlayHint.position);
+				const position = map.toSourcePosition(_inlayHint.position, data => !!data.semanticTokens /* todo */);
 				const edits = _inlayHint.textEdits
 					?.map(textEdit => transformer.asTextEdit(textEdit, range => map!.toSourceRange(range), map.virtualFileDocument))
 					.filter(notEmpty);
