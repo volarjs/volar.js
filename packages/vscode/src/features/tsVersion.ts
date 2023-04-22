@@ -154,7 +154,7 @@ async function getVScodeTsdk() {
 	if (nightly) {
 		const libPath = path.join(
 			nightly.extensionPath as path.OsPath,
-			'extensions/node_modules/typescript/lib' as path.PosixPath,
+			'node_modules/typescript/lib' as path.PosixPath,
 		).replace(/\\/g, '/') as path.PosixPath;
 		return {
 			path: libPath,
