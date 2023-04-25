@@ -9,7 +9,7 @@ import { DocumentsAndSourceMaps } from './documents';
 
 export * from 'vscode-languageserver-protocol';
 
-export interface LanguageServiceOptions {
+export interface ServiceOptions {
 	// InitializeParams
 	modules: {
 		typescript?: typeof import('typescript/lib/tsserverlibrary');
@@ -40,7 +40,7 @@ export interface Commands {
 	createSetSelectionCommand(position: vscode.Position): vscode.Command | undefined;
 }
 
-export interface ServiceContext extends LanguageServiceOptions {
+export interface ServiceContext extends ServiceOptions {
 
 	typescript: {
 		module: typeof import('typescript/lib/tsserverlibrary');

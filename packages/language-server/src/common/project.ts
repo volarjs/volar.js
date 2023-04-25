@@ -1,6 +1,6 @@
 import * as embedded from '@volar/language-core';
 import * as embeddedLS from '@volar/language-service';
-import { LanguageServiceOptions } from '@volar/language-service';
+import { ServiceOptions } from '@volar/language-service';
 import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as html from 'vscode-html-languageservice';
@@ -90,7 +90,7 @@ export async function createProject(context: ProjectContext) {
 					context.workspace.workspaces.initOptions.configFilePath,
 				) : {}
 			) ?? {};
-			const options: LanguageServiceOptions = {
+			const options: ServiceOptions = {
 				modules: { typescript: context.workspace.workspaces.ts },
 				uriToFileName,
 				fileNameToUri,
@@ -318,8 +318,8 @@ function createParsedCommandLine(
 }
 
 function getDocumentContext(
-	fileNameToUri: LanguageServiceOptions['fileNameToUri'],
-	uriToFileName: LanguageServiceOptions['uriToFileName'],
+	fileNameToUri: ServiceOptions['fileNameToUri'],
+	uriToFileName: ServiceOptions['uriToFileName'],
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
 	host: ts.LanguageServiceHost | undefined,
 	rootUri: string,

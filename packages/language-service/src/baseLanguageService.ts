@@ -26,7 +26,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { ServiceContext, LanguageServiceOptions } from './types';
+import { ServiceContext, ServiceOptions } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -44,7 +44,7 @@ import { notEmpty, resolveCommonLanguageId } from './utils/common';
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
 export function createLanguageService(
-	ctx: LanguageServiceOptions,
+	ctx: ServiceOptions,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 	const languageContext = createLanguageContext(ctx.host, ctx.modules, Object.values(ctx.config.languages ?? {}).filter(notEmpty));
@@ -53,7 +53,7 @@ export function createLanguageService(
 }
 
 function createLanguageServicePluginContext(
-	ctx: LanguageServiceOptions,
+	ctx: ServiceOptions,
 	languageContext: ReturnType<typeof createLanguageContext>,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
