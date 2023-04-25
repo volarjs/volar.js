@@ -34,10 +34,9 @@ interface FileSystemHost {
 	onDidChangeWatchedFiles(cb: (params: vscode.DidChangeWatchedFilesParams) => void): () => void,
 }
 
-export interface Commands {
-	createShowReferencesCommand(uri: string, position: vscode.Position, locations: vscode.Location[]): vscode.Command | undefined;
-	createRenameCommand(uri: string, position: vscode.Position): vscode.Command | undefined;
-	createSetSelectionCommand(position: vscode.Position): vscode.Command | undefined;
+interface Command<T> {
+	create: T;
+	is(value: vscode.Command): boolean;
 }
 
 export interface ServiceContext extends ServiceOptions {
@@ -47,7 +46,12 @@ export interface ServiceContext extends ServiceOptions {
 		languageServiceHost: ts.LanguageServiceHost;
 		languageService: ts.LanguageService;
 	} | undefined;
-	commands: Commands;
+
+	commands: {
+		showReferences: Command<(uri: string, position: vscode.Position, locations: vscode.Location[]) => vscode.Command | undefined>;
+		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;
+		setSelection: Command<(position: vscode.Position) => vscode.Command | undefined>;
+	};
 
 	/** @private */
 	core: LanguageContext;

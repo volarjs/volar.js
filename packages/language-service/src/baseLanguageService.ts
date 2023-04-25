@@ -112,58 +112,73 @@ function createLanguageServicePluginContext(
 		} : undefined,
 		documents: textDocumentMapper,
 		commands: {
-			createRenameCommand(uri, position) {
-				const source = toSourceLocation(uri, position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename);
-				if (!source) {
-					return;
-				}
-				return vscode.Command.create(
-					'',
-					'editor.action.rename',
-					source.uri,
-					source.position,
-				);
+			rename: {
+				create(uri, position) {
+					const source = toSourceLocation(uri, position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename);
+					if (!source) {
+						return;
+					}
+					return vscode.Command.create(
+						'',
+						'editor.action.rename',
+						source.uri,
+						source.position,
+					);
+				},
+				is(command) {
+					return command.command === 'editor.action.rename';
+				},
 			},
-			createShowReferencesCommand(uri, position, locations) {
-				const source = toSourceLocation(uri, position);
-				if (!source) {
-					return;
-				}
-				const sourceReferences: vscode.Location[] = [];
-				for (const reference of locations) {
-					if (context.documents.isVirtualFileUri(reference.uri)) {
-						for (const [_, map] of context.documents.getMapsByVirtualFileUri(reference.uri)) {
-							const range = map.toSourceRange(reference.range);
-							if (range) {
-								sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
+			showReferences: {
+				create(uri, position, locations) {
+					const source = toSourceLocation(uri, position);
+					if (!source) {
+						return;
+					}
+					const sourceReferences: vscode.Location[] = [];
+					for (const reference of locations) {
+						if (context.documents.isVirtualFileUri(reference.uri)) {
+							for (const [_, map] of context.documents.getMapsByVirtualFileUri(reference.uri)) {
+								const range = map.toSourceRange(reference.range);
+								if (range) {
+									sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
+								}
 							}
 						}
+						else {
+							sourceReferences.push(reference);
+						}
 					}
-					else {
-						sourceReferences.push(reference);
-					}
-				}
-				return vscode.Command.create(
-					locations.length === 1 ? '1 reference' : `${locations.length} references`,
-					'editor.action.showReferences',
-					source.uri,
-					source.position,
-					sourceReferences,
-				);
+					return vscode.Command.create(
+						locations.length === 1 ? '1 reference' : `${locations.length} references`,
+						'editor.action.showReferences',
+						source.uri,
+						source.position,
+						sourceReferences,
+					);
+				},
+				is(command) {
+					return command.command === 'editor.action.showReferences';
+				},
 			},
-			createSetSelectionCommand(position: vscode.Position) {
-				return vscode.Command.create(
-					'',
-					'setSelection',
-					{
-						selection: {
-							selectionStartLineNumber: position.line + 1,
-							positionLineNumber: position.line + 1,
-							selectionStartColumn: position.character + 1,
-							positionColumn: position.character + 1,
+			setSelection: {
+				create(position: vscode.Position) {
+					return vscode.Command.create(
+						'',
+						'setSelection',
+						{
+							selection: {
+								selectionStartLineNumber: position.line + 1,
+								positionLineNumber: position.line + 1,
+								selectionStartColumn: position.character + 1,
+								positionColumn: position.character + 1,
+							},
 						},
-					},
-				);
+					);
+				},
+				is(command) {
+					return command.command === 'setSelection';
+				}
 			},
 		},
 		getTextDocument,

@@ -34,7 +34,7 @@ export function register(context: ServiceContext) {
 				references = await plugin.resolveReferencesCodeLensLocations(document, data.range, references, token);
 			}
 
-			item.command = context.commands.createShowReferencesCommand(data.uri, data.range.start, references);
+			item.command = context.commands.showReferences.create(data.uri, data.range.start, references);
 		}
 
 		return item;
