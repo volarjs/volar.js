@@ -26,7 +26,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { ServiceContext, ServiceOptions } from './types';
+import { ServiceContext, ServiceEnvironment } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -44,7 +44,7 @@ import { notEmpty, resolveCommonLanguageId } from './utils/common';
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
 export function createLanguageService(
-	ctx: ServiceOptions,
+	ctx: ServiceEnvironment,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 	const languageContext = createLanguageContext(ctx.host, ctx.modules, Object.values(ctx.config.languages ?? {}).filter(notEmpty));
@@ -53,11 +53,11 @@ export function createLanguageService(
 }
 
 function createLanguageServicePluginContext(
-	ctx: ServiceOptions,
+	env: ServiceEnvironment,
 	languageContext: ReturnType<typeof createLanguageContext>,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const ts = ctx.modules.typescript;
+	const ts = env.modules.typescript;
 	let tsLs: ts.LanguageService | undefined;
 
 	if (ts) {
@@ -65,17 +65,17 @@ function createLanguageServicePluginContext(
 			ts,
 			languageContext.typescript.languageServiceHost,
 			proxiedHost => ts.createLanguageService(proxiedHost, documentRegistry),
-			ctx.rootUri.path,
+			env.rootUri.path,
 		);
 		tsLs = created.languageService;
 
-		if (created.setPreferences && ctx.getConfiguration) {
+		if (created.setPreferences && env.getConfiguration) {
 
 			updatePreferences();
-			ctx.onDidChangeConfiguration?.(updatePreferences);
+			env.onDidChangeConfiguration?.(updatePreferences);
 
 			async function updatePreferences() {
-				const preferences = await ctx.getConfiguration?.<ts.UserPreferences>('typescript.preferences');
+				const preferences = await env.getConfiguration?.<ts.UserPreferences>('typescript.preferences');
 				if (preferences) {
 					created.setPreferences?.(preferences);
 				}
@@ -83,26 +83,26 @@ function createLanguageServicePluginContext(
 		}
 
 		if (created.projectUpdated) {
-			let scriptFileNames = new Set(ctx.host.getScriptFileNames());
-			ctx.fileSystemHost?.onDidChangeWatchedFiles((params) => {
+			let scriptFileNames = new Set(env.host.getScriptFileNames());
+			env.onDidChangeWatchedFiles?.((params) => {
 				if (params.changes.some(change => change.type !== vscode.FileChangeType.Changed)) {
-					scriptFileNames = new Set(ctx.host.getScriptFileNames());
+					scriptFileNames = new Set(env.host.getScriptFileNames());
 				}
 
 				for (const change of params.changes) {
-					if (scriptFileNames.has(ctx.uriToFileName(change.uri))) {
-						created.projectUpdated?.(ctx.uriToFileName(context.rootUri.fsPath));
+					if (scriptFileNames.has(env.uriToFileName(change.uri))) {
+						created.projectUpdated?.(env.uriToFileName(env.rootUri.fsPath));
 					}
 				}
 			});
 		}
 	}
 
-	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);
+	const textDocumentMapper = createDocumentsAndSourceMaps(env, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
 	const context: ServiceContext = {
-		...ctx,
+		env: env,
 		core: languageContext,
 		plugins: {},
 		typescript: ts && tsLs ? {
@@ -184,8 +184,8 @@ function createLanguageServicePluginContext(
 		getTextDocument,
 	};
 
-	for (const serviceId in ctx.config.services ?? {}) {
-		const service = ctx.config.services?.[serviceId];
+	for (const serviceId in env.config.services ?? {}) {
+		const service = env.config.services?.[serviceId];
 		if (service) {
 			context.plugins[serviceId] = service(context);
 		}
@@ -213,8 +213,8 @@ function createLanguageServicePluginContext(
 
 	function getTextDocument(uri: string) {
 
-		const fileName = ctx.uriToFileName(uri);
-		const scriptSnapshot = ctx.host.getScriptSnapshot(fileName);
+		const fileName = env.uriToFileName(uri);
+		const scriptSnapshot = env.host.getScriptSnapshot(fileName);
 
 		if (scriptSnapshot) {
 
@@ -228,7 +228,7 @@ function createLanguageServicePluginContext(
 
 				document = TextDocument.create(
 					uri,
-					ctx.host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
+					env.host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 					newVersion,
 					scriptSnapshot.getText(0, scriptSnapshot.getLength()),
 				);

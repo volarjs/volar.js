@@ -141,15 +141,7 @@ export async function ruleWorker<T>(
 			}
 
 			let ruleCtx: RuleContext = {
-				// project context
-				modules: { typescript: context.typescript?.module },
-				uriToFileName: context.uriToFileName,
-				fileNameToUri: context.fileNameToUri,
-				rootUri: context.rootUri,
-				locale: context.locale,
-				getConfiguration: context.getConfiguration,
-				onDidChangeConfiguration: context.onDidChangeConfiguration,
-				settings: context.config.lint?.settings ?? {},
+				env: context.env,
 				// document context
 				ruleId: '',
 				document: map.virtualFileDocument,
@@ -170,9 +162,9 @@ export async function ruleWorker<T>(
 				}
 			}
 
-			for (const ruleName in context.config.lint?.rules) {
+			for (const ruleName in context.env.config.lint?.rules) {
 
-				const rule = context.config.lint?.rules[ruleName];
+				const rule = context.env.config.lint?.rules[ruleName];
 				if (!rule) {
 					continue;
 				}
@@ -207,15 +199,7 @@ export async function ruleWorker<T>(
 	else if (document) {
 
 		let ruleCtx: RuleContext = {
-			// project context
-			modules: { typescript: context.typescript?.module },
-			uriToFileName: context.uriToFileName,
-			fileNameToUri: context.fileNameToUri,
-			rootUri: context.rootUri,
-			locale: context.locale,
-			getConfiguration: context.getConfiguration,
-			onDidChangeConfiguration: context.onDidChangeConfiguration,
-			settings: context.config.lint?.settings ?? {},
+			env: context.env,
 			// document context
 			ruleId: '',
 			document,
@@ -236,9 +220,9 @@ export async function ruleWorker<T>(
 			}
 		}
 
-		for (const ruleName in context.config.lint?.rules) {
+		for (const ruleName in context.env.config.lint?.rules) {
 
-			const rule = context.config.lint?.rules[ruleName];
+			const rule = context.env.config.lint?.rules[ruleName];
 			if (!rule) {
 				continue;
 			}

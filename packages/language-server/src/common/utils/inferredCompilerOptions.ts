@@ -1,7 +1,7 @@
-import { ServiceContext } from '@volar/language-service';
+import { ServiceEnvironment } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
-export async function getInferredCompilerOptions(ctx: Pick<ServiceContext, 'getConfiguration' | 'onDidChangeConfiguration'> | undefined) {
+export async function getInferredCompilerOptions(ctx: Pick<ServiceEnvironment, 'getConfiguration' | 'onDidChangeConfiguration'> | undefined) {
 
 	let [implicitProjectConfig_1, implicitProjectConfig_2] = await Promise.all([
 		ctx?.getConfiguration?.<any>('js/ts.implicitProjectConfig'),

@@ -167,7 +167,7 @@ export function register(context: ServiceContext) {
 			syntax_rules: { errors: [] },
 			format_rules: { errors: [] },
 		}).get(uri)!;
-		const newSnapshot = context.host.getScriptSnapshot(context.uriToFileName(uri));
+		const newSnapshot = context.env.host.getScriptSnapshot(context.env.uriToFileName(uri));
 
 		let updateCacheRangeFailed = false;
 		let errorsUpdated = false;
@@ -287,7 +287,7 @@ export function register(context: ServiceContext) {
 						error.source ||= 'rules';
 						error.code ||= ruleCtx.ruleId;
 
-						const severity = context.config.lint?.severities?.[ruleCtx.ruleId];
+						const severity = context.env.config.lint?.severities?.[ruleCtx.ruleId];
 						if (severity !== undefined) {
 							error.severity = severity;
 						}

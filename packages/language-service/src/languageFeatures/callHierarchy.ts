@@ -186,7 +186,7 @@ export function register(context: ServiceContext) {
 			const vueRanges = tsRanges.map(tsRange => map.toSourceRange(tsRange)).filter(notEmpty);
 			const vueItem: vscode.CallHierarchyItem = {
 				...tsItem,
-				name: tsItem.name === path.basename(context.uriToFileName(map.virtualFileDocument.uri)) ? path.basename(context.uriToFileName(map.sourceFileDocument.uri)) : tsItem.name,
+				name: tsItem.name === path.basename(context.env.uriToFileName(map.virtualFileDocument.uri)) ? path.basename(context.env.uriToFileName(map.sourceFileDocument.uri)) : tsItem.name,
 				uri: map.sourceFileDocument.uri,
 				// TS Bug: `range: range` not works
 				range: {

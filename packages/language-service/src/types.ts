@@ -9,29 +9,24 @@ import { DocumentsAndSourceMaps } from './documents';
 
 export * from 'vscode-languageserver-protocol';
 
-export interface ServiceOptions {
+export interface ServiceEnvironment {
 	// InitializeParams
 	modules: {
 		typescript?: typeof import('typescript/lib/tsserverlibrary');
 	};
 	locale?: string;
 	rootUri: URI;
-	capabilities?: vscode.ClientCapabilities;
-
+	clientCapabilities?: vscode.ClientCapabilities;
 	host: LanguageServiceHost;
 	config: Config;
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
-	getConfiguration?: (<T> (section: string, scopeUri?: string) => Promise<T | undefined>),
-	onDidChangeConfiguration?: (cb: () => void) => void,
+	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>,
+	onDidChangeConfiguration?(cb: () => void): void,
+	onDidChangeWatchedFiles?(cb: (params: vscode.DidChangeWatchedFilesParams) => void): () => void,
 	documentContext?: DocumentContext;
 	fileSystemProvider?: FileSystemProvider;
-	fileSystemHost?: FileSystemHost;
 	schemaRequestService?: SchemaRequestService;
-}
-
-interface FileSystemHost {
-	onDidChangeWatchedFiles(cb: (params: vscode.DidChangeWatchedFilesParams) => void): () => void,
 }
 
 interface Command<T> {
@@ -39,7 +34,9 @@ interface Command<T> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface ServiceContext extends ServiceOptions {
+export interface ServiceContext {
+
+	env: ServiceEnvironment;
 
 	typescript: {
 		module: typeof import('typescript/lib/tsserverlibrary');
@@ -144,34 +141,7 @@ export interface Rule {
 }
 
 export interface RuleContext {
-	/**
-	 * Shared modules.
-	 */
-	modules: {
-		typescript?: typeof import('typescript/lib/tsserverlibrary');
-	},
-	/**
-	 * IDE or user define locale.
-	 * You can use it to localize your rule.
-	 */
-	locale?: string;
-	/**
-	 * Project root path.
-	 */
-	rootUri: URI;
-	uriToFileName(uri: string): string;
-	fileNameToUri(fileName: string): string;
-	/**
-	 * Get configuration from IDE.
-	 * 
-	 * For VSCode, it's .vscode/settings.json
-	 */
-	getConfiguration?: <T> (section: string) => Promise<T | undefined>;
-	onDidChangeConfiguration?: (cb: () => void) => void;
-	/**
-	 * Global settings from config.
-	 */
-	settings: any;
+	env: ServiceEnvironment;
 	ruleId: string;
 	document: TextDocument;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;

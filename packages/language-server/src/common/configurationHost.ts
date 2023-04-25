@@ -1,7 +1,7 @@
-import { ServiceContext } from '@volar/language-service';
+import { ServiceEnvironment } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 
-export function createConfigurationHost(params: vscode.InitializeParams, connection: vscode.Connection): Pick<ServiceContext, 'getConfiguration' | 'onDidChangeConfiguration'> & { ready(): void; } {
+export function createConfigurationHost(params: vscode.InitializeParams, connection: vscode.Connection): Pick<ServiceEnvironment, 'getConfiguration' | 'onDidChangeConfiguration'> & { ready(): void; } {
 
 	const callbacks: (() => void)[] = [];
 	const cache = new Map<string, any>();

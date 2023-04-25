@@ -1,6 +1,6 @@
 import * as embedded from '@volar/language-core';
 import * as embeddedLS from '@volar/language-service';
-import { ServiceOptions } from '@volar/language-service';
+import { ServiceEnvironment } from '@volar/language-service';
 import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as html from 'vscode-html-languageservice';
@@ -90,21 +90,28 @@ export async function createProject(context: ProjectContext) {
 					context.workspace.workspaces.initOptions.configFilePath,
 				) : {}
 			) ?? {};
-			const options: ServiceOptions = {
+			for (const plugin of context.workspace.workspaces.plugins) {
+				if (plugin.resolveConfig) {
+					config = plugin.resolveConfig(config, {
+						project: context,
+						sys,
+						host: languageServiceHost,
+					});
+				}
+			}
+			languageService = embeddedLS.createLanguageService({
 				modules: { typescript: context.workspace.workspaces.ts },
 				uriToFileName,
 				fileNameToUri,
 				locale: context.workspace.workspaces.initParams.locale,
 				rootUri: context.rootUri,
-				capabilities: context.workspace.workspaces.initParams.capabilities,
+				clientCapabilities: context.workspace.workspaces.initParams.capabilities,
 				host: languageServiceHost,
-				get config() {
-					return config;
-				},
+				config,
 				getConfiguration: context.workspace.workspaces.configurationHost?.getConfiguration,
 				onDidChangeConfiguration: context.workspace.workspaces.configurationHost?.onDidChangeConfiguration,
 				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
-				fileSystemHost: context.workspace.workspaces.fileSystemHost,
+				onDidChangeWatchedFiles: context.workspace.workspaces.fileSystemHost?.onDidChangeWatchedFiles,
 				documentContext: getDocumentContext(fileNameToUri, uriToFileName, context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
 				schemaRequestService: async uri => {
 					const protocol = uri.substring(0, uri.indexOf(':'));
@@ -114,18 +121,7 @@ export async function createProject(context: ProjectContext) {
 					}
 					return '';
 				},
-			};
-			for (const plugin of context.workspace.workspaces.plugins) {
-				if (plugin.resolveConfig) {
-					config = plugin.resolveConfig(config, {
-						project: context,
-						options,
-						sys,
-						host: languageServiceHost,
-					});
-				}
-			}
-			languageService = embeddedLS.createLanguageService(options, context.documentRegistry);
+			}, context.documentRegistry);
 		}
 		return languageService;
 	}
@@ -317,8 +313,8 @@ function createParsedCommandLine(
 }
 
 function getDocumentContext(
-	fileNameToUri: ServiceOptions['fileNameToUri'],
-	uriToFileName: ServiceOptions['uriToFileName'],
+	fileNameToUri: ServiceEnvironment['fileNameToUri'],
+	uriToFileName: ServiceEnvironment['uriToFileName'],
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
 	host: ts.LanguageServiceHost | undefined,
 	rootUri: string,

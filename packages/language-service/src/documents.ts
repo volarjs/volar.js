@@ -3,7 +3,7 @@ import { Mapping, SourceMap } from '@volar/source-map';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { ServiceOptions } from './types';
+import { ServiceEnvironment } from './types';
 import { resolveCommonLanguageId } from './utils/common';
 
 export type DocumentsAndSourceMaps = ReturnType<typeof createDocumentsAndSourceMaps>;
@@ -167,7 +167,7 @@ export class MirrorMapWithDocument extends SourceMapWithDocuments<[MirrorBehavio
 }
 
 export function createDocumentsAndSourceMaps(
-	ctx: ServiceOptions,
+	ctx: ServiceEnvironment,
 	mapper: VirtualFiles,
 ) {
 

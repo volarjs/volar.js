@@ -30,7 +30,7 @@ export function register(context: ServiceContext) {
 				: (await tryFormat(document, range, undefined))?.edits;
 		}
 
-		const initialIndentLanguageId = await context.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
+		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 		const originalSnapshot = source.snapshot;
 		const rootVirtualFile = source.root;
 		const originalDocument = document;
@@ -111,7 +111,7 @@ export function register(context: ServiceContext) {
 			if (edits.length > 0) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-				context.core.virtualFiles.updateSource(context.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
+				context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
 				edited = true;
 			}
 
@@ -177,7 +177,7 @@ export function register(context: ServiceContext) {
 						if (indentEdits.length > 0) {
 							const newText = TextDocument.applyEdits(document, indentEdits);
 							document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-							context.core.virtualFiles.updateSource(context.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
+							context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
 							edited = true;
 						}
 					}
@@ -187,7 +187,7 @@ export function register(context: ServiceContext) {
 
 		if (edited) {
 			// recover
-			context.core.virtualFiles.updateSource(context.uriToFileName(document.uri), originalSnapshot, undefined);
+			context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), originalSnapshot, undefined);
 		}
 
 		if (document.getText() === originalDocument.getText())
