@@ -2,7 +2,7 @@ import * as path from 'typesafe-path';
 import * as vscode from 'vscode';
 import { BaseLanguageClient } from 'vscode-languageclient';
 import { quickPick } from '../common';
-import { LanguageServerInitializationOptions } from '@volar/language-server';
+import { InitializationOptions } from '@volar/language-server';
 
 const defaultTsdkPath = 'node_modules/typescript/lib' as path.PosixPath;
 
@@ -101,7 +101,7 @@ export async function activate(
 
 	async function reloadServers() {
 		const tsPaths = await getTsdk(context);
-		const newInitOptions: LanguageServerInitializationOptions = {
+		const newInitOptions: InitializationOptions = {
 			...client.clientOptions.initializationOptions,
 			typescript: tsPaths,
 		};

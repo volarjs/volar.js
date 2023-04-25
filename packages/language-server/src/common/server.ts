@@ -2,7 +2,7 @@ import { Config, standardSemanticTokensLegend } from '@volar/language-service';
 import * as l10n from '@vscode/l10n';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { FileSystemHost, LanguageServerInitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types';
+import { FileSystemHost, InitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types';
 import { createCancellationTokenHost } from './cancellationPipe';
 import { createConfigurationHost } from './configurationHost';
 import { createDocuments } from './documents';
@@ -16,10 +16,10 @@ export interface ServerContext {
 	plugins: LanguageServerPlugin[],
 }
 
-export function startCommonLanguageServer(connection: vscode.Connection, getCtx: (initOptions: LanguageServerInitializationOptions) => ServerContext) {
+export function startCommonLanguageServer(connection: vscode.Connection, getCtx: (initOptions: InitializationOptions) => ServerContext) {
 
 	let initParams: vscode.InitializeParams;
-	let options: LanguageServerInitializationOptions;
+	let options: InitializationOptions;
 	let roots: URI[] = [];
 	let fsHost: FileSystemHost | undefined;
 	let projects: ReturnType<typeof createWorkspaces> | undefined;

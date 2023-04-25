@@ -2,7 +2,7 @@ import { ServiceContext } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, FileSystemHost, LanguageServerInitializationOptions, LanguageServerPlugin, ServerMode } from '../types';
+import { DiagnosticModel, FileSystemHost, InitializationOptions, LanguageServerPlugin, ServerMode } from '../types';
 import { CancellationTokenHost } from './cancellationPipe';
 import { createDocuments } from './documents';
 import { ServerContext } from './server';
@@ -13,7 +13,7 @@ import * as path from 'typesafe-path';
 export interface WorkspacesContext {
 	server: ServerContext;
 	initParams: vscode.InitializeParams,
-	initOptions: LanguageServerInitializationOptions,
+	initOptions: InitializationOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
 	tsLocalized: ts.MapLike<string> | undefined,

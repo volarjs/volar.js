@@ -1,10 +1,10 @@
-import { DiagnosticModel, LanguageServerPlugin, LanguageServerInitializationOptions, ServerMode } from '../../types';
+import { DiagnosticModel, LanguageServerPlugin, InitializationOptions, ServerMode } from '../../types';
 import * as vscode from 'vscode-languageserver';
 import { Config } from '@volar/language-service';
 
 export function setupCapabilities(
 	server: vscode.ServerCapabilities,
-	initOptions: LanguageServerInitializationOptions,
+	initOptions: InitializationOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],
 	semanticTokensLegend: vscode.SemanticTokensLegend,
 	services: NonNullable<Config['services']>,
