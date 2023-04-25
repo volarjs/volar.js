@@ -44,11 +44,11 @@ import { notEmpty, resolveCommonLanguageId } from './utils/common';
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
 export function createLanguageService(
-	ctx: ServiceEnvironment,
+	env: ServiceEnvironment,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const languageContext = createLanguageContext(ctx.host, ctx.modules, Object.values(ctx.config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(ctx, languageContext, documentRegistry);
+	const languageContext = createLanguageContext(env.host, env.modules, Object.values(env.config.languages ?? {}).filter(notEmpty));
+	const context = createLanguageServicePluginContext(env, languageContext, documentRegistry);
 	return createLanguageServiceBase(context);
 }
 

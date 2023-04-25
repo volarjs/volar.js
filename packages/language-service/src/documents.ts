@@ -167,7 +167,7 @@ export class MirrorMapWithDocument extends SourceMapWithDocuments<[MirrorBehavio
 }
 
 export function createDocumentsAndSourceMaps(
-	ctx: ServiceEnvironment,
+	env: ServiceEnvironment,
 	mapper: VirtualFiles,
 ) {
 
@@ -179,16 +179,16 @@ export function createDocumentsAndSourceMaps(
 
 	return {
 		getSourceByUri(sourceFileUri: string) {
-			return mapper.getSource(ctx.uriToFileName(sourceFileUri));
+			return mapper.getSource(env.uriToFileName(sourceFileUri));
 		},
 		isVirtualFileUri(virtualFileUri: string) {
-			return mapper.hasVirtualFile(ctx.uriToFileName(virtualFileUri));
+			return mapper.hasVirtualFile(env.uriToFileName(virtualFileUri));
 		},
 		getVirtualFileByUri(virtualFileUri: string) {
-			return mapper.getVirtualFile(ctx.uriToFileName(virtualFileUri));
+			return mapper.getVirtualFile(env.uriToFileName(virtualFileUri));
 		},
 		getMirrorMapByUri(virtualFileUri: string) {
-			const fileName = ctx.uriToFileName(virtualFileUri);
+			const fileName = env.uriToFileName(virtualFileUri);
 			const [virtualFile] = mapper.getVirtualFile(fileName);
 			if (virtualFile) {
 				const map = mapper.getMirrorMap(virtualFile);
@@ -204,7 +204,7 @@ export function createDocumentsAndSourceMaps(
 			}
 		},
 		getMapsBySourceFileUri(uri: string) {
-			return this.getMapsBySourceFileName(ctx.uriToFileName(uri));
+			return this.getMapsBySourceFileName(env.uriToFileName(uri));
 		},
 		getMapsBySourceFileName(fileName: string) {
 			const source = mapper.getSource(fileName);
@@ -236,7 +236,7 @@ export function createDocumentsAndSourceMaps(
 			}
 		},
 		getMapsByVirtualFileUri(virtualFileUri: string) {
-			return this.getMapsByVirtualFileName(ctx.uriToFileName(virtualFileUri));
+			return this.getMapsByVirtualFileName(env.uriToFileName(virtualFileUri));
 		},
 		*getMapsByVirtualFileName(virtualFileName: string): IterableIterator<[VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>]> {
 			const [virtualFile] = mapper.getVirtualFile(virtualFileName);
@@ -259,7 +259,7 @@ export function createDocumentsAndSourceMaps(
 			}
 		},
 		getDocumentByUri(snapshot: ts.IScriptSnapshot, uri: string) {
-			return this.getDocumentByFileName(snapshot, ctx.uriToFileName(uri));
+			return this.getDocumentByFileName(snapshot, env.uriToFileName(uri));
 		},
 		getDocumentByFileName,
 	};
@@ -270,10 +270,10 @@ export function createDocumentsAndSourceMaps(
 		}
 		const map = _documents.get(snapshot)!;
 		if (!map.has(fileName)) {
-			const uri = ctx.fileNameToUri(fileName);
+			const uri = env.fileNameToUri(fileName);
 			map.set(fileName, TextDocument.create(
 				uri,
-				ctx.host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
+				env.host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 				version++,
 				snapshot.getText(0, snapshot.getLength()),
 			));
