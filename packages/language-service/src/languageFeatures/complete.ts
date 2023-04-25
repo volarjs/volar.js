@@ -2,7 +2,7 @@ import * as transformer from '../transformer';
 import type { FileRangeCapabilities } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { Service, LanguageServicePluginContext } from '../types';
+import type { Service, ServiceContext } from '../types';
 import { visitEmbedded } from '../utils/definePlugin';
 
 export interface PluginCompletionData {
@@ -12,7 +12,7 @@ export interface PluginCompletionData {
 	virtualDocumentUri: string | undefined;
 }
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	let cache: {
 		uri: string,

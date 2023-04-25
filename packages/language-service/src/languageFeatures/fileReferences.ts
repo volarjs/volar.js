@@ -1,11 +1,11 @@
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import * as vscode from 'vscode-languageserver-protocol';
 import { NullableResult } from '@volar/language-service';
 import { notEmpty } from '../utils/common';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return (uri: string, token = vscode.CancellationToken.None): NullableResult<vscode.Location[]> => {
 

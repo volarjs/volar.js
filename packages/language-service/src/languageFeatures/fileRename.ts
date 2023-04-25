@@ -1,11 +1,11 @@
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { embeddedEditToSourceEdit } from './rename';
 import type * as _ from 'vscode-languageserver-protocol';
 import * as dedupe from '../utils/dedupe';
 import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
 import * as vscode from 'vscode-languageserver-protocol';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return async (oldUri: string, newUri: string, token = vscode.CancellationToken.None) => {
 

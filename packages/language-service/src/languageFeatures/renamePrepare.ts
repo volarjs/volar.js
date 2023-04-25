@@ -1,8 +1,8 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return (uri: string, position: vscode.Position, token = vscode.CancellationToken.None) => {
 

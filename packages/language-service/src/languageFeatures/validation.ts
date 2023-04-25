@@ -3,7 +3,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
-import type { LanguageServicePluginContext, RuleContext } from '../types';
+import type { ServiceContext, RuleContext } from '../types';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers';
@@ -128,7 +128,7 @@ export const errorMarkups: Record<string, {
 	markup: vscode.MarkupContent,
 }[]> = {};
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	const lastResponses = new Map<
 		string,

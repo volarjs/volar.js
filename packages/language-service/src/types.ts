@@ -39,7 +39,7 @@ export interface Commands {
 	createSetSelectionCommand(position: vscode.Position): vscode.Command | undefined;
 }
 
-export interface LanguageServicePluginContext extends LanguageServiceOptions {
+export interface ServiceContext extends LanguageServiceOptions {
 
 	typescript: {
 		module: typeof import('typescript/lib/tsserverlibrary');
@@ -76,7 +76,7 @@ export type NullableResult<T> = Result<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
 export interface Service {
-	(context?: LanguageServicePluginContext): {
+	(context?: ServiceContext): {
 		isAdditionalCompletion?: boolean; // volar specific
 		triggerCharacters?: string[];
 		signatureHelpTriggerCharacters?: string[];

@@ -1,6 +1,6 @@
 import { posix as path } from 'path';
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
@@ -12,7 +12,7 @@ export interface PluginCallHierarchyData {
 	virtualDocumentUri: string | undefined,
 }
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return {
 

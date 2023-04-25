@@ -26,7 +26,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { LanguageServicePluginContext, LanguageServiceOptions } from './types';
+import { ServiceContext, LanguageServiceOptions } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -103,7 +103,7 @@ function createLanguageServicePluginContext(
 	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
-	const context: LanguageServicePluginContext = {
+	const context: ServiceContext = {
 		...ctx,
 		core: languageContext,
 		plugins: {},
@@ -227,7 +227,7 @@ function createLanguageServicePluginContext(
 	}
 }
 
-function createLanguageServiceBase(context: LanguageServicePluginContext) {
+function createLanguageServiceBase(context: ServiceContext) {
 
 	return {
 

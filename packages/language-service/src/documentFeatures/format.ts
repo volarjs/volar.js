@@ -1,11 +1,11 @@
 import type { VirtualFile } from '@volar/language-core';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { LanguageServicePluginContext, Service } from '../types';
+import type { ServiceContext, Service } from '../types';
 import { SourceMap } from '@volar/source-map';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return async (
 		uri: string,

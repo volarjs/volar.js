@@ -1,5 +1,5 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
@@ -12,7 +12,7 @@ export interface DocumentLinkData {
 	pluginId: string,
 }
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return async (uri: string, token = vscode.CancellationToken.None) => {
 
