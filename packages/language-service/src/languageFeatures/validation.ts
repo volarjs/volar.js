@@ -204,7 +204,7 @@ export function register(context: ServiceContext) {
 			await doResponse();
 			await lintWorker('onSyntax', cacheMaps.syntax_rules, lastResponse.syntax_rules);
 			await doResponse();
-			await worker('provideSyntacticDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
+			await worker('provideDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
 			await doResponse();
 		}
 
@@ -345,7 +345,7 @@ export function register(context: ServiceContext) {
 		}
 
 		async function worker(
-			api: 'provideSyntacticDiagnostics' | 'provideSemanticDiagnostics',
+			api: 'provideDiagnostics' | 'provideSemanticDiagnostics',
 			cacheMap: CacheMap,
 			cache: Cache,
 		) {
