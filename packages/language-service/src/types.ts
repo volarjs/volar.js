@@ -71,15 +71,11 @@ export interface ConfigurationHost {
 	onDidChangeConfiguration: (cb: () => void) => void,
 }
 
-/**
- * LanguageServicePlugin
- */
-
 export type Result<T> = T | Thenable<T>;
 export type NullableResult<T> = Result<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
-export interface LanguageServicePlugin {
+export interface Service {
 	(context?: LanguageServicePluginContext): LanguageServicePluginInstance;
 }
 
@@ -206,7 +202,7 @@ export interface RuleFix {
 
 export interface Config {
 	languages?: { [id: string]: Language | undefined; };
-	services?: { [id: string]: LanguageServicePlugin | undefined; };
+	services?: { [id: string]: Service | undefined; };
 	lint?: {
 		rules?: { [id: string]: Rule | undefined; };
 		severities?: { [id: string]: vscode.DiagnosticSeverity; };
