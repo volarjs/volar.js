@@ -22,7 +22,8 @@ export interface LanguageServiceOptions {
 	config: Config;
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
-	configurationHost?: ConfigurationHost;
+	getConfiguration?: (<T> (section: string, scopeUri?: string) => Promise<T | undefined>),
+	onDidChangeConfiguration?: (cb: () => void) => void,
 	documentContext?: DocumentContext;
 	fileSystemProvider?: FileSystemProvider;
 	fileSystemHost?: FileSystemHost;
@@ -64,11 +65,6 @@ export interface ServiceContext extends LanguageServiceOptions {
 			};
 		};
 	};
-}
-
-export interface ConfigurationHost {
-	getConfiguration: (<T> (section: string, scopeUri?: string) => Promise<T | undefined>),
-	onDidChangeConfiguration: (cb: () => void) => void,
 }
 
 export type Result<T> = T | Thenable<T>;

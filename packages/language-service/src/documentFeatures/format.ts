@@ -30,7 +30,7 @@ export function register(context: ServiceContext) {
 				: (await tryFormat(document, range, undefined))?.edits;
 		}
 
-		const initialIndentLanguageId = await context.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
+		const initialIndentLanguageId = await context.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 		const originalSnapshot = source.snapshot;
 		const rootVirtualFile = source.root;
 		const originalDocument = document;

@@ -147,8 +147,8 @@ export async function ruleWorker<T>(
 				fileNameToUri: context.fileNameToUri,
 				rootUri: context.rootUri,
 				locale: context.locale,
-				getConfiguration: context.configurationHost?.getConfiguration,
-				onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
+				getConfiguration: context.getConfiguration,
+				onDidChangeConfiguration: context.onDidChangeConfiguration,
 				settings: context.config.lint?.settings ?? {},
 				// document context
 				ruleId: '',
@@ -213,8 +213,8 @@ export async function ruleWorker<T>(
 			fileNameToUri: context.fileNameToUri,
 			rootUri: context.rootUri,
 			locale: context.locale,
-			getConfiguration: context.configurationHost?.getConfiguration,
-			onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
+			getConfiguration: context.getConfiguration,
+			onDidChangeConfiguration: context.onDidChangeConfiguration,
 			settings: context.config.lint?.settings ?? {},
 			// document context
 			ruleId: '',

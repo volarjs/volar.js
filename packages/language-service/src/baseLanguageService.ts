@@ -69,15 +69,13 @@ function createLanguageServicePluginContext(
 		);
 		tsLs = created.languageService;
 
-		if (created.setPreferences && ctx.configurationHost) {
-
-			const configHost = ctx.configurationHost;
+		if (created.setPreferences && ctx.getConfiguration) {
 
 			updatePreferences();
-			ctx.configurationHost?.onDidChangeConfiguration?.(updatePreferences);
+			ctx.onDidChangeConfiguration?.(updatePreferences);
 
 			async function updatePreferences() {
-				const preferences = await configHost.getConfiguration<ts.UserPreferences>('typescript.preferences');
+				const preferences = await ctx.getConfiguration?.<ts.UserPreferences>('typescript.preferences');
 				if (preferences) {
 					created.setPreferences?.(preferences);
 				}

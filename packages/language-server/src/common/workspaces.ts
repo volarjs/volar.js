@@ -1,4 +1,4 @@
-import { ConfigurationHost } from '@volar/language-service';
+import { ServiceContext } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
@@ -18,7 +18,7 @@ export interface WorkspacesContext {
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
 	tsLocalized: ts.MapLike<string> | undefined,
 	fileSystemHost: FileSystemHost | undefined,
-	configurationHost: ConfigurationHost | undefined,
+	configurationHost: Pick<ServiceContext, 'getConfiguration' | 'onDidChangeConfiguration'> | undefined,
 	documents: ReturnType<typeof createDocuments>,
 	cancelTokenHost: CancellationTokenHost,
 }

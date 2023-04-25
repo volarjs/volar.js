@@ -101,7 +101,8 @@ export async function createProject(context: ProjectContext) {
 				get config() {
 					return config;
 				},
-				configurationHost: context.workspace.workspaces.configurationHost,
+				getConfiguration: context.workspace.workspaces.configurationHost?.getConfiguration,
+				onDidChangeConfiguration: context.workspace.workspaces.configurationHost?.onDidChangeConfiguration,
 				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
 				fileSystemHost: context.workspace.workspaces.fileSystemHost,
 				documentContext: getDocumentContext(fileNameToUri, uriToFileName, context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
