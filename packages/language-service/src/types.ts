@@ -206,7 +206,7 @@ export interface RuleFix {
 
 export interface Config {
 	languages?: { [id: string]: LanguageModule | undefined; };
-	plugins?: { [id: string]: LanguageServicePlugin | LanguageServicePluginInstance | undefined; };
+	services?: { [id: string]: LanguageServicePlugin | undefined; };
 	lint?: {
 		rules?: { [id: string]: Rule | undefined; };
 		severities?: { [id: string]: vscode.DiagnosticSeverity; };

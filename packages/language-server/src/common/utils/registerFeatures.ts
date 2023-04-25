@@ -7,10 +7,10 @@ export function setupCapabilities(
 	initOptions: LanguageServerInitializationOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],
 	semanticTokensLegend: vscode.SemanticTokensLegend,
-	lsPlugins: NonNullable<Config['plugins']>,
+	services: NonNullable<Config['services']>,
 ) {
 
-	const lsPluginInstances = Object.values(lsPlugins)
+	const lsPluginInstances = Object.values(services)
 		.map(plugin => typeof plugin === 'function' ? plugin() : plugin)
 		.filter((plugin): plugin is NonNullable<typeof plugin> => !!plugin);
 	const serverMode = initOptions.serverMode ?? ServerMode.Semantic;

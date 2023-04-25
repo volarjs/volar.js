@@ -171,14 +171,10 @@ function createLanguageServicePluginContext(
 		getTextDocument,
 	};
 
-	for (const pluginId in ctx.config.plugins ?? {}) {
-		const plugin = ctx.config.plugins?.[pluginId];
-		if (plugin instanceof Function) {
-			const _plugin = plugin(context);
-			context.plugins[pluginId] = _plugin;
-		}
-		else if (plugin) {
-			context.plugins[pluginId] = plugin;
+	for (const serviceId in ctx.config.services ?? {}) {
+		const service = ctx.config.services?.[serviceId];
+		if (service) {
+			context.plugins[serviceId] = service(context);
 		}
 	}
 

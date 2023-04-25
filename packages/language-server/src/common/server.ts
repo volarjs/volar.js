@@ -67,7 +67,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 
 		configurationHost = initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, connection) : undefined;
 
-		let lsPlugins: Config['plugins'] = {};
+		let services: Config['services'] = {};
 		for (const root of roots) {
 			if (root.scheme === 'file') {
 				let config = loadConfig(root.path, options.configFilePath) ?? {};
@@ -76,10 +76,10 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 						config = plugin.resolveConfig(config, undefined);
 					}
 				}
-				if (config.plugins) {
-					lsPlugins = {
-						...lsPlugins,
-						...config.plugins,
+				if (config.services) {
+					services = {
+						...services,
+						...config.services,
 					};
 				}
 			}
@@ -90,7 +90,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 			options,
 			plugins,
 			getSemanticTokensLegend(),
-			lsPlugins,
+			services,
 		);
 
 		await createLanguageServiceHost();
