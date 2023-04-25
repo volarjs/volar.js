@@ -39,7 +39,6 @@ export interface ServiceContext {
 	env: ServiceEnvironment;
 
 	typescript: {
-		module: typeof import('typescript/lib/tsserverlibrary');
 		languageServiceHost: ts.LanguageServiceHost;
 		languageService: ts.LanguageService;
 	} | undefined;

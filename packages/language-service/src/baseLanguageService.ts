@@ -106,7 +106,6 @@ function createLanguageServicePluginContext(
 		core: languageContext,
 		plugins: {},
 		typescript: ts && tsLs ? {
-			module: ts,
 			languageServiceHost: languageContext.typescript.languageServiceHost,
 			languageService: tsLs,
 		} : undefined,
