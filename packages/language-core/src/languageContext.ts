@@ -6,10 +6,8 @@ import { Language, LanguageServiceHost, FileKind } from './types';
 export type LanguageContext = ReturnType<typeof createLanguageContext>;
 
 export function createLanguageContext(
+	modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
 	host: LanguageServiceHost,
-	modules: {
-		typescript?: typeof import('typescript/lib/tsserverlibrary'),
-	},
 	languages: Language[],
 ) {
 

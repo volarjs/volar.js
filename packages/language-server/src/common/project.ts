@@ -99,8 +99,7 @@ export async function createProject(context: ProjectContext) {
 					});
 				}
 			}
-			languageService = embeddedLS.createLanguageService({
-				modules: { typescript: context.workspace.workspaces.ts },
+			languageService = embeddedLS.createLanguageService({ typescript: context.workspace.workspaces.ts }, {
 				uriToFileName,
 				fileNameToUri,
 				locale: context.workspace.workspaces.initParams.locale,

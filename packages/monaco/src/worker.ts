@@ -22,8 +22,7 @@ export function createLanguageService(options: {
 	const config = options.config ?? {};
 	const compilerOptions = options.typescript?.compilerOptions ?? {};
 	let host = createLanguageServiceHost();
-	let languageService = _createLanguageService({
-		modules: { typescript: ts },
+	let languageService = _createLanguageService({ typescript: ts }, {
 		host,
 		config,
 		uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
@@ -57,8 +56,7 @@ export function createLanguageService(options: {
 				if (newVersion !== dtsVersion) {
 					dtsVersion = newVersion;
 					languageService.dispose();
-					languageService = _createLanguageService({
-						modules: { typescript: ts },
+					languageService = _createLanguageService({ typescript: ts }, {
 						host,
 						config,
 						rootUri: URI.file('/'),

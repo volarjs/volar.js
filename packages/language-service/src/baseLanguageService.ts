@@ -44,20 +44,22 @@ import { notEmpty, resolveCommonLanguageId } from './utils/common';
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
 export function createLanguageService(
+	modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
 	env: ServiceEnvironment,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const languageContext = createLanguageContext(env.host, env.modules, Object.values(env.config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(env, languageContext, documentRegistry);
+	const languageContext = createLanguageContext(modules, env.host, Object.values(env.config.languages ?? {}).filter(notEmpty));
+	const context = createLanguageServicePluginContext(modules, env, languageContext, documentRegistry);
 	return createLanguageServiceBase(context);
 }
 
 function createLanguageServicePluginContext(
+	modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
 	env: ServiceEnvironment,
 	languageContext: ReturnType<typeof createLanguageContext>,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const ts = env.modules.typescript;
+	const ts = modules.typescript;
 	let tsLs: ts.LanguageService | undefined;
 
 	if (ts) {

@@ -11,7 +11,7 @@ export function createLanguageService(host: embedded.LanguageServiceHost, mods: 
 		};
 	} & ts.LanguageService;
 
-	const core = embedded.createLanguageContext(host, { typescript: ts as any }, mods);
+	const core = embedded.createLanguageContext({ typescript: ts as any }, host, mods);
 
 	if (!ts) {
 		throw new Error('TypeScript module not provided.');
