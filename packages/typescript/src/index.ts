@@ -2,7 +2,7 @@ import * as ts from 'typescript'; // this is a peer dependency
 import { getProgram } from './getProgram';
 import * as embedded from '@volar/language-core';
 
-export function createLanguageService(host: embedded.LanguageServiceHost, mods: embedded.LanguageModule[]) {
+export function createLanguageService(host: embedded.LanguageServiceHost, mods: embedded.Language[]) {
 
 	type _LanguageService = {
 		__internal__: {

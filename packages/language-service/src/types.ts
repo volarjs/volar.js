@@ -1,4 +1,4 @@
-import { LanguageContext, LanguageModule, LanguageServiceHost } from '@volar/language-core';
+import { LanguageContext, Language as Language, LanguageServiceHost } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { DocumentContext, FileSystemProvider } from 'vscode-html-languageservice';
 import type { SchemaRequestService } from 'vscode-json-languageservice';
@@ -205,7 +205,7 @@ export interface RuleFix {
 }
 
 export interface Config {
-	languages?: { [id: string]: LanguageModule | undefined; };
+	languages?: { [id: string]: Language | undefined; };
 	services?: { [id: string]: LanguageServicePlugin | undefined; };
 	lint?: {
 		rules?: { [id: string]: Rule | undefined; };

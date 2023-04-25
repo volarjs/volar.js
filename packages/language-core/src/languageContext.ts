@@ -1,7 +1,7 @@
 import { posix as path } from 'path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { createVirtualFiles, forEachEmbeddedFile } from './virtualFiles';
-import { LanguageModule, LanguageServiceHost, FileKind } from './types';
+import { Language, LanguageServiceHost, FileKind } from './types';
 
 export type LanguageContext = ReturnType<typeof createLanguageContext>;
 
@@ -10,12 +10,12 @@ export function createLanguageContext(
 	modules: {
 		typescript?: typeof import('typescript/lib/tsserverlibrary'),
 	},
-	languageModules: LanguageModule[],
+	languages: Language[],
 ) {
 
-	for (const languageModule of languageModules.reverse()) {
-		if (languageModule.proxyLanguageServiceHost) {
-			const proxyApis = languageModule.proxyLanguageServiceHost(host);
+	for (const language of languages.reverse()) {
+		if (language.proxyLanguageServiceHost) {
+			const proxyApis = language.proxyLanguageServiceHost(host);
 			host = new Proxy(host, {
 				get(target, key: keyof ts.LanguageServiceHost) {
 					if (key in proxyApis) {
@@ -30,7 +30,7 @@ export function createLanguageContext(
 	let lastProjectVersion: string | undefined;
 	let tsProjectVersion = 0;
 
-	const virtualFiles = createVirtualFiles(languageModules);
+	const virtualFiles = createVirtualFiles(languages);
 	const ts = modules.typescript;
 	const scriptSnapshots = new Map<string, [string, ts.IScriptSnapshot]>();
 	const sourceTsFileVersions = new Map<string, string>();

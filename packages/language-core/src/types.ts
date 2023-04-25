@@ -82,7 +82,7 @@ export interface VirtualFile {
 	embeddedFiles: VirtualFile[],
 }
 
-export interface LanguageModule<T extends VirtualFile = VirtualFile> {
+export interface Language<T extends VirtualFile = VirtualFile> {
 	createFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
 	updateFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	deleteFile?(virtualFile: T): void;
