@@ -1,7 +1,7 @@
 import type { VirtualFile } from '@volar/language-core';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { LanguageServicePluginContext, LanguageServicePluginInstance } from '../types';
+import type { LanguageServicePluginContext, Service } from '../types';
 import { SourceMap } from '@volar/source-map';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
 
@@ -48,7 +48,7 @@ export function register(context: LanguageServicePluginContext) {
 			const toPatchIndentUris: {
 				uri: string;
 				isCodeBlock: boolean;
-				plugin: LanguageServicePluginInstance;
+				service: ReturnType<Service>;
 			}[] = [];
 
 			for (const embedded of embeddedFiles) {
@@ -92,7 +92,7 @@ export function register(context: LanguageServicePluginContext) {
 				toPatchIndentUris.push({
 					uri: map.virtualFileDocument.uri,
 					isCodeBlock,
-					plugin: embeddedCodeResult.plugin,
+					service: embeddedCodeResult.plugin,
 				});
 
 				for (const textEdit of embeddedCodeResult.edits) {
@@ -134,7 +134,7 @@ export function register(context: LanguageServicePluginContext) {
 
 						const indentSensitiveLines = new Set<number>();
 
-						for (const plugin of toPatchIndentUri.plugin.provideFormattingIndentSensitiveLines ? [toPatchIndentUri.plugin] : Object.values(context.plugins)) {
+						for (const plugin of toPatchIndentUri.service.provideFormattingIndentSensitiveLines ? [toPatchIndentUri.service] : Object.values(context.plugins)) {
 
 							if (token.isCancellationRequested)
 								break;

@@ -2,7 +2,7 @@ import * as transformer from '../transformer';
 import type { FileRangeCapabilities } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { LanguageServicePluginInstance, LanguageServicePluginContext } from '../types';
+import type { Service, LanguageServicePluginContext } from '../types';
 import { visitEmbedded } from '../utils/definePlugin';
 
 export interface PluginCompletionData {
@@ -18,7 +18,7 @@ export function register(context: LanguageServicePluginContext) {
 		uri: string,
 		data: {
 			virtualDocumentUri: string | undefined,
-			plugin: LanguageServicePluginInstance,
+			plugin: ReturnType<Service>,
 			list: vscode.CompletionList,
 		}[],
 		mainCompletion: {
@@ -256,7 +256,7 @@ export function register(context: LanguageServicePluginContext) {
 
 		return combineCompletionList(cache.data.map(cacheData => cacheData.list));
 
-		function sortPlugins(a: LanguageServicePluginInstance, b: LanguageServicePluginInstance) {
+		function sortPlugins(a: ReturnType<Service>, b: ReturnType<Service>) {
 			return (b.isAdditionalCompletion ? -1 : 1) - (a.isAdditionalCompletion ? -1 : 1);
 		}
 
