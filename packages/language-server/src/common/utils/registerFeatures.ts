@@ -11,7 +11,7 @@ export function setupCapabilities(
 ) {
 
 	const lsPluginInstances = Object.values(services)
-		.map(plugin => typeof plugin === 'function' ? plugin() : plugin)
+		.map(plugin => typeof plugin === 'function' ? plugin(undefined, undefined) : plugin)
 		.filter((plugin): plugin is NonNullable<typeof plugin> => !!plugin);
 	const serverMode = initOptions.serverMode ?? ServerMode.Semantic;
 

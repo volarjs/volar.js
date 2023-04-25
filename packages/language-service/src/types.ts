@@ -69,7 +69,7 @@ export type NullableResult<T> = Result<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
 export interface Service {
-	(context?: ServiceContext): {
+	(context: ServiceContext | undefined, modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); } | undefined): {
 		isAdditionalCompletion?: boolean; // volar specific
 		triggerCharacters?: string[];
 		signatureHelpTriggerCharacters?: string[];

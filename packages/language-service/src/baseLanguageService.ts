@@ -188,7 +188,7 @@ function createLanguageServicePluginContext(
 	for (const serviceId in env.config.services ?? {}) {
 		const service = env.config.services?.[serviceId];
 		if (service) {
-			context.plugins[serviceId] = service(context);
+			context.plugins[serviceId] = service(context, modules);
 		}
 	}
 
