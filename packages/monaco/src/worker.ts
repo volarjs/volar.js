@@ -22,13 +22,16 @@ export function createLanguageService(options: {
 	const config = options.config ?? {};
 	const compilerOptions = options.typescript?.compilerOptions ?? {};
 	let host = createLanguageServiceHost();
-	let languageService = _createLanguageService({ typescript: ts }, {
-		host,
+	let languageService = _createLanguageService(
+		{ typescript: ts },
+		{
+			uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
+			fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
+			rootUri: URI.file('/'),
+		},
 		config,
-		uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
-		fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
-		rootUri: URI.file('/'),
-	});
+		host,
+	);
 	let dtsVersion = 0;
 
 	class InnocentRabbit { };
@@ -56,13 +59,16 @@ export function createLanguageService(options: {
 				if (newVersion !== dtsVersion) {
 					dtsVersion = newVersion;
 					languageService.dispose();
-					languageService = _createLanguageService({ typescript: ts }, {
-						host,
+					languageService = _createLanguageService(
+						{ typescript: ts },
+						{
+							rootUri: URI.file('/'),
+							uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
+							fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
+						},
 						config,
-						rootUri: URI.file('/'),
-						uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
-						fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
-					});
+						host,
+					);
 				}
 				result = await (languageService as any)[api](...args);
 				newVersion = await options.dtsHost.getVersion();

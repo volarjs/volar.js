@@ -1,4 +1,4 @@
-import { VirtualFiles, VirtualFile, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, forEachEmbeddedFile } from '@volar/language-core';
+import { VirtualFiles, VirtualFile, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, forEachEmbeddedFile, LanguageServiceHost } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -168,6 +168,7 @@ export class MirrorMapWithDocument extends SourceMapWithDocuments<[MirrorBehavio
 
 export function createDocumentsAndSourceMaps(
 	env: ServiceEnvironment,
+	host: LanguageServiceHost,
 	mapper: VirtualFiles,
 ) {
 
@@ -273,7 +274,7 @@ export function createDocumentsAndSourceMaps(
 			const uri = env.fileNameToUri(fileName);
 			map.set(fileName, TextDocument.create(
 				uri,
-				env.host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
+				host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 				version++,
 				snapshot.getText(0, snapshot.getLength()),
 			));

@@ -1,4 +1,4 @@
-import { createLanguageContext, FileRangeCapabilities } from '@volar/language-core';
+import { createLanguageContext, FileRangeCapabilities, LanguageServiceHost } from '@volar/language-core';
 import * as tsFaster from 'typescript-auto-import-cache';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createDocumentsAndSourceMaps } from './documents';
@@ -26,7 +26,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { ServiceContext, ServiceEnvironment } from './types';
+import { Config, ServiceContext, ServiceEnvironment } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -46,16 +46,20 @@ export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 export function createLanguageService(
 	modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
 	env: ServiceEnvironment,
+	config: Config,
+	host: LanguageServiceHost,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const languageContext = createLanguageContext(modules, env.host, Object.values(env.config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(modules, env, languageContext, documentRegistry);
+	const languageContext = createLanguageContext(modules, host, Object.values(config.languages ?? {}).filter(notEmpty));
+	const context = createLanguageServicePluginContext(modules, env, config, host, languageContext, documentRegistry);
 	return createLanguageServiceBase(context);
 }
 
 function createLanguageServicePluginContext(
 	modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
 	env: ServiceEnvironment,
+	config: Config,
+	host: LanguageServiceHost,
 	languageContext: ReturnType<typeof createLanguageContext>,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
@@ -85,10 +89,10 @@ function createLanguageServicePluginContext(
 		}
 
 		if (created.projectUpdated) {
-			let scriptFileNames = new Set(env.host.getScriptFileNames());
+			let scriptFileNames = new Set(host.getScriptFileNames());
 			env.onDidChangeWatchedFiles?.((params) => {
 				if (params.changes.some(change => change.type !== vscode.FileChangeType.Changed)) {
-					scriptFileNames = new Set(env.host.getScriptFileNames());
+					scriptFileNames = new Set(host.getScriptFileNames());
 				}
 
 				for (const change of params.changes) {
@@ -100,11 +104,13 @@ function createLanguageServicePluginContext(
 		}
 	}
 
-	const textDocumentMapper = createDocumentsAndSourceMaps(env, languageContext.virtualFiles);
+	const textDocumentMapper = createDocumentsAndSourceMaps(env, host, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
 	const context: ServiceContext = {
-		env: env,
+		env,
+		config,
+		host,
 		core: languageContext,
 		plugins: {},
 		typescript: ts && tsLs ? {
@@ -185,8 +191,8 @@ function createLanguageServicePluginContext(
 		getTextDocument,
 	};
 
-	for (const serviceId in env.config.services ?? {}) {
-		const service = env.config.services?.[serviceId];
+	for (const serviceId in config.services ?? {}) {
+		const service = config.services?.[serviceId];
 		if (service) {
 			context.plugins[serviceId] = service(context, modules);
 		}
@@ -215,7 +221,7 @@ function createLanguageServicePluginContext(
 	function getTextDocument(uri: string) {
 
 		const fileName = env.uriToFileName(uri);
-		const scriptSnapshot = env.host.getScriptSnapshot(fileName);
+		const scriptSnapshot = host.getScriptSnapshot(fileName);
 
 		if (scriptSnapshot) {
 
@@ -229,7 +235,7 @@ function createLanguageServicePluginContext(
 
 				document = TextDocument.create(
 					uri,
-					env.host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
+					host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 					newVersion,
 					scriptSnapshot.getText(0, scriptSnapshot.getLength()),
 				);

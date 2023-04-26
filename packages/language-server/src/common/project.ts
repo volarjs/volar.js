@@ -99,28 +99,32 @@ export async function createProject(context: ProjectContext) {
 					});
 				}
 			}
-			languageService = embeddedLS.createLanguageService({ typescript: context.workspace.workspaces.ts }, {
-				uriToFileName,
-				fileNameToUri,
-				locale: context.workspace.workspaces.initParams.locale,
-				rootUri: context.rootUri,
-				clientCapabilities: context.workspace.workspaces.initParams.capabilities,
-				host: languageServiceHost,
-				config,
-				getConfiguration: context.workspace.workspaces.configurationHost?.getConfiguration,
-				onDidChangeConfiguration: context.workspace.workspaces.configurationHost?.onDidChangeConfiguration,
-				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
-				onDidChangeWatchedFiles: context.workspace.workspaces.fileSystemHost?.onDidChangeWatchedFiles,
-				documentContext: getDocumentContext(fileNameToUri, uriToFileName, context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
-				schemaRequestService: async uri => {
-					const protocol = uri.substring(0, uri.indexOf(':'));
-					const builtInHandler = context.workspace.workspaces.server.runtimeEnv.schemaRequestHandlers[protocol];
-					if (builtInHandler) {
-						return await builtInHandler(uri) ?? '';
-					}
-					return '';
+			languageService = embeddedLS.createLanguageService(
+				{ typescript: context.workspace.workspaces.ts },
+				{
+					uriToFileName,
+					fileNameToUri,
+					locale: context.workspace.workspaces.initParams.locale,
+					rootUri: context.rootUri,
+					clientCapabilities: context.workspace.workspaces.initParams.capabilities,
+					getConfiguration: context.workspace.workspaces.configurationHost?.getConfiguration,
+					onDidChangeConfiguration: context.workspace.workspaces.configurationHost?.onDidChangeConfiguration,
+					fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
+					onDidChangeWatchedFiles: context.workspace.workspaces.fileSystemHost?.onDidChangeWatchedFiles,
+					documentContext: getDocumentContext(fileNameToUri, uriToFileName, context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
+					schemaRequestService: async uri => {
+						const protocol = uri.substring(0, uri.indexOf(':'));
+						const builtInHandler = context.workspace.workspaces.server.runtimeEnv.schemaRequestHandlers[protocol];
+						if (builtInHandler) {
+							return await builtInHandler(uri) ?? '';
+						}
+						return '';
+					},
 				},
-			}, context.documentRegistry);
+				config,
+				languageServiceHost,
+				context.documentRegistry,
+			);
 		}
 		return languageService;
 	}

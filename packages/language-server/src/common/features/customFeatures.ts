@@ -116,9 +116,9 @@ export function register(
 		if (project) {
 			const ls = (await project.project)?.getLanguageServiceDontCreate();
 			if (ls) {
-				const sourceFiles = new Set(ls.context.env.host.getScriptFileNames());
+				const sourceFiles = new Set(ls.context.host.getScriptFileNames());
 				for (const virtualFile of ls.context.core.typescript.languageServiceHost.getScriptFileNames()) {
-					if (virtualFile.startsWith(ls.context.env.host.getCurrentDirectory()) && !sourceFiles.has(virtualFile)) {
+					if (virtualFile.startsWith(ls.context.host.getCurrentDirectory()) && !sourceFiles.has(virtualFile)) {
 						const snapshot = ls.context.core.typescript.languageServiceHost.getScriptSnapshot(virtualFile);
 						if (snapshot) {
 							fs.writeFile(virtualFile, snapshot.getText(0, snapshot.getLength()), () => { });

@@ -39,13 +39,16 @@ export function create(
 			return scriptSnapshots.get(fileName);
 		},
 	};
-	const service = createLanguageService({ typescript: ts }, {
-		host,
+	const service = createLanguageService(
+		{ typescript: ts },
+		{
+			uriToFileName,
+			fileNameToUri,
+			rootUri: URI.file(path.dirname(tsConfigPath)),
+		},
 		config,
-		uriToFileName,
-		fileNameToUri,
-		rootUri: URI.file(path.dirname(tsConfigPath)),
-	});
+		host,
+	);
 	const formatHost: ts.FormatDiagnosticsHost = {
 		getCurrentDirectory: () => host.getCurrentDirectory(),
 		getCanonicalFileName: (fileName) => host.useCaseSensitiveFileNames?.() ? fileName : fileName.toLowerCase(),

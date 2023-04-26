@@ -1,4 +1,4 @@
-import { LanguageContext, Language as Language, LanguageServiceHost } from '@volar/language-core';
+import { LanguageContext, Language, LanguageServiceHost } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { DocumentContext, FileSystemProvider } from 'vscode-html-languageservice';
 import type { SchemaRequestService } from 'vscode-json-languageservice';
@@ -14,8 +14,6 @@ export interface ServiceEnvironment {
 	locale?: string;
 	rootUri: URI;
 	clientCapabilities?: vscode.ClientCapabilities;
-	host: LanguageServiceHost;
-	config: Config;
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
 	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>,
@@ -32,6 +30,10 @@ interface Command<T> {
 }
 
 export interface ServiceContext {
+
+	config: Config;
+
+	host: LanguageServiceHost;
 
 	env: ServiceEnvironment;
 
