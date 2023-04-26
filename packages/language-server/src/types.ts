@@ -1,4 +1,4 @@
-import { LanguageService } from '@volar/language-service';
+import { LanguageService, ServiceEnvironment } from '@volar/language-service';
 import * as embedded from '@volar/language-core';
 import type { FileSystemProvider } from 'vscode-html-languageservice';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -54,6 +54,7 @@ export interface LanguageServerPlugin {
 		resolveConfig?(
 			config: Config,
 			ctx: {
+				env: ServiceEnvironment;
 				project: ProjectContext;
 				host: embedded.LanguageServiceHost;
 				sys: FileSystem;
