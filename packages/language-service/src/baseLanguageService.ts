@@ -1,4 +1,4 @@
-import { createLanguageContext, FileRangeCapabilities } from '@volar/language-core';
+import { createLanguageContext, FileRangeCapabilities, LanguageServiceHost } from '@volar/language-core';
 import * as tsFaster from 'typescript-auto-import-cache';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createDocumentsAndSourceMaps } from './documents';
@@ -26,7 +26,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { LanguageServicePluginContext, LanguageServiceOptions } from './types';
+import { Config, ServiceContext, ServiceEnvironment } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -44,20 +44,26 @@ import { notEmpty, resolveCommonLanguageId } from './utils/common';
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
 export function createLanguageService(
-	ctx: LanguageServiceOptions,
+	modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
+	env: ServiceEnvironment,
+	config: Config,
+	host: LanguageServiceHost,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const languageContext = createLanguageContext(ctx.host, ctx.modules, Object.values(ctx.config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(ctx, languageContext, documentRegistry);
+	const languageContext = createLanguageContext(modules, host, Object.values(config.languages ?? {}).filter(notEmpty));
+	const context = createLanguageServicePluginContext(modules, env, config, host, languageContext, documentRegistry);
 	return createLanguageServiceBase(context);
 }
 
 function createLanguageServicePluginContext(
-	ctx: LanguageServiceOptions,
+	modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
+	env: ServiceEnvironment,
+	config: Config,
+	host: LanguageServiceHost,
 	languageContext: ReturnType<typeof createLanguageContext>,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const ts = ctx.modules.typescript;
+	const ts = modules.typescript;
 	let tsLs: ts.LanguageService | undefined;
 
 	if (ts) {
@@ -65,19 +71,17 @@ function createLanguageServicePluginContext(
 			ts,
 			languageContext.typescript.languageServiceHost,
 			proxiedHost => ts.createLanguageService(proxiedHost, documentRegistry),
-			ctx.rootUri.path,
+			env.rootUri.path,
 		);
 		tsLs = created.languageService;
 
-		if (created.setPreferences && ctx.configurationHost) {
-
-			const configHost = ctx.configurationHost;
+		if (created.setPreferences && env.getConfiguration) {
 
 			updatePreferences();
-			ctx.configurationHost?.onDidChangeConfiguration?.(updatePreferences);
+			env.onDidChangeConfiguration?.(updatePreferences);
 
 			async function updatePreferences() {
-				const preferences = await configHost.getConfiguration<ts.UserPreferences>('typescript.preferences');
+				const preferences = await env.getConfiguration?.<ts.UserPreferences>('typescript.preferences');
 				if (preferences) {
 					created.setPreferences?.(preferences);
 				}
@@ -85,100 +89,112 @@ function createLanguageServicePluginContext(
 		}
 
 		if (created.projectUpdated) {
-			let scriptFileNames = new Set(ctx.host.getScriptFileNames());
-			ctx.fileSystemHost?.onDidChangeWatchedFiles((params) => {
+			let scriptFileNames = new Set(host.getScriptFileNames());
+			env.onDidChangeWatchedFiles?.((params) => {
 				if (params.changes.some(change => change.type !== vscode.FileChangeType.Changed)) {
-					scriptFileNames = new Set(ctx.host.getScriptFileNames());
+					scriptFileNames = new Set(host.getScriptFileNames());
 				}
 
 				for (const change of params.changes) {
-					if (scriptFileNames.has(ctx.uriToFileName(change.uri))) {
-						created.projectUpdated?.(ctx.uriToFileName(context.rootUri.fsPath));
+					if (scriptFileNames.has(env.uriToFileName(change.uri))) {
+						created.projectUpdated?.(env.uriToFileName(env.rootUri.fsPath));
 					}
 				}
 			});
 		}
 	}
 
-	const textDocumentMapper = createDocumentsAndSourceMaps(ctx, languageContext.virtualFiles);
+	const textDocumentMapper = createDocumentsAndSourceMaps(env, host, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
-	const context: LanguageServicePluginContext = {
-		...ctx,
+	const context: ServiceContext = {
+		env,
+		config,
+		host,
 		core: languageContext,
 		plugins: {},
 		typescript: ts && tsLs ? {
-			module: ts,
 			languageServiceHost: languageContext.typescript.languageServiceHost,
 			languageService: tsLs,
 		} : undefined,
 		documents: textDocumentMapper,
 		commands: {
-			createRenameCommand(uri, position) {
-				const source = toSourceLocation(uri, position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename);
-				if (!source) {
-					return;
-				}
-				return vscode.Command.create(
-					'',
-					'editor.action.rename',
-					source.uri,
-					source.position,
-				);
+			rename: {
+				create(uri, position) {
+					const source = toSourceLocation(uri, position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename);
+					if (!source) {
+						return;
+					}
+					return vscode.Command.create(
+						'',
+						'editor.action.rename',
+						source.uri,
+						source.position,
+					);
+				},
+				is(command) {
+					return command.command === 'editor.action.rename';
+				},
 			},
-			createShowReferencesCommand(uri, position, locations) {
-				const source = toSourceLocation(uri, position);
-				if (!source) {
-					return;
-				}
-				const sourceReferences: vscode.Location[] = [];
-				for (const reference of locations) {
-					if (context.documents.isVirtualFileUri(reference.uri)) {
-						for (const [_, map] of context.documents.getMapsByVirtualFileUri(reference.uri)) {
-							const range = map.toSourceRange(reference.range);
-							if (range) {
-								sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
+			showReferences: {
+				create(uri, position, locations) {
+					const source = toSourceLocation(uri, position);
+					if (!source) {
+						return;
+					}
+					const sourceReferences: vscode.Location[] = [];
+					for (const reference of locations) {
+						if (context.documents.isVirtualFileUri(reference.uri)) {
+							for (const [_, map] of context.documents.getMapsByVirtualFileUri(reference.uri)) {
+								const range = map.toSourceRange(reference.range);
+								if (range) {
+									sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
+								}
 							}
 						}
+						else {
+							sourceReferences.push(reference);
+						}
 					}
-					else {
-						sourceReferences.push(reference);
-					}
-				}
-				return vscode.Command.create(
-					locations.length === 1 ? '1 reference' : `${locations.length} references`,
-					'editor.action.showReferences',
-					source.uri,
-					source.position,
-					sourceReferences,
-				);
+					return vscode.Command.create(
+						locations.length === 1 ? '1 reference' : `${locations.length} references`,
+						'editor.action.showReferences',
+						source.uri,
+						source.position,
+						sourceReferences,
+					);
+				},
+				is(command) {
+					return command.command === 'editor.action.showReferences';
+				},
 			},
-			createSetSelectionCommand(position: vscode.Position) {
-				return vscode.Command.create(
-					'',
-					'setSelection',
-					{
-						selection: {
-							selectionStartLineNumber: position.line + 1,
-							positionLineNumber: position.line + 1,
-							selectionStartColumn: position.character + 1,
-							positionColumn: position.character + 1,
+			setSelection: {
+				create(position: vscode.Position) {
+					return vscode.Command.create(
+						'',
+						'setSelection',
+						{
+							selection: {
+								selectionStartLineNumber: position.line + 1,
+								positionLineNumber: position.line + 1,
+								selectionStartColumn: position.character + 1,
+								positionColumn: position.character + 1,
+							},
 						},
-					},
-				);
+					);
+				},
+				is(command) {
+					return command.command === 'setSelection';
+				}
 			},
 		},
 		getTextDocument,
 	};
 
-	for (const pluginId in ctx.config.plugins ?? {}) {
-		const plugin = ctx.config.plugins?.[pluginId];
-		if (plugin instanceof Function) {
-			const _plugin = plugin(context);
-			context.plugins[pluginId] = _plugin;
-		}
-		else if (plugin) {
-			context.plugins[pluginId] = plugin;
+	for (const serviceId in config.services ?? {}) {
+		const service = config.services?.[serviceId];
+		if (service) {
+			context.plugins[serviceId] = service(context, modules);
 		}
 	}
 
@@ -204,8 +220,8 @@ function createLanguageServicePluginContext(
 
 	function getTextDocument(uri: string) {
 
-		const fileName = ctx.uriToFileName(uri);
-		const scriptSnapshot = ctx.host.getScriptSnapshot(fileName);
+		const fileName = env.uriToFileName(uri);
+		const scriptSnapshot = host.getScriptSnapshot(fileName);
 
 		if (scriptSnapshot) {
 
@@ -219,7 +235,7 @@ function createLanguageServicePluginContext(
 
 				document = TextDocument.create(
 					uri,
-					ctx.host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
+					host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 					newVersion,
 					scriptSnapshot.getText(0, scriptSnapshot.getLength()),
 				);
@@ -231,7 +247,7 @@ function createLanguageServicePluginContext(
 	}
 }
 
-function createLanguageServiceBase(context: LanguageServicePluginContext) {
+function createLanguageServiceBase(context: ServiceContext) {
 
 	return {
 

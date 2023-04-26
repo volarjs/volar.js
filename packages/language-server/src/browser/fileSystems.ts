@@ -3,7 +3,7 @@ import { FileType } from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { FsReadDirectoryRequest, FsReadFileRequest } from '../protocol';
-import { FileSystem, FileSystemHost, LanguageServerInitializationOptions, RuntimeEnvironment } from '../types';
+import { FileSystem, FileSystemHost, InitializationOptions, RuntimeEnvironment } from '../types';
 import { matchFiles } from './typescript/utilities';
 import { createUriMap } from '../common/utils/uriMap';
 
@@ -24,7 +24,7 @@ export function createWebFileSystemHost(
 	_0: any,
 	_1: any,
 	env: RuntimeEnvironment,
-	initOptions: LanguageServerInitializationOptions,
+	initOptions: InitializationOptions,
 ): FileSystemHost {
 
 	const instances = createUriMap<FileSystem>(env.fileNameToUri);

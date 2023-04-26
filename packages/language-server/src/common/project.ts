@@ -1,12 +1,12 @@
 import * as embedded from '@volar/language-core';
 import * as embeddedLS from '@volar/language-service';
-import { LanguageServiceOptions } from '@volar/language-service';
+import { ServiceEnvironment } from '@volar/language-service';
 import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as html from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI, Utils } from 'vscode-uri';
-import { FileSystem, LanguageServerPlugin, LanguageServiceContext, ServerMode } from '../types';
+import { FileSystem, LanguageServerPlugin, ServerMode } from '../types';
 import { loadConfig } from './utils/serverConfig';
 import { createUriMap } from './utils/uriMap';
 import { WorkspaceContext } from './workspace';
@@ -84,26 +84,16 @@ export async function createProject(context: ProjectContext) {
 
 	function getLanguageService() {
 		if (!languageService) {
-			let config = (
-				context.workspace.rootUri.scheme === 'file' ? loadConfig(
-					context.workspace.rootUri.path,
-					context.workspace.workspaces.initOptions.configFilePath,
-				) : {}
-			) ?? {};
-			const options: LanguageServiceOptions = {
-				modules: { typescript: context.workspace.workspaces.ts },
+			const env: ServiceEnvironment = {
 				uriToFileName,
 				fileNameToUri,
 				locale: context.workspace.workspaces.initParams.locale,
 				rootUri: context.rootUri,
-				capabilities: context.workspace.workspaces.initParams.capabilities,
-				host: languageServiceHost,
-				get config() {
-					return config;
-				},
-				configurationHost: context.workspace.workspaces.configurationHost,
+				clientCapabilities: context.workspace.workspaces.initParams.capabilities,
+				getConfiguration: context.workspace.workspaces.configurationHost?.getConfiguration,
+				onDidChangeConfiguration: context.workspace.workspaces.configurationHost?.onDidChangeConfiguration,
 				fileSystemProvider: context.workspace.workspaces.server.runtimeEnv.fileSystemProvide,
-				fileSystemHost: context.workspace.workspaces.fileSystemHost,
+				onDidChangeWatchedFiles: context.workspace.workspaces.fileSystemHost?.onDidChangeWatchedFiles,
 				documentContext: getDocumentContext(fileNameToUri, uriToFileName, context.workspace.workspaces.ts, languageServiceHost, context.rootUri.toString()),
 				schemaRequestService: async uri => {
 					const protocol = uri.substring(0, uri.indexOf(':'));
@@ -114,18 +104,29 @@ export async function createProject(context: ProjectContext) {
 					return '';
 				},
 			};
-			const lsCtx: LanguageServiceContext = {
-				project: context,
-				options,
-				sys,
-				host: languageServiceHost,
-			};
+			let config = (
+				context.workspace.rootUri.scheme === 'file' ? loadConfig(
+					context.workspace.rootUri.path,
+					context.workspace.workspaces.initOptions.configFilePath,
+				) : {}
+			) ?? {};
 			for (const plugin of context.workspace.workspaces.plugins) {
 				if (plugin.resolveConfig) {
-					config = plugin.resolveConfig(config, lsCtx);
+					config = plugin.resolveConfig(config, {
+						env,
+						project: context,
+						sys,
+						host: languageServiceHost,
+					});
 				}
 			}
-			languageService = embeddedLS.createLanguageService(options, context.documentRegistry);
+			languageService = embeddedLS.createLanguageService(
+				{ typescript: context.workspace.workspaces.ts },
+				env,
+				config,
+				languageServiceHost,
+				context.documentRegistry,
+			);
 		}
 		return languageService;
 	}
@@ -317,8 +318,8 @@ function createParsedCommandLine(
 }
 
 function getDocumentContext(
-	fileNameToUri: LanguageServiceOptions['fileNameToUri'],
-	uriToFileName: LanguageServiceOptions['uriToFileName'],
+	fileNameToUri: ServiceEnvironment['fileNameToUri'],
+	uriToFileName: ServiceEnvironment['uriToFileName'],
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
 	host: ts.LanguageServiceHost | undefined,
 	rootUri: string,

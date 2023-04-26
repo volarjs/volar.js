@@ -1,11 +1,11 @@
 import type { VirtualFile } from '@volar/language-core';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { LanguageServicePluginContext, LanguageServicePluginInstance } from '../types';
+import type { ServiceContext, Service } from '../types';
 import { SourceMap } from '@volar/source-map';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return async (
 		uri: string,
@@ -30,7 +30,7 @@ export function register(context: LanguageServicePluginContext) {
 				: (await tryFormat(document, range, undefined))?.edits;
 		}
 
-		const initialIndentLanguageId = await context.configurationHost?.getConfiguration<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
+		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 		const originalSnapshot = source.snapshot;
 		const rootVirtualFile = source.root;
 		const originalDocument = document;
@@ -48,7 +48,7 @@ export function register(context: LanguageServicePluginContext) {
 			const toPatchIndentUris: {
 				uri: string;
 				isCodeBlock: boolean;
-				plugin: LanguageServicePluginInstance;
+				service: ReturnType<Service>;
 			}[] = [];
 
 			for (const embedded of embeddedFiles) {
@@ -92,7 +92,7 @@ export function register(context: LanguageServicePluginContext) {
 				toPatchIndentUris.push({
 					uri: map.virtualFileDocument.uri,
 					isCodeBlock,
-					plugin: embeddedCodeResult.plugin,
+					service: embeddedCodeResult.plugin,
 				});
 
 				for (const textEdit of embeddedCodeResult.edits) {
@@ -111,7 +111,7 @@ export function register(context: LanguageServicePluginContext) {
 			if (edits.length > 0) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-				context.core.virtualFiles.updateSource(context.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
+				context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
 				edited = true;
 			}
 
@@ -134,7 +134,7 @@ export function register(context: LanguageServicePluginContext) {
 
 						const indentSensitiveLines = new Set<number>();
 
-						for (const plugin of toPatchIndentUri.plugin.provideFormattingIndentSensitiveLines ? [toPatchIndentUri.plugin] : Object.values(context.plugins)) {
+						for (const plugin of toPatchIndentUri.service.provideFormattingIndentSensitiveLines ? [toPatchIndentUri.service] : Object.values(context.plugins)) {
 
 							if (token.isCancellationRequested)
 								break;
@@ -177,7 +177,7 @@ export function register(context: LanguageServicePluginContext) {
 						if (indentEdits.length > 0) {
 							const newText = TextDocument.applyEdits(document, indentEdits);
 							document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-							context.core.virtualFiles.updateSource(context.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
+							context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
 							edited = true;
 						}
 					}
@@ -187,7 +187,7 @@ export function register(context: LanguageServicePluginContext) {
 
 		if (edited) {
 			// recover
-			context.core.virtualFiles.updateSource(context.uriToFileName(document.uri), originalSnapshot, undefined);
+			context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), originalSnapshot, undefined);
 		}
 
 		if (document.getText() === originalDocument.getText())

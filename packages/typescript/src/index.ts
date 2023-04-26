@@ -2,7 +2,7 @@ import * as ts from 'typescript'; // this is a peer dependency
 import { getProgram } from './getProgram';
 import * as embedded from '@volar/language-core';
 
-export function createLanguageService(host: embedded.LanguageServiceHost, mods: embedded.LanguageModule[]) {
+export function createLanguageService(host: embedded.LanguageServiceHost, mods: embedded.Language[]) {
 
 	type _LanguageService = {
 		__internal__: {
@@ -11,7 +11,7 @@ export function createLanguageService(host: embedded.LanguageServiceHost, mods: 
 		};
 	} & ts.LanguageService;
 
-	const core = embedded.createLanguageContext(host, { typescript: ts as any }, mods);
+	const core = embedded.createLanguageContext({ typescript: ts as any }, host, mods);
 
 	if (!ts) {
 		throw new Error('TypeScript module not provided.');

@@ -2,7 +2,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { createUriMap } from '../common/utils/uriMap';
-import { FileSystem, FileSystemHost, LanguageServerInitializationOptions, RuntimeEnvironment } from '../types';
+import { FileSystem, FileSystemHost, InitializationOptions, RuntimeEnvironment } from '../types';
 
 let currentCwd = '';
 
@@ -10,7 +10,7 @@ export function createNodeFileSystemHost(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	capabilities: vscode.ClientCapabilities,
 	env: RuntimeEnvironment,
-	_initOptions: LanguageServerInitializationOptions,
+	_initOptions: InitializationOptions,
 ): FileSystemHost {
 
 	const instances = createUriMap<[FileSystem, Map<string, any>[]]>(env.fileNameToUri);

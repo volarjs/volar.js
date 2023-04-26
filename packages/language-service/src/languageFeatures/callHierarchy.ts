@@ -1,6 +1,6 @@
 import { posix as path } from 'path';
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
@@ -12,7 +12,7 @@ export interface PluginCallHierarchyData {
 	virtualDocumentUri: string | undefined,
 }
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return {
 
@@ -186,7 +186,7 @@ export function register(context: LanguageServicePluginContext) {
 			const vueRanges = tsRanges.map(tsRange => map.toSourceRange(tsRange)).filter(notEmpty);
 			const vueItem: vscode.CallHierarchyItem = {
 				...tsItem,
-				name: tsItem.name === path.basename(context.uriToFileName(map.virtualFileDocument.uri)) ? path.basename(context.uriToFileName(map.sourceFileDocument.uri)) : tsItem.name,
+				name: tsItem.name === path.basename(context.env.uriToFileName(map.virtualFileDocument.uri)) ? path.basename(context.env.uriToFileName(map.sourceFileDocument.uri)) : tsItem.name,
 				uri: map.sourceFileDocument.uri,
 				// TS Bug: `range: range` not works
 				range: {

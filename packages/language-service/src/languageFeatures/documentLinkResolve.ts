@@ -1,8 +1,8 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { DocumentLinkData } from './documentLinks';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return async (item: vscode.CodeLens, token = vscode.CancellationToken.None) => {
 

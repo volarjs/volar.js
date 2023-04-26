@@ -1,4 +1,4 @@
-import { LanguageService, LanguageServiceOptions } from '@volar/language-service';
+import { LanguageService, ServiceEnvironment } from '@volar/language-service';
 import * as embedded from '@volar/language-core';
 import type { FileSystemProvider } from 'vscode-html-languageservice';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -37,7 +37,7 @@ export interface RuntimeEnvironment {
 		ts: typeof import('typescript/lib/tsserverlibrary'),
 		capabilities: vscode.ClientCapabilities,
 		env: RuntimeEnvironment,
-		initOptions: LanguageServerInitializationOptions,
+		initOptions: InitializationOptions,
 	) => FileSystemHost,
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
 	readonly timer: {
@@ -47,20 +47,18 @@ export interface RuntimeEnvironment {
 	};
 }
 
-export interface LanguageServiceContext {
-	project: ProjectContext;
-	options: LanguageServiceOptions;
-	host: embedded.LanguageServiceHost;
-	sys: FileSystem;
-}
-
 export interface LanguageServerPlugin {
-	(initOptions: LanguageServerInitializationOptions, modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); }): {
+	(initOptions: InitializationOptions, modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); }): {
 		extraFileExtensions?: ts.FileExtensionInfo[];
 		watchFileExtensions?: string[];
 		resolveConfig?(
 			config: Config,
-			ctx: LanguageServiceContext | undefined,
+			ctx: {
+				env: ServiceEnvironment;
+				project: ProjectContext;
+				host: embedded.LanguageServiceHost;
+				sys: FileSystem;
+			} | undefined,
 		): Config;
 		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};
@@ -78,7 +76,7 @@ export enum DiagnosticModel {
 	Pull = 2,
 }
 
-export interface LanguageServerInitializationOptions {
+export interface InitializationOptions {
 	typescript?: {
 		/**
 		 * Absolute path to node_modules/typescript/lib

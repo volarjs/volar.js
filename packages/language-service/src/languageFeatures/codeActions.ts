@@ -1,6 +1,6 @@
 import * as transformer from '../transformer';
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
@@ -26,7 +26,7 @@ export interface RuleCodeActionData {
 	index: number,
 }
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = vscode.CancellationToken.None) => {
 

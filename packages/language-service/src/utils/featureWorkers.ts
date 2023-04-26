@@ -1,14 +1,14 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { visitEmbedded } from './definePlugin';
-import type { LanguageServicePluginInstance, LanguageServicePluginContext, Rule, RuleContext } from '../types';
+import type { Service, ServiceContext, Rule, RuleContext } from '../types';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-service';
 import { SourceMapWithDocuments } from '../documents';
 
 export async function documentFeatureWorker<T>(
-	context: LanguageServicePluginContext,
+	context: ServiceContext,
 	uri: string,
 	isValidSourceMap: (file: VirtualFile, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>) => boolean,
-	worker: (plugin: LanguageServicePluginInstance, document: TextDocument) => T,
+	worker: (service: ReturnType<Service>, document: TextDocument) => T,
 	transform: (result: NonNullable<Awaited<T>>, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined) => Awaited<T> | undefined,
 	combineResult?: (results: NonNullable<Awaited<T>>[]) => NonNullable<Awaited<T>>,
 ) {
@@ -29,11 +29,11 @@ export async function documentFeatureWorker<T>(
 }
 
 export async function languageFeatureWorker<T, K>(
-	context: LanguageServicePluginContext,
+	context: ServiceContext,
 	uri: string,
 	arg: K,
 	transformArg: (arg: K, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>, file: VirtualFile) => Generator<K> | K[],
-	worker: (plugin: LanguageServicePluginInstance, document: TextDocument, arg: K, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined, file: VirtualFile | undefined) => T,
+	worker: (service: ReturnType<Service>, document: TextDocument, arg: K, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined, file: VirtualFile | undefined) => T,
 	transform: (result: NonNullable<Awaited<T>>, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined) => Awaited<T> | undefined,
 	combineResult?: (results: NonNullable<Awaited<T>>[]) => NonNullable<Awaited<T>>,
 	reportProgress?: (result: NonNullable<Awaited<T>>) => void,
@@ -117,7 +117,7 @@ export async function languageFeatureWorker<T, K>(
 }
 
 export async function ruleWorker<T>(
-	context: LanguageServicePluginContext,
+	context: ServiceContext,
 	api: 'onSyntax' | 'onSemantic' | 'onFormat',
 	uri: string,
 	isValidSourceMap: (file: VirtualFile) => boolean,
@@ -141,15 +141,7 @@ export async function ruleWorker<T>(
 			}
 
 			let ruleCtx: RuleContext = {
-				// project context
-				modules: { typescript: context.typescript?.module },
-				uriToFileName: context.uriToFileName,
-				fileNameToUri: context.fileNameToUri,
-				rootUri: context.rootUri,
-				locale: context.locale,
-				getConfiguration: context.configurationHost?.getConfiguration,
-				onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
-				settings: context.config.lint?.settings ?? {},
+				env: context.env,
 				// document context
 				ruleId: '',
 				document: map.virtualFileDocument,
@@ -207,15 +199,7 @@ export async function ruleWorker<T>(
 	else if (document) {
 
 		let ruleCtx: RuleContext = {
-			// project context
-			modules: { typescript: context.typescript?.module },
-			uriToFileName: context.uriToFileName,
-			fileNameToUri: context.fileNameToUri,
-			rootUri: context.rootUri,
-			locale: context.locale,
-			getConfiguration: context.configurationHost?.getConfiguration,
-			onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
-			settings: context.config.lint?.settings ?? {},
+			env: context.env,
 			// document context
 			ruleId: '',
 			document,

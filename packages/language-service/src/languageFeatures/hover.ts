@@ -1,10 +1,10 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { isInsideRange } from '../utils/common';
 import { errorMarkups } from './validation';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return async (uri: string, position: vscode.Position, token = vscode.CancellationToken.None) => {
 

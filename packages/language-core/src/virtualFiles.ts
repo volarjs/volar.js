@@ -1,7 +1,7 @@
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { MirrorMap } from './sourceMaps';
-import type { FileRangeCapabilities, LanguageModule, VirtualFile } from './types';
+import type { FileRangeCapabilities, Language, VirtualFile } from './types';
 
 export type VirtualFiles = ReturnType<typeof createVirtualFiles>;
 
@@ -9,10 +9,10 @@ export interface Source {
 	fileName: string;
 	snapshot: ts.IScriptSnapshot;
 	root: VirtualFile;
-	languageModule: LanguageModule;
+	language: Language;
 }
 
-export function createVirtualFiles(languageModules: LanguageModule[]) {
+export function createVirtualFiles(languages: Language[]) {
 
 	const sourceFiles = new Map<string, Source>();
 	const virtualFiles = new Map<string, { virtualFile: VirtualFile, source: Source; }>();
@@ -30,14 +30,14 @@ export function createVirtualFiles(languageModules: LanguageModule[]) {
 			const value = sourceFiles.get(key);
 			if (value) {
 				value.snapshot = snapshot;
-				value.languageModule.updateFile(value.root, snapshot);
+				value.language.updateVirtualFile(value.root, snapshot);
 				sourceFilesDirty = true;
 				return value.root; // updated
 			}
-			for (const languageModule of languageModules) {
-				const virtualFile = languageModule.createFile(fileName, snapshot, languageId);
+			for (const language of languages) {
+				const virtualFile = language.createVirtualFile(fileName, snapshot, languageId);
 				if (virtualFile) {
-					sourceFiles.set(key, { fileName, snapshot, root: virtualFile, languageModule });
+					sourceFiles.set(key, { fileName, snapshot, root: virtualFile, language });
 					sourceFilesDirty = true;
 					return virtualFile; // created
 				}
@@ -47,7 +47,7 @@ export function createVirtualFiles(languageModules: LanguageModule[]) {
 			const key = normalizePath(fileName);
 			const value = sourceFiles.get(key);
 			if (value) {
-				value.languageModule.deleteFile?.(value.root);
+				value.language.deleteVirtualFile?.(value.root);
 				sourceFiles.delete(key); // deleted
 				sourceFilesDirty = true;
 			}

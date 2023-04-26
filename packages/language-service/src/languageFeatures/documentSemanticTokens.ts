@@ -1,11 +1,11 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import { SemanticToken } from '@volar/language-service';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { notEmpty } from '../utils/common';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return async (
 		uri: string,

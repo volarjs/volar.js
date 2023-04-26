@@ -82,14 +82,14 @@ export interface VirtualFile {
 	embeddedFiles: VirtualFile[],
 }
 
-export interface LanguageModule<T extends VirtualFile = VirtualFile> {
-	createFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
-	updateFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
-	deleteFile?(virtualFile: T): void;
-	proxyLanguageServiceHost?(host: LanguageServiceHost): Partial<LanguageServiceHost>;
+export interface Language<T extends VirtualFile = VirtualFile> {
+	resolveHost?(host: LanguageServiceHost): LanguageServiceHost;
+	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
+	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
+	deleteVirtualFile?(virtualFile: T): void;
 }
 
 export interface LanguageServiceHost extends ts.LanguageServiceHost {
 	getScriptLanguageId?(fileName: string): string | undefined;
 	isTsc?: boolean,
-};
+}

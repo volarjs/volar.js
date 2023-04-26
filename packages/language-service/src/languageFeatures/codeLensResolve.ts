@@ -1,9 +1,9 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { PluginCodeLensData, PluginReferencesCodeLensData } from './codeLens';
 import * as references from './references';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	const findReferences = references.register(context);
 
@@ -34,7 +34,7 @@ export function register(context: LanguageServicePluginContext) {
 				references = await plugin.resolveReferencesCodeLensLocations(document, data.range, references, token);
 			}
 
-			item.command = context.commands.createShowReferencesCommand(data.uri, data.range.start, references);
+			item.command = context.commands.showReferences.create(data.uri, data.range.start, references);
 		}
 
 		return item;

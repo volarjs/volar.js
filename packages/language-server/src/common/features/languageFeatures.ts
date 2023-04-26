@@ -3,14 +3,14 @@ import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
 import { CancellationTokenHost } from '../cancellationPipe';
 import type { Workspaces } from '../workspaces';
-import { RuntimeEnvironment, LanguageServerInitializationOptions, ServerMode } from '../../types';
+import { RuntimeEnvironment, InitializationOptions, ServerMode } from '../../types';
 import { createDocuments } from '../documents';
 
 export function register(
 	connection: vscode.Connection,
 	projects: Workspaces,
 	initParams: vscode.InitializeParams,
-	initOptions: LanguageServerInitializationOptions,
+	initOptions: InitializationOptions,
 	cancelHost: CancellationTokenHost,
 	semanticTokensLegend: vscode.SemanticTokensLegend,
 	runtime: RuntimeEnvironment,

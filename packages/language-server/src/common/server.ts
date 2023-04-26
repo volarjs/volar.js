@@ -2,7 +2,7 @@ import { Config, standardSemanticTokensLegend } from '@volar/language-service';
 import * as l10n from '@vscode/l10n';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { FileSystemHost, LanguageServerInitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types';
+import { FileSystemHost, InitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types';
 import { createCancellationTokenHost } from './cancellationPipe';
 import { createConfigurationHost } from './configurationHost';
 import { createDocuments } from './documents';
@@ -16,10 +16,10 @@ export interface ServerContext {
 	plugins: LanguageServerPlugin[],
 }
 
-export function startCommonLanguageServer(connection: vscode.Connection, getCtx: (initOptions: LanguageServerInitializationOptions) => ServerContext) {
+export function startCommonLanguageServer(connection: vscode.Connection, getCtx: (initOptions: InitializationOptions) => ServerContext) {
 
 	let initParams: vscode.InitializeParams;
-	let options: LanguageServerInitializationOptions;
+	let options: InitializationOptions;
 	let roots: URI[] = [];
 	let fsHost: FileSystemHost | undefined;
 	let projects: ReturnType<typeof createWorkspaces> | undefined;
@@ -67,7 +67,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 
 		configurationHost = initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, connection) : undefined;
 
-		let lsPlugins: Config['plugins'] = {};
+		let services: Config['services'] = {};
 		for (const root of roots) {
 			if (root.scheme === 'file') {
 				let config = loadConfig(root.path, options.configFilePath) ?? {};
@@ -76,10 +76,10 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 						config = plugin.resolveConfig(config, undefined);
 					}
 				}
-				if (config.plugins) {
-					lsPlugins = {
-						...lsPlugins,
-						...config.plugins,
+				if (config.services) {
+					services = {
+						...services,
+						...config.services,
 					};
 				}
 			}
@@ -90,7 +90,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 			options,
 			plugins,
 			getSemanticTokensLegend(),
-			lsPlugins,
+			services,
 		);
 
 		await createLanguageServiceHost();
@@ -156,19 +156,19 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 
 		const tsLocalized = options.typescript && initParams.locale ? await context.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale) : undefined;
 		const cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
-		const _projects = createWorkspaces({
+
+		projects = createWorkspaces({
 			server: context,
 			fileSystemHost: fsHost,
 			configurationHost,
 			ts,
 			tsLocalized,
-			initParams: initParams,
+			initParams,
 			initOptions: options,
 			documents,
 			cancelTokenHost,
 			plugins,
 		});
-		projects = _projects;
 
 		for (const root of roots) {
 			projects.add(root);

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -8,7 +8,7 @@ import { SourceMapWithDocuments } from '../documents';
 import { notEmpty } from '../utils/common';
 
 export function register(
-	context: LanguageServicePluginContext,
+	context: ServiceContext,
 	apiName: 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
 	isValidMapping: (data: FileRangeCapabilities) => boolean,
 	isValidMirrorPosition: (mirrorData: MirrorBehaviorCapabilities) => boolean,

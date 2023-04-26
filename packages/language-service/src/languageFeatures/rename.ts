@@ -1,12 +1,12 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { DocumentsAndSourceMaps } from '../documents';
 import { FileRangeCapabilities } from '@volar/language-core';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return (uri: string, position: vscode.Position, newName: string, token = vscode.CancellationToken.None) => {
 

@@ -1,9 +1,9 @@
 import * as transformer from '../transformer';
 import * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServicePluginContext } from '../types';
+import type { ServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
 
-export function register(context: LanguageServicePluginContext) {
+export function register(context: ServiceContext) {
 
 	return async (query: string, token = vscode.CancellationToken.None) => {
 
