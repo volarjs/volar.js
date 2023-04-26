@@ -31,17 +31,13 @@ interface Command<T> {
 
 export interface ServiceContext {
 
-	config: Config;
-
-	host: LanguageServiceHost;
-
 	env: ServiceEnvironment;
-
+	config: Config;
+	host: LanguageServiceHost;
 	typescript: {
 		languageServiceHost: ts.LanguageServiceHost;
 		languageService: ts.LanguageService;
 	} | undefined;
-
 	commands: {
 		showReferences: Command<(uri: string, position: vscode.Position, locations: vscode.Location[]) => vscode.Command | undefined>;
 		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;

@@ -92,4 +92,4 @@ export interface Language<T extends VirtualFile = VirtualFile> {
 export interface LanguageServiceHost extends ts.LanguageServiceHost {
 	getScriptLanguageId?(fileName: string): string | undefined;
 	isTsc?: boolean,
-};
+}
