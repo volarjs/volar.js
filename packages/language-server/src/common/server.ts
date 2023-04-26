@@ -156,19 +156,19 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 
 		const tsLocalized = options.typescript && initParams.locale ? await context.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale) : undefined;
 		const cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
-		const _projects = createWorkspaces({
+
+		projects = createWorkspaces({
 			server: context,
 			fileSystemHost: fsHost,
 			configurationHost,
 			ts,
 			tsLocalized,
-			initParams: initParams,
+			initParams,
 			initOptions: options,
 			documents,
 			cancelTokenHost,
 			plugins,
 		});
-		projects = _projects;
 
 		for (const root of roots) {
 			projects.add(root);
