@@ -30,12 +30,12 @@ export function createVirtualFiles(languages: Language[]) {
 			const value = sourceFiles.get(key);
 			if (value) {
 				value.snapshot = snapshot;
-				value.language.updateFile(value.root, snapshot);
+				value.language.updateVirtualFile(value.root, snapshot);
 				sourceFilesDirty = true;
 				return value.root; // updated
 			}
 			for (const language of languages) {
-				const virtualFile = language.createFile(fileName, snapshot, languageId);
+				const virtualFile = language.createVirtualFile(fileName, snapshot, languageId);
 				if (virtualFile) {
 					sourceFiles.set(key, { fileName, snapshot, root: virtualFile, language });
 					sourceFilesDirty = true;
@@ -47,7 +47,7 @@ export function createVirtualFiles(languages: Language[]) {
 			const key = normalizePath(fileName);
 			const value = sourceFiles.get(key);
 			if (value) {
-				value.language.deleteFile?.(value.root);
+				value.language.deleteVirtualFile?.(value.root);
 				sourceFiles.delete(key); // deleted
 				sourceFilesDirty = true;
 			}

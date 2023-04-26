@@ -83,10 +83,10 @@ export interface VirtualFile {
 }
 
 export interface Language<T extends VirtualFile = VirtualFile> {
-	createFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
-	updateFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
-	deleteFile?(virtualFile: T): void;
-	proxyLanguageServiceHost?(host: LanguageServiceHost): Partial<LanguageServiceHost>;
+	resolveHost?(host: LanguageServiceHost): LanguageServiceHost;
+	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
+	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
+	deleteVirtualFile?(virtualFile: T): void;
 }
 
 export interface LanguageServiceHost extends ts.LanguageServiceHost {

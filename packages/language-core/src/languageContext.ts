@@ -12,16 +12,8 @@ export function createLanguageContext(
 ) {
 
 	for (const language of languages.reverse()) {
-		if (language.proxyLanguageServiceHost) {
-			const proxyApis = language.proxyLanguageServiceHost(host);
-			host = new Proxy(host, {
-				get(target, key: keyof ts.LanguageServiceHost) {
-					if (key in proxyApis) {
-						return proxyApis[key];
-					}
-					return target[key];
-				},
-			});
+		if (language.resolveHost) {
+			host = language.resolveHost(host);
 		}
 	}
 
