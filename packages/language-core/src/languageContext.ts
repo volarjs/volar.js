@@ -13,7 +13,15 @@ export function createLanguageContext(
 
 	for (const language of languages.reverse()) {
 		if (language.resolveHost) {
-			host = language.resolveHost(host);
+			const pastHost = host;
+			host = new Proxy(language.resolveHost(host), {
+				get(target, p) {
+					if (p in target) {
+						return (target as any)[p];
+					}
+					return (pastHost as any)[p];
+				}
+			});
 		}
 	}
 
