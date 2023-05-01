@@ -115,6 +115,7 @@ export interface Service {
 		resolveInlayHint?(inlayHint: vscode.InlayHint, token: vscode.CancellationToken): Result<vscode.InlayHint>;
 		resolveReferencesCodeLensLocations?(document: TextDocument, range: vscode.Range, references: vscode.Location[], token: vscode.CancellationToken): Result<vscode.Location[]>; // volar specific
 		resolveRuleContext?(context: RuleContext, ruleType: 'format' | 'syntax' | 'semantic'): Result<RuleContext>; // volar specific
+		resolveRuleDiagnostic?(diagnostic: vscode.Diagnostic): vscode.Diagnostic; // volar specific
 		resolveEmbeddedRange?(range: vscode.Range): vscode.Range | undefined; // volar specific, only support in resolveCompletionItem for now
 	};
 }
@@ -165,9 +166,5 @@ export interface RuleFix {
 export interface Config {
 	languages?: { [id: string]: Language | undefined; };
 	services?: { [id: string]: Service | undefined; };
-	lint?: {
-		rules?: { [id: string]: Rule | undefined; };
-		severities?: { [id: string]: vscode.DiagnosticSeverity; };
-		settings?: any;
-	};
+	rules?: { [id: string]: Rule | undefined; };
 }

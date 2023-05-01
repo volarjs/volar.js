@@ -162,9 +162,9 @@ export async function ruleWorker<T>(
 				}
 			}
 
-			for (const ruleName in context.config.lint?.rules) {
+			for (const ruleName in context.config.rules) {
 
-				const rule = context.config.lint?.rules[ruleName];
+				const rule = context.config.rules[ruleName];
 				if (!rule) {
 					continue;
 				}
@@ -220,9 +220,9 @@ export async function ruleWorker<T>(
 			}
 		}
 
-		for (const ruleName in context.config.lint?.rules) {
+		for (const ruleName in context.config.rules) {
 
-			const rule = context.config.lint?.rules[ruleName];
+			const rule = context.config.rules[ruleName];
 			if (!rule) {
 				continue;
 			}

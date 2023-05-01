@@ -287,9 +287,11 @@ export function register(context: ServiceContext) {
 						error.source ||= 'rules';
 						error.code ||= ruleCtx.ruleId;
 
-						const severity = context.config.lint?.severities?.[ruleCtx.ruleId];
-						if (severity !== undefined) {
-							error.severity = severity;
+						for (const pluginId in context.plugins) {
+							const plugin = context.plugins[pluginId];
+							if (plugin.resolveRuleDiagnostic) {
+								error = plugin.resolveRuleDiagnostic(error);
+							}
 						}
 
 						reportResults.push([error, ...fixes]);
