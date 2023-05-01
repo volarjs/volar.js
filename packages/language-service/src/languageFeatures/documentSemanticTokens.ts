@@ -57,12 +57,12 @@ export function register(context: ServiceContext) {
 					yield range;
 				}
 			},
-			(plugin, document, offsetRange) => {
+			(service, document, offsetRange) => {
 
 				if (token?.isCancellationRequested)
 					return;
 
-				return plugin.provideDocumentSemanticTokens?.(
+				return service.provideDocumentSemanticTokens?.(
 					document,
 					vscode.Range.create(document.positionAt(offsetRange[0]), document.positionAt(offsetRange[1])),
 					legend,

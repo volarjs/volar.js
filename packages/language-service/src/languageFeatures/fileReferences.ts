@@ -16,12 +16,12 @@ export function register(context: ServiceContext) {
 			function* (_) {
 				yield _;
 			},
-			async (plugin, document) => {
+			async (service, document) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return await plugin.provideFileReferences?.(document, token) ?? [];
+				return await service.provideFileReferences?.(document, token) ?? [];
 			},
 			(data) => data.map(reference => {
 

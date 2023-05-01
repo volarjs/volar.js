@@ -5,10 +5,10 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { Service, ServiceContext } from '../types';
 import { visitEmbedded } from '../utils/definePlugin';
 
-export interface PluginCompletionData {
+export interface ServiceCompletionData {
 	uri: string;
 	original: Pick<vscode.CompletionItem, 'additionalTextEdits' | 'textEdit' | 'data'>;
-	pluginId: string;
+	serviceId: string;
 	virtualDocumentUri: string | undefined;
 }
 
@@ -18,7 +18,7 @@ export function register(context: ServiceContext) {
 		uri: string,
 		data: {
 			virtualDocumentUri: string | undefined,
-			plugin: ReturnType<Service>,
+			service: ReturnType<Service>,
 			list: vscode.CompletionList,
 		}[],
 		mainCompletion: {
@@ -51,10 +51,10 @@ export function register(context: ServiceContext) {
 
 						for (const mapped of map.toGeneratedPositions(position, data => !!data.completion)) {
 
-							if (!cacheData.plugin.provideCompletionItems)
+							if (!cacheData.service.provideCompletionItems)
 								continue;
 
-							const embeddedCompletionList = await cacheData.plugin.provideCompletionItems(map.virtualFileDocument, mapped, completionContext, token);
+							const embeddedCompletionList = await cacheData.service.provideCompletionItems(map.virtualFileDocument, mapped, completionContext, token);
 
 							if (!embeddedCompletionList) {
 								cacheData.list.isIncomplete = false;
@@ -72,19 +72,19 @@ export function register(context: ServiceContext) {
 										textEdit: oldItem.textEdit,
 										data: oldItem.data,
 									},
-									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
+									serviceId: Object.keys(context.services).find(key => context.services[key] === cacheData.service)!,
 									virtualDocumentUri: map.virtualFileDocument.uri,
-								} satisfies PluginCompletionData,
+								} satisfies ServiceCompletionData,
 							);
 						}
 					}
 				}
 				else if (document = context.getTextDocument(uri)) {
 
-					if (!cacheData.plugin.provideCompletionItems)
+					if (!cacheData.service.provideCompletionItems)
 						continue;
 
-					const completionList = await cacheData.plugin.provideCompletionItems(document, position, completionContext, token);
+					const completionList = await cacheData.service.provideCompletionItems(document, position, completionContext, token);
 
 					if (!completionList) {
 						cacheData.list.isIncomplete = false;
@@ -99,9 +99,9 @@ export function register(context: ServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === cacheData.plugin)!,
+							serviceId: Object.keys(context.services).find(key => context.services[key] === cacheData.service)!,
 							virtualDocumentUri: undefined,
-						} satisfies PluginCompletionData;
+						} satisfies ServiceCompletionData;
 					});
 				}
 			}
@@ -123,7 +123,7 @@ export function register(context: ServiceContext) {
 
 				await visitEmbedded(context.documents, rootFile, async (_, map) => {
 
-					const plugins = Object.values(context.plugins).sort(sortPlugins);
+					const services = Object.values(context.services).sort(sortServices);
 
 					let _data: FileRangeCapabilities | undefined;
 
@@ -132,30 +132,30 @@ export function register(context: ServiceContext) {
 						return !!data.completion;
 					})) {
 
-						for (const plugin of plugins) {
+						for (const service of services) {
 
 							if (token.isCancellationRequested)
 								break;
 
-							if (!plugin.provideCompletionItems)
+							if (!service.provideCompletionItems)
 								continue;
 
-							if (plugin.isAdditionalCompletion && !isFirstMapping)
+							if (service.isAdditionalCompletion && !isFirstMapping)
 								continue;
 
-							if (completionContext?.triggerCharacter && !plugin.triggerCharacters?.includes(completionContext.triggerCharacter))
+							if (completionContext?.triggerCharacter && !service.triggerCharacters?.includes(completionContext.triggerCharacter))
 								continue;
 
-							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.additional || plugin.isAdditionalCompletion;
+							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.additional || service.isAdditionalCompletion;
 
 							if (cache!.mainCompletion && (!isAdditional || cache?.mainCompletion.documentUri !== map.virtualFileDocument.uri))
 								continue;
 
 							// avoid duplicate items with .vue and .vue.html
-							if (plugin.isAdditionalCompletion && cache?.data.some(data => data.plugin === plugin))
+							if (service.isAdditionalCompletion && cache?.data.some(data => data.service === service))
 								continue;
 
-							const embeddedCompletionList = await plugin.provideCompletionItems(map.virtualFileDocument, mapped, completionContext!, token);
+							const embeddedCompletionList = await service.provideCompletionItems(map.virtualFileDocument, mapped, completionContext!, token);
 
 							if (!embeddedCompletionList || !embeddedCompletionList.items.length)
 								continue;
@@ -179,14 +179,14 @@ export function register(context: ServiceContext) {
 										textEdit: oldItem.textEdit,
 										data: oldItem.data,
 									},
-									pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+									serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
 									virtualDocumentUri: map.virtualFileDocument.uri,
-								} satisfies PluginCompletionData,
+								} satisfies ServiceCompletionData,
 							);
 
 							cache!.data.push({
 								virtualDocumentUri: map.virtualFileDocument.uri,
-								plugin,
+								service: service,
 								list: completionList,
 							});
 						}
@@ -200,35 +200,35 @@ export function register(context: ServiceContext) {
 
 			if (document = context.getTextDocument(uri)) {
 
-				const plugins = Object.values(context.plugins).sort(sortPlugins);
+				const services = Object.values(context.services).sort(sortServices);
 
-				for (const plugin of plugins) {
+				for (const service of services) {
 
 					if (token.isCancellationRequested)
 						break;
 
-					if (!plugin.provideCompletionItems)
+					if (!service.provideCompletionItems)
 						continue;
 
-					if (plugin.isAdditionalCompletion && !isFirstMapping)
+					if (service.isAdditionalCompletion && !isFirstMapping)
 						continue;
 
-					if (completionContext?.triggerCharacter && !plugin.triggerCharacters?.includes(completionContext.triggerCharacter))
+					if (completionContext?.triggerCharacter && !service.triggerCharacters?.includes(completionContext.triggerCharacter))
 						continue;
 
-					if (cache.mainCompletion && (!plugin.isAdditionalCompletion || cache.mainCompletion.documentUri !== document.uri))
+					if (cache.mainCompletion && (!service.isAdditionalCompletion || cache.mainCompletion.documentUri !== document.uri))
 						continue;
 
 					// avoid duplicate items with .vue and .vue.html
-					if (plugin.isAdditionalCompletion && cache?.data.some(data => data.plugin === plugin))
+					if (service.isAdditionalCompletion && cache?.data.some(data => data.service === service))
 						continue;
 
-					const completionList = await plugin.provideCompletionItems(document, position, completionContext, token);
+					const completionList = await service.provideCompletionItems(document, position, completionContext, token);
 
 					if (!completionList || !completionList.items.length)
 						continue;
 
-					if (!plugin.isAdditionalCompletion) {
+					if (!service.isAdditionalCompletion) {
 						cache.mainCompletion = { documentUri: document.uri };
 					}
 
@@ -240,14 +240,14 @@ export function register(context: ServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+							serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
 							virtualDocumentUri: undefined,
-						} satisfies PluginCompletionData;
+						} satisfies ServiceCompletionData;
 					});
 
 					cache.data.push({
 						virtualDocumentUri: undefined,
-						plugin,
+						service: service,
 						list: completionList,
 					});
 				}
@@ -256,7 +256,7 @@ export function register(context: ServiceContext) {
 
 		return combineCompletionList(cache.data.map(cacheData => cacheData.list));
 
-		function sortPlugins(a: ReturnType<Service>, b: ReturnType<Service>) {
+		function sortServices(a: ReturnType<Service>, b: ReturnType<Service>) {
 			return (b.isAdditionalCompletion ? -1 : 1) - (a.isAdditionalCompletion ? -1 : 1);
 		}
 

@@ -16,12 +16,12 @@ export function register(context: ServiceContext) {
 					return map.toGeneratedRanges(range);
 				return [];
 			},
-			(plugin, document, range) => {
+			(service, document, range) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.provideColorPresentations?.(document, color, range, token);
+				return service.provideColorPresentations?.(document, color, range, token);
 			},
 			(data, map) => map ? data.map(cp => {
 

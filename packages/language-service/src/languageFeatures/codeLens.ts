@@ -3,18 +3,18 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from '../utils/common';
 
-export interface PluginCodeLensData {
+export interface ServiceCodeLensData {
 	kind: 'normal',
 	uri: string,
 	original: Pick<vscode.CodeLens, 'data'>,
-	pluginId: string,
+	serviceId: string,
 }
 
-export interface PluginReferencesCodeLensData {
+export interface ServiceReferencesCodeLensData {
 	kind: 'references',
 	uri: string,
 	range: vscode.Range,
-	pluginId: string,
+	serviceId: string,
 }
 
 export function register(context: ServiceContext) {
@@ -26,14 +26,14 @@ export function register(context: ServiceContext) {
 			uri,
 			undefined,
 			(arg) => [arg],
-			async (plugin, document) => {
+			async (service, document) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				let codeLens = await plugin.provideCodeLenses?.(document, token);
+				let codeLens = await service.provideCodeLenses?.(document, token);
 
-				const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!;
+				const serviceId = Object.keys(context.services).find(key => context.services[key] === service)!;
 
 				codeLens?.forEach(codeLens => {
 					codeLens.data = {
@@ -42,17 +42,17 @@ export function register(context: ServiceContext) {
 						original: {
 							data: codeLens.data,
 						},
-						pluginId,
-					} satisfies PluginCodeLensData;
+						serviceId: serviceId,
+					} satisfies ServiceCodeLensData;
 				});
 
-				const ranges = await plugin.provideReferencesCodeLensRanges?.(document, token);
+				const ranges = await service.provideReferencesCodeLensRanges?.(document, token);
 				const referencesCodeLens = ranges?.map(range => vscode.CodeLens.create(range, {
 					kind: 'references',
 					uri,
 					range,
-					pluginId,
-				} satisfies PluginReferencesCodeLensData));
+					serviceId: serviceId,
+				} satisfies ServiceReferencesCodeLensData));
 
 				codeLens = [
 					...codeLens ?? [],

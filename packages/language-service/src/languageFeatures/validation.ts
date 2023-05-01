@@ -94,13 +94,13 @@ function updatePosition(
 	return false;
 }
 
-export interface PluginDiagnosticData {
+export interface ServiceDiagnosticData {
 	uri: string,
 	version: number,
 	original: Pick<vscode.Diagnostic, 'data'>,
-	type: 'plugin' | 'rule',
+	type: 'service' | 'rule',
 	isFormat: boolean,
-	pluginOrRuleId: string,
+	serviceOrRuleId: string,
 	ruleFixIndex: number,
 	documentUri: string,
 }
@@ -227,8 +227,8 @@ export function register(context: ServiceContext) {
 			const errors = Object.values(lastResponse).flatMap(({ errors }) => errors);
 			errorMarkups[uri] = [];
 			for (const error of errors) {
-				for (const plugin of Object.values(context.plugins)) {
-					const markup = await plugin.provideDiagnosticMarkupContent?.(error, token);
+				for (const service of Object.values(context.services)) {
+					const markup = await service.provideDiagnosticMarkupContent?.(error, token);
 					if (markup) {
 						errorMarkups[uri].push({ error, markup });
 					}
@@ -287,10 +287,9 @@ export function register(context: ServiceContext) {
 						error.source ||= 'rules';
 						error.code ||= ruleCtx.ruleId;
 
-						for (const pluginId in context.plugins) {
-							const plugin = context.plugins[pluginId];
-							if (plugin.resolveRuleDiagnostic) {
-								error = plugin.resolveRuleDiagnostic(error);
+						for (const service of Object.values(context.services)) {
+							if (service.resolveRuleDiagnostic) {
+								error = service.resolveRuleDiagnostic(error);
 							}
 						}
 
@@ -316,13 +315,13 @@ export function register(context: ServiceContext) {
 							version: newDocument!.version,
 							type: 'rule',
 							isFormat: api === 'onFormat',
-							pluginOrRuleId: ruleCtx.ruleId,
+							serviceOrRuleId: ruleCtx.ruleId,
 							original: {
 								data: error.data,
 							},
 							ruleFixIndex: index,
 							documentUri: ruleCtx.document.uri,
-						} satisfies PluginDiagnosticData;
+						} satisfies ServiceDiagnosticData;
 					});
 
 					errorsUpdated = true;
@@ -360,7 +359,7 @@ export function register(context: ServiceContext) {
 						yield arg;
 					}
 				},
-				async (plugin, document) => {
+				async (service, document) => {
 
 					if (token) {
 						if (Date.now() - lastCheckCancelAt >= 5) {
@@ -372,9 +371,9 @@ export function register(context: ServiceContext) {
 						}
 					}
 
-					const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!;
-					const pluginCache = cacheMap.get(pluginId) ?? cacheMap.set(pluginId, new Map()).get(pluginId)!;
-					const cache = pluginCache.get(document.uri);
+					const serviceId = Object.keys(context.services).find(key => context.services[key] === service)!;
+					const serviceCache = cacheMap.get(serviceId) ?? cacheMap.set(serviceId, new Map()).get(serviceId)!;
+					const cache = serviceCache.get(document.uri);
 					const tsProjectVersion = api === 'provideSemanticDiagnostics' ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
 
 					if (api === 'provideSemanticDiagnostics') {
@@ -388,26 +387,26 @@ export function register(context: ServiceContext) {
 						}
 					}
 
-					const errors = await plugin[api]?.(document, token);
+					const errors = await service[api]?.(document, token);
 
 					errors?.forEach(error => {
 						error.data = {
 							uri,
 							version: newDocument!.version,
-							type: 'plugin',
-							pluginOrRuleId: pluginId,
+							type: 'service',
+							serviceOrRuleId: serviceId,
 							isFormat: false,
 							original: {
 								data: error.data,
 							},
 							ruleFixIndex: 0,
 							documentUri: document.uri,
-						} satisfies PluginDiagnosticData;
+						} satisfies ServiceDiagnosticData;
 					});
 
 					errorsUpdated = true;
 
-					pluginCache.set(document.uri, {
+					serviceCache.set(document.uri, {
 						documentVersion: document.version,
 						errors,
 						tsProjectVersion,

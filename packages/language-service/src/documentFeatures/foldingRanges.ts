@@ -11,12 +11,12 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			file => !!file.capabilities.foldingRange,
-			(plugin, document) => {
+			(service, document) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.provideFoldingRanges?.(document, token);
+				return service.provideFoldingRanges?.(document, token);
 			},
 			(data, map) => map ? transformer.asFoldingRanges(data, range => map.toSourceRange(range)) : data,
 			arr => arr.flat(),

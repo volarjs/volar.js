@@ -8,7 +8,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 export interface PluginCallHierarchyData {
 	uri: string,
 	original: Pick<vscode.CallHierarchyItem, 'data'>,
-	pluginId: string,
+	serviceId: string,
 	virtualDocumentUri: string | undefined,
 }
 
@@ -23,12 +23,12 @@ export function register(context: ServiceContext) {
 				uri,
 				position,
 				(position, map) => map.toGeneratedPositions(position, data => !!data.references),
-				async (plugin, document, position, map) => {
+				async (service, document, position, map) => {
 
 					if (token.isCancellationRequested)
 						return;
 
-					const items = await plugin.provideCallHierarchyItems?.(document, position, token);
+					const items = await service.provideCallHierarchyItems?.(document, position, token);
 
 					items?.forEach(item => {
 						item.data = {
@@ -36,7 +36,7 @@ export function register(context: ServiceContext) {
 							original: {
 								data: item.data,
 							},
-							pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+							serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
 							virtualDocumentUri: map?.virtualFileDocument.uri,
 						} satisfies PluginCallHierarchyData;
 					});
@@ -57,9 +57,9 @@ export function register(context: ServiceContext) {
 
 			if (data) {
 
-				const plugin = context.plugins[data.pluginId];
+				const service = context.services[data.serviceId];
 
-				if (!plugin.provideCallHierarchyIncomingCalls)
+				if (!service.provideCallHierarchyIncomingCalls)
 					return incomingItems;
 
 				Object.assign(item, data.original);
@@ -68,7 +68,7 @@ export function register(context: ServiceContext) {
 
 					if (context.documents.isVirtualFileUri(data.virtualDocumentUri)) {
 
-						const _calls = await plugin.provideCallHierarchyIncomingCalls(item, token);
+						const _calls = await service.provideCallHierarchyIncomingCalls(item, token);
 
 						for (const _call of _calls) {
 
@@ -86,7 +86,7 @@ export function register(context: ServiceContext) {
 				}
 				else {
 
-					const _calls = await plugin.provideCallHierarchyIncomingCalls(item, token);
+					const _calls = await service.provideCallHierarchyIncomingCalls(item, token);
 
 					for (const _call of _calls) {
 
@@ -113,9 +113,9 @@ export function register(context: ServiceContext) {
 
 			if (data) {
 
-				const plugin = context.plugins[data.pluginId];
+				const service = context.services[data.serviceId];
 
-				if (!plugin.provideCallHierarchyOutgoingCalls)
+				if (!service.provideCallHierarchyOutgoingCalls)
 					return items;
 
 				Object.assign(item, data.original);
@@ -124,7 +124,7 @@ export function register(context: ServiceContext) {
 
 					if (context.documents.isVirtualFileUri(data.virtualDocumentUri)) {
 
-						const _calls = await plugin.provideCallHierarchyOutgoingCalls(item, token);
+						const _calls = await service.provideCallHierarchyOutgoingCalls(item, token);
 
 						for (const call of _calls) {
 
@@ -142,7 +142,7 @@ export function register(context: ServiceContext) {
 				}
 				else {
 
-					const _calls = await plugin.provideCallHierarchyOutgoingCalls(item, token);
+					const _calls = await service.provideCallHierarchyOutgoingCalls(item, token);
 
 					for (const call of _calls) {
 

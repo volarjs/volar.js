@@ -29,15 +29,15 @@ export function register(context: ServiceContext) {
 			newUri += tsExt;
 		}
 
-		for (const plugin of Object.values(context.plugins)) {
+		for (const service of Object.values(context.services)) {
 
 			if (token.isCancellationRequested)
 				break;
 
-			if (!plugin.provideFileRenameEdits)
+			if (!service.provideFileRenameEdits)
 				continue;
 
-			const workspaceEdit = await plugin.provideFileRenameEdits(oldUri, newUri, token);
+			const workspaceEdit = await service.provideFileRenameEdits(oldUri, newUri, token);
 
 			if (workspaceEdit) {
 

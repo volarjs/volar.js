@@ -8,12 +8,12 @@ export function register(context: ServiceContext) {
 
 		const data: DocumentLinkData | undefined = item.data;
 		if (data) {
-			const plugin = context.plugins[data.pluginId];
-			if (!plugin.resolveDocumentLink)
+			const service = context.services[data.serviceId];
+			if (!service.resolveDocumentLink)
 				return item;
 
 			Object.assign(item, data.original);
-			item = await plugin.resolveDocumentLink(item, token);
+			item = await service.resolveDocumentLink(item, token);
 		}
 
 		return item;

@@ -7,7 +7,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 export interface InlayHintData {
 	uri: string,
 	original: Pick<vscode.CodeAction, 'data' | 'edit'>,
-	pluginId: string,
+	serviceId: string,
 }
 
 export function register(context: ServiceContext) {
@@ -61,19 +61,19 @@ export function register(context: ServiceContext) {
 
 				return [];
 			},
-			async (plugin, document, arg) => {
+			async (service, document, arg) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				const hints = await plugin.provideInlayHints?.(document, arg, token);
+				const hints = await service.provideInlayHints?.(document, arg, token);
 				hints?.forEach(link => {
 					link.data = {
 						uri,
 						original: {
 							data: link.data,
 						},
-						pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+						serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
 					} satisfies InlayHintData;
 				});
 

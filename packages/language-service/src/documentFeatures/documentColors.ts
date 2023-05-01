@@ -11,12 +11,12 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			file => !!file.capabilities.documentSymbol, // TODO: add color capability setting
-			(plugin, document) => {
+			(service, document) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.provideDocumentColors?.(document, token);
+				return service.provideDocumentColors?.(document, token);
 			},
 			(data, map) => map ? data.map(color => {
 

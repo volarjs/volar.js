@@ -19,7 +19,7 @@ export function register(context: ServiceContext) {
 			uri,
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => !!data.completion),
-			(plugin, document, position) => {
+			(service, document, position) => {
 				if (token.isCancellationRequested)
 					return;
 				if (
@@ -27,13 +27,13 @@ export function register(context: ServiceContext) {
 					&& signatureHelpContext.triggerCharacter
 					&& !(
 						signatureHelpContext.isRetrigger
-							? plugin.signatureHelpRetriggerCharacters
-							: plugin.signatureHelpTriggerCharacters
+							? service.signatureHelpRetriggerCharacters
+							: service.signatureHelpTriggerCharacters
 					)?.includes(signatureHelpContext.triggerCharacter)
 				) {
 					return;
 				}
-				return plugin.provideSignatureHelp?.(document, position, signatureHelpContext!, token);
+				return service.provideSignatureHelp?.(document, position, signatureHelpContext!, token);
 			},
 			(data) => data,
 		);

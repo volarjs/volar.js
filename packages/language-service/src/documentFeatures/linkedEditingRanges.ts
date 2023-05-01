@@ -12,12 +12,12 @@ export function register(context: ServiceContext) {
 			uri,
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => !!data.completion),
-			(plugin, document, position) => {
+			(service, document, position) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.provideLinkedEditingRanges?.(document, position, token);
+				return service.provideLinkedEditingRanges?.(document, position, token);
 			},
 			(data, map) => map ? ({
 				wordPattern: data.wordPattern,

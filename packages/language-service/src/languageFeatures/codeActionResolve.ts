@@ -1,23 +1,23 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
-import { PluginCodeActionData, RuleCodeActionData } from './codeActions';
+import { ServiceCodeActionData, RuleCodeActionData } from './codeActions';
 import { embeddedEditToSourceEdit } from './rename';
 
 export function register(context: ServiceContext) {
 
 	return async (item: vscode.CodeAction, token = vscode.CancellationToken.None) => {
 
-		const data: PluginCodeActionData | RuleCodeActionData | undefined = item.data;
+		const data: ServiceCodeActionData | RuleCodeActionData | undefined = item.data;
 
-		if (data?.type === 'plugin') {
+		if (data?.type === 'service') {
 
-			const plugin = context.plugins[data.pluginId];
-			if (!plugin.resolveCodeAction)
+			const service = context.services[data.serviceId];
+			if (!service.resolveCodeAction)
 				return item;
 
 			Object.assign(item, data.original);
 
-			item = await plugin.resolveCodeAction(item, token);
+			item = await service.resolveCodeAction(item, token);
 
 			if (item.edit) {
 				item.edit = embeddedEditToSourceEdit(

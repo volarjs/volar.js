@@ -1,19 +1,19 @@
 import * as transformer from '../transformer';
 import * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
-import { PluginCompletionData } from './complete';
+import { ServiceCompletionData } from './complete';
 
 export function register(context: ServiceContext) {
 
 	return async (item: vscode.CompletionItem, token = vscode.CancellationToken.None) => {
 
-		const data: PluginCompletionData | undefined = item.data;
+		const data: ServiceCompletionData | undefined = item.data;
 
 		if (data) {
 
-			const plugin = context.plugins[data.pluginId];
+			const service = context.services[data.serviceId];
 
-			if (!plugin.resolveCompletionItem)
+			if (!service.resolveCompletionItem)
 				return item;
 
 			item = Object.assign(item, data.original);
@@ -22,11 +22,11 @@ export function register(context: ServiceContext) {
 
 				for (const [_, map] of context.documents.getMapsByVirtualFileUri(data.virtualDocumentUri)) {
 
-					item = await plugin.resolveCompletionItem(item, token);
+					item = await service.resolveCompletionItem(item, token);
 					item = transformer.asCompletionItem(
 						item,
 						embeddedRange => {
-							let range = plugin.resolveEmbeddedRange?.(embeddedRange);
+							let range = service.resolveEmbeddedRange?.(embeddedRange);
 							if (range) return range;
 							return map.toSourceRange(embeddedRange);
 						},
@@ -35,7 +35,7 @@ export function register(context: ServiceContext) {
 				}
 			}
 			else {
-				item = await plugin.resolveCompletionItem(item, token);
+				item = await service.resolveCompletionItem(item, token);
 			}
 		}
 

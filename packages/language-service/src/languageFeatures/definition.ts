@@ -21,7 +21,7 @@ export function register(
 			uri,
 			position,
 			(position, map) => map.toGeneratedPositions(position, isValidMapping),
-			async (plugin, document, position) => {
+			async (service, document, position) => {
 
 				if (token.isCancellationRequested)
 					return;
@@ -35,7 +35,7 @@ export function register(
 
 				async function withMirrors(document: TextDocument, position: vscode.Position, originDefinition: vscode.LocationLink | undefined) {
 
-					const api = plugin[apiName];
+					const api = service[apiName];
 					if (!api)
 						return;
 

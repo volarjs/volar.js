@@ -8,12 +8,12 @@ export function register(context: ServiceContext) {
 
 		const data: InlayHintData | undefined = item.data;
 		if (data) {
-			const plugin = context.plugins[data.pluginId];
-			if (!plugin.resolveInlayHint)
+			const service = context.services[data.serviceId];
+			if (!service.resolveInlayHint)
 				return item;
 
 			Object.assign(item, data.original);
-			item = await plugin.resolveInlayHint(item, token);
+			item = await service.resolveInlayHint(item, token);
 		}
 
 		return item;

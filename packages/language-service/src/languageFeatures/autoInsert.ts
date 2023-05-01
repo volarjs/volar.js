@@ -31,10 +31,10 @@ export function register(context: ServiceContext) {
 					}
 				}
 			},
-			(plugin, document, arg) => {
+			(service, document, arg) => {
 				if (token.isCancellationRequested)
 					return;
-				return plugin.provideAutoInsertionEdit?.(document, arg.position, arg.autoInsertContext, token);
+				return service.provideAutoInsertionEdit?.(document, arg.position, arg.autoInsertContext, token);
 			},
 			(item, map) => {
 

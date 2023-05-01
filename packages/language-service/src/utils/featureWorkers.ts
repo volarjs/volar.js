@@ -50,11 +50,11 @@ export async function languageFeatureWorker<T, K>(
 
 			for (const mappedArg of transformArg(arg, map, file)) {
 
-				for (const [pluginId, plugin] of Object.entries(context.plugins)) {
+				for (const [serviceId, service] of Object.entries(context.services)) {
 
 					const embeddedResult = await safeCall(
-						() => worker(plugin, map.virtualFileDocument, mappedArg, map, file),
-						'plugin ' + pluginId + ' crashed on ' + map.virtualFileDocument.uri,
+						() => worker(service, map.virtualFileDocument, mappedArg, map, file),
+						'service ' + serviceId + ' crashed on ' + map.virtualFileDocument.uri,
 					);
 					if (!embeddedResult)
 						continue;
@@ -82,11 +82,11 @@ export async function languageFeatureWorker<T, K>(
 	}
 	else if (document) {
 
-		for (const [pluginId, plugin] of Object.entries(context.plugins)) {
+		for (const [serviceId, service] of Object.entries(context.services)) {
 
 			const embeddedResult = await safeCall(
-				() => worker(plugin, document, arg, undefined, undefined),
-				'plugin ' + pluginId + ' crashed on ' + uri,
+				() => worker(service, document, arg, undefined, undefined),
+				'service ' + serviceId + ' crashed on ' + uri,
 			);
 			if (!embeddedResult)
 				continue;
@@ -148,17 +148,17 @@ export async function ruleWorker<T>(
 				report: () => { },
 			};
 
-			for (const plugin of Object.values(context.plugins)) {
+			for (const service of Object.values(context.services)) {
 				try {
-					if (plugin.resolveRuleContext) {
-						ruleCtx = await plugin.resolveRuleContext(
+					if (service.resolveRuleContext) {
+						ruleCtx = await service.resolveRuleContext(
 							ruleCtx,
 							api === 'onFormat' ? 'format' : api === 'onSyntax' ? 'syntax' : 'semantic',
 						);
 					}
 				}
 				catch (err) {
-					console.warn('plugin rule context setup crashed on ' + map.virtualFileDocument.uri + ': ' + err);
+					console.warn('service rule context setup crashed on ' + map.virtualFileDocument.uri + ': ' + err);
 				}
 			}
 
@@ -206,17 +206,17 @@ export async function ruleWorker<T>(
 			report: () => { },
 		};
 
-		for (const plugin of Object.values(context.plugins)) {
+		for (const service of Object.values(context.services)) {
 			try {
-				if (plugin.resolveRuleContext) {
-					ruleCtx = await plugin.resolveRuleContext(
+				if (service.resolveRuleContext) {
+					ruleCtx = await service.resolveRuleContext(
 						ruleCtx,
 						api === 'onFormat' ? 'format' : api === 'onSyntax' ? 'syntax' : 'semantic',
 					);
 				}
 			}
 			catch (err) {
-				console.warn('plugin rule context setup crashed on ' + document.uri + ': ' + err);
+				console.warn('service rule context setup crashed on ' + document.uri + ': ' + err);
 			}
 		}
 

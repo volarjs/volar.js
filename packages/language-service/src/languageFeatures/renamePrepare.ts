@@ -11,12 +11,12 @@ export function register(context: ServiceContext) {
 			uri,
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename),
-			(plugin, document, position) => {
+			(service, document, position) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.provideRenameRange?.(document, position, token);
+				return service.provideRenameRange?.(document, position, token);
 			},
 			(item, map) => {
 				if (!map) {

@@ -13,12 +13,12 @@ export function register(context: ServiceContext) {
 			uri,
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => !!data.hover),
-			(plugin, document, position) => {
+			(service, document, position) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.provideHover?.(document, position, token);
+				return service.provideHover?.(document, position, token);
 			},
 			(item, map) => {
 

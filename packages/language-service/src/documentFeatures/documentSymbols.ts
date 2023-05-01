@@ -12,12 +12,12 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			file => !!file.capabilities.documentSymbol,
-			async (plugin, document) => {
+			async (service, document) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.provideDocumentSymbols?.(document, token);
+				return service.provideDocumentSymbols?.(document, token);
 			},
 			(data, map) => map
 				? data

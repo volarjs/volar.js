@@ -92,7 +92,7 @@ export function register(context: ServiceContext) {
 				toPatchIndentUris.push({
 					uri: map.virtualFileDocument.uri,
 					isCodeBlock,
-					service: embeddedCodeResult.plugin,
+					service: embeddedCodeResult.service,
 				});
 
 				for (const textEdit of embeddedCodeResult.edits) {
@@ -134,13 +134,13 @@ export function register(context: ServiceContext) {
 
 						const indentSensitiveLines = new Set<number>();
 
-						for (const plugin of toPatchIndentUri.service.provideFormattingIndentSensitiveLines ? [toPatchIndentUri.service] : Object.values(context.plugins)) {
+						for (const service of toPatchIndentUri.service.provideFormattingIndentSensitiveLines ? [toPatchIndentUri.service] : Object.values(context.services)) {
 
 							if (token.isCancellationRequested)
 								break;
 
-							if (plugin.provideFormattingIndentSensitiveLines) {
-								const lines = await plugin.provideFormattingIndentSensitiveLines(map.virtualFileDocument, token);
+							if (service.provideFormattingIndentSensitiveLines) {
+								const lines = await service.provideFormattingIndentSensitiveLines(map.virtualFileDocument, token);
 								if (lines) {
 									for (const line of lines) {
 										const sourceLine = map.toSourcePosition({ line: line, character: 0 })?.line;
@@ -229,7 +229,7 @@ export function register(context: ServiceContext) {
 
 			let formatRange = range;
 
-			for (const plugin of Object.values(context.plugins)) {
+			for (const service of Object.values(context.services)) {
 
 				if (token.isCancellationRequested)
 					break;
@@ -238,12 +238,12 @@ export function register(context: ServiceContext) {
 
 				try {
 					if (ch !== undefined && vscode.Position.is(formatRange)) {
-						if (plugin.autoFormatTriggerCharacters?.includes(ch)) {
-							edits = await plugin.provideOnTypeFormattingEdits?.(document, formatRange, ch, options, token);
+						if (service.autoFormatTriggerCharacters?.includes(ch)) {
+							edits = await service.provideOnTypeFormattingEdits?.(document, formatRange, ch, options, token);
 						}
 					}
 					else if (ch === undefined && vscode.Range.is(formatRange)) {
-						edits = await plugin.provideDocumentFormattingEdits?.(document, formatRange, options, token);
+						edits = await service.provideDocumentFormattingEdits?.(document, formatRange, options, token);
 					}
 				}
 				catch (err) {
@@ -254,7 +254,7 @@ export function register(context: ServiceContext) {
 					continue;
 
 				return {
-					plugin,
+					service,
 					edits,
 				};
 			}

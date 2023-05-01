@@ -5,14 +5,14 @@ import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { embeddedEditToSourceEdit } from './rename';
-import { PluginDiagnosticData } from './validation';
+import { ServiceDiagnosticData } from './validation';
 
-export interface PluginCodeActionData {
+export interface ServiceCodeActionData {
 	uri: string,
 	version: number,
-	type: 'plugin',
+	type: 'service',
 	original: Pick<vscode.CodeAction, 'data' | 'edit'>,
-	pluginId: string,
+	serviceId: string,
 }
 
 export interface RuleCodeActionData {
@@ -82,28 +82,27 @@ export function register(context: ServiceContext) {
 
 				return [];
 			},
-			async (plugin, document, { range, codeActionContext }) => {
+			async (service, document, { range, codeActionContext }) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				const pluginId = Object.keys(context.plugins).find(key => context.plugins[key] === plugin);
+				const serviceId = Object.keys(context.services).find(key => context.services[key] === service);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
-					const data: PluginDiagnosticData | undefined = diagnostic.data;
+					const data: ServiceDiagnosticData | undefined = diagnostic.data;
 					if (data && data.version !== sourceDocument.version) {
-						// console.warn('[volar/plugin-api] diagnostic version mismatch', data.version, sourceDocument.version);
 						return false;
 					}
-					return data?.type === 'plugin' && data?.pluginOrRuleId === pluginId;
+					return data?.type === 'service' && data?.serviceOrRuleId === serviceId;
 				}).map(diagnostic => {
-					const data: PluginDiagnosticData = diagnostic.data;
+					const data: ServiceDiagnosticData = diagnostic.data;
 					return {
 						...diagnostic,
 						...data.original,
 					};
 				});
 
-				const codeActions = await plugin.provideCodeActions?.(document, range, {
+				const codeActions = await service.provideCodeActions?.(document, range, {
 					...codeActionContext,
 					diagnostics,
 				}, token);
@@ -112,13 +111,13 @@ export function register(context: ServiceContext) {
 					codeAction.data = {
 						uri,
 						version: sourceDocument.version,
-						type: 'plugin',
+						type: 'service',
 						original: {
 							data: codeAction.data,
 							edit: codeAction.edit,
 						},
-						pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
-					} satisfies PluginCodeActionData;
+						serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+					} satisfies ServiceCodeActionData;
 				});
 
 				return codeActions;
@@ -147,13 +146,13 @@ export function register(context: ServiceContext) {
 		const ruleActions: vscode.CodeAction[] = [];
 
 		for (const diagnostic of codeActionContext.diagnostics) {
-			const data: PluginDiagnosticData | undefined = diagnostic.data;
+			const data: ServiceDiagnosticData | undefined = diagnostic.data;
 			if (data && data.version !== sourceDocument.version) {
 				// console.warn('[volar/rules-api] diagnostic version mismatch', data.version, sourceDocument.version);
 				continue;
 			}
 			if (data?.type === 'rule') {
-				const fixes = context.ruleFixes?.[data.documentUri]?.[data.pluginOrRuleId]?.[data.ruleFixIndex];
+				const fixes = context.ruleFixes?.[data.documentUri]?.[data.serviceOrRuleId]?.[data.ruleFixIndex];
 				if (fixes) {
 					for (let i = 0; i < fixes[1].length; i++) {
 						const fix = fixes[1][i];
@@ -179,7 +178,7 @@ export function register(context: ServiceContext) {
 									type: 'rule',
 									version: data.version,
 									isFormat: data.isFormat,
-									ruleId: data.pluginOrRuleId,
+									ruleId: data.serviceOrRuleId,
 									documentUri: data.documentUri,
 									ruleFixIndex: data.ruleFixIndex,
 									index: i,

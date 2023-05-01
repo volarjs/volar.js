@@ -112,8 +112,8 @@ function createLanguageServicePluginContext(
 		config,
 		host,
 		core: languageContext,
-		plugins: {},
-		typescript: ts && tsLs ? {
+		services: {},
+		typescript: tsLs ? {
 			languageServiceHost: languageContext.typescript.languageServiceHost,
 			languageService: tsLs,
 		} : undefined,
@@ -194,7 +194,7 @@ function createLanguageServicePluginContext(
 	for (const serviceId in config.services ?? {}) {
 		const service = config.services?.[serviceId];
 		if (service) {
-			context.plugins[serviceId] = service(context, modules);
+			context.services[serviceId] = service(context, modules);
 		}
 	}
 
@@ -251,10 +251,10 @@ function createLanguageServiceBase(context: ServiceContext) {
 
 	return {
 
-		triggerCharacters: Object.values(context.plugins).map(plugin => plugin?.triggerCharacters ?? []).flat(),
-		autoFormatTriggerCharacters: Object.values(context.plugins).map(plugin => plugin?.autoFormatTriggerCharacters ?? []).flat(),
-		signatureHelpTriggerCharacters: Object.values(context.plugins).map(plugin => plugin?.signatureHelpTriggerCharacters ?? []).flat(),
-		signatureHelpRetriggerCharacters: Object.values(context.plugins).map(plugin => plugin?.signatureHelpRetriggerCharacters ?? []).flat(),
+		triggerCharacters: Object.values(context.services).map(service => service?.triggerCharacters ?? []).flat(),
+		autoFormatTriggerCharacters: Object.values(context.services).map(service => service?.autoFormatTriggerCharacters ?? []).flat(),
+		signatureHelpTriggerCharacters: Object.values(context.services).map(service => service?.signatureHelpTriggerCharacters ?? []).flat(),
+		signatureHelpRetriggerCharacters: Object.values(context.services).map(service => service?.signatureHelpRetriggerCharacters ?? []).flat(),
 
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),

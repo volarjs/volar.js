@@ -17,7 +17,7 @@ export function register(context: ServiceContext) {
 				// note https://github.com/johnsoncodehk/volar/issues/2009
 				data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename
 			),
-			async (plugin, document, position) => {
+			async (service, document, position) => {
 
 				if (token.isCancellationRequested)
 					return;
@@ -31,7 +31,7 @@ export function register(context: ServiceContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position) {
 
-					if (!plugin.provideDocumentHighlights)
+					if (!service.provideDocumentHighlights)
 						return;
 
 					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
@@ -39,7 +39,7 @@ export function register(context: ServiceContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const references = await plugin.provideDocumentHighlights(document, position, token) ?? [];
+					const references = await service.provideDocumentHighlights(document, position, token) ?? [];
 
 					for (const reference of references) {
 

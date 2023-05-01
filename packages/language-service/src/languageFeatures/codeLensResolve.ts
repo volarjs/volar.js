@@ -1,6 +1,6 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
-import { PluginCodeLensData, PluginReferencesCodeLensData } from './codeLens';
+import { ServiceCodeLensData, ServiceReferencesCodeLensData } from './codeLens';
 import * as references from './references';
 
 export function register(context: ServiceContext) {
@@ -9,16 +9,16 @@ export function register(context: ServiceContext) {
 
 	return async (item: vscode.CodeLens, token = vscode.CancellationToken.None) => {
 
-		const data: PluginCodeLensData | PluginReferencesCodeLensData | undefined = item.data;
+		const data: ServiceCodeLensData | ServiceReferencesCodeLensData | undefined = item.data;
 
 		if (data?.kind === 'normal') {
 
-			const plugin = context.plugins[data.pluginId];
-			if (!plugin.resolveCodeLens)
+			const service = context.services[data.serviceId];
+			if (!service.resolveCodeLens)
 				return item;
 
 			Object.assign(item, data.original);
-			item = await plugin.resolveCodeLens(item, token);
+			item = await service.resolveCodeLens(item, token);
 
 			// item.range already transformed in codeLens request
 		}
@@ -27,11 +27,11 @@ export function register(context: ServiceContext) {
 
 			let references = await findReferences(data.uri, item.range.start, token) ?? [];
 
-			const plugin = context.plugins[data.pluginId];
+			const service = context.services[data.serviceId];
 			const document = context.getTextDocument(data.uri);
 
-			if (document && plugin.resolveReferencesCodeLensLocations) {
-				references = await plugin.resolveReferencesCodeLensLocations(document, data.range, references, token);
+			if (document && service.resolveReferencesCodeLensLocations) {
+				references = await service.resolveReferencesCodeLensLocations(document, data.range, references, token);
 			}
 
 			item.command = context.commands.showReferences.create(data.uri, data.range.start, references);

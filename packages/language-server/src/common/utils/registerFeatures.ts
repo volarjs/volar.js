@@ -10,9 +10,9 @@ export function setupCapabilities(
 	services: NonNullable<Config['services']>,
 ) {
 
-	const lsPluginInstances = Object.values(services)
-		.map(plugin => typeof plugin === 'function' ? plugin(undefined, undefined) : plugin)
-		.filter((plugin): plugin is NonNullable<typeof plugin> => !!plugin);
+	const serviceInstances = Object.values(services)
+		.map(service => typeof service === 'function' ? service(undefined, undefined) : service)
+		.filter((service): service is NonNullable<typeof service> => !!service);
 	const serverMode = initOptions.serverMode ?? ServerMode.Semantic;
 
 	if (serverMode === ServerMode.Semantic || serverMode === ServerMode.Syntactic) {
@@ -23,7 +23,7 @@ export function setupCapabilities(
 		server.documentSymbolProvider = true;
 		server.documentFormattingProvider = true;
 		server.documentRangeFormattingProvider = true;
-		const characters = [...new Set(lsPluginInstances.map(plugin => plugin.autoFormatTriggerCharacters ?? []).flat())];
+		const characters = [...new Set(serviceInstances.map(service => service.autoFormatTriggerCharacters ?? []).flat())];
 		if (characters.length) {
 			server.documentOnTypeFormattingProvider = {
 				firstTriggerCharacter: characters[0],
@@ -43,11 +43,11 @@ export function setupCapabilities(
 			prepareProvider: true,
 		};
 		server.signatureHelpProvider = {
-			triggerCharacters: [...new Set(lsPluginInstances.map(plugin => plugin.signatureHelpTriggerCharacters ?? []).flat())],
-			retriggerCharacters: [...new Set(lsPluginInstances.map(plugin => plugin.signatureHelpRetriggerCharacters ?? []).flat())],
+			triggerCharacters: [...new Set(serviceInstances.map(service => service.signatureHelpTriggerCharacters ?? []).flat())],
+			retriggerCharacters: [...new Set(serviceInstances.map(service => service.signatureHelpRetriggerCharacters ?? []).flat())],
 		};
 		server.completionProvider = {
-			triggerCharacters: [...new Set(lsPluginInstances.map(plugin => plugin.triggerCharacters ?? []).flat())],
+			triggerCharacters: [...new Set(serviceInstances.map(service => service.triggerCharacters ?? []).flat())],
 			resolveProvider: true,
 		};
 		if (initOptions.ignoreTriggerCharacters) {

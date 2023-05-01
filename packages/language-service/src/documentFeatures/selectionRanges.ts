@@ -23,12 +23,12 @@ export function register(context: ServiceContext) {
 				}
 				return [];
 			},
-			(plugin, document, positions) => {
+			(service, document, positions) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				return plugin.provideSelectionRanges?.(document, positions, token);
+				return service.provideSelectionRanges?.(document, positions, token);
 			},
 			(item, map) => map ? transformer.asSelectionRanges(item, range => map.toSourceRange(range)) : item,
 			results => {

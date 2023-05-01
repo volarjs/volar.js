@@ -9,7 +9,7 @@ import { notEmpty } from '../utils/common';
 export interface DocumentLinkData {
 	uri: string,
 	original: Pick<vscode.DocumentLink, 'data'>,
-	pluginId: string,
+	serviceId: string,
 }
 
 export function register(context: ServiceContext) {
@@ -20,12 +20,12 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			file => !!file.capabilities.documentSymbol,
-			async (plugin, document) => {
+			async (service, document) => {
 
 				if (token.isCancellationRequested)
 					return;
 
-				const links = await plugin.provideDocumentLinks?.(document, token);
+				const links = await service.provideDocumentLinks?.(document, token);
 
 				links?.forEach(link => {
 					link.data = {
@@ -33,7 +33,7 @@ export function register(context: ServiceContext) {
 						original: {
 							data: link.data,
 						},
-						pluginId: Object.keys(context.plugins).find(key => context.plugins[key] === plugin)!,
+						serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
 					} satisfies DocumentLinkData;
 				});
 

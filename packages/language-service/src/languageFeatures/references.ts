@@ -13,7 +13,7 @@ export function register(context: ServiceContext) {
 			uri,
 			position,
 			(position, map) => map.toGeneratedPositions(position, data => !!data.references),
-			async (plugin, document, position) => {
+			async (service, document, position) => {
 
 				if (token.isCancellationRequested)
 					return;
@@ -27,7 +27,7 @@ export function register(context: ServiceContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position) {
 
-					if (!plugin.provideReferences)
+					if (!service.provideReferences)
 						return;
 
 					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
@@ -35,7 +35,7 @@ export function register(context: ServiceContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const references = await plugin.provideReferences(document, position, token) ?? [];
+					const references = await service.provideReferences(document, position, token) ?? [];
 
 					for (const reference of references) {
 

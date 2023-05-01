@@ -49,7 +49,7 @@ export interface ServiceContext {
 	/** @private */
 	documents: DocumentsAndSourceMaps;
 	/** @private */
-	plugins: { [id: string]: ReturnType<Service>; };
+	services: { [id: string]: ReturnType<Service>; };
 	/** @private */
 	getTextDocument(uri: string): TextDocument | undefined;
 	/** @private */

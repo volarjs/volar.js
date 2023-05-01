@@ -31,7 +31,7 @@ export function register(context: ServiceContext) {
 					yield { position: mapped, newName };
 				};
 			},
-			async (plugin, document, arg) => {
+			async (service, document, arg) => {
 
 				if (token.isCancellationRequested)
 					return;
@@ -45,7 +45,7 @@ export function register(context: ServiceContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position, newName: string) {
 
-					if (!plugin.provideRenameEdits)
+					if (!service.provideRenameEdits)
 						return;
 
 					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
@@ -53,7 +53,7 @@ export function register(context: ServiceContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const workspaceEdit = await plugin.provideRenameEdits(document, position, newName, token);
+					const workspaceEdit = await service.provideRenameEdits(document, position, newName, token);
 
 					if (!workspaceEdit)
 						return;
