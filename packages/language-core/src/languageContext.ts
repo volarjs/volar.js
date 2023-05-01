@@ -14,7 +14,12 @@ export function createLanguageContext(
 	for (const language of languages.reverse()) {
 		if (language.resolveHost) {
 			const pastHost = host;
-			host = new Proxy(language.resolveHost(host), {
+			let proxyHost = language.resolveHost(host);
+			if (proxyHost === pastHost) {
+				console.warn(`[volar] language.resolveHost() should not return the same host instance.`);
+				proxyHost = { ...proxyHost };
+			}
+			host = new Proxy(proxyHost, {
 				get(target, p) {
 					if (p in target) {
 						return (target as any)[p];
