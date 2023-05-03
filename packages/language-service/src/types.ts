@@ -9,6 +9,10 @@ import { DocumentsAndSourceMaps } from './documents';
 
 export * from 'vscode-languageserver-protocol';
 
+export interface SharedModules {
+	typescript?: typeof import('typescript/lib/tsserverlibrary');
+}
+
 export interface ServiceEnvironment {
 	// InitializeParams
 	locale?: string;
@@ -67,7 +71,7 @@ export type NullableResult<T> = Result<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
 export interface Service {
-	(context: ServiceContext | undefined, modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); } | undefined): {
+	(context: ServiceContext | undefined, modules: SharedModules | undefined): {
 		isAdditionalCompletion?: boolean; // volar specific
 		triggerCharacters?: string[];
 		signatureHelpTriggerCharacters?: string[];
@@ -114,9 +118,13 @@ export interface Service {
 		resolveDocumentLink?(link: vscode.DocumentLink, token: vscode.CancellationToken): Result<vscode.DocumentLink>;
 		resolveInlayHint?(inlayHint: vscode.InlayHint, token: vscode.CancellationToken): Result<vscode.InlayHint>;
 		resolveReferencesCodeLensLocations?(document: TextDocument, range: vscode.Range, references: vscode.Location[], token: vscode.CancellationToken): Result<vscode.Location[]>; // volar specific
-		resolveRuleContext?(context: RuleContext, ruleType: 'format' | 'syntax' | 'semantic'): Result<RuleContext>; // volar specific
-		resolveRuleDiagnostic?(diagnostic: vscode.Diagnostic): vscode.Diagnostic; // volar specific
 		resolveEmbeddedRange?(range: vscode.Range): vscode.Range | undefined; // volar specific, only support in resolveCompletionItem for now
+
+		// rules-api
+		rules?: {
+			provide?: Record<any, (document: TextDocument, ruleType: RuleType) => any | undefined>;
+			resolveDiagnostic?(diagnostic: vscode.Diagnostic): vscode.Diagnostic;
+		},
 	};
 }
 
@@ -129,18 +137,27 @@ export interface AutoInsertionContext {
 	};
 }
 
+export enum RuleType {
+	Format,
+	Syntax,
+	Semantic,
+};
+
 export interface Rule {
-	onFormat?(ctx: RuleContext): void;
-	onSyntax?(ctx: RuleContext): void;
-	onSemantic?(ctx: RuleContext): void;
+	type?: RuleType;
+	run(ctx: RuleContext): void;
 }
 
 export interface RuleContext {
 	env: ServiceEnvironment;
 	ruleId: string;
 	document: TextDocument;
+	inject<T>(key: InjectionKey<T>): T | undefined;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
+
+// @ts-ignore
+export interface InjectionKey<T> extends Symbol { }
 
 export interface RuleFix {
 	/**
@@ -164,7 +181,7 @@ export interface RuleFix {
 }
 
 export interface Config {
-	languages?: { [id: string]: Language | undefined; };
-	services?: { [id: string]: Service | undefined; };
-	rules?: { [id: string]: Rule | undefined; };
+	languages?: { [id: string]: Language; };
+	services?: { [id: string]: Service; };
+	rules?: { [id: string]: Rule; };
 }

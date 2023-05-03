@@ -3,7 +3,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
-import type { ServiceContext, RuleContext } from '../types';
+import { ServiceContext, RuleContext, RuleType } from '../types';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers';
@@ -200,16 +200,16 @@ export function register(context: ServiceContext) {
 		}
 
 		if (mode === 'all' || mode === 'syntactic') {
-			await lintWorker('onFormat', cacheMaps.format_rules, lastResponse.format_rules);
+			await lintWorker(RuleType.Format, cacheMaps.format_rules, lastResponse.format_rules);
 			await doResponse();
-			await lintWorker('onSyntax', cacheMaps.syntax_rules, lastResponse.syntax_rules);
+			await lintWorker(RuleType.Syntax, cacheMaps.syntax_rules, lastResponse.syntax_rules);
 			await doResponse();
 			await worker('provideDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
 			await doResponse();
 		}
 
 		if (mode === 'all' || mode === 'semantic') {
-			await lintWorker('onSemantic', cacheMaps.semantic_rules, lastResponse.semantic_rules);
+			await lintWorker(RuleType.Semantic, cacheMaps.semantic_rules, lastResponse.semantic_rules);
 			await doResponse();
 			await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
 		}
@@ -238,15 +238,15 @@ export function register(context: ServiceContext) {
 		}
 
 		async function lintWorker(
-			api: 'onSyntax' | 'onSemantic' | 'onFormat',
+			ruleType: RuleType,
 			cacheMap: CacheMap,
 			cache: Cache,
 		) {
 			const result = await ruleWorker(
 				context,
-				api,
+				ruleType,
 				uri,
-				file => api === 'onFormat' ? !!file.capabilities.documentFormatting : !!file.capabilities.diagnostic,
+				file => ruleType === RuleType.Format ? !!file.capabilities.documentFormatting : !!file.capabilities.diagnostic,
 				async (ruleName, rule, ruleCtx) => {
 
 					if (token) {
@@ -261,9 +261,9 @@ export function register(context: ServiceContext) {
 
 					const pluginCache = cacheMap.get(ruleName) ?? cacheMap.set(ruleName, new Map()).get(ruleName)!;
 					const cache = pluginCache.get(ruleCtx.document.uri);
-					const tsProjectVersion = (api === 'onSemantic') ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
+					const tsProjectVersion = (ruleType === RuleType.Semantic) ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
 
-					if (api === 'onSemantic') {
+					if (ruleType === RuleType.Semantic) {
 						if (cache && cache.documentVersion === ruleCtx.document.version && cache.tsProjectVersion === tsProjectVersion) {
 							return cache.errors;
 						}
@@ -284,12 +284,11 @@ export function register(context: ServiceContext) {
 						}
 
 						error.message ||= 'No message.';
-						error.source ||= 'rules';
-						error.code ||= ruleCtx.ruleId;
+						error.source ||= ruleCtx.ruleId;
 
 						for (const service of Object.values(context.services)) {
-							if (service.resolveRuleDiagnostic) {
-								error = service.resolveRuleDiagnostic(error);
+							if (service.rules?.resolveDiagnostic) {
+								error = service.rules.resolveDiagnostic(error);
 							}
 						}
 
@@ -297,10 +296,10 @@ export function register(context: ServiceContext) {
 					};
 
 					try {
-						await rule[api]?.(ruleCtx);
+						await rule.run(ruleCtx);
 					}
 					catch (err) {
-						console.warn(`[volar/rules-api] ${ruleName} ${api} error.`);
+						console.warn(`[volar/rules-api] ${ruleName} ${ruleType} error.`);
 						console.warn(err);
 					}
 
@@ -314,7 +313,7 @@ export function register(context: ServiceContext) {
 							uri,
 							version: newDocument!.version,
 							type: 'rule',
-							isFormat: api === 'onFormat',
+							isFormat: ruleType === RuleType.Format,
 							serviceOrRuleId: ruleCtx.ruleId,
 							original: {
 								data: error.data,
@@ -336,7 +335,7 @@ export function register(context: ServiceContext) {
 
 					return errors;
 				},
-				api === 'onFormat' ? transformFormatErrorRange : transformErrorRange,
+				ruleType === RuleType.Format ? transformFormatErrorRange : transformErrorRange,
 				arr => arr.flat(),
 			);
 			if (result) {

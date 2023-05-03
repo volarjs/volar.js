@@ -1,21 +1,19 @@
-import { CodeActionTriggerKind, createLanguageService, Diagnostic, DiagnosticSeverity, FormattingOptions, Config, LanguageServiceHost, mergeWorkspaceEdits, CancellationToken } from '@volar/language-service';
-import * as fs from 'fs';
+import { CodeActionTriggerKind, createLanguageService, Diagnostic, DiagnosticSeverity, FormattingOptions, Config, LanguageServiceHost, mergeWorkspaceEdits, CancellationToken, TextDocumentEdit } from '@volar/language-service';
 import * as path from 'path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 
+export * from '@volar/language-service';
+
 const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
 const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
 
-export function create(
-	tsConfigPath: string,
-	config: Config,
-	extraFileExtensions: ts.FileExtensionInfo[] = [],
-	ts: typeof import('typescript/lib/tsserverlibrary') = require('typescript') as any,
-) {
+export function createLanguageServiceHost(tsConfigPath: string, extraFileExtensions: ts.FileExtensionInfo[] = []) {
 
 	let projectVersion = 0;
+
+	const ts = require('typescript') as any;
 	const scriptVersions = new Map<string, number>();
 	const scriptSnapshots = new Map<string, ts.IScriptSnapshot>();
 	const jsonConfig = ts.readJsonConfigFile(tsConfigPath, ts.sys.readFile);
@@ -39,12 +37,19 @@ export function create(
 			return scriptSnapshots.get(fileName);
 		},
 	};
+
+	return host;
+}
+
+export function createLinter(config: Config, host: LanguageServiceHost) {
+
+	const ts = require('typescript') as any;
 	const service = createLanguageService(
 		{ typescript: ts },
 		{
 			uriToFileName,
 			fileNameToUri,
-			rootUri: URI.file(path.dirname(tsConfigPath)),
+			rootUri: URI.file(host.getCurrentDirectory()),
 		},
 		config,
 		host,
@@ -56,83 +61,80 @@ export function create(
 	};
 
 	return {
-		roots: parsedCommandLine.fileNames,
-		lint,
+		check,
+		fixErrors,
+		formatTsErrors,
 		format,
 	};
 
-	async function lint(fileName: string, severity: DiagnosticSeverity = DiagnosticSeverity.Hint, throwLevel: DiagnosticSeverity = 0 as DiagnosticSeverity) {
+	function check(fileName: string) {
+		const uri = fileNameToUri(fileName);
+		return service.doValidation(uri, 'all');
+	}
+
+	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri);
-		let diagnostics: Diagnostic[] = [];
 		if (document) {
-			diagnostics = await service.doValidation(uri, 'all');
-			diagnostics = diagnostics.filter(diagnostic => (diagnostic.severity ?? 1) <= severity);
-			const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
-				category: diagnostic.severity === DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
-				code: diagnostic.code as number,
-				file: ts.createSourceFile(fileName, document.getText(), ts.ScriptTarget.JSON),
-				start: document.offsetAt(diagnostic.range.start),
-				length: document.offsetAt(diagnostic.range.end) - document.offsetAt(diagnostic.range.start),
-				messageText: diagnostic.message,
-			}));
-			const text = ts.formatDiagnosticsWithColorAndContext(errors, formatHost);
-			if (text) {
-				if (diagnostics.some(diagnostic => (diagnostic.severity ?? 1) <= throwLevel)) {
-					throw text;
+			const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
+			const codeActions = await service.doCodeActions(uri, range, { diagnostics, only, triggerKind: CodeActionTriggerKind.Invoked }, CancellationToken.None);
+			if (codeActions) {
+				for (let i = 0; i < codeActions.length; i++) {
+					codeActions[i] = await service.doCodeActionResolve(codeActions[i], CancellationToken.None);
 				}
-				else {
-					console.log(text);
+				const edits = codeActions.map(codeAction => codeAction.edit).filter((edit): edit is NonNullable<typeof edit> => !!edit);
+				if (edits.length) {
+					const rootEdit = edits[0];
+					mergeWorkspaceEdits(rootEdit, ...edits.slice(1));
+					for (const uri in rootEdit.changes ?? {}) {
+						const edits = rootEdit.changes![uri];
+						if (edits.length) {
+							const editDocument = service.context.getTextDocument(uri);
+							if (editDocument) {
+								const newString = TextDocument.applyEdits(editDocument, edits);
+								await writeFile(uriToFileName(uri), newString);
+							}
+						}
+					}
+					for (const change of rootEdit.documentChanges ?? []) {
+						if (TextDocumentEdit.is(change)) {
+							const editDocument = service.context.getTextDocument(change.textDocument.uri);
+							if (editDocument) {
+								const newString = TextDocument.applyEdits(editDocument, change.edits);
+								await writeFile(uriToFileName(change.textDocument.uri), newString);
+							}
+						}
+						// TODO: CreateFile | RenameFile | DeleteFile
+					}
 				}
 			}
 		}
-		return async (crossFileFix = false) => {
-			const document = service.context.getTextDocument(uri);
-			if (document) {
-				const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
-				const codeActions = await service.doCodeActions(uri, range, { diagnostics, only: ['source.fixAll'], triggerKind: CodeActionTriggerKind.Invoked }, CancellationToken.None);
-				if (codeActions) {
-					for (let i = 0; i < codeActions.length; i++) {
-						codeActions[i] = await service.doCodeActionResolve(codeActions[i], CancellationToken.None);
-					}
-					const edits = codeActions.map(codeAction => codeAction.edit).filter((edit): edit is NonNullable<typeof edit> => !!edit);
-					if (edits.length) {
-						const rootEdit = edits[0];
-						mergeWorkspaceEdits(rootEdit, ...edits.slice(1));
-						for (const uri in rootEdit.changes ?? {}) {
-							if (uri === document.uri || crossFileFix) {
-								const edits = rootEdit.changes![uri];
-								if (edits.length) {
-									const editDocument = service.context.getTextDocument(uri);
-									if (editDocument) {
-										const newString = TextDocument.applyEdits(editDocument, edits);
-										writeFile(uriToFileName(uri), newString);
-									}
-								}
-							}
-						}
-						if (crossFileFix) {
-							// TODO: rootEdit.documentChanges
-						}
-					}
-				}
-			}
-		};
 	}
 
-	async function format(fileName: string, options: FormattingOptions) {
+	async function format(fileName: string, options: FormattingOptions, writeFile: (fileName: string, newText: string) => Promise<void>) {
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri);
 		if (document) {
 			const edits = await service.format(uri, options, undefined, undefined, CancellationToken.None);
 			if (edits?.length) {
 				const newString = TextDocument.applyEdits(document, edits);
-				writeFile(fileName, newString);
+				await writeFile(fileName, newString);
 			}
 		}
 	}
-}
 
-function writeFile(fileName: string, newText: string) {
-	fs.writeFileSync(fileName, newText, { encoding: 'utf8' });
+	function formatTsErrors(fileName: string, diagnostics: Diagnostic[]) {
+		const uri = fileNameToUri(fileName);
+		const document = service.context.getTextDocument(uri)!;
+		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
+			category: diagnostic.severity === DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
+			code: diagnostic.code as number,
+			file: ts.createSourceFile(fileName, document.getText(), ts.ScriptTarget.JSON),
+			start: document.offsetAt(diagnostic.range.start),
+			length: document.offsetAt(diagnostic.range.end) - document.offsetAt(diagnostic.range.start),
+			messageText: diagnostic.message,
+		}));
+		const text = ts.formatDiagnosticsWithColorAndContext(errors, formatHost);
+		return text;
+	}
 }

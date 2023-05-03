@@ -1,6 +1,6 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { visitEmbedded } from './definePlugin';
-import type { Service, ServiceContext, Rule, RuleContext } from '../types';
+import { Service, ServiceContext, Rule, RuleContext, RuleType } from '../types';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-service';
 import { SourceMapWithDocuments } from '../documents';
 
@@ -118,10 +118,10 @@ export async function languageFeatureWorker<T, K>(
 
 export async function ruleWorker<T>(
 	context: ServiceContext,
-	api: 'onSyntax' | 'onSemantic' | 'onFormat',
+	ruleType: RuleType,
 	uri: string,
 	isValidSourceMap: (file: VirtualFile) => boolean,
-	worker: (ruleName: string, rule: Rule, ruleCtx: RuleContext) => T,
+	worker: (ruleId: string, rule: Rule, ruleCtx: RuleContext) => T,
 	transform: (result: NonNullable<Awaited<T>>, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined) => Awaited<T> | undefined,
 	combineResult?: (results: NonNullable<Awaited<T>>[]) => NonNullable<Awaited<T>>,
 	reportProgress?: (result: NonNullable<Awaited<T>>) => void,
@@ -129,8 +129,31 @@ export async function ruleWorker<T>(
 
 	const document = context.getTextDocument(uri);
 	const virtualFile = context.documents.getSourceByUri(uri)?.root;
+	const provided = new Map<any, any>();
 
 	let results: NonNullable<Awaited<T>>[] = [];
+	let ruleCtx: RuleContext = {
+		env: context.env,
+		ruleId: '',
+		document: document!,
+		report: () => { },
+		inject: key => {
+			if (!provided.has(key)) {
+				for (const service of Object.values(context.services)) {
+					const provide = service.rules?.provide?.[key as any];
+					if (provide) {
+						try {
+							provided.set(key, provide(ruleCtx.document, ruleType));
+						}
+						catch (err) {
+							console.warn('service rule context setup crashed on ' + ruleCtx.document.uri + ': ' + err);
+						}
+					}
+				}
+			}
+			return provided.get(key);
+		},
+	};
 
 	if (virtualFile) {
 
@@ -140,39 +163,20 @@ export async function ruleWorker<T>(
 				return true;
 			}
 
-			let ruleCtx: RuleContext = {
-				env: context.env,
-				// document context
-				ruleId: '',
-				document: map.virtualFileDocument,
-				report: () => { },
-			};
+			ruleCtx.document = map.virtualFileDocument;
+			provided.clear();
 
-			for (const service of Object.values(context.services)) {
-				try {
-					if (service.resolveRuleContext) {
-						ruleCtx = await service.resolveRuleContext(
-							ruleCtx,
-							api === 'onFormat' ? 'format' : api === 'onSyntax' ? 'syntax' : 'semantic',
-						);
-					}
-				}
-				catch (err) {
-					console.warn('service rule context setup crashed on ' + map.virtualFileDocument.uri + ': ' + err);
-				}
-			}
+			for (const ruleId in context.config.rules) {
 
-			for (const ruleName in context.config.rules) {
-
-				const rule = context.config.rules[ruleName];
-				if (!rule) {
+				const rule = context.config.rules[ruleId];
+				if ((rule.type ?? RuleType.Syntax) !== ruleType) {
 					continue;
 				}
 
-				ruleCtx.ruleId = ruleName;
+				ruleCtx.ruleId = ruleId;
 				const embeddedResult = await safeCall(
-					() => worker(ruleName, rule, ruleCtx),
-					'rule ' + ruleName + ' crashed on ' + map.virtualFileDocument.uri,
+					() => worker(ruleId, rule, ruleCtx),
+					'rule ' + ruleId + ' crashed on ' + map.virtualFileDocument.uri,
 				);
 				if (!embeddedResult)
 					continue;
@@ -198,39 +202,20 @@ export async function ruleWorker<T>(
 	}
 	else if (document) {
 
-		let ruleCtx: RuleContext = {
-			env: context.env,
-			// document context
-			ruleId: '',
-			document,
-			report: () => { },
-		};
+		ruleCtx.document = document;
+		provided.clear();
 
-		for (const service of Object.values(context.services)) {
-			try {
-				if (service.resolveRuleContext) {
-					ruleCtx = await service.resolveRuleContext(
-						ruleCtx,
-						api === 'onFormat' ? 'format' : api === 'onSyntax' ? 'syntax' : 'semantic',
-					);
-				}
-			}
-			catch (err) {
-				console.warn('service rule context setup crashed on ' + document.uri + ': ' + err);
-			}
-		}
+		for (const ruleId in context.config.rules) {
 
-		for (const ruleName in context.config.rules) {
-
-			const rule = context.config.rules[ruleName];
-			if (!rule) {
+			const rule = context.config.rules[ruleId];
+			if ((rule.type ?? RuleType.Syntax) !== ruleType) {
 				continue;
 			}
 
-			ruleCtx.ruleId = ruleName;
+			ruleCtx.ruleId = ruleId;
 			const embeddedResult = await safeCall(
-				() => worker(ruleName, rule, ruleCtx),
-				'rule ' + ruleName + ' crashed on ' + document.uri,
+				() => worker(ruleId, rule, ruleCtx),
+				'rule ' + ruleId + ' crashed on ' + document.uri,
 			);
 			if (!embeddedResult)
 				continue;
