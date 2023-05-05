@@ -20,7 +20,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 	const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
 	const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
 
-	startCommonLanguageServer(connection, (): ServerContext => {
+	startCommonLanguageServer(connection, (): ServerContext['server'] => {
 		return {
 			plugins,
 			connection,

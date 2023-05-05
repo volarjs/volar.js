@@ -11,12 +11,14 @@ import { loadConfig } from './utils/serverConfig';
 import { createWorkspaces } from './workspaces';
 
 export interface ServerContext {
-	connection: vscode.Connection,
-	runtimeEnv: RuntimeEnvironment,
-	plugins: LanguageServerPlugin[],
+	server: {
+		connection: vscode.Connection;
+		runtimeEnv: RuntimeEnvironment;
+		plugins: LanguageServerPlugin[];
+	};
 }
 
-export function startCommonLanguageServer(connection: vscode.Connection, getCtx: (initOptions: InitializationOptions) => ServerContext) {
+export function startCommonLanguageServer(connection: vscode.Connection, getCtx: (initOptions: InitializationOptions) => ServerContext['server']) {
 
 	let initParams: vscode.InitializeParams;
 	let options: InitializationOptions;
@@ -32,11 +34,11 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 
 		initParams = _params;
 		options = initParams.initializationOptions;
-		context = getCtx(options);
-		plugins = context.plugins.map(plugin => plugin(options, {
-			typescript: options.typescript ? context.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined
+		context = { server: getCtx(options) };
+		plugins = context.server.plugins.map(plugin => plugin(options, {
+			typescript: options.typescript ? context.server.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined
 		}));
-		documents = createDocuments(context.runtimeEnv, connection);
+		documents = createDocuments(context.server.runtimeEnv, connection);
 
 		if (options.l10n) {
 			await l10n.config({ uri: options.l10n.location });
@@ -151,30 +153,32 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 
 	async function createLanguageServiceHost() {
 
-		const ts = options.typescript ? context.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined;
-		fsHost = ts ? context.runtimeEnv.createFileSystemHost(ts, initParams.capabilities, context.runtimeEnv, options) : undefined;
+		const ts = options.typescript ? context.server.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined;
+		fsHost = ts ? context.server.runtimeEnv.createFileSystemHost(ts, initParams.capabilities, context.server.runtimeEnv, options) : undefined;
 
-		const tsLocalized = options.typescript && initParams.locale ? await context.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale) : undefined;
+		const tsLocalized = options.typescript && initParams.locale ? await context.server.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale) : undefined;
 		const cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
 
 		projects = createWorkspaces({
-			server: context,
-			fileSystemHost: fsHost,
-			configurationHost,
-			ts,
-			tsLocalized,
-			initParams,
-			initOptions: options,
-			documents,
-			cancelTokenHost,
-			plugins,
+			...context,
+			workspaces: {
+				fileSystemHost: fsHost,
+				configurationHost,
+				ts,
+				tsLocalized,
+				initParams,
+				initOptions: options,
+				documents,
+				cancelTokenHost,
+				plugins,
+			},
 		});
 
 		for (const root of roots) {
 			projects.add(root);
 		}
 
-		(await import('./features/customFeatures')).register(connection, projects, context.runtimeEnv);
+		(await import('./features/customFeatures')).register(connection, projects, context.server.runtimeEnv);
 		(await import('./features/languageFeatures')).register(
 			connection,
 			projects,
@@ -182,12 +186,12 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 			options,
 			cancelTokenHost,
 			getSemanticTokensLegend(),
-			context.runtimeEnv,
+			context.server.runtimeEnv,
 			documents,
 		);
 
 		for (const plugin of plugins) {
-			plugin.onInitialized?.(getLanguageService, context.runtimeEnv);
+			plugin.onInitialized?.(getLanguageService, context.server.runtimeEnv);
 		}
 
 		async function getLanguageService(uri: string) {

@@ -10,17 +10,18 @@ import { createWorkspace, rootTsConfigNames, sortTsConfigs } from './workspace';
 import { isFileInDir } from './utils/isFileInDir';
 import * as path from 'typesafe-path';
 
-export interface WorkspacesContext {
-	server: ServerContext;
-	initParams: vscode.InitializeParams,
-	initOptions: InitializationOptions,
-	plugins: ReturnType<LanguageServerPlugin>[],
-	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
-	tsLocalized: ts.MapLike<string> | undefined,
-	fileSystemHost: FileSystemHost | undefined,
-	configurationHost: Pick<ServiceEnvironment, 'getConfiguration' | 'onDidChangeConfiguration'> | undefined,
-	documents: ReturnType<typeof createDocuments>,
-	cancelTokenHost: CancellationTokenHost,
+export interface WorkspacesContext extends ServerContext {
+	workspaces: {
+		initParams: vscode.InitializeParams;
+		initOptions: InitializationOptions;
+		plugins: ReturnType<LanguageServerPlugin>[];
+		ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
+		tsLocalized: ts.MapLike<string> | undefined;
+		fileSystemHost: FileSystemHost | undefined;
+		configurationHost: Pick<ServiceEnvironment, 'getConfiguration' | 'onDidChangeConfiguration'> | undefined;
+		documents: ReturnType<typeof createDocuments>;
+		cancelTokenHost: CancellationTokenHost;
+	};
 }
 
 export interface Workspaces extends ReturnType<typeof createWorkspaces> { }
@@ -34,13 +35,13 @@ export function createWorkspaces(context: WorkspacesContext) {
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
 
-	context.documents.onDidChangeContent(({ textDocument }) => {
+	context.workspaces.documents.onDidChangeContent(({ textDocument }) => {
 		updateDiagnostics(textDocument.uri);
 	});
-	context.documents.onDidClose(({ textDocument }) => {
+	context.workspaces.documents.onDidClose(({ textDocument }) => {
 		context.server.connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
 	});
-	context.fileSystemHost?.onDidChangeWatchedFiles(({ changes }) => {
+	context.workspaces.fileSystemHost?.onDidChangeWatchedFiles(({ changes }) => {
 		const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
 		if (tsConfigChanges.length) {
 			reloadDiagnostics();
@@ -60,8 +61,10 @@ export function createWorkspaces(context: WorkspacesContext) {
 		add: (rootUri: URI) => {
 			if (!workspaces.has(rootUri.toString())) {
 				workspaces.set(rootUri.toString(), createWorkspace({
-					workspaces: context,
-					rootUri,
+					...context,
+					workspace: {
+						rootUri,
+					},
 				}));
 			}
 		},
@@ -76,7 +79,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 
 	async function reloadProject() {
 
-		context.fileSystemHost?.reload();
+		context.workspaces.fileSystemHost?.reload();
 
 		for (const [_, workspace] of workspaces) {
 			(await workspace).reload();
@@ -86,7 +89,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 	}
 
 	function reloadDiagnostics() {
-		for (const doc of context.documents.data.values()) {
+		for (const doc of context.workspaces.documents.data.values()) {
 			context.server.connection.sendDiagnostics({ uri: doc.uri, diagnostics: [] });
 		}
 
@@ -103,10 +106,10 @@ export function createWorkspaces(context: WorkspacesContext) {
 		await sleep(delay);
 
 		if (req === semanticTokensReq) {
-			if (context.initParams.capabilities.textDocument?.semanticTokens) {
+			if (context.workspaces.initParams.capabilities.textDocument?.semanticTokens) {
 				context.server.connection.languages.semanticTokens.refresh();
 			}
-			if (context.initParams.capabilities.textDocument?.inlayHint) {
+			if (context.workspaces.initParams.capabilities.textDocument?.inlayHint) {
 				context.server.connection.languages.inlayHint.refresh();
 			}
 		}
@@ -114,19 +117,19 @@ export function createWorkspaces(context: WorkspacesContext) {
 
 	async function updateDiagnostics(docUri?: string) {
 
-		if ((context.initOptions.diagnosticModel ?? DiagnosticModel.Push) !== DiagnosticModel.Push)
+		if ((context.workspaces.initOptions.diagnosticModel ?? DiagnosticModel.Push) !== DiagnosticModel.Push)
 			return;
 
 		const req = ++documentUpdatedReq;
 		const delay = 250;
-		const cancel = context.cancelTokenHost.createCancellationToken({
+		const cancel = context.workspaces.cancelTokenHost.createCancellationToken({
 			get isCancellationRequested() {
 				return req !== documentUpdatedReq;
 			},
 			onCancellationRequested: vscode.Event.None,
 		});
-		const changeDoc = docUri ? context.documents.data.uriGet(docUri) : undefined;
-		const otherDocs = [...context.documents.data.values()].filter(doc => doc !== changeDoc);
+		const changeDoc = docUri ? context.workspaces.documents.data.uriGet(docUri) : undefined;
+		const otherDocs = [...context.workspaces.documents.data.values()].filter(doc => doc !== changeDoc);
 
 		if (changeDoc) {
 			await sleep(delay);
@@ -151,7 +154,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 		if (!project) return;
 
 		// fix https://github.com/vuejs/language-tools/issues/2627
-		if (context.initOptions.serverMode === ServerMode.Syntactic) {
+		if (context.workspaces.initOptions.serverMode === ServerMode.Syntactic) {
 			return;
 		}
 		// const mode = context.initOptions.serverMode === ServerMode.PartialSemantic ? 'semantic' as const
@@ -172,7 +175,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 			.filter(rootUri => isFileInDir(uriToFileName(uri) as path.PosixPath, uriToFileName(rootUri) as path.PosixPath))
 			.sort((a, b) => sortTsConfigs(uriToFileName(uri) as path.PosixPath, uriToFileName(a) as path.PosixPath, uriToFileName(b) as path.PosixPath));
 
-		if (context.initOptions.serverMode !== ServerMode.Syntactic) {
+		if (context.workspaces.initOptions.serverMode !== ServerMode.Syntactic) {
 			for (const rootUri of rootUris) {
 				const workspace = await workspaces.get(rootUri);
 				const projectAndTsConfig = await workspace?.getProjectAndTsConfig(uri);

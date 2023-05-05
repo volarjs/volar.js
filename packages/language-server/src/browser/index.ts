@@ -18,7 +18,7 @@ export function createConnection() {
 }
 
 export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
-	startCommonLanguageServer(connection, (options): ServerContext => {
+	startCommonLanguageServer(connection, (options): ServerContext['server'] => {
 
 		return {
 			plugins,

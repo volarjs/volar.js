@@ -10,20 +10,21 @@ import { WorkspacesContext } from './workspaces';
 
 export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
-export interface WorkspaceContext {
-	workspaces: WorkspacesContext;
-	rootUri: URI,
+export interface WorkspaceContext extends WorkspacesContext {
+	workspace: {
+		rootUri: URI;
+	};
 }
 
 export async function createWorkspace(context: WorkspaceContext) {
 
-	const fileNameToUri = context.workspaces.server.runtimeEnv.fileNameToUri;
-	const uriToFileName = context.workspaces.server.runtimeEnv.uriToFileName;
+	const fileNameToUri = context.server.runtimeEnv.fileNameToUri;
+	const uriToFileName = context.server.runtimeEnv.uriToFileName;
 
 	let inferredProject: Project | undefined;
 
-	const sys = context.workspaces.fileSystemHost?.getWorkspaceFileSystem(context.rootUri);
-	const documentRegistry = sys ? context.workspaces.ts?.createDocumentRegistry(sys.useCaseSensitiveFileNames, uriToFileName(context.rootUri.toString())) : undefined;
+	const sys = context.workspaces.fileSystemHost?.getWorkspaceFileSystem(context.workspace.rootUri);
+	const documentRegistry = sys ? context.workspaces.ts?.createDocumentRegistry(sys.useCaseSensitiveFileNames, uriToFileName(context.workspace.rootUri.toString())) : undefined;
 	const projects = createUriMap<Project>(fileNameToUri);
 	const rootTsConfigs = new Set<path.PosixPath>();
 	const searchedDirs = new Set<path.PosixPath>();
@@ -31,7 +32,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 		for (const change of changes) {
 			if (rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1))) {
 				if (change.type === vscode.FileChangeType.Created) {
-					if (isFileInDir(uriToFileName(change.uri) as path.PosixPath, uriToFileName(context.rootUri.toString()) as path.PosixPath)) {
+					if (isFileInDir(uriToFileName(change.uri) as path.PosixPath, uriToFileName(context.workspace.rootUri.toString()) as path.PosixPath)) {
 						rootTsConfigs.add(uriToFileName(change.uri) as path.PosixPath);
 					}
 				}
@@ -87,10 +88,12 @@ export async function createWorkspace(context: WorkspaceContext) {
 			inferredProject = (async () => {
 				const inferOptions = await getInferredCompilerOptions(context.workspaces.configurationHost);
 				return createProject({
-					workspace: context,
-					rootUri: context.rootUri,
-					tsConfig: inferOptions,
-					documentRegistry,
+					...context,
+					project: {
+						rootUri: context.workspace.rootUri,
+						tsConfig: inferOptions,
+						documentRegistry,
+					},
 				});
 			})();
 		}
@@ -236,10 +239,12 @@ export async function createWorkspace(context: WorkspaceContext) {
 		let project = projects.pathGet(tsConfig);
 		if (!project && documentRegistry) {
 			project = createProject({
-				workspace: context,
-				rootUri: URI.parse(fileNameToUri(path.dirname(tsConfig))),
-				tsConfig,
-				documentRegistry,
+				...context,
+				project: {
+					rootUri: URI.parse(fileNameToUri(path.dirname(tsConfig))),
+					tsConfig,
+					documentRegistry,
+				},
 			});
 			projects.pathSet(tsConfig, project);
 		}
