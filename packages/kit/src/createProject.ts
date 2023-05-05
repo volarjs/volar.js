@@ -43,9 +43,10 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 
 	return {
 		languageServiceHost: host,
+		isKnownRelatedFile,
 		fileUpdated(fileName: string) {
 			fileName = asPosix(fileName);
-			if (isUsedFile(fileName)) {
+			if (isKnownRelatedFile(fileName)) {
 				projectVersion++;
 				scriptVersions[fileName] ??= 0;
 				scriptVersions[fileName]++;
@@ -54,7 +55,7 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 		fileDeleted(fileName: string) {
 			fileName = asPosix(fileName);
 			fileExistsCache[fileName] = false;
-			if (isUsedFile(fileName)) {
+			if (isKnownRelatedFile(fileName)) {
 				projectVersion++;
 				delete scriptVersions[fileName];
 				delete scriptSnapshots[fileName];
@@ -63,7 +64,7 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 		},
 		fileCreated(fileName: string) {
 			fileName = asPosix(fileName);
-			if (isUsedFile(fileName)) {
+			if (isKnownRelatedFile(fileName)) {
 				projectVersion++;
 			}
 			shouldCheckRootFiles = true;
@@ -111,7 +112,7 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 		return fileExistsCache[fileName];
 	}
 
-	function isUsedFile(fileName: string) {
+	function isKnownRelatedFile(fileName: string) {
 		return scriptSnapshots[fileName] !== undefined || fileExistsCache[fileName] !== undefined;
 	}
 }
