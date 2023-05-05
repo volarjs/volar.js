@@ -51,7 +51,7 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 				scriptVersions[fileName]++;
 			}
 		},
-		filesDeleted(fileName: string) {
+		fileDeleted(fileName: string) {
 			fileName = asPosix(fileName);
 			fileExistsCache[fileName] = false;
 			if (isUsedFile(fileName)) {
