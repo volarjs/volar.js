@@ -1,4 +1,4 @@
-import { CodeActionTriggerKind, createLanguageService, Diagnostic, DiagnosticSeverity, FormattingOptions, Config, LanguageServiceHost, mergeWorkspaceEdits, CancellationToken, TextDocumentEdit } from '@volar/language-service';
+import { CancellationToken, CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, LanguageServiceHost, TextDocumentEdit, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -8,7 +8,7 @@ const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
 
 export function createLinter(config: Config, host: LanguageServiceHost) {
 
-	const ts = require('typescript') as any;
+	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
 	const service = createLanguageService(
 		{ typescript: ts },
 		{
@@ -29,7 +29,6 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		check,
 		fixErrors,
 		formatTsErrors,
-		format,
 	};
 
 	function check(fileName: string) {
@@ -72,18 +71,6 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 						// TODO: CreateFile | RenameFile | DeleteFile
 					}
 				}
-			}
-		}
-	}
-
-	async function format(fileName: string, options: FormattingOptions, writeFile: (fileName: string, newText: string) => Promise<void>) {
-		const uri = fileNameToUri(fileName);
-		const document = service.context.getTextDocument(uri);
-		if (document) {
-			const edits = await service.format(uri, options, undefined, undefined, CancellationToken.None);
-			if (edits?.length) {
-				const newString = TextDocument.applyEdits(document, edits);
-				await writeFile(fileName, newString);
 			}
 		}
 	}
