@@ -87,3 +87,15 @@ function getTsconfig() {
     return tsconfig;
 }
 ```
+
+## Create Project without tsconfig.json
+
+```ts
+const rootPath = process.cwd();
+const fileNames = [
+	path.resolve(rootPath, './src/a.ts'),
+	path.resolve(rootPath, './src/b.js'),
+	path.resolve(rootPath, './src/c.foo'),
+];
+const project = kit.createInferredProject(rootPath, fileNames);
+```
