@@ -63,11 +63,13 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 		},
 		fileCreated(fileName: string) {
 			fileName = asPosix(fileName);
-			fileExistsCache[fileName] = true;
 			if (isUsedFile(fileName)) {
 				projectVersion++;
 			}
 			shouldCheckRootFiles = true;
+			fileExistsCache[fileName] = true;
+			scriptVersions[fileName] ??= 0;
+			scriptVersions[fileName]++;
 		},
 		reload() {
 			fileExistsCache = {};
