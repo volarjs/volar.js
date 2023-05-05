@@ -3,6 +3,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { LanguageServiceHost } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
+import { asPosix } from './utils';
 
 const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
 const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
@@ -26,6 +27,7 @@ export function createFormatter(config: Config) {
 	};
 
 	async function formatFile(fileName: string, options: FormattingOptions): Promise<string | undefined> {
+		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri);
 		if (document) {

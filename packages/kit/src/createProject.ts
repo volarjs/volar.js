@@ -1,11 +1,13 @@
 import { LanguageServiceHost } from '@volar/language-service';
-import * as path from 'path';
+import * as path from 'typesafe-path/posix';
 import type * as ts from 'typescript/lib/tsserverlibrary';
+import { asPosix } from './utils';
 
-export function createProject(tsConfigPath: string, extraFileExtensions: ts.FileExtensionInfo[] = []) {
+export function createProject(sourceTsconfigPath: string, extraFileExtensions: ts.FileExtensionInfo[] = []) {
 
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
-	const jsonConfig = ts.readJsonConfigFile(tsConfigPath, ts.sys.readFile);
+	const tsconfigPath = asPosix(sourceTsconfigPath);
+	const jsonConfig = ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile);
 	const host: LanguageServiceHost = {
 		...ts.sys,
 		fileExists,
@@ -42,6 +44,7 @@ export function createProject(tsConfigPath: string, extraFileExtensions: ts.File
 	return {
 		languageServiceHost: host,
 		fileUpdated(fileName: string) {
+			fileName = asPosix(fileName);
 			if (isUsedFile(fileName)) {
 				projectVersion++;
 				scriptVersions[fileName] ??= 0;
@@ -49,6 +52,7 @@ export function createProject(tsConfigPath: string, extraFileExtensions: ts.File
 			}
 		},
 		filesDeleted(fileName: string) {
+			fileName = asPosix(fileName);
 			fileExistsCache[fileName] = false;
 			if (isUsedFile(fileName)) {
 				projectVersion++;
@@ -58,6 +62,7 @@ export function createProject(tsConfigPath: string, extraFileExtensions: ts.File
 			}
 		},
 		fileCreated(fileName: string) {
+			fileName = asPosix(fileName);
 			fileExistsCache[fileName] = true;
 			if (isUsedFile(fileName)) {
 				projectVersion++;
@@ -86,7 +91,17 @@ export function createProject(tsConfigPath: string, extraFileExtensions: ts.File
 	}
 
 	function createParsedCommandLine() {
-		return ts.parseJsonSourceFileConfigFileContent(jsonConfig, ts.sys, path.dirname(tsConfigPath), {}, tsConfigPath, undefined, extraFileExtensions);
+		const parsed = ts.parseJsonSourceFileConfigFileContent(
+			jsonConfig,
+			ts.sys,
+			path.dirname(tsconfigPath),
+			{},
+			tsconfigPath,
+			undefined,
+			extraFileExtensions,
+		);
+		parsed.fileNames = parsed.fileNames.map(asPosix);
+		return parsed;
 	}
 
 	function fileExists(fileName: string) {

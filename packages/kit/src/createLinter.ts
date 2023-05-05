@@ -2,6 +2,7 @@ import { CancellationToken, CodeActionTriggerKind, Config, Diagnostic, Diagnosti
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
+import { asPosix } from './utils';
 
 const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
 const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
@@ -32,11 +33,13 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 	};
 
 	function check(fileName: string) {
+		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
 		return service.doValidation(uri, 'all');
 	}
 
 	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
+		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri);
 		if (document) {
@@ -76,6 +79,7 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 	}
 
 	function formatTsErrors(fileName: string, diagnostics: Diagnostic[]) {
+		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri)!;
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
