@@ -7,6 +7,7 @@ export type VirtualFiles = ReturnType<typeof createVirtualFiles>;
 
 export interface Source {
 	fileName: string;
+	languageId: string | undefined;
 	snapshot: ts.IScriptSnapshot;
 	root: VirtualFile;
 	language: Language;
@@ -25,19 +26,26 @@ export function createVirtualFiles(languages: Language[]) {
 		allSources() {
 			return Array.from(sourceFiles.values());
 		},
-		updateSource(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined) {
+		updateSource(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): VirtualFile | undefined {
 			const key = normalizePath(fileName);
 			const value = sourceFiles.get(key);
 			if (value) {
-				value.snapshot = snapshot;
-				value.language.updateVirtualFile(value.root, snapshot);
-				sourceFilesDirty = true;
-				return value.root; // updated
+				if (value.languageId !== languageId) {
+					// languageId changed
+					this.deleteSource(fileName);
+					return this.updateSource(fileName, snapshot, languageId);
+				}
+				else {
+					value.snapshot = snapshot;
+					value.language.updateVirtualFile(value.root, snapshot);
+					sourceFilesDirty = true;
+					return value.root; // updated
+				}
 			}
 			for (const language of languages) {
 				const virtualFile = language.createVirtualFile(fileName, snapshot, languageId);
 				if (virtualFile) {
-					sourceFiles.set(key, { fileName, snapshot, root: virtualFile, language });
+					sourceFiles.set(key, { fileName, languageId, snapshot, root: virtualFile, language });
 					sourceFilesDirty = true;
 					return virtualFile; // created
 				}
