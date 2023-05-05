@@ -2,17 +2,32 @@ import { CancellationToken, Config, FormattingOptions, LanguageServiceHost, crea
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { asPosix, fileNameToUri, uriToFileName } from './utils';
+import { asPosix, fileNameToUri, getConfiguration, uriToFileName } from './utils';
 
 export function createFormatter(config: Config) {
 
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
+
+	let settings = {} as any;
+	let dummyScriptUri = 'kit://dummy';
+	let dummyScriptFileName = '/__dummy__';
+	let dummyScriptVersion = 0;
+	let dummyScriptSnapshot = ts.ScriptSnapshot.fromString('');
+	let dummyScriptLanguageId: string | undefined;
+
 	const service = createLanguageService(
 		{ typescript: ts },
 		{
-			uriToFileName,
-			fileNameToUri,
 			rootUri: URI.file('/'),
+			uriToFileName: uri => {
+				if (uri === dummyScriptUri) return dummyScriptFileName;
+				return uriToFileName(uri);
+			},
+			fileNameToUri: fileName => {
+				if (fileName === dummyScriptFileName) return dummyScriptUri;
+				return fileNameToUri(fileName);
+			},
+			getConfiguration: section => getConfiguration(settings, section),
 		},
 		config,
 		createHost(),
@@ -21,6 +36,12 @@ export function createFormatter(config: Config) {
 	return {
 		formatFile,
 		formatCode,
+		get settings() {
+			return settings;
+		},
+		set settings(newSettings: any) {
+			settings = newSettings;
+		},
 	};
 
 	async function formatFile(fileName: string, options: FormattingOptions): Promise<string> {
@@ -37,8 +58,11 @@ export function createFormatter(config: Config) {
 	}
 
 	async function formatCode(content: string, languageId: string, options: FormattingOptions): Promise<string> {
-		const document = TextDocument.create('file://unknown', languageId, 0, content);
-		const edits = await service.format(document, options, undefined, undefined, CancellationToken.None);
+		dummyScriptSnapshot = ts.ScriptSnapshot.fromString(content);
+		dummyScriptLanguageId = languageId;
+		dummyScriptVersion++;
+		const document = service.context.getTextDocument(dummyScriptUri)!;
+		const edits = await service.format(dummyScriptUri, options, undefined, undefined, CancellationToken.None);
 		if (edits?.length) {
 			const newString = TextDocument.applyEdits(document, edits);
 			return newString;
@@ -52,11 +76,19 @@ export function createFormatter(config: Config) {
 		const host: LanguageServiceHost = {
 			...ts.sys,
 			getCompilationSettings: () => ({}),
-			getScriptFileNames: () => [],
+			getScriptFileNames: () => dummyScriptSnapshot ? [dummyScriptFileName] : [],
 			getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
 			useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,
-			getScriptVersion: (fileName) => scriptVersions.get(fileName)?.toString() ?? '',
+			getScriptVersion: (fileName) => {
+				if (fileName === dummyScriptFileName) {
+					return dummyScriptVersion.toString();
+				}
+				return scriptVersions.get(fileName)?.toString() ?? '';
+			},
 			getScriptSnapshot: (fileName) => {
+				if (fileName === dummyScriptFileName) {
+					return dummyScriptSnapshot;
+				}
 				if (!scriptSnapshots.has(fileName)) {
 					const fileText = ts.sys.readFile(fileName);
 					if (fileText !== undefined) {
@@ -64,6 +96,10 @@ export function createFormatter(config: Config) {
 					}
 				}
 				return scriptSnapshots.get(fileName);
+			},
+			getScriptLanguageId: uri => {
+				if (uri === dummyScriptFileName) return dummyScriptLanguageId;
+				return undefined;
 			},
 		};
 		return host;

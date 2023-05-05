@@ -25,8 +25,8 @@ export function createLanguageService(options: {
 	let languageService = _createLanguageService(
 		{ typescript: ts },
 		{
-			uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
-			fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
+			uriToFileName: uri => URI.parse(uri).fsPath.replace(/\\/g, '/'),
+			fileNameToUri: fileName => URI.file(fileName).toString(),
 			rootUri: URI.file('/'),
 		},
 		config,

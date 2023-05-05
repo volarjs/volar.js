@@ -8,7 +8,7 @@ import { isInsideRange, stringToSnapshot } from '../utils/common';
 export function register(context: ServiceContext) {
 
 	return async (
-		uriOrDocument: string | TextDocument,
+		uri: string,
 		options: vscode.FormattingOptions,
 		range: vscode.Range | undefined,
 		onTypeParams: {
@@ -18,7 +18,7 @@ export function register(context: ServiceContext) {
 		token = vscode.CancellationToken.None
 	) => {
 
-		let document = typeof uriOrDocument === 'string' ? context.getTextDocument(uriOrDocument) : uriOrDocument;
+		let document = context.getTextDocument(uri);
 		if (!document) return;
 
 		range ??= vscode.Range.create(document.positionAt(0), document.positionAt(document.getText().length));
@@ -111,7 +111,7 @@ export function register(context: ServiceContext) {
 			if (edits.length > 0) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-				context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
+				context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), stringToSnapshot(document.getText()), document.languageId);
 				edited = true;
 			}
 
@@ -177,7 +177,7 @@ export function register(context: ServiceContext) {
 						if (indentEdits.length > 0) {
 							const newText = TextDocument.applyEdits(document, indentEdits);
 							document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-							context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), stringToSnapshot(document.getText()), undefined);
+							context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), stringToSnapshot(document.getText()), document.languageId);
 							edited = true;
 						}
 					}
@@ -187,7 +187,7 @@ export function register(context: ServiceContext) {
 
 		if (edited) {
 			// recover
-			context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), originalSnapshot, undefined);
+			context.core.virtualFiles.updateSource(context.env.uriToFileName(document.uri), originalSnapshot, document.languageId);
 		}
 
 		if (document.getText() === originalDocument.getText())

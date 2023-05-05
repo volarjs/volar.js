@@ -2,9 +2,11 @@ import { CancellationToken, CodeActionTriggerKind, Config, Diagnostic, Diagnosti
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { asPosix, fileNameToUri, uriToFileName } from './utils';
+import { asPosix, fileNameToUri, getConfiguration, uriToFileName } from './utils';
 
 export function createLinter(config: Config, host: LanguageServiceHost) {
+
+	let settings = {} as any;
 
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
 	const service = createLanguageService(
@@ -13,6 +15,7 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 			uriToFileName,
 			fileNameToUri,
 			rootUri: URI.file(host.getCurrentDirectory()),
+			getConfiguration: section => getConfiguration(settings, section),
 		},
 		config,
 		host,
@@ -27,6 +30,12 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		check,
 		fixErrors,
 		logErrors,
+		get settings() {
+			return settings;
+		},
+		set settings(newSettings: any) {
+			settings = newSettings;
+		},
 	};
 
 	function check(fileName: string) {
