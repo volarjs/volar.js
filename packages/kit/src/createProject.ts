@@ -3,13 +3,59 @@ import * as path from 'typesafe-path/posix';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { asPosix } from './utils';
 
-export function createProject(sourceTsconfigPath: string, extraFileExtensions: ts.FileExtensionInfo[] = []) {
+export function createInferredProject(
+	rootPath: string,
+	getScriptFileNames: () => string[],
+	compilerOptions: ts.CompilerOptions = {
+		allowJs: true,
+		allowSyntheticDefaultImports: true,
+		allowNonTsExtensions: true,
+		resolveJsonModule: true,
+		jsx: 1 /* ts.JsxEmit.Preserve */,
+	}
+) {
+	return createProjectBase(
+		rootPath,
+		() => ({
+			options: compilerOptions,
+			fileNames: getScriptFileNames().map(asPosix),
+		}),
+	);
+}
 
+export function createProject(
+	sourceTsconfigPath: string,
+	extraFileExtensions: ts.FileExtensionInfo[] = []
+) {
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
 	const tsconfigPath = asPosix(sourceTsconfigPath);
-	const jsonConfig = ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile);
+	return createProjectBase(
+		path.dirname(tsconfigPath),
+		() => {
+			const parsed = ts.parseJsonSourceFileConfigFileContent(
+				ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile),
+				ts.sys,
+				path.dirname(tsconfigPath),
+				{},
+				tsconfigPath,
+				undefined,
+				extraFileExtensions,
+			);
+			parsed.fileNames = parsed.fileNames.map(asPosix);
+			return parsed;
+		},
+	);
+}
+
+function createProjectBase(
+	rootPath: string,
+	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>
+) {
+
+	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
 	const host: LanguageServiceHost = {
 		...ts.sys,
+		getCurrentDirectory: () => rootPath,
 		fileExists,
 		useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,
 		getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
@@ -18,11 +64,13 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 			checkRootFilesUpdate();
 			return projectVersion.toString();
 		},
+		getTypeRootsVersion: () => {
+			return typeRootsVersion;
+		},
 		getScriptFileNames: () => {
 			checkRootFilesUpdate();
 			return parsedCommandLine.fileNames;
 		},
-		getProjectReferences: () => parsedCommandLine.projectReferences,
 		getScriptVersion: (fileName) => scriptVersions[fileName]?.toString() ?? '',
 		getScriptSnapshot: (fileName) => {
 			const version = host.getScriptVersion(fileName);
@@ -39,6 +87,7 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 	let scriptSnapshots: Record<string, [string, ts.IScriptSnapshot | undefined]> = {};
 	let parsedCommandLine = createParsedCommandLine();
 	let projectVersion = 0;
+	let typeRootsVersion = 0;
 	let shouldCheckRootFiles = false;
 
 	return {
@@ -66,6 +115,7 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 			fileName = asPosix(fileName);
 			if (isKnownRelatedFile(fileName)) {
 				projectVersion++;
+				typeRootsVersion++;
 			}
 			shouldCheckRootFiles = true;
 			fileExistsCache[fileName] = true;
@@ -91,20 +141,6 @@ export function createProject(sourceTsconfigPath: string, extraFileExtensions: t
 			parsedCommandLine.fileNames = newParsedCommandLine.fileNames;
 			projectVersion++;
 		}
-	}
-
-	function createParsedCommandLine() {
-		const parsed = ts.parseJsonSourceFileConfigFileContent(
-			jsonConfig,
-			ts.sys,
-			path.dirname(tsconfigPath),
-			{},
-			tsconfigPath,
-			undefined,
-			extraFileExtensions,
-		);
-		parsed.fileNames = parsed.fileNames.map(asPosix);
-		return parsed;
 	}
 
 	function fileExists(fileName: string) {
