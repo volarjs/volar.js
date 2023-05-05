@@ -8,6 +8,8 @@ import { createUriMap } from './utils/uriMap';
 import { isFileInDir } from './utils/isFileInDir';
 import { WorkspacesContext } from './workspaces';
 
+import type * as _ from 'vscode-languageserver-textdocument';
+
 export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
 export interface WorkspaceContext extends WorkspacesContext {

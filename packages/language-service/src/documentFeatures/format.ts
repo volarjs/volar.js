@@ -8,7 +8,7 @@ import { isInsideRange, stringToSnapshot } from '../utils/common';
 export function register(context: ServiceContext) {
 
 	return async (
-		uri: string,
+		uriOrDocument: string | TextDocument,
 		options: vscode.FormattingOptions,
 		range: vscode.Range | undefined,
 		onTypeParams: {
@@ -18,7 +18,7 @@ export function register(context: ServiceContext) {
 		token = vscode.CancellationToken.None
 	) => {
 
-		let document = context.getTextDocument(uri);
+		let document = typeof uriOrDocument === 'string' ? context.getTextDocument(uriOrDocument) : uriOrDocument;
 		if (!document) return;
 
 		range ??= vscode.Range.create(document.positionAt(0), document.positionAt(document.getText().length));

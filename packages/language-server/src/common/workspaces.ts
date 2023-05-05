@@ -10,6 +10,8 @@ import { createWorkspace, rootTsConfigNames, sortTsConfigs } from './workspace';
 import { isFileInDir } from './utils/isFileInDir';
 import * as path from 'typesafe-path';
 
+import type * as _ from 'vscode-languageserver-textdocument';
+
 export interface WorkspacesContext extends ServerContext {
 	workspaces: {
 		initParams: vscode.InitializeParams;
