@@ -62,7 +62,7 @@ async function update(fileNameCheckRelated?: string) {
         const errors = await linter.check(fileName);
         if (isCanceled()) return;
         if (errors.length) {
-            console.log(linter.formatTsErrors(fileName, errors));
+            linter.logErrors(fileName, errors);
             hasError = true;
         }
     }

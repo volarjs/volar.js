@@ -29,7 +29,7 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 	return {
 		check,
 		fixErrors,
-		formatTsErrors,
+		logErrors,
 	};
 
 	function check(fileName: string) {
@@ -78,7 +78,16 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		}
 	}
 
-	function formatTsErrors(fileName: string, diagnostics: Diagnostic[]) {
+	function logErrors(fileName: string, diagnostics: Diagnostic[]) {
+		if (!diagnostics.length) return;
+		let text = formatErrors(fileName, diagnostics);
+		for (const diagnostic of diagnostics) {
+			text = text.replace(`TS${diagnostic.code}`, `${(diagnostic.source ?? '')}(${diagnostic.code})`);
+		}
+		console.log(text);
+	}
+
+	function formatErrors(fileName: string, diagnostics: Diagnostic[]) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri)!;
