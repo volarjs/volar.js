@@ -1,12 +1,8 @@
-import { CancellationToken, Config, FormattingOptions, createLanguageService } from '@volar/language-service';
+import { CancellationToken, Config, FormattingOptions, LanguageServiceHost, createLanguageService } from '@volar/language-service';
+import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { LanguageServiceHost } from '@volar/language-service';
-import type * as ts from 'typescript/lib/tsserverlibrary';
-import { asPosix } from './utils';
-
-const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
-const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
+import { asPosix, fileNameToUri, uriToFileName } from './utils';
 
 export function createFormatter(config: Config) {
 
@@ -24,19 +20,30 @@ export function createFormatter(config: Config) {
 
 	return {
 		formatFile,
+		formatCode,
 	};
 
-	async function formatFile(fileName: string, options: FormattingOptions): Promise<string | undefined> {
+	async function formatFile(fileName: string, options: FormattingOptions): Promise<string> {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri);
-		if (document) {
-			const edits = await service.format(uri, options, undefined, undefined, CancellationToken.None);
-			if (edits?.length) {
-				const newString = TextDocument.applyEdits(document, edits);
-				return newString;
-			}
+		if (!document) throw `file not found: ${fileName}`;
+		const edits = await service.format(uri, options, undefined, undefined, CancellationToken.None);
+		if (edits?.length) {
+			const newString = TextDocument.applyEdits(document, edits);
+			return newString;
 		}
+		return document.getText();
+	}
+
+	async function formatCode(content: string, languageId: string, options: FormattingOptions): Promise<string> {
+		const document = TextDocument.create('file://unknown', languageId, 0, content);
+		const edits = await service.format(document, options, undefined, undefined, CancellationToken.None);
+		if (edits?.length) {
+			const newString = TextDocument.applyEdits(document, edits);
+			return newString;
+		}
+		return content;
 	}
 
 	function createHost() {

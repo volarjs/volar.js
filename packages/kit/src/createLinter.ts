@@ -2,10 +2,7 @@ import { CancellationToken, CodeActionTriggerKind, Config, Diagnostic, Diagnosti
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { asPosix } from './utils';
-
-const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
-const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
+import { asPosix, fileNameToUri, uriToFileName } from './utils';
 
 export function createLinter(config: Config, host: LanguageServiceHost) {
 
