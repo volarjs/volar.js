@@ -129,31 +129,10 @@ export async function ruleWorker<T>(
 
 	const document = context.getTextDocument(uri);
 	const virtualFile = context.documents.getSourceByUri(uri)?.root;
-	const provided = new Map<any, any>();
 
+	let provided: Record<any, Map<TextDocument, any>> = {};
 	let results: NonNullable<Awaited<T>>[] = [];
-	let ruleCtx: RuleContext = {
-		env: context.env,
-		ruleId: '',
-		document: document!,
-		report: () => { },
-		inject: key => {
-			if (!provided.has(key)) {
-				for (const service of Object.values(context.services)) {
-					const provide = service.rules?.provide?.[key as any];
-					if (provide) {
-						try {
-							provided.set(key, provide(ruleCtx.document, ruleType));
-						}
-						catch (err) {
-							console.warn('service rule context setup crashed on ' + ruleCtx.document.uri + ': ' + err);
-						}
-					}
-				}
-			}
-			return provided.get(key);
-		},
-	};
+	let ruleCtx: RuleContext;
 
 	if (virtualFile) {
 
@@ -163,8 +142,8 @@ export async function ruleWorker<T>(
 				return true;
 			}
 
-			ruleCtx.document = map.virtualFileDocument;
-			provided.clear();
+			ruleCtx = createCtx(map.virtualFileDocument);
+			provided = {};
 
 			for (const ruleId in context.config.rules) {
 
@@ -202,8 +181,8 @@ export async function ruleWorker<T>(
 	}
 	else if (document) {
 
-		ruleCtx.document = document;
-		provided.clear();
+		ruleCtx = createCtx(document);
+		provided = {};
 
 		for (const ruleId in context.config.rules) {
 
@@ -242,6 +221,33 @@ export async function ruleWorker<T>(
 	}
 	else if (results.length > 0) {
 		return results[0];
+	}
+
+	function createCtx(document: TextDocument): RuleContext {
+		return {
+			env: context.env,
+			ruleId: '',
+			document: document,
+			report: () => { },
+			inject: key => {
+				provided[key as any] ??= new Map();
+				const map = provided[key as any];
+				if (!map.has(ruleCtx.document)) {
+					for (const service of Object.values(context.services)) {
+						const provide = service.rules?.provide?.[key as any];
+						if (provide) {
+							try {
+								map.set(ruleCtx.document, provide(ruleCtx.document, ruleType));
+							}
+							catch (err) {
+								console.warn('service rule context setup crashed on ' + ruleCtx.document.uri + ': ' + err);
+							}
+						}
+					}
+				}
+				return map.get(ruleCtx.document);
+			},
+		};
 	}
 }
 
