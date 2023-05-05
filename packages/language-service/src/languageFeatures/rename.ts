@@ -174,7 +174,7 @@ export function mergeWorkspaceEdits(original: vscode.WorkspaceEdit, ...others: v
 				original.documentChanges = [];
 			}
 			for (const docChange of other.documentChanges) {
-				original.documentChanges.push(docChange);
+				pushEditToDocumentChanges(original.documentChanges, docChange);
 			}
 		}
 	}
@@ -328,12 +328,26 @@ export function embeddedEditToSourceEdit(
 				}
 			}
 			if (sourceEdit) {
-				sourceResult.documentChanges.push(sourceEdit);
+				pushEditToDocumentChanges(sourceResult.documentChanges, sourceEdit);
 				hasResult = true;
 			}
 		}
 	}
 	if (hasResult) {
 		return sourceResult;
+	}
+}
+
+function pushEditToDocumentChanges(arr: NonNullable<vscode.WorkspaceEdit['documentChanges']>, item: NonNullable<vscode.WorkspaceEdit['documentChanges']>[number]) {
+	const current = arr.find(edit =>
+		vscode.TextDocumentEdit.is(edit)
+		&& vscode.TextDocumentEdit.is(item)
+		&& edit.textDocument.uri === item.textDocument.uri
+	) as vscode.TextDocumentEdit | undefined;
+	if (current) {
+		current.edits.push(...(item as vscode.TextDocumentEdit).edits);
+	}
+	else {
+		arr.push(item);
 	}
 }
