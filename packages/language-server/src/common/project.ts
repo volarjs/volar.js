@@ -114,8 +114,8 @@ export async function createProject(context: ProjectContext) {
 			for (const plugin of context.workspaces.plugins) {
 				if (plugin.resolveConfig) {
 					config = plugin.resolveConfig(config, {
+						...context,
 						env,
-						project: context,
 						sys,
 						host: languageServiceHost,
 					});

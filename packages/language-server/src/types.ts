@@ -47,18 +47,19 @@ export interface RuntimeEnvironment {
 	};
 }
 
+interface LanguageServerPluginContext extends ProjectContext {
+	env: ServiceEnvironment;
+	host: embedded.LanguageServiceHost;
+	sys: FileSystem;
+}
+
 export interface LanguageServerPlugin {
 	(initOptions: InitializationOptions, modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); }): {
 		extraFileExtensions?: ts.FileExtensionInfo[];
 		watchFileExtensions?: string[];
 		resolveConfig?(
 			config: Config,
-			ctx: {
-				env: ServiceEnvironment;
-				project: ProjectContext;
-				host: embedded.LanguageServiceHost;
-				sys: FileSystem;
-			} | undefined,
+			ctx: LanguageServerPluginContext | undefined,
 		): Config;
 		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};
