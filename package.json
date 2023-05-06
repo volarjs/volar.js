@@ -12,7 +12,7 @@
 		"@types/node": "latest",
 		"typescript": "latest",
 		"vite": "latest",
-		"vitest": "0.25.8"
+		"vitest": "latest"
 	},
 	"optionalDependencies": {
 		"@lerna-lite/cli": "latest",
