@@ -33,9 +33,13 @@ interface Command<T> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface ServiceContext {
-
+interface CommonContext {
 	env: ServiceEnvironment;
+	inject<K extends InjectionKey<any, any>>(key: K, ...args: NonNullable<K['__args']>): K['__result'];
+}
+
+export interface ServiceContext extends CommonContext {
+
 	config: Config;
 	host: LanguageServiceHost;
 	typescript: {
@@ -72,6 +76,7 @@ export type SemanticToken = [number, number, number, number, number];
 
 export interface Service {
 	(context: ServiceContext | undefined, modules: SharedModules | undefined): {
+		provide?: Record<string, (...args: any) => any>;
 		isAdditionalCompletion?: boolean; // volar specific
 		triggerCharacters?: string[];
 		signatureHelpTriggerCharacters?: string[];
@@ -119,12 +124,6 @@ export interface Service {
 		resolveInlayHint?(inlayHint: vscode.InlayHint, token: vscode.CancellationToken): Result<vscode.InlayHint>;
 		resolveReferencesCodeLensLocations?(document: TextDocument, range: vscode.Range, references: vscode.Location[], token: vscode.CancellationToken): Result<vscode.Location[]>; // volar specific
 		resolveEmbeddedRange?(range: vscode.Range): vscode.Range | undefined; // volar specific, only support in resolveCompletionItem for now
-
-		// rules-api
-		rules?: {
-			provide?: Record<any, (document: TextDocument, ruleType: RuleType) => any | undefined>;
-			resolveDiagnostic?(diagnostic: vscode.Diagnostic): vscode.Diagnostic;
-		},
 	};
 }
 
@@ -148,16 +147,17 @@ export interface Rule {
 	run(ctx: RuleContext): void;
 }
 
-export interface RuleContext {
-	env: ServiceEnvironment;
+export interface RuleContext extends CommonContext {
 	ruleId: string;
 	document: TextDocument;
-	inject<T>(key: InjectionKey<T>): T | undefined;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
 
-// @ts-ignore
-export interface InjectionKey<T> extends Symbol { }
+export type InjectionKey<T extends any[], R> = string & { __args?: T, __result?: R; };
+
+export function defineProvide<T extends InjectionKey<any, any>>(key: T, provider: T extends InjectionKey<infer A, infer R> ? (...args: A) => R | undefined : never) {
+	return { [key]: provider };
+}
 
 export interface RuleFix {
 	/**

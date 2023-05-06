@@ -38,7 +38,6 @@ import * as linkedEditingRanges from './documentFeatures/linkedEditingRanges';
 import * as selectionRanges from './documentFeatures/selectionRanges';
 import * as vscode from 'vscode-languageserver-protocol';
 
-// fix build
 import { notEmpty, resolveCommonLanguageId } from './utils/common';
 
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
@@ -109,6 +108,14 @@ function createLanguageServicePluginContext(
 	const documentVersions = new Map<string, number>();
 	const context: ServiceContext = {
 		env,
+		inject: (key, ...args) => {
+			for (const service of Object.values(context.services)) {
+				const provide = service.provide?.[key as any];
+				if (provide) {
+					return provide(...args as any);
+				}
+			}
+		},
 		config,
 		host,
 		core: languageContext,

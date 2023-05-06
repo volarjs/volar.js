@@ -88,7 +88,7 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		if (!diagnostics.length) return;
 		let text = formatErrors(fileName, diagnostics);
 		for (const diagnostic of diagnostics) {
-			text = text.replace(`TS${diagnostic.code}`, `${(diagnostic.source ?? '')}(${diagnostic.code})`);
+			text = text.replace(`TS${diagnostic.code}`, (diagnostic.source ?? '') + (diagnostic.code ? `(${diagnostic.code})` : ''));
 		}
 		console.log(text);
 	}

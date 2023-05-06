@@ -130,7 +130,6 @@ export async function ruleWorker<T>(
 	const document = context.getTextDocument(uri);
 	const virtualFile = context.documents.getSourceByUri(uri)?.root;
 
-	let provided: Record<any, Map<TextDocument, any>> = {};
 	let results: NonNullable<Awaited<T>>[] = [];
 	let ruleCtx: RuleContext;
 
@@ -143,7 +142,6 @@ export async function ruleWorker<T>(
 			}
 
 			ruleCtx = createCtx(map.virtualFileDocument);
-			provided = {};
 
 			for (const ruleId in context.config.rules) {
 
@@ -182,7 +180,6 @@ export async function ruleWorker<T>(
 	else if (document) {
 
 		ruleCtx = createCtx(document);
-		provided = {};
 
 		for (const ruleId in context.config.rules) {
 
@@ -226,27 +223,10 @@ export async function ruleWorker<T>(
 	function createCtx(document: TextDocument): RuleContext {
 		return {
 			env: context.env,
+			inject: context.inject,
 			ruleId: '',
 			document: document,
 			report: () => { },
-			inject: key => {
-				provided[key as any] ??= new Map();
-				const map = provided[key as any];
-				if (!map.has(ruleCtx.document)) {
-					for (const service of Object.values(context.services)) {
-						const provide = service.rules?.provide?.[key as any];
-						if (provide) {
-							try {
-								map.set(ruleCtx.document, provide(ruleCtx.document, ruleType));
-							}
-							catch (err) {
-								console.warn('service rule context setup crashed on ' + ruleCtx.document.uri + ': ' + err);
-							}
-						}
-					}
-				}
-				return map.get(ruleCtx.document);
-			},
 		};
 	}
 }
