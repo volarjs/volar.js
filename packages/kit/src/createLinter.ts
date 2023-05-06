@@ -33,8 +33,8 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		get settings() {
 			return settings;
 		},
-		set settings(newSettings: any) {
-			settings = newSettings;
+		set settings(newValue) {
+			settings = newValue;
 		},
 	};
 

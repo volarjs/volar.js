@@ -1,5 +1,14 @@
 import * as path from 'typesafe-path/posix';
 import { URI } from 'vscode-uri';
+import type * as ts from 'typescript/lib/tsserverlibrary';
+
+export const defaultCompilerOptions: ts.CompilerOptions = {
+	allowJs: true,
+	allowSyntheticDefaultImports: true,
+	allowNonTsExtensions: true,
+	resolveJsonModule: true,
+	jsx: 1 /* ts.JsxEmit.Preserve */,
+};
 
 export function asPosix(path: string) {
 	return path.replace(/\\/g, '/') as path.PosixPath;

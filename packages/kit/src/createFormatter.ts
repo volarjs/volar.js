@@ -2,15 +2,18 @@ import { CancellationToken, Config, FormattingOptions, LanguageServiceHost, crea
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { asPosix, fileNameToUri, getConfiguration, uriToFileName } from './utils';
+import { asPosix, defaultCompilerOptions, fileNameToUri, getConfiguration, uriToFileName } from './utils';
 
-export function createFormatter(config: Config) {
+export function createFormatter(
+	config: Config,
+	compilerOptions = defaultCompilerOptions
+) {
 
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
 
 	let settings = {} as any;
-	let dummyScriptUri = 'kit://dummy';
-	let dummyScriptFileName = '/__dummy__';
+	let dummyScriptUri = 'file:///dummy.txt';
+	let dummyScriptFileName = '/dummy.txt';
 	let dummyScriptVersion = 0;
 	let dummyScriptSnapshot = ts.ScriptSnapshot.fromString('');
 	let dummyScriptLanguageId: string | undefined;
@@ -20,11 +23,13 @@ export function createFormatter(config: Config) {
 		{
 			rootUri: URI.file('/'),
 			uriToFileName: uri => {
-				if (uri === dummyScriptUri) return dummyScriptFileName;
+				if (uri.startsWith(dummyScriptUri))
+					return uri.replace(dummyScriptUri, dummyScriptFileName);
 				return uriToFileName(uri);
 			},
 			fileNameToUri: fileName => {
-				if (fileName === dummyScriptFileName) return dummyScriptUri;
+				if (fileName.startsWith(dummyScriptFileName))
+					return fileName.replace(dummyScriptFileName, dummyScriptUri);
 				return fileNameToUri(fileName);
 			},
 			getConfiguration: section => getConfiguration(settings, section),
@@ -39,8 +44,8 @@ export function createFormatter(config: Config) {
 		get settings() {
 			return settings;
 		},
-		set settings(newSettings: any) {
-			settings = newSettings;
+		set settings(newValue) {
+			settings = newValue;
 		},
 	};
 
@@ -75,7 +80,7 @@ export function createFormatter(config: Config) {
 		const scriptSnapshots = new Map<string, ts.IScriptSnapshot>();
 		const host: LanguageServiceHost = {
 			...ts.sys,
-			getCompilationSettings: () => ({}),
+			getCompilationSettings: () => compilerOptions,
 			getScriptFileNames: () => dummyScriptSnapshot ? [dummyScriptFileName] : [],
 			getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
 			useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,

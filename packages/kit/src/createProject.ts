@@ -1,18 +1,12 @@
 import { LanguageServiceHost } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { asPosix } from './utils';
+import { asPosix, defaultCompilerOptions } from './utils';
 
 export function createInferredProject(
 	rootPath: string,
 	getScriptFileNames: () => string[],
-	compilerOptions: ts.CompilerOptions = {
-		allowJs: true,
-		allowSyntheticDefaultImports: true,
-		allowNonTsExtensions: true,
-		resolveJsonModule: true,
-		jsx: 1 /* ts.JsxEmit.Preserve */,
-	}
+	compilerOptions = defaultCompilerOptions
 ) {
 	return createProjectBase(
 		rootPath,
