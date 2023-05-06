@@ -286,12 +286,6 @@ export function register(context: ServiceContext) {
 						error.message ||= 'No message.';
 						error.source ||= ruleCtx.ruleId;
 
-						for (const service of Object.values(context.services)) {
-							if (service.rules?.resolveDiagnostic) {
-								error = service.rules.resolveDiagnostic(error);
-							}
-						}
-
 						reportResults.push([error, ...fixes]);
 					};
 
