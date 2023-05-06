@@ -70,7 +70,7 @@ function createLanguageServicePluginContext(
 			ts,
 			languageContext.typescript.languageServiceHost,
 			proxiedHost => ts.createLanguageService(proxiedHost, documentRegistry),
-			env.rootUri.path,
+			languageContext.typescript.languageServiceHost.getCurrentDirectory(),
 		);
 		tsLs = created.languageService;
 
