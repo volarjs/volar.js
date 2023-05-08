@@ -1,4 +1,4 @@
-import { Segment } from 'muggle-string';
+import { Segment, StackNode } from 'muggle-string';
 
 export * from 'muggle-string';
 
@@ -7,7 +7,12 @@ export interface Mapping<T = any> {
 	sourceRange: [number, number];
 	generatedRange: [number, number];
 	data: T;
-};
+}
+
+export interface Stack {
+	source: string;
+	range: [number, number];
+}
 
 export class SourceMap<Data = any> {
 
@@ -187,4 +192,28 @@ export function buildMappings<T>(chunks: Segment<T>[]) {
 		}
 	}
 	return mappings;
+}
+
+export function buildStacks<T>(chunks: Segment<T>[], stacks: StackNode[]) {
+	let offset = 0;
+	let index = 0;
+	const result: Stack[] = [];
+	for (const stack of stacks) {
+		const start = offset;
+		for (let i = 0; i < stack.length; i++) {
+			const segment = chunks[index + i];
+			if (typeof segment === 'string') {
+				offset += segment.length;
+			}
+			else {
+				offset += segment[0].length;
+			}
+		}
+		index += stack.length;
+		result.push({
+			range: [start, offset],
+			source: stack.stack,
+		});
+	}
+	return result;
 }

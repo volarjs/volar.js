@@ -1,6 +1,7 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type * as html from 'vscode-html-languageservice';
 import type { FileKind, FileRangeCapabilities } from '@volar/language-core';
+import type { Mapping, Stack } from '@volar/source-map';
 
 /**
  * Server request client
@@ -72,11 +73,8 @@ export namespace GetVirtualFileRequest {
 	};
 	export type ResponseType = {
 		content: string;
-		mappings: Record<string, {
-			sourceRange: [number, number];
-			generatedRange: [number, number];
-			data: FileRangeCapabilities;
-		}[]>;
+		mappings: Record<string, Mapping<FileRangeCapabilities>[]>;
+		codegenStacks: Stack[];
 	};
 	export type ErrorType = never;
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFile');

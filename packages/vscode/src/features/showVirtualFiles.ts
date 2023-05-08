@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { BaseLanguageClient, TextDocument } from 'vscode-languageclient';
 import { GetVirtualFileNamesRequest, GetVirtualFileRequest } from '@volar/language-server';
-import { SourceMap } from '@volar/source-map';
+import { SourceMap, Stack } from '@volar/source-map';
 import type { FileRangeCapabilities } from '@volar/language-core';
 
 const scheme = 'volar-virtual-file';
@@ -31,7 +31,9 @@ const mappingSelectionDecorationType = vscode.window.createTextEditorDecorationT
 
 export async function activate(cmd: string, client: BaseLanguageClient) {
 
-	class MappingDataHoverProvider implements vscode.HoverProvider {
+	const subscriptions: vscode.Disposable[] = [];
+
+	subscriptions.push(vscode.languages.registerHoverProvider({ scheme }, {
 		async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
 			const maps = virtualUriToSourceMap.get(document.uri.toString());
@@ -63,15 +65,34 @@ export async function activate(cmd: string, client: BaseLanguageClient) {
 				'```',
 			].join('\n')));
 		}
-	}
+	}));
 
-	const subscriptions: vscode.Disposable[] = [];
+	subscriptions.push(vscode.languages.registerDefinitionProvider({ scheme }, {
+		async provideDefinition(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
-	subscriptions.push(vscode.languages.registerHoverProvider({ scheme }, new MappingDataHoverProvider()));
+			const stacks = virtualUriToStacks.get(document.uri.toString());
+			if (!stacks) return;
+
+			const offset = document.offsetAt(position);
+			const stack = stacks.find(stack => stack.range[0] <= offset && offset <= stack.range[1]);
+			if (!stack) return;
+
+			const line = Number(stack.source.split(':').at(-2));
+			const character = Number(stack.source.split(':').at(-1));
+			const fileName = stack.source.split(':').slice(0, -2).join(':');
+			const link: vscode.DefinitionLink = {
+				originSelectionRange: new vscode.Range(document.positionAt(stack.range[0]), document.positionAt(stack.range[1])),
+				targetUri: vscode.Uri.file(fileName),
+				targetRange: new vscode.Range(line - 1, character - 1, line - 1, character - 1),
+			};
+			return [link];
+		}
+	}));
 
 	const sourceUriToVirtualUris = new Map<string, Set<string>>();
 	const virtualUriToSourceEditor = new Map<string, vscode.TextEditor>();
 	const virtualUriToSourceMap = new Map<string, [string, number, SourceMap<FileRangeCapabilities>][]>();
+	const virtualUriToStacks = new Map<string, Stack[]>();
 	const docChangeEvent = new vscode.EventEmitter<vscode.Uri>();
 	const virtualDocuments = new Map<string, TextDocument>();
 
@@ -103,10 +124,10 @@ export async function activate(cmd: string, client: BaseLanguageClient) {
 
 				if (requestEditor) {
 
-					const virtual = await client.sendRequest(GetVirtualFileRequest.type, { sourceFileUri: requestEditor.document.uri.toString(), virtualFileName: fileName });
+					const virtualFile = await client.sendRequest(GetVirtualFileRequest.type, { sourceFileUri: requestEditor.document.uri.toString(), virtualFileName: fileName });
 					virtualUriToSourceMap.set(uri.toString(), []);
 
-					Object.entries(virtual.mappings).forEach(([sourceUri, mappings]) => {
+					Object.entries(virtualFile.mappings).forEach(([sourceUri, mappings]) => {
 						const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
 						if (sourceEditor) {
 							virtualUriToSourceMap.get(uri.toString())?.push([
@@ -120,12 +141,13 @@ export async function activate(cmd: string, client: BaseLanguageClient) {
 							sourceUriToVirtualUris.get(sourceUri)?.add(uri.toString());
 						}
 					});
-					virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtual.content));
+					virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualFile.content));
+					virtualUriToStacks.set(uri.toString(), virtualFile.codegenStacks);
 
 					clearTimeout(updateDecorationsTimeout);
 					updateDecorationsTimeout = setTimeout(updateDecorations, 100);
 
-					return virtual.content;
+					return virtualFile.content;
 				}
 			}
 		},

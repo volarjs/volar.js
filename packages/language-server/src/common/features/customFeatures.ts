@@ -101,6 +101,7 @@ export function register(
 				return {
 					content: virtualFile.snapshot.getText(0, virtualFile.snapshot.getLength()),
 					mappings,
+					codegenStacks: virtualFile.codegenStacks,
 				};
 			}
 		}

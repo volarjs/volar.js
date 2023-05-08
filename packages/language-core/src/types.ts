@@ -1,4 +1,4 @@
-import { Mapping } from '@volar/source-map';
+import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export interface FileCapabilities {
@@ -78,6 +78,7 @@ export interface VirtualFile {
 	kind: FileKind,
 	capabilities: FileCapabilities,
 	mappings: Mapping<FileRangeCapabilities>[],
+	codegenStacks: Stack[],
 	mirrorBehaviorMappings?: Mapping<[MirrorBehaviorCapabilities, MirrorBehaviorCapabilities]>[],
 	embeddedFiles: VirtualFile[],
 }

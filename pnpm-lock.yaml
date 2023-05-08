@@ -133,8 +133,8 @@ importers:
   packages/source-map:
     dependencies:
       muggle-string:
-        specifier: ^0.2.2
-        version: 0.2.2
+        specifier: ^0.3.0
+        version: 0.3.0
 
   packages/typescript:
     dependencies:
@@ -3157,8 +3157,8 @@ packages:
     dev: false
     optional: true
 
-  /muggle-string@0.2.2:
-    resolution: {integrity: sha512-YVE1mIJ4VpUMqZObFndk9CJu6DBJR/GB13p3tXuNbwD4XExaI5EOuRl6BHeIDxIqXZVxSfAC+y6U1Z/IxCfKUg==}
+  /muggle-string@0.3.0:
+    resolution: {integrity: sha512-JX80YWnbOlip3LsTVg2J017aBz0TtiyfnGcckGCbLl/Xg9Ps/nlrW/emVK8G+mfy3rOn6dfhSla9xDSqse9Xyw==}
     dev: false
 
   /mute-stream@1.0.0:
