@@ -13,6 +13,6 @@
 		"directory": "packages/source-map"
 	},
 	"dependencies": {
-		"muggle-string": "^0.3.0"
+		"muggle-string": "^0.3.1"
 	}
 }

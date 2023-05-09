@@ -1,10 +1,9 @@
-import * as vscode from 'vscode';
-import { BaseLanguageClient, TextDocument } from 'vscode-languageclient';
-import { GetVirtualFileNamesRequest, GetVirtualFileRequest } from '@volar/language-server';
+import type { FileRangeCapabilities } from '@volar/language-server';
 import { SourceMap, Stack } from '@volar/source-map';
-import type { FileRangeCapabilities } from '@volar/language-core';
+import { Exports } from '@volar/vscode';
+import * as vscode from 'vscode';
+import { TextDocument } from 'vscode-languageclient';
 
-const scheme = 'volar-virtual-file';
 const mappingDecorationType = vscode.window.createTextEditorDecorationType({
 	borderWidth: '1px',
 	borderStyle: 'solid',
@@ -29,71 +28,115 @@ const mappingSelectionDecorationType = vscode.window.createTextEditorDecorationT
 	}
 });
 
-export async function activate(cmd: string, client: BaseLanguageClient) {
+export const sourceUriToVirtualUris = new Map<string, Set<string>>();
+
+export const virtualUriToSourceUri = new Map<string, string>();
+
+export async function activate(info: Exports) {
 
 	const subscriptions: vscode.Disposable[] = [];
+	const docChangeEvent = new vscode.EventEmitter<vscode.Uri>();
 
-	subscriptions.push(vscode.languages.registerHoverProvider({ scheme }, {
-		async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
+	for (const client of info.languageClients) {
 
-			const maps = virtualUriToSourceMap.get(document.uri.toString());
-			if (!maps) return;
+		subscriptions.push(vscode.languages.registerHoverProvider({ scheme: client.name.replace(/ /g, '_').toLowerCase() }, {
+			async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
-			const data: {
-				uri: string,
-				mapping: any,
-			}[] = [];
+				const maps = virtualUriToSourceMap.get(document.uri.toString());
+				if (!maps) return;
 
-			for (const [sourceUri, _, map] of maps) {
-				const source = map.toSourceOffset(document.offsetAt(position));
-				if (source) {
-					data.push({
-						uri: sourceUri,
-						mapping: source,
-					});
+				const data: {
+					uri: string,
+					mapping: any,
+				}[] = [];
+
+				for (const [sourceUri, _, map] of maps) {
+					const source = map.toSourceOffset(document.offsetAt(position));
+					if (source) {
+						data.push({
+							uri: sourceUri,
+							mapping: source,
+						});
+					}
 				}
+
+				if (data.length === 0) return;
+
+				return new vscode.Hover(data.map((data) => [
+					data.uri,
+					'',
+					'',
+					'```json',
+					JSON.stringify(data.mapping, null, 2),
+					'```',
+				].join('\n')));
 			}
+		}));
 
-			if (data.length === 0) return;
+		subscriptions.push(vscode.languages.registerDefinitionProvider({ scheme: client.name.replace(/ /g, '_').toLowerCase() }, {
+			async provideDefinition(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
-			return new vscode.Hover(data.map((data) => [
-				data.uri,
-				'',
-				'',
-				'```json',
-				JSON.stringify(data.mapping, null, 2),
-				'```',
-			].join('\n')));
-		}
-	}));
+				const stacks = virtualUriToStacks.get(document.uri.toString());
+				if (!stacks) return;
 
-	subscriptions.push(vscode.languages.registerDefinitionProvider({ scheme }, {
-		async provideDefinition(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
+				const offset = document.offsetAt(position);
+				const stack = stacks.find(stack => stack.range[0] <= offset && offset <= stack.range[1]);
+				if (!stack) return;
 
-			const stacks = virtualUriToStacks.get(document.uri.toString());
-			if (!stacks) return;
+				const line = Number(stack.source.split(':').at(-2));
+				const character = Number(stack.source.split(':').at(-1));
+				const fileName = stack.source.split(':').slice(0, -2).join(':');
+				const link: vscode.DefinitionLink = {
+					originSelectionRange: new vscode.Range(document.positionAt(stack.range[0]), document.positionAt(stack.range[1])),
+					targetUri: vscode.Uri.file(fileName),
+					targetRange: new vscode.Range(line - 1, character - 1, line - 1, character - 1),
+				};
+				return [link];
+			}
+		}));
 
-			const offset = document.offsetAt(position);
-			const stack = stacks.find(stack => stack.range[0] <= offset && offset <= stack.range[1]);
-			if (!stack) return;
+		subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
+			client.name.replace(/ /g, '_').toLowerCase(),
+			{
+				onDidChange: docChangeEvent.event,
+				async provideTextDocumentContent(uri: vscode.Uri): Promise<string | undefined> {
 
-			const line = Number(stack.source.split(':').at(-2));
-			const character = Number(stack.source.split(':').at(-1));
-			const fileName = stack.source.split(':').slice(0, -2).join(':');
-			const link: vscode.DefinitionLink = {
-				originSelectionRange: new vscode.Range(document.positionAt(stack.range[0]), document.positionAt(stack.range[1])),
-				targetUri: vscode.Uri.file(fileName),
-				targetRange: new vscode.Range(line - 1, character - 1, line - 1, character - 1),
-			};
-			return [link];
-		}
-	}));
+					const requestUri = virtualUriToSourceUri.get(uri.toString());
+					if (requestUri) {
 
-	const sourceUriToVirtualUris = new Map<string, Set<string>>();
-	const virtualUriToSourceEditor = new Map<string, vscode.TextEditor>();
+						const fileName = uri.with({ scheme: 'file' }).fsPath;
+						const virtualFile = await client.sendRequest(info.serverLib.GetVirtualFileRequest.type, { sourceFileUri: requestUri, virtualFileName: fileName });
+						virtualUriToSourceMap.set(uri.toString(), []);
+
+						Object.entries(virtualFile.mappings).forEach(([sourceUri, mappings]) => {
+							const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
+							if (sourceEditor) {
+								virtualUriToSourceMap.get(uri.toString())?.push([
+									sourceEditor.document.uri.toString(),
+									sourceEditor.document.version,
+									new SourceMap(mappings),
+								]);
+								if (!sourceUriToVirtualUris.has(sourceUri)) {
+									sourceUriToVirtualUris.set(sourceUri, new Set());
+								}
+								sourceUriToVirtualUris.get(sourceUri)?.add(uri.toString());
+							}
+						});
+						virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualFile.content));
+						virtualUriToStacks.set(uri.toString(), virtualFile.codegenStacks);
+
+						clearTimeout(updateDecorationsTimeout);
+						updateDecorationsTimeout = setTimeout(updateDecorations, 100);
+
+						return virtualFile.content;
+					}
+				}
+			},
+		));
+	}
+
 	const virtualUriToSourceMap = new Map<string, [string, number, SourceMap<FileRangeCapabilities>][]>();
 	const virtualUriToStacks = new Map<string, Stack[]>();
-	const docChangeEvent = new vscode.EventEmitter<vscode.Uri>();
 	const virtualDocuments = new Map<string, TextDocument>();
 
 	let updateVirtualDocument: NodeJS.Timeout | undefined;
@@ -102,6 +145,15 @@ export async function activate(cmd: string, client: BaseLanguageClient) {
 	subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateDecorations));
 	subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateDecorations));
 	subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(updateDecorations));
+	for (const client of info.languageClients) {
+		subscriptions.push(client.onDidChangeState(() => {
+			for (const virtualUris of sourceUriToVirtualUris.values()) {
+				virtualUris.forEach(uri => {
+					docChangeEvent.fire(vscode.Uri.parse(uri));
+				});
+			}
+		}));
+	}
 	subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => {
 		if (sourceUriToVirtualUris.has(e.document.uri.toString())) {
 			const virtualUris = sourceUriToVirtualUris.get(e.document.uri.toString());
@@ -111,57 +163,6 @@ export async function activate(cmd: string, client: BaseLanguageClient) {
 					docChangeEvent.fire(vscode.Uri.parse(uri));
 				});
 			}, 100);
-		}
-	}));
-	subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
-		scheme,
-		{
-			onDidChange: docChangeEvent.event,
-			async provideTextDocumentContent(uri: vscode.Uri): Promise<string | undefined> {
-
-				const fileName = uri.with({ scheme: 'file' }).fsPath;
-				const requestEditor = virtualUriToSourceEditor.get(uri.toString());
-
-				if (requestEditor) {
-
-					const virtualFile = await client.sendRequest(GetVirtualFileRequest.type, { sourceFileUri: requestEditor.document.uri.toString(), virtualFileName: fileName });
-					virtualUriToSourceMap.set(uri.toString(), []);
-
-					Object.entries(virtualFile.mappings).forEach(([sourceUri, mappings]) => {
-						const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
-						if (sourceEditor) {
-							virtualUriToSourceMap.get(uri.toString())?.push([
-								sourceEditor.document.uri.toString(),
-								sourceEditor.document.version,
-								new SourceMap(mappings),
-							]);
-							if (!sourceUriToVirtualUris.has(sourceUri)) {
-								sourceUriToVirtualUris.set(sourceUri, new Set());
-							}
-							sourceUriToVirtualUris.get(sourceUri)?.add(uri.toString());
-						}
-					});
-					virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualFile.content));
-					virtualUriToStacks.set(uri.toString(), virtualFile.codegenStacks);
-
-					clearTimeout(updateDecorationsTimeout);
-					updateDecorationsTimeout = setTimeout(updateDecorations, 100);
-
-					return virtualFile.content;
-				}
-			}
-		},
-	));
-	subscriptions.push(vscode.commands.registerCommand(cmd, async () => {
-		const sourceEditor = vscode.window.activeTextEditor;
-		if (sourceEditor) {
-			const fileNames = await client.sendRequest(GetVirtualFileNamesRequest.type, client.code2ProtocolConverter.asTextDocumentIdentifier(sourceEditor.document));
-			const uris = fileNames.map(fileName => vscode.Uri.file(fileName).with({ scheme }));
-			sourceUriToVirtualUris.set(sourceEditor.document.uri.toString(), new Set(uris.map(uri => uri.toString())));
-			for (const uri of uris) {
-				virtualUriToSourceEditor.set(uri.toString(), sourceEditor);
-				vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
-			}
 		}
 	}));
 

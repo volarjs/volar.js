@@ -1,6 +1,6 @@
 import * as vscode from 'vscode-languageserver-protocol';
 import type * as html from 'vscode-html-languageservice';
-import type { FileKind, FileRangeCapabilities } from '@volar/language-core';
+import type { VirtualFile, FileRangeCapabilities } from '@volar/language-core';
 import type { Mapping, Stack } from '@volar/source-map';
 
 /**
@@ -35,6 +35,26 @@ export namespace GetMatchTsConfigRequest {
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/tsconfig');
 }
 
+export namespace GetProjectsRequest {
+	export type ParamsType = vscode.TextDocumentIdentifier;
+	export type ResponseType = {
+		rootUri: string;
+		tsconfig?: string;
+		isInferredProject: boolean;
+		created: boolean;
+		isSelected: boolean;
+	}[] | null | undefined;
+	export type ErrorType = never;
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/projects');
+}
+
+export namespace GetProjectFilesRequest {
+	export type ParamsType = { rootUri: string; tsconfig?: string; };
+	export type ResponseType = string[] | null | undefined;
+	export type ErrorType = never;
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/projectFiles');
+}
+
 export namespace AutoInsertRequest {
 	export type ParamsType = vscode.TextDocumentPositionParams & {
 		options: {
@@ -59,11 +79,11 @@ export namespace ReloadProjectNotification {
 	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar/client/reloadProject');
 }
 
-export namespace GetVirtualFileNamesRequest {
-	export type ParamsType = vscode.TextDocumentIdentifier & { fileKinds?: FileKind[] };
-	export type ResponseType = string[];
+export namespace GetVirtualFilesRequest {
+	export type ParamsType = vscode.TextDocumentIdentifier;
+	export type ResponseType = VirtualFile | null | undefined;
 	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFileNames');
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFiles');
 }
 
 export namespace GetVirtualFileRequest {

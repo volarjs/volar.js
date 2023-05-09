@@ -121,4 +121,5 @@ export interface InitializationOptions {
 	 * Extra semantic token types and modifiers that are supported by the client.
 	 */
 	semanticTokensLegend?: vscode.SemanticTokensLegend;
+	codegenStack?: boolean;
 }

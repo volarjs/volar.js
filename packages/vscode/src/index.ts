@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 
 export { activate as activateAutoInsertion } from './features/autoInsertion';
-export { activate as activateShowVirtualFiles } from './features/showVirtualFiles';
 export { activate as activateWriteVirtualFiles } from './features/writeVirtualFiles';
 export { activate as activateFindFileReferences } from './features/fileReferences';
 export { activate as activateReloadProjects } from './features/reloadProject';
@@ -93,4 +92,15 @@ export function parseServerCommand(command: vscode.Command) {
 		};
 	}
 	return command;
+}
+
+export interface Exports {
+	devtools?: boolean;
+	codegenStackSupport?: boolean;
+	languageClients: lsp.BaseLanguageClient[];
+	serverLib: typeof import ('@volar/language-server');
+}
+
+export function createExports(exports: Exports) {
+	return { volar: exports };
 }

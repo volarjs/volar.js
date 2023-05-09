@@ -1,16 +1,16 @@
 import * as vscode from 'vscode-languageserver';
 import type { Workspaces } from '../workspaces';
-import { GetMatchTsConfigRequest, ReloadProjectNotification, WriteVirtualFilesNotification, GetVirtualFileNamesRequest, GetVirtualFileRequest, ReportStats } from '../../protocol';
-import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
+import { GetMatchTsConfigRequest, ReloadProjectNotification, WriteVirtualFilesNotification, GetVirtualFilesRequest, GetVirtualFileRequest, ReportStats, GetProjectsRequest, GetProjectFilesRequest } from '../../protocol';
 import { RuntimeEnvironment } from '../../types';
+import { VirtualFile } from '@volar/language-core';
 
 export function register(
 	connection: vscode.Connection,
-	projects: Workspaces,
+	workspaces: Workspaces,
 	env: RuntimeEnvironment,
 ) {
 	connection.onNotification(ReportStats.type, async () => {
-		for (const [rootUri, _workspace] of projects.workspaces) {
+		for (const [rootUri, _workspace] of workspaces.workspaces) {
 
 			connection.console.log('workspace: ' + rootUri);
 			const workspace = await _workspace;
@@ -66,29 +66,72 @@ export function register(
 		}
 	});
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
-		const project = (await projects.getProject(params.uri));
+		const project = (await workspaces.getProject(params.uri));
 		if (project?.tsconfig) {
 			return { uri: env.fileNameToUri(project.tsconfig) };
 		}
 	});
-	connection.onRequest(GetVirtualFileNamesRequest.type, async document => {
-		const project = await projects.getProject(document.uri);
-		const fileNames: string[] = [];
-		if (project) {
-			const rootVirtualFile = project.project?.getLanguageService().context.core.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
-			if (rootVirtualFile) {
-				const kinds = document.fileKinds ?? [FileKind.TypeScriptHostFile];
-				forEachEmbeddedFile(rootVirtualFile, e => {
-					if (e.snapshot.getLength() && kinds.includes(e.kind)) {
-						fileNames.push(e.fileName);
-					}
+	connection.onRequest(GetProjectsRequest.type, async (params) => {
+		const matchProject = params ? (await workspaces.getProject(params.uri)) : undefined;
+		const result: GetProjectsRequest.ResponseType = [];
+		for (const [workspaceUri, _workspace] of workspaces.workspaces) {
+			const workspace = (await _workspace);
+			result.push({
+				isInferredProject: true,
+				rootUri: workspaceUri,
+				tsconfig: undefined,
+				created: !!workspace.getInferredProjectDontCreate(),
+				isSelected: !!matchProject && await workspace.getInferredProjectDontCreate() === matchProject.project,
+			})
+			for (const _project of workspace.projects.values()) {
+				const project = await _project;
+				result.push({
+					isInferredProject: false,
+					rootUri: workspaceUri,
+					tsconfig: project.tsConfig as string,
+					created: !!project.getLanguageServiceDontCreate(),
+					isSelected: !!matchProject && project === matchProject.project,
 				});
 			}
 		}
-		return fileNames;
+		return result;
+	});
+	connection.onRequest(GetProjectFilesRequest.type, async (params) => {
+		const workspace = await workspaces.workspaces.get(params.rootUri);
+		if (!workspace) return [];
+		if (!params.tsconfig) {
+			const project = await workspace.getInferredProject();
+			if (!project) return [];
+			return project.languageServiceHost.getScriptFileNames();
+		}
+		for (const _project of workspace.projects.values()) {
+			const project = await _project;
+			if (project.tsConfig === params.tsconfig) {
+				return project.languageServiceHost.getScriptFileNames();
+			}
+		}
+		return [];
+	});
+	connection.onRequest(GetVirtualFilesRequest.type, async document => {
+		const project = await workspaces.getProject(document.uri);
+		console.log(document.uri, typeof project);
+		if (project) {
+			const file = project.project?.getLanguageService().context.core.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
+			return file ? prune(file) : undefined;
+
+			function prune(file: VirtualFile): VirtualFile {
+				return {
+					fileName: file.fileName,
+					kind: file.kind,
+					capabilities: file.capabilities,
+					embeddedFiles: file.embeddedFiles.map(prune),
+					version: project!.project!.getLanguageService().context.core.typescript.languageServiceHost.getScriptVersion(file.fileName),
+				} as any;
+			}
+		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
-		const project = await projects.getProject(params.sourceFileUri);
+		const project = await workspaces.getProject(params.sourceFileUri);
 		if (project) {
 			const [virtualFile, source] = project.project?.getLanguageService().context.core.virtualFiles.getVirtualFile(params.virtualFileName) ?? [];
 			if (virtualFile && source) {
@@ -107,12 +150,12 @@ export function register(
 		}
 	});
 	connection.onNotification(ReloadProjectNotification.type, () => {
-		projects.reloadProject();
+		workspaces.reloadProject();
 	});
 	connection.onNotification(WriteVirtualFilesNotification.type, async params => {
 
 		const fs = await import('fs');
-		const project = await projects.getProject(params.uri);
+		const project = await workspaces.getProject(params.uri);
 
 		if (project) {
 			const ls = (await project.project)?.getLanguageServiceDontCreate();
