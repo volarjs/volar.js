@@ -1,7 +1,7 @@
 {
 	"private": true,
 	"name": "volarjs-devtools",
-	"version": "1.5.4",
+	"version": "1.6.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/volarjs/volar.js.git",
@@ -59,9 +59,9 @@
 	},
 	"devDependencies": {
 		"@types/vscode": "1.67.0",
-		"@volar/language-server": "1.5.4",
-		"@volar/source-map": "1.5.4",
-		"@volar/vscode": "1.5.4",
+		"@volar/language-server": "1.6.0",
+		"@volar/source-map": "1.6.0",
+		"@volar/vscode": "1.6.0",
 		"esbuild": "0.15.18",
 		"vsce": "latest",
 		"vscode-languageclient": "^8.1.0"
