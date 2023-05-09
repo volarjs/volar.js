@@ -20,7 +20,6 @@ export const fileNameToUri = (fileName: string) => URI.file(fileName).toString()
 
 export function getConfiguration(settings: any, section: string) {
 	if (section in settings) {
-		// console.log(section, settings, settings[section]);
 		return settings[section];
 	}
 	let result: any;
@@ -40,6 +39,5 @@ export function getConfiguration(settings: any, section: string) {
 			current[props.shift()!] = value;
 		}
 	}
-	// console.log(section, settings, result);
 	return result;
 }

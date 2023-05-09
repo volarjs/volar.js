@@ -273,23 +273,17 @@ export async function activate(context: vscode.ExtensionContext) {
 					onDidChangeTreeData: onDidChangeTreeData.event,
 					async getChildren(element) {
 
-						console.log('in');
-
 						const doc = vscode.window.activeTextEditor?.document;
 						if (!doc) return;
 
 						if (!element) {
-							console.log('a');
 							return clients;
 						}
 						else if ('virtualFile' in element) {
-							console.log('b');
 							return element.virtualFile.embeddedFiles.map((file => ({ client: element.client, virtualFile: file, sourceDocumentUri: doc.uri.toString() })));
 						}
 						else {
-							console.log('c');
 							const virtualFile = await element.sendRequest(info.serverLib.GetVirtualFilesRequest.type, { uri: doc.uri.toString() });
-							console.log(doc.uri.toString(), virtualFile);
 							if (virtualFile) {
 								return [{ client: element, virtualFile, sourceDocumentUri: doc.uri.toString() }];
 							}

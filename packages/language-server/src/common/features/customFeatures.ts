@@ -114,7 +114,6 @@ export function register(
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const project = await workspaces.getProject(document.uri);
-		console.log(document.uri, typeof project);
 		if (project) {
 			const file = project.project?.getLanguageService().context.core.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
 			return file ? prune(file) : undefined;
