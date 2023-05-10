@@ -3,12 +3,12 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Launch DevTools",
+			"name": "Launch Labs",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}/packages/devtools"
+				"--extensionDevelopmentPath=${workspaceRoot}/packages/labs"
 			],
 			"outFiles": [
 				"${workspaceRoot}/*/*/out/**/*.js"

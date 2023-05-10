@@ -22,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 			checked.add(extension.id);
 
-			if (!extension.exports?.volar?.devtools) return;
+			if (!extension.exports?.volar) return;
 
 			const info: Exports = extension.exports.volar;
 			const clients: lsp.BaseLanguageClient[] = info.languageClients;

@@ -1,18 +1,18 @@
 {
 	"private": true,
-	"name": "volarjs-devtools",
+	"name": "volarjs-labs",
 	"version": "1.6.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/volarjs/volar.js.git",
-		"directory": "packages/devtools"
+		"directory": "packages/labs"
 	},
 	"sponsor": {
 		"url": "https://github.com/sponsors/johnsoncodehk"
 	},
 	"icon": "images/icon.png",
-	"displayName": "DevTools for Volar.js",
-	"description": "DevTools for Volar.js",
+	"displayName": "Volar.js Labs",
+	"description": "Volar.js Labs",
 	"author": "johnsoncodehk",
 	"publisher": "johnsoncodehk",
 	"engines": {
@@ -27,14 +27,14 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "volar-devtools",
-					"title": "Volar.js DevTools",
+					"id": "volarjs-labs",
+					"title": "Volar.js Labs",
 					"icon": "images/btn.svg"
 				}
 			]
 		},
 		"views": {
-			"volar-devtools": [
+			"volarjs-labs": [
 				{
 					"id": "volar-servers",
 					"name": "Servers",

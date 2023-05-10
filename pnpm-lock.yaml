@@ -34,7 +34,22 @@ importers:
         specifier: latest
         version: 0.0.83-next.9(@types/node@20.1.1)
 
-  packages/devtools:
+  packages/kit:
+    dependencies:
+      '@volar/language-service':
+        specifier: 1.6.0
+        version: link:../language-service
+      typesafe-path:
+        specifier: ^0.2.2
+        version: 0.2.2
+      vscode-languageserver-textdocument:
+        specifier: ^1.0.8
+        version: 1.0.8
+      vscode-uri:
+        specifier: ^3.0.7
+        version: 3.0.7
+
+  packages/labs:
     devDependencies:
       '@types/vscode':
         specifier: 1.67.0
@@ -57,21 +72,6 @@ importers:
       vscode-languageclient:
         specifier: ^8.1.0
         version: 8.1.0
-
-  packages/kit:
-    dependencies:
-      '@volar/language-service':
-        specifier: 1.6.0
-        version: link:../language-service
-      typesafe-path:
-        specifier: ^0.2.2
-        version: 0.2.2
-      vscode-languageserver-textdocument:
-        specifier: ^1.0.8
-        version: 1.0.8
-      vscode-uri:
-        specifier: ^3.0.7
-        version: 3.0.7
 
   packages/language-core:
     dependencies:

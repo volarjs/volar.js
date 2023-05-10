@@ -19,7 +19,7 @@
 			"path": "./packages/monaco/tsconfig.build.json"
 		},
 		{
-			"path": "./packages/devtools/tsconfig.build.json"
+			"path": "./packages/labs/tsconfig.build.json"
 		},
 		// IDE / tests
 		{
