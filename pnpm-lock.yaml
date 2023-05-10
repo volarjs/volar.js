@@ -27,41 +27,17 @@ importers:
   packages/coc.nvim:
     dependencies:
       '@volar/language-server':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../language-server
     devDependencies:
       coc.nvim:
         specifier: latest
         version: 0.0.83-next.9(@types/node@20.1.1)
 
-  packages/devtools:
-    devDependencies:
-      '@types/vscode':
-        specifier: 1.67.0
-        version: 1.67.0
-      '@volar/language-server':
-        specifier: 1.6.0
-        version: link:../language-server
-      '@volar/source-map':
-        specifier: 1.6.0
-        version: link:../source-map
-      '@volar/vscode':
-        specifier: 1.6.0
-        version: link:../vscode
-      esbuild:
-        specifier: 0.15.18
-        version: 0.15.18
-      vsce:
-        specifier: latest
-        version: 2.15.0
-      vscode-languageclient:
-        specifier: ^8.1.0
-        version: 8.1.0
-
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../language-service
       typesafe-path:
         specifier: ^0.2.2
@@ -73,19 +49,43 @@ importers:
         specifier: ^3.0.7
         version: 3.0.7
 
+  packages/labs:
+    devDependencies:
+      '@types/vscode':
+        specifier: 1.67.0
+        version: 1.67.0
+      '@volar/language-server':
+        specifier: 1.6.1
+        version: link:../language-server
+      '@volar/source-map':
+        specifier: 1.6.1
+        version: link:../source-map
+      '@volar/vscode':
+        specifier: 1.6.1
+        version: link:../vscode
+      esbuild:
+        specifier: 0.15.18
+        version: 0.15.18
+      vsce:
+        specifier: latest
+        version: 2.15.0
+      vscode-languageclient:
+        specifier: ^8.1.0
+        version: 8.1.0
+
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../language-core
       '@volar/language-service':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../language-service
       '@vscode/l10n':
         specifier: ^0.0.11
@@ -115,10 +115,10 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../language-core
       '@volar/source-map':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../source-map
       typescript-auto-import-cache:
         specifier: ^0.2.1
@@ -142,7 +142,7 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../language-service
       monaco-editor-core:
         specifier: ^0.36.0
@@ -163,16 +163,16 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../language-core
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../language-server
       '@volar/source-map':
-        specifier: 1.6.0
+        specifier: 1.6.1
         version: link:../source-map
       typesafe-path:
         specifier: ^0.2.2

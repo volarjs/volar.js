@@ -95,7 +95,6 @@ export function parseServerCommand(command: vscode.Command) {
 }
 
 export interface Exports {
-	devtools?: boolean;
 	codegenStackSupport?: boolean;
 	languageClients: lsp.BaseLanguageClient[];
 	serverLib: typeof import ('@volar/language-server');

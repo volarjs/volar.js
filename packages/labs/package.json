@@ -1,18 +1,18 @@
 {
 	"private": true,
-	"name": "volarjs-devtools",
-	"version": "1.6.0",
+	"name": "volarjs-labs",
+	"version": "1.6.1",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/volarjs/volar.js.git",
-		"directory": "packages/devtools"
+		"directory": "packages/labs"
 	},
 	"sponsor": {
 		"url": "https://github.com/sponsors/johnsoncodehk"
 	},
 	"icon": "images/icon.png",
-	"displayName": "DevTools for Volar.js",
-	"description": "DevTools for Volar.js",
+	"displayName": "Volar.js Labs",
+	"description": "Volar.js Labs",
 	"author": "johnsoncodehk",
 	"publisher": "johnsoncodehk",
 	"engines": {
@@ -27,24 +27,42 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "volar-devtools",
-					"title": "Volar.js DevTools",
+					"id": "volarjs-labs",
+					"title": "Volar.js Labs",
 					"icon": "images/btn.svg"
 				}
 			]
 		},
 		"views": {
-			"volar-devtools": [
+			"volarjs-labs": [
 				{
 					"id": "volar-servers",
 					"name": "Servers",
-					"icon": "images/btn.svg",
 					"contextualTitle": "Volar.js"
 				},
 				{
 					"id": "volar-virtual-files",
 					"name": "Virtual Files",
-					"icon": "images/btn.svg",
+					"contextualTitle": "Volar.js"
+				},
+				{
+					"id": "volar-orphan-virtual-files",
+					"name": "Orphan Virtual Files (TODO)",
+					"contextualTitle": "Volar.js"
+				},
+				{
+					"id": "volar-memory-visualization",
+					"name": "Memory Visualization (TODO)",
+					"contextualTitle": "Volar.js"
+				},
+				{
+					"id": "volar-typescript-performance-tracing",
+					"name": "TS Performance Tracing (TODO)",
+					"contextualTitle": "Volar.js"
+				},
+				{
+					"id": "volar-virtual-code-language-feature-behavior-visualization",
+					"name": "Virtual Code Language Feature Behavior Visualization (TODO)",
 					"contextualTitle": "Volar.js"
 				}
 			]
@@ -59,9 +77,9 @@
 	},
 	"devDependencies": {
 		"@types/vscode": "1.67.0",
-		"@volar/language-server": "1.6.0",
-		"@volar/source-map": "1.6.0",
-		"@volar/vscode": "1.6.0",
+		"@volar/language-server": "1.6.1",
+		"@volar/source-map": "1.6.1",
+		"@volar/vscode": "1.6.1",
 		"esbuild": "0.15.18",
 		"vsce": "latest",
 		"vscode-languageclient": "^8.1.0"
