@@ -31,20 +31,20 @@ export function activate(context: vscode.ExtensionContext) {
 		async getChildren(element) {
 			// root
 			if (!element) {
-				return extensions.map(extension => extension.exports.volar.languageClients.map(client => ({ extension, client }))).flat();
+				return extensions.map(extension => extension.exports.volarLabs.languageClients.map(client => ({ extension, client }))).flat();
 			}
 			// child
 			if ('file' in element) {
 				return [];
 			}
 			else if ('project' in element) {
-				const fileNames = await element.client.sendRequest(element.extension.exports.volar.serverLib.GetProjectFilesRequest.type, { rootUri: element.project.rootUri, tsconfig: element.project.tsconfig }) ?? [];
+				const fileNames = await element.client.sendRequest(element.extension.exports.volarLabs.languageServerProtocol.GetProjectFilesRequest.type, { rootUri: element.project.rootUri, tsconfig: element.project.tsconfig }) ?? [];
 				return fileNames.map(fileName => ({ ...element, file: fileName }));
 			}
 			else if ('field' in element) {
 				if (element.field === 'projects') {
 					const currentUri = vscode.window.activeTextEditor ? { uri: vscode.window.activeTextEditor.document.uri.toString() } : undefined;
-					const projects: GetProjectsRequest.ResponseType = await element.client.sendRequest(element.extension.exports.volar.serverLib.GetProjectsRequest.type, currentUri) ?? [];
+					const projects: GetProjectsRequest.ResponseType = await element.client.sendRequest(element.extension.exports.volarLabs.languageServerProtocol.GetProjectsRequest.type, currentUri) ?? [];
 					return projects.map<LanguageClientProjectItem>(project => ({ ...element, project }));
 				}
 				return [];
@@ -54,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
 				if (element.client.state === lsp.State.Running) {
 					stats.push({ ...element, field: 'stop' });
 					stats.push({ ...element, field: 'restart' });
-					if (element.extension.exports.volar.codegenStackSupport) {
+					if (element.extension.exports.volarLabs.codegenStackSupport) {
 						element.client.clientOptions.initializationOptions ??= {};
 						if (element.client.clientOptions.initializationOptions.codegenStack) {
 							stats.push({ ...element, field: 'disableCodegenStack' });
@@ -241,7 +241,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	useVolarExtensions(context, extension => {
-		for (const client of extension.exports.volar.languageClients) {
+		for (const client of extension.exports.volarLabs.languageClients) {
 			context.subscriptions.push(
 				client.onDidChangeState(() => onDidChangeTreeData.fire())
 			);

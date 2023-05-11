@@ -6,10 +6,8 @@
 	"files": [
 		"out/**/*.js",
 		"out/**/*.d.ts",
-		"browser.js",
-		"browser.d.ts",
-		"node.js",
-		"node.d.ts"
+		"*.js",
+		"*.d.ts"
 	],
 	"repository": {
 		"type": "git",

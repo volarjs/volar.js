@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 		async getChildren(element) {
 
 			if (!element) {
-				return extensions.map(extension => extension.exports.volar.languageClients.map(client => ({ extension, iconPath: vscode.Uri.joinPath(extension.extensionUri, extension.packageJSON.icon), client }))).flat();
+				return extensions.map(extension => extension.exports.volarLabs.languageClients.map(client => ({ extension, iconPath: vscode.Uri.joinPath(extension.extensionUri, extension.packageJSON.icon), client }))).flat();
 			}
 
 			const doc = vscode.window.activeTextEditor?.document;
@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
 				})));
 			}
 			else {
-				const virtualFile = await element.client.sendRequest(element.extension.exports.volar.serverLib.GetVirtualFilesRequest.type, { uri: doc.uri.toString() });
+				const virtualFile = await element.client.sendRequest(element.extension.exports.volarLabs.languageServerProtocol.GetVirtualFilesRequest.type, { uri: doc.uri.toString() });
 				if (virtualFile) {
 					return [{
 						...element,
@@ -95,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			const document = e.document;
 			const isVirtualFile = extensions
-				.some(extension => extension.exports.volar.languageClients
+				.some(extension => extension.exports.volarLabs.languageClients
 					.some(client => client.name.replace(/ /g, '_').toLowerCase() === document.uri.scheme)
 				);
 			if (isVirtualFile) return;
@@ -114,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
 	useVolarExtensions(
 		context,
 		extension => {
-			for (const client of extension.exports.volar.languageClients) {
+			for (const client of extension.exports.volarLabs.languageClients) {
 				context.subscriptions.push(
 					client.onDidChangeState(() => onDidChangeTreeData.fire())
 				);

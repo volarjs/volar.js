@@ -1,6 +1,6 @@
 import type { FileRangeCapabilities } from '@volar/language-server';
 import { SourceMap, Stack } from '@volar/source-map';
-import { ExportsInfoForLabs } from '@volar/vscode';
+import type { ExportsInfoForLabs } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { TextDocument } from 'vscode-languageclient';
 
@@ -37,7 +37,7 @@ export async function activate(info: ExportsInfoForLabs) {
 	const subscriptions: vscode.Disposable[] = [];
 	const docChangeEvent = new vscode.EventEmitter<vscode.Uri>();
 
-	for (const client of info.volar.languageClients) {
+	for (const client of info.volarLabs.languageClients) {
 
 		subscriptions.push(vscode.languages.registerHoverProvider({ scheme: client.name.replace(/ /g, '_').toLowerCase() }, {
 			async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
@@ -105,7 +105,7 @@ export async function activate(info: ExportsInfoForLabs) {
 					if (requestUri) {
 
 						const fileName = uri.with({ scheme: 'file' }).fsPath;
-						const virtualFile = await client.sendRequest(info.volar.serverLib.GetVirtualFileRequest.type, { sourceFileUri: requestUri, virtualFileName: fileName });
+						const virtualFile = await client.sendRequest(info.volarLabs.languageServerProtocol.GetVirtualFileRequest.type, { sourceFileUri: requestUri, virtualFileName: fileName });
 						virtualUriToSourceMap.set(uri.toString(), []);
 
 						Object.entries(virtualFile.mappings).forEach(([sourceUri, mappings]) => {
@@ -145,7 +145,7 @@ export async function activate(info: ExportsInfoForLabs) {
 	subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateDecorations));
 	subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateDecorations));
 	subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(updateDecorations));
-	for (const client of info.volar.languageClients) {
+	for (const client of info.volarLabs.languageClients) {
 		subscriptions.push(client.onDidChangeState(() => {
 			for (const virtualUris of sourceUriToVirtualUris.values()) {
 				virtualUris.forEach(uri => {
