@@ -102,6 +102,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 			onDidChangeTreeData.fire();
 		}),
+		vscode.workspace.onDidChangeTextDocument(() => {
+			onDidChangeTreeData.fire();
+		}),
 		vscode.window.createTreeView('volar-virtual-files', {
 			showCollapseAll: false,
 			treeDataProvider: tree,
