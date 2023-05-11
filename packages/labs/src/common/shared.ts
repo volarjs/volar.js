@@ -17,21 +17,21 @@ export function useVolarExtensions(
 
 	function update() {
 		vscode.extensions.all.forEach(extension => {
+			if (!checked.has(extension.id) && extension.isActive) {
 
-			if (checked.has(extension.id)) return;
-			if (!extension.isActive) return;
+				checked.add(extension.id);
 
-			checked.add(extension.id);
+				if (extension.exports && 'volar' in extension.exports) {
 
-			if (!extension.exports?.volar) return;
+					const info: ExportsInfoForLabs = extension.exports;
+					if (info.volar.version !== 1.6) {
+						vscode.window.showWarningMessage(`Extension '${extension.id}' is not compatible with this version of Labs. Expected version 1.6, but found ${info.volar.version}. You can try to downgrade Labs.`);
+						return;
+					}
 
-			const info: ExportsInfoForLabs = extension.exports;
-			if (info.volar.version !== 1.6) {
-				vscode.window.showWarningMessage(`Extension '${extension.id}' is not compatible with this version of Labs. Expected version 1.6, but found ${info.volar.version}.`);
-				return;
+					addExtension(extension);
+				}
 			}
-
-			addExtension(extension);
 		});
 	}
 }
