@@ -94,12 +94,10 @@ export function parseServerCommand(command: vscode.Command) {
 	return command;
 }
 
-export interface Exports {
-	codegenStackSupport?: boolean;
-	languageClients: lsp.BaseLanguageClient[];
-	serverLib: typeof import ('@volar/language-server');
-}
-
-export function createExports(exports: Exports) {
-	return { volar: exports };
+export interface ExportsInfoForLabs {
+	volar: {
+		codegenStackSupport?: boolean;
+		languageClients: lsp.BaseLanguageClient[];
+		serverLib: typeof import('@volar/language-server');
+	};
 }
