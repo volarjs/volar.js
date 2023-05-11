@@ -108,7 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.createTreeView('volar-virtual-files', {
 			showCollapseAll: false,
 			treeDataProvider: tree,
-		})
+		}),
 	);
 
 	useVolarExtensions(

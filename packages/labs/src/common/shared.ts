@@ -25,6 +25,12 @@ export function useVolarExtensions(
 
 			if (!extension.exports?.volar) return;
 
+			const info: ExportsInfoForLabs = extension.exports;
+			if (info.volar.version !== 1.6) {
+				vscode.window.showWarningMessage(`Extension '${extension.id}' is not compatible with this version of Labs. Expected version 1.6, but found ${info.volar.version}.`);
+				return;
+			}
+
 			addExtension(extension);
 		});
 	}

@@ -96,6 +96,7 @@ export function parseServerCommand(command: vscode.Command) {
 
 export interface ExportsInfoForLabs {
 	volar: {
+		version: 1.6; // make sure the version is compatible
 		codegenStackSupport?: boolean;
 		languageClients: lsp.BaseLanguageClient[];
 		serverLib: typeof import('@volar/language-server');
