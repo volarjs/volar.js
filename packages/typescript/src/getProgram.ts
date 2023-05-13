@@ -163,20 +163,9 @@ export function getProgram(
 					}
 				}
 				else {
-					let scriptTarget = ts.ScriptTarget.JSON;
-					if (
-						fileName.endsWith('.js')
-						|| fileName.endsWith('.ts')
-						|| fileName.endsWith('.jsx')
-						|| fileName.endsWith('.tsx')
-						|| fileName.endsWith('.mjs')
-						|| fileName.endsWith('.mts')
-						|| fileName.endsWith('.cjs')
-						|| fileName.endsWith('.cts')
-					) {
-						scriptTarget = ts.ScriptTarget.Latest;
-					}
-					file = ts.createSourceFile(fileName, docText, scriptTarget);
+					file = ts.createSourceFile(fileName, docText, ts.ScriptTarget.Latest, undefined, ts.ScriptKind.Deferred);
+					(file as any).parseDiagnostics = []; // not important
+					(file as any).resolvedPath = fileName; // fix https://github.com/vuejs/language-tools/issues/2622 for TS 5.0
 				}
 			}
 			const newDiagnostic: T = {
