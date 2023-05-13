@@ -12,4 +12,5 @@ Views:
 
 ## Support Extensions
 
+- [Astro](https://marketplace.visualstudio.com/items?itemName=astro-build.astro-vscode) 2.0.0
 - [Vue Language Features (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) 1.7.1
