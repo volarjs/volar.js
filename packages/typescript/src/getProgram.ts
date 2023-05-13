@@ -164,8 +164,11 @@ export function getProgram(
 				}
 				else {
 					file = ts.createSourceFile(fileName, docText, ts.ScriptTarget.Latest, undefined, ts.ScriptKind.Deferred);
-					(file as any).parseDiagnostics = []; // not important
-					(file as any).resolvedPath = fileName; // fix https://github.com/vuejs/language-tools/issues/2622 for TS 5.0
+
+					// fix https://github.com/vuejs/language-tools/issues/2622 for TS 5.0
+					(file as any).originalFileName = fileName;
+					(file as any).path = fileName.toLowerCase();
+					(file as any).resolvedPath = fileName.toLowerCase();
 				}
 			}
 			const newDiagnostic: T = {
