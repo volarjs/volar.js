@@ -61,7 +61,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 					https: httpSchemaRequestHandler,
 				},
 				onDidChangeConfiguration(settings) {
-					configureHttpRequests(settings.http && settings.http.proxy, settings.http && settings.http.proxyStrictSSL);
+					configureHttpRequests(settings.http?.proxy, settings.http?.proxyStrictSSL);
 				},
 				createFileSystemHost: createNodeFileSystemHost,
 				fileSystemProvide: {

@@ -83,7 +83,7 @@ export function createNodeFileSystemHost(
 		});
 		const fileExistsCache = new Map<string, boolean>();
 		const directoryExistsCache = new Map<string, boolean>();
-		// don't cache fs result if client did not supports file watcher
+		// don't cache fs result if the client did not support file watcher
 		const sys = capabilities.workspace?.didChangeWatchedFiles
 			? new Proxy<Partial<ts.System>>({
 				fileExists(path: string) {

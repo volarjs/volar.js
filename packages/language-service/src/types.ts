@@ -33,13 +33,9 @@ interface Command<T> {
 	is(value: vscode.Command): boolean;
 }
 
-interface CommonContext {
+export interface ServiceContext {
+
 	env: ServiceEnvironment;
-	inject<K extends InjectionKey<any, any>>(key: K, ...args: NonNullable<K['__args']>): K['__result'];
-}
-
-export interface ServiceContext extends CommonContext {
-
 	config: Config;
 	host: LanguageServiceHost;
 	typescript: {
@@ -74,9 +70,11 @@ export type Result<T> = T | Thenable<T>;
 export type NullableResult<T> = Result<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
+type BaseProvide = { [K in string]: (...args: any) => any; };
+
 export interface Service {
 	(context: ServiceContext | undefined, modules: SharedModules | undefined): {
-		provide?: Record<string, (...args: any) => any>;
+		provide?: BaseProvide;
 		isAdditionalCompletion?: boolean; // volar specific
 		triggerCharacters?: string[];
 		signatureHelpTriggerCharacters?: string[];
@@ -142,20 +140,15 @@ export enum RuleType {
 	Semantic,
 };
 
-export interface Rule {
+export interface Rule<Provide extends BaseProvide = BaseProvide> {
 	type?: RuleType;
-	run(document: TextDocument, ctx: RuleContext): void;
+	run(document: TextDocument, ctx: RuleContext<Provide>): void;
 }
 
-export interface RuleContext extends CommonContext {
-	ruleId: string;
+export interface RuleContext<Provide extends BaseProvide = BaseProvide> {
+	env: ServiceEnvironment;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
-}
-
-export type InjectionKey<T extends any[], R> = string & { __args?: T, __result?: R; };
-
-export function defineProvide<T extends InjectionKey<any, any>>(key: T, provider: T extends InjectionKey<infer A, infer R> ? (...args: A) => R | undefined : never) {
-	return { [key]: provider };
+	inject<K extends keyof Provide>(key: K, ...args: Parameters<Provide[K]>): ReturnType<Provide[K]>;
 }
 
 export interface RuleFix {
