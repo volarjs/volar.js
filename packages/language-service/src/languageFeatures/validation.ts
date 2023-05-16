@@ -247,7 +247,7 @@ export function register(context: ServiceContext) {
 				ruleType,
 				uri,
 				file => ruleType === RuleType.Format ? !!file.capabilities.documentFormatting : !!file.capabilities.diagnostic,
-				async (ruleName, rule, ruleCtx) => {
+				async (ruleName, rule, lintDocument, ruleCtx) => {
 
 					if (token) {
 						if (Date.now() - lastCheckCancelAt >= 5) {
@@ -260,16 +260,16 @@ export function register(context: ServiceContext) {
 					}
 
 					const pluginCache = cacheMap.get(ruleName) ?? cacheMap.set(ruleName, new Map()).get(ruleName)!;
-					const cache = pluginCache.get(ruleCtx.document.uri);
+					const cache = pluginCache.get(lintDocument.uri);
 					const tsProjectVersion = (ruleType === RuleType.Semantic) ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
 
 					if (ruleType === RuleType.Semantic) {
-						if (cache && cache.documentVersion === ruleCtx.document.version && cache.tsProjectVersion === tsProjectVersion) {
+						if (cache && cache.documentVersion === lintDocument.version && cache.tsProjectVersion === tsProjectVersion) {
 							return cache.errors;
 						}
 					}
 					else {
-						if (cache && cache.documentVersion === ruleCtx.document.version) {
+						if (cache && cache.documentVersion === lintDocument.version) {
 							return cache.errors;
 						}
 					}
@@ -290,7 +290,7 @@ export function register(context: ServiceContext) {
 					};
 
 					try {
-						await rule.run(ruleCtx);
+						await rule.run(lintDocument, ruleCtx);
 					}
 					catch (err) {
 						console.warn(`[volar/rules-api] ${ruleName} ${ruleType} error.`);
@@ -298,11 +298,11 @@ export function register(context: ServiceContext) {
 					}
 
 					context.ruleFixes ??= {};
-					context.ruleFixes[ruleCtx.document.uri] ??= {};
-					context.ruleFixes[ruleCtx.document.uri][ruleCtx.ruleId] ??= {};
+					context.ruleFixes[lintDocument.uri] ??= {};
+					context.ruleFixes[lintDocument.uri][ruleCtx.ruleId] ??= {};
 
 					reportResults?.forEach(([error, ...fixes], index) => {
-						context.ruleFixes![ruleCtx.document.uri][ruleCtx.ruleId][index] = [error, fixes];
+						context.ruleFixes![lintDocument.uri][ruleCtx.ruleId][index] = [error, fixes];
 						error.data = {
 							uri,
 							version: newDocument!.version,
@@ -313,7 +313,7 @@ export function register(context: ServiceContext) {
 								data: error.data,
 							},
 							ruleFixIndex: index,
-							documentUri: ruleCtx.document.uri,
+							documentUri: lintDocument.uri,
 						} satisfies ServiceDiagnosticData;
 					});
 
@@ -321,8 +321,8 @@ export function register(context: ServiceContext) {
 
 					const errors = reportResults.map(reportResult => reportResult[0]);
 
-					pluginCache.set(ruleCtx.document.uri, {
-						documentVersion: ruleCtx.document.version,
+					pluginCache.set(lintDocument.uri, {
+						documentVersion: lintDocument.version,
 						errors,
 						tsProjectVersion,
 					});

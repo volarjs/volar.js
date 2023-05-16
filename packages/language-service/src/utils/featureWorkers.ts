@@ -121,7 +121,7 @@ export async function ruleWorker<T>(
 	ruleType: RuleType,
 	uri: string,
 	isValidSourceMap: (file: VirtualFile) => boolean,
-	worker: (ruleId: string, rule: Rule, ruleCtx: RuleContext) => T,
+	worker: (ruleId: string, rule: Rule, document: TextDocument, ruleCtx: RuleContext) => T,
 	transform: (result: NonNullable<Awaited<T>>, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined) => Awaited<T> | undefined,
 	combineResult?: (results: NonNullable<Awaited<T>>[]) => NonNullable<Awaited<T>>,
 	reportProgress?: (result: NonNullable<Awaited<T>>) => void,
@@ -129,9 +129,14 @@ export async function ruleWorker<T>(
 
 	const document = context.getTextDocument(uri);
 	const virtualFile = context.documents.getSourceByUri(uri)?.root;
+	const ruleCtx: RuleContext = {
+		env: context.env,
+		inject: context.inject,
+		ruleId: '',
+		report: () => { },
+	};
 
 	let results: NonNullable<Awaited<T>>[] = [];
-	let ruleCtx: RuleContext;
 
 	if (virtualFile) {
 
@@ -140,8 +145,6 @@ export async function ruleWorker<T>(
 			if (!isValidSourceMap(file)) {
 				return true;
 			}
-
-			ruleCtx = createCtx(map.virtualFileDocument);
 
 			for (const ruleId in context.config.rules) {
 
@@ -152,7 +155,7 @@ export async function ruleWorker<T>(
 
 				ruleCtx.ruleId = ruleId;
 				const embeddedResult = await safeCall(
-					() => worker(ruleId, rule, ruleCtx),
+					() => worker(ruleId, rule, map.virtualFileDocument, ruleCtx),
 					'rule ' + ruleId + ' crashed on ' + map.virtualFileDocument.uri,
 				);
 				if (!embeddedResult)
@@ -179,8 +182,6 @@ export async function ruleWorker<T>(
 	}
 	else if (document) {
 
-		ruleCtx = createCtx(document);
-
 		for (const ruleId in context.config.rules) {
 
 			const rule = context.config.rules[ruleId];
@@ -190,7 +191,7 @@ export async function ruleWorker<T>(
 
 			ruleCtx.ruleId = ruleId;
 			const embeddedResult = await safeCall(
-				() => worker(ruleId, rule, ruleCtx),
+				() => worker(ruleId, rule, document, ruleCtx),
 				'rule ' + ruleId + ' crashed on ' + document.uri,
 			);
 			if (!embeddedResult)
@@ -218,16 +219,6 @@ export async function ruleWorker<T>(
 	}
 	else if (results.length > 0) {
 		return results[0];
-	}
-
-	function createCtx(document: TextDocument): RuleContext {
-		return {
-			env: context.env,
-			inject: context.inject,
-			ruleId: '',
-			document: document,
-			report: () => { },
-		};
 	}
 }
 

@@ -144,12 +144,11 @@ export enum RuleType {
 
 export interface Rule {
 	type?: RuleType;
-	run(ctx: RuleContext): void;
+	run(document: TextDocument, ctx: RuleContext): void;
 }
 
 export interface RuleContext extends CommonContext {
 	ruleId: string;
-	document: TextDocument;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
 
