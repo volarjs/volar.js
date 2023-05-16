@@ -72,9 +72,10 @@ export type SemanticToken = [number, number, number, number, number];
 
 type BaseProvide = { [K in string]: (...args: any) => any; };
 
-export interface Service {
+type ServiceProvide<P> = P extends undefined ? { provide?: undefined; } : { provide: P; };
+
+export type Service<P extends BaseProvide | undefined = any> = {
 	(context: ServiceContext | undefined, modules: SharedModules | undefined): {
-		provide?: BaseProvide;
 		isAdditionalCompletion?: boolean; // volar specific
 		triggerCharacters?: string[];
 		signatureHelpTriggerCharacters?: string[];
@@ -122,8 +123,8 @@ export interface Service {
 		resolveInlayHint?(inlayHint: vscode.InlayHint, token: vscode.CancellationToken): Result<vscode.InlayHint>;
 		resolveReferencesCodeLensLocations?(document: TextDocument, range: vscode.Range, references: vscode.Location[], token: vscode.CancellationToken): Result<vscode.Location[]>; // volar specific
 		resolveEmbeddedRange?(range: vscode.Range): vscode.Range | undefined; // volar specific, only support in resolveCompletionItem for now
-	};
-}
+	} & ServiceProvide<P>;
+};
 
 export interface AutoInsertionContext {
 	lastChange: {
