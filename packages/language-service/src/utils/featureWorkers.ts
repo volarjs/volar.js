@@ -138,7 +138,7 @@ export async function ruleWorker<T>(
 					return provide(...args as any);
 				}
 			}
-			throw `No service provide ${key}`;
+			throw `No service provide ${key as any}`;
 		},
 		report: () => { },
 	};

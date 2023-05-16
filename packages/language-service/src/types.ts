@@ -70,11 +70,9 @@ export type Result<T> = T | Thenable<T>;
 export type NullableResult<T> = Result<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
-type BaseProvide = { [K in string]: (...args: any) => any; };
-
 type ServiceProvide<P> = P extends undefined ? { provide?: undefined; } : { provide: P; };
 
-export type Service<P extends BaseProvide | undefined = any> = {
+export type Service<P extends any = any> = {
 	(context: ServiceContext | undefined, modules: SharedModules | undefined): {
 		isAdditionalCompletion?: boolean; // volar specific
 		triggerCharacters?: string[];
@@ -141,15 +139,15 @@ export enum RuleType {
 	Semantic,
 };
 
-export interface Rule<Provide extends BaseProvide = BaseProvide> {
+export interface Rule<Provide = any> {
 	type?: RuleType;
 	run(document: TextDocument, ctx: RuleContext<Provide>): void;
 }
 
-export interface RuleContext<Provide extends BaseProvide = BaseProvide> {
+export interface RuleContext<Provide = any> {
 	env: ServiceEnvironment;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
-	inject<K extends keyof Provide>(key: K, ...args: Parameters<Provide[K]>): ReturnType<Provide[K]>;
+	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
 }
 
 export interface RuleFix {
