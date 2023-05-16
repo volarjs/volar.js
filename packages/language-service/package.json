@@ -1,6 +1,6 @@
 {
 	"name": "@volar/language-service",
-	"version": "1.6.3",
+	"version": "1.6.4",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,8 +13,8 @@
 		"directory": "packages/language-service"
 	},
 	"dependencies": {
-		"@volar/language-core": "1.6.3",
-		"@volar/source-map": "1.6.3",
+		"@volar/language-core": "1.6.4",
+		"@volar/source-map": "1.6.4",
 		"typescript-auto-import-cache": "^0.2.1",
 		"vscode-html-languageservice": "^5.0.4",
 		"vscode-json-languageservice": "^5.2.0",
