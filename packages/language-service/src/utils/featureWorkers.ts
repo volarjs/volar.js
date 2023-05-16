@@ -131,8 +131,15 @@ export async function ruleWorker<T>(
 	const virtualFile = context.documents.getSourceByUri(uri)?.root;
 	const ruleCtx: RuleContext = {
 		env: context.env,
-		inject: context.inject,
-		ruleId: '',
+		inject: (key, ...args) => {
+			for (const service of Object.values(context.services)) {
+				const provide = service.provide?.[key as any];
+				if (provide) {
+					return provide(...args as any);
+				}
+			}
+			throw `No service provide ${key}`;
+		},
 		report: () => { },
 	};
 
@@ -153,7 +160,6 @@ export async function ruleWorker<T>(
 					continue;
 				}
 
-				ruleCtx.ruleId = ruleId;
 				const embeddedResult = await safeCall(
 					() => worker(ruleId, rule, map.virtualFileDocument, ruleCtx),
 					'rule ' + ruleId + ' crashed on ' + map.virtualFileDocument.uri,
@@ -189,7 +195,6 @@ export async function ruleWorker<T>(
 				continue;
 			}
 
-			ruleCtx.ruleId = ruleId;
 			const embeddedResult = await safeCall(
 				() => worker(ruleId, rule, document, ruleCtx),
 				'rule ' + ruleId + ' crashed on ' + document.uri,

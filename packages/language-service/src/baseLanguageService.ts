@@ -108,15 +108,6 @@ function createLanguageServicePluginContext(
 	const documentVersions = new Map<string, number>();
 	const context: ServiceContext = {
 		env,
-		inject: (key, ...args) => {
-			for (const service of Object.values(context.services)) {
-				const provide = service.provide?.[key as any];
-				if (provide) {
-					return provide(...args as any);
-				}
-			}
-			throw `no service for injection key ${JSON.stringify(key)}.`;
-		},
 		config,
 		host,
 		core: languageContext,

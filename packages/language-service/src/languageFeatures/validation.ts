@@ -247,7 +247,7 @@ export function register(context: ServiceContext) {
 				ruleType,
 				uri,
 				file => ruleType === RuleType.Format ? !!file.capabilities.documentFormatting : !!file.capabilities.diagnostic,
-				async (ruleName, rule, lintDocument, ruleCtx) => {
+				async (ruleId, rule, lintDocument, ruleCtx) => {
 
 					if (token) {
 						if (Date.now() - lastCheckCancelAt >= 5) {
@@ -259,7 +259,7 @@ export function register(context: ServiceContext) {
 						}
 					}
 
-					const pluginCache = cacheMap.get(ruleName) ?? cacheMap.set(ruleName, new Map()).get(ruleName)!;
+					const pluginCache = cacheMap.get(ruleId) ?? cacheMap.set(ruleId, new Map()).get(ruleId)!;
 					const cache = pluginCache.get(lintDocument.uri);
 					const tsProjectVersion = (ruleType === RuleType.Semantic) ? context.core.typescript.languageServiceHost.getProjectVersion?.() : undefined;
 
@@ -284,7 +284,7 @@ export function register(context: ServiceContext) {
 						}
 
 						error.message ||= 'No message.';
-						error.source ||= ruleCtx.ruleId;
+						error.source ||= ruleId;
 
 						reportResults.push([error, ...fixes]);
 					};
@@ -293,22 +293,22 @@ export function register(context: ServiceContext) {
 						await rule.run(lintDocument, ruleCtx);
 					}
 					catch (err) {
-						console.warn(`[volar/rules-api] ${ruleName} ${ruleType} error.`);
+						console.warn(`[volar/rules-api] ${ruleId} ${ruleType} error.`);
 						console.warn(err);
 					}
 
 					context.ruleFixes ??= {};
 					context.ruleFixes[lintDocument.uri] ??= {};
-					context.ruleFixes[lintDocument.uri][ruleCtx.ruleId] ??= {};
+					context.ruleFixes[lintDocument.uri][ruleId] ??= {};
 
 					reportResults?.forEach(([error, ...fixes], index) => {
-						context.ruleFixes![lintDocument.uri][ruleCtx.ruleId][index] = [error, fixes];
+						context.ruleFixes![lintDocument.uri][ruleId][index] = [error, fixes];
 						error.data = {
 							uri,
 							version: newDocument!.version,
 							type: 'rule',
 							isFormat: ruleType === RuleType.Format,
-							serviceOrRuleId: ruleCtx.ruleId,
+							serviceOrRuleId: ruleId,
 							original: {
 								data: error.data,
 							},
