@@ -33,6 +33,9 @@ export function createLanguageService(options: {
 		host,
 	);
 	let dtsVersion = 0;
+	let runningApis = 0;
+
+	const toClear = new Set<typeof languageService>();
 
 	class InnocentRabbit { };
 
@@ -50,28 +53,43 @@ export function createLanguageService(options: {
 				return (languageService as any)[api](...args);
 			}
 
-			let oldVersion = await options.dtsHost.getVersion();
-			let result = await (languageService as any)[api](...args);
-			let newVersion = await options.dtsHost.getVersion();
+			let result;
 
-			while (newVersion !== oldVersion) {
-				oldVersion = newVersion;
-				if (newVersion !== dtsVersion) {
-					dtsVersion = newVersion;
-					languageService.dispose();
-					languageService = _createLanguageService(
-						{ typescript: ts },
-						{
-							rootUri: URI.file('/'),
-							uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
-							fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
-						},
-						config,
-						host,
-					);
-				}
+			try {
+				runningApis++;
+				let oldVersion = await options.dtsHost.getVersion();
 				result = await (languageService as any)[api](...args);
-				newVersion = await options.dtsHost.getVersion();
+				let newVersion = await options.dtsHost.getVersion();
+
+				while (newVersion !== oldVersion) {
+					oldVersion = newVersion;
+					if (newVersion !== dtsVersion) {
+						dtsVersion = newVersion;
+						toClear.add(languageService);
+						languageService = _createLanguageService(
+							{ typescript: ts },
+							{
+								rootUri: URI.file('/'),
+								uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
+								fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
+							},
+							config,
+							host,
+						);
+					}
+					result = await (languageService as any)[api](...args);
+					newVersion = await options.dtsHost.getVersion();
+				}
+			}
+			finally {
+				runningApis--;
+			}
+
+			if (runningApis === 0 && toClear.size > 0) {
+				for (const languageService of toClear) {
+					languageService.dispose();
+				}
+				toClear.clear();
 			}
 
 			return result;
