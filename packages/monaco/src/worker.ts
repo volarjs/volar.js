@@ -211,8 +211,9 @@ class CdnDtsHost {
 
 	async getVersion() {
 		while (this.files.size !== this.lastUpdateFilesSize) {
-			this.lastUpdateFilesSize = this.files.size;
+			const newFileSize = this.files.size;
 			await Promise.all(this.files.values());
+			this.lastUpdateFilesSize = newFileSize;
 		}
 		return this.files.size;
 	}
