@@ -236,9 +236,12 @@ class CdnDtsHost {
 		const requestFileName = this.resolveRequestFileName(fileName);
 		const url = this.cdn + requestFileName.slice('/node_modules/'.length);
 		try {
-			const text = await (await fetch(url)).text();
-			this.onFetch?.(fileName, text);
-			return text;
+			const res = await fetch(url);
+			if (res.status === 200) {
+				const text = await res.text();
+				this.onFetch?.(fileName, text);
+				return text;
+			}
 		} catch {
 			// ignore
 		}
