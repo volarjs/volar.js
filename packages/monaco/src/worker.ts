@@ -231,7 +231,9 @@ class CdnDtsHost {
 		while (this.files.size !== this.lastUpdateFilesSize) {
 			const newFileSize = this.files.size;
 			await Promise.all(this.files.values());
-			this.lastUpdateFilesSize = newFileSize;
+			if (newFileSize > this.lastUpdateFilesSize) {
+				this.lastUpdateFilesSize = newFileSize;
+			}
 		}
 		return this.files.size;
 	}
