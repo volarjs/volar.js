@@ -291,8 +291,27 @@ class CdnDtsHost {
 			if (pkgName.startsWith('@')) {
 				pkgName += '/' + fileName.split('/')[3];
 			}
-			if (pkgName.endsWith('.d.ts')) {
+			if (pkgName.endsWith('.d.ts') || pkgName.endsWith('/node_modules')) {
 				return undefined;
+			}
+			// hard code for known invalid package
+			if (pkgName.startsWith('@typescript/') || pkgName.startsWith('@types/typescript__')) {
+				return undefined;
+			}
+
+			// don't check @types the original package already having types
+			if (pkgName.startsWith('@types/')) {
+				let originalPkgName = pkgName.slice('@types/'.length);
+				if (originalPkgName.indexOf('__') >= 0) {
+					originalPkgName = '@' + originalPkgName.replace('__', '/');
+				}
+				const packageJson = await this.readFile(`/node_modules/${originalPkgName}/package.json`);
+				if (packageJson) {
+					const packageJsonObj = JSON.parse(packageJson);
+					if (packageJsonObj.types || packageJsonObj.typings) {
+						return undefined;
+					}
+				}
 			}
 
 			if (!this.flatResult.has(pkgName)) {
@@ -301,8 +320,6 @@ class CdnDtsHost {
 
 			const flat = await this.flatResult.get(pkgName)!;
 			const include = flat.includes(fileName.slice(`/node_modules/${pkgName}`.length));
-			console.log(pkgName, flat, fileName, include);
-
 			if (!include) {
 				return undefined;
 			}
