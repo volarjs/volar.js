@@ -9,7 +9,7 @@ import { URI } from 'vscode-uri';
 
 export function createLanguageService(options: {
 	workerContext: monaco.worker.IWorkerContext<any>,
-	dtsHost?: ReturnType<typeof createDtsHost>,
+	dtsHost?: CdnDtsHost,
 	config: Config,
 	typescript?: {
 		module: typeof import('typescript/lib/tsserverlibrary'),
@@ -171,7 +171,7 @@ export function createLanguageService(options: {
 			},
 			getDefaultLibFileName(options) {
 				if (ts) {
-					return `/node_modules/typescript@${ts.version}/lib/${ts.getDefaultLibFileName(options)}`;
+					return `/node_modules/typescript/lib/${ts.getDefaultLibFileName(options)}`;
 				}
 				return '';
 			},
@@ -208,22 +208,55 @@ export function createLanguageService(options: {
 	}
 }
 
-export function createDtsHost(
+export function createBaseDtsHost(
 	cdn: string,
+	versions: Record<string, string> = {},
+	flat?: (pkg: string, version: string | undefined) => Promise<string[]>,
+	onFetch?: (fileName: string, text: string) => void,
+) {
+	return new CdnDtsHost(cdn, versions, flat, onFetch);
+}
+
+export function createJsDelivrDtsHost(
 	versions: Record<string, string> = {},
 	onFetch?: (fileName: string, text: string) => void,
 ) {
-	return new CdnDtsHost(cdn, versions, onFetch);
+	return new CdnDtsHost(
+		'https://cdn.jsdelivr.net/npm/',
+		versions,
+		async (pkg, version) => {
+
+			if (!version) {
+				const data = await fetchJson<{ version: string | null; }>(`https://data.jsdelivr.com/v1/package/resolve/npm/${pkg}@latest`);
+				if (data?.version) {
+					version = data.version;
+				}
+			}
+			if (!version) {
+				return [];
+			}
+
+			const flat = await fetchJson<{ files: { name: string }[]; }>(`https://data.jsdelivr.com/v1/package/npm/${pkg}@${version}/flat`);
+			if (!flat) {
+				return [];
+			}
+
+			return flat.files.map(file => file.name);
+		},
+		onFetch,
+	);
 }
 
 class CdnDtsHost {
 
 	files = new Map<string, Promise<string | undefined> | string | undefined>();
+	flatResult = new Map<string, Promise<string[]>>();
 	lastUpdateFilesSize = 0;
 
 	constructor(
 		public cdn: string,
 		public versions: Record<string, string> = {},
+		public flat?: (pkg: string, version: string | undefined) => Promise<string[]>,
 		public onFetch?: (fileName: string, text: string) => void,
 	) { }
 
@@ -245,7 +278,6 @@ class CdnDtsHost {
 			&& (fileName.endsWith('.d.ts') || fileName.endsWith('/package.json'))
 		) {
 			if (!this.files.has(fileName)) {
-				this.files.set(fileName, undefined);
 				this.files.set(fileName, this.fetchFile(fileName));
 			}
 			return this.files.get(fileName);
@@ -254,18 +286,32 @@ class CdnDtsHost {
 	}
 
 	async fetchFile(fileName: string) {
+		if (this.flat) {
+			let pkgName = fileName.split('/')[2];
+			if (pkgName.startsWith('@')) {
+				pkgName += '/' + fileName.split('/')[3];
+			}
+			if (pkgName.endsWith('.d.ts')) {
+				return undefined;
+			}
+
+			if (!this.flatResult.has(pkgName)) {
+				this.flatResult.set(pkgName, this.flat(pkgName, this.versions[pkgName]));
+			}
+
+			const flat = await this.flatResult.get(pkgName)!;
+			const include = flat.includes(fileName.slice(`/node_modules/${pkgName}`.length));
+			console.log(pkgName, flat, fileName, include);
+
+			if (!include) {
+				return undefined;
+			}
+		}
+
 		const requestFileName = this.resolveRequestFileName(fileName);
 		const url = this.cdn + requestFileName.slice('/node_modules/'.length);
-		try {
-			const res = await fetch(url);
-			if (res.status === 200) {
-				const text = await res.text();
-				this.onFetch?.(fileName, text);
-				return text;
-			}
-		} catch {
-			// ignore
-		}
+
+		return await fetchText(url);
 	}
 
 	resolveRequestFileName(fileName: string) {
@@ -294,5 +340,27 @@ class CdnDtsHost {
 		for (const [fileName, file] of Object.entries(json)) {
 			this.files.set(fileName, file ?? undefined);
 		}
+	}
+}
+
+async function fetchText(url: string) {
+	try {
+		const res = await fetch(url);
+		if (res.status === 200) {
+			return await res.text();
+		}
+	} catch {
+		// ignore
+	}
+}
+
+async function fetchJson<T>(url: string) {
+	try {
+		const res = await fetch(url);
+		if (res.status === 200) {
+			return await res.json() as T;
+		}
+	} catch {
+		// ignore
 	}
 }
