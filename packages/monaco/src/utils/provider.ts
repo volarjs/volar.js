@@ -46,9 +46,9 @@ export async function createLanguageFeaturesProvider(
 	return {
 
 		triggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<typeof languageService.triggerCharacters>)(),
-		autoFormatTriggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<typeof languageService.autoFormatTriggerCharacters>)(),
-		signatureHelpTriggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<typeof languageService.signatureHelpTriggerCharacters>)(),
-		signatureHelpRetriggerCharacters: await (languageService.triggerCharacters as unknown as () => Promise<typeof languageService.signatureHelpRetriggerCharacters>)(),
+		autoFormatTriggerCharacters: await (languageService.autoFormatTriggerCharacters as unknown as () => Promise<typeof languageService.autoFormatTriggerCharacters>)(),
+		signatureHelpTriggerCharacters: await (languageService.signatureHelpTriggerCharacters as unknown as () => Promise<typeof languageService.signatureHelpTriggerCharacters>)(),
+		signatureHelpRetriggerCharacters: await (languageService.signatureHelpRetriggerCharacters as unknown as () => Promise<typeof languageService.signatureHelpRetriggerCharacters>)(),
 
 		getLegend() {
 			return standardSemanticTokensLegend;
