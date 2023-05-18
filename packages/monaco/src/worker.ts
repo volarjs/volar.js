@@ -311,6 +311,10 @@ class CdnDtsHost {
 					if (packageJsonObj.types || packageJsonObj.typings) {
 						return undefined;
 					}
+					const indexDts = await this.readFile(`/node_modules/${originalPkgName}/index.d.ts`);
+					if (indexDts) {
+						return undefined;
+					}
 				}
 			}
 
