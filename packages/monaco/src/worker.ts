@@ -259,10 +259,10 @@ class CdnDtsHost implements DtsHost {
 	lastUpdateFilesSize = 0;
 
 	constructor(
-		public cdn: string,
-		public versions: Record<string, string> = {},
-		public flat?: (pkg: string, version: string | undefined) => Promise<string[]>,
-		public onFetch?: (fileName: string, text: string) => void,
+		private cdn: string,
+		private versions: Record<string, string> = {},
+		private flat?: (pkg: string, version: string | undefined) => Promise<string[]>,
+		private onFetch?: (fileName: string, text: string) => void,
 	) { }
 
 	async getVersion() {
@@ -304,7 +304,7 @@ class CdnDtsHost implements DtsHost {
 				return undefined;
 			}
 
-			// don't check @types the original package already having types
+			// don't check @types if original package already having types
 			if (pkgName.startsWith('@types/')) {
 				let originalPkgName = pkgName.slice('@types/'.length);
 				if (originalPkgName.indexOf('__') >= 0) {
@@ -336,8 +336,14 @@ class CdnDtsHost implements DtsHost {
 
 		const requestFileName = this.resolveRequestFileName(fileName);
 		const url = this.cdn + requestFileName.slice('/node_modules/'.length);
+		const text = await fetchText(url);
+		if (text) {
+			if (this.onFetch) {
+				this.onFetch(fileName, text);
+			}
+		}
 
-		return await fetchText(url);
+		return text;
 	}
 
 	resolveRequestFileName(fileName: string) {
