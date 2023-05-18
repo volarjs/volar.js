@@ -1,11 +1,12 @@
 import * as transformer from '../transformer';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { ServiceCompletionData } from './complete';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return async (item: vscode.CompletionItem, token = vscode.CancellationToken.None) => {
+	return async (item: vscode.CompletionItem, token = NoneCancellationToken) => {
 
 		const data: ServiceCompletionData | undefined = item.data;
 

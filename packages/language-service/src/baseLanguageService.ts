@@ -36,7 +36,7 @@ import * as foldingRanges from './documentFeatures/foldingRanges';
 import * as format from './documentFeatures/format';
 import * as linkedEditingRanges from './documentFeatures/linkedEditingRanges';
 import * as selectionRanges from './documentFeatures/selectionRanges';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 
 import { notEmpty, resolveCommonLanguageId } from './utils/common';
 
@@ -90,7 +90,7 @@ function createLanguageServicePluginContext(
 		if (created.projectUpdated) {
 			let scriptFileNames = new Set(host.getScriptFileNames());
 			env.onDidChangeWatchedFiles?.((params) => {
-				if (params.changes.some(change => change.type !== vscode.FileChangeType.Changed)) {
+				if (params.changes.some(change => change.type !== 2 satisfies typeof vscode.FileChangeType.Changed)) {
 					scriptFileNames = new Set(host.getScriptFileNames());
 				}
 
@@ -124,12 +124,14 @@ function createLanguageServicePluginContext(
 					if (!source) {
 						return;
 					}
-					return vscode.Command.create(
-						'',
-						'editor.action.rename',
-						source.uri,
-						source.position,
-					);
+					return {
+						title: '',
+						command: 'editor.action.rename',
+						arguments: [
+							source.uri,
+							source.position,
+						],
+					};
 				},
 				is(command) {
 					return command.command === 'editor.action.rename';
@@ -155,13 +157,15 @@ function createLanguageServicePluginContext(
 							sourceReferences.push(reference);
 						}
 					}
-					return vscode.Command.create(
-						locations.length === 1 ? '1 reference' : `${locations.length} references`,
-						'editor.action.showReferences',
-						source.uri,
-						source.position,
-						sourceReferences,
-					);
+					return {
+						title: locations.length === 1 ? '1 reference' : `${locations.length} references`,
+						command: 'editor.action.showReferences',
+						arguments: [
+							source.uri,
+							source.position,
+							sourceReferences,
+						],
+					};
 				},
 				is(command) {
 					return command.command === 'editor.action.showReferences';
@@ -169,18 +173,18 @@ function createLanguageServicePluginContext(
 			},
 			setSelection: {
 				create(position: vscode.Position) {
-					return vscode.Command.create(
-						'',
-						'setSelection',
-						{
+					return {
+						title: '',
+						command: 'setSelection',
+						arguments: [{
 							selection: {
 								selectionStartLineNumber: position.line + 1,
 								positionLineNumber: position.line + 1,
 								selectionStartColumn: position.character + 1,
 								positionColumn: position.character + 1,
 							},
-						},
-					);
+						}],
+					};
 				},
 				is(command) {
 					return command.command === 'setSelection';

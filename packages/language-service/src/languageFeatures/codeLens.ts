@@ -1,7 +1,8 @@
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from '../utils/common';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export interface ServiceCodeLensData {
 	kind: 'normal',
@@ -19,7 +20,7 @@ export interface ServiceReferencesCodeLensData {
 
 export function register(context: ServiceContext) {
 
-	return async (uri: string, token = vscode.CancellationToken.None) => {
+	return async (uri: string, token = NoneCancellationToken) => {
 
 		return await languageFeatureWorker(
 			context,
@@ -47,12 +48,15 @@ export function register(context: ServiceContext) {
 				});
 
 				const ranges = await service.provideReferencesCodeLensRanges?.(document, token);
-				const referencesCodeLens = ranges?.map(range => vscode.CodeLens.create(range, {
-					kind: 'references',
-					uri,
+				const referencesCodeLens = ranges?.map<vscode.CodeLens>(range => ({
 					range,
-					serviceId: serviceId,
-				} satisfies ServiceReferencesCodeLensData));
+					data: {
+						kind: 'references',
+						uri,
+						range,
+						serviceId: serviceId,
+					} satisfies ServiceReferencesCodeLensData,
+				}));
 
 				codeLens = [
 					...codeLens ?? [],

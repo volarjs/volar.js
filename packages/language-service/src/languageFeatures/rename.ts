@@ -1,14 +1,15 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { DocumentsAndSourceMaps } from '../documents';
 import { FileRangeCapabilities } from '@volar/language-core';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, position: vscode.Position, newName: string, token = vscode.CancellationToken.None) => {
+	return (uri: string, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
 
 		let _data: FileRangeCapabilities | undefined;
 
@@ -252,16 +253,16 @@ export function embeddedEditToSourceEdit(
 			sourceResult.documentChanges ??= [];
 
 			let sourceEdit: typeof tsDocEdit | undefined;
-			if (vscode.TextDocumentEdit.is(tsDocEdit)) {
+			if ('textDocument' in tsDocEdit) {
 				if (documents.isVirtualFileUri(tsDocEdit.textDocument.uri)) {
 					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.textDocument.uri)) {
-						sourceEdit = vscode.TextDocumentEdit.create(
-							{
+						sourceEdit = {
+							textDocument: {
 								uri: map.sourceFileDocument.uri,
 								version: versions[map.sourceFileDocument.uri] ?? null,
 							},
-							[],
-						);
+							edits: [],
+						} satisfies vscode.TextDocumentEdit;
 						for (const tsEdit of tsDocEdit.edits) {
 							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
 								let _data: FileRangeCapabilities | undefined;
@@ -276,7 +277,7 @@ export function embeddedEditToSourceEdit(
 										newText = _data.rename.apply(tsEdit.newText);
 									}
 									sourceEdit.edits.push({
-										annotationId: vscode.AnnotatedTextEdit.is(tsEdit.range) ? tsEdit.range.annotationId : undefined,
+										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
 										newText,
 										range,
 									});
@@ -286,7 +287,7 @@ export function embeddedEditToSourceEdit(
 								const range = map.toSourceRange(tsEdit.range);
 								if (range) {
 									sourceEdit.edits.push({
-										annotationId: vscode.AnnotatedTextEdit.is(tsEdit.range) ? tsEdit.range.annotationId : undefined,
+										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
 										newText: tsEdit.newText,
 										range,
 									});
@@ -302,28 +303,39 @@ export function embeddedEditToSourceEdit(
 					sourceEdit = tsDocEdit;
 				}
 			}
-			else if (vscode.CreateFile.is(tsDocEdit)) {
+			else if (tsDocEdit.kind === 'create') {
 				sourceEdit = tsDocEdit; // TODO: remove .ts?
 			}
-			else if (vscode.RenameFile.is(tsDocEdit)) {
+			else if (tsDocEdit.kind === 'rename') {
 				if (!documents.isVirtualFileUri(tsDocEdit.oldUri)) {
 					sourceEdit = tsDocEdit;
 				}
 				else {
 					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.oldUri)) {
 						// TODO: check capability?
-						sourceEdit = vscode.RenameFile.create(map.sourceFileDocument.uri, tsDocEdit.newUri /* TODO: remove .ts? */, tsDocEdit.options, tsDocEdit.annotationId);
+						sourceEdit = {
+							kind: 'rename',
+							oldUri: map.sourceFileDocument.uri,
+							newUri: tsDocEdit.newUri /* TODO: remove .ts? */,
+							options: tsDocEdit.options,
+							annotationId: tsDocEdit.annotationId,
+						} satisfies vscode.RenameFile;
 					}
 				}
 			}
-			else if (vscode.DeleteFile.is(tsDocEdit)) {
+			else if (tsDocEdit.kind === 'delete') {
 				if (!documents.isVirtualFileUri(tsDocEdit.uri)) {
 					sourceEdit = tsDocEdit;
 				}
 				else {
 					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.uri)) {
 						// TODO: check capability?
-						sourceEdit = vscode.DeleteFile.create(map.sourceFileDocument.uri, tsDocEdit.options, tsDocEdit.annotationId);
+						sourceEdit = {
+							kind: 'delete',
+							uri: map.sourceFileDocument.uri,
+							options: tsDocEdit.options,
+							annotationId: tsDocEdit.annotationId,
+						} satisfies vscode.DeleteFile;
 					}
 				}
 			}
@@ -340,8 +352,8 @@ export function embeddedEditToSourceEdit(
 
 function pushEditToDocumentChanges(arr: NonNullable<vscode.WorkspaceEdit['documentChanges']>, item: NonNullable<vscode.WorkspaceEdit['documentChanges']>[number]) {
 	const current = arr.find(edit =>
-		vscode.TextDocumentEdit.is(edit)
-		&& vscode.TextDocumentEdit.is(item)
+		'textDocument' in edit
+		&& 'textDocument' in item
 		&& edit.textDocument.uri === item.textDocument.uri
 	) as vscode.TextDocumentEdit | undefined;
 	if (current) {

@@ -1,10 +1,11 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { DocumentLinkData } from './documentLinks';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return async (item: vscode.CodeLens, token = vscode.CancellationToken.None) => {
+	return async (item: vscode.CodeLens, token = NoneCancellationToken) => {
 
 		const data: DocumentLinkData | undefined = item.data;
 		if (data) {

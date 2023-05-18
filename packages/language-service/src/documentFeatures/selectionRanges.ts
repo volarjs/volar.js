@@ -1,12 +1,13 @@
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as transformer from '../transformer';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import { isInsideRange, notEmpty } from '../utils/common';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, positions: vscode.Position[], token = vscode.CancellationToken.None) => {
+	return (uri: string, positions: vscode.Position[], token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,

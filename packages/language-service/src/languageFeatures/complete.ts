@@ -1,9 +1,10 @@
 import * as transformer from '../transformer';
 import type { FileRangeCapabilities } from '@volar/language-service';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { Service, ServiceContext } from '../types';
 import { visitEmbedded } from '../utils/definePlugin';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export interface ServiceCompletionData {
 	uri: string;
@@ -29,14 +30,14 @@ export function register(context: ServiceContext) {
 	return async (
 		uri: string,
 		position: vscode.Position,
-		completionContext: vscode.CompletionContext = { triggerKind: vscode.CompletionTriggerKind.Invoked, },
-		token = vscode.CancellationToken.None,
+		completionContext: vscode.CompletionContext = { triggerKind: 1 satisfies typeof vscode.CompletionTriggerKind.Invoked, },
+		token = NoneCancellationToken,
 	) => {
 
 		let document: TextDocument | undefined;
 
 		if (
-			completionContext?.triggerKind === vscode.CompletionTriggerKind.TriggerForIncompleteCompletions
+			completionContext?.triggerKind === 3 satisfies typeof vscode.CompletionTriggerKind.TriggerForIncompleteCompletions
 			&& cache?.uri === uri
 		) {
 

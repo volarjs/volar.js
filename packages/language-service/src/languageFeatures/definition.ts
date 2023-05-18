@@ -1,4 +1,4 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
@@ -6,6 +6,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { FileRangeCapabilities, MirrorBehaviorCapabilities } from '@volar/language-core';
 import { SourceMapWithDocuments } from '../documents';
 import { notEmpty } from '../utils/common';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(
 	context: ServiceContext,
@@ -14,7 +15,7 @@ export function register(
 	isValidMirrorPosition: (mirrorData: MirrorBehaviorCapabilities) => boolean,
 ) {
 
-	return (uri: string, position: vscode.Position, token = vscode.CancellationToken.None) => {
+	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -120,8 +121,14 @@ export function register(
 							return {
 								...link,
 								targetUri: targetMap.sourceFileDocument.uri,
-								targetRange: vscode.Range.create(0, 0, 0, 0),
-								targetSelectionRange: vscode.Range.create(0, 0, 0, 0),
+								targetRange: {
+									start: { line: 0, character: 0 },
+									end: { line: 0, character: 0 },
+								},
+								targetSelectionRange: {
+									start: { line: 0, character: 0 },
+									end: { line: 0, character: 0 },
+								},
 							};
 						}
 					}

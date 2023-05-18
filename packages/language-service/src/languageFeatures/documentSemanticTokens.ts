@@ -1,9 +1,10 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import { SemanticToken } from '@volar/language-service';
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { notEmpty } from '../utils/common';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
@@ -11,7 +12,7 @@ export function register(context: ServiceContext) {
 		uri: string,
 		range: vscode.Range | undefined,
 		legend: vscode.SemanticTokensLegend,
-		token = vscode.CancellationToken.None,
+		token = NoneCancellationToken,
 		reportProgress?: (tokens: vscode.SemanticTokens) => void,
 	): Promise<vscode.SemanticTokens | undefined> => {
 
@@ -64,7 +65,10 @@ export function register(context: ServiceContext) {
 
 				return service.provideDocumentSemanticTokens?.(
 					document,
-					vscode.Range.create(document.positionAt(offsetRange[0]), document.positionAt(offsetRange[1])),
+					{
+						start: document.positionAt(offsetRange[0]),
+						end: document.positionAt(offsetRange[1]),
+					},
 					legend,
 					token,
 				);

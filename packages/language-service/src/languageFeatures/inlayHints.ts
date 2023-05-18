@@ -1,8 +1,9 @@
 import * as transformer from '../transformer';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export interface InlayHintData {
 	uri: string,
@@ -12,7 +13,7 @@ export interface InlayHintData {
 
 export function register(context: ServiceContext) {
 
-	return async (uri: string, range: vscode.Range, token = vscode.CancellationToken.None) => {
+	return async (uri: string, range: vscode.Range, token = NoneCancellationToken) => {
 
 		const document = context.getTextDocument(uri);
 
@@ -53,10 +54,10 @@ export function register(context: ServiceContext) {
 				}
 
 				if (minStart !== undefined && maxEnd !== undefined) {
-					return [vscode.Range.create(
-						map.virtualFileDocument.positionAt(minStart),
-						map.virtualFileDocument.positionAt(maxEnd),
-					)];
+					return [{
+						start: map.virtualFileDocument.positionAt(minStart),
+						end: map.virtualFileDocument.positionAt(maxEnd),
+					}];
 				}
 
 				return [];

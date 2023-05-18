@@ -1,13 +1,14 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { ServiceCodeLensData, ServiceReferencesCodeLensData } from './codeLens';
 import * as references from './references';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
 	const findReferences = references.register(context);
 
-	return async (item: vscode.CodeLens, token = vscode.CancellationToken.None) => {
+	return async (item: vscode.CodeLens, token = NoneCancellationToken) => {
 
 		const data: ServiceCodeLensData | ServiceReferencesCodeLensData | undefined = item.data;
 

@@ -1,9 +1,10 @@
 import type { VirtualFile } from '@volar/language-core';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext, Service } from '../types';
 import { SourceMap } from '@volar/source-map';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
@@ -15,13 +16,16 @@ export function register(context: ServiceContext) {
 			ch: string,
 			position: vscode.Position,
 		} | undefined,
-		token = vscode.CancellationToken.None
+		token = NoneCancellationToken
 	) => {
 
 		let document = context.getTextDocument(uri);
 		if (!document) return;
 
-		range ??= vscode.Range.create(document.positionAt(0), document.positionAt(document.getText().length));
+		range ??= {
+			start: document.positionAt(0),
+			end: document.positionAt(document.getText().length),
+		};
 
 		const source = context.documents.getSourceByUri(document.uri);
 		if (!source) {
@@ -193,11 +197,14 @@ export function register(context: ServiceContext) {
 		if (document.getText() === originalDocument.getText())
 			return;
 
-		const editRange = vscode.Range.create(
-			originalDocument.positionAt(0),
-			originalDocument.positionAt(originalDocument.getText().length),
-		);
-		const textEdit = vscode.TextEdit.replace(editRange, document.getText());
+		const editRange: vscode.Range = {
+			start: originalDocument.positionAt(0),
+			end: originalDocument.positionAt(originalDocument.getText().length),
+		};
+		const textEdit: vscode.TextEdit = {
+			range: editRange,
+			newText: document.getText(),
+		};
 
 		return [textEdit];
 
@@ -237,12 +244,12 @@ export function register(context: ServiceContext) {
 				let edits: vscode.TextEdit[] | null | undefined;
 
 				try {
-					if (ch !== undefined && vscode.Position.is(formatRange)) {
+					if (ch !== undefined && 'line' in formatRange && 'character' in formatRange) {
 						if (service.autoFormatTriggerCharacters?.includes(ch)) {
 							edits = await service.provideOnTypeFormattingEdits?.(document, formatRange, ch, options, token);
 						}
 					}
-					else if (ch === undefined && vscode.Range.is(formatRange)) {
+					else if (ch === undefined && 'start' in formatRange && 'end' in formatRange) {
 						edits = await service.provideDocumentFormattingEdits?.(document, formatRange, options, token);
 					}
 				}

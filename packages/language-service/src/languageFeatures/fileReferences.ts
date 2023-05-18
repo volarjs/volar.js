@@ -1,13 +1,14 @@
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import { NullableResult } from '@volar/language-service';
 import { notEmpty } from '../utils/common';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, token = vscode.CancellationToken.None): NullableResult<vscode.Location[]> => {
+	return (uri: string, token = NoneCancellationToken): NullableResult<vscode.Location[]> => {
 
 		return languageFeatureWorker(
 			context,

@@ -1,6 +1,6 @@
 import { VirtualFiles, VirtualFile, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, forEachEmbeddedFile, LanguageServiceHost } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { ServiceEnvironment } from './types';

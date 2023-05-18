@@ -1,10 +1,11 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, position: vscode.Position, token = vscode.CancellationToken.None) => {
+	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -22,7 +23,7 @@ export function register(context: ServiceContext) {
 				if (!map) {
 					return item;
 				}
-				if (vscode.Range.is(item)) {
+				if ('start' in item && 'end' in item) {
 					return map.toSourceRange(item);
 				}
 				return item;
@@ -30,18 +31,12 @@ export function register(context: ServiceContext) {
 			prepares => {
 
 				for (const prepare of prepares) {
-					if (vscode.Range.is(prepare)) {
+					if ('start' in prepare && 'end' in prepare) {
 						return prepare; // if has any valid range, ignore other errors
 					}
 				}
 
-				const error = prepares[0] as vscode.ResponseError;
-				const newError = new vscode.ResponseError(error.code, error.message);
-
-				newError.name = error.name;
-				newError.stack = error.stack;
-
-				return newError;
+				return prepares[0] as vscode.ResponseError;
 			},
 		);
 	};

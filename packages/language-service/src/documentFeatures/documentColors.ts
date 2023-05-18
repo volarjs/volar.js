@@ -1,11 +1,12 @@
 import type { ServiceContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from '../utils/common';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, token = vscode.CancellationToken.None) => {
+	return (uri: string, token = NoneCancellationToken) => {
 
 		return documentFeatureWorker(
 			context,
@@ -18,11 +19,14 @@ export function register(context: ServiceContext) {
 
 				return service.provideDocumentColors?.(document, token);
 			},
-			(data, map) => map ? data.map(color => {
+			(data, map) => map ? data.map<vscode.ColorInformation | undefined>(color => {
 
 				const range = map.toSourceRange(color.range);
 				if (range) {
-					return vscode.ColorInformation.create(range, color.color);
+					return {
+						range,
+						color: color.color,
+					};
 				}
 			}).filter(notEmpty) : data,
 			arr => arr.flat(),

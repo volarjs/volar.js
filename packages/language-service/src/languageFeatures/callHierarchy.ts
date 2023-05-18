@@ -1,9 +1,10 @@
 import { posix as path } from 'path';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export interface PluginCallHierarchyData {
 	uri: string,
@@ -16,7 +17,7 @@ export function register(context: ServiceContext) {
 
 	return {
 
-		doPrepare(uri: string, position: vscode.Position, token = vscode.CancellationToken.None) {
+		doPrepare(uri: string, position: vscode.Position, token = NoneCancellationToken) {
 
 			return languageFeatureWorker(
 				context,

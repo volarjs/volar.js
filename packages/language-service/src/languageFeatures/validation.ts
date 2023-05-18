@@ -1,12 +1,13 @@
 import { FileRangeCapabilities } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import { ServiceContext, RuleContext, RuleType } from '../types';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function updateRange(
 	range: vscode.Range,
@@ -151,7 +152,7 @@ export function register(context: ServiceContext) {
 	return async (
 		uri: string,
 		mode: 'all' | 'semantic' | 'syntactic',
-		token = vscode.CancellationToken.None,
+		token = NoneCancellationToken,
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
 
@@ -277,11 +278,6 @@ export function register(context: ServiceContext) {
 					const reportResults: Parameters<RuleContext['report']>[] = [];
 
 					ruleCtx.report = (error, ...fixes) => {
-
-						if (!vscode.Diagnostic.is(error)) {
-							console.warn('[volar/rules-api] report() error must be a Diagnostic.');
-							return;
-						}
 
 						error.message ||= 'No message.';
 						error.source ||= ruleId;

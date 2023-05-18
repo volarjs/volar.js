@@ -1,11 +1,11 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 
 export function transform<T extends vscode.TextEdit | vscode.InsertReplaceEdit>(
 	textEdit: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: vscode.TextDocument,
 ): T | undefined {
-	if (vscode.TextEdit.is(textEdit)) {
+	if ('range' in textEdit) {
 
 		let range = getOtherRange(textEdit.range);
 		if (range) {
@@ -24,7 +24,7 @@ export function transform<T extends vscode.TextEdit | vscode.InsertReplaceEdit>(
 			};
 		}
 	}
-	else if (vscode.InsertReplaceEdit.is(textEdit)) {
+	else if ('replace' in textEdit && 'insert' in textEdit) {
 
 		const insert = getOtherRange(textEdit.insert);
 		const replace = insert ? getOtherRange(textEdit.replace) : undefined;

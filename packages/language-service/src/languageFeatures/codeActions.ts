@@ -1,11 +1,12 @@
 import * as transformer from '../transformer';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { embeddedEditToSourceEdit } from './rename';
 import { ServiceDiagnosticData } from './validation';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export interface ServiceCodeActionData {
 	uri: string,
@@ -28,7 +29,7 @@ export interface RuleCodeActionData {
 
 export function register(context: ServiceContext) {
 
-	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = vscode.CancellationToken.None) => {
+	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = NoneCancellationToken) => {
 
 		const sourceDocument = context.getTextDocument(uri);
 		if (!sourceDocument)
@@ -72,10 +73,10 @@ export function register(context: ServiceContext) {
 
 				if (minStart !== undefined && maxEnd !== undefined) {
 					return [{
-						range: vscode.Range.create(
-							map.virtualFileDocument.positionAt(minStart),
-							map.virtualFileDocument.positionAt(maxEnd),
-						),
+						range: {
+							start: map.virtualFileDocument.positionAt(minStart),
+							end: map.virtualFileDocument.positionAt(maxEnd),
+						},
 						codeActionContext: _codeActionContext,
 					}];
 				}

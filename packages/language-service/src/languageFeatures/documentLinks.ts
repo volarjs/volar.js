@@ -1,10 +1,11 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
 import { notEmpty } from '../utils/common';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export interface DocumentLinkData {
 	uri: string,
@@ -14,7 +15,7 @@ export interface DocumentLinkData {
 
 export function register(context: ServiceContext) {
 
-	return async (uri: string, token = vscode.CancellationToken.None) => {
+	return async (uri: string, token = NoneCancellationToken) => {
 
 		const pluginLinks = await documentFeatureWorker(
 			context,

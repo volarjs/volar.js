@@ -1,6 +1,7 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
@@ -8,10 +9,10 @@ export function register(context: ServiceContext) {
 		uri: string,
 		position: vscode.Position,
 		signatureHelpContext: vscode.SignatureHelpContext = {
-			triggerKind: vscode.SignatureHelpTriggerKind.Invoked,
+			triggerKind: 1 satisfies typeof vscode.SignatureHelpTriggerKind.Invoked,
 			isRetrigger: false,
 		},
-		token = vscode.CancellationToken.None,
+		token = NoneCancellationToken,
 	) => {
 
 		return languageFeatureWorker(
@@ -23,7 +24,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested)
 					return;
 				if (
-					signatureHelpContext?.triggerKind === vscode.SignatureHelpTriggerKind.TriggerCharacter
+					signatureHelpContext?.triggerKind === 2 satisfies typeof vscode.SignatureHelpTriggerKind.TriggerCharacter
 					&& signatureHelpContext.triggerCharacter
 					&& !(
 						signatureHelpContext.isRetrigger

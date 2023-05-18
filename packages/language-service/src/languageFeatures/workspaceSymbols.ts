@@ -1,11 +1,12 @@
 import * as transformer from '../transformer';
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return async (query: string, token = vscode.CancellationToken.None) => {
+	return async (query: string, token = NoneCancellationToken) => {
 
 		const symbolsList: vscode.WorkspaceSymbol[][] = [];
 
@@ -26,7 +27,7 @@ export function register(context: ServiceContext) {
 					for (const [_, map] of context.documents.getMapsByVirtualFileUri(loc.uri)) {
 						const range = map.toSourceRange(loc.range);
 						if (range) {
-							return vscode.Location.create(map.sourceFileDocument.uri, range);
+							return { uri: map.sourceFileDocument.uri, range };
 						}
 					}
 				}

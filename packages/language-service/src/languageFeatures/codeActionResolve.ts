@@ -1,11 +1,12 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { ServiceCodeActionData, RuleCodeActionData } from './codeActions';
 import { embeddedEditToSourceEdit } from './rename';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return async (item: vscode.CodeAction, token = vscode.CancellationToken.None) => {
+	return async (item: vscode.CodeAction, token = NoneCancellationToken) => {
 
 		const data: ServiceCodeActionData | RuleCodeActionData | undefined = item.data;
 

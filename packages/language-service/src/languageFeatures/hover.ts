@@ -1,12 +1,13 @@
-import * as vscode from 'vscode-languageserver-protocol';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { isInsideRange } from '../utils/common';
 import { errorMarkups } from './validation';
+import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
-	return async (uri: string, position: vscode.Position, token = vscode.CancellationToken.None) => {
+	return async (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
 
 		let hover = await languageFeatureWorker(
 			context,
@@ -31,9 +32,9 @@ export function register(context: ServiceContext) {
 					return item;
 				}
 			},
-			hovers => ({
+			(hovers): vscode.Hover => ({
 				contents: {
-					kind: vscode.MarkupKind.Markdown,
+					kind: 'markdown' satisfies typeof vscode.MarkupKind.Markdown,
 					value: hovers.map(getHoverTexts).flat().join('\n\n---\n\n'),
 				},
 				range: hovers.find(hover => hover.range && isInsideRange(hover.range, { start: position, end: position }))?.range ?? hovers[0].range,
@@ -46,14 +47,14 @@ export function register(context: ServiceContext) {
 				if (isInsideRange(errorAndMarkup.error.range, { start: position, end: position })) {
 					hover ??= {
 						contents: {
-							kind: vscode.MarkupKind.Markdown,
+							kind: 'markdown' satisfies typeof vscode.MarkupKind.Markdown,
 							value: '',
 						},
 					};
 					hover.range = errorAndMarkup.error.range;
-					if (!vscode.MarkupContent.is(hover.contents)) {
+					if (typeof hover.contents !== 'object' || typeof hover.contents !== 'string') {
 						hover.contents = {
-							kind: vscode.MarkupKind.Markdown,
+							kind: 'markdown' satisfies typeof vscode.MarkupKind.Markdown,
 							value: hover.contents as string,
 						};
 					}
@@ -73,9 +74,6 @@ function getHoverTexts(hover: vscode.Hover): string[] {
 	if (typeof hover.contents === 'string') {
 		return [hover.contents];
 	}
-	if (vscode.MarkupContent.is(hover.contents)) {
-		return [hover.contents.value];
-	}
 	if (Array.isArray(hover.contents)) {
 		return hover.contents.map(content => {
 			if (typeof content === 'string') {
@@ -83,6 +81,9 @@ function getHoverTexts(hover: vscode.Hover): string[] {
 			}
 			return `\`\`\`${content.language}\n${content.value}\n\`\`\``;
 		});
+	}
+	if ('kind' in hover.contents) {
+		return [hover.contents.value];
 	}
 	return [`\`\`\`${hover.contents.language}\n${hover.contents.value}\n\`\`\``];
 }

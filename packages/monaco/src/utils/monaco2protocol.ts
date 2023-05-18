@@ -12,7 +12,7 @@ export function asRange(range: IRange): protocol.Range {
 	return {
 		start: asPosition({ lineNumber: range.startLineNumber, column: range.startColumn }),
 		end: asPosition({ lineNumber: range.endLineNumber, column: range.endColumn }),
-	}
+	};
 }
 
 export function asCompletionContext(context: languages.CompletionContext): protocol.CompletionContext {
