@@ -3,7 +3,7 @@ import * as embeddedLS from '@volar/language-service';
 import { ServiceEnvironment } from '@volar/language-service';
 import * as path from 'typesafe-path';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import * as html from 'vscode-html-languageservice';
+import type * as html from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI, Utils } from 'vscode-uri';
 import { FileSystem, LanguageServerPlugin, ServerMode } from '../types';
