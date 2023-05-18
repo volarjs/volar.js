@@ -27,7 +27,7 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../language-service
       typesafe-path:
         specifier: ^0.2.2
@@ -45,13 +45,13 @@ importers:
         specifier: 1.67.0
         version: 1.67.0
       '@volar/language-server':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../language-server
       '@volar/source-map':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../source-map
       '@volar/vscode':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../vscode
       esbuild:
         specifier: 0.15.18
@@ -66,16 +66,16 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../language-core
       '@volar/language-service':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../language-service
       '@vscode/l10n':
         specifier: ^0.0.11
@@ -105,10 +105,10 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../language-core
       '@volar/source-map':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../source-map
       typescript-auto-import-cache:
         specifier: ^0.2.1
@@ -133,7 +133,7 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.7
@@ -155,16 +155,16 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../language-core
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../language-server
       '@volar/source-map':
-        specifier: 1.6.6
+        specifier: 1.6.7
         version: link:../source-map
       typesafe-path:
         specifier: ^0.2.2

@@ -1,6 +1,6 @@
 {
 	"name": "@volar/language-core",
-	"version": "1.6.6",
+	"version": "1.6.7",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,6 +13,6 @@
 		"directory": "packages/language-core"
 	},
 	"dependencies": {
-		"@volar/source-map": "1.6.6"
+		"@volar/source-map": "1.6.7"
 	}
 }
