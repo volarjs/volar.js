@@ -9,7 +9,7 @@ import { URI } from 'vscode-uri';
 
 export function createLanguageService(options: {
 	workerContext: monaco.worker.IWorkerContext<any>,
-	dtsHost?: CdnDtsHost,
+	dtsHost?: DtsHost,
 	config: Config,
 	typescript?: {
 		module: typeof import('typescript/lib/tsserverlibrary'),
@@ -247,7 +247,12 @@ export function createJsDelivrDtsHost(
 	);
 }
 
-class CdnDtsHost {
+export interface DtsHost {
+	readFile(fileName: string): Promise<string | undefined> | string | undefined;
+	getVersion(): Promise<number>;
+}
+
+class CdnDtsHost implements DtsHost {
 
 	files = new Map<string, Promise<string | undefined> | string | undefined>();
 	flatResult = new Map<string, Promise<string[]>>();
