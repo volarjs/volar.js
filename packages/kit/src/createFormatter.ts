@@ -1,4 +1,4 @@
-import { CancellationToken, Config, FormattingOptions, LanguageServiceHost, createLanguageService } from '@volar/language-service';
+import { Config, FormattingOptions, LanguageServiceHost, createLanguageService } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -54,7 +54,7 @@ export function createFormatter(
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri);
 		if (!document) throw `file not found: ${fileName}`;
-		const edits = await service.format(uri, options, undefined, undefined, CancellationToken.None);
+		const edits = await service.format(uri, options, undefined, undefined);
 		if (edits?.length) {
 			const newString = TextDocument.applyEdits(document, edits);
 			return newString;
@@ -67,7 +67,7 @@ export function createFormatter(
 		dummyScriptLanguageId = languageId;
 		dummyScriptVersion++;
 		const document = service.context.getTextDocument(dummyScriptUri)!;
-		const edits = await service.format(dummyScriptUri, options, undefined, undefined, CancellationToken.None);
+		const edits = await service.format(dummyScriptUri, options, undefined, undefined);
 		if (edits?.length) {
 			const newString = TextDocument.applyEdits(document, edits);
 			return newString;

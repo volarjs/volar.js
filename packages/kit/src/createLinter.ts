@@ -1,4 +1,4 @@
-import { CancellationToken, CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, LanguageServiceHost, TextDocumentEdit, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
+import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, LanguageServiceHost, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -50,10 +50,10 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		const document = service.context.getTextDocument(uri);
 		if (document) {
 			const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
-			const codeActions = await service.doCodeActions(uri, range, { diagnostics, only, triggerKind: CodeActionTriggerKind.Invoked }, CancellationToken.None);
+			const codeActions = await service.doCodeActions(uri, range, { diagnostics, only, triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked });
 			if (codeActions) {
 				for (let i = 0; i < codeActions.length; i++) {
-					codeActions[i] = await service.doCodeActionResolve(codeActions[i], CancellationToken.None);
+					codeActions[i] = await service.doCodeActionResolve(codeActions[i]);
 				}
 				const edits = codeActions.map(codeAction => codeAction.edit).filter((edit): edit is NonNullable<typeof edit> => !!edit);
 				if (edits.length) {
@@ -70,7 +70,7 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 						}
 					}
 					for (const change of rootEdit.documentChanges ?? []) {
-						if (TextDocumentEdit.is(change)) {
+						if ('textDocument' in change) {
 							const editDocument = service.context.getTextDocument(change.textDocument.uri);
 							if (editDocument) {
 								const newString = TextDocument.applyEdits(editDocument, change.edits);
@@ -98,7 +98,7 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri)!;
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
-			category: diagnostic.severity === DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
+			category: diagnostic.severity === 1 satisfies typeof DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
 			code: diagnostic.code as number,
 			file: ts.createSourceFile(fileName, document.getText(), ts.ScriptTarget.JSON),
 			start: document.offsetAt(diagnostic.range.start),

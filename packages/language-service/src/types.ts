@@ -7,7 +7,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { DocumentsAndSourceMaps } from './documents';
 
-export * from 'vscode-languageserver-protocol';
+export type * from 'vscode-languageserver-protocol';
 
 export interface SharedModules {
 	typescript?: typeof import('typescript/lib/tsserverlibrary');
