@@ -16,8 +16,10 @@
 	},
 	"dependencies": {
 		"@volar/language-service": "1.6.5",
-		"monaco-editor-core": "^0.36.0",
 		"vscode-languageserver-protocol": "^3.17.3",
 		"vscode-uri": "^3.0.7"
+	},
+	"devDependencies": {
+		"monaco-editor-core": "latest"
 	}
 }

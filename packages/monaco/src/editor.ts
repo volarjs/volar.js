@@ -1,5 +1,5 @@
 import { LanguageService } from '@volar/language-service';
-import { editor as _editor, IDisposable, Position, Uri } from 'monaco-editor-core';
+import type { editor as _editor, IDisposable, Uri } from 'monaco-editor-core';
 import { markers } from './utils/markers';
 import * as protocol2monaco from './utils/protocol2monaco';
 import * as monaco2protocol from './utils/monaco2protocol';
@@ -187,11 +187,13 @@ export namespace editor {
 					if (model.getVersionId() !== version) {
 						return;
 					}
-					const position = new Position(lastChange.range.startLineNumber, lastChange.range.startColumn + lastChange.text.length);
 					const languageService = await worker.withSyncedResources(getSyncUris());
 					const edit = await languageService.doAutoInsert(
 						model.uri.toString(),
-						monaco2protocol.asPosition(position),
+						monaco2protocol.asPosition({
+							lineNumber: lastChange.range.startLineNumber,
+							column: lastChange.range.startColumn + lastChange.text.length,
+						}),
 						{
 							lastChange: {
 								range: monaco2protocol.asRange(lastChange.range),

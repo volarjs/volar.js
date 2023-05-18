@@ -1,7 +1,7 @@
-import { IMarkdownString, IRange, languages, Position } from 'monaco-editor-core';
+import type { IMarkdownString, IRange, IPosition, languages } from 'monaco-editor-core';
 import * as protocol from 'vscode-languageserver-protocol';
 
-export function asPosition(position: Position): protocol.Position {
+export function asPosition(position: IPosition): protocol.Position {
 	return protocol.Position.create(position.lineNumber - 1, position.column - 1);
 }
 
@@ -32,11 +32,11 @@ export function asSignatureHelpContext(context: languages.SignatureHelpContext):
 
 export function asSignatureHelpTriggerKind(kind: languages.SignatureHelpTriggerKind): protocol.SignatureHelpTriggerKind {
 	switch (kind) {
-		case languages.SignatureHelpTriggerKind.Invoke:
+		case 1 satisfies languages.SignatureHelpTriggerKind.Invoke as languages.SignatureHelpTriggerKind.Invoke:
 			return protocol.SignatureHelpTriggerKind.Invoked;
-		case languages.SignatureHelpTriggerKind.TriggerCharacter:
+		case 2 satisfies languages.SignatureHelpTriggerKind.TriggerCharacter as languages.SignatureHelpTriggerKind.TriggerCharacter:
 			return protocol.SignatureHelpTriggerKind.TriggerCharacter;
-		case languages.SignatureHelpTriggerKind.ContentChange:
+		case 3 satisfies languages.SignatureHelpTriggerKind.ContentChange as languages.SignatureHelpTriggerKind.ContentChange:
 			return protocol.SignatureHelpTriggerKind.ContentChange;
 	}
 }
@@ -80,11 +80,11 @@ export function asMarkdownString(entry: IMarkdownString | string | undefined): p
 
 export function asTriggerKind(kind: languages.CompletionTriggerKind): protocol.CompletionTriggerKind {
 	switch (kind) {
-		case languages.CompletionTriggerKind.Invoke:
+		case 0 satisfies languages.CompletionTriggerKind.Invoke as languages.CompletionTriggerKind.Invoke:
 			return protocol.CompletionTriggerKind.Invoked;
-		case languages.CompletionTriggerKind.TriggerCharacter:
+		case 1 satisfies languages.CompletionTriggerKind.TriggerCharacter as languages.CompletionTriggerKind.TriggerCharacter:
 			return protocol.CompletionTriggerKind.TriggerCharacter;
-		case languages.CompletionTriggerKind.TriggerForIncompleteCompletions:
+		case 2 satisfies languages.CompletionTriggerKind.TriggerForIncompleteCompletions as languages.CompletionTriggerKind.TriggerForIncompleteCompletions:
 			return protocol.CompletionTriggerKind.TriggerForIncompleteCompletions;
 	}
 }
