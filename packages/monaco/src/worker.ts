@@ -248,13 +248,13 @@ export function createJsDelivrDtsHost(
 }
 
 export interface DtsHost {
-	readFile(fileName: string): Promise<string | undefined> | string | undefined;
-	getVersion(): Promise<number>;
+	readFile(fileName: string): Thenable<string | undefined>;
+	getVersion(): Thenable<number>;
 }
 
 class CdnDtsHost implements DtsHost {
 
-	files = new Map<string, Promise<string | undefined> | string | undefined>();
+	files = new Map<string, Promise<string | undefined>>();
 	flatResult = new Map<string, Promise<string[]>>();
 	lastUpdateFilesSize = 0;
 
@@ -276,7 +276,7 @@ class CdnDtsHost implements DtsHost {
 		return this.files.size;
 	}
 
-	readFile(fileName: string) {
+	async readFile(fileName: string) {
 		if (
 			fileName.startsWith('/node_modules/')
 			// ignore .js because it's no help for intellisense
@@ -285,7 +285,7 @@ class CdnDtsHost implements DtsHost {
 			if (!this.files.has(fileName)) {
 				this.files.set(fileName, this.fetchFile(fileName));
 			}
-			return this.files.get(fileName);
+			return await this.files.get(fileName);
 		}
 		return undefined;
 	}
