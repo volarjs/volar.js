@@ -1,17 +1,18 @@
 import type { IMarkdownString, IRange, IPosition, languages } from 'monaco-editor-core';
-import * as protocol from 'vscode-languageserver-protocol';
+import type * as protocol from 'vscode-languageserver-protocol';
 
 export function asPosition(position: IPosition): protocol.Position {
-	return protocol.Position.create(position.lineNumber - 1, position.column - 1);
+	return {
+		line: position.lineNumber - 1,
+		character: position.column - 1,
+	};
 }
 
 export function asRange(range: IRange): protocol.Range {
-	return protocol.Range.create(
-		range.startLineNumber - 1,
-		range.startColumn - 1,
-		range.endLineNumber - 1,
-		range.endColumn - 1
-	);
+	return {
+		start: asPosition({ lineNumber: range.startLineNumber, column: range.startColumn }),
+		end: asPosition({ lineNumber: range.endLineNumber, column: range.endColumn }),
+	}
 }
 
 export function asCompletionContext(context: languages.CompletionContext): protocol.CompletionContext {
@@ -33,11 +34,11 @@ export function asSignatureHelpContext(context: languages.SignatureHelpContext):
 export function asSignatureHelpTriggerKind(kind: languages.SignatureHelpTriggerKind): protocol.SignatureHelpTriggerKind {
 	switch (kind) {
 		case 1 satisfies languages.SignatureHelpTriggerKind.Invoke as languages.SignatureHelpTriggerKind.Invoke:
-			return protocol.SignatureHelpTriggerKind.Invoked;
+			return 1 satisfies typeof protocol.SignatureHelpTriggerKind.Invoked;
 		case 2 satisfies languages.SignatureHelpTriggerKind.TriggerCharacter as languages.SignatureHelpTriggerKind.TriggerCharacter:
-			return protocol.SignatureHelpTriggerKind.TriggerCharacter;
+			return 2 satisfies typeof protocol.SignatureHelpTriggerKind.TriggerCharacter;
 		case 3 satisfies languages.SignatureHelpTriggerKind.ContentChange as languages.SignatureHelpTriggerKind.ContentChange:
-			return protocol.SignatureHelpTriggerKind.ContentChange;
+			return 3 satisfies typeof protocol.SignatureHelpTriggerKind.ContentChange;
 	}
 }
 
@@ -81,11 +82,11 @@ export function asMarkdownString(entry: IMarkdownString | string | undefined): p
 export function asTriggerKind(kind: languages.CompletionTriggerKind): protocol.CompletionTriggerKind {
 	switch (kind) {
 		case 0 satisfies languages.CompletionTriggerKind.Invoke as languages.CompletionTriggerKind.Invoke:
-			return protocol.CompletionTriggerKind.Invoked;
+			return 1 satisfies typeof protocol.CompletionTriggerKind.Invoked;
 		case 1 satisfies languages.CompletionTriggerKind.TriggerCharacter as languages.CompletionTriggerKind.TriggerCharacter:
-			return protocol.CompletionTriggerKind.TriggerCharacter;
+			return 2 satisfies typeof protocol.CompletionTriggerKind.TriggerCharacter;
 		case 2 satisfies languages.CompletionTriggerKind.TriggerForIncompleteCompletions as languages.CompletionTriggerKind.TriggerForIncompleteCompletions:
-			return protocol.CompletionTriggerKind.TriggerForIncompleteCompletions;
+			return 3 satisfies typeof protocol.CompletionTriggerKind.TriggerForIncompleteCompletions;
 	}
 }
 

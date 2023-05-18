@@ -19,7 +19,7 @@ importers:
         version: 5.0.4
       vite:
         specifier: latest
-        version: 4.3.7(@types/node@20.2.0)
+        version: 4.3.8(@types/node@20.2.0)
       vitest:
         specifier: latest
         version: 0.31.1
@@ -134,15 +134,16 @@ importers:
       '@volar/language-service':
         specifier: 1.6.5
         version: link:../language-service
-      monaco-editor-core:
-        specifier: ^0.36.0
-        version: 0.36.0
-      vscode-languageserver-protocol:
-        specifier: ^3.17.3
-        version: 3.17.3
       vscode-uri:
         specifier: ^3.0.7
         version: 3.0.7
+    devDependencies:
+      monaco-editor-core:
+        specifier: latest
+        version: 0.38.0
+      vscode-languageserver-protocol:
+        specifier: ^3.17.3
+        version: 3.17.3
 
   packages/source-map:
     dependencies:
@@ -1633,7 +1634,7 @@ packages:
       js-string-escape: 1.0.1
       lodash: 4.17.21
       md5-hex: 3.0.1
-      semver: 7.5.0
+      semver: 7.5.1
       well-known-symbols: 2.0.0
     dev: true
 
@@ -3562,9 +3563,9 @@ packages:
     dev: false
     optional: true
 
-  /monaco-editor-core@0.36.0:
-    resolution: {integrity: sha512-d0559W7eAJUAIUYZxVNwvjRTnBux1UXnT5FP94Fmq2w6aNG4/xPQkis5E9+AoPF5hVoNXkQMP5aYnPyogoOR/w==}
-    dev: false
+  /monaco-editor-core@0.38.0:
+    resolution: {integrity: sha512-xMYhffdnz+sKcA9OTxsSh4s1Wul3WocjIKZqX47ULgC5m8Fprwn6CrD+CQG663xQd3pjjoh9xEggy/wN7iqcWA==}
+    dev: true
 
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
@@ -5211,7 +5212,7 @@ packages:
       mlly: 1.2.0
       pathe: 1.1.0
       picocolors: 1.0.0
-      vite: 4.3.7(@types/node@20.2.0)
+      vite: 4.3.8(@types/node@20.2.0)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5222,8 +5223,8 @@ packages:
       - terser
     dev: true
 
-  /vite@4.3.7(@types/node@20.2.0):
-    resolution: {integrity: sha512-MTIFpbIm9v7Hh5b0wSBgkcWzSBz7SAa6K/cBTwS4kUiQJfQLFlZZRJRQgqunCVzhTPCk674tW+0Qaqh3Q00dBg==}
+  /vite@4.3.8(@types/node@20.2.0):
+    resolution: {integrity: sha512-uYB8PwN7hbMrf4j1xzGDk/lqjsZvCDbt/JC5dyfxc19Pg8kRm14LinK/uq+HSLNswZEoKmweGdtpbnxRtrAXiQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
@@ -5308,7 +5309,7 @@ packages:
       strip-literal: 1.0.1
       tinybench: 2.5.0
       tinypool: 0.5.0
-      vite: 4.3.7(@types/node@20.2.0)
+      vite: 4.3.8(@types/node@20.2.0)
       vite-node: 0.31.1(@types/node@20.2.0)
       why-is-node-running: 2.2.2
     transitivePeerDependencies:

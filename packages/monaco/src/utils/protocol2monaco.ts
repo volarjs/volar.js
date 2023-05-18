@@ -1,5 +1,5 @@
 import type { editor, IMarkdownString, IRange, languages, MarkerSeverity, MarkerTag, IPosition, Uri } from 'monaco-editor-core';
-import * as protocol from 'vscode-languageserver-protocol';
+import type * as protocol from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 
 export function asCompletionList(list: protocol.CompletionList, range: protocol.Range): languages.CompletionList {
@@ -11,55 +11,55 @@ export function asCompletionList(list: protocol.CompletionList, range: protocol.
 
 export function asCompletionItemKind(kind: protocol.CompletionItemKind | undefined): languages.CompletionItemKind {
 	switch (kind) {
-		case protocol.CompletionItemKind.Method:
+		case 2 satisfies typeof protocol.CompletionItemKind.Method:
 			return 0 satisfies languages.CompletionItemKind.Method;
-		case protocol.CompletionItemKind.Function:
+		case 3 satisfies typeof protocol.CompletionItemKind.Function:
 			return 1 satisfies languages.CompletionItemKind.Function;
-		case protocol.CompletionItemKind.Constructor:
+		case 4 satisfies typeof protocol.CompletionItemKind.Constructor:
 			return 2 satisfies languages.CompletionItemKind.Constructor;
-		case protocol.CompletionItemKind.Field:
+		case 5 satisfies typeof protocol.CompletionItemKind.Field:
 			return 3 satisfies languages.CompletionItemKind.Field;
-		case protocol.CompletionItemKind.Variable:
+		case 6 satisfies typeof protocol.CompletionItemKind.Variable:
 			return 4 satisfies languages.CompletionItemKind.Variable;
-		case protocol.CompletionItemKind.Class:
+		case 7 satisfies typeof protocol.CompletionItemKind.Class:
 			return 5 satisfies languages.CompletionItemKind.Class;
-		case protocol.CompletionItemKind.Interface:
+		case 8 satisfies typeof protocol.CompletionItemKind.Interface:
 			return 7 satisfies languages.CompletionItemKind.Interface;
-		case protocol.CompletionItemKind.Module:
+		case 9 satisfies typeof protocol.CompletionItemKind.Module:
 			return 8 satisfies languages.CompletionItemKind.Module;
-		case protocol.CompletionItemKind.Property:
+		case 10 satisfies typeof protocol.CompletionItemKind.Property:
 			return 9 satisfies languages.CompletionItemKind.Property;
-		case protocol.CompletionItemKind.Unit:
+		case 11 satisfies typeof protocol.CompletionItemKind.Unit:
 			return 12 satisfies languages.CompletionItemKind.Unit;
-		case protocol.CompletionItemKind.Value:
+		case 12 satisfies typeof protocol.CompletionItemKind.Value:
 			return 13 satisfies languages.CompletionItemKind.Value;
-		case protocol.CompletionItemKind.Enum:
+		case 13 satisfies typeof protocol.CompletionItemKind.Enum:
 			return 15 satisfies languages.CompletionItemKind.Enum;
-		case protocol.CompletionItemKind.Keyword:
+		case 14 satisfies typeof protocol.CompletionItemKind.Keyword:
 			return 17 satisfies languages.CompletionItemKind.Keyword;
-		case protocol.CompletionItemKind.Snippet:
+		case 15 satisfies typeof protocol.CompletionItemKind.Snippet:
 			return 27 satisfies languages.CompletionItemKind.Snippet;
-		case protocol.CompletionItemKind.Text:
+		case 1 satisfies typeof protocol.CompletionItemKind.Text:
 			return 18 satisfies languages.CompletionItemKind.Text;
-		case protocol.CompletionItemKind.Color:
+		case 16 satisfies typeof protocol.CompletionItemKind.Color:
 			return 19 satisfies languages.CompletionItemKind.Color;
-		case protocol.CompletionItemKind.File:
+		case 17 satisfies typeof protocol.CompletionItemKind.File:
 			return 20 satisfies languages.CompletionItemKind.File;
-		case protocol.CompletionItemKind.Reference:
+		case 18 satisfies typeof protocol.CompletionItemKind.Reference:
 			return 21 satisfies languages.CompletionItemKind.Reference;
-		case protocol.CompletionItemKind.Folder:
+		case 19 satisfies typeof protocol.CompletionItemKind.Folder:
 			return 23 satisfies languages.CompletionItemKind.Folder;
-		case protocol.CompletionItemKind.EnumMember:
+		case 20 satisfies typeof protocol.CompletionItemKind.EnumMember:
 			return 16 satisfies languages.CompletionItemKind.EnumMember;
-		case protocol.CompletionItemKind.Constant:
+		case 21 satisfies typeof protocol.CompletionItemKind.Constant:
 			return 14 satisfies languages.CompletionItemKind.Constant;
-		case protocol.CompletionItemKind.Struct:
+		case 22 satisfies typeof protocol.CompletionItemKind.Struct:
 			return 6 satisfies languages.CompletionItemKind.Struct;
-		case protocol.CompletionItemKind.Event:
+		case 23 satisfies typeof protocol.CompletionItemKind.Event:
 			return 10 satisfies languages.CompletionItemKind.Event;
-		case protocol.CompletionItemKind.Operator:
+		case 24 satisfies typeof protocol.CompletionItemKind.Operator:
 			return 11 satisfies languages.CompletionItemKind.Operator;
-		case protocol.CompletionItemKind.TypeParameter:
+		case 25 satisfies typeof protocol.CompletionItemKind.TypeParameter:
 			return 24 satisfies languages.CompletionItemKind.TypeParameter;
 		default:
 			return 18 satisfies languages.CompletionItemKind.Text;
@@ -101,7 +101,7 @@ export function asTextEdit(edit: protocol.TextEdit): languages.TextEdit {
 }
 
 export function asCompletionItemRange(textEdit: NonNullable<protocol.CompletionItem['textEdit']>): languages.CompletionItem['range'] {
-	if (protocol.InsertReplaceEdit.is(textEdit)) {
+	if ('insert' in textEdit && 'replace' in textEdit) {
 		const result: languages.CompletionItemRanges = {
 			insert: asRange(textEdit.insert),
 			replace: asRange(textEdit.replace),
@@ -138,7 +138,7 @@ export function asMarkdownString(markdownString: protocol.Hover['contents']): IM
 }
 
 export function asLocation(definition: protocol.LocationLink | protocol.Location): languages.Location {
-	if (protocol.LocationLink.is(definition)) {
+	if ('targetUri' in definition && 'targetSelectionRange' in definition) {
 		return {
 			uri: asUri(definition.targetUri),
 			range: asRange(definition.targetSelectionRange),
@@ -196,9 +196,9 @@ export function asMarkerData(diagnostic: protocol.Diagnostic): editor.IMarkerDat
 
 export function asMarkerTag(tag: protocol.DiagnosticTag): MarkerTag {
 	switch (tag) {
-		case protocol.DiagnosticTag.Unnecessary:
+		case 1 satisfies typeof protocol.DiagnosticTag.Unnecessary:
 			return 1 satisfies MarkerTag.Unnecessary;
-		case protocol.DiagnosticTag.Deprecated:
+		case 2 satisfies typeof protocol.DiagnosticTag.Deprecated:
 			return 2 satisfies MarkerTag.Deprecated;
 	}
 }
@@ -213,13 +213,13 @@ export function asRelatedInformation(relatedInformation: protocol.DiagnosticRela
 
 export function asMarkerSeverity(severity: protocol.DiagnosticSeverity | undefined): MarkerSeverity {
 	switch (severity) {
-		case protocol.DiagnosticSeverity.Error:
+		case 1 satisfies typeof protocol.DiagnosticSeverity.Error:
 			return 8 satisfies MarkerSeverity.Error;
-		case protocol.DiagnosticSeverity.Warning:
+		case 2 satisfies typeof protocol.DiagnosticSeverity.Warning:
 			return 4 satisfies MarkerSeverity.Warning;
-		case protocol.DiagnosticSeverity.Information:
+		case 3 satisfies typeof protocol.DiagnosticSeverity.Information:
 			return 2 satisfies MarkerSeverity.Info;
-		case protocol.DiagnosticSeverity.Hint:
+		case 4 satisfies typeof protocol.DiagnosticSeverity.Hint:
 			return 1 satisfies MarkerSeverity.Hint;
 		default:
 			return 2 satisfies MarkerSeverity.Info;
@@ -244,7 +244,7 @@ export function asWorkspaceEdit(workspaceEdit: protocol.WorkspaceEdit): language
 	}
 	if (workspaceEdit.documentChanges) {
 		for (const documentChange of workspaceEdit.documentChanges) {
-			if (protocol.TextDocumentEdit.is(documentChange)) {
+			if ('edits' in documentChange) {
 				for (const edit of documentChange.edits) {
 					result.edits.push({
 						resource: asUri(documentChange.textDocument.uri),
@@ -252,7 +252,7 @@ export function asWorkspaceEdit(workspaceEdit: protocol.WorkspaceEdit): language
 						versionId: documentChange.textDocument.version ?? undefined,
 					});
 				}
-			} else if (protocol.CreateFile.is(documentChange)) {
+			} else if (documentChange.kind === 'create') {
 				result.edits.push({
 					newResource: asUri(documentChange.uri),
 					options: {
@@ -260,7 +260,7 @@ export function asWorkspaceEdit(workspaceEdit: protocol.WorkspaceEdit): language
 						ignoreIfExists: documentChange.options?.ignoreIfExists ?? false,
 					},
 				});
-			} else if (protocol.RenameFile.is(documentChange)) {
+			} else if (documentChange.kind === 'rename') {
 				result.edits.push({
 					oldResource: asUri(documentChange.oldUri),
 					newResource: asUri(documentChange.newUri),
@@ -269,7 +269,7 @@ export function asWorkspaceEdit(workspaceEdit: protocol.WorkspaceEdit): language
 						ignoreIfExists: documentChange.options?.ignoreIfExists ?? false,
 					},
 				});
-			} else if (protocol.DeleteFile.is(documentChange)) {
+			} else if (documentChange.kind === 'delete') {
 				result.edits.push({
 					oldResource: asUri(documentChange.uri),
 					options: {
@@ -300,64 +300,64 @@ export function asDocumentSymbol(symbol: protocol.DocumentSymbol): languages.Doc
 
 export function asSymbolTag(tag: protocol.SymbolTag): languages.SymbolTag {
 	switch (tag) {
-		case protocol.SymbolTag.Deprecated:
+		case 1 satisfies typeof protocol.SymbolTag.Deprecated:
 			return 1 satisfies languages.SymbolTag.Deprecated;
 	}
 }
 
 export function asSymbolKind(kind: protocol.SymbolKind): languages.SymbolKind {
 	switch (kind) {
-		case protocol.SymbolKind.File:
+		case 1 satisfies typeof protocol.SymbolKind.File:
 			return 0 satisfies languages.SymbolKind.File;
-		case protocol.SymbolKind.Module:
+		case 2 satisfies typeof protocol.SymbolKind.Module:
 			return 1 satisfies languages.SymbolKind.Module;
-		case protocol.SymbolKind.Namespace:
+		case 3 satisfies typeof protocol.SymbolKind.Namespace:
 			return 2 satisfies languages.SymbolKind.Namespace;
-		case protocol.SymbolKind.Package:
+		case 4 satisfies typeof protocol.SymbolKind.Package:
 			return 3 satisfies languages.SymbolKind.Package;
-		case protocol.SymbolKind.Class:
+		case 5 satisfies typeof protocol.SymbolKind.Class:
 			return 4 satisfies languages.SymbolKind.Class;
-		case protocol.SymbolKind.Method:
+		case 6 satisfies typeof protocol.SymbolKind.Method:
 			return 5 satisfies languages.SymbolKind.Method;
-		case protocol.SymbolKind.Property:
+		case 7 satisfies typeof protocol.SymbolKind.Property:
 			return 6 satisfies languages.SymbolKind.Property;
-		case protocol.SymbolKind.Field:
+		case 8 satisfies typeof protocol.SymbolKind.Field:
 			return 7 satisfies languages.SymbolKind.Field;
-		case protocol.SymbolKind.Constructor:
+		case 9 satisfies typeof protocol.SymbolKind.Constructor:
 			return 8 satisfies languages.SymbolKind.Constructor;
-		case protocol.SymbolKind.Enum:
+		case 10 satisfies typeof protocol.SymbolKind.Enum:
 			return 9 satisfies languages.SymbolKind.Enum;
-		case protocol.SymbolKind.Interface:
+		case 11 satisfies typeof protocol.SymbolKind.Interface:
 			return 10 satisfies languages.SymbolKind.Interface;
-		case protocol.SymbolKind.Function:
+		case 12 satisfies typeof protocol.SymbolKind.Function:
 			return 11 satisfies languages.SymbolKind.Function;
-		case protocol.SymbolKind.Variable:
+		case 13 satisfies typeof protocol.SymbolKind.Variable:
 			return 12 satisfies languages.SymbolKind.Variable;
-		case protocol.SymbolKind.Constant:
+		case 14 satisfies typeof protocol.SymbolKind.Constant:
 			return 13 satisfies languages.SymbolKind.Constant;
-		case protocol.SymbolKind.String:
+		case 15 satisfies typeof protocol.SymbolKind.String:
 			return 14 satisfies languages.SymbolKind.String;
-		case protocol.SymbolKind.Number:
+		case 16 satisfies typeof protocol.SymbolKind.Number:
 			return 15 satisfies languages.SymbolKind.Number;
-		case protocol.SymbolKind.Boolean:
+		case 17 satisfies typeof protocol.SymbolKind.Boolean:
 			return 16 satisfies languages.SymbolKind.Boolean;
-		case protocol.SymbolKind.Array:
+		case 18 satisfies typeof protocol.SymbolKind.Array:
 			return 17 satisfies languages.SymbolKind.Array;
-		case protocol.SymbolKind.Object:
+		case 19 satisfies typeof protocol.SymbolKind.Object:
 			return 18 satisfies languages.SymbolKind.Object;
-		case protocol.SymbolKind.Key:
+		case 20 satisfies typeof protocol.SymbolKind.Key:
 			return 19 satisfies languages.SymbolKind.Key;
-		case protocol.SymbolKind.Null:
+		case 21 satisfies typeof protocol.SymbolKind.Null:
 			return 20 satisfies languages.SymbolKind.Null;
-		case protocol.SymbolKind.EnumMember:
+		case 22 satisfies typeof protocol.SymbolKind.EnumMember:
 			return 21 satisfies languages.SymbolKind.EnumMember;
-		case protocol.SymbolKind.Struct:
+		case 23 satisfies typeof protocol.SymbolKind.Struct:
 			return 22 satisfies languages.SymbolKind.Struct;
-		case protocol.SymbolKind.Event:
+		case 24 satisfies typeof protocol.SymbolKind.Event:
 			return 23 satisfies languages.SymbolKind.Event;
-		case protocol.SymbolKind.Operator:
+		case 25 satisfies typeof protocol.SymbolKind.Operator:
 			return 24 satisfies languages.SymbolKind.Operator;
-		case protocol.SymbolKind.TypeParameter:
+		case 26 satisfies typeof protocol.SymbolKind.TypeParameter:
 			return 25 satisfies languages.SymbolKind.TypeParameter;
 		default:
 			return 0 satisfies languages.SymbolKind.File;
@@ -373,11 +373,11 @@ export function asDocumentHighlight(highlight: protocol.DocumentHighlight): lang
 
 export function asDocumentHighlightKind(kind: protocol.DocumentHighlightKind | undefined): languages.DocumentHighlightKind {
 	switch (kind) {
-		case protocol.DocumentHighlightKind.Text:
+		case 1 satisfies typeof protocol.DocumentHighlightKind.Text:
 			return 0 satisfies languages.DocumentHighlightKind.Text;
-		case protocol.DocumentHighlightKind.Read:
+		case 2 satisfies typeof protocol.DocumentHighlightKind.Read:
 			return 1 satisfies languages.DocumentHighlightKind.Read;
-		case protocol.DocumentHighlightKind.Write:
+		case 3 satisfies typeof protocol.DocumentHighlightKind.Write:
 			return 2 satisfies languages.DocumentHighlightKind.Write;
 		default:
 			return 0 satisfies languages.DocumentHighlightKind.Text;
@@ -459,9 +459,9 @@ export function asInlayHint(item: protocol.InlayHint): languages.InlayHint {
 
 export function asInlayHintKind(kind: protocol.InlayHintKind): languages.InlayHintKind {
 	switch (kind) {
-		case protocol.InlayHintKind.Parameter:
+		case 2 satisfies typeof protocol.InlayHintKind.Parameter:
 			return 2 satisfies languages.InlayHintKind.Parameter;
-		case protocol.InlayHintKind.Type:
+		case 1 satisfies typeof protocol.InlayHintKind.Type:
 			return 1 satisfies languages.InlayHintKind.Type;
 	}
 }
