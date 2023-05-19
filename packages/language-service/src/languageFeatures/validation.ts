@@ -280,7 +280,8 @@ export function register(context: ServiceContext) {
 					ruleCtx.report = (error, ...fixes) => {
 
 						error.message ||= 'No message.';
-						error.source ||= ruleId;
+						error.source ||= 'rule';
+						error.code ||= ruleId;
 
 						reportResults.push([error, ...fixes]);
 					};
