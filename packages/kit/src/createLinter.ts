@@ -20,11 +20,6 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		config,
 		host,
 	);
-	const formatHost: ts.FormatDiagnosticsHost = {
-		getCurrentDirectory: () => host.getCurrentDirectory(),
-		getCanonicalFileName: (fileName) => host.useCaseSensitiveFileNames?.() ? fileName : fileName.toLowerCase(),
-		getNewLine: () => host.getNewLine?.() ?? '\n',
-	};
 
 	return {
 		check,
@@ -93,7 +88,7 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		console.log(text);
 	}
 
-	function formatErrors(fileName: string, diagnostics: Diagnostic[]) {
+	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath = process.cwd()) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri)!;
@@ -105,7 +100,11 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 			length: document.offsetAt(diagnostic.range.end) - document.offsetAt(diagnostic.range.start),
 			messageText: diagnostic.message,
 		}));
-		const text = ts.formatDiagnosticsWithColorAndContext(errors, formatHost);
+		const text = ts.formatDiagnosticsWithColorAndContext(errors, {
+			getCurrentDirectory: () => rootPath ?? host.getCurrentDirectory(),
+			getCanonicalFileName: (fileName) => host.useCaseSensitiveFileNames?.() ? fileName : fileName.toLowerCase(),
+			getNewLine: () => host.getNewLine?.() ?? '\n',
+		});
 		return text;
 	}
 }
