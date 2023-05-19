@@ -1,6 +1,5 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import { SemanticToken } from '@volar/language-service';
-import type { ServiceContext } from '../types';
+import type { SemanticToken, ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { notEmpty } from '../utils/common';

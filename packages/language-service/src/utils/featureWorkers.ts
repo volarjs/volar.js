@@ -1,7 +1,7 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { visitEmbedded } from './definePlugin';
 import { Service, ServiceContext, Rule, RuleContext, RuleType } from '../types';
-import { FileRangeCapabilities, VirtualFile } from '@volar/language-service';
+import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
 import { SourceMapWithDocuments } from '../documents';
 
 export async function documentFeatureWorker<T>(
