@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BaseLanguageClient } from 'vscode-languageclient';
+import type { BaseLanguageClient } from 'vscode-languageclient';
 import { GetMatchTsConfigRequest } from '@volar/language-server';
 import * as path from 'typesafe-path';
 

@@ -16,9 +16,9 @@ export function takeOverModeActive(context: vscode.ExtensionContext) {
 	return false;
 }
 
-import * as lsp from 'vscode-languageclient';
+import type { BaseLanguageClient, Middleware } from 'vscode-languageclient';
 
-export const middleware: lsp.Middleware = {
+export const middleware: Middleware = {
 	async provideHover(document, position, token, next) {
 		const hover = await next(document, position, token);
 		for (const content of hover?.contents ?? []) {
@@ -99,7 +99,7 @@ export const supportLabsVersion = '1.6.2' as const;
 export interface ExportsInfoForLabs {
 	volarLabs: {
 		version: typeof supportLabsVersion;
-		languageClients: lsp.BaseLanguageClient[];
+		languageClients: BaseLanguageClient[];
 		languageServerProtocol: typeof import('@volar/language-server/protocol');
 		codegenStackSupport?: boolean;
 	};

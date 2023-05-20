@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BaseLanguageClient, State } from 'vscode-languageclient';
+import type { BaseLanguageClient, State } from 'vscode-languageclient';
 import { FsReadDirectoryRequest, FsReadFileRequest } from '@volar/language-server';
 
 export async function activate(
@@ -13,7 +13,7 @@ export async function activate(
 	addHandle();
 
 	subscriptions.push(client.onDidChangeState(() => {
-		if (client.state === State.Running) {
+		if (client.state === 2 satisfies State.Running) {
 			addHandle();
 		}
 	}));

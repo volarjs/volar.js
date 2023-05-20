@@ -1,6 +1,6 @@
 import * as path from 'typesafe-path';
 import * as vscode from 'vscode';
-import { BaseLanguageClient } from 'vscode-languageclient';
+import type { BaseLanguageClient } from 'vscode-languageclient';
 import { quickPick } from '../common';
 import { InitializationOptions } from '@volar/language-server';
 

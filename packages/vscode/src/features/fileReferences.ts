@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BaseLanguageClient } from 'vscode-languageclient';
+import type { BaseLanguageClient } from 'vscode-languageclient';
 import * as nls from 'vscode-nls';
 import { FindFileReferenceRequest } from '@volar/language-server';
 
