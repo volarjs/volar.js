@@ -6,7 +6,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as html from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI, Utils } from 'vscode-uri';
-import { FileSystem, LanguageServerPlugin, ServerMode } from '../types';
+import { LanguageServerPlugin, ServerMode } from '../types';
 import { loadConfig } from './utils/serverConfig';
 import { createUriMap } from './utils/uriMap';
 import { WorkspaceContext } from './workspace';
@@ -26,16 +26,24 @@ export async function createProject(context: ProjectContext) {
 	const uriToFileName = context.server.runtimeEnv.uriToFileName;
 	const fileNameToUri = context.server.runtimeEnv.fileNameToUri;
 
-	const sys: FileSystem = context.workspaces.initOptions.serverMode === ServerMode.Syntactic || !context.workspaces.fileSystemHost
+	const sys: ts.System = context.workspaces.initOptions.serverMode === ServerMode.Syntactic || !context.workspaces.fileSystemHost
 		? {
+			args: [],
 			newLine: '\n',
 			useCaseSensitiveFileNames: false,
 			fileExists: () => false,
 			readFile: () => undefined,
 			readDirectory: () => [],
 			getCurrentDirectory: () => '',
-			realpath: () => '',
 			resolvePath: () => '',
+			write: () => { },
+			writeFile: () => { },
+			createDirectory: () => { },
+			realpath: path => path,
+			directoryExists: () => true,
+			exit: () => { },
+			getDirectories: () => [],
+			getExecutingFilePath: () => '/__fake__.js',
 		}
 		: context.workspaces.fileSystemHost.getWorkspaceFileSystem(context.project.rootUri);
 
@@ -126,6 +134,7 @@ export async function createProject(context: ProjectContext) {
 				env,
 				config,
 				languageServiceHost,
+				sys,
 				context.project.documentRegistry,
 			);
 		}
@@ -284,7 +293,7 @@ export async function createProject(context: ProjectContext) {
 
 function createParsedCommandLine(
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
-	sys: FileSystem,
+	sys: ts.System,
 	rootPath: path.PosixPath,
 	tsConfig: path.PosixPath | ts.CompilerOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],

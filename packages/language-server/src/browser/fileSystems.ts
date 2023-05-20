@@ -3,9 +3,10 @@ import { FileType } from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { FsReadDirectoryRequest, FsReadFileRequest } from '../protocol';
-import { FileSystem, FileSystemHost, InitializationOptions, RuntimeEnvironment } from '../types';
+import { FileSystemHost, InitializationOptions, RuntimeEnvironment } from '../types';
 import { matchFiles } from './typescript/utilities';
 import { createUriMap } from '../common/utils/uriMap';
+import type * as ts from 'typescript/lib/tsserverlibrary';
 
 interface File {
 	text?: string;
@@ -27,7 +28,7 @@ export function createWebFileSystemHost(
 	initOptions: InitializationOptions,
 ): FileSystemHost {
 
-	const instances = createUriMap<FileSystem>(env.fileNameToUri);
+	const instances = createUriMap<ts.System>(env.fileNameToUri);
 	const onDidChangeWatchedFilesCb = new Set<(params: vscode.DidChangeWatchedFilesParams) => void>();
 	const root: Dir = {
 		dirs: new Map(),
@@ -90,11 +91,12 @@ export function createWebFileSystemHost(
 	};
 
 
-	function createWorkspaceFileSystem(rootUri: URI): FileSystem {
+	function createWorkspaceFileSystem(rootUri: URI): ts.System {
 
 		const rootPath = env.uriToFileName(rootUri.toString());
 
 		return {
+			args: [],
 			newLine: '\n',
 			useCaseSensitiveFileNames: false,
 			getCurrentDirectory: () => env.uriToFileName(rootUri.toString()),
@@ -103,7 +105,15 @@ export function createWebFileSystemHost(
 			readDirectory,
 			getDirectories,
 			resolvePath,
-			realpath: path => path, // TODO: cannot implement with vscode
+
+			// ignore
+			write: () => { },
+			writeFile: () => { },
+			createDirectory: () => { },
+			realpath: path => path,
+			directoryExists: () => true,
+			exit: () => { },
+			getExecutingFilePath: () => rootPath + '/__fake__.js',
 		};
 
 		function resolvePath(fsPath: path.OsPath) {

@@ -10,20 +10,9 @@ import { ProjectContext } from './common/project';
 export type FileSystemHost = {
 	ready(connection: vscode.Connection): void,
 	reload(): void,
-	getWorkspaceFileSystem(rootUri: URI): FileSystem,
+	getWorkspaceFileSystem(rootUri: URI): ts.System,
 	onDidChangeWatchedFiles(cb: (params: vscode.DidChangeWatchedFilesParams) => void): () => void,
 };
-
-export type FileSystem = Pick<ts.System,
-	'newLine'
-	| 'useCaseSensitiveFileNames'
-	| 'fileExists'
-	| 'readFile'
-	| 'readDirectory'
-	| 'getCurrentDirectory'
-	| 'realpath'
-	| 'resolvePath'
-> & Partial<ts.System>;
 
 export interface RuntimeEnvironment {
 	uriToFileName: (uri: string) => string,
@@ -50,7 +39,7 @@ export interface RuntimeEnvironment {
 interface LanguageServerPluginContext extends ProjectContext {
 	env: ServiceEnvironment;
 	host: embedded.LanguageServiceHost;
-	sys: FileSystem;
+	sys: ts.System;
 }
 
 export interface LanguageServerPlugin {

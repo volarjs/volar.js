@@ -47,10 +47,25 @@ export function createLanguageService(
 	env: ServiceEnvironment,
 	config: Config,
 	host: LanguageServiceHost,
+	sys: ts.System = {
+		...host,
+		args: [],
+		newLine: '\n',
+		write: () => { },
+		resolvePath: path => path,
+		createDirectory: () => { },
+		getExecutingFilePath: () => '/__fake__.js',
+		directoryExists: () => true,
+		exit: () => { },
+		useCaseSensitiveFileNames: false,
+		writeFile: () => { },
+		getDirectories: () => [],
+		readDirectory: () => [],
+	},
 	documentRegistry?: ts.DocumentRegistry,
 ) {
 	const languageContext = createLanguageContext(modules, host, Object.values(config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(modules, env, config, host, languageContext, documentRegistry);
+	const context = createLanguageServicePluginContext(modules, env, config, host, sys, languageContext, documentRegistry);
 	return createLanguageServiceBase(context);
 }
 
@@ -59,6 +74,7 @@ function createLanguageServicePluginContext(
 	env: ServiceEnvironment,
 	config: Config,
 	host: LanguageServiceHost,
+	sys: ts.System,
 	languageContext: ReturnType<typeof createLanguageContext>,
 	documentRegistry?: ts.DocumentRegistry,
 ) {
@@ -68,9 +84,9 @@ function createLanguageServicePluginContext(
 	if (ts) {
 		const created = tsFaster.createLanguageService(
 			ts,
+			sys,
 			languageContext.typescript.languageServiceHost,
 			proxiedHost => ts.createLanguageService(proxiedHost, documentRegistry),
-			languageContext.typescript.languageServiceHost.getCurrentDirectory(),
 		);
 		tsLs = created.languageService;
 
