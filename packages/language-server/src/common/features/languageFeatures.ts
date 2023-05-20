@@ -133,8 +133,12 @@ export function register(
 		});
 	});
 	connection.onPrepareRename(async (params, token) => {
-		return worker(params.textDocument.uri, token, service => {
-			return service.prepareRename(params.textDocument.uri, params.position, token);
+		return worker(params.textDocument.uri, token, async service => {
+			const result = await service.prepareRename(params.textDocument.uri, params.position, token);
+			if (result && 'message' in result) {
+				return new vscode.ResponseError(0, result.message);
+			}
+			return result;
 		});
 	});
 	connection.onRenameRequest(async (params, token) => {
