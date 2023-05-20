@@ -77,8 +77,9 @@ export function createLanguageContext(
 			}
 			: undefined,
 		getProjectVersion: () => {
-			return tsProjectVersion.toString();
+			return host.getTypeRootsVersion?.() + ':' + tsProjectVersion.toString();
 		},
+		getTypeRootsVersion: host.getTypeRootsVersion,
 		getScriptFileNames,
 		getScriptVersion,
 		getScriptSnapshot,

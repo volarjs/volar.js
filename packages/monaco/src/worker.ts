@@ -17,12 +17,15 @@ export function createLanguageService(options: {
 	},
 }) {
 
+	let dtsFilesNum = 0;
+	let dtsFilesNumUpdateAt = 0;
+
 	const ts = options.typescript?.module;
-	const dtsFiles = new Map<string, string | undefined>();
+	const dtsFiles = new Map<string, string | undefined | Promise<void>>();
 	const config = options.config ?? {};
 	const compilerOptions = options.typescript?.compilerOptions ?? {};
-	let host = createLanguageServiceHost();
-	let languageService = _createLanguageService(
+	const host = createLanguageServiceHost();
+	const languageService = _createLanguageService(
 		{ typescript: ts },
 		{
 			uriToFileName: uri => URI.parse(uri).fsPath.replace(/\\/g, '/'),
@@ -32,10 +35,6 @@ export function createLanguageService(options: {
 		config,
 		host,
 	);
-	let dtsVersion = 0;
-	let runningApis = 0;
-
-	const toClear = new Set<typeof languageService>();
 
 	class InnocentRabbit { };
 
@@ -53,43 +52,14 @@ export function createLanguageService(options: {
 				return (languageService as any)[api](...args);
 			}
 
-			let result;
+			let beforeDtsFilesNum = dtsFilesNum;
+			let result = await (languageService as any)[api](...args);
+			dtsFilesNum = (await getDtsFileNames()).length;
 
-			try {
-				runningApis++;
-				let oldVersion = await options.dtsHost.getVersion();
+			while (beforeDtsFilesNum !== dtsFilesNum) {
+				beforeDtsFilesNum = dtsFilesNum;
 				result = await (languageService as any)[api](...args);
-				let newVersion = await options.dtsHost.getVersion();
-
-				while (newVersion !== oldVersion) {
-					oldVersion = newVersion;
-					if (newVersion !== dtsVersion) {
-						dtsVersion = newVersion;
-						toClear.add(languageService);
-						languageService = _createLanguageService(
-							{ typescript: ts },
-							{
-								rootUri: URI.file('/'),
-								uriToFileName: (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/'),
-								fileNameToUri: (fileName: string) => URI.file(fileName).toString(),
-							},
-							config,
-							host,
-						);
-					}
-					result = await (languageService as any)[api](...args);
-					newVersion = await options.dtsHost.getVersion();
-				}
-			}
-			finally {
-				runningApis--;
-			}
-
-			if (runningApis === 0 && toClear.size > 0) {
-				for (const languageService of toClear) {
-					languageService.dispose();
-				}
-				toClear.clear();
+				dtsFilesNum = (await getDtsFileNames()).length;
 			}
 
 			return result;
@@ -110,7 +80,7 @@ export function createLanguageService(options: {
 				const models = options.workerContext.getMirrorModels();
 				if (modelVersions.size === options.workerContext.getMirrorModels().length) {
 					if (models.every(model => modelVersions.get(model) === model.version)) {
-						return projectVersion.toString();
+						return dtsFilesNum.toString() + ':' + projectVersion.toString();
 					}
 				}
 				modelVersions.clear();
@@ -118,7 +88,10 @@ export function createLanguageService(options: {
 					modelVersions.set(model, model.version);
 				}
 				projectVersion++;
-				return projectVersion.toString();
+				return dtsFilesNum.toString() + ':' + projectVersion.toString();
+			},
+			getTypeRootsVersion() {
+				return dtsFilesNum;
 			},
 			getScriptFileNames() {
 				const models = options.workerContext.getMirrorModels();
@@ -129,11 +102,7 @@ export function createLanguageService(options: {
 				if (model) {
 					return model.version.toString();
 				}
-				const dts = readDtsFile(fileName);
-				if (dts) {
-					return dts.length.toString();
-				}
-				return '';
+				return readDtsFile(fileName)?.length.toString() ?? '';
 			},
 			getScriptSnapshot(fileName) {
 				const model = options.workerContext.getMirrorModels().find(model => model.uri.fsPath === fileName);
@@ -196,15 +165,28 @@ export function createLanguageService(options: {
 
 	function readDtsFile(fileName: string) {
 		if (!dtsFiles.has(fileName) && options.dtsHost) {
-			dtsFiles.set(fileName, undefined);
-			readDtsFileAsync(fileName);
+			dtsFiles.set(fileName, readDtsFileAsync(fileName));
 		}
-		return dtsFiles.get(fileName);
+		const textOrFetching = dtsFiles.get(fileName);
+		if (typeof textOrFetching === 'string') {
+			return textOrFetching;
+		}
 	}
 
 	async function readDtsFileAsync(fileName: string) {
 		const text = await options.dtsHost?.readFile(fileName);
 		dtsFiles.set(fileName, text);
+	}
+
+	async function getDtsFileNames() {
+		while (dtsFiles.size !== dtsFilesNumUpdateAt) {
+			const newFileSize = dtsFiles.size;
+			await Promise.all([...dtsFiles.values()]);
+			if (newFileSize > dtsFilesNumUpdateAt) {
+				dtsFilesNumUpdateAt = newFileSize;
+			}
+		}
+		return [...dtsFiles.entries()].filter(([_, text]) => typeof text === 'string').map(([fileName]) => fileName);
 	}
 }
 
@@ -249,14 +231,12 @@ export function createJsDelivrDtsHost(
 
 export interface DtsHost {
 	readFile(fileName: string): Thenable<string | undefined>;
-	getVersion(): Thenable<number>;
 }
 
 class CdnDtsHost implements DtsHost {
 
 	files = new Map<string, Promise<string | undefined>>();
 	flatResult = new Map<string, Promise<string[]>>();
-	lastUpdateFilesSize = 0;
 
 	constructor(
 		private cdn: string,
@@ -264,17 +244,6 @@ class CdnDtsHost implements DtsHost {
 		private flat?: (pkg: string, version: string | undefined) => Promise<string[]>,
 		private onFetch?: (fileName: string, text: string) => void,
 	) { }
-
-	async getVersion() {
-		while (this.files.size !== this.lastUpdateFilesSize) {
-			const newFileSize = this.files.size;
-			await Promise.all(this.files.values());
-			if (newFileSize > this.lastUpdateFilesSize) {
-				this.lastUpdateFilesSize = newFileSize;
-			}
-		}
-		return this.files.size;
-	}
 
 	async readFile(fileName: string) {
 		if (

@@ -61,7 +61,7 @@ export namespace editor {
 			let timer: NodeJS.Timeout | undefined;
 			const changeSubscription = model.onDidChangeContent(() => {
 				clearTimeout(timer);
-				timer = setTimeout(() => doValidation(model), 200);
+				timer = setTimeout(() => doValidation(model), 250);
 			});
 			const visibleSubscription = model.onDidChangeAttached(() => {
 				if (model.isAttachedToEditor()) {
