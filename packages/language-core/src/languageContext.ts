@@ -150,6 +150,16 @@ export function createLanguageContext(
 		let virtualFilesUpdatedNum = 0;
 
 		const remainRootFiles = new Set(host.getScriptFileNames());
+		const oldVirtualTsFileNames = new Set<string>();
+		const newVirtualTsFileNames = new Set<string>();
+
+		for (const { root: rootVirtualFile } of virtualFiles.allSources()) {
+			forEachEmbeddedFile(rootVirtualFile, embedded => {
+				if (embedded.kind === FileKind.TypeScriptHostFile) {
+					oldVirtualTsFileNames.add(embedded.fileName);
+				}
+			});
+		}
 
 		// .vue
 		for (const { fileName } of virtualFiles.allSources()) {
@@ -214,15 +224,32 @@ export function createLanguageContext(
 			}
 		}
 
-		for (const { root: rootVirtualFile } of virtualFiles.allSources()) {
-			if (!shouldUpdateTsProject) {
+		// check virtual file update
+		if (!shouldUpdateTsProject) {
+			for (const { root: rootVirtualFile } of virtualFiles.allSources()) {
 				forEachEmbeddedFile(rootVirtualFile, embedded => {
 					if (embedded.kind === FileKind.TypeScriptHostFile) {
+						newVirtualTsFileNames.add(embedded.fileName);
 						if (virtualFileVersions.has(embedded.fileName) && virtualFileVersions.get(embedded.fileName)?.virtualFileSnapshot !== embedded.snapshot) {
 							shouldUpdateTsProject = true;
 						}
 					}
 				});
+			}
+		}
+
+		// check virtual file create / delete
+		if (!shouldUpdateTsProject) {
+			if (oldVirtualTsFileNames.size !== newVirtualTsFileNames.size) {
+				shouldUpdateTsProject = true;
+			}
+			else {
+				for (const fileName of oldVirtualTsFileNames) {
+					if (!newVirtualTsFileNames.has(fileName)) {
+						shouldUpdateTsProject = true;
+						break;
+					}
+				}
 			}
 		}
 
