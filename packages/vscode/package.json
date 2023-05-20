@@ -14,16 +14,11 @@
 	},
 	"dependencies": {
 		"@volar/language-server": "1.6.7",
-		"@volar/source-map": "1.6.7",
 		"typesafe-path": "^0.2.2",
 		"vscode-nls": "^5.2.0"
 	},
 	"devDependencies": {
 		"@types/vscode": "latest",
 		"vscode-languageclient": "latest"
-	},
-	"peerDependencies": {
-		"@types/vscode": "*",
-		"vscode-languageclient": "*"
 	}
 }

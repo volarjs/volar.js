@@ -1,5 +1,5 @@
 import * as transformer from '../transformer';
-import type { FileRangeCapabilities } from '@volar/language-service';
+import type { FileRangeCapabilities } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { Service, ServiceContext } from '../types';

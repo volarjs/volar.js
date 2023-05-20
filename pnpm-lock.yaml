@@ -101,6 +101,10 @@ importers:
       vscode-uri:
         specifier: ^3.0.7
         version: 3.0.7
+    devDependencies:
+      '@volar/source-map':
+        specifier: 1.6.7
+        version: link:../source-map
 
   packages/language-service:
     dependencies:
@@ -163,9 +167,6 @@ importers:
       '@volar/language-server':
         specifier: 1.6.7
         version: link:../language-server
-      '@volar/source-map':
-        specifier: 1.6.7
-        version: link:../source-map
       typesafe-path:
         specifier: ^0.2.2
         version: 0.2.2

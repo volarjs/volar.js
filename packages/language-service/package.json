@@ -23,13 +23,5 @@
 		"vscode-html-languageservice": "^5.0.4",
 		"vscode-json-languageservice": "^5.2.0",
 		"vscode-languageserver-protocol": "^3.17.3"
-	},
-	"peerDependencies": {
-		"vscode-languageserver-protocol": "*"
-	},
-	"peerDependenciesMeta": {
-		"vscode-languageserver-protocol": {
-			"optional": true
-		}
 	}
 }
