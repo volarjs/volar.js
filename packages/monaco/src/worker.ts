@@ -174,6 +174,38 @@ export function createLanguageService(options: {
 	}
 
 	async function readDtsFileAsync(fileName: string) {
+
+		const pkgName = getPackageNameByNodeModulesPath(fileName);
+
+		if (!fileName.startsWith('/node_modules/')) {
+			return undefined;
+		}
+		if (pkgName.endsWith('.d.ts') || pkgName.endsWith('/node_modules')) {
+			return undefined;
+		}
+		// hard code for known invalid package
+		if (pkgName.startsWith('@typescript/') || pkgName.startsWith('@types/typescript__')) {
+			return undefined;
+		}
+		// don't check @types if original package already having types
+		if (pkgName.startsWith('@types/')) {
+			let originalPkgName = pkgName.slice('@types/'.length);
+			if (originalPkgName.indexOf('__') >= 0) {
+				originalPkgName = '@' + originalPkgName.replace('__', '/');
+			}
+			const packageJson = await readDtsFileAsync(`/node_modules/${originalPkgName}/package.json`);
+			if (packageJson) {
+				const packageJsonObj = JSON.parse(packageJson);
+				if (packageJsonObj.types || packageJsonObj.typings) {
+					return undefined;
+				}
+				const indexDts = await readDtsFileAsync(`/node_modules/${originalPkgName}/index.d.ts`);
+				if (indexDts) {
+					return undefined;
+				}
+			}
+		}
+
 		const text = await options.dtsHost?.readFile(fileName);
 		dtsFiles.set(fileName, text);
 	}
@@ -246,56 +278,19 @@ class CdnDtsHost implements DtsHost {
 	) { }
 
 	async readFile(fileName: string) {
-		if (
-			fileName.startsWith('/node_modules/')
-			// ignore .js because it's no help for intellisense
-			&& (fileName.endsWith('.d.ts') || fileName.endsWith('/package.json'))
-		) {
-			if (!this.files.has(fileName)) {
-				this.files.set(fileName, this.fetchFile(fileName));
-			}
-			return await this.files.get(fileName);
+		if (!this.files.has(fileName)) {
+			this.files.set(fileName, this.fetchFile(fileName));
 		}
-		return undefined;
+		return await this.files.get(fileName);
 	}
 
 	async fetchFile(fileName: string) {
+
 		if (this.flat) {
-			let pkgName = fileName.split('/')[2];
-			if (pkgName.startsWith('@')) {
-				pkgName += '/' + fileName.split('/')[3];
-			}
-			if (pkgName.endsWith('.d.ts') || pkgName.endsWith('/node_modules')) {
-				return undefined;
-			}
-			// hard code for known invalid package
-			if (pkgName.startsWith('@typescript/') || pkgName.startsWith('@types/typescript__')) {
-				return undefined;
-			}
-
-			// don't check @types if original package already having types
-			if (pkgName.startsWith('@types/')) {
-				let originalPkgName = pkgName.slice('@types/'.length);
-				if (originalPkgName.indexOf('__') >= 0) {
-					originalPkgName = '@' + originalPkgName.replace('__', '/');
-				}
-				const packageJson = await this.readFile(`/node_modules/${originalPkgName}/package.json`);
-				if (packageJson) {
-					const packageJsonObj = JSON.parse(packageJson);
-					if (packageJsonObj.types || packageJsonObj.typings) {
-						return undefined;
-					}
-					const indexDts = await this.readFile(`/node_modules/${originalPkgName}/index.d.ts`);
-					if (indexDts) {
-						return undefined;
-					}
-				}
-			}
-
+			const pkgName = getPackageNameByNodeModulesPath(fileName);
 			if (!this.flatResult.has(pkgName)) {
 				this.flatResult.set(pkgName, this.flat(pkgName, this.versions[pkgName]));
 			}
-
 			const flat = await this.flatResult.get(pkgName)!;
 			const include = flat.includes(fileName.slice(`/node_modules/${pkgName}`.length));
 			if (!include) {
@@ -306,10 +301,8 @@ class CdnDtsHost implements DtsHost {
 		const requestFileName = this.resolveRequestFileName(fileName);
 		const url = this.cdn + requestFileName.slice('/node_modules/'.length);
 		const text = await fetchText(url);
-		if (text) {
-			if (this.onFetch) {
-				this.onFetch(fileName, text);
-			}
+		if (text !== undefined) {
+			this.onFetch?.(fileName, text);
 		}
 
 		return text;
@@ -324,6 +317,14 @@ class CdnDtsHost implements DtsHost {
 		}
 		return fileName;
 	}
+}
+
+function getPackageNameByNodeModulesPath(nodeModulesPath: string) {
+	let pkgName = nodeModulesPath.split('/')[2];
+	if (pkgName.startsWith('@')) {
+		pkgName += '/' + nodeModulesPath.split('/')[3];
+	}
+	return pkgName;
 }
 
 async function fetchText(url: string) {
