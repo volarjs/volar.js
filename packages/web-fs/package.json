@@ -1,0 +1,15 @@
+{
+	"name": "@volar/web-fs",
+	"version": "1.6.8",
+	"main": "out/index.js",
+	"license": "MIT",
+	"files": [
+		"out/**/*.js",
+		"out/**/*.d.ts"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/volarjs/volar.js.git",
+		"directory": "packages/web-fs"
+	}
+}

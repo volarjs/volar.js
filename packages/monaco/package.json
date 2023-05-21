@@ -19,6 +19,7 @@
 		"vscode-uri": "^3.0.7"
 	},
 	"devDependencies": {
+		"@volar/web-fs": "1.6.8",
 		"monaco-editor-core": "latest",
 		"vscode-languageserver-protocol": "^3.17.3"
 	}

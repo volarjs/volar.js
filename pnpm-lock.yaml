@@ -143,6 +143,9 @@ importers:
         specifier: ^3.0.7
         version: 3.0.7
     devDependencies:
+      '@volar/web-fs':
+        specifier: 1.6.8
+        version: link:../web-fs
       monaco-editor-core:
         specifier: latest
         version: 0.38.0
@@ -180,6 +183,8 @@ importers:
       vscode-languageclient:
         specifier: latest
         version: 8.1.0
+
+  packages/web-fs: {}
 
 packages:
 
