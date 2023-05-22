@@ -139,13 +139,13 @@ importers:
       '@volar/language-service':
         specifier: 1.6.9
         version: link:../language-service
+      '@volar/web-fs':
+        specifier: 1.6.9
+        version: link:../web-fs
       vscode-uri:
         specifier: ^3.0.7
         version: 3.0.7
     devDependencies:
-      '@volar/web-fs':
-        specifier: 1.6.9
-        version: link:../web-fs
       monaco-editor-core:
         specifier: latest
         version: 0.38.0
