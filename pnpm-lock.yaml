@@ -13,13 +13,13 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.2.1
+        version: 20.2.3
       typescript:
         specifier: latest
         version: 5.0.4
       vite:
         specifier: latest
-        version: 4.3.8(@types/node@20.2.1)
+        version: 4.3.8(@types/node@20.2.3)
       vitest:
         specifier: latest
         version: 0.31.1
@@ -27,7 +27,7 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../language-service
       typesafe-path:
         specifier: ^0.2.2
@@ -45,13 +45,13 @@ importers:
         specifier: 1.67.0
         version: 1.67.0
       '@volar/language-server':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../language-server
       '@volar/source-map':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../source-map
       '@volar/vscode':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../vscode
       esbuild:
         specifier: 0.15.18
@@ -66,16 +66,16 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../language-core
       '@volar/language-service':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../language-service
       '@vscode/l10n':
         specifier: ^0.0.11
@@ -103,16 +103,16 @@ importers:
         version: 3.0.7
     devDependencies:
       '@volar/source-map':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../source-map
 
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../language-core
       '@volar/source-map':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../source-map
       typescript-auto-import-cache:
         specifier: ^0.3.0
@@ -137,14 +137,14 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.7
         version: 3.0.7
     devDependencies:
       '@volar/web-fs':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../web-fs
       monaco-editor-core:
         specifier: latest
@@ -162,13 +162,13 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../language-core
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 1.6.8
+        specifier: 1.6.9
         version: link:../language-server
       typesafe-path:
         specifier: ^0.2.2
@@ -1022,8 +1022,8 @@ packages:
     dev: false
     optional: true
 
-  /@types/node@20.2.1:
-    resolution: {integrity: sha512-DqJociPbZP1lbZ5SQPk4oag6W7AyaGMO6gSfRwq3PWl4PXTwJpRQJhDq4W0kzrg3w6tJ1SwlvGZ5uKFHY13LIg==}
+  /@types/node@20.2.3:
+    resolution: {integrity: sha512-pg9d0yC4rVNWQzX8U7xb4olIOFuuVL9za3bzMT2pu2SU0SNEi66i2qrvhE2qt0HvkhuCaWJu7pLNOt/Pj8BIrw==}
     dev: true
 
   /@types/normalize-package-data@2.4.1:
@@ -5201,7 +5201,7 @@ packages:
     dev: false
     optional: true
 
-  /vite-node@0.31.1(@types/node@20.2.1):
+  /vite-node@0.31.1(@types/node@20.2.3):
     resolution: {integrity: sha512-BajE/IsNQ6JyizPzu9zRgHrBwczkAs0erQf/JRpgTIESpKvNj9/Gd0vxX905klLkb0I0SJVCKbdrl5c6FnqYKA==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
@@ -5211,7 +5211,7 @@ packages:
       mlly: 1.2.0
       pathe: 1.1.0
       picocolors: 1.0.0
-      vite: 4.3.8(@types/node@20.2.1)
+      vite: 4.3.8(@types/node@20.2.3)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5222,7 +5222,7 @@ packages:
       - terser
     dev: true
 
-  /vite@4.3.8(@types/node@20.2.1):
+  /vite@4.3.8(@types/node@20.2.3):
     resolution: {integrity: sha512-uYB8PwN7hbMrf4j1xzGDk/lqjsZvCDbt/JC5dyfxc19Pg8kRm14LinK/uq+HSLNswZEoKmweGdtpbnxRtrAXiQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
@@ -5247,7 +5247,7 @@ packages:
       terser:
         optional: true
     dependencies:
-      '@types/node': 20.2.1
+      '@types/node': 20.2.3
       esbuild: 0.17.12
       postcss: 8.4.23
       rollup: 3.21.2
@@ -5288,7 +5288,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.5
       '@types/chai-subset': 1.3.3
-      '@types/node': 20.2.1
+      '@types/node': 20.2.3
       '@vitest/expect': 0.31.1
       '@vitest/runner': 0.31.1
       '@vitest/snapshot': 0.31.1
@@ -5308,8 +5308,8 @@ packages:
       strip-literal: 1.0.1
       tinybench: 2.5.0
       tinypool: 0.5.0
-      vite: 4.3.8(@types/node@20.2.1)
-      vite-node: 0.31.1(@types/node@20.2.1)
+      vite: 4.3.8(@types/node@20.2.3)
+      vite-node: 0.31.1(@types/node@20.2.3)
       why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less
