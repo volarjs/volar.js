@@ -119,12 +119,14 @@ export function getProgram(
 
 						for (const start of map.toSourceOffsets(diagnostic.start)) {
 
-							if (!start[1].data.diagnostic)
+							const reportStart = typeof start[1].data.diagnostic === 'object' ? typeof start[1].data.diagnostic.shouldReport() : !!start[1].data.diagnostic;
+							if (!reportStart)
 								continue;
 
 							for (const end of map.toSourceOffsets(diagnostic.start + diagnostic.length, true)) {
 
-								if (!end[1].data.diagnostic)
+								const reportEnd = typeof end[1].data.diagnostic === 'object' ? typeof end[1].data.diagnostic.shouldReport() : !!end[1].data.diagnostic;
+								if (!reportEnd)
 									continue;
 
 								onMapping(diagnostic, source.fileName, start[0], end[0], source.snapshot.getText(0, source.snapshot.getLength()));

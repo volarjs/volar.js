@@ -22,7 +22,9 @@ export interface FileRangeCapabilities {
 		additional?: boolean;
 		autoImportOnly?: boolean;
 	};
-	diagnostic?: boolean;
+	diagnostic?: boolean | {
+		shouldReport(): boolean;
+	};
 	semanticTokens?: boolean;
 
 	// TODO

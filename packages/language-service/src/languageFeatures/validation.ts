@@ -419,7 +419,7 @@ export function register(context: ServiceContext) {
 	}
 
 	function transformErrorRange(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined) {
-		return transformErrorRangeBase(errors, map, data => !!data.diagnostic);
+		return transformErrorRangeBase(errors, map, data => typeof data.diagnostic === 'object' ? data.diagnostic.shouldReport() : !!data.diagnostic);
 	}
 
 	function transformErrorRangeBase(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined, filter: (data: FileRangeCapabilities) => boolean) {
