@@ -37,6 +37,7 @@ interface Command<T> {
 export interface ServiceContext<Provide = any> extends LanguageContext {
 	env: ServiceEnvironment;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
+	getTextDocument(uri: string): TextDocument | undefined;
 	commands: {
 		showReferences: Command<(uri: string, position: vscode.Position, locations: vscode.Location[]) => vscode.Command | undefined>;
 		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;
@@ -52,7 +53,6 @@ export interface ServiceContext<Provide = any> extends LanguageContext {
 			};
 		};
 	};
-	getTextDocument(uri: string): TextDocument | undefined;
 }
 
 export type Result<T> = T | Thenable<T>;
@@ -137,6 +137,7 @@ export interface Rule<Provide = any> {
 export interface RuleContext<Provide = any> {
 	env: ServiceEnvironment;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
+	getTextDocument(uri: string): TextDocument | undefined;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
 

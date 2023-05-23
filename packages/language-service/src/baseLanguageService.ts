@@ -184,6 +184,10 @@ function createLanguageServicePluginContext(
 
 	function getTextDocument(uri: string) {
 
+		for (const [_, map] of context.documents.getMapsByVirtualFileUri(uri)) {
+			return map.virtualFileDocument;
+		}
+
 		const fileName = env.uriToFileName(uri);
 		const scriptSnapshot = host.getScriptSnapshot(fileName);
 
