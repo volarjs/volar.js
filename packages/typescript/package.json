@@ -14,5 +14,8 @@
 	},
 	"dependencies": {
 		"@volar/language-core": "1.6.9"
+	},
+	"devDependencies": {
+		"@volar/language-service": "1.6.9"
 	}
 }

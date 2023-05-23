@@ -26,7 +26,6 @@ export async function createWorkspace(context: WorkspaceContext) {
 	let inferredProject: Project | undefined;
 
 	const sys = context.workspaces.fileSystemHost?.getWorkspaceFileSystem(context.workspace.rootUri);
-	const documentRegistry = sys ? context.workspaces.ts?.createDocumentRegistry(sys.useCaseSensitiveFileNames, uriToFileName(context.workspace.rootUri.toString())) : undefined;
 	const projects = createUriMap<Project>(fileNameToUri);
 	const rootTsConfigs = new Set<path.PosixPath>();
 	const searchedDirs = new Set<path.PosixPath>();
@@ -52,7 +51,6 @@ export async function createWorkspace(context: WorkspaceContext) {
 
 	return {
 		projects,
-		documentRegistry,
 		getProjectAndTsConfig,
 		getInferredProject,
 		getInferredProjectDontCreate: () => inferredProject,
@@ -94,7 +92,6 @@ export async function createWorkspace(context: WorkspaceContext) {
 					project: {
 						rootUri: context.workspace.rootUri,
 						tsConfig: inferOptions,
-						documentRegistry,
 					},
 				});
 			})();
@@ -153,9 +150,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 		function findIndirectReferenceTsconfig() {
 			return findTsconfig(async tsconfig => {
 				const project = await projects.pathGet(tsconfig);
-				const ls = project?.getLanguageServiceDontCreate();
-				const validDoc = ls?.context.typescript?.languageService.getProgram()?.getSourceFile(uriToFileName(uri.toString()));
-				return !!validDoc;
+				return project?.readFiles.has(uriToFileName(uri.toString())) ?? false;
 			});
 		}
 		async function findTsconfig(match: (tsconfig: string) => Promise<boolean> | boolean) {
@@ -239,13 +234,12 @@ export async function createWorkspace(context: WorkspaceContext) {
 	function getProjectByCreate(_tsConfig: string) {
 		const tsConfig = _tsConfig.replace(/\\/g, '/') as path.PosixPath;
 		let project = projects.pathGet(tsConfig);
-		if (!project && documentRegistry) {
+		if (!project) {
 			project = createProject({
 				...context,
 				project: {
 					rootUri: URI.parse(fileNameToUri(path.dirname(tsConfig))),
 					tsConfig,
-					documentRegistry,
 				},
 			});
 			projects.pathSet(tsConfig, project);

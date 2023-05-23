@@ -5,6 +5,7 @@ export function getProgram(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	core: embedded.LanguageContext,
 	ls: ts.LanguageService,
+	lsHost: ts.LanguageServiceHost,
 ) {
 
 	const proxy: Partial<ts.Program> = {
@@ -42,7 +43,7 @@ export function getProgram(
 	}
 
 	function getRootFileNames() {
-		return getProgram().getRootFileNames().filter(fileName => core.typescript.languageServiceHost.fileExists?.(fileName));
+		return getProgram().getRootFileNames().filter(fileName => lsHost.fileExists?.(fileName));
 	}
 
 	// for vue-tsc --noEmit --watch
@@ -86,7 +87,7 @@ export function getProgram(
 		return transformDiagnostics(getProgram().getGlobalDiagnostics(cancellationToken) ?? []);
 	}
 	function emit(targetSourceFile?: ts.SourceFile, _writeFile?: ts.WriteFileCallback, cancellationToken?: ts.CancellationToken, emitOnlyDtsFiles?: boolean, customTransformers?: ts.CustomTransformers): ts.EmitResult {
-		const scriptResult = getProgram().emit(targetSourceFile, (core.typescript.languageServiceHost.writeFile ?? ts.sys.writeFile), cancellationToken, emitOnlyDtsFiles, customTransformers);
+		const scriptResult = getProgram().emit(targetSourceFile, (lsHost.writeFile ?? ts.sys.writeFile), cancellationToken, emitOnlyDtsFiles, customTransformers);
 		return {
 			emitSkipped: scriptResult.emitSkipped,
 			emittedFiles: scriptResult.emittedFiles,
@@ -109,7 +110,7 @@ export function getProgram(
 
 				if (virtualFile && source) {
 
-					if (core.typescript.languageServiceHost.fileExists?.(source.fileName) === false)
+					if (lsHost.fileExists?.(source.fileName) === false)
 						continue;
 
 					for (const [sourceFileName, map] of core.virtualFiles.getMaps(virtualFile)) {
@@ -138,7 +139,7 @@ export function getProgram(
 				}
 				else {
 
-					if (core.typescript.languageServiceHost.fileExists?.(diagnostic.file.fileName) === false)
+					if (lsHost.fileExists?.(diagnostic.file.fileName) === false)
 						continue;
 
 					onMapping(diagnostic, diagnostic.file.fileName, diagnostic.start, diagnostic.start + diagnostic.length, diagnostic.file.text);
@@ -159,7 +160,7 @@ export function getProgram(
 			if (!file) {
 
 				if (docText === undefined) {
-					const snapshot = core.typescript.languageServiceHost.getScriptSnapshot(fileName);
+					const snapshot = lsHost.getScriptSnapshot(fileName);
 					if (snapshot) {
 						docText = snapshot.getText(0, snapshot.getLength());
 					}

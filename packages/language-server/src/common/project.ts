@@ -15,7 +15,6 @@ export interface ProjectContext extends WorkspaceContext {
 	project: {
 		rootUri: URI;
 		tsConfig: path.PosixPath | ts.CompilerOptions;
-		documentRegistry: ts.DocumentRegistry | undefined;
 	};
 }
 
@@ -65,6 +64,7 @@ export async function createProject(context: ProjectContext) {
 		snapshot: ts.IScriptSnapshot | undefined,
 		snapshotVersion: number | undefined,
 	}>(fileNameToUri);
+	const readFiles = new Set<string>();
 	const languageServiceHost = createLanguageServiceHost();
 	const disposeWatchEvent = context.workspaces.fileSystemHost?.onDidChangeWatchedFiles(params => {
 		onWorkspaceFilesChanged(params.changes);
@@ -75,6 +75,7 @@ export async function createProject(context: ProjectContext) {
 	});
 
 	return {
+		readFiles,
 		tsConfig: context.project.tsConfig,
 		scripts,
 		languageServiceHost,
@@ -112,6 +113,7 @@ export async function createProject(context: ProjectContext) {
 					}
 					return '';
 				},
+				sys,
 			};
 			let config = (
 				context.workspace.rootUri.scheme === 'file' ? loadConfig(
@@ -134,8 +136,6 @@ export async function createProject(context: ProjectContext) {
 				env,
 				config,
 				languageServiceHost,
-				sys,
-				context.project.documentRegistry,
 			);
 		}
 		return languageService;
@@ -194,7 +194,10 @@ export async function createProject(context: ProjectContext) {
 			// ts
 			getNewLine: () => sys.newLine,
 			useCaseSensitiveFileNames: () => sys.useCaseSensitiveFileNames,
-			readFile: sys.readFile,
+			readFile: fileName => {
+				readFiles.add(fileName);
+				return sys.readFile(fileName);
+			},
 			writeFile: sys.writeFile,
 			directoryExists: sys.directoryExists,
 			getDirectories: sys.getDirectories,

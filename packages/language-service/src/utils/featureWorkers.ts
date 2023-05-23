@@ -131,15 +131,7 @@ export async function ruleWorker<T>(
 	const virtualFile = context.documents.getSourceByUri(uri)?.root;
 	const ruleCtx: RuleContext = {
 		env: context.env,
-		inject: (key, ...args) => {
-			for (const service of Object.values(context.services)) {
-				const provide = service.provide?.[key as any];
-				if (provide) {
-					return provide(...args as any);
-				}
-			}
-			throw `No service provide ${key as any}`;
-		},
+		inject: context.inject,
 		report: () => { },
 	};
 
