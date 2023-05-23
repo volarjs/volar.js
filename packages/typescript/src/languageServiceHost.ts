@@ -74,8 +74,12 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 
 				switch (path.extname(fileName)) {
 					case '.js': return ts.ScriptKind.JS;
+					case '.cjs': return ts.ScriptKind.JS;
+					case '.mjs': return ts.ScriptKind.JS;
 					case '.jsx': return ts.ScriptKind.JSX;
 					case '.ts': return ts.ScriptKind.TS;
+					case '.cts': return ts.ScriptKind.TS;
+					case '.mts': return ts.ScriptKind.TS;
 					case '.tsx': return ts.ScriptKind.TSX;
 					case '.json': return ts.ScriptKind.JSON;
 					default: return ts.ScriptKind.Unknown;
