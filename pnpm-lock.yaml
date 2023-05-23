@@ -114,9 +114,6 @@ importers:
       '@volar/source-map':
         specifier: 1.6.9
         version: link:../source-map
-      typescript-auto-import-cache:
-        specifier: ^0.3.0
-        version: 0.3.0
       vscode-languageserver-textdocument:
         specifier: ^1.0.8
         version: 1.0.8
@@ -164,6 +161,10 @@ importers:
       '@volar/language-core':
         specifier: 1.6.9
         version: link:../language-core
+    devDependencies:
+      '@volar/language-service':
+        specifier: 1.6.9
+        version: link:../language-service
 
   packages/vscode:
     dependencies:
@@ -5095,12 +5096,6 @@ packages:
 
   /typesafe-path@0.2.2:
     resolution: {integrity: sha512-OJabfkAg1WLZSqJAJ0Z6Sdt3utnbzr/jh+NAHoyWHJe8CMSy79Gm085094M9nvTPy22KzTVn5Zq5mbapCI/hPA==}
-    dev: false
-
-  /typescript-auto-import-cache@0.3.0:
-    resolution: {integrity: sha512-Rq6/q4O9iyqUdjvOoyas7x/Qf9nWUMeqpP3YeTaLA+uECgfy5wOhfOS+SW/+fZ/uI/ZcKaf+2/ZhFzXh8xfofQ==}
-    dependencies:
-      semver: 7.5.1
     dev: false
 
   /typescript@5.0.4:

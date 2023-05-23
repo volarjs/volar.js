@@ -4,7 +4,6 @@ export { activate as activateAutoInsertion } from './features/autoInsertion';
 export { activate as activateWriteVirtualFiles } from './features/writeVirtualFiles';
 export { activate as activateFindFileReferences } from './features/fileReferences';
 export { activate as activateReloadProjects } from './features/reloadProject';
-export { activate as activateServerStats } from './features/serverStatus';
 export { activate as activateTsConfigStatusItem } from './features/tsconfig';
 export { activate as activateServerSys } from './features/serverSys';
 export { activate as activateTsVersionStatusItem, getTsdk } from './features/tsVersion';

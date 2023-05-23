@@ -1,4 +1,4 @@
-import { LanguageContext, Language, LanguageServiceHost } from '@volar/language-core';
+import { Language, LanguageContext } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { DocumentContext, FileSystemProvider } from 'vscode-html-languageservice';
 import type { SchemaRequestService } from 'vscode-json-languageservice';
@@ -26,6 +26,7 @@ export interface ServiceEnvironment {
 	documentContext?: DocumentContext;
 	fileSystemProvider?: FileSystemProvider;
 	schemaRequestService?: SchemaRequestService;
+	sys?: ts.System;
 }
 
 interface Command<T> {
@@ -33,30 +34,18 @@ interface Command<T> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface ServiceContext {
-
+export interface ServiceContext<Provide = any> extends LanguageContext {
 	env: ServiceEnvironment;
-	config: Config;
-	host: LanguageServiceHost;
-	typescript: {
-		languageServiceHost: ts.LanguageServiceHost;
-		languageService: ts.LanguageService;
-	} | undefined;
+	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
+	getTextDocument(uri: string): TextDocument | undefined;
 	commands: {
 		showReferences: Command<(uri: string, position: vscode.Position, locations: vscode.Location[]) => vscode.Command | undefined>;
 		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;
 		setSelection: Command<(position: vscode.Position) => vscode.Command | undefined>;
 	};
-
-	/** @private */
-	core: LanguageContext;
-	/** @private */
 	documents: DocumentsAndSourceMaps;
-	/** @private */
+	rules: { [id: string]: Rule; };
 	services: { [id: string]: ReturnType<Service>; };
-	/** @private */
-	getTextDocument(uri: string): TextDocument | undefined;
-	/** @private */
 	ruleFixes?: {
 		[uri: string]: {
 			[ruleId: string]: {
@@ -121,6 +110,7 @@ export type Service<P extends any = any> = {
 		resolveInlayHint?(inlayHint: vscode.InlayHint, token: vscode.CancellationToken): Result<vscode.InlayHint>;
 		resolveReferencesCodeLensLocations?(document: TextDocument, range: vscode.Range, references: vscode.Location[], token: vscode.CancellationToken): Result<vscode.Location[]>; // volar specific
 		resolveEmbeddedRange?(range: vscode.Range): vscode.Range | undefined; // volar specific, only support in resolveCompletionItem for now
+		dispose?(): void;
 	} & ServiceProvide<P>;
 };
 
@@ -146,8 +136,9 @@ export interface Rule<Provide = any> {
 
 export interface RuleContext<Provide = any> {
 	env: ServiceEnvironment;
-	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
+	getTextDocument(uri: string): TextDocument | undefined;
+	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
 
 export interface RuleFix {

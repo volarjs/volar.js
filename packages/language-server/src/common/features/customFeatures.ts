@@ -1,70 +1,19 @@
 import * as vscode from 'vscode-languageserver';
 import type { Workspaces } from '../workspaces';
-import { GetMatchTsConfigRequest, ReloadProjectNotification, WriteVirtualFilesNotification, GetVirtualFilesRequest, GetVirtualFileRequest, ReportStats, GetProjectsRequest, GetProjectFilesRequest } from '../../protocol';
+import { GetMatchTsConfigRequest, ReloadProjectNotification, GetVirtualFileRequest, GetProjectsRequest, GetProjectFilesRequest, GetVirtualFilesRequest, WriteVirtualFilesNotification } from '../../protocol';
 import { RuntimeEnvironment } from '../../types';
-import { VirtualFile } from '@volar/language-core';
+import { FileKind, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function register(
 	connection: vscode.Connection,
 	workspaces: Workspaces,
 	env: RuntimeEnvironment,
 ) {
-	connection.onNotification(ReportStats.type, async () => {
-		for (const [rootUri, _workspace] of workspaces.workspaces) {
 
-			connection.console.log('workspace: ' + rootUri);
-			const workspace = await _workspace;
+	const scriptVersions = new Map<string, number>();
+	const scriptVersionSnapshots = new WeakSet<ts.IScriptSnapshot>();
 
-			connection.console.log('documentRegistry stats: ' + workspace.documentRegistry?.reportStats());
-			connection.console.log('');
-
-			connection.console.log('tsconfig: inferred');
-			const _inferredProject = workspace.getInferredProjectDontCreate();
-			if (_inferredProject) {
-				connection.console.log('loaded: true');
-				const inferredProject = await _inferredProject;
-				connection.console.log('largest 10 files:');
-				for (const script of [...inferredProject.scripts.values()]
-					.sort((a, b) => (b.snapshot?.getLength() ?? 0) - (a.snapshot?.getLength() ?? 0))
-					.slice(0, 10)
-				) {
-					connection.console.log('  - ' + script.fileName);
-					connection.console.log(`    size: ${script.snapshot?.getLength()}`);
-				}
-				connection.console.log('files:');
-				for (const script of inferredProject.scripts.values()) {
-					connection.console.log('  - ' + script.fileName);
-					connection.console.log(`    size: ${script.snapshot?.getLength()}`);
-					connection.console.log(`    ref counts: "${(workspace.documentRegistry as any).getLanguageServiceRefCounts?.(script.fileName, inferredProject.languageServiceHost.getScriptKind?.(script.fileName))})"`);
-				}
-			}
-			else {
-				connection.console.log('loaded: false');
-			}
-			connection.console.log('');
-
-			for (const _project of workspace.projects.values()) {
-				const project = await _project;
-				connection.console.log('tsconfig: ' + project.tsConfig);
-				connection.console.log('loaded: ' + !!project.getLanguageServiceDontCreate());
-				connection.console.log('largest 10 files:');
-				for (const script of [...project.scripts.values()]
-					.sort((a, b) => (b.snapshot?.getLength() ?? 0) - (a.snapshot?.getLength() ?? 0))
-					.slice(0, 10)
-				) {
-					connection.console.log('  - ' + script.fileName);
-					connection.console.log(`    size: ${script.snapshot?.getLength()}`);
-				}
-				connection.console.log('files:');
-				for (const script of project.scripts.values()) {
-					connection.console.log('  - ' + script.fileName);
-					connection.console.log(`    size: ${script.snapshot?.getLength()}`);
-					connection.console.log(`    ref counts: "${(workspace.documentRegistry as any).getLanguageServiceRefCounts?.(script.fileName, project.languageServiceHost.getScriptKind?.(script.fileName))})"`);
-				}
-			}
-			connection.console.log('');
-		}
-	});
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const project = (await workspaces.getProject(params.uri));
 		if (project?.tsconfig) {
@@ -82,7 +31,7 @@ export function register(
 				tsconfig: undefined,
 				created: !!workspace.getInferredProjectDontCreate(),
 				isSelected: !!matchProject && await workspace.getInferredProjectDontCreate() === matchProject.project,
-			})
+			});
 			for (const _project of workspace.projects.values()) {
 				const project = await _project;
 				result.push({
@@ -115,16 +64,22 @@ export function register(
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const project = await workspaces.getProject(document.uri);
 		if (project) {
-			const file = project.project?.getLanguageService().context.core.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
+			const file = project.project?.getLanguageService().context.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
 			return file ? prune(file) : undefined;
 
 			function prune(file: VirtualFile): VirtualFile {
+				let version = scriptVersions.get(file.fileName) ?? 0;
+				if (!scriptVersionSnapshots.has(file.snapshot)) {
+					version++;
+					scriptVersions.set(file.fileName, version);
+					scriptVersionSnapshots.add(file.snapshot);
+				}
 				return {
 					fileName: file.fileName,
 					kind: file.kind,
 					capabilities: file.capabilities,
 					embeddedFiles: file.embeddedFiles.map(prune),
-					version: project!.project!.getLanguageService().context.core.typescript.languageServiceHost.getScriptVersion(file.fileName),
+					version,
 				} as any;
 			}
 		}
@@ -132,7 +87,7 @@ export function register(
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
 		const project = await workspaces.getProject(params.sourceFileUri);
 		if (project) {
-			const [virtualFile, source] = project.project?.getLanguageService().context.core.virtualFiles.getVirtualFile(params.virtualFileName) ?? [];
+			const [virtualFile, source] = project.project?.getLanguageService().context.virtualFiles.getVirtualFile(params.virtualFileName) ?? [];
 			if (virtualFile && source) {
 				const mappings: Record<string, any[]> = {};
 				for (const mapping of virtualFile.mappings) {
@@ -159,12 +114,22 @@ export function register(
 		if (project) {
 			const ls = (await project.project)?.getLanguageServiceDontCreate();
 			if (ls) {
-				const sourceFiles = new Set(ls.context.host.getScriptFileNames());
-				for (const virtualFile of ls.context.core.typescript.languageServiceHost.getScriptFileNames()) {
-					if (virtualFile.startsWith(ls.context.host.getCurrentDirectory()) && !sourceFiles.has(virtualFile)) {
-						const snapshot = ls.context.core.typescript.languageServiceHost.getScriptSnapshot(virtualFile);
+				for (const { root } of ls.context.virtualFiles.allSources()) {
+					forEachEmbeddedFile(root, virtualFile => {
+						if (virtualFile.kind === FileKind.TypeScriptHostFile) {
+							if (virtualFile.fileName.startsWith(ls.context.host.getCurrentDirectory())) {
+								const snapshot = virtualFile.snapshot;
+								fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
+							}
+						}
+					});
+				}
+				// global virtual files
+				for (const fileName of ls.context.host.getScriptFileNames()) {
+					if (!fs.existsSync(fileName)) {
+						const snapshot = ls.context.host.getScriptSnapshot(fileName);
 						if (snapshot) {
-							fs.writeFile(virtualFile, snapshot.getText(0, snapshot.getLength()), () => { });
+							fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
 						}
 					}
 				}

@@ -131,15 +131,8 @@ export async function ruleWorker<T>(
 	const virtualFile = context.documents.getSourceByUri(uri)?.root;
 	const ruleCtx: RuleContext = {
 		env: context.env,
-		inject: (key, ...args) => {
-			for (const service of Object.values(context.services)) {
-				const provide = service.provide?.[key as any];
-				if (provide) {
-					return provide(...args as any);
-				}
-			}
-			throw `No service provide ${key as any}`;
-		},
+		inject: context.inject,
+		getTextDocument: context.getTextDocument,
 		report: () => { },
 	};
 
@@ -153,9 +146,9 @@ export async function ruleWorker<T>(
 				return true;
 			}
 
-			for (const ruleId in context.config.rules) {
+			for (const ruleId in context.rules) {
 
-				const rule = context.config.rules[ruleId];
+				const rule = context.rules[ruleId];
 				if ((rule.type ?? RuleType.Syntax) !== ruleType) {
 					continue;
 				}
@@ -188,9 +181,9 @@ export async function ruleWorker<T>(
 	}
 	else if (document) {
 
-		for (const ruleId in context.config.rules) {
+		for (const ruleId in context.rules) {
 
-			const rule = context.config.rules[ruleId];
+			const rule = context.rules[ruleId];
 			if ((rule.type ?? RuleType.Syntax) !== ruleType) {
 				continue;
 			}

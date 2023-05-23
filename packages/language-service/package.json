@@ -15,7 +15,6 @@
 	"dependencies": {
 		"@volar/language-core": "1.6.9",
 		"@volar/source-map": "1.6.9",
-		"typescript-auto-import-cache": "^0.3.0",
 		"vscode-languageserver-textdocument": "^1.0.8",
 		"vscode-uri": "^3.0.7"
 	},

@@ -99,8 +99,3 @@ export namespace GetVirtualFileRequest {
 	export type ErrorType = never;
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFile');
 }
-
-
-export namespace ReportStats {
-	export const type = new vscode.NotificationType0('volar/client/stats');
-}

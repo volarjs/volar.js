@@ -1,5 +1,4 @@
 import { createLanguageContext, FileRangeCapabilities, LanguageServiceHost } from '@volar/language-core';
-import * as tsFaster from 'typescript-auto-import-cache';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createDocumentsAndSourceMaps } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
@@ -47,25 +46,9 @@ export function createLanguageService(
 	env: ServiceEnvironment,
 	config: Config,
 	host: LanguageServiceHost,
-	sys: ts.System = {
-		...host,
-		args: [],
-		newLine: '\n',
-		write: () => { },
-		resolvePath: path => path,
-		createDirectory: () => { },
-		getExecutingFilePath: () => '/__fake__.js',
-		directoryExists: () => true,
-		exit: () => { },
-		useCaseSensitiveFileNames: false,
-		writeFile: () => { },
-		getDirectories: () => [],
-		readDirectory: () => [],
-	},
-	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const languageContext = createLanguageContext(modules, host, Object.values(config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(modules, env, config, host, sys, languageContext, documentRegistry);
+	const languageContext = createLanguageContext(host, Object.values(config.languages ?? {}).filter(notEmpty));
+	const context = createLanguageServicePluginContext(modules, env, config, host, languageContext);
 	return createLanguageServiceBase(context);
 }
 
@@ -74,64 +57,26 @@ function createLanguageServicePluginContext(
 	env: ServiceEnvironment,
 	config: Config,
 	host: LanguageServiceHost,
-	sys: ts.System,
 	languageContext: ReturnType<typeof createLanguageContext>,
-	documentRegistry?: ts.DocumentRegistry,
 ) {
-	const ts = modules.typescript;
-	let tsLs: ts.LanguageService | undefined;
-
-	if (ts) {
-		const created = tsFaster.createLanguageService(
-			ts,
-			sys,
-			languageContext.typescript.languageServiceHost,
-			proxiedHost => ts.createLanguageService(proxiedHost, documentRegistry),
-		);
-		tsLs = created.languageService;
-
-		if (created.setPreferences && env.getConfiguration) {
-
-			updatePreferences();
-			env.onDidChangeConfiguration?.(updatePreferences);
-
-			async function updatePreferences() {
-				const preferences = await env.getConfiguration?.<ts.UserPreferences>('typescript.preferences');
-				if (preferences) {
-					created.setPreferences?.(preferences);
-				}
-			}
-		}
-
-		if (created.projectUpdated) {
-			let scriptFileNames = new Set(host.getScriptFileNames());
-			env.onDidChangeWatchedFiles?.((params) => {
-				if (params.changes.some(change => change.type !== 2 satisfies typeof vscode.FileChangeType.Changed)) {
-					scriptFileNames = new Set(host.getScriptFileNames());
-				}
-
-				for (const change of params.changes) {
-					if (scriptFileNames.has(env.uriToFileName(change.uri))) {
-						created.projectUpdated?.(env.uriToFileName(env.rootUri.fsPath));
-					}
-				}
-			});
-		}
-	}
 
 	const textDocumentMapper = createDocumentsAndSourceMaps(env, host, languageContext.virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
 	const context: ServiceContext = {
+		...languageContext,
 		env,
-		config,
-		host,
-		core: languageContext,
+		inject: (key, ...args) => {
+			for (const service of Object.values(context.services)) {
+				const provide = service.provide?.[key as any];
+				if (provide) {
+					return provide(...args as any);
+				}
+			}
+			throw `No service provide ${key as any}`;
+		},
+		rules: config.rules ?? {},
 		services: {},
-		typescript: tsLs ? {
-			languageServiceHost: languageContext.typescript.languageServiceHost,
-			languageService: tsLs,
-		} : undefined,
 		documents: textDocumentMapper,
 		commands: {
 			rename: {
@@ -239,6 +184,10 @@ function createLanguageServicePluginContext(
 
 	function getTextDocument(uri: string) {
 
+		for (const [_, map] of context.documents.getMapsByVirtualFileUri(uri)) {
+			return map.virtualFileDocument;
+		}
+
 		const fileName = env.uriToFileName(uri);
 		const scriptSnapshot = host.getScriptSnapshot(fileName);
 
@@ -309,7 +258,7 @@ function createLanguageServiceBase(context: ServiceContext) {
 		getInlayHints: inlayHints.register(context),
 		doInlayHintResolve: inlayHintResolve.register(context),
 		callHierarchy: callHierarchy.register(context),
-		dispose: () => context.typescript?.languageService.dispose(),
+		dispose: () => Object.values(context.services).forEach(service => service.dispose?.()),
 		context,
 	};
 }
