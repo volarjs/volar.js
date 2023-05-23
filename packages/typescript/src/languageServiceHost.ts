@@ -2,12 +2,11 @@ import type { FileKind, VirtualFile, LanguageContext } from '@volar/language-ser
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 
-export function createLanguageServiceHost(core: LanguageContext, ts: typeof import('typescript/lib/tsserverlibrary')) {
+export function createLanguageServiceHost(ctx: LanguageContext, ts: typeof import('typescript/lib/tsserverlibrary')) {
 
 	let lastProjectVersion: string | undefined;
 	let tsProjectVersion = 0;
 
-	const virtualFiles = core.virtualFiles;
 	const _tsHost: Partial<ts.LanguageServiceHost> = {
 		fileExists: fileName => {
 
@@ -29,30 +28,30 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 
 				const sourceFileName = fileName.substring(0, fileName.lastIndexOf('.'));
 
-				if (!virtualFiles.hasSource(sourceFileName)) {
-					const scriptSnapshot = core.host.getScriptSnapshot(sourceFileName);
+				if (!ctx.virtualFiles.hasSource(sourceFileName)) {
+					const scriptSnapshot = ctx.host.getScriptSnapshot(sourceFileName);
 					if (scriptSnapshot) {
-						virtualFiles.updateSource(sourceFileName, scriptSnapshot, core.host.getScriptLanguageId?.(sourceFileName));
+						ctx.virtualFiles.updateSource(sourceFileName, scriptSnapshot, ctx.host.getScriptLanguageId?.(sourceFileName));
 					}
 				}
 			}
 
-			if (virtualFiles.hasVirtualFile(fileName)) {
+			if (ctx.virtualFiles.hasVirtualFile(fileName)) {
 				return true;
 			}
 
-			return !!core.host.fileExists?.(fileName);
+			return !!ctx.host.fileExists?.(fileName);
 		},
 		getProjectVersion: () => {
-			return core.host.getTypeRootsVersion?.() + ':' + tsProjectVersion.toString();
+			return ctx.host.getTypeRootsVersion?.() + ':' + tsProjectVersion.toString();
 		},
-		getTypeRootsVersion: core.host.getTypeRootsVersion,
+		getTypeRootsVersion: ctx.host.getTypeRootsVersion,
 		getScriptFileNames,
 		getScriptVersion,
 		getScriptSnapshot,
 		readDirectory: (_path, extensions, exclude, include, depth) => {
-			const result = core.host.readDirectory?.(_path, extensions, exclude, include, depth) ?? [];
-			for (const { fileName } of virtualFiles.allSources()) {
+			const result = ctx.host.readDirectory?.(_path, extensions, exclude, include, depth) ?? [];
+			for (const { fileName } of ctx.virtualFiles.allSources()) {
 				const vuePath2 = path.join(_path, path.basename(fileName));
 				if (path.relative(_path.toLowerCase(), fileName.toLowerCase()).startsWith('..')) {
 					continue;
@@ -69,7 +68,7 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 		getScriptKind(fileName) {
 
 			if (ts) {
-				if (virtualFiles.hasSource(fileName))
+				if (ctx.virtualFiles.hasSource(fileName))
 					return ts.ScriptKind.Deferred;
 
 				switch (path.extname(fileName)) {
@@ -95,16 +94,16 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 	let oldTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let oldOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
-	return new Proxy(_tsHost as ts.LanguageServiceHost, {
+	return new Proxy(_tsHost, {
 		get: (target, property: keyof ts.LanguageServiceHost) => {
-			update();
-			return target[property] || core.host[property];
+			sync();
+			return target[property] ?? ctx.host[property];
 		},
-	});
+	}) as ts.LanguageServiceHost;
 
-	function update() {
+	function sync() {
 
-		const newProjectVersion = core.host.getProjectVersion?.();
+		const newProjectVersion = ctx.host.getProjectVersion?.();
 		const shouldUpdate = newProjectVersion === undefined || newProjectVersion !== lastProjectVersion;
 		if (!shouldUpdate)
 			return;
@@ -114,9 +113,9 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 		const newTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 		const newOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
-		core.syncVirtualFiles();
+		ctx.syncVirtualFiles();
 
-		for (const { root } of virtualFiles.allSources()) {
+		for (const { root } of ctx.virtualFiles.allSources()) {
 			forEachEmbeddedFile(root, embedded => {
 				if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
 					newTsVirtualFileSnapshots.add(embedded.snapshot);
@@ -143,7 +142,7 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 
 		const tsFileNames = new Set<string>();
 
-		for (const { root: rootVirtualFile } of virtualFiles.allSources()) {
+		for (const { root: rootVirtualFile } of ctx.virtualFiles.allSources()) {
 			forEachEmbeddedFile(rootVirtualFile, embedded => {
 				if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
 					tsFileNames.add(embedded.fileName); // virtual .ts
@@ -151,8 +150,8 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 			});
 		}
 
-		for (const fileName of core.host.getScriptFileNames()) {
-			if (!virtualFiles.hasSource(fileName)) {
+		for (const fileName of ctx.host.getScriptFileNames()) {
+			if (!ctx.virtualFiles.hasSource(fileName)) {
 				tsFileNames.add(fileName); // .ts
 			}
 		}
@@ -166,13 +165,13 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 		if (cache && cache[0] === version) {
 			return cache[1];
 		}
-		const [virtualFile] = virtualFiles.getVirtualFile(fileName);
+		const [virtualFile] = ctx.virtualFiles.getVirtualFile(fileName);
 		if (virtualFile) {
 			const snapshot = virtualFile.snapshot;
 			scriptSnapshots.set(fileName.toLowerCase(), [version, snapshot]);
 			return snapshot;
 		}
-		let tsScript = core.host.getScriptSnapshot(fileName);
+		let tsScript = ctx.host.getScriptSnapshot(fileName);
 		if (tsScript) {
 			scriptSnapshots.set(fileName.toLowerCase(), [version, tsScript]);
 			return tsScript;
@@ -180,7 +179,7 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 	}
 
 	function getScriptVersion(fileName: string) {
-		let [virtualFile, source] = virtualFiles.getVirtualFile(fileName);
+		let [virtualFile, source] = ctx.virtualFiles.getVirtualFile(fileName);
 		if (virtualFile && source) {
 			let version = virtualFileVersions.get(virtualFile.fileName);
 			if (!version) {
@@ -193,7 +192,7 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 			}
 			else if (
 				version.virtualFileSnapshot !== virtualFile.snapshot
-				|| (core.host.isTsc && version.sourceFileSnapshot !== source.snapshot) // fix https://github.com/johnsoncodehk/volar/issues/1082
+				|| (ctx.host.isTsc && version.sourceFileSnapshot !== source.snapshot) // fix https://github.com/johnsoncodehk/volar/issues/1082
 			) {
 				version.value++;
 				version.virtualFileSnapshot = virtualFile.snapshot;
@@ -201,7 +200,7 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 			}
 			return version.value.toString();
 		}
-		return core.host.getScriptVersion(fileName);
+		return ctx.host.getScriptVersion(fileName);
 	}
 }
 
