@@ -33,14 +33,14 @@ export function createLanguageContext(host: LanguageServiceHost, languages: Lang
 		host,
 		virtualFiles: new Proxy(virtualFiles, {
 			get: (target, property) => {
-				update();
+				syncVirtualFiles();
 				return target[property as keyof typeof virtualFiles];
 			},
 		}),
-		update,
+		syncVirtualFiles,
 	};
 
-	function update() {
+	function syncVirtualFiles() {
 
 		const newProjectVersion = host.getProjectVersion?.();
 		const shouldUpdate = newProjectVersion === undefined || newProjectVersion !== lastProjectVersion;
@@ -73,10 +73,7 @@ export function createLanguageContext(host: LanguageServiceHost, languages: Lang
 		for (const fileName of [...remainRootFiles]) {
 			const snapshot = host.getScriptSnapshot(fileName);
 			if (snapshot) {
-				const virtualFile = virtualFiles.updateSource(fileName, snapshot, host.getScriptLanguageId?.(fileName));
-				if (virtualFile) {
-					remainRootFiles.delete(fileName);
-				}
+				virtualFiles.updateSource(fileName, snapshot, host.getScriptLanguageId?.(fileName));
 			}
 		}
 	}

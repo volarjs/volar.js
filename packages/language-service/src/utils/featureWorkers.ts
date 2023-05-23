@@ -145,9 +145,9 @@ export async function ruleWorker<T>(
 				return true;
 			}
 
-			for (const ruleId in context.config.rules) {
+			for (const ruleId in context.rules) {
 
-				const rule = context.config.rules[ruleId];
+				const rule = context.rules[ruleId];
 				if ((rule.type ?? RuleType.Syntax) !== ruleType) {
 					continue;
 				}
@@ -180,9 +180,9 @@ export async function ruleWorker<T>(
 	}
 	else if (document) {
 
-		for (const ruleId in context.config.rules) {
+		for (const ruleId in context.rules) {
 
-			const rule = context.config.rules[ruleId];
+			const rule = context.rules[ruleId];
 			if ((rule.type ?? RuleType.Syntax) !== ruleType) {
 				continue;
 			}

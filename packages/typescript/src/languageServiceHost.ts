@@ -110,7 +110,7 @@ export function createLanguageServiceHost(core: LanguageContext, ts: typeof impo
 		const newTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 		const newOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
-		core.update();
+		core.syncVirtualFiles();
 
 		for (const { root } of virtualFiles.allSources()) {
 			forEachEmbeddedFile(root, embedded => {

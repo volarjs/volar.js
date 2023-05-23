@@ -64,6 +64,7 @@ function createLanguageServicePluginContext(
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
 	const context: ServiceContext = {
+		...languageContext,
 		env,
 		inject: (key, ...args) => {
 			for (const service of Object.values(context.services)) {
@@ -74,8 +75,7 @@ function createLanguageServicePluginContext(
 			}
 			throw `No service provide ${key as any}`;
 		},
-		config,
-		core: languageContext,
+		rules: config.rules ?? {},
 		services: {},
 		documents: textDocumentMapper,
 		commands: {

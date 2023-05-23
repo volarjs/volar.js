@@ -34,26 +34,17 @@ interface Command<T> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface ServiceContext<Provide = any> {
-
+export interface ServiceContext<Provide = any> extends LanguageContext {
 	env: ServiceEnvironment;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
-	config: Config;
 	commands: {
 		showReferences: Command<(uri: string, position: vscode.Position, locations: vscode.Location[]) => vscode.Command | undefined>;
 		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;
 		setSelection: Command<(position: vscode.Position) => vscode.Command | undefined>;
 	};
-
-	/** @private */
-	core: LanguageContext;
-	/** @private */
 	documents: DocumentsAndSourceMaps;
-	/** @private */
+	rules: { [id: string]: Rule; };
 	services: { [id: string]: ReturnType<Service>; };
-	/** @private */
-	getTextDocument(uri: string): TextDocument | undefined;
-	/** @private */
 	ruleFixes?: {
 		[uri: string]: {
 			[ruleId: string]: {
@@ -61,6 +52,7 @@ export interface ServiceContext<Provide = any> {
 			};
 		};
 	};
+	getTextDocument(uri: string): TextDocument | undefined;
 }
 
 export type Result<T> = T | Thenable<T>;
