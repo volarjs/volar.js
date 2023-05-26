@@ -69,8 +69,13 @@ function createProjectBase(
 		getScriptSnapshot: (fileName) => {
 			const version = host.getScriptVersion(fileName);
 			if (!scriptSnapshots[fileName] || scriptSnapshots[fileName][0] !== version) {
-				const fileText = ts.sys.readFile(fileName);
-				scriptSnapshots[fileName] = [version, fileText ? ts.ScriptSnapshot.fromString(fileText) : undefined];
+				const fileText = ts.sys.readFile(fileName, 'utf8');
+				if (fileText !== undefined) {
+					scriptSnapshots[fileName] = [version, ts.ScriptSnapshot.fromString(fileText)];
+				}
+				else {
+					scriptSnapshots[fileName] = [version, undefined];
+				}
 			}
 			return scriptSnapshots[fileName][1];
 		},
