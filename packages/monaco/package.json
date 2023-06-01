@@ -16,7 +16,6 @@
 	},
 	"dependencies": {
 		"@volar/language-service": "1.6.9",
-		"@volar/web-fs": "1.6.9",
 		"vscode-uri": "^3.0.7"
 	},
 	"devDependencies": {

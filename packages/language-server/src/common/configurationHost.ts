@@ -3,7 +3,7 @@ import * as vscode from 'vscode-languageserver';
 
 export function createConfigurationHost(params: vscode.InitializeParams, connection: vscode.Connection): Pick<ServiceEnvironment, 'getConfiguration' | 'onDidChangeConfiguration'> & { ready(): void; } {
 
-	const callbacks: (() => void)[] = [];
+	const callbacks = new Set<() => void>();
 	const cache = new Map<string, any>();
 
 	connection.onDidChangeConfiguration(async () => {
@@ -29,7 +29,12 @@ export function createConfigurationHost(params: vscode.InitializeParams, connect
 			return await getConfigurationWorker(section, scopeUri);
 		},
 		onDidChangeConfiguration(cb) {
-			callbacks.push(cb);
+			callbacks.add(cb);
+			return {
+				dispose() {
+					callbacks.delete(cb);
+				},
+			};
 		},
 	};
 

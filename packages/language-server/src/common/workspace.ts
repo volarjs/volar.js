@@ -9,6 +9,7 @@ import { isFileInDir } from './utils/isFileInDir';
 import { WorkspacesContext } from './workspaces';
 
 import type * as _ from 'vscode-languageserver-textdocument';
+import { FileType } from '@volar/language-service';
 
 export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
@@ -20,16 +21,15 @@ export interface WorkspaceContext extends WorkspacesContext {
 
 export async function createWorkspace(context: WorkspaceContext) {
 
-	const fileNameToUri = context.server.runtimeEnv.fileNameToUri;
-	const uriToFileName = context.server.runtimeEnv.uriToFileName;
-
 	let inferredProject: Project | undefined;
+	let disposeTsConfigWatch: vscode.Disposable | undefined;
 
-	const sys = context.workspaces.fileSystemHost?.getWorkspaceFileSystem(context.workspace.rootUri);
+	const { fileNameToUri, uriToFileName, fs } = context.server.runtimeEnv;
 	const projects = createUriMap<Project>(fileNameToUri);
 	const rootTsConfigs = new Set<path.PosixPath>();
 	const searchedDirs = new Set<path.PosixPath>();
-	const disposeTsConfigWatch = context.workspaces.fileSystemHost?.onDidChangeWatchedFiles(({ changes }) => {
+
+	context.server.onDidChangeWatchedFiles(({ changes }) => {
 		for (const change of changes) {
 			if (rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1))) {
 				if (change.type === vscode.FileChangeType.Created) {
@@ -57,7 +57,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 		reload: clearProjects,
 		dispose() {
 			clearProjects();
-			disposeTsConfigWatch?.();
+			disposeTsConfigWatch?.dispose();
 		},
 	};
 
@@ -86,7 +86,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 	function getInferredProject() {
 		if (!inferredProject) {
 			inferredProject = (async () => {
-				const inferOptions = await getInferredCompilerOptions(context.workspaces.configurationHost);
+				const inferOptions = await getInferredCompilerOptions(context.server.configurationHost);
 				return createProject({
 					...context,
 					project: {
@@ -110,7 +110,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 			searchedDirs.add(dir);
 			for (const tsConfigName of rootTsConfigNames) {
 				const tsconfigPath = path.join(dir, tsConfigName as path.PosixPath);
-				if (sys?.fileExists(tsconfigPath)) {
+				if ((await fs.stat?.(fileNameToUri(tsconfigPath)))?.type === FileType.File) {
 					rootTsConfigs.add(tsconfigPath);
 				}
 			}
@@ -119,7 +119,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 
 		await prepareClosestootParsedCommandLine();
 
-		return await findDirectIncludeTsconfig() ?? await findIndirectReferenceTsconfig();
+		return await findDirectIncludeTsconfig();
 
 		async function prepareClosestootParsedCommandLine() {
 
@@ -145,12 +145,6 @@ export async function createWorkspace(context: WorkspaceContext) {
 					map.pathSet(fileName, true);
 				}
 				return map.uriHas(uri.toString());
-			});
-		}
-		function findIndirectReferenceTsconfig() {
-			return findTsconfig(async tsconfig => {
-				const project = await projects.pathGet(tsconfig);
-				return project?.readFiles.has(uriToFileName(uri.toString())) ?? false;
 			});
 		}
 		async function findTsconfig(match: (tsconfig: string) => Promise<boolean> | boolean) {
@@ -195,13 +189,13 @@ export async function createWorkspace(context: WorkspaceContext) {
 					let tsConfigPath = projectReference.path.replace(/\\/g, '/') as path.PosixPath;
 
 					// fix https://github.com/johnsoncodehk/volar/issues/712
-					if (sys && !sys.fileExists(tsConfigPath)) {
+					if ((await fs.stat?.(fileNameToUri(tsConfigPath)))?.type === FileType.File) {
 						const newTsConfigPath = path.join(tsConfigPath, 'tsconfig.json' as path.PosixPath);
 						const newJsConfigPath = path.join(tsConfigPath, 'jsconfig.json' as path.PosixPath);
-						if (sys.fileExists(newTsConfigPath)) {
+						if ((await fs.stat?.(fileNameToUri(newTsConfigPath)))?.type === FileType.File) {
 							tsConfigPath = newTsConfigPath;
 						}
-						else if (sys.fileExists(newJsConfigPath)) {
+						else if ((await fs.stat?.(fileNameToUri(newJsConfigPath)))?.type === FileType.File) {
 							tsConfigPath = newJsConfigPath;
 						}
 					}

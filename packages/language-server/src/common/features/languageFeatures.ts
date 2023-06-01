@@ -228,7 +228,7 @@ export function register(
 				if (token.isCancellationRequested)
 					return;
 
-				const service = (await project).getLanguageService();
+				const service = await (await project).getLanguageService();
 
 				results = results.concat(await service.findWorkspaceSymbols(params.query, token));
 			}
@@ -338,8 +338,9 @@ export function register(
 					resolve(undefined);
 					return;
 				}
-				const service = await getLanguageService(uri);
-				if (service) {
+				const project = await getProject(uri);
+				if (project) {
+					const service = await project.getLanguageService();
 					try { // handle TS cancel throw
 						const result = await cb(service);
 						if (token.isCancellationRequested) {
@@ -359,9 +360,8 @@ export function register(
 			});
 		});
 	}
-	async function getLanguageService(uri: string) {
-		const project = (await projects.getProject(uri))?.project;
-		return project?.getLanguageService();
+	async function getProject(uri: string) {
+		return (await projects.getProject(uri))?.project;
 	}
 	function fixTextEdit(item: vscode.CompletionItem) {
 		const insertReplaceSupport = initParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;

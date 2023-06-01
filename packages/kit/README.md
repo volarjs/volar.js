@@ -31,11 +31,11 @@ createWatcher(path.dirname(tsconfig), ['ts', 'js', 'foo'])
     })
     .on('unlink', (fileName) => {
         project.fileDeleted(fileName);
-        update(fileName);
+        update();
     })
     .on('change', (fileName) => {
         project.fileUpdated(fileName);
-        update(fileName);
+        update();
     });
 
 function createWatcher(rootPath: string, extension: string[]) {
@@ -45,10 +45,7 @@ function createWatcher(rootPath: string, extension: string[]) {
     });
 }
 
-async function update(fileNameCheckRelated?: string) {
-
-    if (fileNameCheckRelated && !project.isKnownRelatedFile(fileNameCheckRelated))
-        return;
+async function update() {
 
     const currentReq = ++req;
     const isCanceled = () => currentReq !== req;

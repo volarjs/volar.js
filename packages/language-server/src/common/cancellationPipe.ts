@@ -37,10 +37,7 @@ export function createCancellationTokenHost(_cancellationPipeName: string | unde
 		return token;
 	}
 	function getMtime() {
-		try {
-			return fs.statSync(cancellationPipeName).mtime.valueOf();
-		} catch {
-			return -1;
-		}
+		const stat = fs.statSync(cancellationPipeName, { throwIfNoEntry: false });
+		return stat?.mtime.valueOf() ?? -1;
 	}
 }

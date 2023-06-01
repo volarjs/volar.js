@@ -243,13 +243,21 @@ export function createDocuments(
 
 	return {
 		data: snapshots,
-		onDidChangeContent: (cb: (params: vscode.DidChangeTextDocumentParams) => void) => {
+		onDidChangeContent: (cb: (params: vscode.DidChangeTextDocumentParams) => void): vscode.Disposable => {
 			onDidChangeContents.add(cb);
-			return () => onDidChangeContents.delete(cb);
+			return {
+				dispose() {
+					onDidChangeContents.delete(cb);
+				},
+			};
 		},
-		onDidClose: (cb: (params: vscode.DidCloseTextDocumentParams) => void) => {
+		onDidClose: (cb: (params: vscode.DidCloseTextDocumentParams) => void): vscode.Disposable => {
 			onDidCloses.add(cb);
-			return () => onDidCloses.delete(cb);
+			return {
+				dispose() {
+					onDidCloses.delete(cb);
+				},
+			};
 		},
 	};
 }

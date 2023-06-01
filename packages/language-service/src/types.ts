@@ -1,7 +1,4 @@
 import { Language, LanguageContext } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
-import type { DocumentContext, FileSystemProvider } from 'vscode-html-languageservice';
-import type { SchemaRequestService } from 'vscode-json-languageservice';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -14,19 +11,38 @@ export interface SharedModules {
 }
 
 export interface ServiceEnvironment {
-	// InitializeParams
+
 	locale?: string;
 	rootUri: URI;
 	clientCapabilities?: vscode.ClientCapabilities;
+	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>;
+	onDidChangeConfiguration?(cb: () => void): vscode.Disposable;
+	onDidChangeWatchedFiles?(cb: (params: vscode.DidChangeWatchedFilesParams) => void): vscode.Disposable;
+
+	// RuntimeEnvironment
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
-	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>,
-	onDidChangeConfiguration?(cb: () => void): void,
-	onDidChangeWatchedFiles?(cb: (params: vscode.DidChangeWatchedFilesParams) => void): () => void,
-	documentContext?: DocumentContext;
-	fileSystemProvider?: FileSystemProvider;
-	schemaRequestService?: SchemaRequestService;
-	sys?: ts.System;
+	fs: FileSystem;
+}
+
+export interface FileSystem {
+	stat(uri: string): Result<FileStat | undefined>;
+	readDirectory(uri: string): Result<[string, FileType][]>;
+	readFile(uri: string, encoding?: string): Result<string | undefined>;
+}
+
+export interface FileStat {
+	type: FileType;
+	ctime: number;
+	mtime: number;
+	size: number;
+}
+
+export enum FileType {
+	Unknown = 0,
+	File = 1,
+	Directory = 2,
+	SymbolicLink = 64,
 }
 
 interface Command<T> {
@@ -61,7 +77,7 @@ export type SemanticToken = [number, number, number, number, number];
 
 type ServiceProvide<P> = P extends undefined ? { provide?: undefined; } : { provide: P; };
 
-export type Service<P extends any = any> = {
+export type Service<P = any> = {
 	(context: ServiceContext | undefined, modules: SharedModules | undefined): {
 		isAdditionalCompletion?: boolean; // volar specific
 		triggerCharacters?: string[];
@@ -137,7 +153,6 @@ export interface Rule<Provide = any> {
 export interface RuleContext<Provide = any> {
 	env: ServiceEnvironment;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
-	getTextDocument(uri: string): TextDocument | undefined;
 	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
 }
 

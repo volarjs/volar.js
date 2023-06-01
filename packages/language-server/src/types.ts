@@ -1,33 +1,17 @@
-import { LanguageService, ServiceEnvironment } from '@volar/language-service';
-import * as embedded from '@volar/language-core';
-import type { FileSystemProvider } from 'vscode-html-languageservice';
+import { FileSystem, LanguageService, ServiceEnvironment, SharedModules } from '@volar/language-service';
+import type { TypeScriptLanguageHost } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
-import { URI } from 'vscode-uri';
 import { Config } from '@volar/language-service';
 import { ProjectContext } from './common/project';
 
-export type FileSystemHost = {
-	ready(connection: vscode.Connection): void,
-	reload(): void,
-	getWorkspaceFileSystem(rootUri: URI): ts.System,
-	onDidChangeWatchedFiles(cb: (params: vscode.DidChangeWatchedFilesParams) => void): () => void,
-};
-
 export interface RuntimeEnvironment {
-	uriToFileName: (uri: string) => string,
-	fileNameToUri: (fileName: string) => string,
-	loadTypescript: (tsdk: string) => typeof import('typescript/lib/tsserverlibrary'),
-	loadTypescriptLocalized: (tsdk: string, locale: string) => Promise<{} | undefined>,
-	schemaRequestHandlers: { [schema: string]: undefined | ((uri: string, encoding?: BufferEncoding) => Promise<string | undefined>); },
-	onDidChangeConfiguration?: (settings: any) => void,
-	fileSystemProvide: FileSystemProvider | undefined,
-	createFileSystemHost: (
-		ts: typeof import('typescript/lib/tsserverlibrary'),
-		capabilities: vscode.ClientCapabilities,
-		env: RuntimeEnvironment,
-		initOptions: InitializationOptions,
-	) => FileSystemHost,
+	uriToFileName(uri: string): string;
+	fileNameToUri(fileName: string): string;
+	loadTypescript(tsdk: string): typeof import('typescript/lib/tsserverlibrary');
+	loadTypescriptLocalized(tsdk: string, locale: string): Promise<{} | undefined>;
+	onDidChangeConfiguration?(settings: any): void;
+	fs: FileSystem;
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
 	readonly timer: {
 		setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
@@ -36,20 +20,17 @@ export interface RuntimeEnvironment {
 	};
 }
 
-interface LanguageServerPluginContext extends ProjectContext {
-	env: ServiceEnvironment;
-	host: embedded.LanguageServiceHost;
-	sys: ts.System;
-}
-
 export interface LanguageServerPlugin {
-	(initOptions: InitializationOptions, modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); }): {
+	(initOptions: InitializationOptions, modules: SharedModules): {
 		extraFileExtensions?: ts.FileExtensionInfo[];
 		watchFileExtensions?: string[];
 		resolveConfig?(
 			config: Config,
-			ctx: LanguageServerPluginContext | undefined,
-		): Config;
+			ctx: {
+				env: ServiceEnvironment;
+				host: TypeScriptLanguageHost;
+			} & ProjectContext | undefined,
+		): Config | Promise<Config>;
 		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};
 }
@@ -72,19 +53,6 @@ export interface InitializationOptions {
 		 * Absolute path to node_modules/typescript/lib
 		 */
 		tsdk: string;
-		/**
-		 * Dependencies versions.
-		 * @example
-		 * {
-		 * 	'@vue/compiler-sfc': '3.0.0',
-		 * 	'typescript': '4.0.0',
-		 * }
-		 */
-		versions?: Record<string, string>,
-		/**
-		 * CDN url for dependencies.
-		 */
-		cdn?: string;
 	};
 	l10n?: {
 		location: string; // uri
@@ -104,7 +72,6 @@ export interface InitializationOptions {
 	 */
 	cancellationPipeName?: string;
 	reverseConfigFilePriority?: boolean;
-	maxFileSize?: number;
 	configFilePath?: string;
 	/**
 	 * Extra semantic token types and modifiers that are supported by the client.

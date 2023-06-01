@@ -8,6 +8,7 @@ let documentRegistry: ts.DocumentRegistry;
 export function createLanguageService(
 	core: LanguageContext,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
+	sys: ts.System,
 ) {
 
 	type _LanguageService = {
@@ -22,7 +23,7 @@ export function createLanguageService(
 		throw new Error('TypeScript module not provided.');
 	}
 
-	const lsHost = createLanguageServiceHost(core, ts);
+	const lsHost = createLanguageServiceHost(core, ts, sys);
 	const ls = ts.createLanguageService(lsHost, documentRegistry ??= ts.createDocumentRegistry());
 
 	return new Proxy<Partial<_LanguageService>>({
@@ -304,9 +305,9 @@ export function createLanguageService(
 		if (!textSpan) return;
 		const [virtualFile, source] = core.virtualFiles.getVirtualFile(fileName);
 		if (virtualFile && source) {
-			for (const [sourceFileName, map] of core.virtualFiles.getMaps(virtualFile)) {
+			for (const [_, [sourceSnapshot, map]] of core.virtualFiles.getMaps(virtualFile)) {
 
-				if (source.fileName !== sourceFileName)
+				if (source.snapshot !== sourceSnapshot)
 					continue;
 
 				const sourceLoc = map.toSourceOffset(textSpan.start);

@@ -1,8 +1,7 @@
-import { ServiceEnvironment } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, FileSystemHost, InitializationOptions, LanguageServerPlugin, ServerMode } from '../types';
+import { DiagnosticModel, InitializationOptions, LanguageServerPlugin, ServerMode } from '../types';
 import { CancellationTokenHost } from './cancellationPipe';
 import { createDocuments } from './documents';
 import { ServerContext } from './server';
@@ -19,8 +18,6 @@ export interface WorkspacesContext extends ServerContext {
 		plugins: ReturnType<LanguageServerPlugin>[];
 		ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 		tsLocalized: ts.MapLike<string> | undefined;
-		fileSystemHost: FileSystemHost | undefined;
-		configurationHost: Pick<ServiceEnvironment, 'getConfiguration' | 'onDidChangeConfiguration'> | undefined;
 		documents: ReturnType<typeof createDocuments>;
 		cancelTokenHost: CancellationTokenHost;
 	};
@@ -30,8 +27,7 @@ export interface Workspaces extends ReturnType<typeof createWorkspaces> { }
 
 export function createWorkspaces(context: WorkspacesContext) {
 
-	const uriToFileName = context.server.runtimeEnv.uriToFileName;
-
+	const { uriToFileName } = context.server.runtimeEnv;
 	const workspaces = new Map<string, ReturnType<typeof createWorkspace>>();
 
 	let semanticTokensReq = 0;
@@ -43,18 +39,20 @@ export function createWorkspaces(context: WorkspacesContext) {
 	context.workspaces.documents.onDidClose(({ textDocument }) => {
 		context.server.connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
 	});
-	context.workspaces.fileSystemHost?.onDidChangeWatchedFiles(({ changes }) => {
-		const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
-		if (tsConfigChanges.length) {
-			reloadDiagnostics();
-		}
-		else {
-			updateDiagnosticsAndSemanticTokens();
-		}
-	});
-	context.server.runtimeEnv.onDidChangeConfiguration?.(async () => {
-		updateDiagnosticsAndSemanticTokens();
-	});
+
+	if (context.server.initializeParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
+		context.server.onDidChangeWatchedFiles(({ changes }) => {
+			const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
+			if (tsConfigChanges.length) {
+				reloadDiagnostics();
+			}
+			else {
+				updateDiagnosticsAndSemanticTokens();
+			}
+		});
+	}
+
+	context.server.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
 
 	return {
 		workspaces,
@@ -80,8 +78,6 @@ export function createWorkspaces(context: WorkspacesContext) {
 	};
 
 	async function reloadProject() {
-
-		context.workspaces.fileSystemHost?.reload();
 
 		for (const [_, workspace] of workspaces) {
 			(await workspace).reload();
@@ -163,7 +159,7 @@ export function createWorkspaces(context: WorkspacesContext) {
 		// 	: context.initOptions.serverMode === ServerMode.Syntactic ? 'syntactic' as const
 		// 		: 'all' as const;
 
-		const languageService = project.getLanguageService();
+		const languageService = await project.getLanguageService();
 		const errors = await languageService.doValidation(uri, 'all', cancel, result => {
 			context.server.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});

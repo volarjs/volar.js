@@ -51,12 +51,12 @@ export function register(
 		if (!params.tsconfig) {
 			const project = await workspace.getInferredProject();
 			if (!project) return [];
-			return project.languageServiceHost.getScriptFileNames();
+			return project.projectHost.getScriptFileNames();
 		}
 		for (const _project of workspace.projects.values()) {
 			const project = await _project;
 			if (project.tsConfig === params.tsconfig) {
-				return project.languageServiceHost.getScriptFileNames();
+				return project.projectHost.getScriptFileNames();
 			}
 		}
 		return [];
@@ -64,7 +64,7 @@ export function register(
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const project = await workspaces.getProject(document.uri);
 		if (project) {
-			const file = project.project?.getLanguageService().context.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
+			const file = (await project.project?.getLanguageService())?.context.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
 			return file ? prune(file) : undefined;
 
 			function prune(file: VirtualFile): VirtualFile {
@@ -87,7 +87,7 @@ export function register(
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
 		const project = await workspaces.getProject(params.sourceFileUri);
 		if (project) {
-			const [virtualFile, source] = project.project?.getLanguageService().context.virtualFiles.getVirtualFile(params.virtualFileName) ?? [];
+			const [virtualFile, source] = (await project.project?.getLanguageService())?.context.virtualFiles.getVirtualFile(params.virtualFileName) ?? [];
 			if (virtualFile && source) {
 				const mappings: Record<string, any[]> = {};
 				for (const mapping of virtualFile.mappings) {
@@ -114,10 +114,11 @@ export function register(
 		if (project) {
 			const ls = (await project.project)?.getLanguageServiceDontCreate();
 			if (ls) {
+				const rootPath = ls.context.env.uriToFileName(ls.context.env.rootUri.toString());
 				for (const { root } of ls.context.virtualFiles.allSources()) {
 					forEachEmbeddedFile(root, virtualFile => {
 						if (virtualFile.kind === FileKind.TypeScriptHostFile) {
-							if (virtualFile.fileName.startsWith(ls.context.host.getCurrentDirectory())) {
+							if (virtualFile.fileName.startsWith(rootPath)) {
 								const snapshot = virtualFile.snapshot;
 								fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
 							}

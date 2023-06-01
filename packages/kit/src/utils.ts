@@ -1,6 +1,8 @@
 import * as path from 'typesafe-path/posix';
 import { URI } from 'vscode-uri';
 import type * as ts from 'typescript/lib/tsserverlibrary';
+import { FileSystem, FileType } from '@volar/language-service';
+import * as _fs from 'fs';
 
 export const defaultCompilerOptions: ts.CompilerOptions = {
 	allowJs: true,
@@ -41,3 +43,38 @@ export function getConfiguration(settings: any, section: string) {
 	}
 	return result;
 }
+
+export const fs: FileSystem = {
+	readFile(uri, encoding) {
+		return _fs.readFileSync(uriToFileName(uri), { encoding: (encoding as 'utf8') ?? 'utf8' });
+	},
+	readDirectory(uri) {
+		if (uri.startsWith('file://')) {
+			const dirName = uriToFileName(uri);
+			const files = _fs.existsSync(dirName) ? _fs.readdirSync(dirName, { withFileTypes: true }) : [];
+			return files.map<[string, FileType]>(file => {
+				return [file.name, file.isFile() ? FileType.File
+					: file.isDirectory() ? FileType.Directory
+						: file.isSymbolicLink() ? FileType.SymbolicLink
+							: FileType.Unknown];
+			});
+		}
+		return [];
+	},
+	stat(uri) {
+		if (uri.startsWith('file://')) {
+			const stats = _fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
+			if (stats) {
+				return {
+					type: stats.isFile() ? FileType.File
+						: stats.isDirectory() ? FileType.Directory
+							: stats.isSymbolicLink() ? FileType.SymbolicLink
+								: FileType.Unknown,
+					ctime: stats.ctimeMs,
+					mtime: stats.mtimeMs,
+					size: stats.size,
+				};
+			}
+		}
+	},
+};

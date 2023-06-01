@@ -1,9 +1,12 @@
 import { createVirtualFiles } from './virtualFiles';
-import { Language, LanguageServiceHost } from './types';
+import { Language, TypeScriptLanguageHost } from './types';
 
-export type LanguageContext = ReturnType<typeof createLanguageContext>;
+export interface LanguageContext {
+	host: TypeScriptLanguageHost;
+	virtualFiles: ReturnType<typeof createVirtualFiles>;
+};
 
-export function createLanguageContext(host: LanguageServiceHost, languages: Language[]) {
+export function createLanguageContext(host: TypeScriptLanguageHost, languages: Language<any>[]): LanguageContext {
 
 	for (const language of languages.reverse()) {
 		if (language.resolveHost) {
@@ -24,10 +27,9 @@ export function createLanguageContext(host: LanguageServiceHost, languages: Lang
 		}
 	}
 
-	let lastProjectVersion: string | undefined;
+	let lastProjectVersion: number | string | undefined;
 
 	const virtualFiles = createVirtualFiles(languages);
-	const sourceFileVersions = new Map<string, string>();
 
 	return {
 		host,
@@ -37,13 +39,12 @@ export function createLanguageContext(host: LanguageServiceHost, languages: Lang
 				return target[property as keyof typeof virtualFiles];
 			},
 		}),
-		syncVirtualFiles,
 	};
 
 	function syncVirtualFiles() {
 
-		const newProjectVersion = host.getProjectVersion?.();
-		const shouldUpdate = newProjectVersion === undefined || newProjectVersion !== lastProjectVersion;
+		const newProjectVersion = host.getProjectVersion();
+		const shouldUpdate = newProjectVersion !== lastProjectVersion;
 		if (!shouldUpdate)
 			return;
 
@@ -51,21 +52,17 @@ export function createLanguageContext(host: LanguageServiceHost, languages: Lang
 
 		const remainRootFiles = new Set(host.getScriptFileNames());
 
-		for (const { fileName } of virtualFiles.allSources()) {
+		for (const { fileName, snapshot } of virtualFiles.allSources()) {
 			remainRootFiles.delete(fileName);
 
-			const snapshot = host.getScriptSnapshot(fileName);
-			if (!snapshot) {
+			const newSnapshot = host.getScriptSnapshot(fileName);
+			if (!newSnapshot) {
 				// delete
 				virtualFiles.deleteSource(fileName);
-				continue;
 			}
-
-			const newVersion = host.getScriptVersion(fileName);
-			if (sourceFileVersions.get(fileName) !== newVersion) {
+			else if (newSnapshot !== snapshot) {
 				// update
-				sourceFileVersions.set(fileName, newVersion);
-				virtualFiles.updateSource(fileName, snapshot, host.getScriptLanguageId?.(fileName));
+				virtualFiles.updateSource(fileName, newSnapshot, host.getLanguageId?.(fileName));
 			}
 		}
 
@@ -73,7 +70,7 @@ export function createLanguageContext(host: LanguageServiceHost, languages: Lang
 		for (const fileName of [...remainRootFiles]) {
 			const snapshot = host.getScriptSnapshot(fileName);
 			if (snapshot) {
-				virtualFiles.updateSource(fileName, snapshot, host.getScriptLanguageId?.(fileName));
+				virtualFiles.updateSource(fileName, snapshot, host.getLanguageId?.(fileName));
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-import { VirtualFiles, VirtualFile, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, forEachEmbeddedFile, LanguageServiceHost } from '@volar/language-core';
+import { VirtualFiles, VirtualFile, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, forEachEmbeddedFile, TypeScriptLanguageHost } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -168,15 +168,15 @@ export class MirrorMapWithDocument extends SourceMapWithDocuments<[MirrorBehavio
 
 export function createDocumentsAndSourceMaps(
 	env: ServiceEnvironment,
-	host: LanguageServiceHost,
+	host: TypeScriptLanguageHost,
 	mapper: VirtualFiles,
 ) {
 
 	let version = 0;
 
-	const _maps = new WeakMap<SourceMap<FileRangeCapabilities>, [VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>]>();
-	const _mirrorMaps = new WeakMap<MirrorMap, [VirtualFile, MirrorMapWithDocument]>();
-	const _documents = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
+	const map2DocMap = new WeakMap<SourceMap<FileRangeCapabilities>, [VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>]>();
+	const mirrorMap2DocMirrorMap = new WeakMap<MirrorMap, [VirtualFile, MirrorMapWithDocument]>();
+	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
 
 	return {
 		getSourceByUri(sourceFileUri: string) {
@@ -194,13 +194,13 @@ export function createDocumentsAndSourceMaps(
 			if (virtualFile) {
 				const map = mapper.getMirrorMap(virtualFile);
 				if (map) {
-					if (!_mirrorMaps.has(map)) {
-						_mirrorMaps.set(map, [virtualFile, new MirrorMapWithDocument(
+					if (!mirrorMap2DocMirrorMap.has(map)) {
+						mirrorMap2DocMirrorMap.set(map, [virtualFile, new MirrorMapWithDocument(
 							getDocumentByFileName(virtualFile.snapshot, fileName),
 							map,
 						)]);
 					}
-					return _mirrorMaps.get(map);
+					return mirrorMap2DocMirrorMap.get(map);
 				}
 			}
 		},
@@ -212,20 +212,20 @@ export function createDocumentsAndSourceMaps(
 			if (source) {
 				const result: [VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>][] = [];
 				forEachEmbeddedFile(source.root, (embedded) => {
-					for (const [sourceFileName, map] of mapper.getMaps(embedded)) {
-						if (sourceFileName === fileName) {
-							if (!_maps.has(map)) {
-								_maps.set(map, [
+					for (const [sourceFileName, [sourceSnapshot, map]] of mapper.getMaps(embedded)) {
+						if (sourceSnapshot === source.snapshot) {
+							if (!map2DocMap.has(map)) {
+								map2DocMap.set(map, [
 									embedded,
 									new SourceMapWithDocuments(
-										getDocumentByFileName(source.snapshot, sourceFileName),
+										getDocumentByFileName(sourceSnapshot, sourceFileName),
 										getDocumentByFileName(embedded.snapshot, fileName),
 										map,
 									)
 								]);
 							}
-							if (_maps.has(map)) {
-								result.push(_maps.get(map)!);
+							if (map2DocMap.has(map)) {
+								result.push(map2DocMap.get(map)!);
 							}
 						}
 					}
@@ -242,19 +242,16 @@ export function createDocumentsAndSourceMaps(
 		*getMapsByVirtualFileName(virtualFileName: string): IterableIterator<[VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>]> {
 			const [virtualFile] = mapper.getVirtualFile(virtualFileName);
 			if (virtualFile) {
-				for (const [sourceFileName, map] of mapper.getMaps(virtualFile)) {
-					if (!_maps.has(map)) {
-						const sourceSnapshot = mapper.getSource(sourceFileName)?.snapshot;
-						if (sourceSnapshot) {
-							_maps.set(map, [virtualFile, new SourceMapWithDocuments(
-								getDocumentByFileName(sourceSnapshot, sourceFileName),
-								getDocumentByFileName(virtualFile.snapshot, virtualFileName),
-								map,
-							)]);
-						}
+				for (const [sourceFileName, [sourceSnapshot, map]] of mapper.getMaps(virtualFile)) {
+					if (!map2DocMap.has(map)) {
+						map2DocMap.set(map, [virtualFile, new SourceMapWithDocuments(
+							getDocumentByFileName(sourceSnapshot, sourceFileName),
+							getDocumentByFileName(virtualFile.snapshot, virtualFileName),
+							map,
+						)]);
 					}
-					if (_maps.has(map)) {
-						yield _maps.get(map)!;
+					if (map2DocMap.has(map)) {
+						yield map2DocMap.get(map)!;
 					}
 				}
 			}
@@ -266,15 +263,15 @@ export function createDocumentsAndSourceMaps(
 	};
 
 	function getDocumentByFileName(snapshot: ts.IScriptSnapshot, fileName: string) {
-		if (!_documents.has(snapshot)) {
-			_documents.set(snapshot, new Map());
+		if (!snapshot2Doc.has(snapshot)) {
+			snapshot2Doc.set(snapshot, new Map());
 		}
-		const map = _documents.get(snapshot)!;
+		const map = snapshot2Doc.get(snapshot)!;
 		if (!map.has(fileName)) {
 			const uri = env.fileNameToUri(fileName);
 			map.set(fileName, TextDocument.create(
 				uri,
-				host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
+				host.getLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 				version++,
 				snapshot.getText(0, snapshot.getLength()),
 			));

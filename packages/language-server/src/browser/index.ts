@@ -1,10 +1,10 @@
-import { configure as configureHttpRequests } from 'request-light';
+// import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver/browser';
-import { ServerContext, startCommonLanguageServer } from '../common/server';
+import { startCommonLanguageServer } from '../common/server';
 import { LanguageServerPlugin } from '../types';
 import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
-import { createWebFileSystemHost } from './fileSystems';
 import { URI } from 'vscode-uri';
+import { FsReadFileRequest, FsReadDirectoryRequest, FsStatRequest } from '../protocol';
 
 export * from '../index';
 
@@ -18,67 +18,66 @@ export function createConnection() {
 }
 
 export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
-	startCommonLanguageServer(connection, (options): ServerContext['server'] => {
-
-		return {
-			plugins,
-			connection,
-			runtimeEnv: {
-				uriToFileName,
-				fileNameToUri,
-				timer: {
-					setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable {
-						const handle = setTimeout(callback, 0, ...args);
-						return { dispose: () => clearTimeout(handle) };
-					},
-				},
-				loadTypescript() {
-					return require('typescript'); // force bundle because not support load by user config in web
-				},
-				async loadTypescriptLocalized(tsdk, locale) {
-					try {
-						const uri = fileNameToUri(`${tsdk}/${locale}/diagnosticMessages.generated.json`);
-						const json = await httpSchemaRequestHandler(uri);
-						if (json) {
-							return JSON.parse(json);
-						}
-					}
-					catch { }
-				},
-				schemaRequestHandlers: {
-					http: httpSchemaRequestHandler,
-					https: httpSchemaRequestHandler,
-				},
-				onDidChangeConfiguration(settings) {
-					configureHttpRequests(settings.http && settings.http.proxy, settings.http && settings.http.proxyStrictSSL);
-				},
-				fileSystemProvide: undefined, // TODO
-				createFileSystemHost: createWebFileSystemHost,
+	startCommonLanguageServer(connection, plugins, () => ({
+		uriToFileName,
+		fileNameToUri,
+		timer: {
+			setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable {
+				const handle = setTimeout(callback, 0, ...args);
+				return { dispose: () => clearTimeout(handle) };
 			},
-		};
-
-		function uriToFileName(uri: string) {
-			const parsed = URI.parse(uri);
-			if (options.typescript?.cdn && uri.startsWith(options.typescript.cdn)) {
-				return parsed.toString(true).replace(options.typescript.cdn, '/node_modules/');
+		},
+		loadTypescript() {
+			return require('typescript'); // force bundle because not support load by user config in web
+		},
+		async loadTypescriptLocalized(tsdk, locale) {
+			try {
+				const uri = fileNameToUri(`${tsdk}/${locale}/diagnosticMessages.generated.json`);
+				const json = await httpSchemaRequestHandler(uri);
+				if (json) {
+					return JSON.parse(json);
+				}
 			}
-			return `/${parsed.scheme}${parsed.authority ? '@' + parsed.authority : ''}${parsed.path}`;
-		};
-
-		function fileNameToUri(fileName: string) {
-			if (fileName.startsWith('/node_modules/') && options.typescript?.cdn) {
-				return URI.parse(fileName.replace('/node_modules/', options.typescript.cdn)).toString();
-			}
-			const parts = fileName.split('/');
-			if (parts.length <= 1) {
-				return URI.from({ scheme: '', path: '' }).toString();
-			}
-			const firstParts = parts[1].split('@');
-			return URI.from({
-				scheme: firstParts[0],
-				authority: firstParts.length > 1 ? firstParts[1] : undefined,
-				path: '/' + parts.slice(2).join('/'),
-			}).toString();
-		};
-	});
+			catch { }
+		},
+		// TODO
+		// onDidChangeConfiguration(settings) {
+		// 	configureHttpRequests(settings.http && settings.http.proxy, settings.http && settings.http.proxyStrictSSL);
+		// },
+		fs: {
+			stat(uri) {
+				return connection.sendRequest(FsStatRequest.type, uri);
+			},
+			async readFile(uri, encoding) {
+				if (uri.startsWith('http://') || uri.startsWith('https://')) {
+					return await httpSchemaRequestHandler(uri);
+				}
+				const data = await connection.sendRequest(FsReadFileRequest.type, uri);
+				if (data) {
+					return new TextDecoder(encoding ?? 'utf8').decode(data);
+				}
+			},
+			async readDirectory(uri) {
+				return connection.sendRequest(FsReadDirectoryRequest.type, uri);
+			},
+		},
+	}));
 }
+
+function uriToFileName(uri: string) {
+	const parsed = URI.parse(uri);
+	return `/${parsed.scheme}${parsed.authority ? '@' + parsed.authority : ''}${parsed.path}`;
+};
+
+function fileNameToUri(fileName: string) {
+	const parts = fileName.split('/');
+	if (parts.length <= 1) {
+		return URI.from({ scheme: '', path: '' }).toString();
+	}
+	const firstParts = parts[1].split('@');
+	return URI.from({
+		scheme: firstParts[0],
+		authority: firstParts.length > 1 ? firstParts[1] : undefined,
+		path: '/' + parts.slice(2).join('/'),
+	}).toString();
+};
