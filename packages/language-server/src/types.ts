@@ -50,6 +50,7 @@ export interface LanguageServerPlugin {
 			config: Config,
 			ctx: LanguageServerPluginContext | undefined,
 		): Config;
+		resolveExistingOptions?(options: ts.CompilerOptions | undefined): ts.CompilerOptions | undefined;
 		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};
 }

@@ -50,12 +50,19 @@ export async function createProject(context: ProjectContext) {
 	let projectVersion = 0;
 	let projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
 	let languageService: embeddedLS.LanguageService | undefined;
+	let existingOptions: ts.CompilerOptions | undefined;
+	for (const plugin of context.workspaces.plugins) {
+		if (plugin.resolveExistingOptions) {
+			existingOptions = plugin.resolveExistingOptions(existingOptions);
+		}
+	}
 	let parsedCommandLine = createParsedCommandLine(
 		context.workspaces.ts,
 		sys,
 		uriToFileName(context.project.rootUri.toString()) as path.PosixPath,
 		context.project.tsConfig,
 		context.workspaces.plugins,
+		existingOptions,
 	);
 
 	const scripts = createUriMap<{
@@ -173,7 +180,14 @@ export async function createProject(context: ProjectContext) {
 		const deletes = changes.filter(change => change.type === vscode.FileChangeType.Deleted);
 
 		if (creates.length || deletes.length) {
-			parsedCommandLine = createParsedCommandLine(context.workspaces.ts, sys, uriToFileName(context.project.rootUri.toString()) as path.PosixPath, context.project.tsConfig, context.workspaces.plugins);
+			parsedCommandLine = createParsedCommandLine(
+				context.workspaces.ts,
+				sys,
+				uriToFileName(context.project.rootUri.toString()) as path.PosixPath,
+				context.project.tsConfig,
+				context.workspaces.plugins,
+				existingOptions,
+			);
 			projectVersion++;
 			typeRootVersion++;
 		}
@@ -300,6 +314,7 @@ function createParsedCommandLine(
 	rootPath: path.PosixPath,
 	tsConfig: path.PosixPath | ts.CompilerOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],
+	existingOptions: ts.CompilerOptions | undefined,
 ): ts.ParsedCommandLine {
 	const extraFileExtensions = plugins.map(plugin => plugin.extraFileExtensions ?? []).flat();
 	if (ts) {
@@ -307,10 +322,13 @@ function createParsedCommandLine(
 			let content: ts.ParsedCommandLine;
 			if (typeof tsConfig === 'string') {
 				const config = ts.readJsonConfigFile(tsConfig, sys.readFile);
-				content = ts.parseJsonSourceFileConfigFileContent(config, sys, path.dirname(tsConfig), {}, tsConfig, undefined, extraFileExtensions);
+				content = ts.parseJsonSourceFileConfigFileContent(config, sys, path.dirname(tsConfig), existingOptions, tsConfig, undefined, extraFileExtensions);
 			}
 			else {
-				content = ts.parseJsonConfigFileContent({ files: [] }, sys, rootPath, tsConfig, path.join(rootPath, 'jsconfig.json' as path.PosixPath), undefined, extraFileExtensions);
+				content = ts.parseJsonConfigFileContent({ files: [] }, sys, rootPath, {
+					...tsConfig,
+					...existingOptions,
+				}, path.join(rootPath, 'jsconfig.json' as path.PosixPath), undefined, extraFileExtensions);
 			}
 			// fix https://github.com/johnsoncodehk/volar/issues/1786
 			// https://github.com/microsoft/TypeScript/issues/30457
