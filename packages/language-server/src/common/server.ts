@@ -146,14 +146,6 @@ export async function startCommonLanguageServer(connection: vscode.Connection, _
 			});
 		}
 
-		if (context.server.initializeParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
-			connection.onDidChangeWatchedFiles(e => {
-				for (const cb of didChangeWatchedFilesCallbacks) {
-					cb(e);
-				}
-			});
-		}
-
 		if (
 			options.serverMode !== ServerMode.Syntactic
 			&& initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration
@@ -166,6 +158,11 @@ export async function startCommonLanguageServer(connection: vscode.Connection, _
 							globPattern: `**/*.{${exts.join(',')}}`
 						},
 					]
+				});
+				connection.onDidChangeWatchedFiles(e => {
+					for (const cb of didChangeWatchedFilesCallbacks) {
+						cb(e);
+					}
 				});
 			}
 		}

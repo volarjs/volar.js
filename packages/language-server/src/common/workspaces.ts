@@ -39,18 +39,15 @@ export function createWorkspaces(context: WorkspacesContext) {
 	context.workspaces.documents.onDidClose(({ textDocument }) => {
 		context.server.connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
 	});
-
-	if (context.server.initializeParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
-		context.server.onDidChangeWatchedFiles(({ changes }) => {
-			const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
-			if (tsConfigChanges.length) {
-				reloadDiagnostics();
-			}
-			else {
-				updateDiagnosticsAndSemanticTokens();
-			}
-		});
-	}
+	context.server.onDidChangeWatchedFiles(({ changes }) => {
+		const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
+		if (tsConfigChanges.length) {
+			reloadDiagnostics();
+		}
+		else {
+			updateDiagnosticsAndSemanticTokens();
+		}
+	});
 
 	context.server.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
 
