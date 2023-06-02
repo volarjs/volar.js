@@ -177,7 +177,14 @@ export async function createProject(context: ProjectContext) {
 		const creates = changes.filter(change => change.type === vscode.FileChangeType.Created);
 
 		if (creates.length) {
-			parsedCommandLine = await createParsedCommandLine(context.workspaces.ts, env, uriToFileName(context.project.rootUri.toString()) as path.PosixPath, context.project.tsConfig, context.workspaces.plugins);
+			parsedCommandLine = await createParsedCommandLine(
+				context.workspaces.ts,
+				env,
+				uriToFileName(context.project.rootUri.toString()) as path.PosixPath,
+				context.project.tsConfig,
+				context.workspaces.plugins,
+				existingOptions,
+			);
 			if (await syncRootScriptSnapshots()) {
 				projectVersion++;
 			}
