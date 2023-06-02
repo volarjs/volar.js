@@ -72,6 +72,7 @@ export interface InitializationOptions {
 	 */
 	cancellationPipeName?: string;
 	reverseConfigFilePriority?: boolean;
+	maxFileSize?: number;
 	configFilePath?: string;
 	/**
 	 * Extra semantic token types and modifiers that are supported by the client.

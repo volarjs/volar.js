@@ -17,7 +17,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 	const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
 	const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
 
-	startCommonLanguageServer(connection, plugins, () => ({
+	startCommonLanguageServer(connection, plugins, (_, options) => ({
 		uriToFileName,
 		fileNameToUri,
 		timer: {
@@ -68,6 +68,13 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			readFile(uri, encoding) {
 				if (uri.startsWith('file://')) {
 					try {
+						if (options.maxFileSize) {
+							const stats = fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
+							if (stats && stats.size > options.maxFileSize) {
+								console.warn(`[volar] file size exceeded limit: ${uri} (${stats.size} > ${options.maxFileSize})`);
+								return undefined;
+							}
+						}
 						return fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
 					} catch {
 						return undefined;
