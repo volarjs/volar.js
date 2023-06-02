@@ -30,7 +30,16 @@ export function createLanguageService(options: {
 		host,
 	);
 
-	return languageService;
+	class InnocentRabbit { };
+
+	for (const api in languageService) {
+		const isFunction = typeof (languageService as any)[api] === 'function';
+		if (isFunction) {
+			(InnocentRabbit.prototype as any)[api] = (languageService as any)[api];
+		}
+	}
+
+	return new InnocentRabbit();
 
 	function createLanguageServiceHost() {
 

@@ -40,6 +40,9 @@ export function createLanguageServiceHost(
 		getProjectVersion: () => {
 			return tsProjectVersion.toString() + ':' + sys.version;
 		},
+		getTypeRootsVersion: () => {
+			return sys.version ?? -1; // TODO: only update for /node_modules changes?
+		},
 		getScriptFileNames,
 		getScriptVersion,
 		getScriptSnapshot,

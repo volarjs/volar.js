@@ -119,12 +119,12 @@ class DtsHost implements IDtsHost {
 			.filter(f => f.substring(0, f.lastIndexOf('/')) === dirPath)
 			.map(f => f.slice(dirPath.length + 1));
 		const dirs = flat
-			.filter(f => f.startsWith(dirPath + '/'))
+			.filter(f => f.startsWith(dirPath + '/') && f.substring(dirPath.length + 1).split('/').length >= 2)
 			.map(f => f.slice(dirPath.length + 1).split('/')[0]);
 
 		return [
 			...files.map<[string, FileType]>(f => [f, 1 satisfies FileType.File]),
-			...dirs.map<[string, FileType]>(f => [f, 2 satisfies FileType.Directory]),
+			...[...new Set(dirs)].map<[string, FileType]>(f => [f, 2 satisfies FileType.Directory]),
 		];
 	}
 
@@ -147,27 +147,11 @@ class DtsHost implements IDtsHost {
 			return undefined;
 		}
 
-		if (!await this.fileExists(fileName)) {
+		if ((await this.stat(fileName))?.type !== 1 satisfies FileType.File) {
 			return undefined;
 		}
 
 		return await this.fetchText(fileName);
-	}
-
-	async fileExists(fileName: string) {
-
-		const pkgName = getPackageNameOfDtsPath(fileName);
-		if (!pkgName) {
-			return false;
-		}
-
-		if (!this.flatResults.has(pkgName)) {
-			this.flatResults.set(pkgName, this.flat(pkgName));
-		}
-
-		const flat = await this.flatResults.get(pkgName)!;
-		const filePath = fileName.slice(`/node_modules/${pkgName}`.length);
-		return flat.includes(filePath);
 	}
 
 	async valid(fileName: string) {
@@ -226,12 +210,15 @@ async function fetchJson<T>(url: string) {
 	}
 }
 
-function getPackageNameOfDtsPath(path: string) {
+export function getPackageNameOfDtsPath(path: string) {
 	if (!path.startsWith('/node_modules/')) {
 		return undefined;
 	}
 	let pkgName = path.split('/')[2];
 	if (pkgName.startsWith('@')) {
+		if (path.split('/').length < 4) {
+			return undefined;
+		}
 		pkgName += '/' + path.split('/')[3];
 	}
 	return pkgName;

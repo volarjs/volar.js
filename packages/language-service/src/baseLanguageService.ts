@@ -219,10 +219,10 @@ function createLanguageServiceBase(context: ServiceContext) {
 
 	return {
 
-		triggerCharacters: Object.values(context.services).map(service => service?.triggerCharacters ?? []).flat(),
-		autoFormatTriggerCharacters: Object.values(context.services).map(service => service?.autoFormatTriggerCharacters ?? []).flat(),
-		signatureHelpTriggerCharacters: Object.values(context.services).map(service => service?.signatureHelpTriggerCharacters ?? []).flat(),
-		signatureHelpRetriggerCharacters: Object.values(context.services).map(service => service?.signatureHelpRetriggerCharacters ?? []).flat(),
+		getTriggerCharacters: () => Object.values(context.services).map(service => service?.triggerCharacters ?? []).flat(),
+		getAutoFormatTriggerCharacters: () => Object.values(context.services).map(service => service?.autoFormatTriggerCharacters ?? []).flat(),
+		getSignatureHelpTriggerCharacters: () => Object.values(context.services).map(service => service?.signatureHelpTriggerCharacters ?? []).flat(),
+		getSignatureHelpRetriggerCharacters: () => Object.values(context.services).map(service => service?.signatureHelpRetriggerCharacters ?? []).flat(),
 
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),

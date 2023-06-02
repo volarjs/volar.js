@@ -3,7 +3,7 @@ import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';
-import type { IDtsHost } from './dtsHost';
+import { IDtsHost, getPackageNameOfDtsPath } from './dtsHost';
 
 interface File {
 	text?: string;
@@ -142,7 +142,13 @@ export function createSys(
 		dirName = resolvePath(dirName);
 
 		const dir = getDir(dirName);
-		if (dir.exists === undefined) {
+		if (dirName === '/node_modules' && dtsHost) {
+			dir.exists = true;
+		}
+		else if (dirName.startsWith('/node_modules/') && dtsHost && !getPackageNameOfDtsPath(dirName)) {
+			dir.exists = true;
+		}
+		else if (dir.exists === undefined) {
 			dir.exists = false;
 			const result = dirName.startsWith('/node_modules/') && dtsHost
 				? dtsHost.stat(dirName)
@@ -185,6 +191,8 @@ export function createSys(
 					promises.delete(promise);
 					file.exists = result?.type === 1 satisfies FileType.File || result?.type === 64 satisfies FileType.SymbolicLink;
 					if (file.exists) {
+						const time = Date.now();
+						file.modifiedTime = time !== file.modifiedTime ? time : time + 1;
 						version++;
 					}
 				});
