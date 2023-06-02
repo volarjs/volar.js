@@ -41,10 +41,9 @@ self.onmessage = () => {
 ```diff
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
--import { createLanguageService } from '@volar/monaco/worker';
-+import { createLanguageService, createJsDelivrDtsHost } from '@volar/monaco/worker';
+import { createLanguageService } from '@volar/monaco/worker';
 +import * as ts from 'typescript';
-+import createTypeScriptService from 'volar-service-typescript';
++import createTypeScriptService, { createJsDelivrDtsHost } from 'volar-service-typescript';
 
 self.onmessage = () => {
 	worker.initialize((ctx: monaco.worker.IWorkerContext) => {

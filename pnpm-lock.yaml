@@ -156,9 +156,6 @@ importers:
       '@volar/language-service':
         specifier: 1.6.9
         version: link:../language-service
-      '@volar/web-fs':
-        specifier: 1.6.9
-        version: link:../web-fs
 
   packages/vscode:
     dependencies:
@@ -178,12 +175,6 @@ importers:
       vscode-languageclient:
         specifier: latest
         version: 8.1.0
-
-  packages/web-fs:
-    devDependencies:
-      '@volar/language-service':
-        specifier: ^1.6.9
-        version: link:../language-service
 
 packages:
 

@@ -12,8 +12,5 @@
 		{
 			"path": "../language-service/tsconfig.build.json"
 		},
-		{
-			"path": "../web-fs/tsconfig.build.json"
-		}
 	]
 }

@@ -3,7 +3,7 @@ import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';
-import type { IDtsHost } from '@volar/web-fs';
+import type { IDtsHost } from './dtsHost';
 
 interface File {
 	text?: string;

@@ -1,6 +1,4 @@
 import type { FileStat, FileType } from '@volar/language-service';
-import { getPackageNameOfDtsPath } from './utils';
-import { posix as path } from 'path';
 
 export interface IDtsHost {
 	stat(uri: string): Promise<FileStat | undefined>;
@@ -118,8 +116,8 @@ class DtsHost implements IDtsHost {
 		const flat = await this.flatResults.get(pkgName)!;
 		const dirPath = dirName.slice(`/node_modules/${pkgName}`.length);
 		const files = flat
-			.filter(f => path.dirname(f) === dirPath)
-			.map(f => path.basename(f));
+			.filter(f => f.substring(0, f.lastIndexOf('/')) === dirPath)
+			.map(f => f.slice(dirPath.length + 1));
 		const dirs = flat
 			.filter(f => f.startsWith(dirPath + '/'))
 			.map(f => f.slice(dirPath.length + 1).split('/')[0]);
@@ -226,4 +224,15 @@ async function fetchJson<T>(url: string) {
 	} catch {
 		// ignore
 	}
+}
+
+function getPackageNameOfDtsPath(path: string) {
+	if (!path.startsWith('/node_modules/')) {
+		return undefined;
+	}
+	let pkgName = path.split('/')[2];
+	if (pkgName.startsWith('@')) {
+		pkgName += '/' + path.split('/')[3];
+	}
+	return pkgName;
 }
