@@ -44,7 +44,7 @@ export async function createProject(context: ProjectContext) {
 		},
 		throwIfCancellationRequested() { },
 	};
-	const projectHost: TypeScriptLanguageHost = {
+	const languageHost: TypeScriptLanguageHost = {
 		getProjectVersion: () => projectVersion,
 		getScriptFileNames: () => parsedCommandLine.fileNames,
 		getScriptVersion: (fileName) => {
@@ -106,7 +106,7 @@ export async function createProject(context: ProjectContext) {
 		context,
 		tsConfig: context.project.tsConfig,
 		scripts: fsScriptsCache,
-		projectHost,
+		languageHost,
 		getLanguageService,
 		getLanguageServiceDontCreate: () => languageService,
 		getParsedCommandLine: () => parsedCommandLine,
@@ -134,7 +134,7 @@ export async function createProject(context: ProjectContext) {
 					config = await plugin.resolveConfig(config, {
 						...context,
 						env,
-						host: projectHost,
+						host: languageHost,
 					});
 				}
 			}
@@ -142,7 +142,7 @@ export async function createProject(context: ProjectContext) {
 				{ typescript: context.workspaces.ts },
 				env,
 				config,
-				projectHost,
+				languageHost,
 			);
 		}
 		return languageService;

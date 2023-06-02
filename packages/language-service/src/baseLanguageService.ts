@@ -45,10 +45,10 @@ export function createLanguageService(
 	modules: SharedModules,
 	env: ServiceEnvironment,
 	config: Config,
-	projectHost: TypeScriptLanguageHost,
+	languageHost: TypeScriptLanguageHost,
 ) {
-	const languageContext = createLanguageContext(projectHost, Object.values(config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(modules, env, config, projectHost, languageContext);
+	const languageContext = createLanguageContext(languageHost, Object.values(config.languages ?? {}).filter(notEmpty));
+	const context = createLanguageServicePluginContext(modules, env, config, languageHost, languageContext);
 	return createLanguageServiceBase(context);
 }
 

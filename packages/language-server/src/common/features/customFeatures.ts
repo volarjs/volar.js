@@ -51,12 +51,12 @@ export function register(
 		if (!params.tsconfig) {
 			const project = await workspace.getInferredProject();
 			if (!project) return [];
-			return project.projectHost.getScriptFileNames();
+			return project.languageHost.getScriptFileNames();
 		}
 		for (const _project of workspace.projects.values()) {
 			const project = await _project;
 			if (project.tsConfig === params.tsconfig) {
-				return project.projectHost.getScriptFileNames();
+				return project.languageHost.getScriptFileNames();
 			}
 		}
 		return [];

@@ -45,7 +45,7 @@ export function createProject(
 function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>) {
 
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
-	const projectHost: TypeScriptLanguageHost = {
+	const languageHost: TypeScriptLanguageHost = {
 		getCurrentDirectory: () => {
 			return rootPath;
 		},
@@ -84,7 +84,7 @@ function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick
 	let shouldCheckRootFiles = false;
 
 	return {
-		projectHost,
+		languageHost,
 		fileUpdated(fileName: string) {
 			scriptVersions.set(fileName, (scriptVersions.get(fileName) ?? 0) + 1);
 			fileName = asPosix(fileName);
