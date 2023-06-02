@@ -31,6 +31,7 @@ export interface LanguageServerPlugin {
 				host: TypeScriptLanguageHost;
 			} & ProjectContext | undefined,
 		): Config | Promise<Config>;
+		resolveExistingOptions?(options: ts.CompilerOptions | undefined): ts.CompilerOptions | undefined;
 		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
 	};
 }

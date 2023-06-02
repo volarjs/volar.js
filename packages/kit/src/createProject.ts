@@ -19,7 +19,8 @@ export function createInferredProject(
 
 export function createProject(
 	sourceTsconfigPath: string,
-	extraFileExtensions: ts.FileExtensionInfo[] = []
+	extraFileExtensions: ts.FileExtensionInfo[] = [],
+	existingOptions?: ts.CompilerOptions
 ) {
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
 	const tsconfigPath = asPosix(sourceTsconfigPath);
@@ -30,7 +31,7 @@ export function createProject(
 				ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile),
 				ts.sys,
 				path.dirname(tsconfigPath),
-				{},
+				existingOptions,
 				tsconfigPath,
 				undefined,
 				extraFileExtensions,
