@@ -16,6 +16,7 @@
 		"@volar/language-core": "1.6.9"
 	},
 	"devDependencies": {
-		"@volar/language-service": "1.6.9"
+		"@volar/language-service": "1.6.9",
+		"@volar/web-fs": "1.6.9"
 	}
 }

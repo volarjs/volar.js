@@ -3,6 +3,7 @@ import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';
+import type { IDtsHost } from '@volar/web-fs';
 
 interface File {
 	text?: string;
@@ -24,6 +25,7 @@ export function createSys(
 	ctx: LanguageContext | undefined,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	env: ServiceEnvironment,
+	dtsHost?: IDtsHost,
 ): ts.System & {
 	version: number;
 	sync(): Promise<number>;
@@ -142,7 +144,9 @@ export function createSys(
 		const dir = getDir(dirName);
 		if (dir.exists === undefined) {
 			dir.exists = false;
-			const result = env.fs.stat(env.fileNameToUri(dirName));
+			const result = dirName.startsWith('/node_modules/') && dtsHost
+				? dtsHost.stat(dirName)
+				: env.fs?.stat(env.fileNameToUri(dirName));
 			if (typeof result === 'object' && 'then' in result) {
 				const promise = result;
 				promises.add(promise);
@@ -171,7 +175,9 @@ export function createSys(
 		const file = dir.files[baseName] ??= {};
 		if (file.exists === undefined) {
 			file.exists = false;
-			const result = env.fs.stat(env.fileNameToUri(fileName));
+			const result = fileName.startsWith('/node_modules/') && dtsHost
+				? dtsHost.stat(fileName)
+				: env.fs?.stat(env.fileNameToUri(fileName));
 			if (typeof result === 'object' && 'then' in result) {
 				const promise = result;
 				promises.add(promise);
@@ -268,7 +274,9 @@ export function createSys(
 		file.requested = true;
 
 		const uri = env.fileNameToUri(fileName);
-		const result = env.fs.readFile(uri, encoding);
+		const result = fileName.startsWith('/node_modules/') && dtsHost
+			? dtsHost.readFile(fileName)
+			: env.fs?.readFile(uri, encoding);
 
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
@@ -287,17 +295,15 @@ export function createSys(
 				}
 			});
 		}
+		else if (result !== undefined) {
+			file.exists = true;
+			file.text = result;
+			const time = Date.now();
+			file.modifiedTime = time !== file.modifiedTime ? time : time + 1;
+			version++;
+		}
 		else {
-			if (result !== undefined) {
-				file.exists = true;
-				file.text = result;
-				const time = Date.now();
-				file.modifiedTime = time !== file.modifiedTime ? time : time + 1;
-				version++;
-			}
-			else {
-				file.exists = false;
-			}
+			file.exists = false;
 		}
 	}
 
@@ -310,7 +316,9 @@ export function createSys(
 		dir.requested = true;
 
 		const uri = env.fileNameToUri(dirName);
-		const result = env.fs.readDirectory(uri);
+		const result = dirName.startsWith('/node_modules/') && dtsHost
+			? dtsHost.readDirectory(dirName)
+			: env.fs?.readDirectory(uri);
 
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
@@ -321,7 +329,7 @@ export function createSys(
 			});
 		}
 		else {
-			onReadDirectoryResult(dir, result);
+			onReadDirectoryResult(dir, result ?? []);
 		}
 	}
 

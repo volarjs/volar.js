@@ -22,7 +22,7 @@ export interface ServiceEnvironment {
 	// RuntimeEnvironment
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
-	fs: FileSystem;
+	fs?: FileSystem;
 }
 
 export interface FileSystem {

@@ -24,11 +24,9 @@ export function createLanguageServiceHost(
 			try {
 				return ts.getDefaultLibFilePath(options);
 			} catch {
-				// TODO: use tsdk for web
-				// const tsdk = context.workspaces.initOptions.typescript.tsdk;
-				// return tsdk + '/' + context.workspaces.ts.getDefaultLibFileName(options);
+				// web
+				return `/node_modules/typescript/lib/${ts.getDefaultLibFileName(options)}`;
 			}
-			return `/node_modules/typescript/lib/${ts.getDefaultLibFileName(options)}`;
 		},
 		useCaseSensitiveFileNames: sys ? () => sys.useCaseSensitiveFileNames : undefined,
 		getNewLine: sys ? () => sys.newLine : undefined,

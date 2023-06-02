@@ -36,23 +36,36 @@ self.onmessage = () => {
 };
 ```
 
-#### TypeScript Support
+#### Add TypeScript Support
 
-```ts
-import { createLanguageService, createDtsHost } from '@volar/monaco/worker';
-import * as ts from 'typescript';
+```diff
+import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
+import type * as monaco from 'monaco-editor-core';
+-import { createLanguageService } from '@volar/monaco/worker';
++import { createLanguageService, createJsDelivrDtsHost } from '@volar/monaco/worker';
++import * as ts from 'typescript';
++import createTypeScriptService from 'volar-service-typescript';
 
-createLanguageService({
-	// ...
-	typescript: {
-		module: ts as any,
-		compilerOptions: {
-			// ...tsconfig options
-		},
-	},
-	// Enable auto fetch node_modules types
-	dtsHost: createDtsHost('https://unpkg.com/', { typescript: '4.9.5' }),
-});
+self.onmessage = () => {
+	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
+		return createLanguageService({
+			workerContext: ctx,
+			config: {
+				// ...Language Service Config of my-lang language support
++				services: createTypeScriptService({
++					// Enable auto fetch node_modules types
++					dtsHost: createJsDelivrDtsHost({ typescript: '4.9.5' }),
++				}),
+			},
++			typescript: {
++				module: ts as any,
++				compilerOptions: {
++					// ...tsconfig options
++				},
++			},
+		});
+	});
+};
 ```
 
 ### Add worker loader to global env

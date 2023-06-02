@@ -25,17 +25,6 @@ export function createLanguageService(options: {
 			uriToFileName: uri => URI.parse(uri).fsPath.replace(/\\/g, '/'),
 			fileNameToUri: fileName => URI.file(fileName).toString(),
 			rootUri: URI.file('/'),
-			fs: {
-				stat() {
-					return undefined;
-				},
-				readDirectory() {
-					return [];
-				},
-				readFile() {
-					return undefined;
-				},
-			},
 		},
 		config,
 		host,

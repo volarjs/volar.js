@@ -1,8 +1,11 @@
-import { getPackageNameOfDtsPath } from "./utils";
+import type { FileStat, FileType } from '@volar/language-service';
+import { getPackageNameOfDtsPath } from './utils';
+import { posix as path } from 'path';
 
 export interface IDtsHost {
+	stat(uri: string): Promise<FileStat | undefined>;
 	readFile(fileName: string): Promise<string | undefined>;
-	fileExists(fileName: string): Promise<boolean>;
+	readDirectory(dirName: string): Promise<[string, FileType][]>;
 }
 
 export function createJsDelivrDtsHost(
@@ -32,7 +35,7 @@ export function createJsDelivrDtsHost(
 				return [];
 			}
 
-			const flat = await fetchJson<{ files: { name: string }[]; }>(`https://data.jsdelivr.com/v1/package/npm/${pkg}@${version}/flat`);
+			const flat = await fetchJson<{ files: { name: string; }[]; }>(`https://data.jsdelivr.com/v1/package/npm/${pkg}@${version}/flat`);
 			if (!flat) {
 				return [];
 			}
@@ -62,7 +65,77 @@ class DtsHost implements IDtsHost {
 		private flat: (pkg: string) => Promise<string[]>,
 	) { }
 
+	async stat(fileName: string) {
+
+		if (!await this.valid(fileName)) {
+			return;
+		}
+
+		const pkgName = getPackageNameOfDtsPath(fileName);
+		if (!pkgName) {
+			return;
+		}
+
+		if (!this.flatResults.has(pkgName)) {
+			this.flatResults.set(pkgName, this.flat(pkgName));
+		}
+
+		const flat = await this.flatResults.get(pkgName)!;
+		const filePath = fileName.slice(`/node_modules/${pkgName}`.length);
+		if (flat.includes(filePath)) {
+			return {
+				type: 1 satisfies FileType.File,
+				ctime: -1,
+				mtime: -1,
+				size: -1,
+			};
+		}
+		else if (flat.some(f => f.startsWith(filePath + '/'))) {
+			return {
+				type: 2 satisfies FileType.Directory,
+				ctime: -1,
+				mtime: -1,
+				size: -1,
+			};
+		}
+	}
+
+	async readDirectory(dirName: string) {
+
+		if (!await this.valid(dirName)) {
+			return [];
+		}
+
+		const pkgName = getPackageNameOfDtsPath(dirName);
+		if (!pkgName) {
+			return [];
+		}
+
+		if (!this.flatResults.has(pkgName)) {
+			this.flatResults.set(pkgName, this.flat(pkgName));
+		}
+
+		const flat = await this.flatResults.get(pkgName)!;
+		const dirPath = dirName.slice(`/node_modules/${pkgName}`.length);
+		const files = flat
+			.filter(f => path.dirname(f) === dirPath)
+			.map(f => path.basename(f));
+		const dirs = flat
+			.filter(f => f.startsWith(dirPath + '/'))
+			.map(f => f.slice(dirPath.length + 1).split('/')[0]);
+
+		return [
+			...files.map<[string, FileType]>(f => [f, 1 satisfies FileType.File]),
+			...dirs.map<[string, FileType]>(f => [f, 2 satisfies FileType.Directory]),
+		];
+	}
+
 	async readFile(fileName: string) {
+
+		if (!await this.valid(fileName)) {
+			return;
+		}
+
 		if (!this.fetchResults.has(fileName)) {
 			this.fetchResults.set(fileName, this.fetchFile(fileName));
 		}
@@ -95,7 +168,41 @@ class DtsHost implements IDtsHost {
 		}
 
 		const flat = await this.flatResults.get(pkgName)!;
-		return flat.includes(fileName.slice(`/node_modules/${pkgName}`.length));
+		const filePath = fileName.slice(`/node_modules/${pkgName}`.length);
+		return flat.includes(filePath);
+	}
+
+	async valid(fileName: string) {
+		const pkgName = getPackageNameOfDtsPath(fileName);
+		if (!pkgName) {
+			return false;
+		}
+		if (pkgName.indexOf('.') >= 0 || pkgName.endsWith('/node_modules')) {
+			return false;
+		}
+		// hard code for known invalid package
+		if (pkgName.startsWith('@typescript/') || pkgName.startsWith('@types/typescript__')) {
+			return false;
+		}
+		// don't check @types if original package already having types
+		if (pkgName.startsWith('@types/')) {
+			let originalPkgName = pkgName.slice('@types/'.length);
+			if (originalPkgName.indexOf('__') >= 0) {
+				originalPkgName = '@' + originalPkgName.replace('__', '/');
+			}
+			const packageJson = await this.readFile(`/node_modules/${originalPkgName}/package.json`);
+			if (packageJson) {
+				const packageJsonObj = JSON.parse(packageJson);
+				if (packageJsonObj.types || packageJsonObj.typings) {
+					return false;
+				}
+				const indexDts = await this.stat(`/node_modules/${originalPkgName}/index.d.ts`);
+				if (indexDts?.type === 1 satisfies FileType.File) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 }
 
