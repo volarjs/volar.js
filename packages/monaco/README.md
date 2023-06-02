@@ -52,10 +52,12 @@ self.onmessage = () => {
 			workerContext: ctx,
 			config: {
 				// ...Language Service Config of my-lang language support
-+				services: createTypeScriptService({
-+					// Enable auto fetch node_modules types
-+					dtsHost: createJsDelivrDtsHost({ typescript: '4.9.5' }),
-+				}),
++				services: {
++					typescript: createTypeScriptService({
++						// Enable auto fetch node_modules types
++						dtsHost: createJsDelivrDtsHost({ typescript: '4.9.5' }),
++					})
++				},
 			},
 +			typescript: {
 +				module: ts as any,
