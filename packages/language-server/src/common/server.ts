@@ -9,6 +9,7 @@ import { createDocuments } from './documents';
 import { setupCapabilities } from './utils/registerFeatures';
 import { loadConfig } from './utils/serverConfig';
 import { createWorkspaces } from './workspaces';
+import { configure as configureHttpRequests } from 'request-light';
 
 export interface ServerContext {
 	server: {
@@ -129,9 +130,12 @@ export async function startCommonLanguageServer(connection: vscode.Connection, _
 
 		return result;
 	});
-	connection.onInitialized(() => {
+	connection.onInitialized(async () => {
 
 		context.server.configurationHost?.ready();
+		context.server.configurationHost?.onDidChangeConfiguration?.(updateHttpSettings);
+
+		updateHttpSettings();
 
 		if (initParams.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
@@ -165,6 +169,11 @@ export async function startCommonLanguageServer(connection: vscode.Connection, _
 					}
 				});
 			}
+		}
+
+		async function updateHttpSettings() {
+			const httpSettings = await context.server.configurationHost?.getConfiguration?.<{ proxyStrictSSL: boolean; proxy: string; }>('http');
+			configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
 		}
 	});
 	connection.onShutdown(async () => {

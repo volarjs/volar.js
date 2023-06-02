@@ -1,4 +1,3 @@
-// import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver/browser';
 import { startCommonLanguageServer } from '../common/server';
 import { LanguageServerPlugin } from '../types';
@@ -40,10 +39,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			}
 			catch { }
 		},
-		// TODO
-		// onDidChangeConfiguration(settings) {
-		// 	configureHttpRequests(settings.http && settings.http.proxy, settings.http && settings.http.proxyStrictSSL);
-		// },
 		fs: {
 			stat(uri) {
 				return connection.sendRequest(FsStatRequest.type, uri);

@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-// import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
@@ -49,10 +48,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				return require(path);
 			} catch { }
 		},
-		// TODO
-		// onDidChangeConfiguration(settings) {
-		// 	configureHttpRequests(settings.http?.proxy, settings.http?.proxyStrictSSL);
-		// },
 		fs: {
 			stat(uri) {
 				if (uri.startsWith('file://')) {

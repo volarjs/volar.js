@@ -10,7 +10,6 @@ export interface RuntimeEnvironment {
 	fileNameToUri(fileName: string): string;
 	loadTypescript(tsdk: string): typeof import('typescript/lib/tsserverlibrary');
 	loadTypescriptLocalized(tsdk: string, locale: string): Promise<{} | undefined>;
-	onDidChangeConfiguration?(settings: any): void;
 	fs: FileSystem;
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
 	readonly timer: {
