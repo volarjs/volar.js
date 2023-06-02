@@ -37,6 +37,7 @@ export async function createProject(context: ProjectContext) {
 		onDidChangeWatchedFiles: context.server.onDidChangeWatchedFiles,
 	};
 	const fsScriptsCache = createUriMap<{ snapshot: ts.IScriptSnapshot; version: number; } | undefined>(fileNameToUri);
+	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const token: ts.CancellationToken = {
 		isCancellationRequested() {
 			return context.workspaces.cancelTokenHost.getMtime() !== projectVersionUpdateTime;
@@ -57,6 +58,7 @@ export async function createProject(context: ProjectContext) {
 			}
 		},
 		getScriptSnapshot: (fileName) => {
+			askedFiles.pathSet(fileName, true);
 			const doc = context.workspaces.documents.data.pathGet(fileName);
 			if (doc) {
 				return doc.getSnapshot();
@@ -115,6 +117,7 @@ export async function createProject(context: ProjectContext) {
 				projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
 			}
 		},
+		askedFiles,
 		dispose,
 	};
 

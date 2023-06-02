@@ -119,7 +119,7 @@ export async function createWorkspace(context: WorkspaceContext) {
 
 		await prepareClosestootParsedCommandLine();
 
-		return await findDirectIncludeTsconfig();
+		return await findDirectIncludeTsconfig() ?? await findIndirectReferenceTsconfig();
 
 		async function prepareClosestootParsedCommandLine() {
 
@@ -136,6 +136,12 @@ export async function createWorkspace(context: WorkspaceContext) {
 			if (matches.length) {
 				await getParsedCommandLine(matches[0]);
 			}
+		}
+		function findIndirectReferenceTsconfig() {
+			return findTsconfig(async tsconfig => {
+				const project = await projects.pathGet(tsconfig);
+				return project?.askedFiles.uriHas(uri.toString()) ?? false;
+			});
 		}
 		function findDirectIncludeTsconfig() {
 			return findTsconfig(async tsconfig => {
