@@ -1,12 +1,8 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient, State } from 'vscode-languageclient';
-import { FsReadDirectoryRequest, FsReadFileRequest } from '@volar/language-server';
+import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '@volar/language-server';
 
-export async function activate(
-	context: vscode.ExtensionContext,
-	client: BaseLanguageClient,
-	cdn: string | undefined,
-) {
+export async function activate(client: BaseLanguageClient) {
 
 	const subscriptions: vscode.Disposable[] = [];
 
@@ -18,34 +14,32 @@ export async function activate(
 		}
 	}));
 
-	if (cdn) {
-		console.log('skips:', context.globalState.keys().filter(key => key.startsWith(cdn)).length);
-	}
-
 	return vscode.Disposable.from(...subscriptions);
 
 	function addHandle() {
 
-		subscriptions.push(client.onRequest(FsReadFileRequest.type, async uri => {
-			if (cdn && uri.startsWith(cdn) && context.globalState.get(uri) === false) {
-				return;
+		subscriptions.push(client.onRequest(FsStatRequest.type, async uri => {
+			const uri2 = client.protocol2CodeConverter.asUri(uri);
+			try {
+				return await vscode.workspace.fs.stat(uri2);
 			}
+			catch (err) {
+				// ignore
+			}
+		}));
+
+		subscriptions.push(client.onRequest(FsReadFileRequest.type, async uri => {
 			const uri2 = client.protocol2CodeConverter.asUri(uri);
 			try {
 				return await vscode.workspace.fs.readFile(uri2);
 			}
 			catch (err) {
-				if (cdn && uri.startsWith(cdn)) {
-					context.globalState.update(uri, false);
-				}
+				// ignore
 			}
 		}));
 
 		subscriptions.push(client.onRequest(FsReadDirectoryRequest.type, async uri => {
 			try {
-				if (cdn && uri.startsWith(cdn)) {
-					return [];
-				}
 				const uri2 = client.protocol2CodeConverter.asUri(uri);
 				let data = await vscode.workspace.fs.readDirectory(uri2);
 				data = data.filter(([name]) => !name.startsWith('.'));

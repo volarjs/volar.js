@@ -1,10 +1,10 @@
-import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, LanguageServiceHost, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
+import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, TypeScriptLanguageHost, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { asPosix, fileNameToUri, fs, getConfiguration, uriToFileName } from './utils';
 import { URI } from 'vscode-uri';
-import { asPosix, fileNameToUri, getConfiguration, uriToFileName } from './utils';
 
-export function createLinter(config: Config, host: LanguageServiceHost) {
+export function createLinter(config: Config, host: TypeScriptLanguageHost) {
 
 	let settings = {} as any;
 
@@ -14,8 +14,9 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 		{
 			uriToFileName,
 			fileNameToUri,
-			rootUri: URI.file(host.getCurrentDirectory()),
+			rootUri: URI.parse(fileNameToUri(host.getCurrentDirectory())),
 			getConfiguration: section => getConfiguration(settings, section),
+			fs,
 		},
 		config,
 		host,
@@ -101,9 +102,9 @@ export function createLinter(config: Config, host: LanguageServiceHost) {
 			messageText: diagnostic.message,
 		}));
 		const text = ts.formatDiagnosticsWithColorAndContext(errors, {
-			getCurrentDirectory: () => rootPath ?? host.getCurrentDirectory(),
-			getCanonicalFileName: (fileName) => host.useCaseSensitiveFileNames?.() ? fileName : fileName.toLowerCase(),
-			getNewLine: () => host.getNewLine?.() ?? '\n',
+			getCurrentDirectory: () => rootPath,
+			getCanonicalFileName: (fileName) => ts.sys.useCaseSensitiveFileNames ? fileName : fileName.toLowerCase(),
+			getNewLine: () => ts.sys.newLine,
 		});
 		return text;
 	}

@@ -1,18 +1,14 @@
 import {
 	createLanguageService as _createLanguageService,
+	type TypeScriptLanguageHost,
 	type Config,
-	type LanguageServiceHost
 } from '@volar/language-service';
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { URI } from 'vscode-uri';
-import * as webFs from '@volar/web-fs';
-
-export * from '@volar/web-fs';
 
 export function createLanguageService(options: {
 	workerContext: monaco.worker.IWorkerContext<any>,
-	dtsHost?: webFs.IDtsHost,
 	config: Config,
 	typescript?: {
 		module: typeof import('typescript/lib/tsserverlibrary'),
@@ -20,11 +16,8 @@ export function createLanguageService(options: {
 	},
 }) {
 
-	let dtsClientVersion = 0;
-
 	const ts = options.typescript?.module;
 	const config = options.config ?? {};
-	const compilerOptions = options.typescript?.compilerOptions ?? {};
 	const host = createLanguageServiceHost();
 	const languageService = _createLanguageService(
 		{ typescript: ts },
@@ -36,40 +29,14 @@ export function createLanguageService(options: {
 		config,
 		host,
 	);
-	const dtsClient = options.dtsHost ? webFs.createDtsClient(options.dtsHost) : undefined;
-
-	if (!dtsClient) {
-		return languageService;
-	}
 
 	class InnocentRabbit { };
 
 	for (const api in languageService) {
-
 		const isFunction = typeof (languageService as any)[api] === 'function';
-		if (!isFunction) {
-			(InnocentRabbit.prototype as any)[api] = () => (languageService as any)[api];
-			continue;
+		if (isFunction) {
+			(InnocentRabbit.prototype as any)[api] = (languageService as any)[api];
 		}
-
-		(InnocentRabbit.prototype as any)[api] = async (...args: any[]) => {
-
-			if (!options.dtsHost) {
-				return (languageService as any)[api](...args);
-			}
-
-			let lastDtsClientVersion = dtsClientVersion;
-			let result = await (languageService as any)[api](...args);
-			dtsClientVersion = await dtsClient.sync();
-
-			while (lastDtsClientVersion !== dtsClientVersion) {
-				lastDtsClientVersion = dtsClientVersion;
-				result = await (languageService as any)[api](...args);
-				dtsClientVersion = await dtsClient.sync();
-			}
-
-			return result;
-		};
 	}
 
 	return new InnocentRabbit();
@@ -79,14 +46,13 @@ export function createLanguageService(options: {
 		let projectVersion = 0;
 
 		const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
-		const dtsFileSnapshot = new Map<string, ts.IScriptSnapshot>();
 		const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
-		const host: LanguageServiceHost = {
+		const host: TypeScriptLanguageHost = {
 			getProjectVersion() {
 				const models = options.workerContext.getMirrorModels();
 				if (modelVersions.size === options.workerContext.getMirrorModels().length) {
 					if (models.every(model => modelVersions.get(model) === model.version)) {
-						return dtsClientVersion.toString() + ':' + projectVersion.toString();
+						return projectVersion;
 					}
 				}
 				modelVersions.clear();
@@ -94,10 +60,7 @@ export function createLanguageService(options: {
 					modelVersions.set(model, model.version);
 				}
 				projectVersion++;
-				return dtsClientVersion.toString() + ':' + projectVersion.toString();
-			},
-			getTypeRootsVersion() {
-				return dtsClientVersion;
+				return projectVersion;
 			},
 			getScriptFileNames() {
 				const models = options.workerContext.getMirrorModels();
@@ -105,10 +68,7 @@ export function createLanguageService(options: {
 			},
 			getScriptVersion(fileName) {
 				const model = options.workerContext.getMirrorModels().find(model => model.uri.fsPath === fileName);
-				if (model) {
-					return model.version.toString();
-				}
-				return dtsClient?.readFile(fileName)?.length.toString() ?? '';
+				return model?.version.toString();
 			},
 			getScriptSnapshot(fileName) {
 				const model = options.workerContext.getMirrorModels().find(model => model.uri.fsPath === fileName);
@@ -125,44 +85,12 @@ export function createLanguageService(options: {
 					}]);
 					return modelSnapshot.get(model)?.[1];
 				}
-				if (dtsFileSnapshot.has(fileName)) {
-					return dtsFileSnapshot.get(fileName);
-				}
-				const dtsFileText = dtsClient?.readFile(fileName);
-				if (dtsFileText !== undefined) {
-					dtsFileSnapshot.set(fileName, {
-						getText: (start, end) => dtsFileText.substring(start, end),
-						getLength: () => dtsFileText.length,
-						getChangeRange: () => undefined,
-					});
-					return dtsFileSnapshot.get(fileName);
-				}
 			},
 			getCompilationSettings() {
-				return compilerOptions;
+				return options.typescript?.compilerOptions ?? {};
 			},
 			getCurrentDirectory() {
 				return '/';
-			},
-			getDefaultLibFileName(options) {
-				if (ts) {
-					return `/node_modules/typescript/lib/${ts.getDefaultLibFileName(options)}`;
-				}
-				return '';
-			},
-			readFile(fileName) {
-				const model = options.workerContext.getMirrorModels().find(model => model.uri.fsPath === fileName);
-				if (model) {
-					return model.getValue();
-				}
-				return dtsClient?.readFile(fileName);
-			},
-			fileExists(fileName) {
-				const model = options.workerContext.getMirrorModels().find(model => model.uri.fsPath === fileName);
-				if (model) {
-					return true;
-				}
-				return dtsClient?.fileExists(fileName) ?? false;
 			},
 		};
 

@@ -1,4 +1,4 @@
-import { createLanguageContext, FileRangeCapabilities, LanguageServiceHost } from '@volar/language-core';
+import { createLanguageContext, FileRangeCapabilities, TypeScriptLanguageHost } from '@volar/language-core';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createDocumentsAndSourceMaps } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
@@ -25,7 +25,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { Config, ServiceContext, ServiceEnvironment } from './types';
+import { Config, ServiceContext, ServiceEnvironment, SharedModules } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -42,21 +42,21 @@ import { notEmpty, resolveCommonLanguageId } from './utils/common';
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
 export function createLanguageService(
-	modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
+	modules: SharedModules,
 	env: ServiceEnvironment,
 	config: Config,
-	host: LanguageServiceHost,
+	languageHost: TypeScriptLanguageHost,
 ) {
-	const languageContext = createLanguageContext(host, Object.values(config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(modules, env, config, host, languageContext);
+	const languageContext = createLanguageContext(languageHost, Object.values(config.languages ?? {}).filter(notEmpty));
+	const context = createLanguageServicePluginContext(modules, env, config, languageHost, languageContext);
 	return createLanguageServiceBase(context);
 }
 
 function createLanguageServicePluginContext(
-	modules: { typescript?: typeof import('typescript/lib/tsserverlibrary'); },
+	modules: SharedModules,
 	env: ServiceEnvironment,
 	config: Config,
-	host: LanguageServiceHost,
+	host: TypeScriptLanguageHost,
 	languageContext: ReturnType<typeof createLanguageContext>,
 ) {
 
@@ -203,7 +203,7 @@ function createLanguageServicePluginContext(
 
 				document = TextDocument.create(
 					uri,
-					host.getScriptLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
+					host.getLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 					newVersion,
 					scriptSnapshot.getText(0, scriptSnapshot.getLength()),
 				);
@@ -219,10 +219,10 @@ function createLanguageServiceBase(context: ServiceContext) {
 
 	return {
 
-		triggerCharacters: Object.values(context.services).map(service => service?.triggerCharacters ?? []).flat(),
-		autoFormatTriggerCharacters: Object.values(context.services).map(service => service?.autoFormatTriggerCharacters ?? []).flat(),
-		signatureHelpTriggerCharacters: Object.values(context.services).map(service => service?.signatureHelpTriggerCharacters ?? []).flat(),
-		signatureHelpRetriggerCharacters: Object.values(context.services).map(service => service?.signatureHelpRetriggerCharacters ?? []).flat(),
+		getTriggerCharacters: () => Object.values(context.services).map(service => service?.triggerCharacters ?? []).flat(),
+		getAutoFormatTriggerCharacters: () => Object.values(context.services).map(service => service?.autoFormatTriggerCharacters ?? []).flat(),
+		getSignatureHelpTriggerCharacters: () => Object.values(context.services).map(service => service?.signatureHelpTriggerCharacters ?? []).flat(),
+		getSignatureHelpRetriggerCharacters: () => Object.values(context.services).map(service => service?.signatureHelpRetriggerCharacters ?? []).flat(),
 
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),

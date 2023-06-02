@@ -113,9 +113,9 @@ export function getProgram(
 					if (lsHost.fileExists?.(source.fileName) === false)
 						continue;
 
-					for (const [sourceFileName, map] of core.virtualFiles.getMaps(virtualFile)) {
+					for (const [_, [sourceSnapshot, map]] of core.virtualFiles.getMaps(virtualFile)) {
 
-						if (sourceFileName !== source.fileName)
+						if (sourceSnapshot !== source.snapshot)
 							continue;
 
 						for (const start of map.toSourceOffsets(diagnostic.start)) {

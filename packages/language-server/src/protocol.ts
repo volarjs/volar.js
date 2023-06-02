@@ -1,7 +1,7 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type * as html from 'vscode-html-languageservice';
 import type { VirtualFile, FileRangeCapabilities } from '@volar/language-core';
 import type { Mapping, Stack } from '@volar/source-map';
+import type { FileStat, FileType } from '@volar/language-service';
 
 /**
  * Server request client
@@ -12,7 +12,11 @@ export namespace FsReadFileRequest {
 }
 
 export namespace FsReadDirectoryRequest {
-	export const type = new vscode.RequestType<vscode.DocumentUri, [string, html.FileType][], unknown>('volar/server/fs/readDirectory');
+	export const type = new vscode.RequestType<vscode.DocumentUri, [string, FileType][], unknown>('volar/server/fs/readDirectory');
+}
+
+export namespace FsStatRequest {
+	export const type = new vscode.RequestType<vscode.DocumentUri, FileStat, unknown>('volar/server/fs/stat');
 }
 
 /**

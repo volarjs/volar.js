@@ -8,6 +8,7 @@ let documentRegistry: ts.DocumentRegistry;
 export function createLanguageService(
 	core: LanguageContext,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
+	sys: ts.System,
 ) {
 
 	type _LanguageService = {
@@ -22,7 +23,7 @@ export function createLanguageService(
 		throw new Error('TypeScript module not provided.');
 	}
 
-	const lsHost = createLanguageServiceHost(core, ts);
+	const lsHost = createLanguageServiceHost(core, ts, sys);
 	const ls = ts.createLanguageService(lsHost, documentRegistry ??= ts.createDocumentRegistry());
 
 	return new Proxy<Partial<_LanguageService>>({
@@ -97,8 +98,8 @@ export function createLanguageService(
 	function getImplementationAtPosition(fileName: string, position: number): ReturnType<ts.LanguageService['getImplementationAtPosition']> {
 		return findLocations(fileName, position, 'implementation') as ts.ImplementationLocation[];
 	}
-	function findRenameLocations(fileName: string, position: number, findInStrings: boolean, findInComments: boolean, providePrefixAndSuffixTextForRename?: boolean): ReturnType<ts.LanguageService['findRenameLocations']> {
-		return findLocations(fileName, position, 'rename', findInStrings, findInComments, providePrefixAndSuffixTextForRename) as ts.RenameLocation[];
+	function findRenameLocations(fileName: string, position: number, findInStrings: boolean, findInComments: boolean, preferences: ts.UserPreferences | boolean | undefined): ReturnType<ts.LanguageService['findRenameLocations']> {
+		return findLocations(fileName, position, 'rename', findInStrings, findInComments, preferences as ts.UserPreferences) as ts.RenameLocation[];
 	}
 	function findLocations(
 		fileName: string,
@@ -106,7 +107,7 @@ export function createLanguageService(
 		mode: 'definition' | 'typeDefinition' | 'references' | 'implementation' | 'rename',
 		findInStrings = false,
 		findInComments = false,
-		providePrefixAndSuffixTextForRename?: boolean
+		preferences?: ts.UserPreferences
 	) {
 
 		const loopChecker = new Set<string>();
@@ -124,7 +125,7 @@ export function createLanguageService(
 				: mode === 'typeDefinition' ? ls.getTypeDefinitionAtPosition(fileName, position)
 					: mode === 'references' ? ls.getReferencesAtPosition(fileName, position)
 						: mode === 'implementation' ? ls.getImplementationAtPosition(fileName, position)
-							: mode === 'rename' ? ls.findRenameLocations(fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename)
+							: mode === 'rename' && preferences ? ls.findRenameLocations(fileName, position, findInStrings, findInComments, preferences)
 								: undefined;
 			if (!_symbols) return;
 			symbols = symbols.concat(_symbols);
@@ -304,9 +305,9 @@ export function createLanguageService(
 		if (!textSpan) return;
 		const [virtualFile, source] = core.virtualFiles.getVirtualFile(fileName);
 		if (virtualFile && source) {
-			for (const [sourceFileName, map] of core.virtualFiles.getMaps(virtualFile)) {
+			for (const [_, [sourceSnapshot, map]] of core.virtualFiles.getMaps(virtualFile)) {
 
-				if (source.fileName !== sourceFileName)
+				if (source.snapshot !== sourceSnapshot)
 					continue;
 
 				const sourceLoc = map.toSourceOffset(textSpan.start);

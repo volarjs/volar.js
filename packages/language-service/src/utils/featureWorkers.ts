@@ -132,7 +132,6 @@ export async function ruleWorker<T>(
 	const ruleCtx: RuleContext = {
 		env: context.env,
 		inject: context.inject,
-		getTextDocument: context.getTextDocument,
 		report: () => { },
 	};
 

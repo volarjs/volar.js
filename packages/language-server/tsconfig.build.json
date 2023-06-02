@@ -15,5 +15,8 @@
 		{
 			"path": "../language-service/tsconfig.build.json"
 		},
+		{
+			"path": "../typescript/tsconfig.build.json"
+		},
 	]
 }

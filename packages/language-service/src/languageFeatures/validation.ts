@@ -118,7 +118,7 @@ type CacheMap = Map<
 		string,
 		{
 			documentVersion: number,
-			projectVersion: string | undefined,
+			projectVersion: number | string | undefined,
 			errors: vscode.Diagnostic[] | undefined | null,
 		}
 	>

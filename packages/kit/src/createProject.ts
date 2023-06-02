@@ -1,4 +1,4 @@
-import { LanguageServiceHost } from '@volar/language-service';
+import type { TypeScriptLanguageHost } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { asPosix, defaultCompilerOptions } from './utils';
@@ -42,90 +42,74 @@ export function createProject(
 	);
 }
 
-function createProjectBase(
-	rootPath: string,
-	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>
-) {
+function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>) {
 
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
-	const host: LanguageServiceHost = {
-		...ts.sys,
-		getCurrentDirectory: () => rootPath,
-		fileExists,
-		useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,
-		getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
-		getCompilationSettings: () => parsedCommandLine.options,
+	const languageHost: TypeScriptLanguageHost = {
+		getCurrentDirectory: () => {
+			return rootPath;
+		},
+		getCompilationSettings: () => {
+			return parsedCommandLine.options;
+		},
 		getProjectVersion: () => {
 			checkRootFilesUpdate();
-			return projectVersion.toString();
-		},
-		getTypeRootsVersion: () => {
-			return typeRootsVersion;
+			return projectVersion;
 		},
 		getScriptFileNames: () => {
 			checkRootFilesUpdate();
 			return parsedCommandLine.fileNames;
 		},
-		getScriptVersion: (fileName) => scriptVersions[fileName]?.toString() ?? '',
+		getScriptVersion: (fileName) => {
+			return scriptVersions.get(fileName)?.toString();
+		},
 		getScriptSnapshot: (fileName) => {
-			const version = host.getScriptVersion(fileName);
-			if (!scriptSnapshots[fileName] || scriptSnapshots[fileName][0] !== version) {
+			if (!scriptSnapshotsCache.has(fileName)) {
 				const fileText = ts.sys.readFile(fileName, 'utf8');
 				if (fileText !== undefined) {
-					scriptSnapshots[fileName] = [version, ts.ScriptSnapshot.fromString(fileText)];
+					scriptSnapshotsCache.set(fileName, ts.ScriptSnapshot.fromString(fileText));
 				}
 				else {
-					scriptSnapshots[fileName] = [version, undefined];
+					scriptSnapshotsCache.set(fileName, undefined);
 				}
 			}
-			return scriptSnapshots[fileName][1];
+			return scriptSnapshotsCache.get(fileName);
 		},
 	};
 
-	let fileExistsCache: Record<string, boolean> = {};
-	let scriptVersions: Record<string, number> = {};
-	let scriptSnapshots: Record<string, [string, ts.IScriptSnapshot | undefined]> = {};
+	let scriptSnapshotsCache: Map<string, ts.IScriptSnapshot | undefined> = new Map();
+	let scriptVersions: Map<string, number> = new Map();
 	let parsedCommandLine = createParsedCommandLine();
 	let projectVersion = 0;
-	let typeRootsVersion = 0;
 	let shouldCheckRootFiles = false;
 
 	return {
-		languageServiceHost: host,
-		isKnownRelatedFile,
+		languageHost,
 		fileUpdated(fileName: string) {
+			scriptVersions.set(fileName, (scriptVersions.get(fileName) ?? 0) + 1);
 			fileName = asPosix(fileName);
-			if (isKnownRelatedFile(fileName)) {
+			if (scriptSnapshotsCache.has(fileName)) {
 				projectVersion++;
-				scriptVersions[fileName] ??= 0;
-				scriptVersions[fileName]++;
+				scriptSnapshotsCache.delete(fileName);
 			}
 		},
 		fileDeleted(fileName: string) {
+			scriptVersions.set(fileName, (scriptVersions.get(fileName) ?? 0) + 1);
 			fileName = asPosix(fileName);
-			fileExistsCache[fileName] = false;
-			if (isKnownRelatedFile(fileName)) {
+			if (scriptSnapshotsCache.has(fileName)) {
 				projectVersion++;
-				delete scriptVersions[fileName];
-				delete scriptSnapshots[fileName];
+				scriptSnapshotsCache.delete(fileName);
 				parsedCommandLine.fileNames = parsedCommandLine.fileNames.filter(name => name !== fileName);
 			}
 		},
 		fileCreated(fileName: string) {
+			scriptVersions.set(fileName, (scriptVersions.get(fileName) ?? 0) + 1);
 			fileName = asPosix(fileName);
-			if (isKnownRelatedFile(fileName)) {
-				projectVersion++;
-				typeRootsVersion++;
-			}
 			shouldCheckRootFiles = true;
-			fileExistsCache[fileName] = true;
-			scriptVersions[fileName] ??= 0;
-			scriptVersions[fileName]++;
 		},
 		reload() {
-			fileExistsCache = {};
-			scriptVersions = {};
-			scriptSnapshots = {};
+			scriptVersions.clear();
+			scriptSnapshotsCache.clear();
 			projectVersion++;
 			parsedCommandLine = createParsedCommandLine();
 		},
@@ -141,14 +125,5 @@ function createProjectBase(
 			parsedCommandLine.fileNames = newParsedCommandLine.fileNames;
 			projectVersion++;
 		}
-	}
-
-	function fileExists(fileName: string) {
-		fileExistsCache[fileName] ??= ts.sys.fileExists(fileName);
-		return fileExistsCache[fileName];
-	}
-
-	function isKnownRelatedFile(fileName: string) {
-		return scriptSnapshots[fileName] !== undefined || fileExistsCache[fileName] !== undefined;
 	}
 }

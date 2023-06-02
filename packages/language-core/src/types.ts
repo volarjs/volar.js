@@ -86,13 +86,24 @@ export interface VirtualFile {
 }
 
 export interface Language<T extends VirtualFile = VirtualFile> {
-	resolveHost?(host: LanguageServiceHost): LanguageServiceHost;
+	resolveHost?(host: TypeScriptLanguageHost): TypeScriptLanguageHost;
 	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	deleteVirtualFile?(virtualFile: T): void;
 }
 
-export interface LanguageServiceHost extends ts.LanguageServiceHost {
-	getScriptLanguageId?(fileName: string): string | undefined;
-	isTsc?: boolean,
+interface LanguageHost {
+	getProjectVersion(): number | string;
+	getScriptFileNames(): string[];
+	getScriptSnapshot(fileName: string): ts.IScriptSnapshot | undefined;
+	getLanguageId?(fileName: string): string | undefined;
+}
+
+export interface TypeScriptLanguageHost extends LanguageHost {
+	getScriptVersion(fileName: string): string | undefined;
+	getCurrentDirectory(): string;
+	getCancellationToken?(): ts.CancellationToken;
+	getLocalizedDiagnosticMessages?: () => any;
+	getCompilationSettings(): ts.CompilerOptions;
+	getProjectReferences?(): readonly ts.ProjectReference[] | undefined;
 }

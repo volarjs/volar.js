@@ -1,15 +1,13 @@
-import * as embedded from '@volar/language-core';
-import * as embeddedLS from '@volar/language-service';
-import { ServiceEnvironment } from '@volar/language-service';
-import * as path from 'typesafe-path';
+import { LanguageService, ServiceEnvironment, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
+import * as path from 'typesafe-path/posix';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import type * as html from 'vscode-html-languageservice';
 import * as vscode from 'vscode-languageserver';
-import { URI, Utils } from 'vscode-uri';
-import { LanguageServerPlugin, ServerMode } from '../types';
+import { URI } from 'vscode-uri';
+import { LanguageServerPlugin } from '../types';
 import { loadConfig } from './utils/serverConfig';
 import { createUriMap } from './utils/uriMap';
 import { WorkspaceContext } from './workspace';
+import { createSys } from '@volar/typescript';
 
 export interface ProjectContext extends WorkspaceContext {
 	project: {
@@ -22,70 +20,108 @@ export type Project = ReturnType<typeof createProject>;
 
 export async function createProject(context: ProjectContext) {
 
-	const uriToFileName = context.server.runtimeEnv.uriToFileName;
-	const fileNameToUri = context.server.runtimeEnv.fileNameToUri;
-
-	const sys: ts.System = context.workspaces.initOptions.serverMode === ServerMode.Syntactic || !context.workspaces.fileSystemHost
-		? {
-			args: [],
-			newLine: '\n',
-			useCaseSensitiveFileNames: false,
-			fileExists: () => false,
-			readFile: () => undefined,
-			readDirectory: () => [],
-			getCurrentDirectory: () => '',
-			resolvePath: () => '',
-			write: () => { },
-			writeFile: () => { },
-			createDirectory: () => { },
-			realpath: path => path,
-			directoryExists: () => true,
-			exit: () => { },
-			getDirectories: () => [],
-			getExecutingFilePath: () => '/__fake__.js',
-		}
-		: context.workspaces.fileSystemHost.getWorkspaceFileSystem(context.project.rootUri);
-
-	let typeRootVersion = 0;
 	let projectVersion = 0;
 	let projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
-	let languageService: embeddedLS.LanguageService | undefined;
+	let languageService: LanguageService | undefined;
+
+	const { uriToFileName, fileNameToUri, fs } = context.server.runtimeEnv;
+	const env: ServiceEnvironment = {
+		uriToFileName,
+		fileNameToUri,
+		fs,
+		locale: context.workspaces.initParams.locale,
+		rootUri: context.project.rootUri,
+		clientCapabilities: context.workspaces.initParams.capabilities,
+		getConfiguration: context.server.configurationHost?.getConfiguration,
+		onDidChangeConfiguration: context.server.configurationHost?.onDidChangeConfiguration,
+		onDidChangeWatchedFiles: context.server.onDidChangeWatchedFiles,
+	};
+	const fsScriptsCache = createUriMap<{ snapshot: ts.IScriptSnapshot; version: number; } | undefined>(fileNameToUri);
+	const askedFiles = createUriMap<boolean>(fileNameToUri);
+	const token: ts.CancellationToken = {
+		isCancellationRequested() {
+			return context.workspaces.cancelTokenHost.getMtime() !== projectVersionUpdateTime;
+		},
+		throwIfCancellationRequested() { },
+	};
+	const languageHost: TypeScriptLanguageHost = {
+		getProjectVersion: () => projectVersion,
+		getScriptFileNames: () => parsedCommandLine.fileNames,
+		getScriptVersion: (fileName) => {
+			const doc = context.workspaces.documents.data.pathGet(fileName);
+			if (doc) {
+				return doc.version.toString();
+			}
+			const fsSnapshot = fsScriptsCache.pathGet(fileName);
+			if (fsSnapshot) {
+				return fsSnapshot.version.toString();
+			}
+		},
+		getScriptSnapshot: (fileName) => {
+			askedFiles.pathSet(fileName, true);
+			const doc = context.workspaces.documents.data.pathGet(fileName);
+			if (doc) {
+				return doc.getSnapshot();
+			}
+			const fsSnapshot = fsScriptsCache.pathGet(fileName);
+			if (fsSnapshot) {
+				return fsSnapshot.snapshot;
+			}
+		},
+		getLanguageId: (fileName) => context.workspaces.documents.data.pathGet(fileName)?.languageId,
+		getCancellationToken: () => token,
+		getCompilationSettings: () => parsedCommandLine.options,
+		getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
+		getCurrentDirectory: () => uriToFileName(context.project.rootUri.toString()),
+		getProjectReferences: () => parsedCommandLine.projectReferences,
+	};
+	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
+		projectVersion++;
+		projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
+	});
+	const fileWatch = env.onDidChangeWatchedFiles?.(params => {
+		onWorkspaceFilesChanged(params.changes);
+	});
+
 	let existingOptions: ts.CompilerOptions | undefined;
+
 	for (const plugin of context.workspaces.plugins) {
 		if (plugin.resolveExistingOptions) {
 			existingOptions = plugin.resolveExistingOptions(existingOptions);
 		}
 	}
-	let parsedCommandLine = createParsedCommandLine(
+
+	let parsedCommandLine = await createParsedCommandLine(
 		context.workspaces.ts,
-		sys,
+		env,
 		uriToFileName(context.project.rootUri.toString()) as path.PosixPath,
 		context.project.tsConfig,
 		context.workspaces.plugins,
 		existingOptions,
 	);
+	let config = (
+		context.workspace.rootUri.scheme === 'file' ? loadConfig(
+			context.server.runtimeEnv.uriToFileName(context.workspace.rootUri.toString()),
+			context.workspaces.initOptions.configFilePath,
+		) : {}
+	) ?? {};
+	for (const plugin of context.workspaces.plugins) {
+		if (plugin.resolveConfig) {
+			config = await plugin.resolveConfig(config, {
+				...context,
+				env,
+				host: languageHost,
+			});
+		}
+	}
 
-	const scripts = createUriMap<{
-		version: number,
-		fileName: string,
-		snapshot: ts.IScriptSnapshot | undefined,
-		snapshotVersion: number | undefined,
-	}>(fileNameToUri);
-	const readFiles = new Set<string>();
-	const languageServiceHost = createLanguageServiceHost();
-	const disposeWatchEvent = context.workspaces.fileSystemHost?.onDidChangeWatchedFiles(params => {
-		onWorkspaceFilesChanged(params.changes);
-	});
-	const disposeDocChange = context.workspaces.documents.onDidChangeContent(() => {
-		projectVersion++;
-		projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
-	});
+	await syncRootScriptSnapshots();
 
 	return {
-		readFiles,
+		context,
 		tsConfig: context.project.tsConfig,
-		scripts,
-		languageServiceHost,
+		scripts: fsScriptsCache,
+		languageHost,
 		getLanguageService,
 		getLanguageServiceDontCreate: () => languageService,
 		getParsedCommandLine: () => parsedCommandLine,
@@ -96,249 +132,131 @@ export async function createProject(context: ProjectContext) {
 				projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
 			}
 		},
+		askedFiles,
 		dispose,
 	};
 
 	function getLanguageService() {
 		if (!languageService) {
-			const env: ServiceEnvironment = {
-				uriToFileName,
-				fileNameToUri,
-				locale: context.workspaces.initParams.locale,
-				rootUri: context.project.rootUri,
-				clientCapabilities: context.workspaces.initParams.capabilities,
-				getConfiguration: context.workspaces.configurationHost?.getConfiguration,
-				onDidChangeConfiguration: context.workspaces.configurationHost?.onDidChangeConfiguration,
-				fileSystemProvider: context.server.runtimeEnv.fileSystemProvide,
-				onDidChangeWatchedFiles: context.workspaces.fileSystemHost?.onDidChangeWatchedFiles,
-				documentContext: getDocumentContext(fileNameToUri, uriToFileName, context.workspaces.ts, languageServiceHost, context.project.rootUri.toString()),
-				schemaRequestService: async uri => {
-					const protocol = uri.substring(0, uri.indexOf(':'));
-					const builtInHandler = context.server.runtimeEnv.schemaRequestHandlers[protocol];
-					if (builtInHandler) {
-						return await builtInHandler(uri) ?? '';
-					}
-					return '';
-				},
-				sys,
-			};
-			let config = (
-				context.workspace.rootUri.scheme === 'file' ? loadConfig(
-					context.server.runtimeEnv.uriToFileName(context.workspace.rootUri.toString()),
-					context.workspaces.initOptions.configFilePath,
-				) : {}
-			) ?? {};
-			for (const plugin of context.workspaces.plugins) {
-				if (plugin.resolveConfig) {
-					config = plugin.resolveConfig(config, {
-						...context,
-						env,
-						sys,
-						host: languageServiceHost,
-					});
-				}
-			}
-			languageService = embeddedLS.createLanguageService(
+			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
 				env,
 				config,
-				languageServiceHost,
+				languageHost,
 			);
 		}
 		return languageService;
 	}
-	async function onWorkspaceFilesChanged(changes: vscode.FileEvent[]) {
-
-		const _projectVersion = projectVersion;
-
-		for (const change of changes) {
-
-			const script = scripts.uriGet(change.uri);
-
-			if (script && (change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Created)) {
-				if (script.version >= 0) {
-					script.version = -1;
-				}
-				else {
-					script.version--;
-				}
-			}
-			else if (script && change.type === vscode.FileChangeType.Deleted) {
-				scripts.uriDelete(change.uri);
-			}
-
-			if (
-				script
-				|| change.uri.endsWith('.d.ts')
-				|| change.uri.endsWith('/package.json')
-			) {
-				projectVersion++;
+	async function syncRootScriptSnapshots() {
+		const promises: Promise<void>[] = [];
+		let dirty = false;
+		for (const fileName of parsedCommandLine.fileNames) {
+			const uri = fileNameToUri(fileName);
+			if (!fsScriptsCache.uriHas(uri)) {
+				dirty = true;
+				promises.push(updateRootScriptSnapshot(uri));
 			}
 		}
+		await Promise.all(promises);
+		return dirty;
+	}
+	async function updateRootScriptSnapshot(uri: string) {
+		const text = await context.server.runtimeEnv.fs.readFile(uri);
+		const oldVersion = fsScriptsCache.uriGet(uri)?.version ?? 0;
+		fsScriptsCache.uriSet(uri,
+			text !== undefined ? {
+				snapshot: {
+					getText: (start, end) => text.substring(start, end),
+					getLength: () => text.length,
+					getChangeRange: () => undefined,
+				},
+				version: oldVersion + 1,
+			} : undefined,
+		);
+	}
+	async function onWorkspaceFilesChanged(changes: vscode.FileEvent[]) {
 
+		const oldProjectVersion = projectVersion;
 		const creates = changes.filter(change => change.type === vscode.FileChangeType.Created);
-		const deletes = changes.filter(change => change.type === vscode.FileChangeType.Deleted);
 
-		if (creates.length || deletes.length) {
-			parsedCommandLine = createParsedCommandLine(
+		if (creates.length) {
+			parsedCommandLine = await createParsedCommandLine(
 				context.workspaces.ts,
-				sys,
+				env,
 				uriToFileName(context.project.rootUri.toString()) as path.PosixPath,
 				context.project.tsConfig,
 				context.workspaces.plugins,
 				existingOptions,
 			);
-			projectVersion++;
-			typeRootVersion++;
+			if (await syncRootScriptSnapshots()) {
+				projectVersion++;
+			}
 		}
 
-		if (_projectVersion !== projectVersion) {
+		for (const change of changes) {
+			const oldSnapshot = fsScriptsCache.uriGet(change.uri);
+			if (oldSnapshot) {
+				if (change.type === vscode.FileChangeType.Changed) {
+					updateRootScriptSnapshot(change.uri);
+				}
+				else if (change.type === vscode.FileChangeType.Deleted) {
+					fsScriptsCache.uriSet(change.uri, undefined);
+				}
+				projectVersion++;
+			}
+		}
+
+		if (oldProjectVersion !== projectVersion) {
 			projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
-		}
-	}
-	function createLanguageServiceHost() {
-
-		const token: ts.CancellationToken = {
-			isCancellationRequested() {
-				return context.workspaces.cancelTokenHost.getMtime() !== projectVersionUpdateTime;
-			},
-			throwIfCancellationRequested() { },
-		};
-		let host: embedded.LanguageServiceHost = {
-			// ts
-			getNewLine: () => sys.newLine,
-			useCaseSensitiveFileNames: () => sys.useCaseSensitiveFileNames,
-			readFile: fileName => {
-				readFiles.add(fileName);
-				return sys.readFile(fileName);
-			},
-			writeFile: sys.writeFile,
-			directoryExists: sys.directoryExists,
-			getDirectories: sys.getDirectories,
-			readDirectory: sys.readDirectory,
-			realpath: sys.realpath,
-			fileExists: sys.fileExists,
-			getCurrentDirectory: () => uriToFileName(context.project.rootUri.toString()),
-			getProjectReferences: () => parsedCommandLine.projectReferences, // if circular, broken with provide `getParsedCommandLine: () => parsedCommandLine`
-			getCancellationToken: () => token,
-			// custom
-			getDefaultLibFileName: options => {
-				if (context.workspaces.initOptions.typescript && context.workspaces.ts) {
-					try {
-						return context.workspaces.ts.getDefaultLibFilePath(options);
-					} catch {
-						// web
-						const tsdk = context.workspaces.initOptions.typescript.tsdk;
-						return tsdk + '/' + context.workspaces.ts.getDefaultLibFileName(options);
-					}
-				}
-				return '';
-			},
-			getProjectVersion: () => projectVersion.toString(),
-			getTypeRootsVersion: () => typeRootVersion,
-			getScriptFileNames: () => parsedCommandLine.fileNames,
-			getCompilationSettings: () => parsedCommandLine.options,
-			getScriptVersion,
-			getScriptSnapshot,
-			getScriptLanguageId: (fileName) => {
-				return context.workspaces.documents.data.pathGet(fileName)?.languageId;
-			},
-		};
-
-		if (context.workspaces.tsLocalized) {
-			host.getLocalizedDiagnosticMessages = () => context.workspaces.tsLocalized;
-		}
-
-		return host;
-
-		function getScriptVersion(fileName: string) {
-
-			const doc = context.workspaces.documents.data.pathGet(fileName);
-			if (doc) {
-				return doc.version.toString();
-			}
-
-			return scripts.pathGet(fileName)?.version.toString() ?? '';
-		}
-		function getScriptSnapshot(fileName: string) {
-
-			const doc = context.workspaces.documents.data.pathGet(fileName);
-			if (doc) {
-				return doc.getSnapshot();
-			}
-
-			const script = scripts.pathGet(fileName);
-			if (script && script.snapshotVersion === script.version) {
-				return script.snapshot;
-			}
-
-			if (context.workspaces.ts && sys.fileExists(fileName)) {
-				if (context.workspaces.initOptions.maxFileSize) {
-					const fileSize = sys.getFileSize?.(fileName);
-					if (fileSize !== undefined && fileSize > context.workspaces.initOptions.maxFileSize) {
-						console.warn(`IGNORING "${fileName}" because it is too large (${fileSize}bytes > ${context.workspaces.initOptions.maxFileSize}bytes)`);
-						return context.workspaces.ts.ScriptSnapshot.fromString('');
-					}
-				}
-				const text = sys.readFile(fileName, 'utf8');
-				if (text !== undefined) {
-					const snapshot = context.workspaces.ts.ScriptSnapshot.fromString(text);
-					if (script) {
-						script.snapshot = snapshot;
-						script.snapshotVersion = script.version;
-					}
-					else {
-						scripts.pathSet(fileName, {
-							version: -1,
-							fileName: fileName,
-							snapshot: snapshot,
-							snapshotVersion: -1,
-						});
-					}
-					return snapshot;
-				}
-			}
 		}
 	}
 	function dispose() {
 		languageService?.dispose();
-		scripts.clear();
-		disposeWatchEvent?.();
-		disposeDocChange();
+		fileWatch?.dispose();
+		docChangeWatcher.dispose();
 	}
 }
 
-function createParsedCommandLine(
+async function createParsedCommandLine(
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
-	sys: ts.System,
+	env: ServiceEnvironment,
 	rootPath: path.PosixPath,
 	tsConfig: path.PosixPath | ts.CompilerOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],
 	existingOptions: ts.CompilerOptions | undefined,
-): ts.ParsedCommandLine {
+): Promise<ts.ParsedCommandLine> {
 	const extraFileExtensions = plugins.map(plugin => plugin.extraFileExtensions ?? []).flat();
 	if (ts) {
-		try {
-			let content: ts.ParsedCommandLine;
-			if (typeof tsConfig === 'string') {
-				const config = ts.readJsonConfigFile(tsConfig, sys.readFile);
-				content = ts.parseJsonSourceFileConfigFileContent(config, sys, path.dirname(tsConfig), existingOptions, tsConfig, undefined, extraFileExtensions);
+		const sys = createSys(undefined, ts, {
+			...env,
+			onDidChangeWatchedFiles: undefined,
+		});
+		let content: ts.ParsedCommandLine | undefined;
+		let sysVersion: number | undefined;
+		let newSysVersion = await sys.sync();
+		while (sysVersion !== newSysVersion) {
+			sysVersion = newSysVersion;
+			try {
+				if (typeof tsConfig === 'string') {
+					const config = ts.readJsonConfigFile(tsConfig, sys.readFile);
+					content = ts.parseJsonSourceFileConfigFileContent(config, sys, path.dirname(tsConfig), existingOptions, tsConfig, undefined, extraFileExtensions);
+				}
+				else {
+					content = ts.parseJsonConfigFileContent({ files: [] }, sys, rootPath, { ...tsConfig, ...existingOptions }, rootPath + '/jsconfig.json', undefined, extraFileExtensions);
+				}
+				// fix https://github.com/johnsoncodehk/volar/issues/1786
+				// https://github.com/microsoft/TypeScript/issues/30457
+				// patching ts server broke with outDir + rootDir + composite/incremental
+				content.options.outDir = undefined;
+				content.fileNames = content.fileNames.map(fileName => fileName.replace(/\\/g, '/'));
 			}
-			else {
-				content = ts.parseJsonConfigFileContent({ files: [] }, sys, rootPath, {
-					...tsConfig,
-					...existingOptions,
-				}, path.join(rootPath, 'jsconfig.json' as path.PosixPath), undefined, extraFileExtensions);
+			catch {
+				// will be failed if web fs host first result not ready
 			}
-			// fix https://github.com/johnsoncodehk/volar/issues/1786
-			// https://github.com/microsoft/TypeScript/issues/30457
-			// patching ts server broke with outDir + rootDir + composite/incremental
-			content.options.outDir = undefined;
-			content.fileNames = content.fileNames.map(fileName => fileName.replace(/\\/g, '/'));
-			return content;
+			newSysVersion = await sys.sync();
 		}
-		catch {
-			// will be failed if web fs host first result not ready
+		if (content) {
+			return content;
 		}
 	}
 	return {
@@ -346,69 +264,4 @@ function createParsedCommandLine(
 		fileNames: [],
 		options: {},
 	};
-}
-
-function getDocumentContext(
-	fileNameToUri: ServiceEnvironment['fileNameToUri'],
-	uriToFileName: ServiceEnvironment['uriToFileName'],
-	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
-	host: ts.LanguageServiceHost | undefined,
-	rootUri: string,
-) {
-	const documentContext: html.DocumentContext = {
-		resolveReference: (ref: string, base) => {
-
-			if (ts && host) { // support tsconfig.json paths
-
-				const isUri = base.indexOf('://') >= 0;
-				const resolveResult = ts.resolveModuleName(
-					ref,
-					isUri ? uriToFileName(base) : base,
-					host.getCompilationSettings(),
-					host,
-				);
-				const failedLookupLocations: path.PosixPath[] | undefined = typeof resolveResult === 'object' ? (resolveResult as any).failedLookupLocations : [];
-				const dirs = new Set<string>();
-
-				if (!failedLookupLocations) {
-					console.warn(`[volar] failedLookupLocations not exists, ts: ${ts.version}`);
-				}
-
-				for (let failed of failedLookupLocations ?? []) {
-					const fileName = path.basename(failed);
-					if (fileName === 'index.d.ts' || fileName === '*.d.ts') {
-						dirs.add(path.dirname(failed));
-					}
-					if (failed.endsWith('.d.ts')) {
-						failed = failed.substring(0, failed.length - '.d.ts'.length) as path.PosixPath;
-					}
-					else {
-						continue;
-					}
-					if (host.fileExists(failed)) {
-						return isUri ? fileNameToUri(failed) : failed;
-					}
-				}
-				for (const dir of dirs) {
-					if (host.directoryExists?.(dir) ?? true) {
-						return isUri ? fileNameToUri(dir) : dir;
-					}
-				}
-			}
-
-			// original html resolveReference
-
-			if (ref.match(/^\w[\w\d+.-]*:/)) {
-				// starts with a schema
-				return ref;
-			}
-			if (ref[0] === '/') { // resolve absolute path against the current workspace folder
-				return rootUri + ref;
-			}
-			const baseUri = URI.parse(base);
-			const baseUriDir = baseUri.path.endsWith('/') ? baseUri : Utils.dirname(baseUri);
-			return Utils.resolvePath(baseUriDir, ref).toString(true);
-		},
-	};
-	return documentContext;
 }

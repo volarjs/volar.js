@@ -1,8 +1,7 @@
-import { Config, FormattingOptions, LanguageServiceHost, createLanguageService } from '@volar/language-service';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import { Config, FormattingOptions, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { asPosix, defaultCompilerOptions, fileNameToUri, getConfiguration, uriToFileName } from './utils';
+import { asPosix, defaultCompilerOptions, fileNameToUri, fs, getConfiguration, uriToFileName } from './utils';
 
 export function createFormatter(
 	config: Config,
@@ -13,10 +12,10 @@ export function createFormatter(
 
 	let settings = {} as any;
 	let dummyScriptUri = 'file:///dummy.txt';
-	let dummyScriptFileName = '/dummy.txt';
-	let dummyScriptVersion = 0;
-	let dummyScriptSnapshot = ts.ScriptSnapshot.fromString('');
-	let dummyScriptLanguageId: string | undefined;
+	let fakeScriptVersion = 0;
+	let fakeScriptFileName = '/dummy.txt';
+	let fakeScriptSnapshot = ts.ScriptSnapshot.fromString('');
+	let fakeScriptLanguageId: string | undefined;
 
 	const service = createLanguageService(
 		{ typescript: ts },
@@ -24,15 +23,16 @@ export function createFormatter(
 			rootUri: URI.file('/'),
 			uriToFileName: uri => {
 				if (uri.startsWith(dummyScriptUri))
-					return uri.replace(dummyScriptUri, dummyScriptFileName);
+					return uri.replace(dummyScriptUri, fakeScriptFileName);
 				return uriToFileName(uri);
 			},
 			fileNameToUri: fileName => {
-				if (fileName.startsWith(dummyScriptFileName))
-					return fileName.replace(dummyScriptFileName, dummyScriptUri);
+				if (fileName.startsWith(fakeScriptFileName))
+					return fileName.replace(fakeScriptFileName, dummyScriptUri);
 				return fileNameToUri(fileName);
 			},
 			getConfiguration: section => getConfiguration(settings, section),
+			fs,
 		},
 		config,
 		createHost(),
@@ -63,9 +63,9 @@ export function createFormatter(
 	}
 
 	async function formatCode(content: string, languageId: string, options: FormattingOptions): Promise<string> {
-		dummyScriptSnapshot = ts.ScriptSnapshot.fromString(content);
-		dummyScriptLanguageId = languageId;
-		dummyScriptVersion++;
+		fakeScriptSnapshot = ts.ScriptSnapshot.fromString(content);
+		fakeScriptVersion++;
+		fakeScriptLanguageId = languageId;
 		const document = service.context.getTextDocument(dummyScriptUri)!;
 		const edits = await service.format(dummyScriptUri, options, undefined, undefined);
 		if (edits?.length) {
@@ -76,35 +76,26 @@ export function createFormatter(
 	}
 
 	function createHost() {
-		const scriptVersions = new Map<string, number>();
-		const scriptSnapshots = new Map<string, ts.IScriptSnapshot>();
-		const host: LanguageServiceHost = {
-			...ts.sys,
+		let projectVersion = 0;
+		const host: TypeScriptLanguageHost = {
+			getCurrentDirectory: () => '/',
 			getCompilationSettings: () => compilerOptions,
-			getScriptFileNames: () => dummyScriptSnapshot ? [dummyScriptFileName] : [],
-			getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
-			useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,
+			getProjectVersion: () => projectVersion++,
+			getScriptFileNames: () => fakeScriptSnapshot ? [fakeScriptFileName] : [],
 			getScriptVersion: (fileName) => {
-				if (fileName === dummyScriptFileName) {
-					return dummyScriptVersion.toString();
+				if (fileName === fakeScriptFileName) {
+					return fakeScriptVersion.toString();
 				}
-				return scriptVersions.get(fileName)?.toString() ?? '';
 			},
 			getScriptSnapshot: (fileName) => {
-				if (fileName === dummyScriptFileName) {
-					return dummyScriptSnapshot;
+				if (fileName === fakeScriptFileName) {
+					return fakeScriptSnapshot;
 				}
-				if (!scriptSnapshots.has(fileName)) {
-					const fileText = ts.sys.readFile(fileName);
-					if (fileText !== undefined) {
-						scriptSnapshots.set(fileName, ts.ScriptSnapshot.fromString(fileText));
-					}
-				}
-				return scriptSnapshots.get(fileName);
 			},
-			getScriptLanguageId: uri => {
-				if (uri === dummyScriptFileName) return dummyScriptLanguageId;
-				return undefined;
+			getLanguageId: fileName => {
+				if (fileName === fakeScriptFileName) {
+					return fakeScriptLanguageId;
+				}
 			},
 		};
 		return host;

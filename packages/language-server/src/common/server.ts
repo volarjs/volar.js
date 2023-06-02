@@ -1,40 +1,64 @@
-import { Config, standardSemanticTokensLegend } from '@volar/language-service';
+import { Config, FileSystem, standardSemanticTokensLegend } from '@volar/language-service';
 import * as l10n from '@vscode/l10n';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { FileSystemHost, InitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types';
+import { InitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types';
 import { createCancellationTokenHost } from './cancellationPipe';
 import { createConfigurationHost } from './configurationHost';
 import { createDocuments } from './documents';
 import { setupCapabilities } from './utils/registerFeatures';
 import { loadConfig } from './utils/serverConfig';
 import { createWorkspaces } from './workspaces';
+import { configure as configureHttpRequests } from 'request-light';
 
 export interface ServerContext {
 	server: {
+		initializeParams: vscode.InitializeParams;
 		connection: vscode.Connection;
 		runtimeEnv: RuntimeEnvironment;
 		plugins: LanguageServerPlugin[];
+		onDidChangeWatchedFiles: vscode.Connection['onDidChangeWatchedFiles'];
+		configurationHost: ReturnType<typeof createConfigurationHost> | undefined;
 	};
 }
 
-export function startCommonLanguageServer(connection: vscode.Connection, getCtx: (initOptions: InitializationOptions) => ServerContext['server']) {
+export async function startCommonLanguageServer(connection: vscode.Connection, _plugins: LanguageServerPlugin[], getRuntimeEnv: (params: vscode.InitializeParams, options: InitializationOptions) => RuntimeEnvironment) {
 
 	let initParams: vscode.InitializeParams;
 	let options: InitializationOptions;
 	let roots: URI[] = [];
-	let fsHost: FileSystemHost | undefined;
 	let projects: ReturnType<typeof createWorkspaces> | undefined;
-	let configurationHost: ReturnType<typeof createConfigurationHost> | undefined;
 	let plugins: ReturnType<LanguageServerPlugin>[];
 	let documents: ReturnType<typeof createDocuments>;
 	let context: ServerContext;
+
+	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 
 	connection.onInitialize(async _params => {
 
 		initParams = _params;
 		options = initParams.initializationOptions;
-		context = { server: getCtx(options) };
+		const env = getRuntimeEnv(initParams, options);
+		context = {
+			server: {
+				initializeParams: initParams,
+				connection,
+				runtimeEnv: {
+					...env,
+					fs: createFsWithCache(env.fs),
+				},
+				plugins: _plugins,
+				configurationHost: initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, connection) : undefined,
+				onDidChangeWatchedFiles: cb => {
+					didChangeWatchedFilesCallbacks.add(cb);
+					return {
+						dispose: () => {
+							didChangeWatchedFilesCallbacks.delete(cb);
+						},
+					};
+				},
+			},
+		};
 		plugins = context.server.plugins.map(plugin => plugin(options, {
 			typescript: options.typescript ? context.server.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined
 		}));
@@ -67,15 +91,13 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 			},
 		};
 
-		configurationHost = initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, connection) : undefined;
-
 		let services: Config['services'] = {};
 		for (const root of roots) {
 			if (root.scheme === 'file') {
 				let config = loadConfig(root.path, options.configFilePath) ?? {};
 				for (const plugin of plugins) {
 					if (plugin.resolveConfig) {
-						config = plugin.resolveConfig(config, undefined);
+						config = await plugin.resolveConfig(config, undefined);
 					}
 				}
 				if (config.services) {
@@ -108,10 +130,12 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 
 		return result;
 	});
-	connection.onInitialized(() => {
+	connection.onInitialized(async () => {
 
-		fsHost?.ready(connection);
-		configurationHost?.ready();
+		context.server.configurationHost?.ready();
+		context.server.configurationHost?.onDidChangeConfiguration?.(updateHttpSettings);
+
+		updateHttpSettings();
 
 		if (initParams.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
@@ -139,7 +163,17 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 						},
 					]
 				});
+				connection.onDidChangeWatchedFiles(e => {
+					for (const cb of didChangeWatchedFilesCallbacks) {
+						cb(e);
+					}
+				});
 			}
+		}
+
+		async function updateHttpSettings() {
+			const httpSettings = await context.server.configurationHost?.getConfiguration?.<{ proxyStrictSSL: boolean; proxy: string; }>('http');
+			configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
 		}
 	});
 	connection.onShutdown(async () => {
@@ -151,19 +185,64 @@ export function startCommonLanguageServer(connection: vscode.Connection, getCtx:
 	});
 	connection.listen();
 
+	function createFsWithCache(fs: FileSystem): FileSystem {
+
+		const readFileCache = new Map<string, ReturnType<FileSystem['readFile']>>();
+		const statCache = new Map<string, ReturnType<FileSystem['stat']>>();
+		const readDirectoryCache = new Map<string, ReturnType<FileSystem['readDirectory']>>();
+
+		didChangeWatchedFilesCallbacks.add(({ changes }) => {
+			for (const change of changes) {
+				if (change.type === vscode.FileChangeType.Deleted) {
+					readFileCache.set(change.uri, undefined);
+					statCache.set(change.uri, undefined);
+					const dir = change.uri.substring(0, change.uri.lastIndexOf('/'));
+					readDirectoryCache.delete(dir);
+				}
+				else if (change.type === vscode.FileChangeType.Changed) {
+					readFileCache.delete(change.uri);
+					statCache.delete(change.uri);
+				}
+				else if (change.type === vscode.FileChangeType.Created) {
+					readFileCache.delete(change.uri);
+					statCache.delete(change.uri);
+					const dir = change.uri.substring(0, change.uri.lastIndexOf('/'));
+					readDirectoryCache.delete(dir);
+				}
+			}
+		});
+
+		return {
+			readFile: uri => {
+				if (!readFileCache.has(uri)) {
+					readFileCache.set(uri, fs.readFile(uri));
+				}
+				return readFileCache.get(uri)!;
+			},
+			stat: uri => {
+				if (!statCache.has(uri)) {
+					statCache.set(uri, fs.stat(uri));
+				}
+				return statCache.get(uri)!;
+			},
+			readDirectory: uri => {
+				if (!readDirectoryCache.has(uri)) {
+					readDirectoryCache.set(uri, fs.readDirectory(uri));
+				}
+				return readDirectoryCache.get(uri)!;
+			},
+		};
+	}
+
 	async function createLanguageServiceHost() {
 
 		const ts = options.typescript ? context.server.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined;
-		fsHost = ts ? context.server.runtimeEnv.createFileSystemHost(ts, initParams.capabilities, context.server.runtimeEnv, options) : undefined;
-
 		const tsLocalized = options.typescript && initParams.locale ? await context.server.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale) : undefined;
 		const cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
 
 		projects = createWorkspaces({
 			...context,
 			workspaces: {
-				fileSystemHost: fsHost,
-				configurationHost,
 				ts,
 				tsLocalized,
 				initParams,
