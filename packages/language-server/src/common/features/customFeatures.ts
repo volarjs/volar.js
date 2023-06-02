@@ -64,7 +64,7 @@ export function register(
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const project = await workspaces.getProject(document.uri);
 		if (project) {
-			const file = (await project.project?.getLanguageService())?.context.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
+			const file = project.project?.getLanguageService()?.context.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
 			return file ? prune(file) : undefined;
 
 			function prune(file: VirtualFile): VirtualFile {
@@ -87,7 +87,7 @@ export function register(
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
 		const project = await workspaces.getProject(params.sourceFileUri);
 		if (project) {
-			const [virtualFile, source] = (await project.project?.getLanguageService())?.context.virtualFiles.getVirtualFile(params.virtualFileName) ?? [];
+			const [virtualFile, source] = project.project?.getLanguageService()?.context.virtualFiles.getVirtualFile(params.virtualFileName) ?? [];
 			if (virtualFile && source) {
 				const mappings: Record<string, any[]> = {};
 				for (const mapping of virtualFile.mappings) {

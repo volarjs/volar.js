@@ -72,7 +72,11 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			},
 			readFile(uri, encoding) {
 				if (uri.startsWith('file://')) {
-					return fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
+					try {
+						return fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
+					} catch {
+						return undefined;
+					}
 				}
 				if (uri.startsWith('http://') || uri.startsWith('https://')) {
 					return httpSchemaRequestHandler(uri);

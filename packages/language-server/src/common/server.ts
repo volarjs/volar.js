@@ -266,7 +266,7 @@ export async function startCommonLanguageServer(connection: vscode.Connection, _
 
 		async function getLanguageService(uri: string) {
 			const project = (await projects!.getProject(uri))?.project;
-			return await project?.getLanguageService();
+			return project?.getLanguageService();
 		}
 	}
 

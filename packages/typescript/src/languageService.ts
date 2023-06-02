@@ -98,8 +98,8 @@ export function createLanguageService(
 	function getImplementationAtPosition(fileName: string, position: number): ReturnType<ts.LanguageService['getImplementationAtPosition']> {
 		return findLocations(fileName, position, 'implementation') as ts.ImplementationLocation[];
 	}
-	function findRenameLocations(fileName: string, position: number, findInStrings: boolean, findInComments: boolean, providePrefixAndSuffixTextForRename?: boolean): ReturnType<ts.LanguageService['findRenameLocations']> {
-		return findLocations(fileName, position, 'rename', findInStrings, findInComments, providePrefixAndSuffixTextForRename) as ts.RenameLocation[];
+	function findRenameLocations(fileName: string, position: number, findInStrings: boolean, findInComments: boolean, preferences: ts.UserPreferences | boolean | undefined): ReturnType<ts.LanguageService['findRenameLocations']> {
+		return findLocations(fileName, position, 'rename', findInStrings, findInComments, preferences as ts.UserPreferences) as ts.RenameLocation[];
 	}
 	function findLocations(
 		fileName: string,
@@ -107,7 +107,7 @@ export function createLanguageService(
 		mode: 'definition' | 'typeDefinition' | 'references' | 'implementation' | 'rename',
 		findInStrings = false,
 		findInComments = false,
-		providePrefixAndSuffixTextForRename?: boolean
+		preferences?: ts.UserPreferences
 	) {
 
 		const loopChecker = new Set<string>();
@@ -125,7 +125,7 @@ export function createLanguageService(
 				: mode === 'typeDefinition' ? ls.getTypeDefinitionAtPosition(fileName, position)
 					: mode === 'references' ? ls.getReferencesAtPosition(fileName, position)
 						: mode === 'implementation' ? ls.getImplementationAtPosition(fileName, position)
-							: mode === 'rename' ? ls.findRenameLocations(fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename)
+							: mode === 'rename' && preferences ? ls.findRenameLocations(fileName, position, findInStrings, findInComments, preferences)
 								: undefined;
 			if (!_symbols) return;
 			symbols = symbols.concat(_symbols);

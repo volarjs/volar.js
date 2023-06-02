@@ -6,6 +6,7 @@ import { matchFiles } from './typescript/utilities';
 
 interface File {
 	text?: string;
+	modifiedTime?: number;
 	exists?: boolean;
 	requested?: boolean;
 }
@@ -23,7 +24,10 @@ export function createSys(
 	ctx: LanguageContext | undefined,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	env: ServiceEnvironment,
-): ts.System & { version: number; sync(): Promise<number>; } & Disposable {
+): ts.System & {
+	version: number;
+	sync(): Promise<number>;
+} & Disposable {
 
 	let version = 0;
 
@@ -69,6 +73,7 @@ export function createSys(
 		realpath: sys?.realpath,
 		getExecutingFilePath: sys?.getExecutingFilePath ?? (() => rootPath + '/__fake__.js'),
 		getCurrentDirectory: () => rootPath,
+		getModifiedTime,
 		readFile,
 		readDirectory,
 		getDirectories,
@@ -107,6 +112,17 @@ export function createSys(
 		return path.resolve(fsPath);
 	}
 
+	function getModifiedTime(fileName: string) {
+		fileName = resolvePath(fileName);
+		const dirPath = path.dirname(fileName);
+		const dir = getDir(dirPath);
+		const name = path.basename(fileName);
+		const modifiedTime = dir.files[name]?.modifiedTime;
+		if (modifiedTime !== undefined) {
+			return new Date(modifiedTime);
+		}
+	}
+
 	function readFile(fileName: string, encoding?: string) {
 
 		fileName = resolvePath(fileName);
@@ -116,7 +132,7 @@ export function createSys(
 
 		readFileWorker(fileName, encoding, dir);
 
-		return dir.files[name]?.text ?? '';
+		return dir.files[name]?.text;
 	}
 
 	function directoryExists(dirName: string): boolean {
@@ -262,6 +278,8 @@ export function createSys(
 				if (result !== undefined) {
 					file.exists = true;
 					file.text = result;
+					const time = Date.now();
+					file.modifiedTime = time !== file.modifiedTime ? time : time + 1;
 					version++;
 				}
 				else {
@@ -273,6 +291,8 @@ export function createSys(
 			if (result !== undefined) {
 				file.exists = true;
 				file.text = result;
+				const time = Date.now();
+				file.modifiedTime = time !== file.modifiedTime ? time : time + 1;
 				version++;
 			}
 			else {

@@ -99,6 +99,21 @@ export async function createProject(context: ProjectContext) {
 		context.workspaces.plugins,
 		existingOptions,
 	);
+	let config = (
+		context.workspace.rootUri.scheme === 'file' ? loadConfig(
+			context.server.runtimeEnv.uriToFileName(context.workspace.rootUri.toString()),
+			context.workspaces.initOptions.configFilePath,
+		) : {}
+	) ?? {};
+	for (const plugin of context.workspaces.plugins) {
+		if (plugin.resolveConfig) {
+			config = await plugin.resolveConfig(config, {
+				...context,
+				env,
+				host: languageHost,
+			});
+		}
+	}
 
 	await syncRootScriptSnapshots();
 
@@ -121,23 +136,8 @@ export async function createProject(context: ProjectContext) {
 		dispose,
 	};
 
-	async function getLanguageService() {
+	function getLanguageService() {
 		if (!languageService) {
-			let config = (
-				context.workspace.rootUri.scheme === 'file' ? loadConfig(
-					context.server.runtimeEnv.uriToFileName(context.workspace.rootUri.toString()),
-					context.workspaces.initOptions.configFilePath,
-				) : {}
-			) ?? {};
-			for (const plugin of context.workspaces.plugins) {
-				if (plugin.resolveConfig) {
-					config = await plugin.resolveConfig(config, {
-						...context,
-						env,
-						host: languageHost,
-					});
-				}
-			}
 			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
 				env,

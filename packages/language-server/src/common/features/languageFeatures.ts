@@ -228,7 +228,7 @@ export function register(
 				if (token.isCancellationRequested)
 					return;
 
-				const service = await (await project).getLanguageService();
+				const service = (await project).getLanguageService();
 
 				results = results.concat(await service.findWorkspaceSymbols(params.query, token));
 			}
@@ -340,7 +340,7 @@ export function register(
 				}
 				const project = await getProject(uri);
 				if (project) {
-					const service = await project.getLanguageService();
+					const service = project.getLanguageService();
 					try { // handle TS cancel throw
 						const result = await cb(service);
 						if (token.isCancellationRequested) {

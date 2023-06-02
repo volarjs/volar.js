@@ -5,7 +5,9 @@ import { posix as path } from 'path';
 export function createLanguageServiceHost(
 	ctx: LanguageContext,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
-	sys: ts.System & { version?: number; },
+	sys: ts.System & {
+		version?: number;
+	},
 ) {
 
 	let lastProjectVersion: number | string | undefined;
@@ -66,8 +68,7 @@ export function createLanguageServiceHost(
 			return 0;
 		},
 	};
-	const fsFileSnapshots = new Map<string, ts.IScriptSnapshot | undefined>();
-	const fsFileVersions = new Map<string, number>();
+	const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
 	const fileVersions = new Map<string, { value: number, versions: WeakMap<ts.IScriptSnapshot, number>; }>();
 
 	let oldTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
@@ -148,17 +149,19 @@ export function createLanguageServiceHost(
 			return tsScript;
 		}
 		// fs files
-		if (!fsFileSnapshots.has(fileName)) {
+		const cache = fsFileSnapshots.get(fileName);
+		const modifiedTime = sys.getModifiedTime?.(fileName)?.valueOf();
+		if (!cache || cache[0] !== modifiedTime) {
 			if (sys.fileExists(fileName)) {
-				const text = sys.readFile(fileName)!;
-				const snapshot = ts.ScriptSnapshot.fromString(text);
-				fsFileSnapshots.set(fileName, snapshot);
+				const text = sys.readFile(fileName);
+				const snapshot = text !== undefined ? ts.ScriptSnapshot.fromString(text) : undefined;
+				fsFileSnapshots.set(fileName, [modifiedTime, snapshot]);
 			}
 			else {
-				fsFileSnapshots.set(fileName, undefined);
+				fsFileSnapshots.set(fileName, [modifiedTime, undefined]);
 			}
 		}
-		return fsFileSnapshots.get(fileName);
+		return fsFileSnapshots.get(fileName)?.[1];
 	}
 
 	function getScriptVersion(fileName: string) {
@@ -185,7 +188,7 @@ export function createLanguageServiceHost(
 			return version;
 		}
 		// fs files
-		return fsFileVersions.get(fileName)?.toString() ?? '';
+		return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '';
 	}
 
 	function fileExists(fileName: string) {
