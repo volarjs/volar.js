@@ -242,7 +242,7 @@ async function createParsedCommandLine(
 					content = ts.parseJsonSourceFileConfigFileContent(config, sys, path.dirname(tsConfig), existingOptions, tsConfig, undefined, extraFileExtensions);
 				}
 				else {
-					content = ts.parseJsonConfigFileContent({ files: [] }, sys, rootPath, { ...tsConfig, ...existingOptions }, path.join(rootPath, 'jsconfig.json' as path.PosixPath), undefined, extraFileExtensions);
+					content = ts.parseJsonConfigFileContent({ files: [] }, sys, rootPath, { ...tsConfig, ...existingOptions }, rootPath + '/jsconfig.json', undefined, extraFileExtensions);
 				}
 				// fix https://github.com/johnsoncodehk/volar/issues/1786
 				// https://github.com/microsoft/TypeScript/issues/30457
