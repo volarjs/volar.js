@@ -70,7 +70,7 @@ export function createLanguageServiceHost(
 		},
 	};
 	const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
-	const fileVersions = new Map<string, { value: number, versions: WeakMap<ts.IScriptSnapshot, number>; }>();
+	const fileVersions = new Map<string, { value: number; snapshot: ts.IScriptSnapshot; }>();
 
 	let oldTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let oldOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
@@ -170,18 +170,15 @@ export function createLanguageServiceHost(
 		const [virtualFile] = ctx.virtualFiles.getVirtualFile(fileName);
 		const snapshot = virtualFile?.snapshot ?? ctx.host.getScriptSnapshot(fileName);
 		if (snapshot) {
-			let version = fileVersions.get(fileName);
-			if (!version) {
-				version = {
-					value: 0,
-					versions: new WeakMap(),
-				};
-				fileVersions.set(fileName, version);
+			if (!fileVersions.has(fileName)) {
+				fileVersions.set(fileName, { value: 0, snapshot });
 			}
-			if (!version.versions.has(snapshot)) {
-				version.versions.set(snapshot, version.value++);
+			const version = fileVersions.get(fileName)!;
+			if (version.snapshot !== snapshot) {
+				version.value++;
+				version.snapshot = snapshot;
 			}
-			return version.versions.get(snapshot)!.toString();
+			return version.value.toString();
 		}
 		// root files / opened files
 		const version = ctx.host.getScriptVersion(fileName);

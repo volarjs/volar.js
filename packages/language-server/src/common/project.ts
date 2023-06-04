@@ -50,11 +50,11 @@ export async function createProject(context: ProjectContext) {
 		getScriptVersion: (fileName) => {
 			const doc = context.workspaces.documents.data.pathGet(fileName);
 			if (doc) {
-				return doc.version.toString();
+				return 'editor:' + doc.version.toString();
 			}
 			const fsSnapshot = fsScriptsCache.pathGet(fileName);
 			if (fsSnapshot) {
-				return fsSnapshot.version.toString();
+				return 'fs:' + fsSnapshot.version.toString();
 			}
 		},
 		getScriptSnapshot: (fileName) => {

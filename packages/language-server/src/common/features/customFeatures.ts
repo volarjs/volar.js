@@ -2,8 +2,9 @@ import * as vscode from 'vscode-languageserver';
 import type { Workspaces } from '../workspaces';
 import { GetMatchTsConfigRequest, ReloadProjectNotification, GetVirtualFileRequest, GetProjectsRequest, GetProjectFilesRequest, GetVirtualFilesRequest, WriteVirtualFilesNotification } from '../../protocol';
 import { RuntimeEnvironment } from '../../types';
-import { FileKind, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import { FileKind, FileRangeCapabilities, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
+import { Mapping, Stack } from '@volar/source-map';
 
 export function register(
 	connection: vscode.Connection,
@@ -86,21 +87,21 @@ export function register(
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
 		const project = await workspaces.getProject(params.sourceFileUri);
-		if (project) {
-			const [virtualFile, source] = project.project?.getLanguageService()?.context.virtualFiles.getVirtualFile(params.virtualFileName) ?? [];
-			if (virtualFile && source) {
-				const mappings: Record<string, any[]> = {};
-				for (const mapping of virtualFile.mappings) {
-					const sourceUri = env.fileNameToUri(mapping.source ?? source.fileName);
-					mappings[sourceUri] ??= [];
-					mappings[sourceUri].push(mapping);
-				}
-				return {
-					content: virtualFile.snapshot.getText(0, virtualFile.snapshot.getLength()),
-					mappings,
-					codegenStacks: virtualFile.codegenStacks,
-				};
+		const service = project?.project?.getLanguageService();
+		if (service) {
+			let content: string = '';
+			let codegenStacks: Stack[] = [];
+			const mappings: Record<string, Mapping<FileRangeCapabilities>[]> = {};
+			for (const [file, map] of service.context.documents.getMapsByVirtualFileName(params.virtualFileName)) {
+				content = map.virtualFileDocument.getText();
+				codegenStacks = file.codegenStacks;
+				mappings[map.sourceFileDocument.uri] = map.map.mappings;
 			}
+			return {
+				content,
+				mappings,
+				codegenStacks,
+			};
 		}
 	});
 	connection.onNotification(ReloadProjectNotification.type, () => {
