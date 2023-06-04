@@ -28,8 +28,8 @@ export function createLanguageServiceHost(
 				return `/node_modules/typescript/lib/${ts.getDefaultLibFileName(options)}`;
 			}
 		},
-		useCaseSensitiveFileNames: sys ? () => sys.useCaseSensitiveFileNames : undefined,
-		getNewLine: sys ? () => sys.newLine : undefined,
+		useCaseSensitiveFileNames: () => sys.useCaseSensitiveFileNames,
+		getNewLine: () => sys.newLine,
 		readFile: fileName => {
 			const snapshot = getScriptSnapshot(fileName);
 			if (snapshot) {
@@ -166,7 +166,7 @@ export function createLanguageServiceHost(
 	}
 
 	function getScriptVersion(fileName: string) {
-		// virtual files
+		// virtual files / root files / opened files
 		const [virtualFile] = ctx.virtualFiles.getVirtualFile(fileName);
 		const snapshot = virtualFile?.snapshot ?? ctx.host.getScriptSnapshot(fileName);
 		if (snapshot) {
@@ -179,11 +179,6 @@ export function createLanguageServiceHost(
 				version.snapshot = snapshot;
 			}
 			return version.value.toString();
-		}
-		// root files / opened files
-		const version = ctx.host.getScriptVersion(fileName);
-		if (version !== undefined) {
-			return version;
 		}
 		// fs files
 		return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '';

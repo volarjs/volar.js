@@ -60,9 +60,6 @@ function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick
 			checkRootFilesUpdate();
 			return parsedCommandLine.fileNames;
 		},
-		getScriptVersion: (fileName) => {
-			return scriptVersions.get(fileName)?.toString();
-		},
 		getScriptSnapshot: (fileName) => {
 			if (!scriptSnapshotsCache.has(fileName)) {
 				const fileText = ts.sys.readFile(fileName, 'utf8');
@@ -78,7 +75,6 @@ function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick
 	};
 
 	let scriptSnapshotsCache: Map<string, ts.IScriptSnapshot | undefined> = new Map();
-	let scriptVersions: Map<string, number> = new Map();
 	let parsedCommandLine = createParsedCommandLine();
 	let projectVersion = 0;
 	let shouldCheckRootFiles = false;
@@ -86,7 +82,6 @@ function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick
 	return {
 		languageHost,
 		fileUpdated(fileName: string) {
-			scriptVersions.set(fileName, (scriptVersions.get(fileName) ?? 0) + 1);
 			fileName = asPosix(fileName);
 			if (scriptSnapshotsCache.has(fileName)) {
 				projectVersion++;
@@ -94,7 +89,6 @@ function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick
 			}
 		},
 		fileDeleted(fileName: string) {
-			scriptVersions.set(fileName, (scriptVersions.get(fileName) ?? 0) + 1);
 			fileName = asPosix(fileName);
 			if (scriptSnapshotsCache.has(fileName)) {
 				projectVersion++;
@@ -103,12 +97,10 @@ function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick
 			}
 		},
 		fileCreated(fileName: string) {
-			scriptVersions.set(fileName, (scriptVersions.get(fileName) ?? 0) + 1);
 			fileName = asPosix(fileName);
 			shouldCheckRootFiles = true;
 		},
 		reload() {
-			scriptVersions.clear();
 			scriptSnapshotsCache.clear();
 			projectVersion++;
 			parsedCommandLine = createParsedCommandLine();

@@ -66,10 +66,6 @@ export function createLanguageService(options: {
 				const models = options.workerContext.getMirrorModels();
 				return models.map(model => model.uri.fsPath);
 			},
-			getScriptVersion(fileName) {
-				const model = options.workerContext.getMirrorModels().find(model => model.uri.fsPath === fileName);
-				return model?.version.toString();
-			},
 			getScriptSnapshot(fileName) {
 				const model = options.workerContext.getMirrorModels().find(model => model.uri.fsPath === fileName);
 				if (model) {

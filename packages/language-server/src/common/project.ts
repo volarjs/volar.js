@@ -36,7 +36,7 @@ export async function createProject(context: ProjectContext) {
 		onDidChangeConfiguration: context.server.configurationHost?.onDidChangeConfiguration,
 		onDidChangeWatchedFiles: context.server.onDidChangeWatchedFiles,
 	};
-	const fsScriptsCache = createUriMap<{ snapshot: ts.IScriptSnapshot; version: number; } | undefined>(fileNameToUri);
+	const fsScriptsCache = createUriMap<ts.IScriptSnapshot | undefined>(fileNameToUri);
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const token: ts.CancellationToken = {
 		isCancellationRequested() {
@@ -47,16 +47,6 @@ export async function createProject(context: ProjectContext) {
 	const languageHost: TypeScriptLanguageHost = {
 		getProjectVersion: () => projectVersion,
 		getScriptFileNames: () => parsedCommandLine.fileNames,
-		getScriptVersion: (fileName) => {
-			const doc = context.workspaces.documents.data.pathGet(fileName);
-			if (doc) {
-				return 'editor:' + doc.version.toString();
-			}
-			const fsSnapshot = fsScriptsCache.pathGet(fileName);
-			if (fsSnapshot) {
-				return 'fs:' + fsSnapshot.version.toString();
-			}
-		},
 		getScriptSnapshot: (fileName) => {
 			askedFiles.pathSet(fileName, true);
 			const doc = context.workspaces.documents.data.pathGet(fileName);
@@ -65,7 +55,7 @@ export async function createProject(context: ProjectContext) {
 			}
 			const fsSnapshot = fsScriptsCache.pathGet(fileName);
 			if (fsSnapshot) {
-				return fsSnapshot.snapshot;
+				return fsSnapshot;
 			}
 		},
 		getLanguageId: (fileName) => context.workspaces.documents.data.pathGet(fileName)?.languageId,
@@ -162,15 +152,11 @@ export async function createProject(context: ProjectContext) {
 	}
 	async function updateRootScriptSnapshot(uri: string) {
 		const text = await context.server.runtimeEnv.fs.readFile(uri);
-		const oldVersion = fsScriptsCache.uriGet(uri)?.version ?? 0;
 		fsScriptsCache.uriSet(uri,
 			text !== undefined ? {
-				snapshot: {
-					getText: (start, end) => text.substring(start, end),
-					getLength: () => text.length,
-					getChangeRange: () => undefined,
-				},
-				version: oldVersion + 1,
+				getText: (start, end) => text.substring(start, end),
+				getLength: () => text.length,
+				getChangeRange: () => undefined,
 			} : undefined,
 		);
 	}

@@ -12,7 +12,6 @@ export function createFormatter(
 
 	let settings = {} as any;
 	let dummyScriptUri = 'file:///dummy.txt';
-	let fakeScriptVersion = 0;
 	let fakeScriptFileName = '/dummy.txt';
 	let fakeScriptSnapshot = ts.ScriptSnapshot.fromString('');
 	let fakeScriptLanguageId: string | undefined;
@@ -64,7 +63,6 @@ export function createFormatter(
 
 	async function formatCode(content: string, languageId: string, options: FormattingOptions): Promise<string> {
 		fakeScriptSnapshot = ts.ScriptSnapshot.fromString(content);
-		fakeScriptVersion++;
 		fakeScriptLanguageId = languageId;
 		const document = service.context.getTextDocument(dummyScriptUri)!;
 		const edits = await service.format(dummyScriptUri, options, undefined, undefined);
@@ -82,11 +80,6 @@ export function createFormatter(
 			getCompilationSettings: () => compilerOptions,
 			getProjectVersion: () => projectVersion++,
 			getScriptFileNames: () => fakeScriptSnapshot ? [fakeScriptFileName] : [],
-			getScriptVersion: (fileName) => {
-				if (fileName === fakeScriptFileName) {
-					return fakeScriptVersion.toString();
-				}
-			},
 			getScriptSnapshot: (fileName) => {
 				if (fileName === fakeScriptFileName) {
 					return fakeScriptSnapshot;

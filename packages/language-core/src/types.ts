@@ -100,7 +100,6 @@ interface LanguageHost {
 }
 
 export interface TypeScriptLanguageHost extends LanguageHost {
-	getScriptVersion(fileName: string): string | undefined;
 	getCurrentDirectory(): string;
 	getCancellationToken?(): ts.CancellationToken;
 	getLocalizedDiagnosticMessages?: () => any;
