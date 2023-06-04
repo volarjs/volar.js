@@ -308,7 +308,6 @@ export function createSys(
 			file.text = result;
 			const time = Date.now();
 			file.modifiedTime = time !== file.modifiedTime ? time : time + 1;
-			version++;
 		}
 		else {
 			file.exists = false;
@@ -333,7 +332,9 @@ export function createSys(
 			promises.add(promise);
 			result.then((result) => {
 				promises.delete(promise);
-				onReadDirectoryResult(dir, result);
+				if (onReadDirectoryResult(dir, result)) {
+					version++;
+				}
 			});
 		}
 		else {
@@ -342,22 +343,24 @@ export function createSys(
 	}
 
 	function onReadDirectoryResult(dir: Dir, result: [string, FileType][]) {
+		let updated = false;
 		for (const [name, fileType] of result) {
 			if (fileType === 1 satisfies FileType.File || fileType === 64 satisfies FileType.SymbolicLink) {
 				dir.files[name] ??= {};
 				if (!dir.files[name].exists) {
 					dir.files[name].exists = true;
-					version++;
+					updated = true;
 				}
 			}
 			else if (fileType === 2 satisfies FileType.Directory) {
 				const childDir = getDirFromDir(dir, name);
 				if (!childDir.exists) {
 					childDir.exists = true;
-					version++;
+					updated = true;
 				}
 			}
 		}
+		return updated;
 	}
 
 	function getDir(dirName: string) {
