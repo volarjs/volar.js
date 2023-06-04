@@ -19,13 +19,17 @@ const mappingDecorationType = vscode.window.createTextEditorDecorationType({
 	}
 });
 const mappingSelectionDecorationType = vscode.window.createTextEditorDecorationType({
-	cursor: 'crosshair',
 	light: {
 		backgroundColor: 'lightblue'
 	},
 	dark: {
 		backgroundColor: 'darkblue'
 	}
+});
+const mappingCursorDecorationType = vscode.window.createTextEditorDecorationType({
+	borderWidth: '1px',
+	borderStyle: 'solid',
+	backgroundColor: 'darkorange'
 });
 
 export const sourceUriToVirtualUris = new Map<string, Set<string>>();
@@ -175,6 +179,7 @@ export async function activate(info: ExportsInfoForLabs) {
 				if (sourceEditor) {
 					sourceEditor.setDecorations(mappingDecorationType, []);
 					sourceEditor.setDecorations(mappingSelectionDecorationType, []);
+					sourceEditor.setDecorations(mappingCursorDecorationType, []);
 				}
 			}
 		}
@@ -183,6 +188,7 @@ export async function activate(info: ExportsInfoForLabs) {
 			const virtualEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === virtualUri);
 			let virtualRanges1: vscode.Range[] = [];
 			let virtualRanges2: vscode.Range[] = [];
+			let virtualRanges3: vscode.Range[] = [];
 
 			if (virtualEditor) {
 				for (const [sourceUri, sourceVersion, map] of sources) {
@@ -202,20 +208,32 @@ export async function activate(info: ExportsInfoForLabs) {
 						 * selection
 						 */
 						if (vscode.window.activeTextEditor) {
+
 							const selection = vscode.window.activeTextEditor.selection;
 							const startOffset = vscode.window.activeTextEditor.document.offsetAt(selection.start);
-							sourceEditor.setDecorations(mappingSelectionDecorationType, []);
+							const endOffset = vscode.window.activeTextEditor.document.offsetAt(selection.end);
+
 							if (vscode.window.activeTextEditor === sourceEditor) {
-								const matchVirtualRanges = [...map.toGeneratedOffsets(startOffset)];
-								sourceEditor.setDecorations(mappingSelectionDecorationType, matchVirtualRanges.map(mapped => new vscode.Range(
+
+								const mappedStart = [...map.toGeneratedOffsets(startOffset)];
+								const mappedEnd = [...map.toGeneratedOffsets(endOffset, true)];
+
+								sourceEditor.setDecorations(mappingSelectionDecorationType, mappedStart.map(mapped => new vscode.Range(
 									sourceEditor.document.positionAt(mapped[1].sourceRange[0]),
 									sourceEditor.document.positionAt(mapped[1].sourceRange[1]),
 								)));
-								virtualRanges2 = virtualRanges2.concat(matchVirtualRanges.map(mapped => new vscode.Range(
+								sourceEditor.setDecorations(mappingCursorDecorationType, [selection]);
+
+								virtualRanges2 = virtualRanges2.concat(mappedStart.map(mapped => new vscode.Range(
 									getGeneratedPosition(virtualUri, mapped[1].generatedRange[0]),
 									getGeneratedPosition(virtualUri, mapped[1].generatedRange[1]),
 								)));
-								const mapped = matchVirtualRanges.sort((a, b) => a[1].generatedRange[0] - b[1].generatedRange[0])[0];
+								virtualRanges3 = virtualRanges3.concat(mappedStart.map(mapped => new vscode.Range(
+									getGeneratedPosition(virtualUri, mapped[0]),
+									getGeneratedPosition(virtualUri, mappedEnd.find(mapped2 => mapped[1] === mapped2[1])?.[0] ?? mapped[0]),
+								)));
+
+								const mapped = mappedStart.sort((a, b) => a[1].generatedRange[0] - b[1].generatedRange[0])[0];
 								if (mapped) {
 									virtualEditor.revealRange(new vscode.Range(
 										getGeneratedPosition(virtualUri, mapped[1].generatedRange[0]),
@@ -224,16 +242,26 @@ export async function activate(info: ExportsInfoForLabs) {
 								}
 							}
 							else if (vscode.window.activeTextEditor === virtualEditor) {
-								const matchSourceRanges = [...map.toSourceOffsets(startOffset)];
-								sourceEditor.setDecorations(mappingSelectionDecorationType, matchSourceRanges.map(mapped => new vscode.Range(
+
+								const mappedStart = [...map.toSourceOffsets(startOffset)];
+								const mappedEnd = [...map.toSourceOffsets(endOffset, true)];
+
+								sourceEditor.setDecorations(mappingSelectionDecorationType, mappedStart.map(mapped => new vscode.Range(
 									sourceEditor.document.positionAt(mapped[1].sourceRange[0]),
 									sourceEditor.document.positionAt(mapped[1].sourceRange[1]),
 								)));
-								virtualRanges2 = virtualRanges2.concat(matchSourceRanges.map(mapped => new vscode.Range(
+								sourceEditor.setDecorations(mappingCursorDecorationType, mappedStart.map(mapped => new vscode.Range(
+									sourceEditor.document.positionAt(mapped[0]),
+									sourceEditor.document.positionAt(mappedEnd.find(mapped2 => mapped[1] === mapped2[1])?.[0] ?? mapped[0]),
+								)));
+
+								virtualRanges2 = virtualRanges2.concat(mappedStart.map(mapped => new vscode.Range(
 									getGeneratedPosition(virtualUri, mapped[1].generatedRange[0]),
 									getGeneratedPosition(virtualUri, mapped[1].generatedRange[1]),
 								)));
-								const mapped = matchSourceRanges.sort((a, b) => a[1].sourceRange[0] - b[1].sourceRange[0])[0];
+								virtualRanges3 = virtualRanges3.concat(selection);
+
+								const mapped = mappedStart.sort((a, b) => a[1].sourceRange[0] - b[1].sourceRange[0])[0];
 								if (mapped) {
 									sourceEditor.revealRange(new vscode.Range(
 										sourceEditor.document.positionAt(mapped[1].sourceRange[0]),
@@ -242,13 +270,11 @@ export async function activate(info: ExportsInfoForLabs) {
 								}
 							}
 						}
-						else {
-							sourceEditor.setDecorations(mappingSelectionDecorationType, []);
-						}
 					}
 				}
 				virtualEditor.setDecorations(mappingDecorationType, virtualRanges1);
 				virtualEditor.setDecorations(mappingSelectionDecorationType, virtualRanges2);
+				virtualEditor.setDecorations(mappingCursorDecorationType, virtualRanges3);
 			}
 		}
 	}
