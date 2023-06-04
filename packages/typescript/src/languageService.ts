@@ -124,6 +124,7 @@ export function createLanguageService(
 				: mode === 'typeDefinition' ? ls.getTypeDefinitionAtPosition(fileName, position)
 					: mode === 'references' ? ls.getReferencesAtPosition(fileName, position)
 						: mode === 'implementation' ? ls.getImplementationAtPosition(fileName, position)
+							// @ts-expect-error
 							: mode === 'rename' && preferences ? ls.findRenameLocations(fileName, position, findInStrings, findInComments, preferences)
 								: undefined;
 			if (!_symbols) return;
