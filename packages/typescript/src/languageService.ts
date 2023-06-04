@@ -2,8 +2,7 @@ import { FileKind, LanguageContext, forEachEmbeddedFile } from '@volar/language-
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { getProgram } from './getProgram';
 import { createLanguageServiceHost } from './languageServiceHost';
-
-let documentRegistry: ts.DocumentRegistry;
+import { getDocumentRegistry } from './documentRegistry';
 
 export function createLanguageService(
 	core: LanguageContext,
@@ -24,7 +23,7 @@ export function createLanguageService(
 	}
 
 	const lsHost = createLanguageServiceHost(core, ts, sys);
-	const ls = ts.createLanguageService(lsHost, documentRegistry ??= ts.createDocumentRegistry());
+	const ls = ts.createLanguageService(lsHost, getDocumentRegistry(ts, sys.useCaseSensitiveFileNames, core.host.getCurrentDirectory()));
 
 	return new Proxy<Partial<_LanguageService>>({
 		organizeImports,
