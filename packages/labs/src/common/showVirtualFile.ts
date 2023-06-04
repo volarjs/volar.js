@@ -169,6 +169,15 @@ export async function activate(info: ExportsInfoForLabs) {
 	return vscode.Disposable.from(...subscriptions);
 
 	function updateDecorations() {
+		for (const [_, sources] of virtualUriToSourceMap) {
+			for (const [sourceUri] of sources) {
+				const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
+				if (sourceEditor) {
+					sourceEditor.setDecorations(mappingDecorationType, []);
+					sourceEditor.setDecorations(mappingSelectionDecorationType, []);
+				}
+			}
+		}
 		for (const [virtualUri, sources] of virtualUriToSourceMap) {
 
 			const virtualEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === virtualUri);
@@ -240,15 +249,6 @@ export async function activate(info: ExportsInfoForLabs) {
 				}
 				virtualEditor.setDecorations(mappingDecorationType, virtualRanges1);
 				virtualEditor.setDecorations(mappingSelectionDecorationType, virtualRanges2);
-			}
-			else {
-				for (const [sourceUri] of sources) {
-					const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
-					if (sourceEditor) {
-						sourceEditor.setDecorations(mappingDecorationType, []);
-						sourceEditor.setDecorations(mappingSelectionDecorationType, []);
-					}
-				}
 			}
 		}
 	}
