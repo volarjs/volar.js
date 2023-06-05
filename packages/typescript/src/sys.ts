@@ -109,9 +109,9 @@ export function createSys(
 					} catch { }
 				}
 			}
-			return sys.resolvePath(fsPath);
+			return sys.resolvePath(fsPath).replace(/\\/g, '/');
 		}
-		return path.resolve(fsPath);
+		return path.resolve(fsPath).replace(/\\/g, '/');
 	}
 
 	function getModifiedTime(fileName: string) {
@@ -369,8 +369,10 @@ export function createSys(
 
 		let currentDirPath = dirName;
 		let currentDirName = path.basename(currentDirPath);
+		let lastDirName: string | undefined;
 
-		while (currentDirName !== '') {
+		while (lastDirName !== currentDirName) {
+			lastDirName = currentDirName;
 			dirNames.push(currentDirName);
 			currentDirPath = path.dirname(currentDirPath);
 			currentDirName = path.basename(currentDirPath);
