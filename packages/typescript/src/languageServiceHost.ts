@@ -15,11 +15,11 @@ export function createLanguageServiceHost(
 
 	const _tsHost: ts.LanguageServiceHost = {
 		...sys,
-		getCurrentDirectory: ctx.host.getCurrentDirectory,
-		getCancellationToken: ctx.host.getCancellationToken,
-		getLocalizedDiagnosticMessages: ctx.host.getLocalizedDiagnosticMessages,
-		getCompilationSettings: ctx.host.getCompilationSettings,
-		getProjectReferences: ctx.host.getProjectReferences,
+		getCurrentDirectory: () => ctx.host.getCurrentDirectory(),
+		getCompilationSettings: () => ctx.host.getCompilationSettings(),
+		getCancellationToken: ctx.host.getCancellationToken ? () => ctx.host.getCancellationToken!() : undefined,
+		getLocalizedDiagnosticMessages: ctx.host.getLocalizedDiagnosticMessages ? () => ctx.host.getLocalizedDiagnosticMessages!() : undefined,
+		getProjectReferences: ctx.host.getProjectReferences ? () => ctx.host.getProjectReferences!() : undefined,
 		getDefaultLibFileName: (options) => {
 			try {
 				return ts.getDefaultLibFilePath(options);
