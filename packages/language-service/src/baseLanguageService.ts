@@ -47,6 +47,14 @@ export function createLanguageService(
 	config: Config,
 	languageHost: TypeScriptLanguageHost,
 ) {
+
+	if (languageHost.getCurrentDirectory().indexOf('\\') >= 0) {
+		throw new Error('Volar: Current directory must be posix style.');
+	}
+	if (languageHost.getScriptFileNames().some(fileName => fileName.indexOf('\\') >= 0)) {
+		throw new Error('Volar: Script file names must be posix style.');
+	}
+
 	const languageContext = createLanguageContext(languageHost, Object.values(config.languages ?? {}).filter(notEmpty));
 	const context = createLanguageServicePluginContext(modules, env, config, languageHost, languageContext);
 	return createLanguageServiceBase(context);
