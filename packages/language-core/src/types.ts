@@ -99,10 +99,11 @@ interface LanguageHost {
 	getLanguageId?(fileName: string): string | undefined;
 }
 
-export interface TypeScriptLanguageHost extends LanguageHost {
-	getCurrentDirectory(): string;
-	getCancellationToken?(): ts.CancellationToken;
-	getLocalizedDiagnosticMessages?: () => any;
-	getCompilationSettings(): ts.CompilerOptions;
-	getProjectReferences?(): readonly ts.ProjectReference[] | undefined;
-}
+export interface TypeScriptLanguageHost extends LanguageHost, Pick<ts.LanguageServiceHost,
+	'getCurrentDirectory'
+	| 'getCancellationToken'
+	| 'getLocalizedDiagnosticMessages'
+	| 'getCompilationSettings'
+	| 'getProjectReferences'
+	| 'resolveModuleNames'
+	| 'resolveModuleNameLiterals'> { }

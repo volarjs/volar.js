@@ -20,6 +20,8 @@ export function createLanguageServiceHost(
 		getCancellationToken: ctx.host.getCancellationToken ? () => ctx.host.getCancellationToken!() : undefined,
 		getLocalizedDiagnosticMessages: ctx.host.getLocalizedDiagnosticMessages ? () => ctx.host.getLocalizedDiagnosticMessages!() : undefined,
 		getProjectReferences: ctx.host.getProjectReferences ? () => ctx.host.getProjectReferences!() : undefined,
+		resolveModuleNames: ctx.host.resolveModuleNames ? (...args) => ctx.host.resolveModuleNames!(...args) : undefined,
+		resolveModuleNameLiterals: ctx.host.resolveModuleNameLiterals ? (...args) => ctx.host.resolveModuleNameLiterals!(...args) : undefined,
 		getDefaultLibFileName: (options) => {
 			try {
 				return ts.getDefaultLibFilePath(options);
