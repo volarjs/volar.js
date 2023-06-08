@@ -24,13 +24,9 @@ export function register(context: ServiceContext) {
 				for (const [_, map] of context.documents.getMapsByVirtualFileUri(data.virtualDocumentUri)) {
 
 					item = await service.resolveCompletionItem(item, token);
-					item = transformer.asCompletionItem(
+					item = service.transformCompletionItem?.(item) ?? transformer.asCompletionItem(
 						item,
-						embeddedRange => {
-							let range = service.resolveEmbeddedRange?.(embeddedRange);
-							if (range) return range;
-							return map.toSourceRange(embeddedRange);
-						},
+						embeddedRange => map.toSourceRange(embeddedRange),
 						map.virtualFileDocument,
 					);
 				}
