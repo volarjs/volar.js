@@ -31,7 +31,7 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../language-service
       typesafe-path:
         specifier: ^0.2.2
@@ -49,13 +49,13 @@ importers:
         specifier: 1.67.0
         version: 1.67.0
       '@volar/language-server':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../language-server
       '@volar/source-map':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../source-map
       '@volar/vscode':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../vscode
       esbuild:
         specifier: 0.15.18
@@ -70,19 +70,19 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../language-core
       '@volar/language-service':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../language-service
       '@volar/typescript':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../typescript
       '@vscode/l10n':
         specifier: ^0.0.11
@@ -107,16 +107,16 @@ importers:
         version: 3.0.7
     devDependencies:
       '@volar/source-map':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../source-map
 
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../language-core
       '@volar/source-map':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../source-map
       vscode-languageserver-protocol:
         specifier: ^3.17.3
@@ -131,7 +131,7 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.7
@@ -153,17 +153,17 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../language-core
     devDependencies:
       '@volar/language-service':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 1.7.3
+        specifier: 1.7.4
         version: link:../language-server
       typesafe-path:
         specifier: ^0.2.2
