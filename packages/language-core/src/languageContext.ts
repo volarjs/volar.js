@@ -2,11 +2,14 @@ import { createVirtualFiles } from './virtualFiles';
 import { Language, TypeScriptLanguageHost } from './types';
 
 export interface LanguageContext {
+	rawHost: TypeScriptLanguageHost;
 	host: TypeScriptLanguageHost;
 	virtualFiles: ReturnType<typeof createVirtualFiles>;
 };
 
-export function createLanguageContext(host: TypeScriptLanguageHost, languages: Language<any>[]): LanguageContext {
+export function createLanguageContext(rawHost: TypeScriptLanguageHost, languages: Language<any>[]): LanguageContext {
+
+	let host = rawHost;
 
 	for (const language of languages.reverse()) {
 		if (language.resolveHost) {
@@ -32,6 +35,7 @@ export function createLanguageContext(host: TypeScriptLanguageHost, languages: L
 	const virtualFiles = createVirtualFiles(languages);
 
 	return {
+		rawHost,
 		host,
 		virtualFiles: new Proxy(virtualFiles, {
 			get: (target, property) => {
