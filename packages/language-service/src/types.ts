@@ -126,6 +126,7 @@ export type Service<P = any> = {
 		resolveInlayHint?(inlayHint: vscode.InlayHint, token: vscode.CancellationToken): Result<vscode.InlayHint>;
 		resolveReferencesCodeLensLocations?(document: TextDocument, range: vscode.Range, references: vscode.Location[], token: vscode.CancellationToken): Result<vscode.Location[]>; // volar specific
 		transformCompletionItem?(item: vscode.CompletionItem): vscode.CompletionItem | undefined; // volar specific
+		transformCodeAction?(item: vscode.CodeAction): vscode.CodeAction | undefined; // volar specific
 		dispose?(): void;
 	} & ServiceProvide<P>;
 };

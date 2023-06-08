@@ -19,15 +19,20 @@ export function register(context: ServiceContext) {
 			Object.assign(item, data.original);
 
 			item = await service.resolveCodeAction(item, token);
-
-			if (item.edit) {
-				item.edit = embeddedEditToSourceEdit(
-					item.edit,
-					context.documents,
-					'codeAction',
-					{ [data.uri]: data.version },
+			item = service.transformCodeAction?.(item)
+				?? (
+					item.edit
+						? {
+							...item,
+							edit: embeddedEditToSourceEdit(
+								item.edit,
+								context.documents,
+								'codeAction',
+								{ [data.uri]: data.version },
+							),
+						}
+						: item
 				);
-			}
 		}
 
 		if (data?.type === 'rule') {
