@@ -39,6 +39,7 @@ export function register(context: ServiceContext) {
 			start: sourceDocument.offsetAt(range.start),
 			end: sourceDocument.offsetAt(range.end),
 		};
+		const transformedCodeActions = new WeakSet<vscode.CodeAction>();
 		const pluginActions = await languageFeatureWorker(
 			context,
 			uri,
@@ -83,7 +84,7 @@ export function register(context: ServiceContext) {
 
 				return [];
 			},
-			async (service, document, { range, codeActionContext }) => {
+			async (service, document, { range, codeActionContext }, map) => {
 
 				if (token.isCancellationRequested)
 					return;
@@ -121,9 +122,22 @@ export function register(context: ServiceContext) {
 					} satisfies ServiceCodeActionData;
 				});
 
+				if (codeActions && map && service.transformCodeAction) {
+					for (let i = 0; i < codeActions.length; i++) {
+						const transformed = service.transformCodeAction(codeActions[i]);
+						if (transformed) {
+							codeActions[i] = transformed;
+							transformedCodeActions.add(transformed);
+						}
+					}
+				}
+
 				return codeActions;
 			},
 			(actions, map) => actions.map(action => {
+
+				if (transformedCodeActions.has(action))
+					return action;
 
 				if (!map)
 					return action;
