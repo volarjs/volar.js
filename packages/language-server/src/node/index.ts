@@ -51,18 +51,20 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 		fs: {
 			stat(uri) {
 				if (uri.startsWith('file://')) {
-					const stats = fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
-					if (stats) {
-						return {
-							type: stats.isFile() ? FileType.File
-								: stats.isDirectory() ? FileType.Directory
-									: stats.isSymbolicLink() ? FileType.SymbolicLink
-										: FileType.Unknown,
-							ctime: stats.ctimeMs,
-							mtime: stats.mtimeMs,
-							size: stats.size,
-						};
-					}
+					try {
+						const stats = fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
+						if (stats) {
+							return {
+								type: stats.isFile() ? FileType.File
+									: stats.isDirectory() ? FileType.Directory
+										: stats.isSymbolicLink() ? FileType.SymbolicLink
+											: FileType.Unknown,
+								ctime: stats.ctimeMs,
+								mtime: stats.mtimeMs,
+								size: stats.size,
+							};
+						}
+					} catch { }
 				}
 			},
 			readFile(uri, encoding) {
@@ -76,9 +78,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 							}
 						}
 						return fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
-					} catch {
-						return undefined;
-					}
+					} catch { }
 				}
 				if (uri.startsWith('http://') || uri.startsWith('https://')) {
 					return httpSchemaRequestHandler(uri);

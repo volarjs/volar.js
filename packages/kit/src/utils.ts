@@ -63,18 +63,20 @@ export const fs: FileSystem = {
 	},
 	stat(uri) {
 		if (uri.startsWith('file://')) {
-			const stats = _fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
-			if (stats) {
-				return {
-					type: stats.isFile() ? FileType.File
-						: stats.isDirectory() ? FileType.Directory
-							: stats.isSymbolicLink() ? FileType.SymbolicLink
-								: FileType.Unknown,
-					ctime: stats.ctimeMs,
-					mtime: stats.mtimeMs,
-					size: stats.size,
-				};
-			}
+			try {
+				const stats = _fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
+				if (stats) {
+					return {
+						type: stats.isFile() ? FileType.File
+							: stats.isDirectory() ? FileType.Directory
+								: stats.isSymbolicLink() ? FileType.SymbolicLink
+									: FileType.Unknown,
+						ctime: stats.ctimeMs,
+						mtime: stats.mtimeMs,
+						size: stats.size,
+					};
+				}
+			} catch { }
 		}
 	},
 };
