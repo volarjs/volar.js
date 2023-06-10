@@ -13,7 +13,6 @@ export async function activate(
 	shouldStatusBarShow: (document: vscode.TextDocument) => boolean,
 	resolveStatusText: (text: string) => string,
 	disableTakeOverMode: boolean,
-	cdn = 'https://unpkg.com/',
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];
@@ -40,7 +39,7 @@ export async function activate(
 				useVSCodeTsdk: {
 					label: (!tsdk.isWorkspacePath ? '• ' : '') + "Use VS Code's Version",
 					description: vscodeTsdk.version,
-					detail: vscodeTsdk.isWeb ? vscodeTsdk.path.replace('/node_modules/', cdn) : undefined,
+					detail: vscodeTsdk.isWeb ? vscodeTsdk.path : undefined,
 				},
 				useConfigWorkspaceTsdk: configTsdkPath && !vscodeTsdk.isWeb ? {
 					label: (tsdk.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',

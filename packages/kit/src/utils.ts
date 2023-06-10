@@ -9,7 +9,7 @@ export const defaultCompilerOptions: ts.CompilerOptions = {
 	allowSyntheticDefaultImports: true,
 	allowNonTsExtensions: true,
 	resolveJsonModule: true,
-	jsx: 1 /* ts.JsxEmit.Preserve */,
+	jsx: 1 satisfies ts.JsxEmit.Preserve,
 };
 
 export function asPosix(path: string) {

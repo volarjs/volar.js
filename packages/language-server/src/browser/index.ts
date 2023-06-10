@@ -44,12 +44,12 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				return connection.sendRequest(FsStatRequest.type, uri);
 			},
 			async readFile(uri, encoding) {
-				if (uri.startsWith('http://') || uri.startsWith('https://')) {
-					return await httpSchemaRequestHandler(uri);
-				}
 				const data = await connection.sendRequest(FsReadFileRequest.type, uri);
 				if (data) {
 					return new TextDecoder(encoding ?? 'utf8').decode(data);
+				}
+				if (uri.startsWith('http://') || uri.startsWith('https://')) {
+					return await httpSchemaRequestHandler(uri);
 				}
 			},
 			async readDirectory(uri) {
