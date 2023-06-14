@@ -73,6 +73,10 @@ export function createSys(
 		newLine: sys?.newLine ?? '\n',
 		useCaseSensitiveFileNames: sys?.useCaseSensitiveFileNames ?? false,
 		realpath: sys?.realpath,
+		write: sys?.write ?? (() => { }),
+		writeFile: sys?.writeFile ?? (() => { }),
+		createDirectory: sys?.createDirectory ?? (() => { }),
+		exit: sys?.exit ?? (() => { }),
 		getExecutingFilePath: sys?.getExecutingFilePath ?? (() => rootPath + '/__fake__.js'),
 		getCurrentDirectory: () => rootPath,
 		getModifiedTime,
@@ -88,12 +92,6 @@ export function createSys(
 			}
 			return version;
 		},
-
-		// ignore
-		write: () => { },
-		writeFile: () => { },
-		createDirectory: () => { },
-		exit: () => { },
 	};
 
 	function resolvePath(fsPath: string) {
