@@ -20,8 +20,6 @@ export function createVirtualFiles(languages: Language[]) {
 	const virtualFileMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<FileRangeCapabilities>]>>();
 	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, MirrorMap | undefined>();
 
-	let sourceFilesDirty = true;
-
 	return {
 		allSources() {
 			return Array.from(sourceFiles.values());
@@ -37,16 +35,18 @@ export function createVirtualFiles(languages: Language[]) {
 				}
 				else {
 					value.snapshot = snapshot;
+					deleteVirtualFiles(value);
 					value.language.updateVirtualFile(value.root, snapshot);
-					sourceFilesDirty = true;
+					updateVirtualFiles(value);
 					return value.root; // updated
 				}
 			}
 			for (const language of languages) {
 				const virtualFile = language.createVirtualFile(fileName, snapshot, languageId);
 				if (virtualFile) {
-					sourceFiles.set(key, { fileName, languageId, snapshot, root: virtualFile, language });
-					sourceFilesDirty = true;
+					const source: Source = { fileName, languageId, snapshot, root: virtualFile, language };
+					sourceFiles.set(key, source);
+					updateVirtualFiles(source);
 					return virtualFile; // created
 				}
 			}
@@ -57,7 +57,7 @@ export function createVirtualFiles(languages: Language[]) {
 			if (value) {
 				value.language.deleteVirtualFile?.(value.root);
 				sourceFiles.delete(key); // deleted
-				sourceFilesDirty = true;
+				deleteVirtualFiles(value);
 			}
 		},
 		getSource(fileName: string) {
@@ -68,10 +68,10 @@ export function createVirtualFiles(languages: Language[]) {
 		getMirrorMap: getMirrorMap,
 		getMaps: getMapsByVirtualFile,
 		hasVirtualFile(fileName: string) {
-			return !!getVirtualFileToSourceFileMap().get(normalizePath(fileName));
+			return !!virtualFiles.get(normalizePath(fileName));
 		},
 		getVirtualFile(fileName: string) {
-			const sourceAndVirtual = getVirtualFileToSourceFileMap().get(normalizePath(fileName));
+			const sourceAndVirtual = virtualFiles.get(normalizePath(fileName));
 			if (sourceAndVirtual) {
 				return [sourceAndVirtual.virtualFile, sourceAndVirtual.source] as const;
 			}
@@ -79,17 +79,16 @@ export function createVirtualFiles(languages: Language[]) {
 		},
 	};
 
-	function getVirtualFileToSourceFileMap() {
-		if (sourceFilesDirty) {
-			sourceFilesDirty = false;
-			virtualFiles.clear();
-			for (const [_, row] of sourceFiles) {
-				forEachEmbeddedFile(row.root, file => {
-					virtualFiles.set(normalizePath(file.fileName), { virtualFile: file, source: row });
-				});
-			}
-		}
-		return virtualFiles;
+	function deleteVirtualFiles(source: Source) {
+		forEachEmbeddedFile(source.root, file => {
+			virtualFiles.delete(normalizePath(file.fileName));
+		});
+	}
+
+	function updateVirtualFiles(source: Source) {
+		forEachEmbeddedFile(source.root, file => {
+			virtualFiles.set(normalizePath(file.fileName), { virtualFile: file, source });
+		});
 	}
 
 	function getMapsByVirtualFile(virtualFile: VirtualFile) {
@@ -104,7 +103,7 @@ export function createVirtualFiles(languages: Language[]) {
 				return [sourceFileName, source.snapshot];
 			}
 			else {
-				const source = getVirtualFileToSourceFileMap().get(normalizePath(virtualFile.fileName))!.source;
+				const source = virtualFiles.get(normalizePath(virtualFile.fileName))!.source;
 				return [source.fileName, source.snapshot];
 			}
 		}, virtualFileMaps.get(virtualFile.snapshot));
