@@ -341,6 +341,10 @@ export function createSys(
 	}
 
 	function onReadDirectoryResult(dir: Dir, result: [string, FileType][]) {
+
+		// See https://github.com/microsoft/TypeScript/blob/e1a9290051a3b0cbdfbadc3adbcc155a4641522a/src/compiler/sys.ts#L1853-L1857
+		result = result.filter(([name]) => name !== '.' && name !== '..');
+
 		let updated = false;
 		for (const [name, fileType] of result) {
 			if (fileType === 1 satisfies FileType.File || fileType === 64 satisfies FileType.SymbolicLink) {
