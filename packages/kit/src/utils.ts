@@ -45,22 +45,6 @@ export function getConfiguration(settings: any, section: string) {
 }
 
 export const fs: FileSystem = {
-	readFile(uri, encoding) {
-		return _fs.readFileSync(uriToFileName(uri), { encoding: (encoding as 'utf8') ?? 'utf8' });
-	},
-	readDirectory(uri) {
-		if (uri.startsWith('file://')) {
-			const dirName = uriToFileName(uri);
-			const files = _fs.existsSync(dirName) ? _fs.readdirSync(dirName, { withFileTypes: true }) : [];
-			return files.map<[string, FileType]>(file => {
-				return [file.name, file.isFile() ? FileType.File
-					: file.isDirectory() ? FileType.Directory
-						: file.isSymbolicLink() ? FileType.SymbolicLink
-							: FileType.Unknown];
-			});
-		}
-		return [];
-	},
 	stat(uri) {
 		if (uri.startsWith('file://')) {
 			try {
@@ -76,7 +60,38 @@ export const fs: FileSystem = {
 						size: stats.size,
 					};
 				}
-			} catch { }
+			}
+			catch {
+				return undefined;
+			}
 		}
+	},
+	readFile(uri, encoding) {
+		if (uri.startsWith('file://')) {
+			try {
+				return _fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
+			}
+			catch {
+				return undefined;
+			}
+		}
+	},
+	readDirectory(uri) {
+		if (uri.startsWith('file://')) {
+			try {
+				const dirName = uriToFileName(uri);
+				const files = _fs.readdirSync(dirName, { withFileTypes: true });
+				return files.map<[string, FileType]>(file => {
+					return [file.name, file.isFile() ? FileType.File
+						: file.isDirectory() ? FileType.Directory
+							: file.isSymbolicLink() ? FileType.SymbolicLink
+								: FileType.Unknown];
+				});
+			}
+			catch {
+				return [];
+			}
+		}
+		return [];
 	},
 };

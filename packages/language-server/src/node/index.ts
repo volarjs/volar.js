@@ -64,7 +64,10 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 								size: stats.size,
 							};
 						}
-					} catch { }
+					}
+					catch {
+						return undefined;
+					}
 				}
 			},
 			readFile(uri, encoding) {
@@ -78,7 +81,10 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 							}
 						}
 						return fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
-					} catch { }
+					}
+					catch {
+						return undefined;
+					}
 				}
 				if (uri.startsWith('http://') || uri.startsWith('https://')) {
 					return httpSchemaRequestHandler(uri);
@@ -86,14 +92,19 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			},
 			readDirectory(uri) {
 				if (uri.startsWith('file://')) {
-					const dirName = uriToFileName(uri);
-					const files = fs.existsSync(dirName) ? fs.readdirSync(dirName, { withFileTypes: true }) : [];
-					return files.map<[string, FileType]>(file => {
-						return [file.name, file.isFile() ? FileType.File
-							: file.isDirectory() ? FileType.Directory
-								: file.isSymbolicLink() ? FileType.SymbolicLink
-									: FileType.Unknown];
-					});
+					try {
+						const dirName = uriToFileName(uri);
+						const files = fs.readdirSync(dirName, { withFileTypes: true });
+						return files.map<[string, FileType]>(file => {
+							return [file.name, file.isFile() ? FileType.File
+								: file.isDirectory() ? FileType.Directory
+									: file.isSymbolicLink() ? FileType.SymbolicLink
+										: FileType.Unknown];
+						});
+					}
+					catch {
+						return [];
+					}
 				}
 				return [];
 			},
