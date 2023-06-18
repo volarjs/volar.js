@@ -193,10 +193,6 @@ export function createLanguageServiceHost(
 			}
 		}
 
-		for (const name of sys.getDirectories(dirName)) {
-			names.add(name);
-		}
-
 		return [...names];
 	}
 
