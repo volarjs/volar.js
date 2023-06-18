@@ -213,7 +213,7 @@ async function createParsedCommandLine(
 ): Promise<ts.ParsedCommandLine> {
 	const extraFileExtensions = plugins.map(plugin => plugin.extraFileExtensions ?? []).flat();
 	if (ts) {
-		const sys = createSys(undefined, ts, {
+		const sys = createSys(ts, {
 			...env,
 			onDidChangeWatchedFiles: undefined,
 		});

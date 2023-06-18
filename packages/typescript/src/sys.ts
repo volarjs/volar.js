@@ -1,5 +1,4 @@
-import type { FileChangeType, FileType, ServiceEnvironment, Disposable, LanguageContext } from '@volar/language-service';
-import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
+import type { FileChangeType, FileType, ServiceEnvironment, Disposable } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';
@@ -22,7 +21,6 @@ interface Dir {
 let currentCwd = '';
 
 export function createSys(
-	ctx: LanguageContext | undefined,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	env: ServiceEnvironment,
 	dtsHost?: IDtsHost,
@@ -190,7 +188,7 @@ export function createSys(
 					file.exists = result?.type === 1 satisfies FileType.File || result?.type === 64 satisfies FileType.SymbolicLink;
 					if (file.exists) {
 						const time = Date.now();
-						file.modifiedTime = time !== file.modifiedTime ? time : time + 1;
+						file.modifiedTime = time !== file.modifiedTime ? time : file.modifiedTime + 1;
 						version++;
 					}
 				});
@@ -218,7 +216,7 @@ export function createSys(
 		depth?: number,
 	) {
 		dirName = resolvePath(dirName);
-		let matches = matchFiles(
+		const matches = matchFiles(
 			dirName,
 			extensions,
 			excludes,
@@ -231,40 +229,14 @@ export function createSys(
 				dirPath = resolvePath(dirPath);
 				readDirectoryWorker(dirPath);
 				const dir = getDir(dirPath);
-				const virtualFiles: string[] = [];
-
-				if (ctx) {
-					for (const { root } of ctx.virtualFiles.allSources()) {
-						forEachEmbeddedFile(root, file => {
-							if (file.kind === FileKind.TypeScriptHostFile) {
-								const fileDirName = path.dirname(file.fileName);
-								if (fileDirName.toLowerCase() === dirPath.toLowerCase()) {
-									virtualFiles.push(path.basename(file.fileName));
-								}
-							}
-						});
-					}
-				}
 
 				return {
-					files: [
-						...[...Object.entries(dir.files)].filter(([_, file]) => file.exists).map(([name]) => name),
-						...virtualFiles,
-					],
+					files: [...Object.entries(dir.files)].filter(([_, file]) => file.exists).map(([name]) => name),
 					directories: [...Object.entries(dir.dirs)].filter(([_, dir]) => dir.exists).map(([name]) => name),
 				};
 			},
 			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
 		);
-		if (ctx) {
-			matches = matches.map(match => {
-				const [_, source] = ctx.virtualFiles.getVirtualFile(match);
-				if (source) {
-					return source.fileName;
-				}
-				return match;
-			});
-		}
 		return [...new Set(matches)];
 	}
 
@@ -320,10 +292,9 @@ export function createSys(
 		}
 		dir.requested = true;
 
-		const uri = env.fileNameToUri(dirName);
 		const result = dirName.startsWith('/node_modules/') && dtsHost
 			? dtsHost.readDirectory(dirName)
-			: env.fs?.readDirectory(uri);
+			: env.fs?.readDirectory(env.fileNameToUri(dirName || '.'));
 
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;

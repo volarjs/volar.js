@@ -1,6 +1,7 @@
 import type { FileKind, VirtualFile, LanguageContext } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
+import { matchFiles } from './typescript/utilities';
 
 export function createLanguageServiceHost(
 	ctx: LanguageContext,
@@ -38,9 +39,12 @@ export function createLanguageServiceHost(
 				return snapshot.getText(0, snapshot.getLength());
 			}
 		},
+		readDirectory,
+		getDirectories,
+		directoryExists,
 		fileExists,
 		getProjectVersion: () => {
-			return tsProjectVersion.toString() + ':' + sys.version;
+			return tsProjectVersion + ':' + sys.version;
 		},
 		getTypeRootsVersion: () => {
 			return sys.version ?? -1; // TODO: only update for /node_modules changes?
@@ -119,6 +123,83 @@ export function createLanguageServiceHost(
 		oldOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
 	}
 
+	function readDirectory(
+		dirName: string,
+		extensions?: readonly string[],
+		excludes?: readonly string[],
+		includes?: readonly string[],
+		depth?: number,
+	): string[] {
+		let matches = matchFiles(
+			dirName,
+			extensions,
+			excludes,
+			includes,
+			sys?.useCaseSensitiveFileNames ?? false,
+			ctx.host.getCurrentDirectory(),
+			depth,
+			(dirPath) => {
+
+				const files: string[] = [];
+
+				for (const fileName of getScriptFileNames()) {
+					if (fileName.toLowerCase().startsWith(dirPath.toLowerCase())) {
+						const baseName = fileName.substring(dirPath.length);
+						if (baseName.indexOf('/') === -1) {
+							files.push(baseName);
+						}
+					}
+				}
+
+				return {
+					files,
+					directories: getVirtualFileDirectories(dirPath),
+				};
+			},
+			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
+		);
+		if (ctx) {
+			matches = matches.map(match => {
+				const [_, source] = ctx.virtualFiles.getVirtualFile(match);
+				if (source) {
+					return source.fileName;
+				}
+				return match;
+			});
+		}
+		return [...new Set([
+			...matches,
+			...sys.readDirectory(dirName, extensions, excludes, includes, depth),
+		])];
+	}
+
+	function getDirectories(dirName: string): string[] {
+		return [...new Set([
+			...getVirtualFileDirectories(dirName),
+			...sys.getDirectories(dirName),
+		])];
+	}
+
+	function getVirtualFileDirectories(dirName: string): string[] {
+
+		const names = new Set<string>();
+
+		for (const fileName of getScriptFileNames()) {
+			if (fileName.toLowerCase().startsWith(dirName.toLowerCase())) {
+				const path = fileName.substring(dirName.length);
+				if (path.indexOf('/') >= 0) {
+					names.add(path.split('/')[0]);
+				}
+			}
+		}
+
+		for (const name of sys.getDirectories(dirName)) {
+			names.add(name);
+		}
+
+		return [...names];
+	}
+
 	function getScriptFileNames() {
 
 		const tsFileNames = new Set<string>();
@@ -184,6 +265,13 @@ export function createLanguageServiceHost(
 		}
 		// fs files
 		return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '';
+	}
+
+	function directoryExists(dirName: string): boolean {
+		if (getScriptFileNames().some(fileName => fileName.toLowerCase().startsWith(dirName.toLowerCase()))) {
+			return true;
+		}
+		return sys.directoryExists(dirName);
 	}
 
 	function fileExists(fileName: string) {
