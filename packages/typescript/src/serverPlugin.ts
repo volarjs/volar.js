@@ -121,14 +121,11 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 
 			const text = languageServiceHost.readFile(fileName);
 
-			if ((text !== undefined) !== (scripts.get(fileName)?.snapshot !== undefined)) {
-				extraProjectVersion++;
-			}
-
 			let snapshot: ts.IScriptSnapshot | undefined;
 			let extension = '.ts';
 
 			if (text !== undefined) {
+				extraProjectVersion++;
 				const virtualFile = virtualFiles.updateSource(fileName, ts.ScriptSnapshot.fromString(text), undefined);
 				if (virtualFile) {
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
@@ -142,7 +139,8 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 					snapshot = ts.ScriptSnapshot.fromString(patchedText);
 				}
 			}
-			else {
+			else if (virtualFiles.hasSource(fileName)) {
+				extraProjectVersion++;
 				virtualFiles.deleteSource(fileName);
 			}
 
