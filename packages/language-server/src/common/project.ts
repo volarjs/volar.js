@@ -142,7 +142,7 @@ export async function createProject(context: ProjectContext) {
 		let dirty = false;
 		for (const fileName of parsedCommandLine.fileNames) {
 			const uri = fileNameToUri(fileName);
-			if (!fsScriptsCache.uriHas(uri)) {
+			if (!fsScriptsCache.uriGet(uri)) {
 				dirty = true;
 				promises.push(updateRootScriptSnapshot(uri));
 			}
