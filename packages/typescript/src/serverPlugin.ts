@@ -3,6 +3,8 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, languageServiceHost: ts.LanguageServiceHost, ts: typeof import('typescript/lib/tsserverlibrary'), exts: string[]) {
 
+	let extraProjectVersion = 0;
+
 	const scripts = new Map<string, {
 		version: string;
 		snapshot: ts.IScriptSnapshot | undefined;
@@ -11,6 +13,8 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 
 	const resolveModuleNameLiterals = languageServiceHost.resolveModuleNameLiterals?.bind(languageServiceHost);
 	const resolveModuleNames = languageServiceHost.resolveModuleNames?.bind(languageServiceHost);
+	const getProjectVersion = languageServiceHost.getProjectVersion?.bind(languageServiceHost);
+	const getScriptFileNames = languageServiceHost.getScriptFileNames.bind(languageServiceHost);
 	const getScriptSnapshot = languageServiceHost.getScriptSnapshot.bind(languageServiceHost);
 
 	if (resolveModuleNameLiterals) {
@@ -62,6 +66,24 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 		};
 	}
 
+	if (getProjectVersion) {
+		languageServiceHost.getProjectVersion = () => {
+			return getProjectVersion() + ':' + extraProjectVersion;
+		};
+	}
+
+	languageServiceHost.getScriptFileNames = () => {
+		if (languageServiceHost.getCompilationSettings().composite) {
+			return [
+				...getScriptFileNames(),
+				...virtualFiles.allSources().map(source => source.fileName),
+			];
+		}
+		else {
+			return getScriptFileNames();
+		}
+	};
+
 	languageServiceHost.getScriptSnapshot = (fileName) => {
 		if (scripts.has(fileName)) {
 			updateScript(fileName);
@@ -98,6 +120,10 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 		if (version !== scripts.get(fileName)?.version) {
 
 			const text = languageServiceHost.readFile(fileName);
+
+			if ((text !== undefined) !== (scripts.get(fileName)?.snapshot !== undefined)) {
+				extraProjectVersion++;
+			}
 
 			let snapshot: ts.IScriptSnapshot | undefined;
 			let extension = '.ts';
