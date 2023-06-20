@@ -1,79 +1,34 @@
-import { FileKind, LanguageContext, forEachEmbeddedFile } from '@volar/language-core';
+import { FileKind, VirtualFile, VirtualFiles, forEachEmbeddedFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { getProgram } from './getProgram';
-import { createLanguageServiceHost } from './languageServiceHost';
-import { getDocumentRegistry } from './documentRegistry';
 
-export function createLanguageService(
-	core: LanguageContext,
-	ts: typeof import('typescript/lib/tsserverlibrary'),
-	sys: ts.System,
-) {
+export function decorateLanguageService(virtualFiles: VirtualFiles, languageService: ts.LanguageService, isTsPlugin: boolean) {
 
-	type _LanguageService = {
-		__internal__: {
-			languageServiceHost: ts.LanguageServiceHost;
-			languageService: ts.LanguageService;
-			context: LanguageContext;
-		};
-	} & ts.LanguageService;
+	const _organizeImports = languageService.organizeImports.bind(languageService);
+	const _getDefinitionAtPosition = languageService.getDefinitionAtPosition.bind(languageService);
+	const _getDefinitionAndBoundSpan = languageService.getDefinitionAndBoundSpan.bind(languageService);
+	const _getTypeDefinitionAtPosition = languageService.getTypeDefinitionAtPosition.bind(languageService);
+	const _getImplementationAtPosition = languageService.getImplementationAtPosition.bind(languageService);
+	const _findRenameLocations = languageService.findRenameLocations.bind(languageService);
+	const _getReferencesAtPosition = languageService.getReferencesAtPosition.bind(languageService);
+	const _findReferences = languageService.findReferences.bind(languageService);
 
-	if (!ts) {
-		throw new Error('TypeScript module not provided.');
-	}
-
-	const lsHost = createLanguageServiceHost(core, ts, sys);
-	const ls = ts.createLanguageService(lsHost, getDocumentRegistry(ts, sys.useCaseSensitiveFileNames, core.host.getCurrentDirectory()));
-
-	return new Proxy<Partial<_LanguageService>>({
-		organizeImports,
-
-		// only support for .ts for now, not support for .vue
-		getDefinitionAtPosition,
-		getDefinitionAndBoundSpan,
-		getTypeDefinitionAtPosition,
-		getImplementationAtPosition,
-		findRenameLocations,
-		getReferencesAtPosition,
-		findReferences,
-
-		// TODO: now is handled by vue server
-		// prepareCallHierarchy: tsLanguageService.rawLs.prepareCallHierarchy,
-		// provideCallHierarchyIncomingCalls: tsLanguageService.rawLs.provideCallHierarchyIncomingCalls,
-		// provideCallHierarchyOutgoingCalls: tsLanguageService.rawLs.provideCallHierarchyOutgoingCalls,
-		// getEditsForFileRename: tsLanguageService.rawLs.getEditsForFileRename,
-
-		// TODO
-		// getCodeFixesAtPosition: tsLanguageService.rawLs.getCodeFixesAtPosition,
-		// getCombinedCodeFix: tsLanguageService.rawLs.getCombinedCodeFix,
-		// applyCodeActionCommand: tsLanguageService.rawLs.applyCodeActionCommand,
-		// getApplicableRefactors: tsLanguageService.rawLs.getApplicableRefactors,
-		// getEditsForRefactor: tsLanguageService.rawLs.getEditsForRefactor,
-
-		getProgram: () => getProgram(ts as any, core, ls, lsHost),
-
-		__internal__: {
-			context: core,
-			languageService: ls,
-			languageServiceHost: lsHost,
-		},
-	}, {
-		get: (target: any, property: keyof ts.LanguageService) => {
-			if (property in target) {
-				return target[property];
-			}
-			return ls[property];
-		},
-	}) as _LanguageService;
+	languageService.organizeImports = organizeImports;
+	languageService.getDefinitionAtPosition = getDefinitionAtPosition;
+	languageService.getDefinitionAndBoundSpan = getDefinitionAndBoundSpan;
+	languageService.getTypeDefinitionAtPosition = getTypeDefinitionAtPosition;
+	languageService.getImplementationAtPosition = getImplementationAtPosition;
+	languageService.findRenameLocations = findRenameLocations;
+	languageService.getReferencesAtPosition = getReferencesAtPosition;
+	languageService.findReferences = findReferences;
 
 	// apis
 	function organizeImports(args: ts.OrganizeImportsArgs, formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences | undefined): ReturnType<ts.LanguageService['organizeImports']> {
 		let edits: readonly ts.FileTextChanges[] = [];
-		const file = core.virtualFiles.getSource(args.fileName)?.root;
+		const file = virtualFiles.getSource(args.fileName)?.root;
 		if (file) {
 			forEachEmbeddedFile(file, embeddedFile => {
 				if (embeddedFile.kind === FileKind.TypeScriptHostFile && embeddedFile.capabilities.codeAction) {
-					edits = edits.concat(ls.organizeImports({
+					edits = edits.concat(_organizeImports({
 						...args,
 						fileName: embeddedFile.fileName,
 					}, formatOptions, preferences));
@@ -81,7 +36,7 @@ export function createLanguageService(
 			});
 		}
 		else {
-			return ls.organizeImports(args, formatOptions, preferences);
+			return _organizeImports(args, formatOptions, preferences);
 		}
 		return edits.map(transformFileTextChanges).filter(notEmpty);
 	}
@@ -114,28 +69,28 @@ export function createLanguageService(
 
 		withMirrors(fileName, position);
 
-		return symbols.map(s => transformDocumentSpanLike(s)).filter(notEmpty);
+		return symbols.map(s => transformDocumentSpanLike(s, mode === 'definition')).filter(notEmpty);
 
 		function withMirrors(fileName: string, position: number) {
 			if (loopChecker.has(fileName + ':' + position))
 				return;
 			loopChecker.add(fileName + ':' + position);
-			const _symbols = mode === 'definition' ? ls.getDefinitionAtPosition(fileName, position)
-				: mode === 'typeDefinition' ? ls.getTypeDefinitionAtPosition(fileName, position)
-					: mode === 'references' ? ls.getReferencesAtPosition(fileName, position)
-						: mode === 'implementation' ? ls.getImplementationAtPosition(fileName, position)
-							: mode === 'rename' && preferences ? ls.findRenameLocations(fileName, position, findInStrings, findInComments, preferences)
+			const _symbols = mode === 'definition' ? _getDefinitionAtPosition(fileName, position)
+				: mode === 'typeDefinition' ? _getTypeDefinitionAtPosition(fileName, position)
+					: mode === 'references' ? _getReferencesAtPosition(fileName, position)
+						: mode === 'implementation' ? _getImplementationAtPosition(fileName, position)
+							: mode === 'rename' && preferences ? _findRenameLocations(fileName, position, findInStrings, findInComments, preferences)
 								: undefined;
 			if (!_symbols) return;
 			symbols = symbols.concat(_symbols);
 			for (const ref of _symbols) {
 				loopChecker.add(ref.fileName + ':' + ref.textSpan.start);
 
-				const [virtualFile] = core.virtualFiles.getVirtualFile(ref.fileName);
+				const [virtualFile] = getVirtualFile(ref.fileName);
 				if (!virtualFile)
 					continue;
 
-				const mirrorMap = core.virtualFiles.getMirrorMap(virtualFile);
+				const mirrorMap = virtualFiles.getMirrorMap(virtualFile);
 				if (!mirrorMap)
 					continue;
 
@@ -164,14 +119,14 @@ export function createLanguageService(
 		if (!textSpan) return;
 		return {
 			textSpan: textSpan,
-			definitions: symbols?.map(s => transformDocumentSpanLike(s)).filter(notEmpty),
+			definitions: symbols?.map(s => transformDocumentSpanLike(s, true)).filter(notEmpty),
 		};
 
 		function withMirrors(fileName: string, position: number) {
 			if (loopChecker.has(fileName + ':' + position))
 				return;
 			loopChecker.add(fileName + ':' + position);
-			const _symbols = ls.getDefinitionAndBoundSpan(fileName, position);
+			const _symbols = _getDefinitionAndBoundSpan(fileName, position);
 			if (!_symbols) return;
 			if (!textSpan) {
 				textSpan = _symbols.textSpan;
@@ -182,11 +137,11 @@ export function createLanguageService(
 
 				loopChecker.add(ref.fileName + ':' + ref.textSpan.start);
 
-				const [virtualFile] = core.virtualFiles.getVirtualFile(ref.fileName);
+				const [virtualFile] = getVirtualFile(ref.fileName);
 				if (!virtualFile)
 					continue;
 
-				const mirrorMap = core.virtualFiles.getMirrorMap(virtualFile);
+				const mirrorMap = virtualFiles.getMirrorMap(virtualFile);
 				if (!mirrorMap)
 					continue;
 
@@ -213,7 +168,7 @@ export function createLanguageService(
 			if (loopChecker.has(fileName + ':' + position))
 				return;
 			loopChecker.add(fileName + ':' + position);
-			const _symbols = ls.findReferences(fileName, position);
+			const _symbols = _findReferences(fileName, position);
 			if (!_symbols) return;
 			symbols = symbols.concat(_symbols);
 			for (const symbol of _symbols) {
@@ -221,11 +176,11 @@ export function createLanguageService(
 
 					loopChecker.add(ref.fileName + ':' + ref.textSpan.start);
 
-					const [virtualFile] = core.virtualFiles.getVirtualFile(ref.fileName);
+					const [virtualFile] = getVirtualFile(ref.fileName);
 					if (!virtualFile)
 						continue;
 
-					const mirrorMap = core.virtualFiles.getMirrorMap(virtualFile);
+					const mirrorMap = virtualFiles.getMirrorMap(virtualFile);
 					if (!mirrorMap)
 						continue;
 
@@ -243,7 +198,7 @@ export function createLanguageService(
 
 	// transforms
 	function transformFileTextChanges(changes: ts.FileTextChanges): ts.FileTextChanges | undefined {
-		const [_, source] = core.virtualFiles.getVirtualFile(changes.fileName);
+		const [_, source] = getVirtualFile(changes.fileName);
 		if (source) {
 			return {
 				...changes,
@@ -264,8 +219,8 @@ export function createLanguageService(
 		}
 	}
 	function transformReferencedSymbol(symbol: ts.ReferencedSymbol): ts.ReferencedSymbol | undefined {
-		const definition = transformDocumentSpanLike(symbol.definition);
-		const references = symbol.references.map(r => transformDocumentSpanLike(r)).filter(notEmpty);
+		const definition = transformDocumentSpanLike(symbol.definition, false);
+		const references = symbol.references.map(r => transformDocumentSpanLike(r, false)).filter(notEmpty);
 		if (definition) {
 			return {
 				definition,
@@ -283,8 +238,17 @@ export function createLanguageService(
 			};
 		}
 	}
-	function transformDocumentSpanLike<T extends ts.DocumentSpan>(documentSpan: T): T | undefined {
-		const textSpan = transformSpan(documentSpan.fileName, documentSpan.textSpan);
+	function transformDocumentSpanLike<T extends ts.DocumentSpan>(documentSpan: T, isDefinition: boolean): T | undefined {
+		let textSpan = transformSpan(documentSpan.fileName, documentSpan.textSpan);
+		if (isDefinition && !textSpan) {
+			const [virtualFile, source] = getVirtualFile(documentSpan.fileName);
+			if (virtualFile && source) {
+				textSpan = {
+					fileName: source.fileName,
+					textSpan: { start: 0, length: 0 },
+				};
+			}
+		}
 		if (!textSpan) return;
 		const contextSpan = transformSpan(documentSpan.fileName, documentSpan.contextSpan);
 		const originalTextSpan = transformSpan(documentSpan.originalFileName, documentSpan.originalTextSpan);
@@ -302,9 +266,15 @@ export function createLanguageService(
 	function transformSpan(fileName: string | undefined, textSpan: ts.TextSpan | undefined) {
 		if (!fileName) return;
 		if (!textSpan) return;
-		const [virtualFile, source] = core.virtualFiles.getVirtualFile(fileName);
+		const [virtualFile, source] = getVirtualFile(fileName);
 		if (virtualFile && source) {
-			for (const [_, [sourceSnapshot, map]] of core.virtualFiles.getMaps(virtualFile)) {
+			if (isTsPlugin) {
+				textSpan = {
+					start: textSpan.start - source.snapshot.getLength(),
+					length: textSpan.length,
+				};
+			}
+			for (const [_, [sourceSnapshot, map]] of virtualFiles.getMaps(virtualFile)) {
 
 				if (source.snapshot !== sourceSnapshot)
 					continue;
@@ -326,6 +296,25 @@ export function createLanguageService(
 				fileName,
 				textSpan,
 			};
+		}
+	}
+
+	function getVirtualFile(fileName: string) {
+		if (isTsPlugin) {
+			let result: VirtualFile | undefined;
+			const source = virtualFiles.getSource(fileName);
+			if (source) {
+				forEachEmbeddedFile(source.root, file => {
+					const ext = file.fileName.replace(fileName, '');
+					if (file.kind === FileKind.TypeScriptHostFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
+						result = file;
+					}
+				});
+			}
+			return [result, source] as const;
+		}
+		else {
+			return virtualFiles.getVirtualFile(fileName);
 		}
 	}
 }

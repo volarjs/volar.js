@@ -115,7 +115,7 @@ export function register(
 					link.targetSelectionRange = targetSelectionRange;
 				}
 
-				if (context.documents.isVirtualFileUri(link.targetUri) && !foundTargetSelectionRange) {
+				if (apiName === 'provideDefinition' && context.documents.isVirtualFileUri(link.targetUri) && !foundTargetSelectionRange) {
 					for (const [_, targetMap] of context.documents.getMapsByVirtualFileUri(link.targetUri)) {
 						if (targetMap && targetMap.sourceFileDocument.uri !== uri) {
 							return {
