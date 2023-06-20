@@ -185,7 +185,7 @@ export function createSys(
 				promises.add(promise);
 				result.then(result => {
 					promises.delete(promise);
-					file.exists = result?.type === 1 satisfies FileType.File || result?.type === 64 satisfies FileType.SymbolicLink;
+					file.exists = result?.type === 1 satisfies FileType.File;
 					if (file.exists) {
 						const time = Date.now();
 						file.modifiedTime = time !== file.modifiedTime ? time : file.modifiedTime + 1;
@@ -194,7 +194,7 @@ export function createSys(
 				});
 			}
 			else {
-				file.exists = result?.type === 1 satisfies FileType.File || result?.type === 64 satisfies FileType.SymbolicLink;
+				file.exists = result?.type === 1 satisfies FileType.File;
 			}
 		}
 		return file.exists;
@@ -301,24 +301,52 @@ export function createSys(
 			promises.add(promise);
 			result.then((result) => {
 				promises.delete(promise);
-				if (onReadDirectoryResult(dir, result)) {
+				if (onReadDirectoryResult(dirName, dir, result)) {
 					version++;
 				}
 			});
 		}
 		else {
-			onReadDirectoryResult(dir, result ?? []);
+			onReadDirectoryResult(dirName, dir, result ?? []);
 		}
 	}
 
-	function onReadDirectoryResult(dir: Dir, result: [string, FileType][]) {
+	function onReadDirectoryResult(dirName: string, dir: Dir, result: [string, FileType][]) {
 
 		// See https://github.com/microsoft/TypeScript/blob/e1a9290051a3b0cbdfbadc3adbcc155a4641522a/src/compiler/sys.ts#L1853-L1857
 		result = result.filter(([name]) => name !== '.' && name !== '..');
 
 		let updated = false;
-		for (const [name, fileType] of result) {
-			if (fileType === 1 satisfies FileType.File || fileType === 64 satisfies FileType.SymbolicLink) {
+		for (const [name, _fileType] of result) {
+			let fileType = _fileType;
+			if (fileType === 64 satisfies FileType.SymbolicLink) {
+				const stat = env.fs?.stat(env.fileNameToUri(dirName + '/' + name));
+				if (typeof stat === 'object' && 'then' in stat) {
+					const promise = stat;
+					promises.add(promise);
+					stat.then((stat) => {
+						promises.delete(promise);
+						if (stat?.type === 1 satisfies FileType.File) {
+							dir.files[name] ??= {};
+							if (!dir.files[name].exists) {
+								dir.files[name].exists = true;
+								version++;
+							}
+						}
+						else if (stat?.type === 2 satisfies FileType.Directory) {
+							const childDir = getDirFromDir(dir, name);
+							if (!childDir.exists) {
+								childDir.exists = true;
+								version++;
+							}
+						}
+					});
+				}
+				else if (stat) {
+					fileType = stat.type;
+				}
+			}
+			if (fileType === 1 satisfies FileType.File) {
 				dir.files[name] ??= {};
 				if (!dir.files[name].exists) {
 					dir.files[name].exists = true;
@@ -342,10 +370,10 @@ export function createSys(
 
 		let currentDirPath = dirName;
 		let currentDirName = path.basename(currentDirPath);
-		let lastDirName: string | undefined;
+		let lastDirPath: string | undefined;
 
-		while (lastDirName !== currentDirName) {
-			lastDirName = currentDirName;
+		while (lastDirPath !== currentDirPath) {
+			lastDirPath = currentDirPath;
 			dirNames.push(currentDirName);
 			currentDirPath = path.dirname(currentDirPath);
 			currentDirName = path.basename(currentDirPath);

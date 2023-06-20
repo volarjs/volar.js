@@ -9,7 +9,7 @@ export interface IDtsHost {
 export function createJsDelivrDtsHost(
 	versions: Record<string, string> = {},
 	onFetch?: (fileName: string, text: string) => void,
-) {
+): IDtsHost {
 	return new DtsHost(
 		async fileName => {
 			const requestFileName = resolveRequestFileName(fileName);
