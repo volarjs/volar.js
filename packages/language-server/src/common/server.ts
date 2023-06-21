@@ -91,21 +91,21 @@ export async function startCommonLanguageServer(connection: vscode.Connection, _
 			},
 		};
 
-		let services: Config['services'] = {};
+		let config: Config = {};
+
 		for (const root of roots) {
 			if (root.scheme === 'file') {
-				let config = loadConfig(root.path, options.configFilePath) ?? {};
-				for (const plugin of plugins) {
-					if (plugin.resolveConfig) {
-						config = await plugin.resolveConfig(config, undefined);
-					}
+				const workspaceConfig = loadConfig(root.path, options.configFilePath);
+				if (workspaceConfig) {
+					config = workspaceConfig;
+					break;
 				}
-				if (config.services) {
-					services = {
-						...services,
-						...config.services,
-					};
-				}
+			}
+		}
+
+		for (const plugin of plugins) {
+			if (plugin.resolveConfig) {
+				config = await plugin.resolveConfig(config, undefined);
 			}
 		}
 
@@ -114,7 +114,7 @@ export async function startCommonLanguageServer(connection: vscode.Connection, _
 			options,
 			plugins,
 			getSemanticTokensLegend(),
-			services,
+			config.services ?? {},
 		);
 
 		await createLanguageServiceHost();
