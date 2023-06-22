@@ -21,9 +21,15 @@ export type Project = ReturnType<typeof createProject>;
 export async function createProject(context: ProjectContext) {
 
 	let projectVersion = 0;
-	let projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
+	let token = context.workspaces.cancelTokenHost.createCancellationToken();
 	let languageService: LanguageService | undefined;
 
+	const tsToken: ts.CancellationToken = {
+		isCancellationRequested() {
+			return token.isCancellationRequested;
+		},
+		throwIfCancellationRequested() { },
+	};
 	const { uriToFileName, fileNameToUri, fs } = context.server.runtimeEnv;
 	const env: ServiceEnvironment = {
 		uriToFileName,
@@ -38,12 +44,6 @@ export async function createProject(context: ProjectContext) {
 	};
 	const fsScriptsCache = createUriMap<ts.IScriptSnapshot | undefined>(fileNameToUri);
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
-	const token: ts.CancellationToken = {
-		isCancellationRequested() {
-			return context.workspaces.cancelTokenHost.getMtime() !== projectVersionUpdateTime;
-		},
-		throwIfCancellationRequested() { },
-	};
 	const languageHost: TypeScriptLanguageHost = {
 		getProjectVersion: () => projectVersion,
 		getScriptFileNames: () => parsedCommandLine.fileNames,
@@ -59,7 +59,7 @@ export async function createProject(context: ProjectContext) {
 			}
 		},
 		getLanguageId: (fileName) => context.workspaces.documents.data.pathGet(fileName)?.languageId,
-		getCancellationToken: () => token,
+		getCancellationToken: () => tsToken,
 		getCompilationSettings: () => parsedCommandLine.options,
 		getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
 		getCurrentDirectory: () => uriToFileName(context.project.rootUri.toString()),
@@ -67,7 +67,7 @@ export async function createProject(context: ProjectContext) {
 	};
 	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
 		projectVersion++;
-		projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
+		token = context.workspaces.cancelTokenHost.createCancellationToken();
 	});
 	const fileWatch = env.onDidChangeWatchedFiles?.(params => {
 		onWorkspaceFilesChanged(params.changes);
@@ -119,7 +119,7 @@ export async function createProject(context: ProjectContext) {
 			if (!parsedCommandLine.fileNames.includes(fileName)) {
 				parsedCommandLine.fileNames.push(fileName);
 				projectVersion++;
-				projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
+				token = context.workspaces.cancelTokenHost.createCancellationToken();
 			}
 		},
 		askedFiles,
@@ -193,7 +193,7 @@ export async function createProject(context: ProjectContext) {
 		}
 
 		if (oldProjectVersion !== projectVersion) {
-			projectVersionUpdateTime = context.workspaces.cancelTokenHost.getMtime();
+			token = context.workspaces.cancelTokenHost.createCancellationToken();
 		}
 	}
 	function dispose() {

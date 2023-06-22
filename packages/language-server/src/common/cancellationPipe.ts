@@ -6,12 +6,9 @@ export function createCancellationTokenHost(_cancellationPipeName: string | unde
 
 	if (_cancellationPipeName === undefined) {
 		return {
-			createCancellationToken(original: vscode.CancellationToken) {
-				return original;
+			createCancellationToken(original?: vscode.CancellationToken) {
+				return original ?? vscode.CancellationToken.None;
 			},
-			getMtime() {
-				return -1;
-			}
 		};
 	}
 
@@ -20,17 +17,26 @@ export function createCancellationTokenHost(_cancellationPipeName: string | unde
 
 	return {
 		createCancellationToken,
-		getMtime,
 	};
 
-	function createCancellationToken(original: vscode.CancellationToken) {
+	function createCancellationToken(original?: vscode.CancellationToken) {
+
 		const mtime = getMtime();
+
+		let currentMtime = mtime;
+		let updateAt = Date.now();
+
 		const token: vscode.CancellationToken = {
 			get isCancellationRequested() {
-				if (original.isCancellationRequested) {
+				if (original?.isCancellationRequested) {
 					return true;
 				}
-				return getMtime() !== mtime;
+				// debounce 20ms
+				if (currentMtime === mtime && Date.now() - updateAt >= 20) {
+					currentMtime = getMtime();
+					updateAt = Date.now();
+				}
+				return currentMtime !== mtime;
 			},
 			onCancellationRequested: vscode.Event.None,
 		};
