@@ -10,10 +10,10 @@ importers:
     optionalDependencies:
       '@lerna-lite/cli':
         specifier: latest
-        version: 2.4.2(@lerna-lite/publish@2.4.2)(@lerna-lite/version@2.4.2)
+        version: 2.4.2(@lerna-lite/publish@2.4.3)(@lerna-lite/version@2.4.2)
       '@lerna-lite/publish':
         specifier: latest
-        version: 2.4.2
+        version: 2.4.3
     devDependencies:
       '@types/node':
         specifier: latest
@@ -31,7 +31,7 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../language-service
       typesafe-path:
         specifier: ^0.2.2
@@ -49,13 +49,13 @@ importers:
         specifier: 1.67.0
         version: 1.67.0
       '@volar/language-server':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../language-server
       '@volar/source-map':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../source-map
       '@volar/vscode':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../vscode
       esbuild:
         specifier: 0.15.18
@@ -70,19 +70,19 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../language-core
       '@volar/language-service':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../language-service
       '@volar/typescript':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../typescript
       '@vscode/l10n':
         specifier: ^0.0.11
@@ -107,16 +107,16 @@ importers:
         version: 3.0.7
     devDependencies:
       '@volar/source-map':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../source-map
 
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../language-core
       '@volar/source-map':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../source-map
       vscode-languageserver-protocol:
         specifier: ^3.17.3
@@ -131,7 +131,7 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.7
@@ -153,17 +153,17 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../language-core
     devDependencies:
       '@volar/language-service':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 1.7.8
+        specifier: 1.7.9
         version: link:../language-server
       typesafe-path:
         specifier: ^0.2.2
@@ -454,7 +454,7 @@ packages:
     resolution: {integrity: sha512-eF2rxCRulEKXHTRiDrDy6erMYWqNw4LPdQ8UQA4huuxaQsVeRPFl2oM8oDGxMFhJUWZf9McpLtJasDDZb/Bpeg==}
     dev: true
 
-  /@lerna-lite/cli@2.4.2(@lerna-lite/publish@2.4.2)(@lerna-lite/version@2.4.2):
+  /@lerna-lite/cli@2.4.2(@lerna-lite/publish@2.4.3)(@lerna-lite/version@2.4.2):
     resolution: {integrity: sha512-n7qykx847XePkaLoCW2WYz/Tr27Q8HOKHGXFtHHiv6XX/68BbGk5w5icp8w4esrk4xvenEXNSm6tm6Z9oPdbww==}
     engines: {node: '>=16.15.0', npm: '>=8.5.0'}
     hasBin: true
@@ -481,8 +481,8 @@ packages:
     dependencies:
       '@lerna-lite/core': 2.4.2
       '@lerna-lite/init': 2.4.2
-      '@lerna-lite/publish': 2.4.2
-      '@lerna-lite/version': 2.4.2(@lerna-lite/publish@2.4.2)
+      '@lerna-lite/publish': 2.4.3
+      '@lerna-lite/version': 2.4.2(@lerna-lite/publish@2.4.3)
       dedent: 0.7.0
       dotenv: 16.3.1
       import-local: 3.1.0
@@ -545,14 +545,14 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/publish@2.4.2:
-    resolution: {integrity: sha512-T1tIHpETYj2r3pLVQeZ+CdgYT7zMmbMF7Eof5jXM8fv97mlpaWSI9fhn+hBVz58T5Q29u9+BVJO0NYRDbdAZIw==}
+  /@lerna-lite/publish@2.4.3:
+    resolution: {integrity: sha512-iTwE6sUZxkiEllcIEbLF/sql6BzdglNGCUm9MiUY8aImBVqr6E6+d5Y4CkkSU1Ff8fzheZ6nmfJhbSljgiroag==}
     engines: {node: '>=16.15.0', npm: '>=8.5.0'}
     requiresBuild: true
     dependencies:
-      '@lerna-lite/cli': 2.4.2(@lerna-lite/publish@2.4.2)(@lerna-lite/version@2.4.2)
+      '@lerna-lite/cli': 2.4.2(@lerna-lite/publish@2.4.3)(@lerna-lite/version@2.4.2)
       '@lerna-lite/core': 2.4.2
-      '@lerna-lite/version': 2.4.2(@lerna-lite/publish@2.4.2)
+      '@lerna-lite/version': 2.4.2(@lerna-lite/publish@2.4.3)
       '@npmcli/arborist': 6.2.9
       byte-size: 8.1.1
       chalk: 5.2.0
@@ -587,11 +587,11 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/version@2.4.2(@lerna-lite/publish@2.4.2):
+  /@lerna-lite/version@2.4.2(@lerna-lite/publish@2.4.3):
     resolution: {integrity: sha512-N7DY01sIM6/V2Tbb8tHUxCYNEE8sACYc6R7UrGa6WdKdGOq5KeRIeekIclO2ybrlMqR+YhfgZlZ33Rxxe8UOKQ==}
     engines: {node: '>=16.15.0', npm: '>=8.5.0'}
     dependencies:
-      '@lerna-lite/cli': 2.4.2(@lerna-lite/publish@2.4.2)(@lerna-lite/version@2.4.2)
+      '@lerna-lite/cli': 2.4.2(@lerna-lite/publish@2.4.3)(@lerna-lite/version@2.4.2)
       '@lerna-lite/core': 2.4.2
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 19.0.13
