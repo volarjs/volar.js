@@ -13,6 +13,7 @@ export function createLanguageServiceHost(
 
 	let lastProjectVersion: number | string | undefined;
 	let tsProjectVersion = 0;
+	let tsFileNames: string[] = [];
 
 	const _tsHost: ts.LanguageServiceHost = {
 		...sys,
@@ -41,7 +42,7 @@ export function createLanguageServiceHost(
 		},
 		readDirectory,
 		getDirectories,
-		directoryExists,
+		directoryExists: undefined, // ignore for better performance
 		fileExists,
 		getProjectVersion: () => {
 			return tsProjectVersion + ':' + sys.version;
@@ -49,7 +50,7 @@ export function createLanguageServiceHost(
 		getTypeRootsVersion: () => {
 			return sys.version ?? -1; // TODO: only update for /node_modules changes?
 		},
-		getScriptFileNames,
+		getScriptFileNames: () => tsFileNames,
 		getScriptVersion,
 		getScriptSnapshot,
 		getScriptKind(fileName) {
@@ -121,6 +122,21 @@ export function createLanguageServiceHost(
 
 		oldTsVirtualFileSnapshots = newTsVirtualFileSnapshots;
 		oldOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
+
+		const tsFileNamesSet = new Set<string>();
+		for (const { root } of ctx.virtualFiles.allSources()) {
+			forEachEmbeddedFile(root, embedded => {
+				if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
+					tsFileNamesSet.add(embedded.fileName); // virtual .ts
+				}
+			});
+		}
+		for (const fileName of ctx.host.getScriptFileNames()) {
+			if (!ctx.virtualFiles.hasSource(fileName)) {
+				tsFileNamesSet.add(fileName); // .ts
+			}
+		}
+		tsFileNames = [...tsFileNamesSet];
 	}
 
 	function readDirectory(
@@ -142,7 +158,7 @@ export function createLanguageServiceHost(
 
 				const files: string[] = [];
 
-				for (const fileName of getScriptFileNames()) {
+				for (const fileName of tsFileNames) {
 					if (fileName.toLowerCase().startsWith(dirPath.toLowerCase())) {
 						const baseName = fileName.substring(dirPath.length);
 						if (baseName.indexOf('/') === -1) {
@@ -184,7 +200,7 @@ export function createLanguageServiceHost(
 
 		const names = new Set<string>();
 
-		for (const fileName of getScriptFileNames()) {
+		for (const fileName of tsFileNames) {
 			if (fileName.toLowerCase().startsWith(dirName.toLowerCase())) {
 				const path = fileName.substring(dirName.length);
 				if (path.indexOf('/') >= 0) {
@@ -194,27 +210,6 @@ export function createLanguageServiceHost(
 		}
 
 		return [...names];
-	}
-
-	function getScriptFileNames() {
-
-		const tsFileNames = new Set<string>();
-
-		for (const { root } of ctx.virtualFiles.allSources()) {
-			forEachEmbeddedFile(root, embedded => {
-				if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
-					tsFileNames.add(embedded.fileName); // virtual .ts
-				}
-			});
-		}
-
-		for (const fileName of ctx.host.getScriptFileNames()) {
-			if (!ctx.virtualFiles.hasSource(fileName)) {
-				tsFileNames.add(fileName); // .ts
-			}
-		}
-
-		return [...tsFileNames];
 	}
 
 	function getScriptSnapshot(fileName: string) {
@@ -263,42 +258,7 @@ export function createLanguageServiceHost(
 		return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '';
 	}
 
-	function directoryExists(dirName: string): boolean {
-		if (getScriptFileNames().some(fileName => fileName.toLowerCase().startsWith(dirName.toLowerCase()))) {
-			return true;
-		}
-		return sys.directoryExists(dirName);
-	}
-
 	function fileExists(fileName: string) {
-
-		// fill external virtual files
-
-		const ext = fileName.substring(fileName.lastIndexOf('.'));
-		if (
-			ext === '.js'
-			|| ext === '.ts'
-			|| ext === '.jsx'
-			|| ext === '.tsx'
-		) {
-
-			/**
-			 * If try to access a external .vue file that outside of the project,
-			 * the file will not process by language service host,
-			 * so virtual file will not be created.
-			 * 
-			 * We try to create virtual file here.
-			 */
-
-			const sourceFileName = fileName.substring(0, fileName.lastIndexOf('.'));
-
-			if (!ctx.virtualFiles.hasSource(sourceFileName)) {
-				const scriptSnapshot = getScriptSnapshot(sourceFileName);
-				if (scriptSnapshot) {
-					ctx.virtualFiles.updateSource(sourceFileName, scriptSnapshot, ctx.host.getLanguageId?.(sourceFileName));
-				}
-			}
-		}
 
 		// virtual files
 		if (ctx.virtualFiles.hasVirtualFile(fileName)) {
