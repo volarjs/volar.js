@@ -113,7 +113,7 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 		return resolved;
 	}
 
-	// fix https://github.com/volarjs/volar.js/commit/b1344bf65c01f55872e0b0a17c767cfbae6893e0
+	// fix https://github.com/vuejs/language-tools/issues/3332
 	function fileExists(fileName: string) {
 		if (languageServiceHost.fileExists(fileName)) {
 			const fileSize = ts.sys.getFileSize?.(fileName) ?? languageServiceHost.readFile(fileName)?.length ?? 0;
