@@ -98,7 +98,7 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 			},
 			fileExists(fileName) {
 				if (exts.some(ext => fileName.endsWith(ext + '.d.ts'))) {
-					return languageServiceHost.fileExists(fileName.slice(0, -'.d.ts'.length));
+					return fileExists(fileName.slice(0, -'.d.ts'.length));
 				}
 				return languageServiceHost.fileExists(fileName);
 			},
@@ -111,6 +111,15 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 			}
 		}
 		return resolved;
+	}
+
+	// fix https://github.com/volarjs/volar.js/commit/b1344bf65c01f55872e0b0a17c767cfbae6893e0
+	function fileExists(fileName: string) {
+		if (languageServiceHost.fileExists(fileName)) {
+			const fileSize = ts.sys.getFileSize?.(fileName) ?? languageServiceHost.readFile(fileName)?.length ?? 0;
+			return fileSize < 4 * 1024 * 1024;
+		}
+		return false;
 	}
 
 	function updateScript(fileName: string) {
