@@ -42,7 +42,7 @@ export function createLanguageServiceHost(
 		},
 		readDirectory,
 		getDirectories,
-		directoryExists: undefined, // ignore for better performance
+		directoryExists,
 		fileExists,
 		getProjectVersion: () => {
 			return tsProjectVersion + ':' + sys.version;
@@ -256,6 +256,11 @@ export function createLanguageServiceHost(
 		}
 		// fs files
 		return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '';
+	}
+
+	function directoryExists(dirName: string): boolean {
+		return sys.directoryExists(dirName)
+			|| tsFileNames.some(fileName => fileName.toLowerCase().startsWith(dirName.toLowerCase()));
 	}
 
 	function fileExists(fileName: string) {
