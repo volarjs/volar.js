@@ -101,10 +101,10 @@ export function createWorkspaces(context: WorkspacesContext) {
 		await sleep(delay);
 
 		if (req === semanticTokensReq) {
-			if (context.workspaces.initParams.capabilities.textDocument?.semanticTokens) {
+			if (context.workspaces.initParams.capabilities.workspace?.semanticTokens?.refreshSupport) {
 				context.server.connection.languages.semanticTokens.refresh();
 			}
-			if (context.workspaces.initParams.capabilities.textDocument?.inlayHint) {
+			if (context.workspaces.initParams.capabilities.workspace?.inlayHint?.refreshSupport) {
 				context.server.connection.languages.inlayHint.refresh();
 			}
 		}
