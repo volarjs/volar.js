@@ -1,6 +1,6 @@
 import type { FileType, FileSystem, FileStat, Result } from '@volar/language-service';
-import { UriResolver } from './types';
-import { fetchJson, fetchText, getPackageName } from './utils';
+import { UriResolver } from '../types';
+import { fetchJson, fetchText, getPackageName } from '../utils';
 
 export const jsDelivrUriBase = 'https://cdn.jsdelivr.net/npm';
 

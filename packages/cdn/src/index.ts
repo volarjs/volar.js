@@ -2,7 +2,7 @@ import type { FileSystem, ServiceEnvironment } from '@volar/language-service';
 import type { UriResolver } from './types';
 
 export * from './types';
-export * from './jsdelivr';
+export * from './cdns/jsdelivr';
 
 export function decorateServiceEnvironment(
 	env: ServiceEnvironment,

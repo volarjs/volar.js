@@ -45,11 +45,11 @@ export function createLanguageHost(
 		},
 		getScriptFileNames() {
 			const models = workerContext.getMirrorModels();
-			return models.map(model => env.uriToFileName(model.uri.toString()));
+			return models.map(model => env.uriToFileName(model.uri.toString(true)));
 		},
 		getScriptSnapshot(fileName) {
 			const uri = env.fileNameToUri(fileName);
-			const model = workerContext.getMirrorModels().find(model => model.uri.toString() === uri);
+			const model = workerContext.getMirrorModels().find(model => model.uri.toString(true) === uri);
 			if (model) {
 				const cache = modelSnapshot.get(model);
 				if (cache && cache[0] === model.version) {
