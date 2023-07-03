@@ -21,6 +21,7 @@ export function createServiceEnvironment(): ServiceEnvironment {
 export function createLanguageHost(
 	workerContext: monaco.worker.IWorkerContext<any>,
 	env: ServiceEnvironment,
+	rootPath: string,
 	compilerOptions: ts.CompilerOptions = {}
 ): TypeScriptLanguageHost {
 
@@ -68,7 +69,7 @@ export function createLanguageHost(
 			return compilerOptions;
 		},
 		getCurrentDirectory() {
-			return '/';
+			return rootPath;
 		},
 	};
 

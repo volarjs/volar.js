@@ -2,9 +2,9 @@ import type { FileType, FileSystem, FileStat, Result } from '@volar/language-ser
 import { UriResolver } from '../types';
 import { fetchJson, fetchText } from '../utils';
 
-export function createGitHubUriResolver(owner: string, repo: string, branch: string, fileNameBase = '/workspace'): UriResolver {
+export function createGitHubUriResolver(fileNameBase: string, owner: string, repo: string, branch: string): UriResolver {
 
-	const gitHubUriBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}`;
+	const gitHubUriBase = getGitHubUriBase(owner, repo, branch);
 
 	return {
 		uriToFileName,
@@ -34,7 +34,7 @@ export function createGitHubUriResolver(owner: string, repo: string, branch: str
 
 export function createGitHubFs(owner: string, repo: string, branch: string, onReadFile?: (uri: string, content: string) => void): FileSystem {
 
-	const gitHubUriBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}`;
+	const gitHubUriBase = getGitHubUriBase(owner, repo, branch);
 
 	return {
 		stat,
@@ -100,12 +100,13 @@ export function createGitHubFs(owner: string, repo: string, branch: string, onRe
 
 				const path = uri.substring(gitHubUriBase.length);
 				const dirData = await fetchContents(path);
-				return dirData.map(entry => [
+				const result: [string, FileType][] = dirData.map(entry => [
 					entry.name,
 					entry.type === 'file' ? 1 satisfies FileType.File
 						: entry.type === 'dir' ? 2 satisfies FileType.Directory
 							: 0 satisfies FileType.Unknown,
 				]);
+				return result;
 			})();
 		}
 
@@ -139,4 +140,8 @@ export function createGitHubFs(owner: string, repo: string, branch: string, onRe
 			type: 'file' | 'dir',
 		}[]>(`https://api.github.com/repos/${owner}/${repo}/contents${dirName}?ref=${branch}`) ?? [];
 	}
+}
+
+function getGitHubUriBase(owner: string, repo: string, branch: string) {
+	return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}`;
 }

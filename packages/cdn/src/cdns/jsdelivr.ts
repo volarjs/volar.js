@@ -5,8 +5,8 @@ import { fetchJson, fetchText } from '../utils';
 export const jsDelivrUriBase = 'https://cdn.jsdelivr.net/npm';
 
 export function createJsDelivrUriResolver(
+	fileNameBase: string,
 	versions: Record<string, string> = {},
-	fileNameBase = '/node_modules'
 ): UriResolver {
 
 	return {
