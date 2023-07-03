@@ -2,7 +2,6 @@ import type { FileChangeType, FileType, ServiceEnvironment, Disposable } from '@
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';
-import { IDtsHost, getPackageNameOfDtsPath } from './dtsHost';
 
 interface File {
 	text?: string;
@@ -23,7 +22,6 @@ let currentCwd = '';
 export function createSys(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	env: ServiceEnvironment,
-	dtsHost?: IDtsHost,
 ): ts.System & {
 	version: number;
 	sync(): Promise<number>;
@@ -138,17 +136,9 @@ export function createSys(
 		dirName = resolvePath(dirName);
 
 		const dir = getDir(dirName);
-		if (dirName === '/node_modules' && dtsHost) {
-			dir.exists = true;
-		}
-		else if (dirName.startsWith('/node_modules/') && dtsHost && !getPackageNameOfDtsPath(dirName)) {
-			dir.exists = true;
-		}
-		else if (dir.exists === undefined) {
+		if (dir.exists === undefined) {
 			dir.exists = false;
-			const result = dirName.startsWith('/node_modules/') && dtsHost
-				? dtsHost.stat(dirName)
-				: env.fs?.stat(env.fileNameToUri(dirName));
+			const result = env.fs?.stat(env.fileNameToUri(dirName));
 			if (typeof result === 'object' && 'then' in result) {
 				const promise = result;
 				promises.add(promise);
@@ -177,9 +167,7 @@ export function createSys(
 		const file = dir.files[baseName] ??= {};
 		if (file.exists === undefined) {
 			file.exists = false;
-			const result = fileName.startsWith('/node_modules/') && dtsHost
-				? dtsHost.stat(fileName)
-				: env.fs?.stat(env.fileNameToUri(fileName));
+			const result = env.fs?.stat(env.fileNameToUri(fileName));
 			if (typeof result === 'object' && 'then' in result) {
 				const promise = result;
 				promises.add(promise);
@@ -252,9 +240,7 @@ export function createSys(
 		file.requested = true;
 
 		const uri = env.fileNameToUri(fileName);
-		const result = fileName.startsWith('/node_modules/') && dtsHost
-			? dtsHost.readFile(fileName)
-			: env.fs?.readFile(uri, encoding);
+		const result = env.fs?.readFile(uri, encoding);
 
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
@@ -292,9 +278,7 @@ export function createSys(
 		}
 		dir.requested = true;
 
-		const result = dirName.startsWith('/node_modules/') && dtsHost
-			? dtsHost.readDirectory(dirName)
-			: env.fs?.readDirectory(env.fileNameToUri(dirName || '.'));
+		const result = env.fs?.readDirectory(env.fileNameToUri(dirName || '.'));
 
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
