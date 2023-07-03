@@ -7,36 +7,36 @@ export * from './cdns/github';
 
 export function decorateServiceEnvironment(
 	env: ServiceEnvironment,
-	jsDelivrUriResolver: UriResolver,
-	jsDelivrFs: FileSystem
+	uriResolver: UriResolver,
+	fs: FileSystem
 ) {
-	const fileNameToUri = env.fileNameToUri;
-	const uriToFileName = env.uriToFileName;
-	const fs = env.fs;
+	const _fileNameToUri = env.fileNameToUri;
+	const _uriToFileName = env.uriToFileName;
+	const _fs = env.fs;
 	env.fileNameToUri = fileName => {
-		return jsDelivrUriResolver.fileNameToUri(fileName) ?? fileNameToUri(fileName);
+		return uriResolver.fileNameToUri(fileName) ?? _fileNameToUri(fileName);
 	};
 	env.uriToFileName = fileName => {
-		return jsDelivrUriResolver.uriToFileName(fileName) ?? uriToFileName(fileName);
+		return uriResolver.uriToFileName(fileName) ?? _uriToFileName(fileName);
 	};
 	env.fs = {
 		stat(uri) {
-			if (jsDelivrUriResolver.uriToFileName(uri)) {
-				return jsDelivrFs.stat(uri);
+			if (uriResolver.uriToFileName(uri)) {
+				return fs.stat(uri);
 			}
-			return fs?.stat(uri);
+			return _fs?.stat(uri);
 		},
 		readDirectory(uri) {
-			if (jsDelivrUriResolver.uriToFileName(uri)) {
-				return jsDelivrFs.readDirectory(uri);
+			if (uriResolver.uriToFileName(uri)) {
+				return fs.readDirectory(uri);
 			}
-			return fs?.readDirectory(uri) ?? [];
+			return _fs?.readDirectory(uri) ?? [];
 		},
 		readFile(uri) {
-			if (jsDelivrUriResolver.uriToFileName(uri)) {
-				return jsDelivrFs.readFile(uri);
+			if (uriResolver.uriToFileName(uri)) {
+				return fs.readFile(uri);
 			}
-			return fs?.readFile(uri);
+			return _fs?.readFile(uri);
 		},
 	};
 }

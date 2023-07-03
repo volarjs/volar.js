@@ -1,4 +1,4 @@
-import type { FileType, FileSystem, FileStat, Result } from '@volar/language-service';
+import type { FileType, FileSystem, FileStat } from '@volar/language-service';
 import { UriResolver } from '../types';
 import { fetchJson, fetchText } from '../utils';
 
@@ -42,7 +42,7 @@ export function createGitHubFs(owner: string, repo: string, branch: string, onRe
 		readFile,
 	};
 
-	function stat(uri: string): Result<FileStat | undefined> {
+	async function stat(uri: string): Promise<FileStat | undefined> {
 
 		if (uri === gitHubUriBase) {
 			return {
@@ -64,66 +64,58 @@ export function createGitHubFs(owner: string, repo: string, branch: string, onRe
 				};
 			}
 
-			return (async () => {
-
-				const path = uri.substring(gitHubUriBase.length);
-				const dirName = path.substring(0, path.lastIndexOf('/'));
-				const baseName = path.substring(path.lastIndexOf('/') + 1);
-				const dirData = await fetchContents(dirName);
-				const file = dirData.find(entry => entry.name === baseName && entry.type === 'file');
-				const dir = dirData.find(entry => entry.name === baseName && entry.type === 'dir');
-				if (file) {
-					return {
-						type: 1 satisfies FileType.File,
-						size: file.size,
-						ctime: -1,
-						mtime: -1,
-					};
-				}
-				if (dir) {
-					return {
-						type: 2 satisfies FileType.Directory,
-						size: dir.size,
-						ctime: -1,
-						mtime: -1,
-					};
-				}
-			})();
+			const path = uri.substring(gitHubUriBase.length);
+			const dirName = path.substring(0, path.lastIndexOf('/'));
+			const baseName = path.substring(path.lastIndexOf('/') + 1);
+			const dirData = await fetchContents(dirName);
+			const file = dirData.find(entry => entry.name === baseName && entry.type === 'file');
+			const dir = dirData.find(entry => entry.name === baseName && entry.type === 'dir');
+			if (file) {
+				return {
+					type: 1 satisfies FileType.File,
+					size: file.size,
+					ctime: -1,
+					mtime: -1,
+				};
+			}
+			if (dir) {
+				return {
+					type: 2 satisfies FileType.Directory,
+					size: dir.size,
+					ctime: -1,
+					mtime: -1,
+				};
+			}
 		}
 	}
 
-	function readDirectory(uri: string): Result<[string, FileType][]> {
+	async function readDirectory(uri: string): Promise<[string, FileType][]> {
 
 		if (uri === gitHubUriBase || uri.startsWith(gitHubUriBase + '/')) {
 
-			return (async () => {
-
-				const path = uri.substring(gitHubUriBase.length);
-				const dirData = await fetchContents(path);
-				const result: [string, FileType][] = dirData.map(entry => [
-					entry.name,
-					entry.type === 'file' ? 1 satisfies FileType.File
-						: entry.type === 'dir' ? 2 satisfies FileType.Directory
-							: 0 satisfies FileType.Unknown,
-				]);
-				return result;
-			})();
+			const path = uri.substring(gitHubUriBase.length);
+			const dirData = await fetchContents(path);
+			const result: [string, FileType][] = dirData.map(entry => [
+				entry.name,
+				entry.type === 'file' ? 1 satisfies FileType.File
+					: entry.type === 'dir' ? 2 satisfies FileType.Directory
+						: 0 satisfies FileType.Unknown,
+			]);
+			return result;
 		}
 
 		return [];
 	}
 
-	function readFile(uri: string): Result<string | undefined> {
+	async function readFile(uri: string): Promise<string | undefined> {
 
 		if (uri.startsWith(gitHubUriBase + '/')) {
 
-			return (async () => {
-				const text = await fetchText(uri);
-				if (text !== undefined) {
-					onReadFile?.(uri, text);
-				}
-				return text;
-			})();
+			const text = await fetchText(uri);
+			if (text !== undefined) {
+				onReadFile?.(uri, text);
+			}
+			return text;
 		}
 	}
 

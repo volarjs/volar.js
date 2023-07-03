@@ -1,4 +1,4 @@
-import type { FileType, FileSystem, FileStat, Result } from '@volar/language-service';
+import type { FileType, FileSystem, FileStat } from '@volar/language-service';
 import { UriResolver } from '../types';
 import { fetchJson, fetchText } from '../utils';
 
@@ -61,7 +61,7 @@ export function createJsDelivrFs(onReadFile?: (uri: string, content: string) => 
 		readFile,
 	};
 
-	function stat(uri: string): Result<FileStat | undefined> {
+	async function stat(uri: string): Promise<FileStat | undefined> {
 
 		if (uri === jsDelivrUriBase) {
 			return {
@@ -76,112 +76,92 @@ export function createJsDelivrFs(onReadFile?: (uri: string, content: string) => 
 
 			const path = uri.substring(jsDelivrUriBase.length);
 			const pkgName = getPackageName(path);
-			if (!pkgName || !isValidPackageNameSync(pkgName)) {
+			if (!pkgName || !await isValidPackageName(pkgName)) {
 				return;
 			}
 
-			return (async () => {
-				if (!await isValidPackageNameAsync(pkgName)) {
-					return;
-				}
+			if (!flatResults.has(pkgName)) {
+				flatResults.set(pkgName, flat(pkgName));
+			}
 
-				if (!flatResults.has(pkgName)) {
-					flatResults.set(pkgName, flat(pkgName));
-				}
-
-				const flatResult = await flatResults.get(pkgName)!;
-				const filePath = path.slice(`/${pkgName}`.length);
-				const file = flatResult.find(file => file.name === filePath);
-				if (file) {
-					return {
-						type: 1 satisfies FileType.File,
-						ctime: new Date(file.time).valueOf(),
-						mtime: new Date(file.time).valueOf(),
-						size: file.size,
-					};
-				}
-				else if (flatResult.some(file => file.name.startsWith(filePath + '/'))) {
-					return {
-						type: 2 satisfies FileType.Directory,
-						ctime: -1,
-						mtime: -1,
-						size: -1,
-					};
-				}
-			})();
+			const flatResult = await flatResults.get(pkgName)!;
+			const filePath = path.slice(`/${pkgName}`.length);
+			const file = flatResult.find(file => file.name === filePath);
+			if (file) {
+				return {
+					type: 1 satisfies FileType.File,
+					ctime: new Date(file.time).valueOf(),
+					mtime: new Date(file.time).valueOf(),
+					size: file.size,
+				};
+			}
+			else if (flatResult.some(file => file.name.startsWith(filePath + '/'))) {
+				return {
+					type: 2 satisfies FileType.Directory,
+					ctime: -1,
+					mtime: -1,
+					size: -1,
+				};
+			}
 		}
 	}
 
-	function readDirectory(uri: string): Result<[string, FileType][]> {
+	async function readDirectory(uri: string): Promise<[string, FileType][]> {
 
 		if (uri.startsWith(jsDelivrUriBase + '/')) {
 
 			const path = uri.substring(jsDelivrUriBase.length);
 			const pkgName = getPackageName(path);
-			if (!pkgName || !isValidPackageNameSync(pkgName)) {
+			if (!pkgName || !await isValidPackageName(pkgName)) {
 				return [];
 			}
 
-			return (async () => {
+			if (!flatResults.has(pkgName)) {
+				flatResults.set(pkgName, flat(pkgName));
+			}
 
-				if (!await isValidPackageNameAsync(pkgName)) {
-					return [];
-				}
+			const flatResult = await flatResults.get(pkgName)!;
+			const dirPath = path.slice(`/${pkgName}`.length);
+			const files = flatResult
+				.filter(f => f.name.substring(0, f.name.lastIndexOf('/')) === dirPath)
+				.map(f => f.name.slice(dirPath.length + 1));
+			const dirs = flatResult
+				.filter(f => f.name.startsWith(dirPath + '/') && f.name.substring(dirPath.length + 1).split('/').length >= 2)
+				.map(f => f.name.slice(dirPath.length + 1).split('/')[0]);
 
-				if (!flatResults.has(pkgName)) {
-					flatResults.set(pkgName, flat(pkgName));
-				}
-
-				const flatResult = await flatResults.get(pkgName)!;
-				const dirPath = path.slice(`/${pkgName}`.length);
-				const files = flatResult
-					.filter(f => f.name.substring(0, f.name.lastIndexOf('/')) === dirPath)
-					.map(f => f.name.slice(dirPath.length + 1));
-				const dirs = flatResult
-					.filter(f => f.name.startsWith(dirPath + '/') && f.name.substring(dirPath.length + 1).split('/').length >= 2)
-					.map(f => f.name.slice(dirPath.length + 1).split('/')[0]);
-
-				return [
-					...files.map<[string, FileType]>(f => [f, 1 satisfies FileType.File]),
-					...[...new Set(dirs)].map<[string, FileType]>(f => [f, 2 satisfies FileType.Directory]),
-				];
-			})();
+			return [
+				...files.map<[string, FileType]>(f => [f, 1 satisfies FileType.File]),
+				...[...new Set(dirs)].map<[string, FileType]>(f => [f, 2 satisfies FileType.Directory]),
+			];
 		}
 
 		return [];
 	}
 
-	function readFile(uri: string): Result<string | undefined> {
+	async function readFile(uri: string): Promise<string | undefined> {
 
 		if (uri.startsWith(jsDelivrUriBase + '/')) {
 
 			const path = uri.substring(jsDelivrUriBase.length);
 			const pkgName = getPackageName(path);
-			if (!pkgName || !isValidPackageNameSync(pkgName)) {
+			if (!pkgName || !await isValidPackageName(pkgName)) {
 				return;
 			}
 
-			return (async () => {
+			if (!fetchResults.has(path)) {
+				fetchResults.set(path, (async () => {
+					if ((await stat(uri))?.type !== 1 satisfies FileType.File) {
+						return;
+					}
+					const text = await fetchText(uri);
+					if (text !== undefined) {
+						onReadFile?.(uri, text);
+					}
+					return text;
+				})());
+			}
 
-				if (!await isValidPackageNameAsync(pkgName)) {
-					return;
-				}
-
-				if (!fetchResults.has(path)) {
-					fetchResults.set(path, (async () => {
-						if ((await stat(uri))?.type !== 1 satisfies FileType.File) {
-							return;
-						}
-						const text = await fetchText(uri);
-						if (text !== undefined) {
-							onReadFile?.(uri, text);
-						}
-						return text;
-					})());
-				}
-
-				return await fetchResults.get(path)!;
-			})();
+			return await fetchResults.get(path)!;
 		}
 	}
 
@@ -219,7 +199,7 @@ export function createJsDelivrFs(onReadFile?: (uri: string, content: string) => 
 		return flat.files;
 	}
 
-	function isValidPackageNameSync(pkgName: string) {
+	async function isValidPackageName(pkgName: string) {
 		if (pkgName.substring(1).includes('@')) {
 			pkgName = pkgName.substring(0, pkgName.lastIndexOf('@'));
 		}
@@ -229,13 +209,6 @@ export function createJsDelivrFs(onReadFile?: (uri: string, content: string) => 
 		// hard code for known invalid package
 		if (pkgName.startsWith('@typescript/') || pkgName.startsWith('@types/typescript__')) {
 			return false;
-		}
-		return true;
-	}
-
-	async function isValidPackageNameAsync(pkgName: string) {
-		if (pkgName.substring(1).includes('@')) {
-			pkgName = pkgName.substring(0, pkgName.lastIndexOf('@'));
 		}
 		// don't check @types if original package already having types
 		if (pkgName.startsWith('@types/')) {
