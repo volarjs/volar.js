@@ -19,7 +19,7 @@ export function createServiceEnvironment(): ServiceEnvironment {
 }
 
 export function createLanguageHost(
-	workerContext: monaco.worker.IWorkerContext<any>,
+	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
 	env: ServiceEnvironment,
 	rootPath: string,
 	compilerOptions: ts.CompilerOptions = {}
@@ -31,26 +31,26 @@ export function createLanguageHost(
 	const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
 	const host: TypeScriptLanguageHost = {
 		getProjectVersion() {
-			const models = workerContext.getMirrorModels();
-			if (modelVersions.size === workerContext.getMirrorModels().length) {
+			const models = getMirrorModels();
+			if (modelVersions.size === getMirrorModels().length) {
 				if (models.every(model => modelVersions.get(model) === model.version)) {
 					return projectVersion.toString();
 				}
 			}
 			modelVersions.clear();
-			for (const model of workerContext.getMirrorModels()) {
+			for (const model of getMirrorModels()) {
 				modelVersions.set(model, model.version);
 			}
 			projectVersion++;
 			return projectVersion.toString();
 		},
 		getScriptFileNames() {
-			const models = workerContext.getMirrorModels();
+			const models = getMirrorModels();
 			return models.map(model => env.uriToFileName(model.uri.toString(true)));
 		},
 		getScriptSnapshot(fileName) {
 			const uri = env.fileNameToUri(fileName);
-			const model = workerContext.getMirrorModels().find(model => model.uri.toString(true) === uri);
+			const model = getMirrorModels().find(model => model.uri.toString(true) === uri);
 			if (model) {
 				const cache = modelSnapshot.get(model);
 				if (cache && cache[0] === model.version) {
