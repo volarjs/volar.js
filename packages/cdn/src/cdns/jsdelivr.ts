@@ -1,6 +1,6 @@
 import type { FileType, FileSystem, FileStat, Result } from '@volar/language-service';
 import { UriResolver } from '../types';
-import { fetchJson, fetchText, getPackageName } from '../utils';
+import { fetchJson, fetchText } from '../utils';
 
 export const jsDelivrUriBase = 'https://cdn.jsdelivr.net/npm';
 
@@ -257,4 +257,22 @@ export function createJsDelivrFs(onReadFile?: (uri: string, content: string) => 
 		}
 		return true;
 	}
+}
+
+/**
+ * @example
+ * "/a/b/c" -> "a"
+ * "/@a/b/c" -> "@a/b"
+ * "/@a/b@1.2.3/c" -> "@a/b@1.2.3"
+ */
+export function getPackageName(path: string) {
+	const parts = path.split('/');
+	let pkgName = parts[1];
+	if (pkgName.startsWith('@')) {
+		if (parts.length < 3 || !parts[2]) {
+			return undefined;
+		}
+		pkgName += '/' + parts[2];
+	}
+	return pkgName;
 }

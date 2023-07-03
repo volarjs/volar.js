@@ -3,6 +3,7 @@ import type { UriResolver } from './types';
 
 export * from './types';
 export * from './cdns/jsdelivr';
+export * from './cdns/github';
 
 export function decorateServiceEnvironment(
 	env: ServiceEnvironment,
