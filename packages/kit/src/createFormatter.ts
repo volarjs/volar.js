@@ -78,7 +78,7 @@ export function createFormatter(
 		const host: TypeScriptLanguageHost = {
 			getCurrentDirectory: () => '/',
 			getCompilationSettings: () => compilerOptions,
-			getProjectVersion: () => projectVersion++,
+			getProjectVersion: () => (projectVersion++).toString(),
 			getScriptFileNames: () => fakeScriptSnapshot ? [fakeScriptFileName] : [],
 			getScriptSnapshot: (fileName) => {
 				if (fileName === fakeScriptFileName) {

@@ -33,7 +33,7 @@ export function createLanguageHost(
 			const models = workerContext.getMirrorModels();
 			if (modelVersions.size === workerContext.getMirrorModels().length) {
 				if (models.every(model => modelVersions.get(model) === model.version)) {
-					return projectVersion;
+					return projectVersion.toString();
 				}
 			}
 			modelVersions.clear();
@@ -41,7 +41,7 @@ export function createLanguageHost(
 				modelVersions.set(model, model.version);
 			}
 			projectVersion++;
-			return projectVersion;
+			return projectVersion.toString();
 		},
 		getScriptFileNames() {
 			const models = workerContext.getMirrorModels();

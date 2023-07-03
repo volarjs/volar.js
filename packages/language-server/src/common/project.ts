@@ -45,7 +45,7 @@ export async function createProject(context: ProjectContext) {
 	const fsScriptsCache = createUriMap<ts.IScriptSnapshot | undefined>(fileNameToUri);
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const languageHost: TypeScriptLanguageHost = {
-		getProjectVersion: () => projectVersion,
+		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => parsedCommandLine.fileNames,
 		getScriptSnapshot: (fileName) => {
 			askedFiles.pathSet(fileName, true);

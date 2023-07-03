@@ -54,7 +54,7 @@ function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick
 		},
 		getProjectVersion: () => {
 			checkRootFilesUpdate();
-			return projectVersion;
+			return projectVersion.toString();
 		},
 		getScriptFileNames: () => {
 			checkRootFilesUpdate();

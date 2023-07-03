@@ -93,7 +93,7 @@ export interface Language<T extends VirtualFile = VirtualFile> {
 }
 
 interface LanguageHost {
-	getProjectVersion(): number | string;
+	getProjectVersion(): string;
 	getScriptFileNames(): string[];
 	getScriptSnapshot(fileName: string): ts.IScriptSnapshot | undefined;
 	getLanguageId?(fileName: string): string | undefined;
