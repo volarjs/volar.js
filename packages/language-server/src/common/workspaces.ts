@@ -107,6 +107,11 @@ export function createWorkspaces(context: WorkspacesContext) {
 			if (context.workspaces.initParams.capabilities.workspace?.inlayHint?.refreshSupport) {
 				context.server.connection.languages.inlayHint.refresh();
 			}
+			if ((context.workspaces.initOptions.diagnosticModel ?? DiagnosticModel.Push) === DiagnosticModel.Pull) {
+				if (context.workspaces.initParams.capabilities.workspace?.diagnostics?.refreshSupport) {
+					context.server.connection.languages.diagnostics.refresh();
+				}
+			}
 		}
 	}
 
