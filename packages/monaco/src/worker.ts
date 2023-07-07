@@ -15,6 +15,7 @@ export function createServiceEnvironment(): ServiceEnvironment {
 		uriToFileName: uri => URI.parse(uri).fsPath.replace(/\\/g, '/'),
 		fileNameToUri: fileName => URI.file(fileName).toString(),
 		rootUri: URI.file('/'),
+		console,
 	};
 }
 

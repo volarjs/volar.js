@@ -1,5 +1,4 @@
-import { Config } from '@volar/language-service';
-import { Console } from '../../types';
+import type { Config, Console } from '@volar/language-service';
 
 export function loadConfig(console: Console, dir: string, configFile: string | undefined): Config | undefined {
 	let configPath: string | undefined;

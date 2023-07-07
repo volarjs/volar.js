@@ -12,6 +12,7 @@ describe('triple-directory', () => {
 			fileNameToUri,
 			uriToFileName,
 			fs: createFs({}),
+			console,
 		});
 		sys.readDirectory(__dirname);
 	});

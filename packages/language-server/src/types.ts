@@ -1,16 +1,9 @@
-import { FileSystem, LanguageService, ServiceEnvironment, SharedModules } from '@volar/language-service';
+import { FileSystem, Console, LanguageService, ServiceEnvironment, SharedModules } from '@volar/language-service';
 import type { TypeScriptLanguageHost } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { Config } from '@volar/language-service';
 import { ProjectContext } from './common/project';
-
-export interface Console {
-	error(message: string): void;
-	info(message: string): void;
-	log(message: string): void;
-	warn(message: string): void;
-}
 
 export interface Timer {
 	setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;

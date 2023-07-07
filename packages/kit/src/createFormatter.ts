@@ -32,6 +32,7 @@ export function createFormatter(
 			},
 			getConfiguration: section => getConfiguration(settings, section),
 			fs,
+			console,
 		},
 		config,
 		createHost(),

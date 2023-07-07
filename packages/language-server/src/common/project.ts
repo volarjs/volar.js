@@ -35,6 +35,7 @@ export async function createProject(context: ProjectContext) {
 		uriToFileName,
 		fileNameToUri,
 		fs,
+		console: context.server.runtimeEnv.console,
 		locale: context.workspaces.initParams.locale,
 		rootUri: context.project.rootUri,
 		clientCapabilities: context.workspaces.initParams.capabilities,
