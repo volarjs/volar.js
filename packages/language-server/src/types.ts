@@ -5,6 +5,19 @@ import * as vscode from 'vscode-languageserver';
 import { Config } from '@volar/language-service';
 import { ProjectContext } from './common/project';
 
+export interface Console {
+	error(message: string): void;
+	info(message: string): void;
+	log(message: string): void;
+	warn(message: string): void;
+}
+
+export interface Timer {
+	setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
+	// Seems not useful
+	// setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): vscode.Disposable;
+}
+
 export interface RuntimeEnvironment {
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
@@ -12,11 +25,8 @@ export interface RuntimeEnvironment {
 	loadTypescriptLocalized(tsdk: string, locale: string): Promise<{} | undefined>;
 	fs: FileSystem;
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
-	readonly timer: {
-		setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
-		// Seems not useful
-		// setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): vscode.Disposable;
-	};
+	timer: Timer;
+	console: Console;
 }
 
 export interface LanguageServerPlugin {

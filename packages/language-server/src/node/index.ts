@@ -85,6 +85,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 	startCommonLanguageServer(connection, plugins, (_, options) => ({
 		uriToFileName,
 		fileNameToUri,
+		console: connection.console,
 		timer: {
 			setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable {
 				const handle = setImmediate(callback, ...args);

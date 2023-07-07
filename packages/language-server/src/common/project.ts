@@ -91,6 +91,7 @@ export async function createProject(context: ProjectContext) {
 	);
 	let config = (
 		context.workspace.rootUri.scheme === 'file' ? loadConfig(
+			context.server.runtimeEnv.console,
 			context.server.runtimeEnv.uriToFileName(context.workspace.rootUri.toString()),
 			context.workspaces.initOptions.configFilePath,
 		) : {}

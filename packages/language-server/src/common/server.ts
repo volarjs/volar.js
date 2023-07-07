@@ -95,7 +95,7 @@ export async function startCommonLanguageServer(connection: vscode.Connection, _
 
 		for (const root of roots) {
 			if (root.scheme === 'file') {
-				const workspaceConfig = loadConfig(root.path, options.configFilePath);
+				const workspaceConfig = loadConfig(env.console, root.path, options.configFilePath);
 				if (workspaceConfig) {
 					config = workspaceConfig;
 					break;

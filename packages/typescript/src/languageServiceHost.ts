@@ -1,4 +1,4 @@
-import type { FileKind, VirtualFile, LanguageContext } from '@volar/language-service';
+import type { FileKind, VirtualFile, LanguageContext } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';

@@ -1,6 +1,7 @@
-import { Config } from "@volar/language-service";
+import { Config } from '@volar/language-service';
+import { Console } from '../../types';
 
-export function loadConfig(dir: string, configFile: string | undefined): Config | undefined {
+export function loadConfig(console: Console, dir: string, configFile: string | undefined): Config | undefined {
 	let configPath: string | undefined;
 	try {
 		configPath = require.resolve(configFile ?? './volar.config.js', { paths: [dir] });
@@ -14,6 +15,6 @@ export function loadConfig(dir: string, configFile: string | undefined): Config 
 		}
 	}
 	catch (err) {
-		console.log(err);
+		console.warn(String(err));
 	}
 }
