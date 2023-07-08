@@ -5,6 +5,7 @@ import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '@volar
 export async function activate(client: BaseLanguageClient) {
 
 	const subscriptions: vscode.Disposable[] = [];
+	const textDecoder = new TextDecoder();
 
 	addHandle();
 
@@ -31,7 +32,9 @@ export async function activate(client: BaseLanguageClient) {
 		subscriptions.push(client.onRequest(FsReadFileRequest.type, async uri => {
 			const uri2 = client.protocol2CodeConverter.asUri(uri);
 			try {
-				return await vscode.workspace.fs.readFile(uri2);
+				const data = await vscode.workspace.fs.readFile(uri2);
+				const text = textDecoder.decode(data);
+				return text;
 			}
 			catch (err) {
 				// ignore
