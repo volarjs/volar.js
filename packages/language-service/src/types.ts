@@ -23,7 +23,7 @@ export interface ServiceEnvironment {
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
 	fs?: FileSystem;
-	console: Console;
+	console?: Console;
 }
 
 export interface Console {
