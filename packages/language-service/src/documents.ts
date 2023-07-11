@@ -176,7 +176,7 @@ export function createDocumentsAndSourceMaps(
 
 	const map2DocMap = new WeakMap<SourceMap<FileRangeCapabilities>, SourceMapWithDocuments<FileRangeCapabilities>>();
 	const mirrorMap2DocMirrorMap = new WeakMap<MirrorMap, MirrorMapWithDocument>();
-	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, TextDocument>();
+	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
 
 	return {
 		getSourceByUri(sourceFileUri: string) {
@@ -257,14 +257,18 @@ export function createDocumentsAndSourceMaps(
 
 	function getDocumentByFileName(snapshot: ts.IScriptSnapshot, fileName: string) {
 		if (!snapshot2Doc.has(snapshot)) {
+			snapshot2Doc.set(snapshot, new Map());
+		}
+		const map = snapshot2Doc.get(snapshot)!;
+		if (!map.has(fileName)) {
 			const uri = env.fileNameToUri(fileName);
-			snapshot2Doc.set(snapshot, TextDocument.create(
+			map.set(fileName, TextDocument.create(
 				uri,
 				host.getLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 				version++,
 				snapshot.getText(0, snapshot.getLength()),
 			));
 		}
-		return snapshot2Doc.get(snapshot)!;
+		return map.get(fileName)!;
 	}
 }
