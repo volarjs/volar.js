@@ -17,6 +17,7 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 	const getProjectVersion = languageServiceHost.getProjectVersion?.bind(languageServiceHost);
 	const getScriptFileNames = languageServiceHost.getScriptFileNames.bind(languageServiceHost);
 	const getScriptSnapshot = languageServiceHost.getScriptSnapshot.bind(languageServiceHost);
+	const getScriptKind = languageServiceHost.getScriptKind?.bind(languageServiceHost);
 
 	// path completion
 	if (readDirectory) {
@@ -105,6 +106,30 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 		}
 		return scripts.get(fileName)?.snapshot ?? getScriptSnapshot(fileName);
 	};
+
+	if (getScriptKind) {
+		languageServiceHost.getScriptKind = (fileName) => {
+			if (scripts.has(fileName)) {
+				updateScript(fileName);
+			}
+			const script = scripts.get(fileName);
+			if (script) {
+				if (script.extension.endsWith('.js')) {
+					return ts.ScriptKind.JS;
+				}
+				if (script.extension.endsWith('.jsx')) {
+					return ts.ScriptKind.JSX;
+				}
+				if (script.extension.endsWith('.ts')) {
+					return ts.ScriptKind.TS;
+				}
+				if (script.extension.endsWith('.tsx')) {
+					return ts.ScriptKind.TSX;
+				}
+			}
+			return getScriptKind(fileName);
+		};
+	}
 
 	function resolveModuleName(name: string, containingFile: string, options: ts.CompilerOptions, redirectedReference?: ts.ResolvedProjectReference) {
 		const resolved = ts.resolveModuleName(name, containingFile, options, {
