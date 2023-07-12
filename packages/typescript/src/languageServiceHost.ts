@@ -174,15 +174,13 @@ export function createLanguageServiceHost(
 			},
 			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
 		);
-		if (ctx) {
-			matches = matches.map(match => {
-				const [_, source] = ctx.virtualFiles.getVirtualFile(match);
-				if (source) {
-					return source.fileName;
-				}
-				return match;
-			});
-		}
+		matches = matches.map(match => {
+			const [_, source] = ctx.virtualFiles.getVirtualFile(match);
+			if (source) {
+				return source.fileName;
+			}
+			return match;
+		});
 		return [...new Set([
 			...matches,
 			...sys.readDirectory(dirName, extensions, excludes, includes, depth),

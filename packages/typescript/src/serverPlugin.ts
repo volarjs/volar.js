@@ -11,11 +11,26 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 		extension: string;
 	}>();
 
+	const readDirectory = languageServiceHost.readDirectory?.bind(languageServiceHost);
 	const resolveModuleNameLiterals = languageServiceHost.resolveModuleNameLiterals?.bind(languageServiceHost);
 	const resolveModuleNames = languageServiceHost.resolveModuleNames?.bind(languageServiceHost);
 	const getProjectVersion = languageServiceHost.getProjectVersion?.bind(languageServiceHost);
 	const getScriptFileNames = languageServiceHost.getScriptFileNames.bind(languageServiceHost);
 	const getScriptSnapshot = languageServiceHost.getScriptSnapshot.bind(languageServiceHost);
+
+	// path completion
+	if (readDirectory) {
+		languageServiceHost.readDirectory = (path, extensions, exclude, include, depth) => {
+			if (extensions) {
+				for (const ext of exts) {
+					if (!extensions.includes(ext)) {
+						extensions = [...extensions, ...ext];
+					}
+				}
+			}
+			return readDirectory(path, extensions, exclude, include, depth);
+		};
+	}
 
 	if (resolveModuleNameLiterals) {
 		languageServiceHost.resolveModuleNameLiterals = (
