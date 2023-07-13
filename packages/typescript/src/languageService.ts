@@ -8,6 +8,7 @@ export function decorateLanguageService(virtualFiles: VirtualFiles, languageServ
 	const _getDefinitionAndBoundSpan = languageService.getDefinitionAndBoundSpan.bind(languageService);
 	const _getTypeDefinitionAtPosition = languageService.getTypeDefinitionAtPosition.bind(languageService);
 	const _getImplementationAtPosition = languageService.getImplementationAtPosition.bind(languageService);
+	const _getFileReferences = languageService.getFileReferences.bind(languageService);
 	const _findRenameLocations = languageService.findRenameLocations.bind(languageService);
 	const _getReferencesAtPosition = languageService.getReferencesAtPosition.bind(languageService);
 	const _findReferences = languageService.findReferences.bind(languageService);
@@ -19,6 +20,7 @@ export function decorateLanguageService(virtualFiles: VirtualFiles, languageServ
 	languageService.getImplementationAtPosition = getImplementationAtPosition;
 	languageService.findRenameLocations = findRenameLocations;
 	languageService.getReferencesAtPosition = getReferencesAtPosition;
+	languageService.getFileReferences = getFileReferences;
 	languageService.findReferences = findReferences;
 
 	// apis
@@ -43,6 +45,9 @@ export function decorateLanguageService(virtualFiles: VirtualFiles, languageServ
 	function getReferencesAtPosition(fileName: string, position: number): ReturnType<ts.LanguageService['getReferencesAtPosition']> {
 		return findLocations(fileName, position, 'references') as ts.ReferenceEntry[];
 	}
+	function getFileReferences(fileName: string): ReturnType<ts.LanguageService['getFileReferences']> {
+		return findLocations(fileName, -1, 'fileReferences') as ts.ReferenceEntry[];
+	}
 	function getDefinitionAtPosition(fileName: string, position: number): ReturnType<ts.LanguageService['getDefinitionAtPosition']> {
 		return findLocations(fileName, position, 'definition') as ts.DefinitionInfo[];
 	}
@@ -58,7 +63,7 @@ export function decorateLanguageService(virtualFiles: VirtualFiles, languageServ
 	function findLocations(
 		fileName: string,
 		position: number,
-		mode: 'definition' | 'typeDefinition' | 'references' | 'implementation' | 'rename',
+		mode: 'definition' | 'typeDefinition' | 'references' | 'fileReferences' | 'implementation' | 'rename',
 		findInStrings = false,
 		findInComments = false,
 		preferences?: ts.UserPreferences
@@ -78,9 +83,10 @@ export function decorateLanguageService(virtualFiles: VirtualFiles, languageServ
 			const _symbols = mode === 'definition' ? _getDefinitionAtPosition(fileName, position)
 				: mode === 'typeDefinition' ? _getTypeDefinitionAtPosition(fileName, position)
 					: mode === 'references' ? _getReferencesAtPosition(fileName, position)
-						: mode === 'implementation' ? _getImplementationAtPosition(fileName, position)
-							: mode === 'rename' && preferences ? _findRenameLocations(fileName, position, findInStrings, findInComments, preferences)
-								: undefined;
+						: mode === 'fileReferences' ? _getFileReferences(fileName)
+							: mode === 'implementation' ? _getImplementationAtPosition(fileName, position)
+								: mode === 'rename' && preferences ? _findRenameLocations(fileName, position, findInStrings, findInComments, preferences)
+									: undefined;
 			if (!_symbols) return;
 			symbols = symbols.concat(_symbols);
 			for (const ref of _symbols) {
