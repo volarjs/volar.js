@@ -15,7 +15,6 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 	const resolveModuleNameLiterals = languageServiceHost.resolveModuleNameLiterals?.bind(languageServiceHost);
 	const resolveModuleNames = languageServiceHost.resolveModuleNames?.bind(languageServiceHost);
 	const getProjectVersion = languageServiceHost.getProjectVersion?.bind(languageServiceHost);
-	const getScriptFileNames = languageServiceHost.getScriptFileNames.bind(languageServiceHost);
 	const getScriptSnapshot = languageServiceHost.getScriptSnapshot.bind(languageServiceHost);
 	const getScriptKind = languageServiceHost.getScriptKind?.bind(languageServiceHost);
 
@@ -88,44 +87,34 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 		};
 	}
 
-	languageServiceHost.getScriptFileNames = () => {
-		if (languageServiceHost.getCompilationSettings().composite) {
-			return [
-				...getScriptFileNames(),
-				...virtualFiles.allSources().map(source => source.fileName),
-			];
-		}
-		else {
-			return getScriptFileNames();
-		}
-	};
-
 	languageServiceHost.getScriptSnapshot = (fileName) => {
-		if (scripts.has(fileName)) {
+		if (exts.some(ext => fileName.endsWith(ext))) {
 			updateScript(fileName);
+			return scripts.get(fileName)?.snapshot;
 		}
-		return scripts.get(fileName)?.snapshot ?? getScriptSnapshot(fileName);
+		return getScriptSnapshot(fileName);
 	};
 
 	if (getScriptKind) {
 		languageServiceHost.getScriptKind = (fileName) => {
-			if (scripts.has(fileName)) {
+			if (exts.some(ext => fileName.endsWith(ext))) {
 				updateScript(fileName);
-			}
-			const script = scripts.get(fileName);
-			if (script) {
-				if (script.extension.endsWith('.js')) {
-					return ts.ScriptKind.JS;
+				const script = scripts.get(fileName);
+				if (script) {
+					if (script.extension.endsWith('.js')) {
+						return ts.ScriptKind.JS;
+					}
+					if (script.extension.endsWith('.jsx')) {
+						return ts.ScriptKind.JSX;
+					}
+					if (script.extension.endsWith('.ts')) {
+						return ts.ScriptKind.TS;
+					}
+					if (script.extension.endsWith('.tsx')) {
+						return ts.ScriptKind.TSX;
+					}
 				}
-				if (script.extension.endsWith('.jsx')) {
-					return ts.ScriptKind.JSX;
-				}
-				if (script.extension.endsWith('.ts')) {
-					return ts.ScriptKind.TS;
-				}
-				if (script.extension.endsWith('.tsx')) {
-					return ts.ScriptKind.TSX;
-				}
+				return ts.ScriptKind.Deferred;
 			}
 			return getScriptKind(fileName);
 		};
@@ -202,4 +191,23 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 
 		return scripts.get(fileName);
 	}
+}
+
+export function getExternalFiles(ts: typeof import('typescript/lib/tsserverlibrary'), project: ts.server.Project, exts: string[]) {
+	if (project.projectKind !== ts.server.ProjectKind.Configured) {
+		return [];
+	}
+	const configFile = project.getProjectName();
+	const config = ts.readJsonConfigFile(configFile, project.readFile.bind(project));
+	const parseHost: ts.ParseConfigHost = {
+		useCaseSensitiveFileNames: project.useCaseSensitiveFileNames(),
+		fileExists: project.fileExists.bind(project),
+		readFile: project.readFile.bind(project),
+		readDirectory: (...args) => {
+			args[1] = exts;
+			return project.readDirectory(...args);
+		},
+	};
+	const parsed = ts.parseJsonSourceFileConfigFileContent(config, parseHost, project.getCurrentDirectory());
+	return parsed.fileNames;
 }
