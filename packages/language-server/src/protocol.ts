@@ -39,26 +39,6 @@ export namespace GetMatchTsConfigRequest {
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/tsconfig');
 }
 
-export namespace GetProjectsRequest {
-	export type ParamsType = vscode.TextDocumentIdentifier;
-	export type ResponseType = {
-		rootUri: string;
-		tsconfig?: string;
-		isInferredProject: boolean;
-		created: boolean;
-		isSelected: boolean;
-	}[] | null | undefined;
-	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/projects');
-}
-
-export namespace GetProjectFilesRequest {
-	export type ParamsType = { rootUri: string; tsconfig?: string; };
-	export type ResponseType = string[] | null | undefined;
-	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/projectFiles');
-}
-
 export namespace AutoInsertRequest {
 	export type ParamsType = vscode.TextDocumentPositionParams & {
 		options: {

@@ -1,5 +1,4 @@
 import type { ExportsInfoForLabs } from '@volar/vscode';
-import type { GetProjectsRequest } from '@volar/language-server';
 import { LoadedTSFilesMetaRequest } from '@volar/language-server/protocol';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -14,22 +13,14 @@ interface LanguageClientItem {
 }
 
 interface LanguageClientFieldItem extends LanguageClientItem {
-	field: 'start' | 'stop' | 'restart' | 'enableCodegenStack' | 'disableCodegenStack' | 'initializationOptions' | 'initializeResult' | 'projects' | 'memory';
-}
-
-interface LanguageClientProjectItem extends LanguageClientItem {
-	project: NonNullable<GetProjectsRequest.ResponseType>[number];
-}
-
-interface LanguageClientProjectFileItem extends LanguageClientProjectItem {
-	file: string;
+	field: 'start' | 'stop' | 'restart' | 'enableCodegenStack' | 'disableCodegenStack' | 'initializationOptions' | 'initializeResult' | 'memory';
 }
 
 export function activate(context: vscode.ExtensionContext) {
 
 	const extensions: vscode.Extension<ExportsInfoForLabs>[] = [];
 	const onDidChangeTreeData = new vscode.EventEmitter<void>();
-	const tree: vscode.TreeDataProvider<LanguageClientItem | LanguageClientFieldItem | LanguageClientProjectItem | LanguageClientProjectFileItem> = {
+	const tree: vscode.TreeDataProvider<LanguageClientItem | LanguageClientFieldItem> = {
 		onDidChangeTreeData: onDidChangeTreeData.event,
 		async getChildren(element) {
 			// root
@@ -40,16 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
 			if ('file' in element) {
 				return [];
 			}
-			else if ('project' in element) {
-				const fileNames = await element.client.sendRequest(element.extension.exports.volarLabs.languageServerProtocol.GetProjectFilesRequest.type, { rootUri: element.project.rootUri, tsconfig: element.project.tsconfig }) ?? [];
-				return fileNames.map(fileName => ({ ...element, file: fileName }));
-			}
 			else if ('field' in element) {
-				if (element.field === 'projects') {
-					const currentUri = vscode.window.activeTextEditor ? { uri: vscode.window.activeTextEditor.document.uri.toString() } : undefined;
-					const projects: GetProjectsRequest.ResponseType = await element.client.sendRequest(element.extension.exports.volarLabs.languageServerProtocol.GetProjectsRequest.type, currentUri) ?? [];
-					return projects.map<LanguageClientProjectItem>(project => ({ ...element, project }));
-				}
 				return [];
 			}
 			else {
@@ -69,7 +51,6 @@ export function activate(context: vscode.ExtensionContext) {
 					stats.push({ ...element, field: 'initializationOptions' });
 					stats.push({ ...element, field: 'initializeResult' });
 					stats.push({ ...element, field: 'memory' });
-					stats.push({ ...element, field: 'projects' });
 				}
 				else if (element.client.state === lsp.State.Starting) {
 					stats.push({ ...element, field: 'stop' });
@@ -81,33 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		},
 		getTreeItem(element) {
-			if ('file' in element) {
-				return {
-					iconPath: new vscode.ThemeIcon('file'),
-					label: path.relative(element.project.rootUri, vscode.Uri.file(element.file).toString()),
-					collapsibleState: vscode.TreeItemCollapsibleState.None,
-					command: {
-						command: 'vscode.open',
-						title: '',
-						arguments: [vscode.Uri.file(element.file)],
-					},
-				};
-			}
-			else if ('project' in element) {
-				let label = '[inferred]';
-				if (element.project.tsconfig) {
-					label = path.relative(element.project.rootUri, vscode.Uri.file(element.project.tsconfig).toString());
-				}
-				if (element.project.isSelected) {
-					label += ' 👈';
-				}
-				return {
-					iconPath: element.project.created ? new vscode.ThemeIcon('debug-breakpoint-disabled') : new vscode.ThemeIcon('debug-breakpoint-unverified'),
-					label,
-					collapsibleState: element.project.created ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
-				};
-			}
-			else if ('field' in element) {
+			if ('field' in element) {
 				if (element.field === 'restart') {
 					return {
 						iconPath: new vscode.ThemeIcon('extensions-refresh'),

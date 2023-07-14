@@ -2,7 +2,7 @@ import { FileKind, FileRangeCapabilities, VirtualFile, forEachEmbeddedFile } fro
 import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
-import { GetMatchTsConfigRequest, GetProjectFilesRequest, GetProjectsRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';
+import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';
 import { RuntimeEnvironment } from '../../types';
 import type { Workspaces } from '../workspaces';
 
@@ -20,47 +20,6 @@ export function register(
 		if (project?.tsconfig) {
 			return { uri: env.fileNameToUri(project.tsconfig) };
 		}
-	});
-	connection.onRequest(GetProjectsRequest.type, async (params) => {
-		const matchProject = params ? (await workspaces.getProject(params.uri)) : undefined;
-		const result: GetProjectsRequest.ResponseType = [];
-		for (const [workspaceUri, _workspace] of workspaces.workspaces) {
-			const workspace = (await _workspace);
-			result.push({
-				isInferredProject: true,
-				rootUri: workspaceUri,
-				tsconfig: undefined,
-				created: !!workspace.getInferredProjectDontCreate(),
-				isSelected: !!matchProject && await workspace.getInferredProjectDontCreate() === matchProject.project,
-			});
-			for (const _project of workspace.projects.values()) {
-				const project = await _project;
-				result.push({
-					isInferredProject: false,
-					rootUri: workspaceUri,
-					tsconfig: project.tsConfig as string,
-					created: !!project.getLanguageServiceDontCreate(),
-					isSelected: !!matchProject && project === matchProject.project,
-				});
-			}
-		}
-		return result;
-	});
-	connection.onRequest(GetProjectFilesRequest.type, async (params) => {
-		const workspace = await workspaces.workspaces.get(params.rootUri);
-		if (!workspace) return [];
-		if (!params.tsconfig) {
-			const project = await workspace.getInferredProject();
-			if (!project) return [];
-			return project.languageHost.getScriptFileNames();
-		}
-		for (const _project of workspace.projects.values()) {
-			const project = await _project;
-			if (project.tsConfig === params.tsconfig) {
-				return project.languageHost.getScriptFileNames();
-			}
-		}
-		return [];
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const project = await workspaces.getProject(document.uri);
