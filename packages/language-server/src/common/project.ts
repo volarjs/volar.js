@@ -1,4 +1,4 @@
-import { LanguageService, ServiceEnvironment, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
+import { FileSystem, LanguageService, ServiceEnvironment, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
@@ -17,6 +17,8 @@ export interface ProjectContext extends WorkspaceContext {
 }
 
 export type Project = ReturnType<typeof createProject>;
+
+const globalSnapshots = new WeakMap<FileSystem, ReturnType<typeof createUriMap<ts.IScriptSnapshot | undefined>>>();
 
 export async function createProject(context: ProjectContext) {
 
@@ -43,7 +45,11 @@ export async function createProject(context: ProjectContext) {
 		onDidChangeConfiguration: context.server.configurationHost?.onDidChangeConfiguration,
 		onDidChangeWatchedFiles: context.server.onDidChangeWatchedFiles,
 	};
-	const fsScriptsCache = createUriMap<ts.IScriptSnapshot | undefined>(fileNameToUri);
+
+	if (!globalSnapshots.has(fs)) {
+		globalSnapshots.set(fs, createUriMap(fileNameToUri));
+	}
+
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const languageHost: TypeScriptLanguageHost = {
 		getProjectVersion: () => projectVersion.toString(),
@@ -54,7 +60,7 @@ export async function createProject(context: ProjectContext) {
 			if (doc) {
 				return doc.getSnapshot();
 			}
-			const fsSnapshot = fsScriptsCache.pathGet(fileName);
+			const fsSnapshot = globalSnapshots.get(fs)!.pathGet(fileName);
 			if (fsSnapshot) {
 				return fsSnapshot;
 			}
@@ -112,7 +118,6 @@ export async function createProject(context: ProjectContext) {
 	return {
 		context,
 		tsConfig: context.project.tsConfig,
-		scripts: fsScriptsCache,
 		languageHost,
 		getLanguageService,
 		getLanguageServiceDontCreate: () => languageService,
@@ -144,7 +149,7 @@ export async function createProject(context: ProjectContext) {
 		let dirty = false;
 		for (const fileName of parsedCommandLine.fileNames) {
 			const uri = fileNameToUri(fileName);
-			if (!fsScriptsCache.uriGet(uri)) {
+			if (!globalSnapshots.get(fs)!.uriGet(uri)) {
 				dirty = true;
 				promises.push(updateRootScriptSnapshot(uri));
 			}
@@ -154,7 +159,7 @@ export async function createProject(context: ProjectContext) {
 	}
 	async function updateRootScriptSnapshot(uri: string) {
 		const text = await context.server.runtimeEnv.fs.readFile(uri);
-		fsScriptsCache.uriSet(uri,
+		globalSnapshots.get(fs)!.uriSet(uri,
 			text !== undefined ? {
 				getText: (start, end) => text.substring(start, end),
 				getLength: () => text.length,
@@ -182,13 +187,12 @@ export async function createProject(context: ProjectContext) {
 		}
 
 		for (const change of changes) {
-			const oldSnapshot = fsScriptsCache.uriGet(change.uri);
-			if (oldSnapshot) {
+			if (askedFiles.uriGet(change.uri) && globalSnapshots.get(fs)!.uriGet(change.uri)) {
 				if (change.type === vscode.FileChangeType.Changed) {
 					updateRootScriptSnapshot(change.uri);
 				}
 				else if (change.type === vscode.FileChangeType.Deleted) {
-					fsScriptsCache.uriSet(change.uri, undefined);
+					globalSnapshots.get(fs)!.uriSet(change.uri, undefined);
 				}
 				projectVersion++;
 			}

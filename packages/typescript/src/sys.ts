@@ -5,8 +5,8 @@ import { matchFiles } from './typescript/utilities';
 
 interface File {
 	text?: string;
-	modifiedTime?: number;
 	exists?: boolean;
+	modifiedTime?: Date;
 	requested?: boolean;
 }
 
@@ -108,17 +108,6 @@ export function createSys(
 		return path.resolve(fsPath).replace(/\\/g, '/');
 	}
 
-	function getModifiedTime(fileName: string) {
-		fileName = resolvePath(fileName);
-		const dirPath = path.dirname(fileName);
-		const dir = getDir(dirPath);
-		const name = path.basename(fileName);
-		const modifiedTime = dir.files[name]?.modifiedTime;
-		if (modifiedTime !== undefined) {
-			return new Date(modifiedTime);
-		}
-	}
-
 	function readFile(fileName: string, encoding?: string) {
 
 		fileName = resolvePath(fileName);
@@ -157,7 +146,52 @@ export function createSys(
 		return dir.exists;
 	}
 
+	function getModifiedTime(fileName: string) {
+		fileName = resolvePath(fileName);
+		const file = getFile(fileName);
+		if (file.modifiedTime === undefined) {
+			file.modifiedTime = new Date(0);
+			handleStat(fileName, file);
+		}
+		return file.modifiedTime;
+	}
+
 	function fileExists(fileName: string): boolean {
+		fileName = resolvePath(fileName);
+		const file = getFile(fileName);
+		if (file.exists === undefined) {
+			file.exists = false;
+			handleStat(fileName, file);
+		}
+		return file.exists;
+	}
+
+	function handleStat(fileName: string, file: File) {
+		const result = env.fs?.stat(env.fileNameToUri(fileName));
+		if (typeof result === 'object' && 'then' in result) {
+			const promise = result;
+			promises.add(promise);
+			result.then(result => {
+				promises.delete(promise);
+				file.exists = result?.type === 1 satisfies FileType.File;
+				if (result) {
+					file.modifiedTime = new Date(result.mtime);
+				}
+				if (file.exists) {
+					file.requested = false;
+					version++;
+				}
+			});
+		}
+		else {
+			file.exists = result?.type === 1 satisfies FileType.File;
+			if (result) {
+				file.modifiedTime = new Date(result.mtime);
+			}
+		}
+	}
+
+	function getFile(fileName: string) {
 
 		fileName = resolvePath(fileName);
 
@@ -165,27 +199,8 @@ export function createSys(
 		const baseName = path.basename(fileName);
 		const dir = getDir(dirPath);
 		const file = dir.files[baseName] ??= {};
-		if (file.exists === undefined) {
-			file.exists = false;
-			const result = env.fs?.stat(env.fileNameToUri(fileName));
-			if (typeof result === 'object' && 'then' in result) {
-				const promise = result;
-				promises.add(promise);
-				result.then(result => {
-					promises.delete(promise);
-					file.exists = result?.type === 1 satisfies FileType.File;
-					if (file.exists) {
-						const time = Date.now();
-						file.modifiedTime = time !== file.modifiedTime ? time : file.modifiedTime + 1;
-						version++;
-					}
-				});
-			}
-			else {
-				file.exists = result?.type === 1 satisfies FileType.File;
-			}
-		}
-		return file.exists;
+
+		return file;
 	}
 
 	// for import path completion
@@ -250,8 +265,6 @@ export function createSys(
 				if (result !== undefined) {
 					file.exists = true;
 					file.text = result;
-					const time = Date.now();
-					file.modifiedTime = time !== file.modifiedTime ? time : time + 1;
 					version++;
 				}
 				else {
@@ -262,8 +275,6 @@ export function createSys(
 		else if (result !== undefined) {
 			file.exists = true;
 			file.text = result;
-			const time = Date.now();
-			file.modifiedTime = time !== file.modifiedTime ? time : time + 1;
 		}
 		else {
 			file.exists = false;
