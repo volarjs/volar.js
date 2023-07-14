@@ -1,7 +1,7 @@
 {
 	"private": true,
 	"name": "volarjs-labs",
-	"version": "1.8.3",
+	"version": "1.9.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/volarjs/volar.js.git",
@@ -81,9 +81,9 @@
 	},
 	"devDependencies": {
 		"@types/vscode": "1.67.0",
-		"@volar/language-server": "1.8.3",
-		"@volar/source-map": "1.8.3",
-		"@volar/vscode": "1.8.3",
+		"@volar/language-server": "1.9.0",
+		"@volar/source-map": "1.9.0",
+		"@volar/vscode": "1.9.0",
 		"esbuild": "0.15.18",
 		"esbuild-plugin-copy": "latest",
 		"esbuild-visualizer": "^0.4.1",
