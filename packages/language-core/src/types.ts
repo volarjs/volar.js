@@ -93,6 +93,8 @@ export interface Language<T extends VirtualFile = VirtualFile> {
 }
 
 interface LanguageHost {
+	workspacePath: string;
+	rootPath: string;
 	getProjectVersion(): string;
 	getScriptFileNames(): string[];
 	getScriptSnapshot(fileName: string): ts.IScriptSnapshot | undefined;
@@ -100,8 +102,7 @@ interface LanguageHost {
 }
 
 export interface TypeScriptLanguageHost extends LanguageHost, Pick<ts.LanguageServiceHost,
-	'getCurrentDirectory'
-	| 'getCancellationToken'
+	'getCancellationToken'
 	| 'getLocalizedDiagnosticMessages'
 	| 'getCompilationSettings'
 	| 'getProjectReferences'

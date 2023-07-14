@@ -19,6 +19,7 @@ export function createFormatter(
 	const service = createLanguageService(
 		{ typescript: ts },
 		{
+			workspaceUri: URI.file('/'),
 			rootUri: URI.file('/'),
 			uriToFileName: uri => {
 				if (uri.startsWith(dummyScriptUri))
@@ -77,7 +78,8 @@ export function createFormatter(
 	function createHost() {
 		let projectVersion = 0;
 		const host: TypeScriptLanguageHost = {
-			getCurrentDirectory: () => '/',
+			workspacePath: '/',
+			rootPath: '/',
 			getCompilationSettings: () => compilerOptions,
 			getProjectVersion: () => (projectVersion++).toString(),
 			getScriptFileNames: () => fakeScriptSnapshot ? [fakeScriptFileName] : [],

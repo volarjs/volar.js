@@ -39,6 +39,7 @@ export async function createProject(context: ProjectContext) {
 		fs,
 		console: context.server.runtimeEnv.console,
 		locale: context.workspaces.initParams.locale,
+		workspaceUri: context.workspace.rootUri,
 		rootUri: context.project.rootUri,
 		clientCapabilities: context.workspaces.initParams.capabilities,
 		getConfiguration: context.server.configurationHost?.getConfiguration,
@@ -52,6 +53,8 @@ export async function createProject(context: ProjectContext) {
 
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const languageHost: TypeScriptLanguageHost = {
+		workspacePath: uriToFileName(context.workspace.rootUri.toString()),
+		rootPath: uriToFileName(context.project.rootUri.toString()),
 		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => parsedCommandLine.fileNames,
 		getScriptSnapshot: (fileName) => {
@@ -69,7 +72,6 @@ export async function createProject(context: ProjectContext) {
 		getCancellationToken: () => tsToken,
 		getCompilationSettings: () => parsedCommandLine.options,
 		getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
-		getCurrentDirectory: () => uriToFileName(context.project.rootUri.toString()),
 		getProjectReferences: () => parsedCommandLine.projectReferences,
 	};
 	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
