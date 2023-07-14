@@ -48,7 +48,7 @@ export function createLanguageService(
 	languageHost: TypeScriptLanguageHost,
 ) {
 
-	if (languageHost.getCurrentDirectory().indexOf('\\') >= 0) {
+	if (languageHost.workspacePath.indexOf('\\') >= 0 || languageHost.rootPath.indexOf('\\') >= 0) {
 		throw new Error('Volar: Current directory must be posix style.');
 	}
 	if (languageHost.getScriptFileNames().some(fileName => fileName.indexOf('\\') >= 0)) {

@@ -17,7 +17,7 @@ export function createLanguageServiceHost(
 
 	const _tsHost: ts.LanguageServiceHost = {
 		...sys,
-		getCurrentDirectory: () => ctx.host.getCurrentDirectory(),
+		getCurrentDirectory: () => ctx.host.workspacePath,
 		getCompilationSettings: () => ctx.host.getCompilationSettings(),
 		getCancellationToken: ctx.host.getCancellationToken ? () => ctx.host.getCancellationToken!() : undefined,
 		getLocalizedDiagnosticMessages: ctx.host.getLocalizedDiagnosticMessages ? () => ctx.host.getLocalizedDiagnosticMessages!() : undefined,
@@ -152,7 +152,7 @@ export function createLanguageServiceHost(
 			excludes,
 			includes,
 			sys?.useCaseSensitiveFileNames ?? false,
-			ctx.host.getCurrentDirectory(),
+			ctx.host.workspacePath,
 			depth,
 			(dirPath) => {
 

@@ -14,7 +14,8 @@ export function createLinter(config: Config, host: TypeScriptLanguageHost) {
 		{
 			uriToFileName,
 			fileNameToUri,
-			rootUri: URI.parse(fileNameToUri(host.getCurrentDirectory())),
+			workspaceUri: URI.parse(fileNameToUri(host.workspacePath)),
+			rootUri: URI.parse(fileNameToUri(host.rootPath)),
 			getConfiguration: section => getConfiguration(settings, section),
 			fs,
 			console,

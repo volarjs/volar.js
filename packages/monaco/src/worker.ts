@@ -14,6 +14,7 @@ export function createServiceEnvironment(): ServiceEnvironment {
 	return {
 		uriToFileName: uri => URI.parse(uri).fsPath.replace(/\\/g, '/'),
 		fileNameToUri: fileName => URI.file(fileName).toString(),
+		workspaceUri: URI.file('/'),
 		rootUri: URI.file('/'),
 		console,
 	};
@@ -31,6 +32,8 @@ export function createLanguageHost(
 	const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 	const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
 	const host: TypeScriptLanguageHost = {
+		workspacePath: rootPath,
+		rootPath: rootPath,
 		getProjectVersion() {
 			const models = getMirrorModels();
 			if (modelVersions.size === getMirrorModels().length) {
@@ -68,9 +71,6 @@ export function createLanguageHost(
 		},
 		getCompilationSettings() {
 			return compilerOptions;
-		},
-		getCurrentDirectory() {
-			return rootPath;
 		},
 	};
 

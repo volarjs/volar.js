@@ -13,6 +13,7 @@ export interface SharedModules {
 export interface ServiceEnvironment {
 
 	locale?: string;
+	workspaceUri: URI;
 	rootUri: URI;
 	clientCapabilities?: vscode.ClientCapabilities;
 	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>;

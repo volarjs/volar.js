@@ -46,9 +46,8 @@ function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick
 
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
 	const languageHost: TypeScriptLanguageHost = {
-		getCurrentDirectory: () => {
-			return rootPath;
-		},
+		workspacePath: rootPath,
+		rootPath: rootPath,
 		getCompilationSettings: () => {
 			return parsedCommandLine.options;
 		},
