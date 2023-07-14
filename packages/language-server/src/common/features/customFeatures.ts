@@ -1,10 +1,10 @@
-import * as vscode from 'vscode-languageserver';
-import type { Workspaces } from '../workspaces';
-import { GetMatchTsConfigRequest, ReloadProjectNotification, GetVirtualFileRequest, GetProjectsRequest, GetProjectFilesRequest, GetVirtualFilesRequest, WriteVirtualFilesNotification } from '../../protocol';
-import { RuntimeEnvironment } from '../../types';
 import { FileKind, FileRangeCapabilities, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
 import { Mapping, Stack } from '@volar/source-map';
+import type * as ts from 'typescript/lib/tsserverlibrary';
+import * as vscode from 'vscode-languageserver';
+import { GetMatchTsConfigRequest, GetProjectFilesRequest, GetProjectsRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';
+import { RuntimeEnvironment } from '../../types';
+import type { Workspaces } from '../workspaces';
 
 export function register(
 	connection: vscode.Connection,
@@ -137,5 +137,70 @@ export function register(
 				}
 			}
 		}
+	});
+	connection.onRequest(LoadedTSFilesMetaRequest.type, async () => {
+
+		const sourceFilesData = new Map<ts.SourceFile, {
+			projectNames: string[];
+			size: number;
+		}>();
+
+		for (const workspace of workspaces.workspaces.values()) {
+			for (const _project of (await workspace).projects.values()) {
+				const project = await _project;
+				const service = project.getLanguageServiceDontCreate();
+				const languageService: ts.LanguageService | undefined = service?.context.inject('typescript/languageService');
+				const program = languageService?.getProgram();
+				if (program) {
+					const projectName = typeof project.tsConfig === 'string' ? project.tsConfig : (project.languageHost.workspacePath + '(inferred)');
+					const sourceFiles = program?.getSourceFiles() ?? [];
+					for (const sourceFile of sourceFiles) {
+						if (!sourceFilesData.has(sourceFile)) {
+							let nodes = 0;
+							sourceFile.forEachChild(function walk(node) {
+								nodes++;
+								node.forEachChild(walk);
+							});
+							sourceFilesData.set(sourceFile, {
+								projectNames: [],
+								size: nodes * 128,
+							});
+						}
+						sourceFilesData.get(sourceFile)!.projectNames.push(projectName);
+					};
+				}
+			}
+		}
+
+		const result: {
+			inputs: {};
+			outputs: Record<string, {
+				imports: string[];
+				exports: string[];
+				entryPoint: string;
+				inputs: Record<string, { bytesInOutput: number; }>;
+				bytes: number;
+			}>;
+		} = {
+			inputs: {},
+			outputs: {},
+		};
+
+		for (const [sourceFile, fileData] of sourceFilesData) {
+			let key = fileData.projectNames.sort().join(', ');
+			if (fileData.projectNames.length >= 2) {
+				key = `Shared in ${fileData.projectNames.length} projects (${key})`;
+			}
+			result.outputs[key] ??= {
+				imports: [],
+				exports: [],
+				entryPoint: '',
+				inputs: {},
+				bytes: 0,
+			};
+			result.outputs[key].inputs[sourceFile.fileName] = { bytesInOutput: fileData.size };
+		}
+
+		return result;
 	});
 }

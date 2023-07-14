@@ -3,6 +3,8 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';
 
+const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: WeakMap<ts.IScriptSnapshot, number> }>();
+
 export function createLanguageServiceHost(
 	ctx: LanguageContext,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
@@ -77,7 +79,6 @@ export function createLanguageServiceHost(
 		},
 	};
 	const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
-	const fileVersions = new Map<string, { value: number; snapshot: ts.IScriptSnapshot; }>();
 
 	let oldTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let oldOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
@@ -243,14 +244,13 @@ export function createLanguageServiceHost(
 		const snapshot = virtualFile?.snapshot ?? ctx.host.getScriptSnapshot(fileName);
 		if (snapshot) {
 			if (!fileVersions.has(fileName)) {
-				fileVersions.set(fileName, { value: 0, snapshot });
+				fileVersions.set(fileName, { lastVersion: 0, snapshotVersions: new WeakMap() });
 			}
 			const version = fileVersions.get(fileName)!;
-			if (version.snapshot !== snapshot) {
-				version.value++;
-				version.snapshot = snapshot;
+			if (!version.snapshotVersions.has(snapshot)) {
+				version.snapshotVersions.set(snapshot, version.lastVersion++);
 			}
-			return version.value.toString();
+			return version.snapshotVersions.get(snapshot)!.toString();
 		}
 		// fs files
 		return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '';

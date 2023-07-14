@@ -1,6 +1,9 @@
 import type { ExportsInfoForLabs } from '@volar/vscode';
 import type { GetProjectsRequest } from '@volar/language-server';
+import { LoadedTSFilesMetaRequest } from '@volar/language-server/protocol';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient';
 import { useVolarExtensions, getIconPath } from '../common/shared';
@@ -11,7 +14,7 @@ interface LanguageClientItem {
 }
 
 interface LanguageClientFieldItem extends LanguageClientItem {
-	field: 'start' | 'stop' | 'restart' | 'enableCodegenStack' | 'disableCodegenStack' | 'initializationOptions' | 'initializeResult' | 'projects';
+	field: 'start' | 'stop' | 'restart' | 'enableCodegenStack' | 'disableCodegenStack' | 'initializationOptions' | 'initializeResult' | 'projects' | 'memory';
 }
 
 interface LanguageClientProjectItem extends LanguageClientItem {
@@ -65,6 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 					stats.push({ ...element, field: 'initializationOptions' });
 					stats.push({ ...element, field: 'initializeResult' });
+					stats.push({ ...element, field: 'memory' });
 					stats.push({ ...element, field: 'projects' });
 				}
 				else if (element.client.state === lsp.State.Starting) {
@@ -140,6 +144,17 @@ export function activate(context: vscode.ExtensionContext) {
 						},
 					};
 				}
+				else if (element.field === 'memory') {
+					return {
+						label: 'TS Memory Treemap',
+						collapsibleState: vscode.TreeItemCollapsibleState.None,
+						command: {
+							command: '_volar.action.tsMemoryTreemap',
+							title: '',
+							arguments: [element.client],
+						},
+					};
+				}
 				else if (element.field === 'enableCodegenStack') {
 					return {
 						iconPath: new vscode.ThemeIcon('primitive-dot'),
@@ -192,7 +207,7 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				else if (element.field === 'projects') {
 					return {
-						label: `Projects`,
+						label: 'Projects',
 						collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
 					};
 				}
@@ -215,6 +230,14 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('_volar.action.restartServer', async (client: lsp.BaseLanguageClient) => {
 			await client.stop();
 			await client.start();
+		}),
+		vscode.commands.registerCommand('_volar.action.tsMemoryTreemap', async (client: lsp.BaseLanguageClient) => {
+			const meta = await client.sendRequest(LoadedTSFilesMetaRequest.type);
+			const { visualizer } = await import('esbuild-visualizer/dist/plugin/index');
+			const fileContent = await visualizer(meta as any);
+			const tmpPath = path.join(os.tmpdir(), 'stats.html');
+			fs.writeFileSync(tmpPath, fileContent);
+			await vscode.env.openExternal(vscode.Uri.file(tmpPath));
 		}),
 		vscode.commands.registerCommand('_volar.action.enableCodegenStack', async (client: lsp.BaseLanguageClient) => {
 			client.clientOptions.initializationOptions.codegenStack = true;

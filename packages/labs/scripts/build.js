@@ -14,4 +14,14 @@ require('esbuild').build({
 	define: { 'process.env.NODE_ENV': '"production"' },
 	minify: process.argv.includes('--minify'),
 	watch: process.argv.includes('--watch'),
+	plugins: [
+		require('esbuild-plugin-copy').copy({
+			resolveFrom: 'cwd',
+			assets: {
+				from: ['./node_modules/esbuild-visualizer/dist/lib/**/*'],
+				to: ['./lib'],
+			},
+			keepStructure: true,
+		}),
+	],
 }).catch(() => process.exit(1))

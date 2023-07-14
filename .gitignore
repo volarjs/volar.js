@@ -2,3 +2,4 @@ out
 dist
 node_modules
 *.tsbuildinfo
+packages/labs/lib

@@ -75,6 +75,10 @@ export namespace AutoInsertRequest {
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/autoInsert');
 }
 
+export namespace LoadedTSFilesMetaRequest {
+	export const type = new vscode.RequestType0('volar/client/loadedTsFiles');
+}
+
 export namespace WriteVirtualFilesNotification {
 	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar/client/writeVirtualFiles');
 }
