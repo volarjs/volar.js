@@ -1,4 +1,4 @@
-import type { ExportsInfoForLabs } from '@volar/vscode';
+import { type ExportsInfoForLabs } from '@volar/vscode';
 import { LoadedTSFilesMetaRequest } from '@volar/language-server/protocol';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -6,6 +6,7 @@ import * as os from 'os';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient';
 import { useVolarExtensions, getIconPath } from '../common/shared';
+import { quickPick } from '../common/quickPick';
 
 interface LanguageClientItem {
 	extension: vscode.Extension<ExportsInfoForLabs>;
@@ -187,12 +188,70 @@ export function activate(context: vscode.ExtensionContext) {
 			await client.start();
 		}),
 		vscode.commands.registerCommand('_volar.action.tsMemoryTreemap', async (client: lsp.BaseLanguageClient) => {
-			const meta = await client.sendRequest(LoadedTSFilesMetaRequest.type);
-			const { visualizer } = await import('esbuild-visualizer/dist/plugin/index');
-			const fileContent = await visualizer(meta as any);
-			const tmpPath = path.join(os.tmpdir(), 'stats.html');
-			fs.writeFileSync(tmpPath, fileContent);
-			await vscode.env.openExternal(vscode.Uri.file(tmpPath));
+			// Start querying so it is _maybe_ ready when the user selected an option
+			const createHtmlContent = async () => {
+				const meta = await client.sendRequest(LoadedTSFilesMetaRequest.type);
+				const { visualizer } = await import('esbuild-visualizer/dist/plugin/index');
+				return visualizer(meta as any);
+			};
+
+			const select = await quickPick([
+				{
+					openInBrowser: {
+						label: 'Open in Browser',
+						description: 'Open the TypeScript Memory Treemap in your browser',
+					},
+					showInVSCode: {
+						label: 'Show in VS Code',
+						description: 'Show the html file in VS Code',
+					},
+					saveFile: {
+						label: 'Save File',
+						description: 'Pick a location to save the html file',
+					},
+				}
+			]);
+
+			if (select === undefined) {
+				return; // cancel
+			}
+
+			vscode.window.withProgress({
+				location: vscode.ProgressLocation.Window,
+				cancellable: false,
+				title: 'Loading Memory Data'
+			}, async (progress) => {
+
+				progress.report({ increment: 0 });
+
+				if (select === 'openInBrowser') {
+					const fileContent = await createHtmlContent();
+					const tmpPath = path.join(os.tmpdir(), 'memory-report.html');
+					fs.writeFileSync(tmpPath, fileContent);
+					await vscode.env.openExternal(vscode.Uri.file(tmpPath));
+				}
+				else if (select === 'showInVSCode') {
+					const fileContent = await createHtmlContent();
+					const doc = await vscode.workspace.openTextDocument({ content: fileContent, language: 'html' });
+					vscode.window.showTextDocument(doc);
+				}
+				else if (select === 'saveFile') {
+					const workspaces = vscode.workspace.workspaceFolders;
+					if (!workspaces?.length) return;
+
+					const defaultUri = vscode.Uri.joinPath(workspaces[0].uri, 'stats.html');
+					const pickedUri = await vscode.window.showSaveDialog({ defaultUri });
+
+					if (!pickedUri) return;
+
+					const fileContent = await createHtmlContent();
+
+					await vscode.workspace.fs.writeFile(pickedUri, Buffer.from(fileContent));
+					await vscode.window.showTextDocument(pickedUri);
+				}
+
+				progress.report({ increment: 100 });
+			});
 		}),
 		vscode.commands.registerCommand('_volar.action.enableCodegenStack', async (client: lsp.BaseLanguageClient) => {
 			client.clientOptions.initializationOptions.codegenStack = true;
