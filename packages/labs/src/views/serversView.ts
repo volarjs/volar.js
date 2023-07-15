@@ -189,11 +189,11 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 		vscode.commands.registerCommand('_volar.action.tsMemoryTreemap', async (client: lsp.BaseLanguageClient) => {
 			// Start querying so it is _maybe_ ready when the user selected an option
-			const fileContentPromise = client.sendRequest(LoadedTSFilesMetaRequest.type).then(meta => {
-				return import('esbuild-visualizer/dist/plugin/index').then(({ visualizer }) => {
-					return visualizer(meta as any);
-				})
-			})
+			const createHtmlContent = async () => {
+				const meta = await client.sendRequest(LoadedTSFilesMetaRequest.type);
+				const { visualizer } = await import('esbuild-visualizer/dist/plugin/index');
+				return visualizer(meta as any);
+			};
 
 			const select = await quickPick([
 				{
@@ -211,7 +211,7 @@ export function activate(context: vscode.ExtensionContext) {
 					},
 				}
 			]);
-	
+
 			if (select === undefined) {
 				return; // cancel
 			}
@@ -221,33 +221,35 @@ export function activate(context: vscode.ExtensionContext) {
 				cancellable: false,
 				title: 'Loading Memory Data'
 			}, async (progress) => {
-				
-				progress.report({  increment: 0 });
-			
+
+				progress.report({ increment: 0 });
+
 				if (select === 'openInBrowser') {
-					const fileContent = await fileContentPromise
+					const fileContent = await createHtmlContent();
 					const tmpPath = path.join(os.tmpdir(), 'memory-report.html');
 					fs.writeFileSync(tmpPath, fileContent);
-					await vscode.env.openExternal(vscode.Uri.file(tmpPath))
-				} else if (select === 'showInVSCode') {
-					const fileContent = await fileContentPromise
+					await vscode.env.openExternal(vscode.Uri.file(tmpPath));
+				}
+				else if (select === 'showInVSCode') {
+					const fileContent = await createHtmlContent();
 					const doc = await vscode.workspace.openTextDocument({ content: fileContent, language: 'html' });
 					vscode.window.showTextDocument(doc);
-				} else if (select === 'saveFile') {
+				}
+				else if (select === 'saveFile') {
 					const workspaces = vscode.workspace.workspaceFolders;
-					if (!workspaces) return;
-	
+					if (!workspaces?.length) return;
+
 					const defaultUri = vscode.Uri.joinPath(workspaces[0].uri, 'stats.html');
-					const pickedUri = await vscode.window.showSaveDialog({ defaultUri })
-	
+					const pickedUri = await vscode.window.showSaveDialog({ defaultUri });
+
 					if (!pickedUri) return;
-	
-					const fileContent = await fileContentPromise
-	
+
+					const fileContent = await createHtmlContent();
+
 					await vscode.workspace.fs.writeFile(pickedUri, Buffer.from(fileContent));
 					await vscode.window.showTextDocument(pickedUri);
 				}
-			
+
 				progress.report({ increment: 100 });
 			});
 		}),
