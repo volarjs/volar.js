@@ -11,8 +11,8 @@
 		"url": "https://github.com/sponsors/johnsoncodehk"
 	},
 	"icon": "images/icon.png",
-	"displayName": "Volar.js Labs",
-	"description": "Volar.js Labs",
+	"displayName": "Volar Labs",
+	"description": "Volar Labs",
 	"author": "johnsoncodehk",
 	"publisher": "johnsoncodehk",
 	"engines": {
@@ -28,7 +28,7 @@
 			"activitybar": [
 				{
 					"id": "volarjs-labs",
-					"title": "Volar.js Labs",
+					"title": "Volar Labs",
 					"icon": "images/btn.svg"
 				}
 			]
