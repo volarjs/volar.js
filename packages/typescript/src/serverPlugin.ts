@@ -1,7 +1,12 @@
 import { FileKind, VirtualFiles, forEachEmbeddedFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
-export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, languageServiceHost: ts.LanguageServiceHost, ts: typeof import('typescript/lib/tsserverlibrary'), exts: string[]) {
+export function decorateLanguageServiceHost(
+	virtualFiles: VirtualFiles,
+	languageServiceHost: ts.LanguageServiceHost,
+	ts: typeof import('typescript/lib/tsserverlibrary'),
+	exts: string[]
+) {
 
 	let extraProjectVersion = 0;
 
@@ -49,7 +54,10 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 			);
 			return moduleNames.map<ts.ResolvedModuleWithFailedLookupLocations>((name, i) => {
 				if (exts.some(ext => name.text.endsWith(ext))) {
-					return resolveModuleName(name.text, containingFile, options, redirectedReference);
+					const resolved = resolveModuleName(name.text, containingFile, options, redirectedReference);
+					if (resolved.resolvedModule) {
+						return resolved;
+					}
 				}
 				return resolvedModules[i];
 			});
@@ -74,7 +82,10 @@ export function decorateLanguageServiceHost(virtualFiles: VirtualFiles, language
 			);
 			return moduleNames.map<ts.ResolvedModule | undefined>((name, i) => {
 				if (exts.some(ext => name.endsWith(ext))) {
-					return resolveModuleName(name, containingFile, options, redirectedReference).resolvedModule;
+					const resolved = resolveModuleName(name, containingFile, options, redirectedReference);
+					if (resolved.resolvedModule) {
+						return resolved.resolvedModule;
+					}
 				}
 				return resolvedModules[i];
 			});
