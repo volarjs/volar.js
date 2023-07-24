@@ -1,20 +1,20 @@
-import type { FileChangeType, FileType, ServiceEnvironment, Disposable } from '@volar/language-service';
+import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';
 
 interface File {
 	text?: string;
-	exists?: boolean;
-	modifiedTime?: Date;
-	requested?: boolean;
+	stat?: FileStat;
+	requestedText?: boolean;
+	requestedStat?: boolean;
 }
 
 interface Dir {
 	dirs: Record<string, Dir>;
 	files: Record<string, File>;
 	exists?: boolean;
-	requested?: boolean;
+	requestedRead?: boolean;
 }
 
 let currentCwd = '';
@@ -29,12 +29,12 @@ export function createSys(
 
 	let version = 0;
 
-	const rootPath = env.uriToFileName(env.rootUri.toString());
+	const rootPath = env.uriToFileName(env.workspaceUri.toString());
 	const sys = ts.sys as ts.System | undefined;
 	const root: Dir = {
 		dirs: {},
 		files: {},
-		requested: false,
+		requestedRead: false,
 	};
 	const promises = new Set<Thenable<any>>();
 	const fileWatcher = env.onDidChangeWatchedFiles?.(({ changes }) => {
@@ -45,14 +45,24 @@ export function createSys(
 			const dir = getDir(dirName);
 			if (dir.files[baseName]) { // is requested file
 				version++;
-				if (change.type === 1 satisfies typeof FileChangeType.Created) {
-					dir.files[baseName] = { exists: true };
-				}
-				else if (change.type === 2 satisfies typeof FileChangeType.Changed) {
-					dir.files[baseName] = { exists: true };
+				if (change.type === 1 satisfies typeof FileChangeType.Created || change.type === 2 satisfies typeof FileChangeType.Changed) {
+					dir.files[baseName] = {
+						stat: {
+							type: 1 satisfies FileType.File,
+							ctime: Date.now(),
+							mtime: Date.now(),
+							size: -1,
+						},
+						requestedStat: false,
+					};
 				}
 				else if (change.type === 3 satisfies typeof FileChangeType.Deleted) {
-					dir.files[baseName] = { exists: false };
+					dir.files[baseName] = {
+						stat: undefined,
+						text: undefined,
+						requestedStat: true,
+						requestedText: true,
+					};
 				}
 			}
 		}
@@ -146,24 +156,28 @@ export function createSys(
 		return dir.exists;
 	}
 
-	function getModifiedTime(fileName: string) {
+	function getModifiedTime(fileName: string): Date {
 		fileName = resolvePath(fileName);
 		const file = getFile(fileName);
-		if (file.modifiedTime === undefined) {
-			file.modifiedTime = new Date(0);
+		if (!file.requestedStat) {
+			file.requestedStat = true;
 			handleStat(fileName, file);
 		}
-		return file.modifiedTime;
+		return file.stat ? new Date(file.stat.mtime) : new Date(0);
 	}
 
 	function fileExists(fileName: string): boolean {
 		fileName = resolvePath(fileName);
 		const file = getFile(fileName);
-		if (file.exists === undefined) {
-			file.exists = false;
+		const exists = () => file.text !== undefined || file.stat?.type === 1 satisfies FileType.File;
+		if (exists()) {
+			return true;
+		}
+		if (!file.requestedStat) {
+			file.requestedStat = true;
 			handleStat(fileName, file);
 		}
-		return file.exists;
+		return exists();
 	}
 
 	function handleStat(fileName: string, file: File) {
@@ -173,21 +187,14 @@ export function createSys(
 			promises.add(promise);
 			result.then(result => {
 				promises.delete(promise);
-				file.exists = result?.type === 1 satisfies FileType.File;
-				if (result) {
-					file.modifiedTime = new Date(result.mtime);
-				}
-				if (file.exists) {
-					file.requested = false;
+				if (file.stat?.type !== result?.type || file.stat?.mtime !== result?.mtime) {
 					version++;
 				}
+				file.stat = result;
 			});
 		}
 		else {
-			file.exists = result?.type === 1 satisfies FileType.File;
-			if (result) {
-				file.modifiedTime = new Date(result.mtime);
-			}
+			file.stat = result;
 		}
 	}
 
@@ -234,7 +241,7 @@ export function createSys(
 				const dir = getDir(dirPath);
 
 				return {
-					files: [...Object.entries(dir.files)].filter(([_, file]) => file.exists).map(([name]) => name),
+					files: [...Object.entries(dir.files)].filter(([_, file]) => file.stat?.type === 1 satisfies FileType.File).map(([name]) => name),
 					directories: [...Object.entries(dir.dirs)].filter(([_, dir]) => dir.exists).map(([name]) => name),
 				};
 			},
@@ -249,10 +256,10 @@ export function createSys(
 		dir.files[name] ??= {};
 
 		const file = dir.files[name];
-		if (file.exists === false || file.requested) {
+		if (file.requestedText) {
 			return;
 		}
-		file.requested = true;
+		file.requestedText = true;
 
 		const uri = env.fileNameToUri(fileName);
 		const result = env.fs?.readFile(uri, encoding);
@@ -263,31 +270,26 @@ export function createSys(
 			result.then(result => {
 				promises.delete(promise);
 				if (result !== undefined) {
-					file.exists = true;
 					file.text = result;
+					if (file.stat) {
+						file.stat.mtime++;
+					}
 					version++;
-				}
-				else {
-					file.exists = false;
 				}
 			});
 		}
 		else if (result !== undefined) {
-			file.exists = true;
 			file.text = result;
-		}
-		else {
-			file.exists = false;
 		}
 	}
 
 	function readDirectoryWorker(dirName: string) {
 
 		const dir = getDir(dirName);
-		if (dir.requested) {
+		if (dir.requestedRead) {
 			return;
 		}
-		dir.requested = true;
+		dir.requestedRead = true;
 
 		const result = env.fs?.readDirectory(env.fileNameToUri(dirName || '.'));
 
@@ -323,10 +325,12 @@ export function createSys(
 						promises.delete(promise);
 						if (stat?.type === 1 satisfies FileType.File) {
 							dir.files[name] ??= {};
-							if (!dir.files[name].exists) {
-								dir.files[name].exists = true;
+							const file = dir.files[name];
+							if (stat.type !== file.stat?.type || stat.mtime !== file.stat.mtime) {
 								version++;
 							}
+							file.stat = stat;
+							file.requestedStat = true;
 						}
 						else if (stat?.type === 2 satisfies FileType.Directory) {
 							const childDir = getDirFromDir(dir, name);
@@ -343,8 +347,13 @@ export function createSys(
 			}
 			if (fileType === 1 satisfies FileType.File) {
 				dir.files[name] ??= {};
-				if (!dir.files[name].exists) {
-					dir.files[name].exists = true;
+				if (!dir.files[name].stat) {
+					dir.files[name].stat = {
+						type: 1 satisfies FileType.File,
+						mtime: 0,
+						ctime: 0,
+						size: 0,
+					};
 					updated = true;
 				}
 			}
