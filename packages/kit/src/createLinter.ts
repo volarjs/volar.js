@@ -83,8 +83,8 @@ export function createLinter(config: Config, host: TypeScriptLanguageHost) {
 		}
 	}
 
-	function printErrors(fileName: string, diagnostics: Diagnostic[]) {
-		let text = formatErrors(fileName, diagnostics, host.workspacePath);
+	function printErrors(fileName: string, diagnostics: Diagnostic[], rootPath = process.cwd()) {
+		let text = formatErrors(fileName, diagnostics, rootPath);
 		for (const diagnostic of diagnostics) {
 			text = text.replace(`TS${diagnostic.code}`, (diagnostic.source ?? '') + (diagnostic.code ? `(${diagnostic.code})` : ''));
 		}
@@ -94,8 +94,8 @@ export function createLinter(config: Config, host: TypeScriptLanguageHost) {
 	/**
 	 * @deprecated please use `printErrors()` instead of
 	 */
-	function logErrors(fileName: string, diagnostics: Diagnostic[]) {
-		console.log(printErrors(fileName, diagnostics));
+	function logErrors(fileName: string, diagnostics: Diagnostic[], rootPath = process.cwd()) {
+		console.log(printErrors(fileName, diagnostics, rootPath));
 	}
 
 	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath: string) {
