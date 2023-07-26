@@ -3,7 +3,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';
 
-const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: WeakMap<ts.IScriptSnapshot, number> }>();
+const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: WeakMap<ts.IScriptSnapshot, number>; }>();
 
 export function createLanguageServiceHost(
 	ctx: LanguageContext,
@@ -24,8 +24,6 @@ export function createLanguageServiceHost(
 		getCancellationToken: ctx.host.getCancellationToken ? () => ctx.host.getCancellationToken!() : undefined,
 		getLocalizedDiagnosticMessages: ctx.host.getLocalizedDiagnosticMessages ? () => ctx.host.getLocalizedDiagnosticMessages!() : undefined,
 		getProjectReferences: ctx.host.getProjectReferences ? () => ctx.host.getProjectReferences!() : undefined,
-		resolveModuleNames: ctx.host.resolveModuleNames ? (...args) => ctx.host.resolveModuleNames!(...args) : undefined,
-		resolveModuleNameLiterals: ctx.host.resolveModuleNameLiterals ? (...args) => ctx.host.resolveModuleNameLiterals!(...args) : undefined,
 		getDefaultLibFileName: (options) => {
 			try {
 				return ts.getDefaultLibFilePath(options);
@@ -79,6 +77,59 @@ export function createLanguageServiceHost(
 		},
 	};
 	const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
+
+	if (ctx.host.resolveModuleName) {
+
+		// TODO: can this share between monorepo packages?
+		const moduleCache = ts.createModuleResolutionCache(
+			_tsHost.getCurrentDirectory(),
+			_tsHost.useCaseSensitiveFileNames ? s => s : s => s.toLowerCase(),
+			_tsHost.getCompilationSettings()
+		);
+
+		_tsHost.resolveModuleNameLiterals = (
+			moduleLiterals,
+			containingFile,
+			redirectedReference,
+			options,
+			sourceFile
+		) => {
+			return moduleLiterals.map((moduleLiteral) => {
+				let moduleName = moduleLiteral.text;
+				moduleName = ctx.host.resolveModuleName!(moduleName, sourceFile.impliedNodeFormat);
+				return ts.resolveModuleName(
+					moduleName,
+					containingFile,
+					options,
+					_tsHost,
+					moduleCache,
+					redirectedReference,
+					sourceFile.impliedNodeFormat
+				);
+			});
+		};
+		_tsHost.resolveModuleNames = (
+			moduleNames,
+			containingFile,
+			_reusedNames,
+			redirectedReference,
+			options,
+			sourceFile
+		) => {
+			return moduleNames.map((moduleName) => {
+				moduleName = ctx.host.resolveModuleName!(moduleName, sourceFile?.impliedNodeFormat);
+				return ts.resolveModuleName(
+					moduleName,
+					containingFile,
+					options,
+					_tsHost,
+					moduleCache,
+					redirectedReference,
+					sourceFile?.impliedNodeFormat
+				).resolvedModule;
+			});
+		};
+	}
 
 	let oldTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let oldOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();

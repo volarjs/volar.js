@@ -101,10 +101,12 @@ interface LanguageHost {
 	getLanguageId?(fileName: string): string | undefined;
 }
 
-export interface TypeScriptLanguageHost extends LanguageHost, Pick<ts.LanguageServiceHost,
+export interface TypeScriptLanguageHost extends LanguageHost, Pick<
+	ts.LanguageServiceHost,
 	'getCancellationToken'
 	| 'getLocalizedDiagnosticMessages'
 	| 'getCompilationSettings'
 	| 'getProjectReferences'
-	| 'resolveModuleNames'
-	| 'resolveModuleNameLiterals'> { }
+> {
+	resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string;
+}
