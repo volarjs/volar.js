@@ -12,7 +12,7 @@ export function createLanguageServiceHost(
 	sys: ts.System & {
 		version?: number;
 	},
-	env: ServiceEnvironment,
+	env: ServiceEnvironment | undefined,
 ) {
 
 	let lastProjectVersion: number | string | undefined;
@@ -89,7 +89,7 @@ export function createLanguageServiceHost(
 			_tsHost.getCompilationSettings()
 		);
 
-		env.onDidChangeWatchedFiles?.(() => {
+		env?.onDidChangeWatchedFiles?.(() => {
 			moduleCache.clear();
 		});
 
