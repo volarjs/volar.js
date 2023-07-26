@@ -82,13 +82,18 @@ export function createLinter(config: Config, host: TypeScriptLanguageHost) {
 		}
 	}
 
-	function logErrors(fileName: string, diagnostics: Diagnostic[]) {
-		if (!diagnostics.length) return;
+	function logErrors(fileName: string, diagnostics: Diagnostic[], printErrors = true): string | null {
+		if (!diagnostics.length) return null;
 		let text = formatErrors(fileName, diagnostics);
 		for (const diagnostic of diagnostics) {
 			text = text.replace(`TS${diagnostic.code}`, (diagnostic.source ?? '') + (diagnostic.code ? `(${diagnostic.code})` : ''));
 		}
-		console.log(text);
+
+		if (printErrors) {
+			console.log(text);
+		}
+
+		return text;
 	}
 
 	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath = process.cwd()) {
