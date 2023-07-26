@@ -88,10 +88,11 @@ export function createLanguageServiceHost(
 			_tsHost.useCaseSensitiveFileNames ? s => s : s => s.toLowerCase(),
 			_tsHost.getCompilationSettings()
 		);
-
-		env?.onDidChangeWatchedFiles?.(() => {
+		const watching = !!env?.onDidChangeWatchedFiles?.(() => {
 			moduleCache.clear();
 		});
+
+		let lastProjectVersion = ctx.host.getProjectVersion();
 
 		_tsHost.resolveModuleNameLiterals = (
 			moduleLiterals,
@@ -100,6 +101,10 @@ export function createLanguageServiceHost(
 			options,
 			sourceFile
 		) => {
+			if (!watching && lastProjectVersion !== ctx.host.getProjectVersion()) {
+				lastProjectVersion = ctx.host.getProjectVersion();
+				moduleCache.clear();
+			}
 			return moduleLiterals.map((moduleLiteral) => {
 				let moduleName = moduleLiteral.text;
 				moduleName = ctx.host.resolveModuleName!(moduleName, sourceFile.impliedNodeFormat);
@@ -122,6 +127,10 @@ export function createLanguageServiceHost(
 			options,
 			sourceFile
 		) => {
+			if (!watching && lastProjectVersion !== ctx.host.getProjectVersion()) {
+				lastProjectVersion = ctx.host.getProjectVersion();
+				moduleCache.clear();
+			}
 			return moduleNames.map((moduleName) => {
 				moduleName = ctx.host.resolveModuleName!(moduleName, sourceFile?.impliedNodeFormat);
 				return ts.resolveModuleName(
