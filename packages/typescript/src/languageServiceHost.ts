@@ -314,6 +314,34 @@ export function createLanguageServiceHost(
 
 	function fileExists(fileName: string) {
 
+		// fill external virtual files
+
+		const ext = fileName.substring(fileName.lastIndexOf('.'));
+		if (
+			ext === '.js'
+			|| ext === '.ts'
+			|| ext === '.jsx'
+			|| ext === '.tsx'
+		) {
+
+			/**
+			 * If try to access a external .vue file that outside of the project,
+			 * the file will not process by language service host,
+			 * so virtual file will not be created.
+			 * 
+			 * We try to create virtual file here.
+			 */
+
+			const sourceFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+
+			if (!ctx.virtualFiles.hasSource(sourceFileName)) {
+				const scriptSnapshot = getScriptSnapshot(sourceFileName);
+				if (scriptSnapshot) {
+					ctx.virtualFiles.updateSource(sourceFileName, scriptSnapshot, ctx.host.getLanguageId?.(sourceFileName));
+				}
+			}
+		}
+
 		// virtual files
 		if (ctx.virtualFiles.hasVirtualFile(fileName)) {
 			return true;
