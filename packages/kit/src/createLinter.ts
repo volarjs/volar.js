@@ -27,6 +27,7 @@ export function createLinter(config: Config, host: TypeScriptLanguageHost) {
 	return {
 		check,
 		fixErrors,
+		printErrors,
 		logErrors,
 		get settings() {
 			return settings;
@@ -82,21 +83,22 @@ export function createLinter(config: Config, host: TypeScriptLanguageHost) {
 		}
 	}
 
-	function logErrors(fileName: string, diagnostics: Diagnostic[], printErrors = true): string | null {
-		if (!diagnostics.length) return null;
-		let text = formatErrors(fileName, diagnostics);
+	function printErrors(fileName: string, diagnostics: Diagnostic[]) {
+		let text = formatErrors(fileName, diagnostics, host.workspacePath);
 		for (const diagnostic of diagnostics) {
 			text = text.replace(`TS${diagnostic.code}`, (diagnostic.source ?? '') + (diagnostic.code ? `(${diagnostic.code})` : ''));
 		}
-
-		if (printErrors) {
-			console.log(text);
-		}
-
 		return text;
 	}
 
-	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath = process.cwd()) {
+	/**
+	 * @deprecated please use `printErrors()` instead of
+	 */
+	function logErrors(fileName: string, diagnostics: Diagnostic[]) {
+		console.log(printErrors(fileName, diagnostics));
+	}
+
+	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath: string) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
 		const document = service.context.getTextDocument(uri)!;
