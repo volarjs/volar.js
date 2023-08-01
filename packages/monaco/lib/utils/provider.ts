@@ -1,9 +1,33 @@
 import { LanguageService, standardSemanticTokensLegend } from '@volar/language-service';
-import type { editor, languages, Uri } from 'monaco-editor-core';
+import type { editor, languages, Uri } from 'monaco-types';
+import {
+	fromCompletionContext,
+	fromFormattingOptions,
+	fromPosition,
+	fromRange,
+	fromSignatureHelpContext,
+	toCodeAction,
+	toCodeLens,
+	toColorInformation,
+	toColorPresentation,
+	toCompletionItem,
+	toCompletionList,
+	toDocumentHighlight,
+	toDocumentSymbol,
+	toFoldingRange,
+	toHover,
+	toInlayHint,
+	toLink,
+	toLocation,
+	toLocationLink,
+	toRange,
+	toSelectionRange,
+	toSignatureHelp,
+	toTextEdit,
+	toWorkspaceEdit,
+} from 'monaco-languageserver-types';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { markers } from './markers.js';
-import * as monaco2protocol from './monaco2protocol.js';
-import * as protocol2monaco from './protocol2monaco.js';
 
 export async function createLanguageFeaturesProvider(
 	worker: editor.MonacoWebWorker<LanguageService>,
@@ -69,7 +93,7 @@ export async function createLanguageFeaturesProvider(
 		},
 		async provideDocumentRangeSemanticTokens(model, range) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
-			const codeResult = await languageService.getSemanticTokens(model.uri.toString(), monaco2protocol.asRange(range), standardSemanticTokensLegend);
+			const codeResult = await languageService.getSemanticTokens(model.uri.toString(), fromRange(range), standardSemanticTokensLegend);
 			if (codeResult) {
 				return {
 					resultId: codeResult.resultId,
@@ -82,28 +106,28 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findDocumentSymbols(model.uri.toString());
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asDocumentSymbol);
+				return codeResult.map(toDocumentSymbol);
 			}
 		},
 		async provideDocumentHighlights(model, position) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findDocumentHighlights(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
+				fromPosition(position),
 			);
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asDocumentHighlight);
+				return codeResult.map(toDocumentHighlight);
 			}
 		},
 		async provideLinkedEditingRanges(model, position) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findLinkedEditingRanges(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
+				fromPosition(position),
 			);
 			if (codeResult) {
 				return {
-					ranges: codeResult.ranges.map(protocol2monaco.asRange),
+					ranges: codeResult.ranges.map(toRange),
 					wordPattern: codeResult.wordPattern
 						? new RegExp(codeResult.wordPattern)
 						: undefined,
@@ -114,37 +138,37 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findDefinition(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
+				fromPosition(position),
 			);
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asLocation);
+				return codeResult.map(toLocationLink);
 			}
 		},
 		async provideImplementation(model, position) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findImplementations(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
+				fromPosition(position),
 			);
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asLocation);
+				return codeResult.map(toLocationLink);
 			}
 		},
 		async provideTypeDefinition(model, position) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findTypeDefinition(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
+				fromPosition(position),
 			);
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asLocation);
+				return codeResult.map(toLocationLink);
 			}
 		},
 		async provideCodeLenses(model) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.doCodeLens(model.uri.toString());
 			if (codeResult) {
-				const monacoResult = codeResult.map(protocol2monaco.asCodeLens);
+				const monacoResult = codeResult.map(toCodeLens);
 				for (let i = 0; i < monacoResult.length; i++) {
 					codeLens.set(monacoResult[i], codeResult[i]);
 				}
@@ -160,7 +184,7 @@ export async function createLanguageFeaturesProvider(
 				const languageService = await worker.withSyncedResources(getSyncUris());
 				codeResult = await languageService.doCodeLensResolve(codeResult);
 				if (codeResult) {
-					monacoResult = protocol2monaco.asCodeLens(codeResult);
+					monacoResult = toCodeLens(codeResult);
 					codeLens.set(monacoResult, codeResult);
 				}
 			}
@@ -179,7 +203,7 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.doCodeActions(
 				model.uri.toString(),
-				monaco2protocol.asRange(range),
+				fromRange(range),
 				{
 					diagnostics: diagnostics,
 					only: context.only ? [context.only] : undefined,
@@ -187,7 +211,7 @@ export async function createLanguageFeaturesProvider(
 			);
 
 			if (codeResult) {
-				const monacoResult = codeResult.map(protocol2monaco.asCodeAction);
+				const monacoResult = codeResult.map(codeAction => toCodeAction(codeAction));
 				for (let i = 0; i < monacoResult.length; i++) {
 					codeActions.set(monacoResult[i], codeResult[i]);
 				}
@@ -203,7 +227,7 @@ export async function createLanguageFeaturesProvider(
 				const languageService = await worker.withSyncedResources(getSyncUris());
 				codeResult = await languageService.doCodeActionResolve(codeResult);
 				if (codeResult) {
-					monacoResult = protocol2monaco.asCodeAction(codeResult);
+					monacoResult = toCodeAction(codeResult);
 					codeActions.set(monacoResult, codeResult);
 				}
 			}
@@ -213,39 +237,39 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.format(
 				model.uri.toString(),
-				monaco2protocol.asFormattingOptions(options),
+				fromFormattingOptions(options),
 				undefined,
 				undefined,
 			);
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asTextEdit);
+				return codeResult.map(toTextEdit);
 			}
 		},
 		async provideDocumentRangeFormattingEdits(model, range, options) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.format(
 				model.uri.toString(),
-				monaco2protocol.asFormattingOptions(options),
-				monaco2protocol.asRange(range),
+				fromFormattingOptions(options),
+				fromRange(range),
 				undefined,
 			);
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asTextEdit);
+				return codeResult.map(toTextEdit);
 			}
 		},
 		async provideOnTypeFormattingEdits(model, position, ch, options) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.format(
 				model.uri.toString(),
-				monaco2protocol.asFormattingOptions(options),
+				fromFormattingOptions(options),
 				undefined,
 				{
 					ch: ch,
-					position: monaco2protocol.asPosition(position),
+					position: fromPosition(position),
 				},
 			);
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asTextEdit);
+				return codeResult.map(toTextEdit);
 			}
 		},
 		async provideLinks(model) {
@@ -254,7 +278,7 @@ export async function createLanguageFeaturesProvider(
 			if (codeResult) {
 				return {
 					links: codeResult.map(link => {
-						const monacoLink = protocol2monaco.asLink(link);
+						const monacoLink = toLink(link);
 						documentLinks.set(monacoLink, link);
 						return monacoLink;
 					}),
@@ -265,7 +289,7 @@ export async function createLanguageFeaturesProvider(
 			let codeResult = documentLinks.get(link);
 			if (codeResult) {
 				codeResult = await languageService.doDocumentLinkResolve(codeResult);
-				return protocol2monaco.asLink(codeResult);
+				return toLink(codeResult);
 			}
 			return link;
 		},
@@ -273,14 +297,17 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.doComplete(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
-				monaco2protocol.asCompletionContext(context),
+				fromPosition(position),
+				fromCompletionContext(context),
 			);
-			const fallbackRange = {
-				start: monaco2protocol.asPosition(position),
-				end: monaco2protocol.asPosition(position),
-			};
-			const monacoResult = protocol2monaco.asCompletionList(codeResult, fallbackRange);
+			const monacoResult = toCompletionList(codeResult, {
+				range: {
+					startColumn: position.column,
+					startLineNumber: position.lineNumber,
+					endColumn: position.column,
+					endLineNumber: position.lineNumber,
+				}
+			});
 			for (let i = 0; i < codeResult.items.length; i++) {
 				completionItems.set(
 					monacoResult.suggestions[i],
@@ -294,10 +321,9 @@ export async function createLanguageFeaturesProvider(
 			if (codeItem) {
 				const languageService = await worker.withSyncedResources(getSyncUris());
 				codeItem = await languageService.doCompletionResolve(codeItem);
-				const fallbackRange = 'replace' in monacoItem.range
-					? monaco2protocol.asRange(monacoItem.range.replace)
-					: monaco2protocol.asRange(monacoItem.range);
-				monacoItem = protocol2monaco.asCompletionItem(codeItem, fallbackRange);
+				monacoItem = toCompletionItem(codeItem, {
+					range: 'replace' in monacoItem.range ? monacoItem.range.replace : monacoItem.range
+				});
 				completionItems.set(monacoItem, codeItem);
 			}
 			return monacoItem;
@@ -306,7 +332,7 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findDocumentColors(model.uri.toString());
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asColorInformation);
+				return codeResult.map(toColorInformation);
 			}
 		},
 		async provideColorPresentations(model, monacoResult) {
@@ -317,14 +343,14 @@ export async function createLanguageFeaturesProvider(
 					model.uri.toString(),
 					codeResult.color,
 					{
-						start: monaco2protocol.asPosition(model.getPositionAt(0)),
-						end: monaco2protocol.asPosition(
+						start: fromPosition(model.getPositionAt(0)),
+						end: fromPosition(
 							model.getPositionAt(model.getValueLength())
 						),
 					},
 				);
 				if (codeColors) {
-					return codeColors.map(protocol2monaco.asColorPresentation);
+					return codeColors.map(toColorPresentation);
 				}
 			}
 		},
@@ -332,17 +358,17 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getFoldingRanges(model.uri.toString());
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asFoldingRange);
+				return codeResult.map(toFoldingRange);
 			}
 		},
 		async provideDeclaration(model, position) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findDefinition(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
+				fromPosition(position),
 			);
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asLocation);
+				return codeResult.map(toLocationLink);
 			}
 		},
 		async provideSelectionRanges(model, positions) {
@@ -351,24 +377,24 @@ export async function createLanguageFeaturesProvider(
 				positions.map((position) =>
 					languageService.getSelectionRanges(
 						model.uri.toString(),
-						[monaco2protocol.asPosition(position)],
+						[fromPosition(position)],
 					)
 				)
 			);
 			return codeResults.map(
-				(codeResult) => codeResult?.map(protocol2monaco.asSelectionRange) ?? []
+				(codeResult) => codeResult?.map(toSelectionRange) ?? []
 			);
 		},
 		async provideSignatureHelp(model, position, _token, context) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getSignatureHelp(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
-				monaco2protocol.asSignatureHelpContext(context),
+				fromPosition(position),
+				fromSignatureHelpContext(context),
 			);
 			if (codeResult) {
 				return {
-					value: protocol2monaco.asSignatureHelp(codeResult),
+					value: toSignatureHelp(codeResult),
 					dispose: () => { },
 				};
 			}
@@ -377,33 +403,33 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.doRename(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
+				fromPosition(position),
 				newName,
 			);
 			if (codeResult) {
-				return protocol2monaco.asWorkspaceEdit(codeResult);
+				return toWorkspaceEdit(codeResult);
 			}
 		},
 		async provideReferences(model, position, _context) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.findReferences(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
+				fromPosition(position),
 			);
 			if (codeResult) {
-				return codeResult.map(protocol2monaco.asLocation);
+				return codeResult.map(toLocation);
 			}
 		},
 		async provideInlayHints(model, range) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getInlayHints(
 				model.uri.toString(),
-				monaco2protocol.asRange(range),
+				fromRange(range),
 			);
 			if (codeResult) {
 				return {
 					hints: codeResult.map(hint => {
-						const monacoHint = protocol2monaco.asInlayHint(hint);
+						const monacoHint = toInlayHint(hint);
 						inlayHints.set(monacoHint, hint);
 						return monacoHint;
 					}),
@@ -416,7 +442,7 @@ export async function createLanguageFeaturesProvider(
 			const codeHint = inlayHints.get(hint);
 			if (codeHint) {
 				const resolvedCodeHint = await languageService.doInlayHintResolve(codeHint);
-				return protocol2monaco.asInlayHint(resolvedCodeHint);
+				return toInlayHint(resolvedCodeHint);
 			}
 			return hint;
 		},
@@ -424,10 +450,10 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.doHover(
 				model.uri.toString(),
-				monaco2protocol.asPosition(position),
+				fromPosition(position),
 			);
 			if (codeResult) {
-				return protocol2monaco.asHover(codeResult);
+				return toHover(codeResult);
 			}
 		},
 	};

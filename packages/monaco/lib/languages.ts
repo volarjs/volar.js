@@ -2,18 +2,22 @@ import type {
 	editor,
 	languages,
 	IDisposable,
+	MonacoEditor,
 	Uri,
-} from 'monaco-editor-core';
+} from 'monaco-types';
 import type { LanguageService } from '@volar/language-service';
 import { createLanguageFeaturesProvider } from './utils/provider.js';
+import { setMonaco } from 'monaco-languageserver-types';
 
 export async function registerProviders(
 	worker: editor.MonacoWebWorker<LanguageService>,
 	language: languages.LanguageSelector,
 	getSyncUris: () => Uri[],
-	languages: typeof import('monaco-editor-core').languages,
+	monaco: MonacoEditor
 ): Promise<IDisposable> {
+	setMonaco(monaco);
 
+	const { languages } = monaco;
 	const provider = await createLanguageFeaturesProvider(worker, getSyncUris);
 	const disposables: IDisposable[] = [
 		languages.registerHoverProvider(language, provider),

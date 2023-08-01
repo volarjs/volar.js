@@ -1,8 +1,7 @@
 import type { LanguageService } from '@volar/language-service';
-import type { editor, IDisposable, Uri } from 'monaco-editor-core';
+import type { editor, IDisposable, MonacoEditor, Uri } from 'monaco-types';
+import { fromPosition, fromRange, setMonaco, toMarkerData, toTextEdit } from 'monaco-languageserver-types';
 import { markers } from './utils/markers.js';
-import * as protocol2monaco from './utils/protocol2monaco.js';
-import * as monaco2protocol from './utils/monaco2protocol.js';
 
 interface IInternalEditorModel extends editor.IModel {
 	onDidChangeAttached(listener: () => void): IDisposable;
@@ -14,9 +13,11 @@ export function activateMarkers(
 	languages: string[],
 	markersOwn: string,
 	getSyncUris: () => Uri[],
-	editor: typeof import('monaco-editor-core').editor,
+	monaco: MonacoEditor,
 ): IDisposable {
+	setMonaco(monaco);
 
+	const { editor } = monaco;
 	const disposables: IDisposable[] = [];
 	const listener = new Map<string, IDisposable>();
 
@@ -101,7 +102,7 @@ export function activateMarkers(
 			return;
 		}
 		const result = diagnostics.map(error => {
-			const marker = protocol2monaco.asMarkerData(error);
+			const marker = toMarkerData(error);
 			markers.set(marker, error);
 			return marker;
 		});
@@ -114,9 +115,11 @@ export function activateAutoInsertion(
 	worker: editor.MonacoWebWorker<LanguageService>,
 	languages: string[],
 	getSyncUris: () => Uri[],
-	editor: typeof import('monaco-editor-core').editor,
+	monaco: MonacoEditor
 ): IDisposable {
+	setMonaco(monaco);
 
+	const { editor } = monaco;
 	const disposables: IDisposable[] = [];
 	const listener = new Map<editor.IModel, IDisposable>();
 
@@ -188,13 +191,13 @@ export function activateAutoInsertion(
 				const languageService = await worker.withSyncedResources(getSyncUris());
 				const edit = await languageService.doAutoInsert(
 					model.uri.toString(),
-					monaco2protocol.asPosition({
+					fromPosition({
 						lineNumber: lastChange.range.startLineNumber,
 						column: lastChange.range.startColumn + lastChange.text.length,
 					}),
 					{
 						lastChange: {
-							range: monaco2protocol.asRange(lastChange.range),
+							range: fromRange(lastChange.range),
 							rangeLength: lastChange.rangeLength,
 							text: lastChange.text,
 							rangeOffset: lastChange.rangeOffset,
@@ -210,7 +213,7 @@ export function activateAutoInsertion(
 						(codeEditor?.getContribution('snippetController2') as any)?.insert(edit);
 					}
 					else {
-						model.pushEditOperations([], [protocol2monaco.asTextEdit(edit)], () => []);
+						model.pushEditOperations([], [toTextEdit(edit)], () => []);
 					}
 				}
 			})();
