@@ -54,7 +54,7 @@ export namespace editor {
 		}
 
 		function hostingMarkers(model: IInternalEditorModel): void {
-			if (!languages.includes(model.getLanguageId())) {
+			if (!languages.includes(model.getLanguageId?.() ?? (model as any).getModeId?.())) {
 				return;
 			}
 
@@ -155,7 +155,7 @@ export namespace editor {
 		}
 
 		function hostingAutoInsertion(model: IInternalEditorModel) {
-			if (!languages.includes(model.getLanguageId())) {
+			if (!languages.includes(model.getLanguageId?.() ?? (model as any).getModeId?.())) {
 				return;
 			}
 			listener.set(model, model.onDidChangeContent((e) => {
