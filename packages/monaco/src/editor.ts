@@ -1,4 +1,4 @@
-import { LanguageService } from '@volar/language-service';
+import type { LanguageService } from '@volar/language-service';
 import type { editor as _editor, IDisposable, Uri } from 'monaco-editor-core';
 import { markers } from './utils/markers';
 import * as protocol2monaco from './utils/protocol2monaco';

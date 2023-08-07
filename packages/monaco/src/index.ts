@@ -1,2 +1,2 @@
-export * from './languages';
 export * from './editor';
+export * from './languages';

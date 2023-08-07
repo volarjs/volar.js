@@ -22,7 +22,7 @@ export interface ServerContext {
 	};
 }
 
-export async function startCommonLanguageServer(connection: vscode.Connection, _plugins: LanguageServerPlugin[], getRuntimeEnv: (params: vscode.InitializeParams, options: InitializationOptions) => RuntimeEnvironment) {
+export function startCommonLanguageServer(connection: vscode.Connection, _plugins: LanguageServerPlugin[], getRuntimeEnv: (params: vscode.InitializeParams, options: InitializationOptions) => RuntimeEnvironment) {
 
 	let initParams: vscode.InitializeParams;
 	let options: InitializationOptions;

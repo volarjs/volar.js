@@ -77,12 +77,13 @@ export function createLanguageHost(
 	return host;
 }
 
-export function createLanguageService(
+export function createLanguageService<T = {}>(
 	modules: SharedModules,
 	env: ServiceEnvironment,
 	config: Config,
 	host: TypeScriptLanguageHost,
-) {
+	extraApis: T = {} as any,
+): LanguageService & T {
 
 	const languageService = _createLanguageService(
 		modules,
@@ -100,5 +101,12 @@ export function createLanguageService(
 		}
 	}
 
-	return new InnocentRabbit() as LanguageService;
+	for (const api in extraApis) {
+		const isFunction = typeof (extraApis as any)[api] === 'function';
+		if (isFunction) {
+			(InnocentRabbit.prototype as any)[api] = (extraApis as any)[api];
+		}
+	}
+
+	return new InnocentRabbit() as any;
 }
