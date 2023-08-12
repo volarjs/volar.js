@@ -43,7 +43,7 @@ export function createSys(
 			const dirName = path.dirname(fileName);
 			const baseName = path.basename(fileName);
 			const dir = getDir(dirName);
-			if (dir.files[baseName]) { // is requested file
+			if (dir.files?.[baseName]) { // is requested file
 				version++;
 				if (change.type === 1 satisfies typeof FileChangeType.Created || change.type === 2 satisfies typeof FileChangeType.Changed) {
 					dir.files[baseName] = {
@@ -126,7 +126,7 @@ export function createSys(
 		const name = path.basename(fileName);
 
 		readFileWorker(fileName, encoding, dir);
-
+		dir.files ??= {};
 		return dir.files[name]?.text;
 	}
 
@@ -205,6 +205,7 @@ export function createSys(
 		const dirPath = path.dirname(fileName);
 		const baseName = path.basename(fileName);
 		const dir = getDir(dirPath);
+		dir.files ??= {};
 		const file = dir.files[baseName] ??= {};
 
 		return file;
@@ -215,7 +216,7 @@ export function createSys(
 		dirName = resolvePath(dirName);
 		readDirectoryWorker(dirName);
 		const dir = getDir(dirName);
-		return [...Object.entries(dir.dirs)].filter(([_, dir]) => dir.exists).map(([name]) => name);
+		return [...Object.entries(dir.dirs || {})].filter(([_, dir]) => dir.exists).map(([name]) => name);
 	}
 
 	function readDirectory(
@@ -241,8 +242,8 @@ export function createSys(
 				const dir = getDir(dirPath);
 
 				return {
-					files: [...Object.entries(dir.files)].filter(([_, file]) => file.stat?.type === 1 satisfies FileType.File).map(([name]) => name),
-					directories: [...Object.entries(dir.dirs)].filter(([_, dir]) => dir.exists).map(([name]) => name),
+					files: [...Object.entries(dir?.files || {})].filter(([_, file]) => file.stat?.type === 1 satisfies FileType.File).map(([name]) => name),
+					directories: [...Object.entries(dir?.dirs || {})].filter(([_, dir]) => dir.exists).map(([name]) => name),
 				};
 			},
 			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
@@ -253,9 +254,10 @@ export function createSys(
 	function readFileWorker(fileName: string, encoding: string | undefined, dir: Dir) {
 
 		const name = path.basename(fileName);
+		dir.files ??= {};
 		dir.files[name] ??= {};
 
-		const file = dir.files[name];
+		const file = dir.files?.[name] || {};
 		if (file.requestedText) {
 			return;
 		}
@@ -324,9 +326,10 @@ export function createSys(
 					stat.then((stat) => {
 						promises.delete(promise);
 						if (stat?.type === 1 satisfies FileType.File) {
+							dir.files ??= {};
 							dir.files[name] ??= {};
 							const file = dir.files[name];
-							if (stat.type !== file.stat?.type || stat.mtime !== file.stat.mtime) {
+							if (stat.type !== file.stat?.type || stat.mtime !== file.stat?.mtime) {
 								version++;
 							}
 							file.stat = stat;
@@ -346,6 +349,7 @@ export function createSys(
 				}
 			}
 			if (fileType === 1 satisfies FileType.File) {
+				dir.files ??= {};
 				dir.files[name] ??= {};
 				if (!dir.files[name].stat) {
 					dir.files[name].stat = {
@@ -394,6 +398,7 @@ export function createSys(
 	}
 
 	function getDirFromDir(dir: Dir, name: string) {
+		dir.dirs ??= {};
 		let target = dir.dirs[name];
 		if (!target) {
 			target = {
