@@ -11,8 +11,8 @@ interface File {
 }
 
 interface Dir {
-	dirs: Record<string, Dir>;
-	files: Record<string, File>;
+	dirs?: Record<string, Dir>;
+	files?: Record<string, File>;
 	exists?: boolean;
 	requestedRead?: boolean;
 }
