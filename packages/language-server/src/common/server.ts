@@ -27,7 +27,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 	let initParams: vscode.InitializeParams;
 	let options: InitializationOptions;
 	let roots: URI[] = [];
-	let projects: ReturnType<typeof createWorkspaces> | undefined;
+	let workspaces: ReturnType<typeof createWorkspaces> | undefined;
 	let plugins: ReturnType<LanguageServerPlugin>[];
 	let documents: ReturnType<typeof createDocuments>;
 	let context: ServerContext;
@@ -141,11 +141,11 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 
 				for (const folder of e.added) {
-					projects?.add(URI.parse(folder.uri));
+					workspaces?.add(URI.parse(folder.uri));
 				}
 
 				for (const folder of e.removed) {
-					projects?.remove(URI.parse(folder.uri));
+					workspaces?.remove(URI.parse(folder.uri));
 				}
 			});
 		}
@@ -177,11 +177,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 		}
 	});
 	connection.onShutdown(async () => {
-		if (projects) {
-			for (const workspace of projects.workspaces) {
-				(await workspace[1]).dispose();
-			}
-		}
+		workspaces?.reloadProjects();
 	});
 	connection.listen();
 
@@ -240,7 +236,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 		const tsLocalized = options.typescript && initParams.locale ? await context.server.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale) : undefined;
 		const cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
 
-		projects = createWorkspaces({
+		workspaces = createWorkspaces({
 			...context,
 			workspaces: {
 				ts,
@@ -251,16 +247,12 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 				cancelTokenHost,
 				plugins,
 			},
-		});
+		}, roots);
 
-		for (const root of roots) {
-			projects.add(root);
-		}
-
-		(await import('./features/customFeatures')).register(connection, projects, context.server.runtimeEnv);
+		(await import('./features/customFeatures')).register(connection, workspaces, context.server.runtimeEnv);
 		(await import('./features/languageFeatures')).register(
 			connection,
-			projects,
+			workspaces,
 			initParams,
 			options,
 			cancelTokenHost,
@@ -274,7 +266,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 		}
 
 		async function getLanguageService(uri: string) {
-			const project = (await projects!.getProject(uri))?.project;
+			const project = (await workspaces!.getProject(uri))?.project;
 			return project?.getLanguageService();
 		}
 	}

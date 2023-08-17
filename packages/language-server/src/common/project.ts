@@ -6,11 +6,12 @@ import { URI } from 'vscode-uri';
 import { LanguageServerPlugin } from '../types';
 import { loadConfig } from './utils/serverConfig';
 import { createUriMap } from './utils/uriMap';
-import { WorkspaceContext } from './workspace';
 import { createSys } from '@volar/typescript';
+import { WorkspacesContext } from './workspaces';
 
-export interface ProjectContext extends WorkspaceContext {
+export interface ProjectContext extends WorkspacesContext {
 	project: {
+		workspaceUri: URI;
 		rootUri: URI;
 		tsConfig: path.PosixPath | ts.CompilerOptions;
 	};
@@ -39,7 +40,7 @@ export async function createProject(context: ProjectContext) {
 		fs,
 		console: context.server.runtimeEnv.console,
 		locale: context.workspaces.initParams.locale,
-		workspaceUri: context.workspace.rootUri,
+		workspaceUri: context.project.workspaceUri,
 		rootUri: context.project.rootUri,
 		clientCapabilities: context.workspaces.initParams.capabilities,
 		getConfiguration: context.server.configurationHost?.getConfiguration,
@@ -53,7 +54,7 @@ export async function createProject(context: ProjectContext) {
 
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const languageHost: TypeScriptLanguageHost = {
-		workspacePath: uriToFileName(context.workspace.rootUri.toString()),
+		workspacePath: uriToFileName(context.project.workspaceUri.toString()),
 		rootPath: uriToFileName(context.project.rootUri.toString()),
 		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => parsedCommandLine.fileNames,
@@ -99,9 +100,9 @@ export async function createProject(context: ProjectContext) {
 		existingOptions,
 	);
 	let config = (
-		context.workspace.rootUri.scheme === 'file' ? loadConfig(
+		context.project.workspaceUri.scheme === 'file' ? loadConfig(
 			context.server.runtimeEnv.console,
-			context.server.runtimeEnv.uriToFileName(context.workspace.rootUri.toString()),
+			context.server.runtimeEnv.uriToFileName(context.project.workspaceUri.toString()),
 			context.workspaces.initOptions.configFilePath,
 		) : {}
 	) ?? {};

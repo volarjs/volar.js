@@ -8,6 +8,7 @@ interface Options<T> {
 	set(key: string, value: T): void;
 	clear(): void;
 	values(): IterableIterator<T>;
+	keys(): IterableIterator<string>;
 }
 
 export function createUriMap<T>(
@@ -21,6 +22,7 @@ export function createUriMap<T>(
 	return {
 		clear,
 		values,
+		keys,
 		uriDelete,
 		uriGet,
 		uriHas,
@@ -48,6 +50,9 @@ export function createUriMap<T>(
 	}
 	function values() {
 		return map.values();
+	}
+	function keys() {
+		return map.keys();
 	}
 
 	function uriDelete(_uri: string) {
