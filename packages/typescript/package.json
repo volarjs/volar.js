@@ -1,6 +1,6 @@
 {
 	"name": "@volar/typescript",
-	"version": "1.10.0",
+	"version": "1.10.1",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,9 +13,9 @@
 		"directory": "packages/typescript"
 	},
 	"dependencies": {
-		"@volar/language-core": "1.10.0"
+		"@volar/language-core": "1.10.1"
 	},
 	"devDependencies": {
-		"@volar/language-service": "1.10.0"
+		"@volar/language-service": "1.10.1"
 	}
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@volar/language-server",
-	"version": "1.10.0",
+	"version": "1.10.1",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -15,9 +15,9 @@
 		"directory": "packages/language-server"
 	},
 	"dependencies": {
-		"@volar/language-core": "1.10.0",
-		"@volar/language-service": "1.10.0",
-		"@volar/typescript": "1.10.0",
+		"@volar/language-core": "1.10.1",
+		"@volar/language-service": "1.10.1",
+		"@volar/typescript": "1.10.1",
 		"@vscode/l10n": "^0.0.11",
 		"request-light": "^0.7.0",
 		"typesafe-path": "^0.2.2",
@@ -27,6 +27,6 @@
 		"vscode-uri": "^3.0.7"
 	},
 	"devDependencies": {
-		"@volar/source-map": "1.10.0"
+		"@volar/source-map": "1.10.1"
 	}
 }
