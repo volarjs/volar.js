@@ -64,7 +64,7 @@ export function register(
 		}
 	});
 	connection.onNotification(ReloadProjectNotification.type, () => {
-		workspaces.reloadProject();
+		workspaces.reloadProjects();
 	});
 	connection.onNotification(WriteVirtualFilesNotification.type, async params => {
 
@@ -104,30 +104,28 @@ export function register(
 			size: number;
 		}>();
 
-		for (const workspace of workspaces.workspaces.values()) {
-			for (const _project of (await workspace).projects.values()) {
-				const project = await _project;
-				const service = project.getLanguageServiceDontCreate();
-				const languageService: ts.LanguageService | undefined = service?.context.inject('typescript/languageService');
-				const program = languageService?.getProgram();
-				if (program) {
-					const projectName = typeof project.tsConfig === 'string' ? project.tsConfig : (project.languageHost.workspacePath + '(inferred)');
-					const sourceFiles = program?.getSourceFiles() ?? [];
-					for (const sourceFile of sourceFiles) {
-						if (!sourceFilesData.has(sourceFile)) {
-							let nodes = 0;
-							sourceFile.forEachChild(function walk(node) {
-								nodes++;
-								node.forEachChild(walk);
-							});
-							sourceFilesData.set(sourceFile, {
-								projectNames: [],
-								size: nodes * 128,
-							});
-						}
-						sourceFilesData.get(sourceFile)!.projectNames.push(projectName);
-					};
-				}
+		for (const _project of [...workspaces.configProjects.values(), ...workspaces.inferredProjects.values()]) {
+			const project = await _project;
+			const service = project.getLanguageServiceDontCreate();
+			const languageService: ts.LanguageService | undefined = service?.context.inject('typescript/languageService');
+			const program = languageService?.getProgram();
+			if (program) {
+				const projectName = typeof project.tsConfig === 'string' ? project.tsConfig : (project.languageHost.workspacePath + '(inferred)');
+				const sourceFiles = program?.getSourceFiles() ?? [];
+				for (const sourceFile of sourceFiles) {
+					if (!sourceFilesData.has(sourceFile)) {
+						let nodes = 0;
+						sourceFile.forEachChild(function walk(node) {
+							nodes++;
+							node.forEachChild(walk);
+						});
+						sourceFilesData.set(sourceFile, {
+							projectNames: [],
+							size: nodes * 128,
+						});
+					}
+					sourceFilesData.get(sourceFile)!.projectNames.push(projectName);
+				};
 			}
 		}
 
