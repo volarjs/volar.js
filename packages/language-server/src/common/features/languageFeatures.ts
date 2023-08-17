@@ -8,7 +8,7 @@ import { createDocuments } from '../documents';
 
 export function register(
 	connection: vscode.Connection,
-	projects: Workspaces,
+	workspaces: Workspaces,
 	initParams: vscode.InitializeParams,
 	initOptions: InitializationOptions,
 	cancelHost: CancellationTokenHost,
@@ -218,20 +218,20 @@ export function register(
 	connection.onWorkspaceSymbol(async (params, token) => {
 
 		let results: vscode.WorkspaceSymbol[] = [];
+		let projects = [...workspaces.configProjects.values()];
 
-		for (const _workspace of projects.workspaces.values()) {
-			const workspace = await _workspace;
-			let projects = [...workspace.projects.values()];
-			projects = projects.length ? projects : [workspace.getInferredProject()];
-			for (const project of projects) {
+		if (!projects.length) {
+			projects = [...workspaces.inferredProjects.values()];
+		}
 
-				if (token.isCancellationRequested)
-					return;
+		for (const project of projects) {
 
-				const service = (await project).getLanguageService();
+			if (token.isCancellationRequested)
+				return;
 
-				results = results.concat(await service.findWorkspaceSymbols(params.query, token));
-			}
+			const service = (await project).getLanguageService();
+
+			results = results.concat(await service.findWorkspaceSymbols(params.query, token));
 		}
 
 		return results;
@@ -361,7 +361,7 @@ export function register(
 		});
 	}
 	async function getProject(uri: string) {
-		return (await projects.getProject(uri))?.project;
+		return (await workspaces.getProject(uri))?.project;
 	}
 	function fixTextEdit(item: vscode.CompletionItem) {
 		const insertReplaceSupport = initParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;
