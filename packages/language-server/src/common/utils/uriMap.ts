@@ -22,7 +22,7 @@ export function createUriMap<T>(
 	return {
 		clear,
 		values,
-		keys,
+		uriKeys: keys,
 		uriDelete,
 		uriGet,
 		uriHas,
