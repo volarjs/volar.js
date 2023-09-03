@@ -249,8 +249,8 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 			},
 		}, roots);
 
-		(await import('./features/customFeatures')).register(connection, workspaces, context.server.runtimeEnv);
-		(await import('./features/languageFeatures')).register(
+		(await import('./features/customFeatures.js')).register(connection, workspaces, context.server.runtimeEnv);
+		(await import('./features/languageFeatures.js')).register(
 			connection,
 			workspaces,
 			initParams,

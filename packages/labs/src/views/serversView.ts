@@ -219,7 +219,7 @@ export function activate(context: vscode.ExtensionContext) {
 				progress.report({ increment: 0 });
 
 				const meta = await client.sendRequest(LoadedTSFilesMetaRequest.type);
-				const { visualizer } = await import('esbuild-visualizer/dist/plugin/index');
+				const { visualizer } = await import('esbuild-visualizer/dist/plugin/index.js');
 				const fileContent = await visualizer(meta as any);
 
 				if (select === 'openInBrowser') {
