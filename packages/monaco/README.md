@@ -115,7 +115,7 @@ languages.onLanguage('my-lang', () => {
 		() => [Uri.file('/Foo.my-lang'), Uri.file('/Bar.my-lang')],
 		editor
 	);
-	VolarMonaco.languages.registerProvides(worker, ['my-lang'], languages)
+	VolarMonaco.languages.registerProviders(worker, ['my-lang'], languages)
 });
 ```
 
