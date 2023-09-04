@@ -1,4 +1,4 @@
-import { FileKind, FileRangeCapabilities, type VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import { FileKind, FileRangeCapabilities, forEachEmbeddedFile, type VirtualFile } from '@volar/language-service';
 import type { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import * as vscode from 'vscode-languageserver';

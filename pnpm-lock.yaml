@@ -87,9 +87,6 @@ importers:
 
   packages/language-server:
     dependencies:
-      '@volar/language-core':
-        specifier: 1.10.1
-        version: link:../language-core
       '@volar/language-service':
         specifier: 1.10.1
         version: link:../language-service

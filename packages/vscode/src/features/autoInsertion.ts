@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
-import { AutoInsertRequest } from '@volar/language-server';
+import { AutoInsertRequest } from '@volar/language-server/protocol';
 
 export async function activate(
 	clients: BaseLanguageClient[],

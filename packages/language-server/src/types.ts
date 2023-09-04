@@ -1,8 +1,6 @@
-import type { FileSystem, Console, LanguageService, ServiceEnvironment, SharedModules } from '@volar/language-service';
-import type { TypeScriptLanguageHost } from '@volar/language-core';
+import type { Config, Console, FileSystem, LanguageService, ServiceEnvironment, SharedModules, TypeScriptLanguageHost } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import * as vscode from 'vscode-languageserver';
-import type { Config } from '@volar/language-service';
 import type { ProjectContext } from './common/project.js';
 
 export interface Timer {
