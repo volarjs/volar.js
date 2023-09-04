@@ -11,9 +11,6 @@
 	],
 	"references": [
 		{
-			"path": "../language-core/tsconfig.esm.json"
-		},
-		{
 			"path": "../language-service/tsconfig.esm.json"
 		},
 		{

@@ -14,9 +14,6 @@
 	],
 	"references": [
 		{
-			"path": "../language-core/tsconfig.cjs.json"
-		},
-		{
 			"path": "../language-service/tsconfig.cjs.json"
 		},
 		{
