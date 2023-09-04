@@ -1,10 +1,10 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import type { ServiceContext } from '../types.js';
+import { languageFeatureWorker } from '../utils/featureWorkers.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import * as dedupe from '../utils/dedupe';
-import { notEmpty } from '../utils/common';
-import { NoneCancellationToken } from '../utils/cancellation';
+import * as dedupe from '../utils/dedupe.js';
+import { notEmpty } from '../utils/common.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export function register(context: ServiceContext) {
 

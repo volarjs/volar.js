@@ -1,7 +1,7 @@
 import * as path from 'typesafe-path/posix';
 import { URI } from 'vscode-uri';
-import type * as ts from 'typescript/lib/tsserverlibrary';
-import { FileSystem, FileType } from '@volar/language-service';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
+import { type FileSystem, FileType } from '@volar/language-service';
 import * as _fs from 'fs';
 
 export const defaultCompilerOptions: ts.CompilerOptions = {

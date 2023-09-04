@@ -1,7 +1,7 @@
 import type { TypeScriptLanguageHost } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
-import type * as ts from 'typescript/lib/tsserverlibrary';
-import { asPosix, defaultCompilerOptions } from './utils';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
+import { asPosix, defaultCompilerOptions } from './utils.js';
 
 export function createInferredProject(
 	rootPath: string,
@@ -22,7 +22,7 @@ export function createProject(
 	extraFileExtensions: ts.FileExtensionInfo[] = [],
 	existingOptions?: ts.CompilerOptions
 ) {
-	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
+	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary.js');
 	const tsconfigPath = asPosix(sourceTsconfigPath);
 	return createProjectBase(
 		path.dirname(tsconfigPath),
@@ -44,7 +44,7 @@ export function createProject(
 
 function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>) {
 
-	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
+	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary.js');
 	const languageHost: TypeScriptLanguageHost = {
 		workspacePath: rootPath,
 		rootPath: rootPath,

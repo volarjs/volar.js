@@ -1,14 +1,14 @@
-import { Config, FormattingOptions, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
+import { type Config, type FormattingOptions, type TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { asPosix, defaultCompilerOptions, fileNameToUri, fs, getConfiguration, uriToFileName } from './utils';
+import { asPosix, defaultCompilerOptions, fileNameToUri, fs, getConfiguration, uriToFileName } from './utils.js';
 
 export function createFormatter(
 	config: Config,
 	compilerOptions = defaultCompilerOptions
 ) {
 
-	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
+	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary.js');
 
 	let settings = {} as any;
 	let dummyScriptUri = 'file:///dummy.txt';

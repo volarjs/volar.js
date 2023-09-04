@@ -1,6 +1,6 @@
-import { flatMap, last, map, createGetCanonicalFileName, flatten, sort, compareStringsCaseSensitive, findIndex, getStringComparer, every, indexOfAnyCharCode } from "./core";
-import { getNormalizedPathComponents, removeTrailingDirectorySeparator, directorySeparator, normalizePath, combinePaths, fileExtensionIsOneOf, isRootedDiskPath, containsPath, hasExtension, getDirectoryPath } from "./path";
-import { CharacterCodes } from "./types";
+import { flatMap, last, map, createGetCanonicalFileName, flatten, sort, compareStringsCaseSensitive, findIndex, getStringComparer, every, indexOfAnyCharCode } from "./core.js";
+import { getNormalizedPathComponents, removeTrailingDirectorySeparator, directorySeparator, normalizePath, combinePaths, fileExtensionIsOneOf, isRootedDiskPath, containsPath, hasExtension, getDirectoryPath } from "./path.js";
+import { CharacterCodes } from "./types.js";
 
 // KLUDGE: Don't assume one 'node_modules' links to another. More likely a single directory inside the node_modules is the symlink.
 // ALso, don't assume that an `@foo` directory is linked. More likely the contents of that are linked.

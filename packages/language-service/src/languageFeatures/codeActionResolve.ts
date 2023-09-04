@@ -1,8 +1,8 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { ServiceCodeActionData, RuleCodeActionData } from './codeActions';
-import { embeddedEditToSourceEdit } from './rename';
-import { NoneCancellationToken } from '../utils/cancellation';
+import type { ServiceContext } from '../types.js';
+import type { ServiceCodeActionData, RuleCodeActionData } from './codeActions.js';
+import { embeddedEditToSourceEdit } from './rename.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export function register(context: ServiceContext) {
 

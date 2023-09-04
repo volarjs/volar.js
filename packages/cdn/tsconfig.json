@@ -1,0 +1,15 @@
+{
+    "extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"composite": true,
+	},
+	"include": [],
+	"references": [
+		{
+			"path": "./tsconfig.esm.json"
+		},
+		{
+			"path": "./tsconfig.cjs.json"
+		},
+	],
+}

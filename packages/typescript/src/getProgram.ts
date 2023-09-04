@@ -1,8 +1,8 @@
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import type * as embedded from '@volar/language-core';
 
 export function getProgram(
-	ts: typeof import('typescript/lib/tsserverlibrary'),
+	ts: typeof import('typescript/lib/tsserverlibrary.js'),
 	core: embedded.LanguageContext,
 	ls: ts.LanguageService,
 	sys: ts.System,

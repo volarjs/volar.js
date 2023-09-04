@@ -1,10 +1,10 @@
-import { FileKind, VirtualFiles, forEachEmbeddedFile } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import { FileKind, type VirtualFiles, forEachEmbeddedFile } from '@volar/language-core';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 
 export function decorateLanguageServiceHost(
 	virtualFiles: VirtualFiles,
 	languageServiceHost: ts.LanguageServiceHost,
-	ts: typeof import('typescript/lib/tsserverlibrary'),
+	ts: typeof import('typescript/lib/tsserverlibrary.js'),
 	exts: string[]
 ) {
 
@@ -204,7 +204,7 @@ export function decorateLanguageServiceHost(
 	}
 }
 
-export function getExternalFiles(ts: typeof import('typescript/lib/tsserverlibrary'), project: ts.server.Project, exts: string[]) {
+export function getExternalFiles(ts: typeof import('typescript/lib/tsserverlibrary.js'), project: ts.server.Project, exts: string[]) {
 	if (project.projectKind !== ts.server.ProjectKind.Configured) {
 		return [];
 	}

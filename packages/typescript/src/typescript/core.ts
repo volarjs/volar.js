@@ -1,4 +1,4 @@
-import { Comparer, Comparison, EqualityComparer, SortedReadonlyArray } from "./corePublic";
+import { type Comparer, Comparison, type EqualityComparer, type SortedReadonlyArray } from "./corePublic.js";
 
 const emptyArray: never[] = [] as never[];
 

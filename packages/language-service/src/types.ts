@@ -1,13 +1,13 @@
-import { Language, LanguageContext } from '@volar/language-core';
+import type { Language, LanguageContext } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { DocumentsAndSourceMaps } from './documents';
+import type { DocumentsAndSourceMaps } from './documents.js';
 
 export type * from 'vscode-languageserver-protocol';
 
 export interface SharedModules {
-	typescript?: typeof import('typescript/lib/tsserverlibrary');
+	typescript?: typeof import('typescript/lib/tsserverlibrary.js');
 }
 
 export interface ServiceEnvironment {

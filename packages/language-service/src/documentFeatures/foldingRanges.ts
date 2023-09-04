@@ -1,7 +1,7 @@
-import type { ServiceContext } from '../types';
-import { documentFeatureWorker } from '../utils/featureWorkers';
-import * as transformer from '../transformer';
-import { NoneCancellationToken } from '../utils/cancellation';
+import type { ServiceContext } from '../types.js';
+import { documentFeatureWorker } from '../utils/featureWorkers.js';
+import * as transformer from '../transformer/index.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 import type * as _ from 'vscode-languageserver-protocol';
 

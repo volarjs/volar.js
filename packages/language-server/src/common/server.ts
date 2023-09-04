@@ -1,14 +1,14 @@
-import { Config, FileSystem, standardSemanticTokensLegend } from '@volar/language-service';
+import { type Config, type FileSystem, standardSemanticTokensLegend } from '@volar/language-service';
 import * as l10n from '@vscode/l10n';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { InitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types';
-import { createCancellationTokenHost } from './cancellationPipe';
-import { createConfigurationHost } from './configurationHost';
-import { createDocuments } from './documents';
-import { setupCapabilities } from './utils/registerFeatures';
-import { loadConfig } from './utils/serverConfig';
-import { createWorkspaces } from './workspaces';
+import { type InitializationOptions, type LanguageServerPlugin, type RuntimeEnvironment, ServerMode } from '../types.js';
+import { createCancellationTokenHost } from './cancellationPipe.js';
+import { createConfigurationHost } from './configurationHost.js';
+import { createDocuments } from './documents.js';
+import { setupCapabilities } from './utils/registerFeatures.js';
+import { loadConfig } from './utils/serverConfig.js';
+import { createWorkspaces } from './workspaces.js';
 import { configure as configureHttpRequests } from 'request-light';
 
 export interface ServerContext {

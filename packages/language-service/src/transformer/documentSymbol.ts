@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import { notEmpty } from '../utils/common';
+import { notEmpty } from '../utils/common.js';
 
 export function transform(symbol: vscode.DocumentSymbol, getOtherRange: (range: vscode.Range) => vscode.Range | undefined): vscode.DocumentSymbol | undefined {
 	const range = getOtherRange(symbol.range);

@@ -1,1 +1,1 @@
-export * from './out/node';
+export * from './out/types/node/index.js';

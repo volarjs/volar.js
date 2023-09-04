@@ -1,7 +1,7 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext, AutoInsertionContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import { NoneCancellationToken } from '../utils/cancellation';
+import type { ServiceContext, AutoInsertionContext } from '../types.js';
+import { languageFeatureWorker } from '../utils/featureWorkers.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export function register(context: ServiceContext) {
 

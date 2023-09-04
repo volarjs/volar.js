@@ -1,9 +1,9 @@
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import * as transformer from '../transformer';
+import type { ServiceContext } from '../types.js';
+import { languageFeatureWorker } from '../utils/featureWorkers.js';
+import * as transformer from '../transformer/index.js';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { isInsideRange, notEmpty } from '../utils/common';
-import { NoneCancellationToken } from '../utils/cancellation';
+import { isInsideRange, notEmpty } from '../utils/common.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export function register(context: ServiceContext) {
 

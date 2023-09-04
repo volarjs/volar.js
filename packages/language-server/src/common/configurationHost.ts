@@ -1,4 +1,4 @@
-import { ServiceEnvironment } from '@volar/language-service';
+import type { ServiceEnvironment } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 
 export function createConfigurationHost(params: vscode.InitializeParams, connection: vscode.Connection): Pick<ServiceEnvironment, 'getConfiguration' | 'onDidChangeConfiguration'> & { ready(): void; } {

@@ -1,12 +1,12 @@
-import * as transformer from '../transformer';
+import * as transformer from '../transformer/index.js';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { getOverlapRange, notEmpty } from '../utils/common';
-import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import { embeddedEditToSourceEdit } from './rename';
-import { ServiceDiagnosticData } from './validation';
-import { NoneCancellationToken } from '../utils/cancellation';
+import type { ServiceContext } from '../types.js';
+import { getOverlapRange, notEmpty } from '../utils/common.js';
+import * as dedupe from '../utils/dedupe.js';
+import { languageFeatureWorker } from '../utils/featureWorkers.js';
+import { embeddedEditToSourceEdit } from './rename.js';
+import type { ServiceDiagnosticData } from './validation.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export interface ServiceCodeActionData {
 	uri: string,

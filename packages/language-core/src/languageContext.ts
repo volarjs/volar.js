@@ -1,12 +1,12 @@
-import { createVirtualFiles } from './virtualFiles';
-import { Language, TypeScriptLanguageHost } from './types';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import { createVirtualFiles } from './virtualFiles.js';
+import type { Language, TypeScriptLanguageHost } from './types.js';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 
 export interface LanguageContext {
 	rawHost: TypeScriptLanguageHost;
 	host: TypeScriptLanguageHost;
 	virtualFiles: ReturnType<typeof createVirtualFiles>;
-};
+}
 
 export function createLanguageContext(rawHost: TypeScriptLanguageHost, languages: Language<any>[]): LanguageContext {
 

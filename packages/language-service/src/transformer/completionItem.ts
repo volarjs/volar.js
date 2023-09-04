@@ -1,6 +1,6 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import { notEmpty } from '../utils/common';
-import { transform as transformTextEdit } from './textEdit';
+import { notEmpty } from '../utils/common.js';
+import { transform as transformTextEdit } from './textEdit.js';
 
 export function transform<T extends vscode.CompletionItem>(
 	item: T,

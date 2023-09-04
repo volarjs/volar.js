@@ -1,5 +1,5 @@
-import { ServiceEnvironment } from '@volar/language-service';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type { ServiceEnvironment } from '@volar/language-service';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 
 export async function getInferredCompilerOptions(ctx: Pick<ServiceEnvironment, 'getConfiguration' | 'onDidChangeConfiguration'> | undefined) {
 

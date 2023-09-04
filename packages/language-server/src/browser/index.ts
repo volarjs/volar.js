@@ -1,12 +1,12 @@
-import * as vscode from 'vscode-languageserver/browser';
-import { startCommonLanguageServer } from '../common/server';
-import { LanguageServerPlugin } from '../types';
-import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
+import * as vscode from 'vscode-languageserver/browser.js';
+import { startCommonLanguageServer } from '../common/server.js';
+import type { LanguageServerPlugin } from '../types.js';
+import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http.js';
 import { URI } from 'vscode-uri';
-import { FsReadFileRequest, FsReadDirectoryRequest } from '../protocol';
-import { FileSystem, FileType } from '@volar/language-service';
+import { FsReadFileRequest, FsReadDirectoryRequest } from '../protocol.js';
+import { type FileSystem, FileType } from '@volar/language-service';
 
-export * from '../index';
+export * from '../index.js';
 
 export function createConnection() {
 

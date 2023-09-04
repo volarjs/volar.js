@@ -1,10 +1,10 @@
-import { FileKind, FileRangeCapabilities, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
-import { Mapping, Stack } from '@volar/source-map';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import { FileKind, FileRangeCapabilities, type VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import type { Mapping, Stack } from '@volar/source-map';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import * as vscode from 'vscode-languageserver';
-import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';
-import { RuntimeEnvironment } from '../../types';
-import type { Workspaces } from '../workspaces';
+import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol.js';
+import type { RuntimeEnvironment } from '../../types.js';
+import type { Workspaces } from '../workspaces.js';
 
 export function register(
 	connection: vscode.Connection,

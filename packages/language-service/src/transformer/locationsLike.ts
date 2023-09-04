@@ -1,6 +1,6 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import { notEmpty } from '../utils/common';
-import { transform as transformLocation } from './locationLike';
+import { notEmpty } from '../utils/common.js';
+import { transform as transformLocation } from './locationLike.js';
 
 export function transform<T extends { range: vscode.Range; }>(locations: T[], getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T[] {
 	return locations

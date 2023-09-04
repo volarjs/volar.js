@@ -1,9 +1,9 @@
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as vscode from 'vscode-languageserver';
-import type * as ts from 'typescript/lib/tsserverlibrary';
-import { createUriMap } from './utils/uriMap';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
+import { createUriMap } from './utils/uriMap.js';
 import type * as _ from 'vscode-uri';
-import { RuntimeEnvironment } from '../types';
+import type { RuntimeEnvironment } from '../types.js';
 
 interface IncrementalScriptSnapshotChange {
 	applied: boolean,

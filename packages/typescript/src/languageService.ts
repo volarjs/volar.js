@@ -1,5 +1,5 @@
-import { FileKind, VirtualFile, VirtualFiles, forEachEmbeddedFile } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import { FileKind, forEachEmbeddedFile, type VirtualFile, type VirtualFiles } from '@volar/language-core';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 
 export function decorateLanguageService(virtualFiles: VirtualFiles, languageService: ts.LanguageService, isTsPlugin: boolean) {
 

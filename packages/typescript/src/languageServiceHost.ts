@@ -1,14 +1,14 @@
 import type { FileKind, VirtualFile, LanguageContext } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { posix as path } from 'path';
-import { matchFiles } from './typescript/utilities';
-import { ServiceEnvironment } from '@volar/language-service';
+import { matchFiles } from './typescript/utilities.js';
+import type { ServiceEnvironment } from '@volar/language-service';
 
 const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: WeakMap<ts.IScriptSnapshot, number>; }>();
 
 export function createLanguageServiceHost(
 	ctx: LanguageContext,
-	ts: typeof import('typescript/lib/tsserverlibrary'),
+	ts: typeof import('typescript/lib/tsserverlibrary.js'),
 	sys: ts.System & {
 		version?: number;
 	},

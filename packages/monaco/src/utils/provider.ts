@@ -1,9 +1,9 @@
-import { LanguageService, standardSemanticTokensLegend } from '@volar/language-service';
+import { type LanguageService, standardSemanticTokensLegend } from '@volar/language-service';
 import type { editor, languages, Uri } from 'monaco-editor-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { markers } from './markers';
-import * as monaco2protocol from './monaco2protocol';
-import * as protocol2monaco from './protocol2monaco';
+import { markers } from './markers.js';
+import * as monaco2protocol from './monaco2protocol.js';
+import * as protocol2monaco from './protocol2monaco.js';
 
 export async function createLanguageFeaturesProvider(
 	worker: editor.MonacoWebWorker<LanguageService>,

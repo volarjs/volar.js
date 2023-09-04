@@ -1,12 +1,12 @@
 import * as fs from 'fs';
-import * as vscode from 'vscode-languageserver/node';
+import * as vscode from 'vscode-languageserver/node.js';
 import { URI } from 'vscode-uri';
-import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
-import { startCommonLanguageServer } from '../common/server';
-import { InitializationOptions, LanguageServerPlugin } from '../types';
-import { FileSystem, FileType } from '@volar/language-service';
+import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http.js';
+import { startCommonLanguageServer } from '../common/server.js';
+import type { InitializationOptions, LanguageServerPlugin } from '../types.js';
+import { type FileSystem, FileType } from '@volar/language-service';
 
-export * from '../index';
+export * from '../index.js';
 
 export const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
 

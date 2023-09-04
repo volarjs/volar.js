@@ -1,13 +1,19 @@
-import { FileSystem, LanguageService, ServiceEnvironment, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
+import {
+	type FileSystem,
+	type LanguageService,
+	type ServiceEnvironment,
+	type TypeScriptLanguageHost,
+	createLanguageService,
+} from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { LanguageServerPlugin } from '../types';
-import { loadConfig } from './utils/serverConfig';
-import { createUriMap } from './utils/uriMap';
+import type { LanguageServerPlugin } from '../types.js';
+import { loadConfig } from './utils/serverConfig.js';
+import { createUriMap } from './utils/uriMap.js';
 import { createSys } from '@volar/typescript';
-import { WorkspacesContext } from './workspaces';
+import type { WorkspacesContext } from './workspaces.js';
 
 export interface ProjectContext extends WorkspacesContext {
 	project: {
@@ -213,7 +219,7 @@ export async function createProject(context: ProjectContext) {
 }
 
 async function createParsedCommandLine(
-	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
+	ts: typeof import('typescript/lib/tsserverlibrary.js') | undefined,
 	env: ServiceEnvironment,
 	rootPath: path.PosixPath,
 	tsConfig: path.PosixPath | ts.CompilerOptions,

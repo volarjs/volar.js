@@ -1,9 +1,9 @@
-import * as transformer from '../transformer';
+import * as transformer from '../transformer/index.js';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { getOverlapRange, notEmpty } from '../utils/common';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import { NoneCancellationToken } from '../utils/cancellation';
+import type { ServiceContext } from '../types.js';
+import { getOverlapRange, notEmpty } from '../utils/common.js';
+import { languageFeatureWorker } from '../utils/featureWorkers.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export interface InlayHintData {
 	uri: string,

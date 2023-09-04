@@ -1,12 +1,15 @@
 {
 	"name": "@volar/language-server",
 	"version": "1.10.1",
-	"main": "out/index.js",
+	"main": "./out/cjs/index.js",
+	"module": "./out/esm/index.js",
+	"types": "./out/types/index.d.ts",
 	"license": "MIT",
 	"files": [
 		"out/**/*.js",
 		"out/**/*.d.ts",
-		"*.js",
+		"*.cjs",
+		"*.mjs",
 		"*.d.ts"
 	],
 	"repository": {

@@ -1,5 +1,5 @@
-import { DocumentsAndSourceMaps, SourceMapWithDocuments } from '../documents';
-import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
+import { type DocumentsAndSourceMaps, SourceMapWithDocuments } from '../documents.js';
+import { FileRangeCapabilities, type VirtualFile } from '@volar/language-core';
 
 export async function visitEmbedded(
 	documents: DocumentsAndSourceMaps,

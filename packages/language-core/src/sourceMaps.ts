@@ -1,5 +1,5 @@
 import * as SourceMaps from '@volar/source-map';
-import { MirrorBehaviorCapabilities } from './types';
+import { MirrorBehaviorCapabilities } from './types.js';
 
 export class MirrorMap extends SourceMaps.SourceMap<[MirrorBehaviorCapabilities, MirrorBehaviorCapabilities]> {
 	*findMirrorOffsets(start: number) {

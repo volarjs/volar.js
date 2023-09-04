@@ -1,10 +1,10 @@
-import { VirtualFiles, VirtualFile, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, forEachEmbeddedFile, TypeScriptLanguageHost } from '@volar/language-core';
-import { Mapping, SourceMap } from '@volar/source-map';
+import { FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, type TypeScriptLanguageHost, type VirtualFile, type VirtualFiles, forEachEmbeddedFile } from '@volar/language-core';
+import { type Mapping, SourceMap } from '@volar/source-map';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type * as ts from 'typescript/lib/tsserverlibrary';
-import { ServiceEnvironment } from './types';
-import { resolveCommonLanguageId } from './utils/common';
+import type { ServiceEnvironment } from './types.js';
+import { resolveCommonLanguageId } from './utils/common.js';
 
 export type DocumentsAndSourceMaps = ReturnType<typeof createDocumentsAndSourceMaps>;
 

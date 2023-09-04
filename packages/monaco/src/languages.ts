@@ -5,7 +5,7 @@ import type {
 	Uri,
 } from 'monaco-editor-core';
 import type { LanguageService } from '@volar/language-service';
-import { createLanguageFeaturesProvider } from './utils/provider';
+import { createLanguageFeaturesProvider } from './utils/provider.js';
 
 export namespace languages {
 

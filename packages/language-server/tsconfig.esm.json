@@ -1,0 +1,23 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": false,
+		"outDir": "out/esm",
+		"declarationDir": "out/types",
+		"rootDir": "src",
+	},
+	"include": [
+		"src"
+	],
+	"references": [
+		{
+			"path": "../language-core/tsconfig.esm.json"
+		},
+		{
+			"path": "../language-service/tsconfig.esm.json"
+		},
+		{
+			"path": "../typescript/tsconfig.esm.json"
+		},
+	],
+}

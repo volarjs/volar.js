@@ -1,11 +1,11 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { documentFeatureWorker } from '../utils/featureWorkers';
+import type { ServiceContext } from '../types.js';
+import { documentFeatureWorker } from '../utils/featureWorkers.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { SourceMapWithDocuments } from '../documents';
-import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
-import { notEmpty } from '../utils/common';
-import { NoneCancellationToken } from '../utils/cancellation';
+import { SourceMapWithDocuments } from '../documents.js';
+import { FileRangeCapabilities, type VirtualFile } from '@volar/language-core';
+import { notEmpty } from '../utils/common.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export interface DocumentLinkData {
 	uri: string,

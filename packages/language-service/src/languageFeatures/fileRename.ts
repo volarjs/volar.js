@@ -1,9 +1,9 @@
-import type { ServiceContext } from '../types';
-import { embeddedEditToSourceEdit } from './rename';
+import type { ServiceContext } from '../types.js';
+import { embeddedEditToSourceEdit } from './rename.js';
 import type * as _ from 'vscode-languageserver-protocol';
-import * as dedupe from '../utils/dedupe';
+import * as dedupe from '../utils/dedupe.js';
 import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
-import { NoneCancellationToken } from '../utils/cancellation';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export function register(context: ServiceContext) {
 

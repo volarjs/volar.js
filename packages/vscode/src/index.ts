@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 
-export { activate as activateAutoInsertion } from './features/autoInsertion';
-export { activate as activateWriteVirtualFiles } from './features/writeVirtualFiles';
-export { activate as activateFindFileReferences } from './features/fileReferences';
-export { activate as activateReloadProjects } from './features/reloadProject';
-export { activate as activateTsConfigStatusItem } from './features/tsconfig';
-export { activate as activateServerSys } from './features/serverSys';
-export { activate as activateTsVersionStatusItem, getTsdk } from './features/tsVersion';
+export { activate as activateAutoInsertion } from './features/autoInsertion.js';
+export { activate as activateWriteVirtualFiles } from './features/writeVirtualFiles.js';
+export { activate as activateFindFileReferences } from './features/fileReferences.js';
+export { activate as activateReloadProjects } from './features/reloadProject.js';
+export { activate as activateTsConfigStatusItem } from './features/tsconfig.js';
+export { activate as activateServerSys } from './features/serverSys.js';
+export { activate as activateTsVersionStatusItem, getTsdk } from './features/tsVersion.js';
 
 export function takeOverModeActive(context: vscode.ExtensionContext) {
 	if (vscode.workspace.getConfiguration('volar').get<string>('takeOverMode.extension') === context.extension.id) {
@@ -99,7 +99,7 @@ export interface ExportsInfoForLabs {
 	volarLabs: {
 		version: typeof supportLabsVersion;
 		languageClients: BaseLanguageClient[];
-		languageServerProtocol: typeof import('@volar/language-server/protocol');
+		languageServerProtocol: typeof import('@volar/language-server/out/types/protocol.js');
 		codegenStackSupport?: boolean;
 	};
 }

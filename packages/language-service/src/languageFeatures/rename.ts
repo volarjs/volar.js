@@ -1,11 +1,11 @@
-import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import * as dedupe from '../utils/dedupe';
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import { DocumentsAndSourceMaps } from '../documents';
 import { FileRangeCapabilities } from '@volar/language-core';
-import { NoneCancellationToken } from '../utils/cancellation';
+import type * as vscode from 'vscode-languageserver-protocol';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import type { DocumentsAndSourceMaps } from '../documents.js';
+import type { ServiceContext } from '../types.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
+import * as dedupe from '../utils/dedupe.js';
+import { languageFeatureWorker } from '../utils/featureWorkers.js';
 
 export function register(context: ServiceContext) {
 

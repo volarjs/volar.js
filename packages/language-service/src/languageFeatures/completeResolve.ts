@@ -1,8 +1,8 @@
-import * as transformer from '../transformer';
+import * as transformer from '../transformer/index.js';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { ServiceCompletionData } from './complete';
-import { NoneCancellationToken } from '../utils/cancellation';
+import type { ServiceContext } from '../types.js';
+import type { ServiceCompletionData } from './complete.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export function register(context: ServiceContext) {
 

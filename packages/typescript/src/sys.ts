@@ -1,7 +1,7 @@
 import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { posix as path } from 'path';
-import { matchFiles } from './typescript/utilities';
+import { matchFiles } from './typescript/utilities.js';
 
 interface File {
 	text?: string;
@@ -20,7 +20,7 @@ interface Dir {
 let currentCwd = '';
 
 export function createSys(
-	ts: typeof import('typescript/lib/tsserverlibrary'),
+	ts: typeof import('typescript/lib/tsserverlibrary.js'),
 	env: ServiceEnvironment,
 ): ts.System & {
 	version: number;

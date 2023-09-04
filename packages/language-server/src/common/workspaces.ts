@@ -1,17 +1,17 @@
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, InitializationOptions, LanguageServerPlugin, ServerMode } from '../types';
-import { CancellationTokenHost } from './cancellationPipe';
-import { createDocuments } from './documents';
-import { ServerContext } from './server';
-import { isFileInDir } from './utils/isFileInDir';
+import { DiagnosticModel, type InitializationOptions, type LanguageServerPlugin, ServerMode } from '../types.js';
+import type { CancellationTokenHost } from './cancellationPipe.js';
+import { createDocuments } from './documents.js';
+import type { ServerContext } from './server.js';
+import { isFileInDir } from './utils/isFileInDir.js';
 import * as path from 'typesafe-path/posix';
 
 import type * as _ from 'vscode-languageserver-textdocument';
-import { createProject, Project } from './project';
-import { getInferredCompilerOptions } from './utils/inferredCompilerOptions';
-import { createUriMap } from './utils/uriMap';
+import { createProject, type Project } from './project.js';
+import { getInferredCompilerOptions } from './utils/inferredCompilerOptions.js';
+import { createUriMap } from './utils/uriMap.js';
 import { FileType } from '@volar/language-service';
 
 export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
@@ -21,7 +21,7 @@ export interface WorkspacesContext extends ServerContext {
 		initParams: vscode.InitializeParams;
 		initOptions: InitializationOptions;
 		plugins: ReturnType<LanguageServerPlugin>[];
-		ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
+		ts: typeof import('typescript/lib/tsserverlibrary.js') | undefined;
 		tsLocalized: ts.MapLike<string> | undefined;
 		documents: ReturnType<typeof createDocuments>;
 		cancelTokenHost: CancellationTokenHost;

@@ -1,13 +1,13 @@
 import { FileRangeCapabilities } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { SourceMapWithDocuments } from '../documents';
-import { ServiceContext, RuleContext, RuleType } from '../types';
-import { sleep } from '../utils/common';
-import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers';
-import { NoneCancellationToken } from '../utils/cancellation';
+import { SourceMapWithDocuments } from '../documents.js';
+import { type ServiceContext, type RuleContext, RuleType } from '../types.js';
+import { sleep } from '../utils/common.js';
+import * as dedupe from '../utils/dedupe.js';
+import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export function updateRange(
 	range: vscode.Range,

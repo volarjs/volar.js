@@ -1,9 +1,9 @@
-import { FileSystem, Console, LanguageService, ServiceEnvironment, SharedModules } from '@volar/language-service';
+import type { FileSystem, Console, LanguageService, ServiceEnvironment, SharedModules } from '@volar/language-service';
 import type { TypeScriptLanguageHost } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import * as vscode from 'vscode-languageserver';
-import { Config } from '@volar/language-service';
-import { ProjectContext } from './common/project';
+import type { Config } from '@volar/language-service';
+import type { ProjectContext } from './common/project.js';
 
 export interface Timer {
 	setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
@@ -14,7 +14,7 @@ export interface Timer {
 export interface RuntimeEnvironment {
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
-	loadTypescript(tsdk: string): typeof import('typescript/lib/tsserverlibrary');
+	loadTypescript(tsdk: string): typeof import('typescript/lib/tsserverlibrary.js');
 	loadTypescriptLocalized(tsdk: string, locale: string): Promise<{} | undefined>;
 	fs: FileSystem;
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56

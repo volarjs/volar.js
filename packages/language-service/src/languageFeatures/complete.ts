@@ -1,10 +1,10 @@
-import * as transformer from '../transformer';
+import * as transformer from '../transformer/index.js';
 import type { FileRangeCapabilities } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { Service, ServiceContext } from '../types';
-import { visitEmbedded } from '../utils/definePlugin';
-import { NoneCancellationToken } from '../utils/cancellation';
+import type { Service, ServiceContext } from '../types.js';
+import { visitEmbedded } from '../utils/definePlugin.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export interface ServiceCompletionData {
 	uri: string;

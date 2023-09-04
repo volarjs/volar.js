@@ -1,9 +1,9 @@
-import type { NullableResult, ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import * as dedupe from '../utils/dedupe';
+import type { NullableResult, ServiceContext } from '../types.js';
+import { languageFeatureWorker } from '../utils/featureWorkers.js';
+import * as dedupe from '../utils/dedupe.js';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { notEmpty } from '../utils/common';
-import { NoneCancellationToken } from '../utils/cancellation';
+import { notEmpty } from '../utils/common.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export function register(context: ServiceContext) {
 

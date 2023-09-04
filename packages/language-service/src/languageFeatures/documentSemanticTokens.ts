@@ -1,9 +1,9 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { SemanticToken, ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
-import { notEmpty } from '../utils/common';
-import { NoneCancellationToken } from '../utils/cancellation';
+import type { SemanticToken, ServiceContext } from '../types.js';
+import { languageFeatureWorker } from '../utils/featureWorkers.js';
+import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder.js';
+import { notEmpty } from '../utils/common.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
 
 export function register(context: ServiceContext) {
 

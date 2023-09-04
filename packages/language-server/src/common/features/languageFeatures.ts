@@ -1,10 +1,10 @@
 import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
-import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
-import { CancellationTokenHost } from '../cancellationPipe';
-import type { Workspaces } from '../workspaces';
-import { RuntimeEnvironment, InitializationOptions, ServerMode } from '../../types';
-import { createDocuments } from '../documents';
+import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol.js';
+import type { CancellationTokenHost } from '../cancellationPipe.js';
+import type { Workspaces } from '../workspaces.js';
+import { type RuntimeEnvironment, type InitializationOptions, ServerMode } from '../../types.js';
+import { createDocuments } from '../documents.js';
 
 export function register(
 	connection: vscode.Connection,

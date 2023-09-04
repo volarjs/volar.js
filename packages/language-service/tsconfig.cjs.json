@@ -1,0 +1,23 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": false,
+		"module": "CommonJS",
+		"moduleResolution": "Node10",
+		"verbatimModuleSyntax": false,
+		"outDir": "out/cjs",
+		"declarationDir": "out/types",
+		"rootDir": "src",
+	},
+	"include": [
+		"src"
+	],
+	"references": [
+		{
+			"path": "../language-core/tsconfig.cjs.json"
+		},
+		{
+			"path": "../source-map/tsconfig.cjs.json"
+		},
+	],
+}

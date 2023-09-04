@@ -1,12 +1,12 @@
-import { VirtualFile, forEachEmbeddedFile, updateVirtualFileMaps } from '@volar/language-core';
+import { type VirtualFile, forEachEmbeddedFile, updateVirtualFileMaps } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { ServiceContext, Service } from '../types';
+import type { ServiceContext, Service } from '../types.js';
 import { SourceMap } from '@volar/source-map';
-import { isInsideRange, resolveCommonLanguageId, stringToSnapshot } from '../utils/common';
-import { NoneCancellationToken } from '../utils/cancellation';
-import { SourceMapWithDocuments } from '../documents';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import { isInsideRange, resolveCommonLanguageId, stringToSnapshot } from '../utils/common.js';
+import { NoneCancellationToken } from '../utils/cancellation.js';
+import { SourceMapWithDocuments } from '../documents.js';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 
 export function register(context: ServiceContext) {
 

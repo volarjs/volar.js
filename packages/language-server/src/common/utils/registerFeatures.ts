@@ -1,6 +1,6 @@
-import { DiagnosticModel, LanguageServerPlugin, InitializationOptions, ServerMode } from '../../types';
+import type { Config } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
-import { Config } from '@volar/language-service';
+import { DiagnosticModel, ServerMode, type InitializationOptions, type LanguageServerPlugin } from '../../types.js';
 
 export function setupCapabilities(
 	server: vscode.ServerCapabilities,

@@ -1,9 +1,9 @@
 export * from '@volar/language-core';
-export * from './baseLanguageService';
-export * from './documents';
-export { mergeWorkspaceEdits } from './languageFeatures/rename';
-export * from './types';
-export * as transformer from './transformer';
+export * from './baseLanguageService.js';
+export * from './documents.js';
+export { mergeWorkspaceEdits } from './languageFeatures/rename.js';
+export * from './types.js';
+export * as transformer from './transformer/index.js';
 
 import type * as vscode from 'vscode-languageserver-protocol';
 
