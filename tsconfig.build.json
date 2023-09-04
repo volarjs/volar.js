@@ -22,8 +22,8 @@
 			"path": "./packages/labs/tsconfig.json"
 		},
 		// tests
-		// {
-		// 	"path": "./tsconfig.base.json"
-		// },
+		{
+			"path": "./tsconfig.base.json"
+		},
 	]
 }

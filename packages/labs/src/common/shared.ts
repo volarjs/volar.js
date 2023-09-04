@@ -1,4 +1,4 @@
-import { ExportsInfoForLabs, supportLabsVersion } from '@volar/vscode';
+import { type ExportsInfoForLabs, supportLabsVersion } from '@volar/vscode';
 import * as vscode from 'vscode';
 
 export function useVolarExtensions(

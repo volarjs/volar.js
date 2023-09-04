@@ -1,5 +1,5 @@
 import type { FileRangeCapabilities } from '@volar/language-server';
-import { SourceMap, Stack } from '@volar/source-map';
+import { SourceMap, type Stack } from '@volar/source-map';
 import type { ExportsInfoForLabs } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { TextDocument } from 'vscode-languageclient';
