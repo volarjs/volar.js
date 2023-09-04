@@ -1,1 +1,1 @@
-module.exports = require('./out/cjs/protocol.js');
+module.exports = require('./out/protocol.js');
