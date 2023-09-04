@@ -8,9 +8,9 @@
 	"files": [
 		"out/**/*.js",
 		"out/**/*.d.ts",
-		"browser/**/*",
-		"node/**/*",
-		"protocol/**/*"
+		"*.js",
+		"*.mjs",
+		"*.d.ts"
 	],
 	"repository": {
 		"type": "git",
