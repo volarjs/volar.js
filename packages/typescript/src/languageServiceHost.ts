@@ -1,6 +1,5 @@
 import type { FileKind, VirtualFile, LanguageContext } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
-import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities.js';
 import type { ServiceEnvironment } from '@volar/language-service';
 
@@ -61,7 +60,7 @@ export function createLanguageServiceHost(
 				if (ctx.virtualFiles.hasSource(fileName))
 					return ts.ScriptKind.Deferred;
 
-				switch (path.extname(fileName)) {
+				switch (fileName.substring(fileName.lastIndexOf('.'))) {
 					case '.js': return ts.ScriptKind.JS;
 					case '.cjs': return ts.ScriptKind.JS;
 					case '.mjs': return ts.ScriptKind.JS;

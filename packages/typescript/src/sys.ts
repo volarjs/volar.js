@@ -1,6 +1,6 @@
 import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
-import { posix as path } from 'path';
+import { posix as path } from 'path-browserify';
 import { matchFiles } from './typescript/utilities.js';
 
 interface File {
