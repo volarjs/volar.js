@@ -99,7 +99,7 @@ export interface ExportsInfoForLabs {
 	volarLabs: {
 		version: typeof supportLabsVersion;
 		languageClients: BaseLanguageClient[];
-		languageServerProtocol: typeof import('@volar/language-server/out/types/protocol.js');
+		languageServerProtocol: typeof import('@volar/language-server/protocol');
 		codegenStackSupport?: boolean;
 	};
 }
