@@ -5,8 +5,7 @@
 			"WebWorker",
 			"ES2021",
 		],
-		"module": "ESNext",
-		"moduleResolution": "Bundler",
+		"module": "Node16",
 		"sourceMap": true,
 		"composite": true,
 		"declaration": true,
@@ -15,7 +14,6 @@
 		"skipLibCheck": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"verbatimModuleSyntax": true,
 		"baseUrl": "./",
 		"paths": {
 			"@volar/*": [

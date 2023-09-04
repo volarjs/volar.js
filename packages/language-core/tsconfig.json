@@ -1,15 +1,16 @@
 {
-    "extends": "../../tsconfig.base.json",
+	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"composite": true,
+		"noEmit": false,
+		"outDir": "out",
+		"rootDir": "src",
 	},
-	"include": [],
+	"include": [
+		"src"
+	],
 	"references": [
 		{
-			"path": "./tsconfig.cjs.json"
-		},
-		{
-			"path": "./tsconfig.esm.json"
+			"path": "../source-map/tsconfig.json"
 		},
 	],
 }

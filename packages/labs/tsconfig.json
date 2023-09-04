@@ -1,9 +1,6 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"module": "CommonJS",
-		"moduleResolution": "Node10",
-		"verbatimModuleSyntax": false,
 		"noEmit": false,
 		"outDir": "out",
 		"rootDir": "src",
@@ -11,16 +8,12 @@
 	"include": [
 		"src",
 	],
-	"exclude": [
-		"node_modules",
-		".vscode-test"
-	],
 	"references": [
 		{
-			"path": "../language-server/tsconfig.cjs.json"
+			"path": "../language-server/tsconfig.json"
 		},
 		{
-			"path": "../vscode/tsconfig.cjs.json"
+			"path": "../vscode/tsconfig.json"
 		},
 	]
 }
