@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
-import { GetMatchTsConfigRequest } from '@volar/language-server';
+import { GetMatchTsConfigRequest } from '@volar/language-server/protocol';
 import * as path from 'typesafe-path';
 
 export async function activate(
