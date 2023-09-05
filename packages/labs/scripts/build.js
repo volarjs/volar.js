@@ -23,5 +23,18 @@ require('esbuild').build({
 			},
 			keepStructure: true,
 		}),
+		{
+			name: 'meta',
+			setup(build) {
+				build.onEnd((result) => {
+					if (result.metafile && result.errors.length === 0) {
+						require('fs').writeFileSync(
+							require('path').resolve(__dirname, '../meta.json'),
+							JSON.stringify(result.metafile),
+						);
+					}
+				});
+			},
+		},
 	],
 }).catch(() => process.exit(1))
