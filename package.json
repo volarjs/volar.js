@@ -1,9 +1,9 @@
 {
 	"private": true,
 	"scripts": {
-		"build": "tsc -b tsconfig.build.json",
+		"build": "tsc -b",
 		"watch": "npm run build && (npm run watch:base & npm run watch:labs)",
-		"watch:base": "tsc -b tsconfig.build.json -w",
+		"watch:base": "tsc -b -w",
 		"watch:labs": "cd packages/labs && npm run watch",
 		"prerelease": "npm run build && npm run test",
 		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",

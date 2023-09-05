@@ -6,7 +6,7 @@ export interface LanguageContext {
 	rawHost: TypeScriptLanguageHost;
 	host: TypeScriptLanguageHost;
 	virtualFiles: ReturnType<typeof createVirtualFiles>;
-};
+}
 
 export function createLanguageContext(rawHost: TypeScriptLanguageHost, languages: Language<any>[]): LanguageContext {
 
