@@ -1,5 +1,4 @@
 src
 out
 scripts
-tsconfig.build.json
-tsconfig.build.tsbuildinfo
+tsconfig.*
