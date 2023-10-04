@@ -18,6 +18,7 @@ export function createLanguageServiceHost(
 	let lastProjectVersion: number | string | undefined;
 	let tsProjectVersion = 0;
 	let tsFileNames: string[] = [];
+	let tsDirectories: Record<string, true> = {};
 
 	const _tsHost: ts.LanguageServiceHost = {
 		...sys,
@@ -204,6 +205,12 @@ export function createLanguageServiceHost(
 			}
 		}
 		tsFileNames = [...tsFileNamesSet];
+
+		// Update tsDirectories for `directoryExists()`
+		tsDirectories = {};
+		for (const fileName of tsFileNames) {
+			tsDirectories[path.dirname(fileName)] = true;
+		}
 	}
 
 	function readDirectory(
@@ -323,8 +330,7 @@ export function createLanguageServiceHost(
 	}
 
 	function directoryExists(dirName: string): boolean {
-		return sys.directoryExists(dirName)
-			|| tsFileNames.some(fileName => fileName.toLowerCase().startsWith(dirName.toLowerCase()));
+		return tsDirectories[dirName] || sys.directoryExists(dirName);
 	}
 
 	function fileExists(fileName: string) {
