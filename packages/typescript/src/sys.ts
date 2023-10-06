@@ -217,7 +217,7 @@ export function createSys(
 		dirName = resolvePath(dirName);
 		readDirectoryWorker(dirName);
 		const dir = getDir(dirName);
-		return [...Object.entries(dir.dirs || {})].filter(([_, dir]) => dir.exists).map(([name]) => name);
+		return [...dir.dirs.entries()].filter(([_, dir]) => dir.exists).map(([name]) => name);
 	}
 
 	function readDirectory(
@@ -243,8 +243,8 @@ export function createSys(
 				const dir = getDir(dirPath);
 
 				return {
-					files: [...Object.entries(dir?.files || {})].filter(([_, file]) => file.stat?.type === 1 satisfies FileType.File).map(([name]) => name),
-					directories: [...Object.entries(dir?.dirs || {})].filter(([_, dir]) => dir.exists).map(([name]) => name),
+					files: [...dir.files.entries()].filter(([_, file]) => file.stat?.type === 1 satisfies FileType.File).map(([name]) => name),
+					directories: [...dir.dirs.entries()].filter(([_, dir]) => dir.exists).map(([name]) => name),
 				};
 			},
 			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
