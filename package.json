@@ -6,7 +6,7 @@
 		"watch:base": "tsc -b -w",
 		"watch:labs": "cd packages/labs && npm run watch",
 		"prerelease": "npm run build && npm run test",
-		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
+		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock --no-push",
 		"release:next": "npm run release -- --dist-tag next",
 		"test": "vitest run"
 	},
