@@ -18,7 +18,7 @@ export function createLanguageServiceHost(
 	let lastProjectVersion: number | string | undefined;
 	let tsProjectVersion = 0;
 	let tsFileNames: string[] = [];
-	let tsDirectories: Record<string, true> = {};
+	let tsDirectories = new Set<string>();
 
 	const _tsHost: ts.LanguageServiceHost = {
 		...sys,
@@ -207,9 +207,9 @@ export function createLanguageServiceHost(
 		tsFileNames = [...tsFileNamesSet];
 
 		// Update tsDirectories for `directoryExists()`
-		tsDirectories = {};
+		tsDirectories.clear();
 		for (const fileName of tsFileNames) {
-			tsDirectories[path.dirname(fileName)] = true;
+			tsDirectories.add(path.dirname(normalizePath(fileName)));
 		}
 	}
 
@@ -330,7 +330,7 @@ export function createLanguageServiceHost(
 	}
 
 	function directoryExists(dirName: string): boolean {
-		return tsDirectories[dirName] || sys.directoryExists(dirName);
+		return tsDirectories.has(normalizePath(dirName)) || sys.directoryExists(dirName);
 	}
 
 	function fileExists(fileName: string) {
@@ -391,4 +391,8 @@ function forEachEmbeddedFile(file: VirtualFile, cb: (embedded: VirtualFile) => v
 	for (const embeddedFile of file.embeddedFiles) {
 		forEachEmbeddedFile(embeddedFile, cb);
 	}
+}
+
+function normalizePath(fileName: string) {
+	return fileName.replace(/\\/g, '/').toLowerCase();
 }
