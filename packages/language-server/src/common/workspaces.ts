@@ -49,28 +49,26 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 	});
 	context.server.onDidChangeWatchedFiles(({ changes }) => {
 		const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
+
+		for (const change of tsConfigChanges) {
+			if (change.type === vscode.FileChangeType.Created) {
+				rootTsConfigs.add(uriToFileName(change.uri) as path.PosixPath);
+			}
+			else if ((change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Deleted) && configProjects.uriHas(change.uri)) {
+				if (change.type === vscode.FileChangeType.Deleted) {
+					rootTsConfigs.delete(uriToFileName(change.uri) as path.PosixPath);
+				}
+				const project = configProjects.uriGet(change.uri);
+				configProjects.uriDelete(change.uri);
+				project?.then(project => project.dispose());
+			}
+		}
+
 		if (tsConfigChanges.length) {
 			reloadDiagnostics();
 		}
 		else {
 			updateDiagnosticsAndSemanticTokens();
-		}
-	});
-	context.server.onDidChangeWatchedFiles(({ changes }) => {
-		for (const change of changes) {
-			if (rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1))) {
-				if (change.type === vscode.FileChangeType.Created) {
-					rootTsConfigs.add(uriToFileName(change.uri) as path.PosixPath);
-				}
-				else if ((change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Deleted) && configProjects.uriHas(change.uri)) {
-					if (change.type === vscode.FileChangeType.Deleted) {
-						rootTsConfigs.delete(uriToFileName(change.uri) as path.PosixPath);
-					}
-					const project = configProjects.uriGet(change.uri);
-					configProjects.uriDelete(change.uri);
-					project?.then(project => project.dispose());
-				}
-			}
 		}
 	});
 
@@ -88,11 +86,11 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 		},
 		remove: (rootUri: URI) => {
 			rootUris = rootUris.filter(uri => uri.toString() !== rootUri.toString());
-			for (const tsconfig of configProjects.keys()) {
-				const project = configProjects.pathGet(tsconfig)!;
+			for (const uri of configProjects.uriKeys()) {
+				const project = configProjects.uriGet(uri)!;
 				project.then(project => {
 					if (project.context.project.workspaceUri.toString() === rootUri.toString()) {
-						configProjects.uriDelete(tsconfig);
+						configProjects.uriDelete(uri);
 						project.dispose();
 					}
 				});

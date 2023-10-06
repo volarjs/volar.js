@@ -2,7 +2,7 @@ import * as path from 'typesafe-path';
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import { quickPick } from '../common';
-import { InitializationOptions } from '@volar/language-server';
+import type { InitializationOptions } from '@volar/language-server';
 
 const defaultTsdkPath = 'node_modules/typescript/lib' as path.PosixPath;
 

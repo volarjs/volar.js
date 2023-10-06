@@ -10,7 +10,7 @@ require('esbuild').build({
 	],
 	format: 'cjs',
 	platform: 'node',
-	tsconfig: '../../tsconfig.build.json',
+	tsconfig: './tsconfig.json',
 	define: { 'process.env.NODE_ENV': '"production"' },
 	minify: process.argv.includes('--minify'),
 	watch: process.argv.includes('--watch'),
@@ -23,5 +23,18 @@ require('esbuild').build({
 			},
 			keepStructure: true,
 		}),
+		{
+			name: 'meta',
+			setup(build) {
+				build.onEnd((result) => {
+					if (result.metafile && result.errors.length === 0) {
+						require('fs').writeFileSync(
+							require('path').resolve(__dirname, '../meta.json'),
+							JSON.stringify(result.metafile),
+						);
+					}
+				});
+			},
+		},
 	],
 }).catch(() => process.exit(1))

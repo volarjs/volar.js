@@ -1,7 +1,7 @@
 {
 	"private": true,
 	"name": "volarjs-labs",
-	"version": "1.10.0",
+	"version": "1.10.1",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/volarjs/volar.js.git",
@@ -77,13 +77,14 @@
 		"watch": "npm run build -- --watch",
 		"prepack": "npm run build -- --minify",
 		"pack": "npm run prepack && vsce package",
-		"release": "npm run prepack && vsce publish"
+		"release": "npm run prepack && vsce publish",
+		"size": "npm run prepack -- --metafile && esbuild-visualizer --metadata ./meta.json && open ./stats.html"
 	},
 	"devDependencies": {
 		"@types/vscode": "1.67.0",
-		"@volar/language-server": "1.10.0",
-		"@volar/source-map": "1.10.0",
-		"@volar/vscode": "1.10.0",
+		"@volar/language-server": "1.10.1",
+		"@volar/source-map": "1.10.1",
+		"@volar/vscode": "1.10.1",
 		"esbuild": "0.15.18",
 		"esbuild-plugin-copy": "latest",
 		"esbuild-visualizer": "^0.4.1",

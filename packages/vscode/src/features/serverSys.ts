@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient, State } from 'vscode-languageclient';
-import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '@volar/language-server';
+import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '@volar/language-server/protocol';
 
 export async function activate(client: BaseLanguageClient) {
 

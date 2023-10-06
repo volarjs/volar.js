@@ -1,6 +1,6 @@
 {
 	"name": "@volar/kit",
-	"version": "1.10.0",
+	"version": "1.10.1",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,7 +13,7 @@
 		"directory": "packages/kit"
 	},
 	"dependencies": {
-		"@volar/language-service": "1.10.0",
+		"@volar/language-service": "1.10.1",
 		"typesafe-path": "^0.2.2",
 		"vscode-languageserver-textdocument": "^1.0.8",
 		"vscode-uri": "^3.0.7"
