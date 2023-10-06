@@ -11,8 +11,8 @@ interface File {
 }
 
 interface Dir {
-	dirs: Record<string, Dir>;
-	files: Record<string, File>;
+	dirs: Map<string, Dir>;
+	files: Map<string, File>;
 	exists?: boolean;
 	requestedRead?: boolean;
 }
@@ -32,8 +32,8 @@ export function createSys(
 	const rootPath = env.uriToFileName(env.workspaceUri.toString());
 	const sys = ts.sys as ts.System | undefined;
 	const root: Dir = {
-		dirs: {},
-		files: {},
+		dirs: new Map(),
+		files: new Map(),
 		requestedRead: false,
 	};
 	const promises = new Set<Thenable<any>>();
@@ -43,10 +43,10 @@ export function createSys(
 			const dirName = path.dirname(fileName);
 			const baseName = path.basename(fileName);
 			const dir = getDir(dirName);
-			if (dir.files[baseName]) { // is requested file
+			if (dir.files.has(baseName)) { // is requested file
 				version++;
 				if (change.type === 1 satisfies typeof FileChangeType.Created || change.type === 2 satisfies typeof FileChangeType.Changed) {
-					dir.files[baseName] = {
+					dir.files.set(baseName, {
 						stat: {
 							type: 1 satisfies FileType.File,
 							ctime: Date.now(),
@@ -54,15 +54,15 @@ export function createSys(
 							size: -1,
 						},
 						requestedStat: false,
-					};
+					});
 				}
 				else if (change.type === 3 satisfies typeof FileChangeType.Deleted) {
-					dir.files[baseName] = {
+					dir.files.set(baseName, {
 						stat: undefined,
 						text: undefined,
 						requestedStat: true,
 						requestedText: true,
-					};
+					});
 				}
 			}
 		}
@@ -126,8 +126,7 @@ export function createSys(
 		const name = path.basename(fileName);
 
 		readFileWorker(fileName, encoding, dir);
-
-		return dir.files[name]?.text;
+		return dir.files.get(name)?.text;
 	}
 
 	function directoryExists(dirName: string): boolean {
@@ -205,7 +204,10 @@ export function createSys(
 		const dirPath = path.dirname(fileName);
 		const baseName = path.basename(fileName);
 		const dir = getDir(dirPath);
-		const file = dir.files[baseName] ??= {};
+		let file = dir.files.get(baseName);
+		if (!file) {
+			dir.files.set(baseName, file = {});
+		}
 
 		return file;
 	}
@@ -215,7 +217,7 @@ export function createSys(
 		dirName = resolvePath(dirName);
 		readDirectoryWorker(dirName);
 		const dir = getDir(dirName);
-		return [...Object.entries(dir.dirs)].filter(([_, dir]) => dir.exists).map(([name]) => name);
+		return [...dir.dirs.entries()].filter(([_, dir]) => dir.exists).map(([name]) => name);
 	}
 
 	function readDirectory(
@@ -241,8 +243,8 @@ export function createSys(
 				const dir = getDir(dirPath);
 
 				return {
-					files: [...Object.entries(dir.files)].filter(([_, file]) => file.stat?.type === 1 satisfies FileType.File).map(([name]) => name),
-					directories: [...Object.entries(dir.dirs)].filter(([_, dir]) => dir.exists).map(([name]) => name),
+					files: [...dir.files.entries()].filter(([_, file]) => file.stat?.type === 1 satisfies FileType.File).map(([name]) => name),
+					directories: [...dir.dirs.entries()].filter(([_, dir]) => dir.exists).map(([name]) => name),
 				};
 			},
 			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
@@ -253,9 +255,12 @@ export function createSys(
 	function readFileWorker(fileName: string, encoding: string | undefined, dir: Dir) {
 
 		const name = path.basename(fileName);
-		dir.files[name] ??= {};
 
-		const file = dir.files[name];
+		let file = dir.files.get(name);
+		if (!file) {
+			dir.files.set(name, file = {});
+		}
+
 		if (file.requestedText) {
 			return;
 		}
@@ -270,9 +275,9 @@ export function createSys(
 			result.then(result => {
 				promises.delete(promise);
 				if (result !== undefined) {
-					file.text = result;
-					if (file.stat) {
-						file.stat.mtime++;
+					file!.text = result;
+					if (file!.stat) {
+						file!.stat.mtime++;
 					}
 					version++;
 				}
@@ -324,9 +329,11 @@ export function createSys(
 					stat.then((stat) => {
 						promises.delete(promise);
 						if (stat?.type === 1 satisfies FileType.File) {
-							dir.files[name] ??= {};
-							const file = dir.files[name];
-							if (stat.type !== file.stat?.type || stat.mtime !== file.stat.mtime) {
+							let file = dir.files.get(name);
+							if (!file) {
+								dir.files.set(name, file = {});
+							}
+							if (stat.type !== file.stat?.type || stat.mtime !== file.stat?.mtime) {
 								version++;
 							}
 							file.stat = stat;
@@ -346,9 +353,12 @@ export function createSys(
 				}
 			}
 			if (fileType === 1 satisfies FileType.File) {
-				dir.files[name] ??= {};
-				if (!dir.files[name].stat) {
-					dir.files[name].stat = {
+				let file = dir.files.get(name);
+				if (!file) {
+					dir.files.set(name, file = {});
+				}
+				if (!file.stat) {
+					file.stat = {
 						type: 1 satisfies FileType.File,
 						mtime: 0,
 						ctime: 0,
@@ -394,13 +404,12 @@ export function createSys(
 	}
 
 	function getDirFromDir(dir: Dir, name: string) {
-		let target = dir.dirs[name];
+		let target = dir.dirs.get(name);
 		if (!target) {
-			target = {
-				dirs: {},
-				files: {},
-			};
-			dir.dirs[name] = target;
+			dir.dirs.set(name, target = {
+				dirs: new Map(),
+				files: new Map(),
+			});
 		}
 		return target;
 	}
