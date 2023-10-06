@@ -89,6 +89,6 @@
 		"esbuild-plugin-copy": "latest",
 		"esbuild-visualizer": "^0.4.1",
 		"vsce": "latest",
-		"vscode-languageclient": "^8.1.0"
+		"vscode-languageclient": "^9.0.1"
 	}
 }

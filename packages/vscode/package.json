@@ -18,7 +18,7 @@
 		"vscode-nls": "^5.2.0"
 	},
 	"devDependencies": {
-		"@types/vscode": "latest",
-		"vscode-languageclient": "latest"
+		"@types/vscode": "1.67.0",
+		"vscode-languageclient": "^9.0.1"
 	}
 }

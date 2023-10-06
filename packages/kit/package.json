@@ -15,8 +15,8 @@
 	"dependencies": {
 		"@volar/language-service": "1.10.2",
 		"typesafe-path": "^0.2.2",
-		"vscode-languageserver-textdocument": "^1.0.8",
-		"vscode-uri": "^3.0.7"
+		"vscode-languageserver-textdocument": "^1.0.11",
+		"vscode-uri": "^3.0.8"
 	},
 	"peerDependencies": {
 		"typescript": "*"
