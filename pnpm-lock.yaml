@@ -17,13 +17,13 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.8.2
+        version: 20.8.3
       typescript:
         specifier: latest
         version: 5.2.2
       vite:
         specifier: latest
-        version: 4.4.11(@types/node@20.8.2)
+        version: 4.4.11(@types/node@20.8.3)
       vitest:
         specifier: latest
         version: 0.34.6
@@ -52,8 +52,8 @@ importers:
   packages/labs:
     devDependencies:
       '@types/vscode':
-        specifier: 1.67.0
-        version: 1.67.0
+        specifier: ^1.82.0
+        version: 1.83.0
       '@volar/language-server':
         specifier: 1.10.3
         version: link:../language-server
@@ -151,7 +151,7 @@ importers:
     devDependencies:
       monaco-editor-core:
         specifier: latest
-        version: 0.43.0
+        version: 0.44.0
       vscode-languageserver-protocol:
         specifier: ^3.17.5
         version: 3.17.5
@@ -185,8 +185,8 @@ importers:
         version: 5.2.0
     devDependencies:
       '@types/vscode':
-        specifier: 1.67.0
-        version: 1.67.0
+        specifier: ^1.82.0
+        version: 1.83.0
       vscode-languageclient:
         specifier: ^9.0.1
         version: 9.0.1
@@ -1130,8 +1130,8 @@ packages:
     dev: false
     optional: true
 
-  /@types/node@20.8.2:
-    resolution: {integrity: sha512-Vvycsc9FQdwhxE3y3DzeIxuEJbWGDsnrxvMADzTDF/lcdR9/K+AQIeAghTQsHtotg/q0j3WEOYS/jQgSdWue3w==}
+  /@types/node@20.8.3:
+    resolution: {integrity: sha512-jxiZQFpb+NlH5kjW49vXxvxTjeeqlbsnTAdBTKpzEdPs9itay7MscYXz3Fo9VYFEsfQ6LJFitHad3faerLAjCw==}
     dev: true
 
   /@types/normalize-package-data@2.4.2:
@@ -1140,8 +1140,8 @@ packages:
     dev: false
     optional: true
 
-  /@types/vscode@1.67.0:
-    resolution: {integrity: sha512-GH8BDf8cw9AC9080uneJfulhSa7KHSMI2s/CyKePXoGNos9J486w2V4YKoeNUqIEkW4hKoEAWp6/cXTwyGj47g==}
+  /@types/vscode@1.83.0:
+    resolution: {integrity: sha512-3mUtHqLAVz9hegut9au4xehuBrzRE3UJiQMpoEHkNl6XHliihO7eATx2BMHs0odsmmrwjJrlixx/Pte6M3ygDQ==}
     dev: true
 
   /@vitest/expect@0.34.6:
@@ -3927,8 +3927,8 @@ packages:
     dev: false
     optional: true
 
-  /monaco-editor-core@0.43.0:
-    resolution: {integrity: sha512-u+JeEanDWs9gc2+dfV/nVyerpc4r8uzoCqrUd9s1iKLAzoD0myMsWjkZaPufZd8HcGhCxRVsS7w30bSa2GVWmA==}
+  /monaco-editor-core@0.44.0:
+    resolution: {integrity: sha512-gPhXfbi0RCnIRXMUzkvjRc8tUiD56lkuw7uRr2dUv00owYthFRlyot2R0ECFuA5F3YKei4OlFjALDahxIC/6Jg==}
     dev: true
 
   /ms@2.1.2:
@@ -5719,7 +5719,7 @@ packages:
     dev: false
     optional: true
 
-  /vite-node@0.34.6(@types/node@20.8.2):
+  /vite-node@0.34.6(@types/node@20.8.3):
     resolution: {integrity: sha512-nlBMJ9x6n7/Amaz6F3zJ97EBwR2FkzhBRxF5e+jE6LA3yi6Wtc2lyTij1OnDMIr34v5g/tVQtsVAzhT0jc5ygA==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
@@ -5729,7 +5729,7 @@ packages:
       mlly: 1.4.2
       pathe: 1.1.1
       picocolors: 1.0.0
-      vite: 4.4.11(@types/node@20.8.2)
+      vite: 4.4.11(@types/node@20.8.3)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5741,7 +5741,7 @@ packages:
       - terser
     dev: true
 
-  /vite@4.4.11(@types/node@20.8.2):
+  /vite@4.4.11(@types/node@20.8.3):
     resolution: {integrity: sha512-ksNZJlkcU9b0lBwAGZGGaZHCMqHsc8OpgtoYhsQ4/I2v5cnpmmmqe5pM4nv/4Hn6G/2GhTdj0DhZh2e+Er1q5A==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
@@ -5769,7 +5769,7 @@ packages:
       terser:
         optional: true
     dependencies:
-      '@types/node': 20.8.2
+      '@types/node': 20.8.3
       esbuild: 0.18.20
       postcss: 8.4.31
       rollup: 3.29.4
@@ -5810,7 +5810,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.6
       '@types/chai-subset': 1.3.3
-      '@types/node': 20.8.2
+      '@types/node': 20.8.3
       '@vitest/expect': 0.34.6
       '@vitest/runner': 0.34.6
       '@vitest/snapshot': 0.34.6
@@ -5829,8 +5829,8 @@ packages:
       strip-literal: 1.3.0
       tinybench: 2.5.1
       tinypool: 0.7.0
-      vite: 4.4.11(@types/node@20.8.2)
-      vite-node: 0.34.6(@types/node@20.8.2)
+      vite: 4.4.11(@types/node@20.8.3)
+      vite-node: 0.34.6(@types/node@20.8.3)
       why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less

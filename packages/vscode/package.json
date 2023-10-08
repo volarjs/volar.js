@@ -18,7 +18,15 @@
 		"vscode-nls": "^5.2.0"
 	},
 	"devDependencies": {
-		"@types/vscode": "1.67.0",
+		"@types/vscode": "^1.82.0",
 		"vscode-languageclient": "^9.0.1"
+	},
+	"peerDependencies": {
+		"vscode-languageclient": "*"
+	},
+	"peerDependenciesMeta": {
+		"vscode-languageclient": {
+			"optional": true
+		}
 	}
 }
