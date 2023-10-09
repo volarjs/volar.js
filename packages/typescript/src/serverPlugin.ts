@@ -204,7 +204,7 @@ export function decorateLanguageServiceHost(
 	}
 }
 
-export function getExternalFiles(ts: typeof import('typescript/lib/tsserverlibrary'), project: ts.server.Project, exts: string[]) {
+export function searchExternalFiles(ts: typeof import('typescript/lib/tsserverlibrary'), project: ts.server.Project, exts: string[]) {
 	if (project.projectKind !== ts.server.ProjectKind.Configured) {
 		return [];
 	}
@@ -222,3 +222,8 @@ export function getExternalFiles(ts: typeof import('typescript/lib/tsserverlibra
 	const parsed = ts.parseJsonSourceFileConfigFileContent(config, parseHost, project.getCurrentDirectory());
 	return parsed.fileNames;
 }
+
+/**
+ * @deprecated use `searchExternalFiles` instead
+ */
+export const getExternalFiles = searchExternalFiles;
