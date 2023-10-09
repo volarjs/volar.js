@@ -22,7 +22,7 @@
 		"vscode-languageclient": "^9.0.1"
 	},
 	"peerDependencies": {
-		"vscode-languageclient": "*"
+		"vscode-languageclient": "^9.0.1"
 	},
 	"peerDependenciesMeta": {
 		"vscode-languageclient": {
