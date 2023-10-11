@@ -17,13 +17,13 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.8.3
+        version: 20.8.4
       typescript:
         specifier: latest
         version: 5.2.2
       vite:
         specifier: latest
-        version: 4.4.11(@types/node@20.8.3)
+        version: 4.4.11(@types/node@20.8.4)
       vitest:
         specifier: latest
         version: 0.34.6
@@ -31,13 +31,13 @@ importers:
   packages/cdn:
     dependencies:
       '@volar/language-service':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-service
 
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-service
       typesafe-path:
         specifier: ^0.2.2
@@ -55,13 +55,13 @@ importers:
         specifier: ^1.82.0
         version: 1.83.0
       '@volar/language-server':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-server
       '@volar/source-map':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../source-map
       '@volar/vscode':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../vscode
       esbuild:
         specifier: 0.15.18
@@ -82,19 +82,19 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-core
       '@volar/language-service':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-service
       '@volar/typescript':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../typescript
       '@vscode/l10n':
         specifier: ^0.0.16
@@ -119,16 +119,16 @@ importers:
         version: 3.0.8
     devDependencies:
       '@volar/source-map':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../source-map
 
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-core
       '@volar/source-map':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../source-map
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -143,7 +143,7 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.8
@@ -165,17 +165,17 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-core
     devDependencies:
       '@volar/language-service':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 1.10.3
+        specifier: 1.10.4
         version: link:../language-server
       typesafe-path:
         specifier: ^0.2.2
@@ -1130,8 +1130,10 @@ packages:
     dev: false
     optional: true
 
-  /@types/node@20.8.3:
-    resolution: {integrity: sha512-jxiZQFpb+NlH5kjW49vXxvxTjeeqlbsnTAdBTKpzEdPs9itay7MscYXz3Fo9VYFEsfQ6LJFitHad3faerLAjCw==}
+  /@types/node@20.8.4:
+    resolution: {integrity: sha512-ZVPnqU58giiCjSxjVUESDtdPk4QR5WQhhINbc9UBrKLU68MX5BF6kbQzTrkwbolyr0X8ChBpXfavr5mZFKZQ5A==}
+    dependencies:
+      undici-types: 5.25.3
     dev: true
 
   /@types/normalize-package-data@2.4.2:
@@ -5658,6 +5660,10 @@ packages:
     resolution: {integrity: sha512-+A5Sja4HP1M08MaXya7p5LvjuM7K6q/2EaC0+iovj/wOcMsTzMvDFbasi/oSapiwOlt252IqsKqPjCl7huKS0A==}
     dev: true
 
+  /undici-types@5.25.3:
+    resolution: {integrity: sha512-Ga1jfYwRn7+cP9v8auvEXN1rX3sWqlayd4HP7OKk4mZWylEmu3KzXDUGrQUN6Ol7qo1gPvB2e5gX6udnyEPgdA==}
+    dev: true
+
   /unique-filename@3.0.0:
     resolution: {integrity: sha512-afXhuC55wkAmZ0P18QsVE6kp8JaxrEokN2HGIoIVv2ijHQd419H0+6EigAFcIzXeMIkcIkNBpB3L/DXB3cTS/g==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -5719,7 +5725,7 @@ packages:
     dev: false
     optional: true
 
-  /vite-node@0.34.6(@types/node@20.8.3):
+  /vite-node@0.34.6(@types/node@20.8.4):
     resolution: {integrity: sha512-nlBMJ9x6n7/Amaz6F3zJ97EBwR2FkzhBRxF5e+jE6LA3yi6Wtc2lyTij1OnDMIr34v5g/tVQtsVAzhT0jc5ygA==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
@@ -5729,7 +5735,7 @@ packages:
       mlly: 1.4.2
       pathe: 1.1.1
       picocolors: 1.0.0
-      vite: 4.4.11(@types/node@20.8.3)
+      vite: 4.4.11(@types/node@20.8.4)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5741,7 +5747,7 @@ packages:
       - terser
     dev: true
 
-  /vite@4.4.11(@types/node@20.8.3):
+  /vite@4.4.11(@types/node@20.8.4):
     resolution: {integrity: sha512-ksNZJlkcU9b0lBwAGZGGaZHCMqHsc8OpgtoYhsQ4/I2v5cnpmmmqe5pM4nv/4Hn6G/2GhTdj0DhZh2e+Er1q5A==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
@@ -5769,7 +5775,7 @@ packages:
       terser:
         optional: true
     dependencies:
-      '@types/node': 20.8.3
+      '@types/node': 20.8.4
       esbuild: 0.18.20
       postcss: 8.4.31
       rollup: 3.29.4
@@ -5810,7 +5816,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.6
       '@types/chai-subset': 1.3.3
-      '@types/node': 20.8.3
+      '@types/node': 20.8.4
       '@vitest/expect': 0.34.6
       '@vitest/runner': 0.34.6
       '@vitest/snapshot': 0.34.6
@@ -5829,8 +5835,8 @@ packages:
       strip-literal: 1.3.0
       tinybench: 2.5.1
       tinypool: 0.7.0
-      vite: 4.4.11(@types/node@20.8.3)
-      vite-node: 0.34.6(@types/node@20.8.3)
+      vite: 4.4.11(@types/node@20.8.4)
+      vite-node: 0.34.6(@types/node@20.8.4)
       why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less
