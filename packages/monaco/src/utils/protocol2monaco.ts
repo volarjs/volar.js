@@ -77,7 +77,7 @@ export function asCompletionItem(item: protocol.CompletionItem, range: protocol.
 		filterText: item.filterText,
 		preselect: item.preselect,
 		insertText: item.textEdit?.newText ?? item.insertText ?? item.label,
-		insertTextRules: 4 satisfies languages.CompletionItemInsertTextRule.InsertAsSnippet,
+		insertTextRules: 0 satisfies languages.CompletionItemInsertTextRule.None,
 		range: item.textEdit ? asCompletionItemRange(item.textEdit) : asRange(range),
 		commitCharacters: item.commitCharacters,
 		additionalTextEdits: item.additionalTextEdits?.map(asTextEdit),
