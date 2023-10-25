@@ -93,7 +93,7 @@ export function createLanguageServiceHost(
 			moduleCache.clear();
 		});
 
-		let lastProjectVersion = ctx.host.getProjectVersion();
+		let lastSysVersion = sys.version;
 
 		_tsHost.resolveModuleNameLiterals = (
 			moduleLiterals,
@@ -102,8 +102,8 @@ export function createLanguageServiceHost(
 			options,
 			sourceFile
 		) => {
-			if (!watching && lastProjectVersion !== ctx.host.getProjectVersion()) {
-				lastProjectVersion = ctx.host.getProjectVersion();
+			if (!watching && lastSysVersion !== sys.version) {
+				lastSysVersion = sys.version;
 				moduleCache.clear();
 			}
 			return moduleLiterals.map((moduleLiteral) => {
@@ -128,8 +128,8 @@ export function createLanguageServiceHost(
 			options,
 			sourceFile
 		) => {
-			if (!watching && lastProjectVersion !== ctx.host.getProjectVersion()) {
-				lastProjectVersion = ctx.host.getProjectVersion();
+			if (!watching && lastSysVersion !== sys.version) {
+				lastSysVersion = sys.version;
 				moduleCache.clear();
 			}
 			return moduleNames.map((moduleName) => {
