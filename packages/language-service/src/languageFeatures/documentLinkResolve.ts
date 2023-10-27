@@ -56,12 +56,14 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 					if (sourceRange) {
 						target += '#L' + (sourceRange.start.line + 1) + ',' + (sourceRange.start.character + 1);
 						target += '-L' + (sourceRange.end.line + 1) + ',' + (sourceRange.end.character + 1);
+						break;
 					}
 				}
 				else {
 					const sourcePos = map.toSourcePosition({ line: startLine, character: startCharacter });
 					if (sourcePos) {
 						target += '#L' + (sourcePos.line + 1) + ',' + (sourcePos.character + 1);
+						break;
 					}
 				}
 			}
