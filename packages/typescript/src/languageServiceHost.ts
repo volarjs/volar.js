@@ -2,7 +2,6 @@ import type { FileKind, VirtualFile, LanguageContext } from '@volar/language-cor
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { posix as path } from 'path';
 import { matchFiles } from './typescript/utilities';
-import { ServiceEnvironment } from '@volar/language-service';
 
 const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: WeakMap<ts.IScriptSnapshot, number>; }>();
 
@@ -12,7 +11,6 @@ export function createLanguageServiceHost(
 	sys: ts.System & {
 		version?: number;
 	},
-	env: ServiceEnvironment | undefined,
 ) {
 
 	let lastProjectVersion: number | string | undefined;
@@ -89,9 +87,6 @@ export function createLanguageServiceHost(
 			_tsHost.useCaseSensitiveFileNames ? s => s : s => s.toLowerCase(),
 			_tsHost.getCompilationSettings()
 		);
-		const watching = !!env?.onDidChangeWatchedFiles?.(() => {
-			moduleCache.clear();
-		});
 
 		let lastSysVersion = sys.version;
 
@@ -102,7 +97,7 @@ export function createLanguageServiceHost(
 			options,
 			sourceFile
 		) => {
-			if (!watching && lastSysVersion !== sys.version) {
+			if (lastSysVersion !== sys.version) {
 				lastSysVersion = sys.version;
 				moduleCache.clear();
 			}
@@ -128,7 +123,7 @@ export function createLanguageServiceHost(
 			options,
 			sourceFile
 		) => {
-			if (!watching && lastSysVersion !== sys.version) {
+			if (lastSysVersion !== sys.version) {
 				lastSysVersion = sys.version;
 				moduleCache.clear();
 			}
