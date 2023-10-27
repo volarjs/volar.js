@@ -1,4 +1,3 @@
-import { posix as path } from 'path';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
@@ -187,7 +186,9 @@ export function register(context: ServiceContext) {
 			const vueRanges = tsRanges.map(tsRange => map.toSourceRange(tsRange)).filter(notEmpty);
 			const vueItem: vscode.CallHierarchyItem = {
 				...tsItem,
-				name: tsItem.name === path.basename(context.env.uriToFileName(map.virtualFileDocument.uri)) ? path.basename(context.env.uriToFileName(map.sourceFileDocument.uri)) : tsItem.name,
+				name: tsItem.name === map.virtualFileDocument.uri.substring(map.virtualFileDocument.uri.lastIndexOf('/') + 1)
+					? map.sourceFileDocument.uri.substring(map.sourceFileDocument.uri.lastIndexOf('/') + 1)
+					: tsItem.name,
 				uri: map.sourceFileDocument.uri,
 				// TS Bug: `range: range` not works
 				range: {

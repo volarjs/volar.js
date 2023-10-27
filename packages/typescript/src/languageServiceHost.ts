@@ -1,6 +1,6 @@
 import type { FileKind, VirtualFile, LanguageContext } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { posix as path } from 'path';
+import * as path from 'path-browserify';
 import { matchFiles } from './typescript/utilities';
 
 const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: WeakMap<ts.IScriptSnapshot, number>; }>();

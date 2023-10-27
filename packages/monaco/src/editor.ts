@@ -58,7 +58,7 @@ export namespace editor {
 				return;
 			}
 
-			let timer: NodeJS.Timeout | undefined;
+			let timer: number | undefined;
 			const changeSubscription = model.onDidChangeContent(() => {
 				clearTimeout(timer);
 				timer = setTimeout(() => doValidation(model), 250);
@@ -122,7 +122,7 @@ export namespace editor {
 		const disposables: IDisposable[] = [];
 		const listener = new Map<_editor.IModel, IDisposable>();
 
-		let timeout: NodeJS.Timeout | undefined;
+		let timeout: number | undefined;
 
 		disposables.push(
 			editor.onDidCreateModel((model) => hostingAutoInsertion(model)),
