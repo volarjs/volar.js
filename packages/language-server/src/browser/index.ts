@@ -28,8 +28,15 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				return { dispose: () => clearTimeout(handle) };
 			},
 		},
-		loadTypescript() {
-			return importTsFromCdn();
+		async loadTypescript() {
+			const _module = globalThis.module;
+			globalThis.module = { exports: {} } as typeof _module;
+			const tsVersion = 'latest';
+			const tsUrl = `https://cdn.jsdelivr.net/npm/typescript@${tsVersion}/lib/typescript.js`;
+			await import(tsUrl);
+			const ts = globalThis.module.exports;
+			globalThis.module = _module;
+			return ts as typeof import('typescript/lib/tsserverlibrary');
 		},
 		async loadTypescriptLocalized(tsdk, locale) {
 			try {
@@ -43,16 +50,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 		},
 		fs: createFs(connection),
 	}));
-}
-
-async function importTsFromCdn(tsVersion = 'latest') {
-	const _module = globalThis.module
-		; (globalThis as any).module = { exports: {} };
-	const tsUrl = `https://cdn.jsdelivr.net/npm/typescript@${tsVersion}/lib/typescript.js`;
-	await import(/* @vite-ignore */ tsUrl);
-	const ts = globalThis.module.exports;
-	globalThis.module = _module;
-	return ts as typeof import('typescript/lib/tsserverlibrary');
 }
 
 /**
