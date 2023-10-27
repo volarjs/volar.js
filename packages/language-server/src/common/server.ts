@@ -31,6 +31,9 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 	let plugins: ReturnType<LanguageServerPlugin>[];
 	let documents: ReturnType<typeof createDocuments>;
 	let context: ServerContext;
+	let ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
+	let tsLocalized: {} | undefined;
+	let cancelTokenHost: ReturnType<typeof createCancellationTokenHost>;
 
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 
@@ -59,9 +62,14 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 				},
 			},
 		};
-		plugins = context.server.plugins.map(plugin => plugin(options, {
-			typescript: options.typescript ? context.server.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined
-		}));
+		ts = options.typescript
+			? await context.server.runtimeEnv.loadTypescript(options.typescript.tsdk)
+			: undefined;
+		tsLocalized = options.typescript && initParams.locale
+			? await context.server.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale)
+			: undefined;
+		cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
+		plugins = context.server.plugins.map(plugin => plugin(options, { typescript: ts }));
 		documents = createDocuments(context.server.runtimeEnv, connection);
 
 		if (options.l10n) {
@@ -231,10 +239,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 	}
 
 	async function createLanguageServiceHost() {
-
-		const ts = options.typescript ? context.server.runtimeEnv.loadTypescript(options.typescript.tsdk) : undefined;
-		const tsLocalized = options.typescript && initParams.locale ? await context.server.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale) : undefined;
-		const cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
 
 		workspaces = createWorkspaces({
 			...context,

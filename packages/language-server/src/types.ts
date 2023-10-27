@@ -14,7 +14,7 @@ export interface Timer {
 export interface RuntimeEnvironment {
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
-	loadTypescript(tsdk: string): typeof import('typescript/lib/tsserverlibrary');
+	loadTypescript(tsdk: string): Promise<typeof import('typescript/lib/tsserverlibrary')>;
 	loadTypescriptLocalized(tsdk: string, locale: string): Promise<{} | undefined>;
 	fs: FileSystem;
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56

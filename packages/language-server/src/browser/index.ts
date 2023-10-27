@@ -29,7 +29,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			},
 		},
 		loadTypescript() {
-			return require('typescript'); // force bundle because not support load by user config in web
+			return importTsFromCdn();
 		},
 		async loadTypescriptLocalized(tsdk, locale) {
 			try {
@@ -43,6 +43,16 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 		},
 		fs: createFs(connection),
 	}));
+}
+
+async function importTsFromCdn(tsVersion = 'latest') {
+	const _module = globalThis.module
+		; (globalThis as any).module = { exports: {} };
+	const tsUrl = `https://cdn.jsdelivr.net/npm/typescript@${tsVersion}/lib/typescript.js`;
+	await import(/* @vite-ignore */ tsUrl);
+	const ts = globalThis.module.exports;
+	globalThis.module = _module;
+	return ts as typeof import('typescript/lib/tsserverlibrary');
 }
 
 /**
