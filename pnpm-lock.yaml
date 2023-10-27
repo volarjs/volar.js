@@ -52,6 +52,9 @@ importers:
 
   packages/labs:
     devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 20.8.9
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.83.0
@@ -191,6 +194,9 @@ importers:
         specifier: ^5.2.0
         version: 5.2.0
     devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 20.8.9
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.83.0
