@@ -6,6 +6,7 @@ import { SourceMapWithDocuments } from '../documents';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformDocumentLinkTarget } from './documentLinkResolve';
 
 export interface DocumentLinkData {
 	uri: string,
@@ -28,7 +29,7 @@ export function register(context: ServiceContext) {
 
 				const links = await service.provideDocumentLinks?.(document, token);
 
-				links?.forEach(link => {
+				for (const link of links ?? []) {
 					link.data = {
 						uri,
 						original: {
@@ -36,7 +37,7 @@ export function register(context: ServiceContext) {
 						},
 						serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
 					} satisfies DocumentLinkData;
-				});
+				}
 
 				return links;
 			},
@@ -46,12 +47,18 @@ export function register(context: ServiceContext) {
 					return link;
 
 				const range = map.toSourceRange(link.range);
-				if (range) {
-					return {
-						...link,
-						range,
-					};
-				}
+				if (!range)
+					return;
+
+				link = {
+					...link,
+					range,
+				};
+
+				if (link.target)
+					link.target = transformDocumentLinkTarget(link.target, context);
+
+				return link;
 			}).filter(notEmpty),
 			arr => arr.flat(),
 		) ?? [];
