@@ -1,6 +1,6 @@
 import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { posix as path } from 'path';
+import * as path from 'path-browserify';
 import { matchFiles } from './typescript/utilities';
 
 interface File {
@@ -109,6 +109,7 @@ export function createSys(
 				if (sys.directoryExists(rootPath)) {
 					// https://github.com/vuejs/language-tools/issues/2480
 					try {
+						// @ts-expect-error
 						process.chdir(rootPath);
 					} catch { }
 				}

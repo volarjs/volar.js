@@ -81,6 +81,7 @@
 		"size": "npm run prepack -- --metafile && esbuild-visualizer --metadata ./meta.json && open ./stats.html"
 	},
 	"devDependencies": {
+		"@types/node": "latest",
 		"@types/vscode": "^1.82.0",
 		"@volar/language-server": "1.10.6",
 		"@volar/source-map": "1.10.6",
