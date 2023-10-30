@@ -1,7 +1,7 @@
 lockfileVersion: '6.0'
 
 settings:
-  autoInstallPeers: false
+  autoInstallPeers: true
   excludeLinksFromLockfile: false
 
 importers:
@@ -39,6 +39,9 @@ importers:
       typesafe-path:
         specifier: ^0.2.2
         version: 0.2.2
+      typescript:
+        specifier: '*'
+        version: 5.2.2
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
         version: 1.0.11

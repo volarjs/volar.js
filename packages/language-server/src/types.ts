@@ -14,8 +14,8 @@ export interface Timer {
 export interface RuntimeEnvironment {
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
-	loadTypescript(tsdk: string): typeof import('typescript/lib/tsserverlibrary');
-	loadTypescriptLocalized(tsdk: string, locale: string): Promise<{} | undefined>;
+	loadTypeScript(options: InitializationOptions): Promise<typeof import('typescript/lib/tsserverlibrary') | undefined>;
+	loadTypeScriptLocalized(options: InitializationOptions, locale: string): Promise<{} | undefined>;
 	fs: FileSystem;
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
 	timer: Timer;
@@ -53,9 +53,16 @@ export enum DiagnosticModel {
 export interface InitializationOptions {
 	typescript?: {
 		/**
-		 * Absolute path to node_modules/typescript/lib
+		 * Absolute path to node_modules/typescript/lib, available for node
 		 */
 		tsdk: string;
+		/**
+		 * URI to node_modules/typescript/lib, available for web
+		 * @example "https://cdn.jsdelivr.net/npm/typescript"
+		 * @example "https://cdn.jsdelivr.net/npm/typescript@latest"
+		 * @example "https://cdn.jsdelivr.net/npm/typescript@5.0.0"
+		 */
+		tsdkUrl: string;
 	};
 	l10n?: {
 		location: string; // uri
