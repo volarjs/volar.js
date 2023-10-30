@@ -59,7 +59,7 @@ export interface InitializationOptions {
 		/**
 		 * URI to node_modules/typescript/lib, available for web
 		 */
-		tsdkUri: string;
+		tsdkUrl: string;
 	};
 	l10n?: {
 		location: string; // uri

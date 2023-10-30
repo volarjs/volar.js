@@ -29,7 +29,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			},
 		},
 		async loadTypeScript(options) {
-			const tsdkUri = options.typescript?.tsdkUri;
+			const tsdkUri = options.typescript?.tsdkUrl;
 			if (!tsdkUri) {
 				return;
 			}
@@ -41,7 +41,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			return ts as typeof import('typescript/lib/tsserverlibrary');
 		},
 		async loadTypeScriptLocalized(options, locale) {
-			const tsdkUri = options.typescript?.tsdkUri;
+			const tsdkUri = options.typescript?.tsdkUrl;
 			if (!tsdkUri) {
 				return;
 			}
