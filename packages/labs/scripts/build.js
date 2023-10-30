@@ -1,4 +1,4 @@
-require('esbuild').build({
+require('esbuild').context({
 	entryPoints: {
 		extension: './out/extension.js',
 	},
@@ -13,7 +13,6 @@ require('esbuild').build({
 	tsconfig: './tsconfig.json',
 	define: { 'process.env.NODE_ENV': '"production"' },
 	minify: process.argv.includes('--minify'),
-	watch: process.argv.includes('--watch'),
 	plugins: [
 		require('esbuild-plugin-copy').copy({
 			resolveFrom: 'cwd',
@@ -37,4 +36,15 @@ require('esbuild').build({
 			},
 		},
 	],
-}).catch(() => process.exit(1))
+}).then(async ctx => {
+	console.log('building...');
+	if (process.argv.includes('--watch')) {
+		await ctx.watch();
+		console.log('watching...');
+	} else {
+		await ctx.rebuild();
+		await ctx.dispose();
+		console.log('finished.');
+	}
+});
+
