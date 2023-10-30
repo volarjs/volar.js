@@ -28,19 +28,25 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				return { dispose: () => clearTimeout(handle) };
 			},
 		},
-		async loadTypescript() {
+		async loadTypeScript(options) {
+			const tsdkUri = options.typescript?.tsdkUri;
+			if (!tsdkUri) {
+				return;
+			}
 			const _module = globalThis.module;
 			globalThis.module = { exports: {} } as typeof _module;
-			const tsVersion = 'latest';
-			const tsUrl = `https://cdn.jsdelivr.net/npm/typescript@${tsVersion}/lib/typescript.js`;
-			await import(tsUrl);
+			await import(`${tsdkUri}/lib/typescript.js`);
 			const ts = globalThis.module.exports;
 			globalThis.module = _module;
 			return ts as typeof import('typescript/lib/tsserverlibrary');
 		},
-		async loadTypescriptLocalized(tsdk, locale) {
+		async loadTypeScriptLocalized(options, locale) {
+			const tsdkUri = options.typescript?.tsdkUri;
+			if (!tsdkUri) {
+				return;
+			}
 			try {
-				const uri = fileNameToUri(`${tsdk}/${locale}/diagnosticMessages.generated.json`);
+				const uri = fileNameToUri(`${tsdkUri}/${locale}/diagnosticMessages.generated.json`);
 				const json = await httpSchemaRequestHandler(uri);
 				if (json) {
 					return JSON.parse(json);

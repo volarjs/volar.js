@@ -62,11 +62,9 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 				},
 			},
 		};
-		ts = options.typescript
-			? await context.server.runtimeEnv.loadTypescript(options.typescript.tsdk)
-			: undefined;
-		tsLocalized = options.typescript && initParams.locale
-			? await context.server.runtimeEnv.loadTypescriptLocalized(options.typescript.tsdk, initParams.locale)
+		ts = await context.server.runtimeEnv.loadTypeScript(options);
+		tsLocalized = initParams.locale
+			? await context.server.runtimeEnv.loadTypeScriptLocalized(options, initParams.locale)
 			: undefined;
 		cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
 		plugins = context.server.plugins.map(plugin => plugin(options, { typescript: ts }));

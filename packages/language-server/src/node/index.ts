@@ -92,7 +92,11 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				return { dispose: () => clearImmediate(handle) };
 			},
 		},
-		loadTypescript(tsdk) {
+		loadTypeScript(options) {
+			const tsdk = options.typescript?.tsdk;
+			if (!tsdk) {
+				return;
+			}
 			for (const name of ['./typescript.js', './tsserverlibrary.js']) {
 				try {
 					return require(require.resolve(name, { paths: [tsdk] }));
@@ -108,7 +112,11 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 
 			throw new Error(`Can't find typescript.js or tsserverlibrary.js in ${tsdk}`);
 		},
-		async loadTypescriptLocalized(tsdk, locale) {
+		async loadTypeScriptLocalized(options, locale) {
+			const tsdk = options.typescript?.tsdk;
+			if (!tsdk) {
+				return;
+			}
 			try {
 				const path = require.resolve(`./${locale}/diagnosticMessages.generated.json`, { paths: [tsdk] });
 				return require(path);
