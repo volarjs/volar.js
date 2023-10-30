@@ -93,7 +93,9 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			},
 		},
 		loadTypeScript(options) {
-			const tsdk = options.typescript?.tsdk;
+			const tsdk = options.typescript && 'tsdk' in options.typescript
+				? options.typescript.tsdk
+				: undefined;
 			if (!tsdk) {
 				return;
 			}
@@ -113,7 +115,9 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			throw new Error(`Can't find typescript.js or tsserverlibrary.js in ${tsdk}`);
 		},
 		async loadTypeScriptLocalized(options, locale) {
-			const tsdk = options.typescript?.tsdk;
+			const tsdk = options.typescript && 'tsdk' in options.typescript
+				? options.typescript.tsdk
+				: undefined;
 			if (!tsdk) {
 				return;
 			}

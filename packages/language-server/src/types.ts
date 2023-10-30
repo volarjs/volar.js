@@ -56,6 +56,7 @@ export interface InitializationOptions {
 		 * Absolute path to node_modules/typescript/lib, available for node
 		 */
 		tsdk: string;
+	} | {
 		/**
 		 * URI to node_modules/typescript/lib, available for web
 		 * @example "https://cdn.jsdelivr.net/npm/typescript"
