@@ -1,5 +1,5 @@
 import { FileSystem, LanguageService, ServiceEnvironment, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
-import * as path from 'typesafe-path/posix';
+import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
@@ -13,7 +13,7 @@ export interface ProjectContext extends WorkspacesContext {
 	project: {
 		workspaceUri: URI;
 		rootUri: URI;
-		tsConfig: path.PosixPath | ts.CompilerOptions;
+		tsConfig: string | ts.CompilerOptions;
 	};
 }
 
@@ -94,7 +94,7 @@ export async function createProject(context: ProjectContext) {
 	let parsedCommandLine = await createParsedCommandLine(
 		context.workspaces.ts,
 		env,
-		uriToFileName(context.project.rootUri.toString()) as path.PosixPath,
+		uriToFileName(context.project.rootUri.toString()),
 		context.project.tsConfig,
 		context.workspaces.plugins,
 		existingOptions,
@@ -179,7 +179,7 @@ export async function createProject(context: ProjectContext) {
 			parsedCommandLine = await createParsedCommandLine(
 				context.workspaces.ts,
 				env,
-				uriToFileName(context.project.rootUri.toString()) as path.PosixPath,
+				uriToFileName(context.project.rootUri.toString()),
 				context.project.tsConfig,
 				context.workspaces.plugins,
 				existingOptions,
@@ -215,8 +215,8 @@ export async function createProject(context: ProjectContext) {
 async function createParsedCommandLine(
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
 	env: ServiceEnvironment,
-	rootPath: path.PosixPath,
-	tsConfig: path.PosixPath | ts.CompilerOptions,
+	rootPath: string,
+	tsConfig: string | ts.CompilerOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],
 	existingOptions: ts.CompilerOptions | undefined,
 ): Promise<ts.ParsedCommandLine> {
