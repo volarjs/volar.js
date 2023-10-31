@@ -2,7 +2,6 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { DiagnosticModel, InitializationOptions, LanguageServerPlugin, ServerMode } from '../types';
-import { CancellationTokenHost } from './cancellationPipe';
 import { createDocuments } from './documents';
 import { ServerContext } from './server';
 import { isFileInDir } from './utils/isFileInDir';
@@ -24,7 +23,6 @@ export interface WorkspacesContext extends ServerContext {
 		ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 		tsLocalized: ts.MapLike<string> | undefined;
 		documents: ReturnType<typeof createDocuments>;
-		cancelTokenHost: CancellationTokenHost;
 	};
 }
 
@@ -149,7 +147,7 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 
 		const req = ++documentUpdatedReq;
 		const delay = 250;
-		const cancel = context.workspaces.cancelTokenHost.createCancellationToken({
+		const cancel = context.server.runtimeEnv.getCancellationToken({
 			get isCancellationRequested() {
 				return req !== documentUpdatedReq;
 			},

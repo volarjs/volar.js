@@ -3,7 +3,6 @@ import * as l10n from '@vscode/l10n';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { InitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types';
-import { createCancellationTokenHost } from './cancellationPipe';
 import { createConfigurationHost } from './configurationHost';
 import { createDocuments } from './documents';
 import { setupCapabilities } from './utils/registerFeatures';
@@ -33,7 +32,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 	let context: ServerContext;
 	let ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 	let tsLocalized: {} | undefined;
-	let cancelTokenHost: ReturnType<typeof createCancellationTokenHost>;
 
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 
@@ -66,7 +64,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 		tsLocalized = initParams.locale
 			? await context.server.runtimeEnv.loadTypeScriptLocalized(options, initParams.locale)
 			: undefined;
-		cancelTokenHost = createCancellationTokenHost(options.cancellationPipeName);
 		plugins = context.server.plugins.map(plugin => plugin(options, { typescript: ts }));
 		documents = createDocuments(context.server.runtimeEnv, connection);
 
@@ -246,7 +243,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 				initParams,
 				initOptions: options,
 				documents,
-				cancelTokenHost,
 				plugins,
 			},
 		}, roots);
@@ -257,7 +253,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 			workspaces,
 			initParams,
 			options,
-			cancelTokenHost,
 			getSemanticTokensLegend(),
 			context.server.runtimeEnv,
 			documents,

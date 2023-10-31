@@ -59,6 +59,9 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			catch { }
 		},
 		fs: createFs(connection),
+		getCancellationToken(original) {
+			return original ?? vscode.CancellationToken.None;
+		},
 	}));
 }
 

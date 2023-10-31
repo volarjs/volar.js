@@ -24,7 +24,7 @@ const globalSnapshots = new WeakMap<FileSystem, ReturnType<typeof createUriMap<t
 export async function createProject(context: ProjectContext) {
 
 	let projectVersion = 0;
-	let token = context.workspaces.cancelTokenHost.createCancellationToken();
+	let token = context.server.runtimeEnv.getCancellationToken();
 	let languageService: LanguageService | undefined;
 
 	const tsToken: ts.CancellationToken = {
@@ -77,7 +77,7 @@ export async function createProject(context: ProjectContext) {
 	};
 	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
 		projectVersion++;
-		token = context.workspaces.cancelTokenHost.createCancellationToken();
+		token = context.server.runtimeEnv.getCancellationToken();
 	});
 	const fileWatch = env.onDidChangeWatchedFiles?.(params => {
 		onWorkspaceFilesChanged(params.changes);
@@ -129,7 +129,7 @@ export async function createProject(context: ProjectContext) {
 			if (!parsedCommandLine.fileNames.includes(fileName)) {
 				parsedCommandLine.fileNames.push(fileName);
 				projectVersion++;
-				token = context.workspaces.cancelTokenHost.createCancellationToken();
+				token = context.server.runtimeEnv.getCancellationToken();
 			}
 		},
 		askedFiles,
@@ -202,7 +202,7 @@ export async function createProject(context: ProjectContext) {
 		}
 
 		if (oldProjectVersion !== projectVersion) {
-			token = context.workspaces.cancelTokenHost.createCancellationToken();
+			token = context.server.runtimeEnv.getCancellationToken();
 		}
 	}
 	function dispose() {
