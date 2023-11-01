@@ -1,6 +1,6 @@
 {
 	"name": "@volar/vscode",
-	"version": "1.10.9",
+	"version": "1.10.10",
 	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
@@ -13,13 +13,13 @@
 		"directory": "packages/vscode"
 	},
 	"dependencies": {
-		"@volar/language-server": "1.10.9",
+		"@volar/language-server": "1.10.10",
 		"path-browserify": "^1.0.1",
 		"vscode-nls": "^5.2.0"
 	},
 	"devDependencies": {
-		"@types/path-browserify": "latest",
 		"@types/node": "latest",
+		"@types/path-browserify": "latest",
 		"@types/vscode": "^1.82.0",
 		"vscode-languageclient": "^9.0.1"
 	},
