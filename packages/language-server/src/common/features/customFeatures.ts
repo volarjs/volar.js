@@ -68,7 +68,8 @@ export function register(
 	});
 	connection.onNotification(WriteVirtualFilesNotification.type, async params => {
 
-		const fs = await import('fs');
+		const fsModeName = 'fs'; // avoid bundle
+		const fs: typeof import('fs') = await import(fsModeName);
 		const project = await workspaces.getProject(params.uri);
 
 		if (project) {
