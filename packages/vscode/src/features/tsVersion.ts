@@ -1,10 +1,10 @@
-import * as path from 'typesafe-path';
+import * as path from 'path-browserify';
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import { quickPick } from '../common';
 import type { InitializationOptions } from '@volar/language-server';
 
-const defaultTsdkPath = 'node_modules/typescript/lib' as path.PosixPath;
+const defaultTsdkPath = 'node_modules/typescript/lib';
 
 export async function activate(
 	cmd: string,
@@ -128,22 +128,23 @@ export async function getTsdk(context: vscode.ExtensionContext) {
 	};
 }
 
-function resolveWorkspaceTsdk(tsdk: path.OsPath | path.PosixPath) {
+function resolveWorkspaceTsdk(tsdk: string) {
 	if (path.isAbsolute(tsdk)) {
 		try {
 			if (require.resolve('./typescript.js', { paths: [tsdk] })) {
-				return tsdk.replace(/\\/g, '/') as path.PosixPath;
+				return tsdk;
 			}
 		} catch { }
 	}
-	const workspaceFolderFsPaths = (vscode.workspace.workspaceFolders ?? []).map(folder => folder.uri.fsPath as path.OsPath);
-	for (const folder of workspaceFolderFsPaths) {
-		const _path = path.join(folder, tsdk);
-		try {
-			if (require.resolve('./typescript.js', { paths: [_path] })) {
-				return _path.replace(/\\/g, '/') as path.PosixPath;
-			}
-		} catch { }
+	if (vscode.workspace.workspaceFolders) {
+		for (const folder of vscode.workspace.workspaceFolders) {
+			const tsdkPath = path.join(folder.uri.fsPath.replace(/\\/g, '/'), tsdk);
+			try {
+				if (require.resolve('./typescript.js', { paths: [tsdkPath] })) {
+					return tsdkPath;
+				}
+			} catch { }
+		}
 	}
 }
 
@@ -152,9 +153,9 @@ async function getVScodeTsdk() {
 	const nightly = vscode.extensions.getExtension('ms-vscode.vscode-typescript-next');
 	if (nightly) {
 		const libPath = path.join(
-			nightly.extensionPath as path.OsPath,
-			'node_modules/typescript/lib' as path.PosixPath,
-		).replace(/\\/g, '/') as path.PosixPath;
+			nightly.extensionPath.replace(/\\/g, '/'),
+			'node_modules/typescript/lib',
+		);
 		return {
 			path: libPath,
 			version: await getTsVersion(libPath),
@@ -164,9 +165,9 @@ async function getVScodeTsdk() {
 
 	if (vscode.env.appRoot) {
 		const libPath = path.join(
-			vscode.env.appRoot as path.OsPath,
-			'extensions/node_modules/typescript/lib' as path.PosixPath,
-		).replace(/\\/g, '/') as path.PosixPath;
+			vscode.env.appRoot.replace(/\\/g, '/'),
+			'extensions/node_modules/typescript/lib',
+		);
 		return {
 			path: libPath,
 			version: await getTsVersion(libPath),
@@ -184,7 +185,7 @@ async function getVScodeTsdk() {
 }
 
 function getConfigTsdkPath() {
-	return vscode.workspace.getConfiguration('typescript').get<path.PosixPath>('tsdk');
+	return vscode.workspace.getConfiguration('typescript').get<string>('tsdk')?.replace(/\\/g, '/');
 }
 
 function isUseWorkspaceTsdk(context: vscode.ExtensionContext) {

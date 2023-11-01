@@ -193,9 +193,9 @@ importers:
       '@volar/language-server':
         specifier: 1.10.9
         version: link:../language-server
-      typesafe-path:
-        specifier: ^0.2.2
-        version: 0.2.2
+      path-browserify:
+        specifier: ^1.0.1
+        version: 1.0.1
       vscode-nls:
         specifier: ^5.2.0
         version: 5.2.0
@@ -203,6 +203,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 20.8.10
+      '@types/path-browserify':
+        specifier: latest
+        version: 1.0.1
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.83.0

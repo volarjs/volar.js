@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import { GetMatchTsConfigRequest } from '@volar/language-server/protocol';
-import * as path from 'typesafe-path';
+import * as path from 'path-browserify';
 
 export async function activate(
 	cmd: string,
@@ -41,8 +41,8 @@ export async function activate(
 			if (tsconfig?.uri) {
 				currentTsconfigUri = vscode.Uri.parse(tsconfig.uri);
 				statusBar.text = path.relative(
-					(vscode.workspace.rootPath || '/') as path.OsPath,
-					currentTsconfigUri.fsPath as path.OsPath,
+					(vscode.workspace.rootPath?.replace(/\\/g, '/') || '/'),
+					currentTsconfigUri.fsPath.replace(/\\/g, '/'),
 				);
 				statusBar.command = cmd;
 			}

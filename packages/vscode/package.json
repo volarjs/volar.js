@@ -14,10 +14,11 @@
 	},
 	"dependencies": {
 		"@volar/language-server": "1.10.9",
-		"typesafe-path": "^0.2.2",
+		"path-browserify": "^1.0.1",
 		"vscode-nls": "^5.2.0"
 	},
 	"devDependencies": {
+		"@types/path-browserify": "latest",
 		"@types/node": "latest",
 		"@types/vscode": "^1.82.0",
 		"vscode-languageclient": "^9.0.1"
