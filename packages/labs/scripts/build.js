@@ -1,3 +1,5 @@
+// @ts-check
+
 require('esbuild').context({
 	entryPoints: {
 		extension: './out/extension.js',
@@ -20,6 +22,7 @@ require('esbuild').context({
 				from: ['./node_modules/esbuild-visualizer/dist/lib/**/*'],
 				to: ['./lib'],
 			},
+			// @ts-expect-error
 			keepStructure: true,
 		}),
 		{

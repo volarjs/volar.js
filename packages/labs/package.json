@@ -86,9 +86,9 @@
 		"@volar/language-server": "1.10.9",
 		"@volar/source-map": "1.10.9",
 		"@volar/vscode": "1.10.9",
-		"esbuild": "0.15.18",
+		"esbuild": "latest",
 		"esbuild-plugin-copy": "latest",
-		"esbuild-visualizer": "^0.4.1",
+		"esbuild-visualizer": "latest",
 		"vsce": "latest",
 		"vscode-languageclient": "^9.0.1"
 	}

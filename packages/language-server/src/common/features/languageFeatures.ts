@@ -1,7 +1,6 @@
 import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
-import { CancellationTokenHost } from '../cancellationPipe';
 import type { Workspaces } from '../workspaces';
 import { RuntimeEnvironment, InitializationOptions, ServerMode } from '../../types';
 import { createDocuments } from '../documents';
@@ -11,7 +10,6 @@ export function register(
 	workspaces: Workspaces,
 	initParams: vscode.InitializeParams,
 	initOptions: InitializationOptions,
-	cancelHost: CancellationTokenHost,
 	semanticTokensLegend: vscode.SemanticTokensLegend,
 	runtime: RuntimeEnvironment,
 	documents: ReturnType<typeof createDocuments>,
@@ -274,7 +272,7 @@ export function register(
 	});
 	connection.languages.diagnostics.on(async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
 		const result = await worker(params.textDocument.uri, token, service => {
-			const tsToken = cancelHost.createCancellationToken(token);
+			const tsToken = runtime.getCancellationToken(token);
 			const mode = initOptions.serverMode === ServerMode.PartialSemantic ? 'semantic' as const
 				: initOptions.serverMode === ServerMode.Syntactic ? 'syntactic' as const
 					: 'all' as const;

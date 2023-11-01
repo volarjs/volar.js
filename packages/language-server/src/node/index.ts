@@ -5,6 +5,7 @@ import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
 import { startCommonLanguageServer } from '../common/server';
 import { InitializationOptions, LanguageServerPlugin } from '../types';
 import { FileSystem, FileType } from '@volar/language-service';
+import { createGetCancellationToken } from './cancellationPipe';
 
 export * from '../index';
 
@@ -127,5 +128,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			} catch { }
 		},
 		fs: createFs(options),
+		getCancellationToken: createGetCancellationToken(options.cancellationPipeName),
 	}));
 }

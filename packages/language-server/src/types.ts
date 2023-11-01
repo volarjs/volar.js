@@ -16,6 +16,7 @@ export interface RuntimeEnvironment {
 	fileNameToUri(fileName: string): string;
 	loadTypeScript(options: InitializationOptions): Promise<typeof import('typescript/lib/tsserverlibrary') | undefined>;
 	loadTypeScriptLocalized(options: InitializationOptions, locale: string): Promise<{} | undefined>;
+	getCancellationToken(original?: vscode.CancellationToken): vscode.CancellationToken;
 	fs: FileSystem;
 	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
 	timer: Timer;

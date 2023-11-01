@@ -1,5 +1,5 @@
 import { FileSystem, LanguageService, ServiceEnvironment, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
-import * as path from 'typesafe-path/posix';
+import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
@@ -13,7 +13,7 @@ export interface ProjectContext extends WorkspacesContext {
 	project: {
 		workspaceUri: URI;
 		rootUri: URI;
-		tsConfig: path.PosixPath | ts.CompilerOptions;
+		tsConfig: string | ts.CompilerOptions;
 	};
 }
 
@@ -24,7 +24,7 @@ const globalSnapshots = new WeakMap<FileSystem, ReturnType<typeof createUriMap<t
 export async function createProject(context: ProjectContext) {
 
 	let projectVersion = 0;
-	let token = context.workspaces.cancelTokenHost.createCancellationToken();
+	let token = context.server.runtimeEnv.getCancellationToken();
 	let languageService: LanguageService | undefined;
 
 	const tsToken: ts.CancellationToken = {
@@ -77,7 +77,7 @@ export async function createProject(context: ProjectContext) {
 	};
 	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
 		projectVersion++;
-		token = context.workspaces.cancelTokenHost.createCancellationToken();
+		token = context.server.runtimeEnv.getCancellationToken();
 	});
 	const fileWatch = env.onDidChangeWatchedFiles?.(params => {
 		onWorkspaceFilesChanged(params.changes);
@@ -94,7 +94,7 @@ export async function createProject(context: ProjectContext) {
 	let parsedCommandLine = await createParsedCommandLine(
 		context.workspaces.ts,
 		env,
-		uriToFileName(context.project.rootUri.toString()) as path.PosixPath,
+		uriToFileName(context.project.rootUri.toString()),
 		context.project.tsConfig,
 		context.workspaces.plugins,
 		existingOptions,
@@ -129,7 +129,7 @@ export async function createProject(context: ProjectContext) {
 			if (!parsedCommandLine.fileNames.includes(fileName)) {
 				parsedCommandLine.fileNames.push(fileName);
 				projectVersion++;
-				token = context.workspaces.cancelTokenHost.createCancellationToken();
+				token = context.server.runtimeEnv.getCancellationToken();
 			}
 		},
 		askedFiles,
@@ -179,7 +179,7 @@ export async function createProject(context: ProjectContext) {
 			parsedCommandLine = await createParsedCommandLine(
 				context.workspaces.ts,
 				env,
-				uriToFileName(context.project.rootUri.toString()) as path.PosixPath,
+				uriToFileName(context.project.rootUri.toString()),
 				context.project.tsConfig,
 				context.workspaces.plugins,
 				existingOptions,
@@ -202,7 +202,7 @@ export async function createProject(context: ProjectContext) {
 		}
 
 		if (oldProjectVersion !== projectVersion) {
-			token = context.workspaces.cancelTokenHost.createCancellationToken();
+			token = context.server.runtimeEnv.getCancellationToken();
 		}
 	}
 	function dispose() {
@@ -215,8 +215,8 @@ export async function createProject(context: ProjectContext) {
 async function createParsedCommandLine(
 	ts: typeof import('typescript/lib/tsserverlibrary') | undefined,
 	env: ServiceEnvironment,
-	rootPath: path.PosixPath,
-	tsConfig: path.PosixPath | ts.CompilerOptions,
+	rootPath: string,
+	tsConfig: string | ts.CompilerOptions,
 	plugins: ReturnType<LanguageServerPlugin>[],
 	existingOptions: ts.CompilerOptions | undefined,
 ): Promise<ts.ParsedCommandLine> {
