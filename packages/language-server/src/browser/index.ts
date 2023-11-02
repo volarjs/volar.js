@@ -21,7 +21,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 
 	const jobs = new Map<Promise<any>, string>();
 
-	let fsProgress: vscode.WorkDoneProgressServerReporter | undefined;
+	let fsProgress: Promise<vscode.WorkDoneProgressServerReporter> | undefined;
 	let totalJobs = 0;
 
 	startCommonLanguageServer(connection, plugins, () => ({
@@ -80,9 +80,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 					}
 					return undefined;
 				}
-				return withProgress(async () => {
-					return await connection.sendRequest(FsStatRequest.type, uri);
-				}, uri);
+				return await connection.sendRequest(FsStatRequest.type, uri);
 			},
 			async readFile(uri) {
 				if (uri.startsWith('__invalid__:')) {
@@ -113,25 +111,27 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 	}));
 
 	async function withProgress<T>(fn: () => Promise<T>, asset: string): Promise<T> {
+		const path = URI.parse(asset).path;
 		if (!fsProgress) {
-			fsProgress = await connection.window.createWorkDoneProgress();
-			fsProgress.begin('Loading', 0, asset);
+			fsProgress = connection.window.createWorkDoneProgress();
+			fsProgress.then(progress => progress.begin('Load', 0, path));
 		}
+		const _fsProgress = await fsProgress;
 		totalJobs++;
 		let job!: Promise<T>;
 		try {
 			job = fn();
-			jobs.set(job, asset);
+			jobs.set(job, path);
 			return await job;
 		} finally {
 			jobs.delete(job);
 			if (jobs.size === 0) {
-				fsProgress.done();
+				_fsProgress.done();
 				fsProgress = undefined;
 			}
 			else {
-				for (const [_, asset] of jobs) {
-					fsProgress.report((totalJobs - jobs.size) / totalJobs * 100, asset);
+				for (const [_, path] of jobs) {
+					_fsProgress.report((totalJobs - jobs.size) / totalJobs * 100, path);
 					break;
 				}
 			}
