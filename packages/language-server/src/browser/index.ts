@@ -19,6 +19,11 @@ export function createConnection() {
 
 export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
 
+	const jobs = new Map<Promise<any>, string>();
+
+	let fsProgress: vscode.WorkDoneProgressServerReporter | undefined;
+	let totalJobs = 0;
+
 	startCommonLanguageServer(connection, plugins, () => ({
 		uriToFileName,
 		fileNameToUri,
@@ -75,7 +80,9 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 					}
 					return undefined;
 				}
-				return await connection.sendRequest(FsStatRequest.type, uri);
+				return withProgress(async () => {
+					return await connection.sendRequest(FsStatRequest.type, uri);
+				}, uri);
 			},
 			async readFile(uri) {
 				if (uri.startsWith('__invalid__:')) {
@@ -84,7 +91,9 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
 					return await httpSchemaRequestHandler(uri);
 				}
-				return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
+				return withProgress(async () => {
+					return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
+				}, uri);
 			},
 			async readDirectory(uri) {
 				if (uri.startsWith('__invalid__:')) {
@@ -93,13 +102,41 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
 					return [];
 				}
-				return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
+				return withProgress(async () => {
+					return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
+				}, uri);
 			},
 		},
 		getCancellationToken(original) {
 			return original ?? vscode.CancellationToken.None;
 		},
 	}));
+
+	async function withProgress<T>(fn: () => Promise<T>, asset: string): Promise<T> {
+		if (!fsProgress) {
+			fsProgress = await connection.window.createWorkDoneProgress();
+			fsProgress.begin('Loading', 0, asset);
+		}
+		totalJobs++;
+		let job!: Promise<T>;
+		try {
+			job = fn();
+			jobs.set(job, asset);
+			return await job;
+		} finally {
+			jobs.delete(job);
+			if (jobs.size === 0) {
+				fsProgress.done();
+				fsProgress = undefined;
+			}
+			else {
+				for (const [_, asset] of jobs) {
+					fsProgress.report((totalJobs - jobs.size) / totalJobs * 100, asset);
+					break;
+				}
+			}
+		}
+	}
 }
 
 function uriToFileName(uri: string) {
