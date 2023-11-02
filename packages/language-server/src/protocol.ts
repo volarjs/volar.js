@@ -19,6 +19,27 @@ export namespace FsStatRequest {
 	export const type = new vscode.RequestType<vscode.DocumentUri, FileStat, unknown>('volar/server/fs/stat');
 }
 
+export namespace FsCacheRequest {
+	export type ResponseType = {
+		stat: [string, FileStat][];
+		readDirectory: [string, [string, FileType][]][];
+		readFile: [string, string][];
+	} | null | undefined;
+	export const type = new vscode.RequestType0<ResponseType, unknown>('volar/server/fs/cache');
+}
+
+export namespace UseReadFileCacheNotification {
+	export const type = new vscode.NotificationType<vscode.DocumentUri>('volar/server/fs/readFile/cache');
+}
+
+export namespace UseReadDirectoryCacheNotification {
+	export const type = new vscode.NotificationType<vscode.DocumentUri>('volar/server/fs/readDirectory/cache');
+}
+
+export namespace UseStatCacheNotification {
+	export const type = new vscode.NotificationType<vscode.DocumentUri>('volar/server/fs/stat/cache');
+}
+
 /**
  * Client request server
  */
