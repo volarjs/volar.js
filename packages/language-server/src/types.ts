@@ -60,9 +60,9 @@ export interface InitializationOptions {
 	} | {
 		/**
 		 * URI to node_modules/typescript/lib, available for web
-		 * @example "https://cdn.jsdelivr.net/npm/typescript"
-		 * @example "https://cdn.jsdelivr.net/npm/typescript@latest"
-		 * @example "https://cdn.jsdelivr.net/npm/typescript@5.0.0"
+		 * @example "https://cdn.jsdelivr.net/npm/typescript/lib"
+		 * @example "https://cdn.jsdelivr.net/npm/typescript@latest/lib"
+		 * @example "https://cdn.jsdelivr.net/npm/typescript@5.0.0/lib"
 		 */
 		tsdkUrl: string;
 	};

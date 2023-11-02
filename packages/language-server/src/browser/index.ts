@@ -37,7 +37,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			}
 			const _module = globalThis.module;
 			globalThis.module = { exports: {} } as typeof _module;
-			await import(`${tsdkUri}/lib/typescript.js`);
+			await import(`${tsdkUri}/typescript.js`);
 			const ts = globalThis.module.exports;
 			globalThis.module = _module;
 			return ts as typeof import('typescript/lib/tsserverlibrary');
@@ -50,8 +50,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				return;
 			}
 			try {
-				const uri = fileNameToUri(`${tsdkUri}/${locale}/diagnosticMessages.generated.json`);
-				const json = await httpSchemaRequestHandler(uri);
+				const json = await httpSchemaRequestHandler(`${tsdkUri}/${locale}/diagnosticMessages.generated.json`);
 				if (json) {
 					return JSON.parse(json);
 				}
