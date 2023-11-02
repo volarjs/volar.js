@@ -34,13 +34,8 @@ export async function activate(context: vscode.ExtensionContext, client: BaseLan
 				return;
 			}
 
-			try {
-				const uri2 = client.protocol2CodeConverter.asUri(uri);
-				return await vscode.workspace.fs.stat(uri2);
-			}
-			catch {
-				// ignore
-			}
+			const uri2 = client.protocol2CodeConverter.asUri(uri);
+			return await _stat(uri2);
 		}
 
 		async function readFile(uri: string) {
@@ -53,39 +48,60 @@ export async function activate(context: vscode.ExtensionContext, client: BaseLan
 				return;
 			}
 
-			try {
-				const uri2 = client.protocol2CodeConverter.asUri(uri);
-				const stat = await vscode.workspace.fs.stat(uri2);
-				if (context.workspaceState.get<number>(uri + '?mtime') !== stat.mtime) {
-					const data = textDecoder.decode(await vscode.workspace.fs.readFile(uri2));
+			const uri2 = client.protocol2CodeConverter.asUri(uri);
+			const stat = await _stat(uri2);
+			if (context.workspaceState.get<number>(uri + '?mtime') !== stat?.mtime) {
+				if (stat) {
+					const data = await _readFile(uri2);
 					context.workspaceState.update(uri + '?mtime', stat.mtime);
 					context.workspaceState.update(uri, data);
 				}
-				return context.workspaceState.get<string>(uri)!;
+				else {
+					context.workspaceState.update(uri + '?mtime', undefined);
+					context.workspaceState.update(uri, undefined);
+				}
 			}
-			catch {
-				// ignore
-			}
+			return context.workspaceState.get<string>(uri)!;
 		}
 
 		async function readDirectory(uri: string): Promise<[string, vscode.FileType][]> {
-			try {
-				const uri2 = client.protocol2CodeConverter.asUri(uri);
-				const stat = await vscode.workspace.fs.stat(uri2);
-				if (context.workspaceState.get<number>(uri + '?mtime') !== stat.mtime) {
+			const uri2 = client.protocol2CodeConverter.asUri(uri);
+			const stat = await _stat(uri2);
+			if (context.workspaceState.get<number>(uri + '?mtime') !== stat?.mtime) {
+				if (stat) {
 					const data = stat.type === vscode.FileType.Directory
-						? (await vscode.workspace.fs.readDirectory(uri2))
+						? (await _readDirectory(uri2))
 							.filter(([name]) => !name.startsWith('.'))
 						: [];
 					context.workspaceState.update(uri + '?mtime', stat.mtime);
 					context.workspaceState.update(uri + '?readdir', data);
 				}
-				return context.workspaceState.get<[string, vscode.FileType][]>(uri + '?readdir')!;
+				else {
+					context.workspaceState.update(uri + '?mtime', undefined);
+					context.workspaceState.update(uri + '?readdir', undefined);
+				}
 			}
-			catch {
-				// ignore
+			return context.workspaceState.get<[string, vscode.FileType][]>(uri + '?readdir')!;
+		}
+
+		async function _readFile(uri: vscode.Uri) {
+			try {
+				return textDecoder.decode(await vscode.workspace.fs.readFile(uri));
+			} catch { }
+		}
+
+		async function _readDirectory(uri: vscode.Uri) {
+			try {
+				return await vscode.workspace.fs.readDirectory(uri);
+			} catch {
 				return [];
 			}
+		}
+
+		async function _stat(uri: vscode.Uri) {
+			try {
+				return await vscode.workspace.fs.stat(uri);
+			} catch { }
 		}
 	}
 }
