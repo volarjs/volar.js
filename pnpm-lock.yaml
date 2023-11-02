@@ -196,9 +196,6 @@ importers:
       path-browserify:
         specifier: ^1.0.1
         version: 1.0.1
-      vscode-languageclient:
-        specifier: ^9.0.1
-        version: 9.0.1
       vscode-nls:
         specifier: ^5.2.0
         version: 5.2.0
@@ -212,6 +209,9 @@ importers:
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.83.0
+      vscode-languageclient:
+        specifier: ^9.0.1
+        version: 9.0.1
 
 packages:
 
@@ -3811,6 +3811,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
+    dev: true
 
   /minimatch@9.0.3:
     resolution: {integrity: sha512-RHiac9mvaRw0x3AYRgDC1CxAP7HTcNrrECeA8YYJeWnpo+2Q5CegtZjaotWTWxDG3UeGA1coE05iH1mPjT/2mg==}
@@ -5916,6 +5917,7 @@ packages:
       minimatch: 5.1.6
       semver: 7.5.4
       vscode-languageserver-protocol: 3.17.5
+    dev: true
 
   /vscode-languageserver-protocol@3.17.5:
     resolution: {integrity: sha512-mb1bvRJN8SVznADSGWM9u/b07H7Ecg0I3OgXDuLdn307rl/J3A9YD6/eYOssqhecL27hK1IPZAsaqh00i/Jljg==}

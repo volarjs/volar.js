@@ -3,16 +3,8 @@ import { startCommonLanguageServer } from '../common/server';
 import { LanguageServerPlugin } from '../types';
 import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
 import { URI } from 'vscode-uri';
-import {
-	FsReadFileRequest,
-	FsReadDirectoryRequest,
-	FsStatRequest,
-	FsCacheRequest,
-	UseReadFileCacheNotification,
-	UseReadDirectoryCacheNotification,
-	UseStatCacheNotification
-} from '../protocol';
-import { FileType, FileStat } from '@volar/language-service';
+import { FsReadFileRequest, FsReadDirectoryRequest, FsStatRequest } from '../protocol';
+import { FileType } from '@volar/language-service';
 
 export * from '../index';
 
@@ -29,7 +21,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 
 	const jobs = new Map<Promise<any>, string>();
 
-	let cache: ReturnType<typeof requestCache> | undefined;
 	let fsProgress: Promise<vscode.WorkDoneProgressServerReporter> | undefined;
 	let totalJobs = 0;
 
@@ -89,16 +80,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 					}
 					return undefined;
 				}
-				if (!cache) {
-					cache = requestCache();
-				}
-				const _cache = await cache;
-				if (_cache.stat.has(uri)) {
-					const res = _cache.stat.get(uri)!;
-					_cache.stat.delete(uri);
-					connection.sendNotification(UseStatCacheNotification.type, uri);
-					return res;
-				}
 				return await connection.sendRequest(FsStatRequest.type, uri);
 			},
 			async readFile(uri) {
@@ -109,16 +90,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 					return await httpSchemaRequestHandler(uri);
 				}
 				return withProgress(async () => {
-					if (!cache) {
-						cache = requestCache();
-					}
-					const _cache = await cache;
-					if (_cache.readFile.has(uri)) {
-						const res = _cache.readFile.get(uri)!;
-						_cache.readFile.delete(uri);
-						connection.sendNotification(UseReadFileCacheNotification.type, uri);
-						return res;
-					}
 					return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
 				}, uri);
 			},
@@ -130,16 +101,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 					return [];
 				}
 				return withProgress(async () => {
-					if (!cache) {
-						cache = requestCache();
-					}
-					const _cache = await cache;
-					if (_cache.readDirectory.has(uri)) {
-						const res = _cache.readDirectory.get(uri)!;
-						_cache.readDirectory.delete(uri);
-						connection.sendNotification(UseReadDirectoryCacheNotification.type, uri);
-						return res;
-					}
 					return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
 				}, uri);
 			},
@@ -148,30 +109,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			return original ?? vscode.CancellationToken.None;
 		},
 	}));
-
-	async function requestCache() {
-
-		const stat = new Map<string, FileStat>();
-		const readDirectory = new Map<string, [string, FileType][]>();
-		const readFile = new Map<string, string>();
-		const cache = await connection.sendRequest(FsCacheRequest.type);
-
-		for (const [uri, fileStat] of cache?.stat ?? []) {
-			stat.set(uri, fileStat);
-		}
-		for (const [uri, entries] of cache?.readDirectory ?? []) {
-			readDirectory.set(uri, entries);
-		}
-		for (const [uri, text] of cache?.readFile ?? []) {
-			readFile.set(uri, text);
-		}
-
-		return {
-			stat,
-			readDirectory,
-			readFile,
-		};
-	}
 
 	async function withProgress<T>(fn: () => Promise<T>, asset: string): Promise<T> {
 		const path = URI.parse(asset).path;
