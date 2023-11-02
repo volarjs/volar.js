@@ -3,8 +3,8 @@ import { startCommonLanguageServer } from '../common/server';
 import { LanguageServerPlugin } from '../types';
 import httpSchemaRequestHandler from '../common/schemaRequestHandlers/http';
 import { URI } from 'vscode-uri';
-import { FsReadFileRequest, FsReadDirectoryRequest } from '../protocol';
-import { FileSystem, FileType } from '@volar/language-service';
+import { FsReadFileRequest, FsReadDirectoryRequest, FsStatRequest } from '../protocol';
+import { FileType } from '@volar/language-service';
 
 export * from '../index';
 
@@ -18,6 +18,7 @@ export function createConnection() {
 }
 
 export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
+
 	startCommonLanguageServer(connection, plugins, () => ({
 		uriToFileName,
 		fileNameToUri,
@@ -29,109 +30,76 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			},
 		},
 		async loadTypeScript(options) {
-			const tsdkUri = options.typescript && 'tsdkUrl' in options.typescript
+			const tsdkUrl = options.typescript && 'tsdkUrl' in options.typescript
 				? options.typescript.tsdkUrl
 				: undefined;
-			if (!tsdkUri) {
+			if (!tsdkUrl) {
 				return;
 			}
 			const _module = globalThis.module;
 			globalThis.module = { exports: {} } as typeof _module;
-			await import(`${tsdkUri}/typescript.js`);
+			await import(`${tsdkUrl}/typescript.js`);
 			const ts = globalThis.module.exports;
 			globalThis.module = _module;
 			return ts as typeof import('typescript/lib/tsserverlibrary');
 		},
 		async loadTypeScriptLocalized(options, locale) {
-			const tsdkUri = options.typescript && 'tsdkUrl' in options.typescript
+			const tsdkUrl = options.typescript && 'tsdkUrl' in options.typescript
 				? options.typescript.tsdkUrl
 				: undefined;
-			if (!tsdkUri) {
+			if (!tsdkUrl) {
 				return;
 			}
 			try {
-				const json = await httpSchemaRequestHandler(`${tsdkUri}/${locale}/diagnosticMessages.generated.json`);
+				const json = await httpSchemaRequestHandler(`${tsdkUrl}/${locale}/diagnosticMessages.generated.json`);
 				if (json) {
 					return JSON.parse(json);
 				}
 			}
 			catch { }
 		},
-		fs: createFs(connection),
+		fs: {
+			async stat(uri) {
+				if (uri.startsWith('__invalid__:')) {
+					return;
+				}
+				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
+					const text = await this.readFile(uri);
+					if (text !== undefined) {
+						return {
+							type: FileType.File,
+							size: text.length,
+							ctime: -1,
+							mtime: -1,
+						};
+					}
+					return undefined;
+				}
+				return await connection.sendRequest(FsStatRequest.type, uri);
+			},
+			async readFile(uri) {
+				if (uri.startsWith('__invalid__:')) {
+					return;
+				}
+				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
+					return await httpSchemaRequestHandler(uri);
+				}
+				return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
+			},
+			async readDirectory(uri) {
+				if (uri.startsWith('__invalid__:')) {
+					return [];
+				}
+				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
+					return [];
+				}
+				return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
+			},
+		},
 		getCancellationToken(original) {
 			return original ?? vscode.CancellationToken.None;
 		},
 	}));
-}
-
-/**
- * To avoid hitting the API hourly limit, we keep requests as low as possible.
- */
-function createFs(connection: vscode.Connection): FileSystem {
-
-	const readDirectoryResults = new Map<string, Promise<[string, FileType][]>>();
-
-	return {
-		async stat(uri) {
-			if (uri.startsWith('__invalid__:')) {
-				return;
-			}
-			if (uri.startsWith('http://') || uri.startsWith('https://')) {
-				const text = await this.readFile(uri); // TODO: perf
-				if (text !== undefined) {
-					return {
-						type: FileType.File,
-						size: text.length,
-						ctime: -1,
-						mtime: -1,
-					};
-				}
-				return undefined;
-			}
-			const dirUri = uri.substring(0, uri.lastIndexOf('/'));
-			const baseName = uri.substring(uri.lastIndexOf('/') + 1);
-			const entries = await this.readDirectory(dirUri);
-			const matches = entries.filter(entry => entry[0] === baseName);
-			if (matches.length) {
-				return {
-					type: matches.some(entry => entry[1] === FileType.File) ? FileType.File : matches[0][1],
-					size: -1,
-					ctime: -1,
-					mtime: -1,
-				};
-			}
-		},
-		async readFile(uri) {
-			if (uri.startsWith('__invalid__:')) {
-				return;
-			}
-			if (uri.startsWith('http://') || uri.startsWith('https://')) {
-				return await httpSchemaRequestHandler(uri);
-			}
-			const dirUri = uri.substring(0, uri.lastIndexOf('/'));
-			const baseName = uri.substring(uri.lastIndexOf('/') + 1);
-			const entries = await this.readDirectory(dirUri);
-			const file = entries.filter(entry => entry[0] === baseName && entry[1] === FileType.File);
-			if (file) {
-				const text = await connection.sendRequest(FsReadFileRequest.type, uri);
-				if (text !== undefined && text !== null) {
-					return text;
-				}
-			}
-		},
-		async readDirectory(uri) {
-			if (uri.startsWith('__invalid__:')) {
-				return [];
-			}
-			if (uri.startsWith('http://') || uri.startsWith('https://')) {
-				return [];
-			}
-			if (!readDirectoryResults.has(uri)) {
-				readDirectoryResults.set(uri, connection.sendRequest(FsReadDirectoryRequest.type, uri));
-			}
-			return await readDirectoryResults.get(uri)!;
-		},
-	};
 }
 
 function uriToFileName(uri: string) {
