@@ -114,7 +114,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 		const path = URI.parse(asset).path;
 		if (!fsProgress) {
 			fsProgress = connection.window.createWorkDoneProgress();
-			fsProgress.then(progress => progress.begin(''));
+			fsProgress.then(progress => progress.begin('', 0));
 		}
 		const _fsProgress = await fsProgress;
 		totalJobs++;
@@ -123,7 +123,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			job = fn();
 			jobs.set(job, path);
 			for (const [_, path] of jobs) {
-				_fsProgress.report((totalJobs - jobs.size) / totalJobs * 100, `Loading ${totalJobs - jobs.size} of ${totalJobs} files: ${path}`);
+				_fsProgress.report(0, `Loading ${totalJobs - jobs.size} of ${totalJobs} files: ${path}`);
 				break;
 			}
 			return await job;
