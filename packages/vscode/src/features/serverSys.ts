@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import type { BaseLanguageClient, State } from 'vscode-languageclient';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '@volar/language-server/protocol';
 
-export async function activate(context: vscode.ExtensionContext, client: BaseLanguageClient) {
+export async function activate(client: BaseLanguageClient) {
 
 	const subscriptions: vscode.Disposable[] = [];
 	const textDecoder = new TextDecoder();
@@ -39,9 +39,9 @@ export async function activate(context: vscode.ExtensionContext, client: BaseLan
 			try {
 				job = fn();
 				jobs.set(job, asset);
-				if (!startProgress && jobs.size >= 10) {
+				if (!startProgress && jobs.size >= 2) {
 					startProgress = true;
-					vscode.window.withProgress({ location: vscode.ProgressLocation.Notification }, async progress => {
+					vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async progress => {
 						progress.report({
 							message: `Loading ${totalJobs} resources: ${asset}`
 						});
@@ -85,51 +85,19 @@ export async function activate(context: vscode.ExtensionContext, client: BaseLan
 			const entries = await readDirectory(dirUri);
 			const uri2 = client.protocol2CodeConverter.asUri(uri);
 
-			let stat: vscode.FileStat | undefined;
-
 			if (!entries.some(entry => entry[0] === baseName && entry[1] === vscode.FileType.File)) {
-				stat = undefined;
-			}
-			else {
-				stat = await _stat(uri2);
+				return;
 			}
 
-			if (context.workspaceState.get<number>(uri + '?mtime') !== stat?.mtime) {
-				if (stat) {
-					const data = await _readFile(uri2);
-					context.workspaceState.update(uri + '?mtime', stat.mtime);
-					context.workspaceState.update(uri, data);
-				}
-				else {
-					context.workspaceState.update(uri + '?mtime', undefined);
-					context.workspaceState.update(uri, undefined);
-				}
-			}
-
-			return context.workspaceState.get<string>(uri);
+			return await _readFile(uri2);
 		}
 
 		async function readDirectory(uri: string): Promise<[string, vscode.FileType][]> {
 
 			const uri2 = client.protocol2CodeConverter.asUri(uri);
-			const stat = await _stat(uri2);
 
-			if (context.workspaceState.get<number>(uri + '?mtime') !== stat?.mtime) {
-				if (stat) {
-					const data = stat.type === vscode.FileType.Directory
-						? (await _readDirectory(uri2))
-							.filter(([name]) => !name.startsWith('.'))
-						: [];
-					context.workspaceState.update(uri + '?mtime', stat.mtime);
-					context.workspaceState.update(uri + '?readdir', data);
-				}
-				else {
-					context.workspaceState.update(uri + '?mtime', undefined);
-					context.workspaceState.update(uri + '?readdir', undefined);
-				}
-			}
-
-			return await context.workspaceState.get<[string, vscode.FileType][]>(uri + '?readdir') ?? [];
+			return await (await _readDirectory(uri2))
+				.filter(([name]) => !name.startsWith('.'));
 		}
 
 		async function _readFile(uri: vscode.Uri) {
