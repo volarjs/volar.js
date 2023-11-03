@@ -1,8 +1,12 @@
 dist
 node_modules
-*.js
-*.d.ts
-*.map
 *.tsbuildinfo
 extensions/labs/lib
 *.vsix
+
+packages/*/*.d.ts
+packages/*/*.js
+packages/*/*.map
+packages/*/lib/**/*.d.ts
+packages/*/lib/**/*.js
+packages/*/lib/**/*.map
