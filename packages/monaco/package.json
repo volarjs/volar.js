@@ -1,6 +1,6 @@
 {
 	"name": "@volar/monaco",
-	"version": "1.10.10",
+	"version": "1.11.0",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
@@ -12,7 +12,7 @@
 		"directory": "packages/monaco"
 	},
 	"dependencies": {
-		"@volar/language-service": "1.10.10",
+		"@volar/language-service": "1.11.0",
 		"vscode-uri": "^3.0.8"
 	},
 	"devDependencies": {
