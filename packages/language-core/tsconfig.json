@@ -1,10 +1,6 @@
 {
 	"extends": "../../tsconfig.base.json",
-	"compilerOptions": {
-		"outDir": "out",
-		"rootDir": "src",
-	},
-	"include": [ "src" ],
+	"include": [ "**/*" ],
 	"references": [
 		{ "path": "../source-map/tsconfig.json" },
 	],

@@ -1,5 +1,8 @@
-out
 dist
 node_modules
+*.js
+*.d.ts
+*.map
 *.tsbuildinfo
-packages/labs/lib
+extensions/labs/lib
+*.vsix

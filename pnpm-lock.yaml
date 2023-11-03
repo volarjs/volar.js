@@ -25,6 +25,36 @@ importers:
         specifier: latest
         version: 0.34.6
 
+  extensions/labs:
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 20.8.10
+      '@types/vscode':
+        specifier: ^1.82.0
+        version: 1.83.0
+      '@volar/language-server':
+        specifier: 1.10.10
+        version: link:../../packages/language-server
+      '@volar/source-map':
+        specifier: 1.10.10
+        version: link:../../packages/source-map
+      '@volar/vscode':
+        specifier: 1.10.10
+        version: link:../../packages/vscode
+      esbuild:
+        specifier: latest
+        version: 0.19.5
+      esbuild-plugin-copy:
+        specifier: latest
+        version: 2.1.1(esbuild@0.19.5)
+      esbuild-visualizer:
+        specifier: latest
+        version: 0.4.1
+      vsce:
+        specifier: latest
+        version: 2.15.0
+
   packages/cdn:
     dependencies:
       '@volar/language-service':
@@ -52,39 +82,6 @@ importers:
       '@types/node':
         specifier: latest
         version: 20.8.10
-
-  packages/labs:
-    devDependencies:
-      '@types/node':
-        specifier: latest
-        version: 20.8.10
-      '@types/vscode':
-        specifier: ^1.82.0
-        version: 1.83.0
-      '@volar/language-server':
-        specifier: 1.10.10
-        version: link:../language-server
-      '@volar/source-map':
-        specifier: 1.10.10
-        version: link:../source-map
-      '@volar/vscode':
-        specifier: 1.10.10
-        version: link:../vscode
-      esbuild:
-        specifier: latest
-        version: 0.19.5
-      esbuild-plugin-copy:
-        specifier: latest
-        version: 2.1.1(esbuild@0.19.5)
-      esbuild-visualizer:
-        specifier: latest
-        version: 0.4.1
-      vsce:
-        specifier: latest
-        version: 2.15.0
-      vscode-languageclient:
-        specifier: ^9.0.1
-        version: 9.0.1
 
   packages/language-core:
     dependencies:
@@ -1646,6 +1643,7 @@ packages:
     resolution: {integrity: sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==}
     dependencies:
       balanced-match: 1.0.2
+    dev: false
 
   /braces@3.0.2:
     resolution: {integrity: sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A==}
@@ -3811,6 +3809,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
+    dev: false
 
   /minimatch@9.0.3:
     resolution: {integrity: sha512-RHiac9mvaRw0x3AYRgDC1CxAP7HTcNrrECeA8YYJeWnpo+2Q5CegtZjaotWTWxDG3UeGA1coE05iH1mPjT/2mg==}
@@ -5916,6 +5915,7 @@ packages:
       minimatch: 5.1.6
       semver: 7.5.4
       vscode-languageserver-protocol: 3.17.5
+    dev: false
 
   /vscode-languageserver-protocol@3.17.5:
     resolution: {integrity: sha512-mb1bvRJN8SVznADSGWM9u/b07H7Ecg0I3OgXDuLdn307rl/J3A9YD6/eYOssqhecL27hK1IPZAsaqh00i/Jljg==}

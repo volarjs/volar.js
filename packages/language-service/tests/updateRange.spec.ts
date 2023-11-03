@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { updateRange } from '../out/languageFeatures/validation';
+import { updateRange } from '../lib/languageFeatures/validation';
 
 describe(`Test updateRange()`, () => {
 

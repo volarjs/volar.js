@@ -15,5 +15,11 @@
 	},
 	"[jsonc]": {
 		"editor.defaultFormatter": "vscode.json-language-features"
+	},
+	"files.exclude": {
+		"packages/*/*.d.ts": true,
+		"packages/*/*.js": true,
+		"packages/*/lib/**/*.d.ts": true,
+		"packages/*/lib/**/*.js": true
 	}
 }

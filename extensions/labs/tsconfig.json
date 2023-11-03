@@ -1,0 +1,11 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+	},
+	"include": [ "src" ],
+	"references": [
+		{ "path": "../../packages/language-server/tsconfig.json" },
+		{ "path": "../../packages/vscode/tsconfig.json" },
+	],
+}
