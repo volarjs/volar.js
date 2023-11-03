@@ -1,11 +1,10 @@
 {
 	"name": "@volar/language-service",
 	"version": "1.10.10",
-	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
-		"out/**/*.js",
-		"out/**/*.d.ts"
+		"**/*.js",
+		"**/*.d.ts"
 	],
 	"repository": {
 		"type": "git",

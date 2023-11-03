@@ -1,13 +1,10 @@
 {
 	"name": "@volar/monaco",
 	"version": "1.10.10",
-	"main": "out/index.js",
 	"license": "MIT",
 	"files": [
-		"*.js",
-		"*.d.ts",
-		"out/**/*.js",
-		"out/**/*.d.ts"
+		"**/*.js",
+		"**/*.d.ts"
 	],
 	"repository": {
 		"type": "git",
