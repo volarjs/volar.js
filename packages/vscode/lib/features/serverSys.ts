@@ -7,6 +7,7 @@ export async function activate(client: BaseLanguageClient) {
 	const subscriptions: vscode.Disposable[] = [];
 	const textDecoder = new TextDecoder();
 	const jobs = new Map<Promise<any>, string>();
+	const progressAssets = new Set<string>();
 
 	let startProgress = false;
 	let totalJobs = 0;
@@ -33,6 +34,12 @@ export async function activate(client: BaseLanguageClient) {
 		}));
 
 		async function withProgress<T>(fn: () => Promise<T>, asset: string): Promise<T> {
+
+			if (progressAssets.has(asset)) {
+				return await fn();
+			}
+			progressAssets.add(asset);
+
 			asset = vscode.Uri.parse(asset).path;
 			totalJobs++;
 			let job!: Promise<T>;
