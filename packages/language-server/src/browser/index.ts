@@ -19,11 +19,6 @@ export function createConnection() {
 
 export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
 
-	const jobs = new Map<Promise<any>, string>();
-
-	let fsProgress: Promise<vscode.WorkDoneProgressServerReporter> | undefined;
-	let totalJobs = 0;
-
 	startCommonLanguageServer(connection, plugins, () => ({
 		uriToFileName,
 		fileNameToUri,
@@ -89,9 +84,7 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
 					return await httpSchemaRequestHandler(uri);
 				}
-				return withProgress(async () => {
-					return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
-				}, uri);
+				return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
 			},
 			async readDirectory(uri) {
 				if (uri.startsWith('__invalid__:')) {
@@ -100,47 +93,13 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
 					return [];
 				}
-				return withProgress(async () => {
-					return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
-				}, uri);
+				return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
 			},
 		},
 		getCancellationToken(original) {
 			return original ?? vscode.CancellationToken.None;
 		},
 	}));
-
-	async function withProgress<T>(fn: () => Promise<T>, asset: string): Promise<T> {
-		const path = URI.parse(asset).path;
-		if (!fsProgress) {
-			fsProgress = connection.window.createWorkDoneProgress();
-			fsProgress.then(progress => progress.begin('', 0));
-		}
-		const _fsProgress = await fsProgress;
-		totalJobs++;
-		let job!: Promise<T>;
-		try {
-			job = fn();
-			jobs.set(job, path);
-			for (const [_, path] of jobs) {
-				_fsProgress.report(0, `Loading ${totalJobs - jobs.size} of ${totalJobs} files: ${path}`);
-				break;
-			}
-			return await job;
-		} finally {
-			jobs.delete(job);
-			if (jobs.size === 0) {
-				_fsProgress.done();
-				fsProgress = undefined;
-			}
-			else {
-				for (const [_, path] of jobs) {
-					_fsProgress.report((totalJobs - jobs.size) / totalJobs * 100, `Loading ${totalJobs - jobs.size} of ${totalJobs} files: ${path}`);
-					break;
-				}
-			}
-		}
-	}
 }
 
 function uriToFileName(uri: string) {
