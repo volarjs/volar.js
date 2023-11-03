@@ -1,1 +1,1 @@
-export * from 'vscode-languageclient/browser';
+export * from 'vscode-languageclient/node';
