@@ -19,7 +19,9 @@
 	"files.exclude": {
 		"packages/*/*.d.ts": true,
 		"packages/*/*.js": true,
+		"packages/*/*.map": true,
 		"packages/*/lib/**/*.d.ts": true,
-		"packages/*/lib/**/*.js": true
+		"packages/*/lib/**/*.js": true,
+		"packages/*/lib/**/*.map": true
 	}
 }
