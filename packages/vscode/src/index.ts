@@ -8,6 +8,8 @@ export { activate as activateTsConfigStatusItem } from './features/tsconfig';
 export { activate as activateServerSys } from './features/serverSys';
 export { activate as activateTsVersionStatusItem, getTsdk } from './features/tsVersion';
 
+export * from 'vscode-languageclient';
+
 export function takeOverModeActive(context: vscode.ExtensionContext) {
 	if (vscode.workspace.getConfiguration('volar').get<string>('takeOverMode.extension') === context.extension.id) {
 		return !vscode.extensions.getExtension('vscode.typescript-language-features');

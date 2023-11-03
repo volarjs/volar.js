@@ -189,17 +189,17 @@ export async function createProject(context: ProjectContext) {
 			}
 		}
 
-		for (const change of changes) {
+		await Promise.all(changes.map(async change => {
 			if (askedFiles.uriGet(change.uri) && globalSnapshots.get(fs)!.uriGet(change.uri)) {
 				if (change.type === vscode.FileChangeType.Changed) {
-					updateRootScriptSnapshot(change.uri);
+					await updateRootScriptSnapshot(change.uri);
 				}
 				else if (change.type === vscode.FileChangeType.Deleted) {
 					globalSnapshots.get(fs)!.uriSet(change.uri, undefined);
 				}
 				projectVersion++;
 			}
-		}
+		}));
 
 		if (oldProjectVersion !== projectVersion) {
 			token = context.server.runtimeEnv.getCancellationToken();
