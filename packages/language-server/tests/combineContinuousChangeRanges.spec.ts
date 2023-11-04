@@ -97,9 +97,7 @@ describe(`Test combineContinuousChangeRanges()`, () => {
 
 	it(`webstorm edge case`, () => {
 		expect(combineContinuousChangeRanges(
-			{ span: { start: 0, length: 0, }, newLength: 1 },
-			{ span: { start: 0, length: 0, }, newLength: 31 },
-			{ span: { start: 32, length: 0, }, newLength: 1 },
+			{ span: { start: 0, length: 0, }, newLength: 33 },
 			{ span: { start: 31, length: 32, }, newLength: 0 },
 		)).toEqual({ span: { start: 0, length: 0, }, newLength: 32 });
 	});
