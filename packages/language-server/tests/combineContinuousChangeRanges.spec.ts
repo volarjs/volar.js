@@ -94,4 +94,13 @@ describe(`Test combineContinuousChangeRanges()`, () => {
 			{ span: { start: 0, length: 1, }, newLength: 1 },
 		)).toEqual({ span: { start: 0, length: 2, }, newLength: 3 });
 	});
+
+	it(`webstorm edge case`, () => {
+		expect(combineContinuousChangeRanges(
+			{ span: { start: 0, length: 0, }, newLength: 1 },
+			{ span: { start: 0, length: 0, }, newLength: 31 },
+			{ span: { start: 32, length: 0, }, newLength: 1 },
+			{ span: { start: 31, length: 32, }, newLength: 0 },
+		)).toEqual({ span: { start: 0, length: 0, }, newLength: 32 });
+	});
 });
