@@ -163,13 +163,13 @@ export function combineContinuousChangeRanges(...changeRanges: ts.TextChangeRang
 	return changeRange;
 }
 
-// https://tsplay.dev/w6Paym - @browsnet
+// https://tsplay.dev/mMldVN - @browsnet
 function _combineContinuousChangeRanges(a: ts.TextChangeRange, b: ts.TextChangeRange): ts.TextChangeRange {
 	const aStart = a.span.start;
 	const aEnd = a.span.start + a.span.length;
 	const aDiff = a.newLength - a.span.length;
 	const changeBegin = aStart + Math.min(a.span.length, a.newLength);
-	const rollback = (start: number) => start > changeBegin ? start - aDiff : start;
+	const rollback = (start: number) => start > changeBegin ? Math.max(0, start - aDiff) : start;
 	const bStart = rollback(b.span.start);
 	const bEnd = rollback(b.span.start + b.span.length);
 	const bDiff = b.newLength - b.span.length;
