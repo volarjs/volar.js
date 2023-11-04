@@ -94,4 +94,11 @@ describe(`Test combineContinuousChangeRanges()`, () => {
 			{ span: { start: 0, length: 1, }, newLength: 1 },
 		)).toEqual({ span: { start: 0, length: 2, }, newLength: 3 });
 	});
+
+	it(`12345 -> aa12345 -> a12345`, () => {
+		expect(combineContinuousChangeRanges(
+			{ span: { start: 0, length: 0, }, newLength: 2 },
+			{ span: { start: 1, length: 1, }, newLength: 0 },
+		)).toEqual({ span: { start: 0, length: 0, }, newLength: 1 });
+	});
 });
