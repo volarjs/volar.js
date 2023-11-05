@@ -8,7 +8,7 @@ import { isFileInDir } from './utils/isFileInDir';
 import * as path from 'path-browserify';
 
 import type * as _ from 'vscode-languageserver-textdocument';
-import { createProject, Project } from './project';
+import { createTypeScriptProject } from './project';
 import { getInferredCompilerOptions } from './utils/inferredCompilerOptions';
 import { createUriMap } from './utils/uriMap';
 import { FileType } from '@volar/language-service';
@@ -31,8 +31,8 @@ export interface Workspaces extends ReturnType<typeof createWorkspaces> { }
 export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 
 	const { fileNameToUri, uriToFileName, fs } = context.server.runtimeEnv;
-	const configProjects = createUriMap<Project>(fileNameToUri);
-	const inferredProjects = createUriMap<Project>(fileNameToUri);
+	const configProjects = createUriMap<ReturnType<typeof createTypeScriptProject>>(fileNameToUri);
+	const inferredProjects = createUriMap<ReturnType<typeof createTypeScriptProject>>(fileNameToUri);
 	const rootTsConfigs = new Set<string>();
 	const searchedDirs = new Set<string>();
 
@@ -75,7 +75,7 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 	return {
 		configProjects,
 		inferredProjects,
-		getProject: getProjectAndTsConfig,
+		getProject,
 		reloadProjects: reloadProject,
 		add: (rootUri: URI) => {
 			if (!rootUris.some(uri => uri.toString() === rootUri.toString())) {
@@ -175,8 +175,7 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 
 	async function sendDocumentDiagnostics(uri: string, version: number, cancel: vscode.CancellationToken) {
 
-		const project = (await getProjectAndTsConfig(uri))?.project;
-		if (!project) return;
+		const project = await getProject(uri);
 
 		// fix https://github.com/vuejs/language-tools/issues/2627
 		if (context.workspaces.initOptions.serverMode === ServerMode.Syntactic) {
@@ -194,16 +193,12 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 		context.server.connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
 	}
 
-	async function getProjectAndTsConfig(uri: string) {
+	async function getProject(uri: string) {
 
 		if (context.workspaces.initOptions.serverMode !== ServerMode.Syntactic) {
-			const tsconfig = await findMatchConfigs(URI.parse(uri));
+			const tsconfig = await findMatchTSConfig(URI.parse(uri));
 			if (tsconfig) {
-				const project = await getProjectByCreate(tsconfig);
-				return {
-					tsconfig: tsconfig,
-					project,
-				};
+				return await getOrCreateProject(tsconfig);
 			}
 		}
 
@@ -212,7 +207,7 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 		if (!inferredProjects.uriHas(workspaceUri.toString())) {
 			inferredProjects.uriSet(workspaceUri.toString(), (async () => {
 				const inferOptions = await getInferredCompilerOptions(context.server.configurationHost);
-				return createProject({
+				return createTypeScriptProject({
 					...context,
 					project: {
 						workspaceUri,
@@ -227,10 +222,7 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 
 		project.tryAddFile(uriToFileName(uri));
 
-		return {
-			tsconfig: undefined,
-			project,
-		};
+		return project;
 	}
 
 	function getWorkspaceUri(uri: URI) {
@@ -239,7 +231,7 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 
 		let _rootUris = [...rootUris]
 			.filter(rootUri => isFileInDir(fileName, uriToFileName(rootUri.toString())))
-			.sort((a, b) => sortTsConfigs(fileName, uriToFileName(a.toString()), uriToFileName(b.toString())));
+			.sort((a, b) => sortTSConfigs(fileName, uriToFileName(a.toString()), uriToFileName(b.toString())));
 
 		if (!_rootUris.length) {
 			_rootUris = [...rootUris];
@@ -252,7 +244,7 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 		return _rootUris[0];
 	}
 
-	async function findMatchConfigs(uri: URI) {
+	async function findMatchTSConfig(uri: URI) {
 
 		const filePath = uriToFileName(uri.toString());
 		let dir = path.dirname(filePath);
@@ -285,20 +277,20 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 				}
 			}
 
-			matches = matches.sort((a, b) => sortTsConfigs(uriToFileName(uri.toString()), a, b));
+			matches = matches.sort((a, b) => sortTSConfigs(uriToFileName(uri.toString()), a, b));
 
 			if (matches.length) {
 				await getParsedCommandLine(matches[0]);
 			}
 		}
 		function findIndirectReferenceTsconfig() {
-			return findTsconfig(async tsconfig => {
+			return findTSConfig(async tsconfig => {
 				const project = await configProjects.pathGet(tsconfig);
 				return project?.askedFiles.uriHas(uri.toString()) ?? false;
 			});
 		}
 		function findDirectIncludeTsconfig() {
-			return findTsconfig(async tsconfig => {
+			return findTSConfig(async tsconfig => {
 				const map = createUriMap<boolean>(fileNameToUri);
 				const parsedCommandLine = await getParsedCommandLine(tsconfig);
 				for (const fileName of parsedCommandLine?.fileNames ?? []) {
@@ -307,11 +299,11 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 				return map.uriHas(uri.toString());
 			});
 		}
-		async function findTsconfig(match: (tsconfig: string) => Promise<boolean> | boolean) {
+		async function findTSConfig(match: (tsconfig: string) => Promise<boolean> | boolean) {
 
 			const checked = new Set<string>();
 
-			for (const rootTsConfig of [...rootTsConfigs].sort((a, b) => sortTsConfigs(uriToFileName(uri.toString()), a, b))) {
+			for (const rootTsConfig of [...rootTsConfigs].sort((a, b) => sortTSConfigs(uriToFileName(uri.toString()), a, b))) {
 				const project = await configProjects.pathGet(rootTsConfig);
 				if (project) {
 
@@ -328,7 +320,6 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 							if (checked.has(tsconfig))
 								continue;
 							checked.add(tsconfig);
-
 
 							if (await match(tsconfig)) {
 								return tsconfig;
@@ -381,17 +372,17 @@ export function createWorkspaces(context: WorkspacesContext, rootUris: URI[]) {
 			}
 		}
 		async function getParsedCommandLine(tsConfig: string) {
-			const project = await getProjectByCreate(tsConfig);
+			const project = await getOrCreateProject(tsConfig);
 			return project?.getParsedCommandLine();
 		}
 	}
 
-	function getProjectByCreate(_tsConfig: string) {
+	function getOrCreateProject(_tsConfig: string) {
 		const tsConfig = _tsConfig.replace(/\\/g, '/');
 		let project = configProjects.pathGet(tsConfig);
 		if (!project) {
 			const rootUri = URI.parse(fileNameToUri(path.dirname(tsConfig)));
-			project = createProject({
+			project = createTypeScriptProject({
 				...context,
 				project: {
 					workspaceUri: getWorkspaceUri(rootUri),
@@ -409,7 +400,7 @@ export function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function sortTsConfigs(file: string, a: string, b: string) {
+export function sortTSConfigs(file: string, a: string, b: string) {
 
 	const inA = isFileInDir(file, path.dirname(a));
 	const inB = isFileInDir(file, path.dirname(b));

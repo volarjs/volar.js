@@ -1,10 +1,10 @@
-import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, TypeScriptLanguageHost, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
+import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, ProjectHost, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { asPosix, fileNameToUri, fs, getConfiguration, uriToFileName } from './utils';
 import { URI } from 'vscode-uri';
 
-export function createLinter(config: Config, host: TypeScriptLanguageHost) {
+export function createLinter(config: Config, projectHost: ProjectHost) {
 
 	let settings = {} as any;
 
@@ -14,14 +14,14 @@ export function createLinter(config: Config, host: TypeScriptLanguageHost) {
 		{
 			uriToFileName,
 			fileNameToUri,
-			workspaceUri: URI.parse(fileNameToUri(host.workspacePath)),
-			rootUri: URI.parse(fileNameToUri(host.rootPath)),
+			workspaceUri: URI.parse(fileNameToUri(projectHost.workspacePath)),
+			rootUri: URI.parse(fileNameToUri(projectHost.rootPath)),
 			getConfiguration: section => getConfiguration(settings, section),
 			fs,
 			console,
 		},
 		config,
-		host,
+		projectHost,
 	);
 
 	return {

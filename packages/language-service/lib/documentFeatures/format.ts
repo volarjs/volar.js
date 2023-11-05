@@ -282,8 +282,8 @@ export function register(context: ServiceContext) {
 			const [_, map] = maps.get(_sourceFileName)!;
 			const version = fakeVersion++;
 			return new SourceMapWithDocuments(
-				TextDocument.create(context.env.fileNameToUri(_sourceFileName), context.host.getLanguageId?.(_sourceFileName) ?? resolveCommonLanguageId(context.env.fileNameToUri(_sourceFileName)), version, _sourceSnapshot.getText(0, _sourceSnapshot.getLength())),
-				TextDocument.create(context.env.fileNameToUri(file.fileName), context.host.getLanguageId?.(file.fileName) ?? resolveCommonLanguageId(context.env.fileNameToUri(file.fileName)), version, file.snapshot.getText(0, file.snapshot.getLength())),
+				TextDocument.create(context.env.fileNameToUri(_sourceFileName), context.project.host.getLanguageId?.(_sourceFileName) ?? resolveCommonLanguageId(context.env.fileNameToUri(_sourceFileName)), version, _sourceSnapshot.getText(0, _sourceSnapshot.getLength())),
+				TextDocument.create(context.env.fileNameToUri(file.fileName), context.project.host.getLanguageId?.(file.fileName) ?? resolveCommonLanguageId(context.env.fileNameToUri(file.fileName)), version, file.snapshot.getText(0, file.snapshot.getLength())),
 				map,
 			);
 		}

@@ -1,16 +1,14 @@
 import { createVirtualFiles } from './virtualFiles';
-import { Language, TypeScriptLanguageHost } from './types';
+import { Language, ProjectHost } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
-export interface LanguageContext {
-	rawHost: TypeScriptLanguageHost;
-	host: TypeScriptLanguageHost;
+export function createProxyHostAndVirtualFiles<P extends ProjectHost = ProjectHost>(projectHost: P, languages: Language<any, P>[]): {
+	rawHost: P;
+	host: P;
 	virtualFiles: ReturnType<typeof createVirtualFiles>;
-}
+} {
 
-export function createLanguageContext(rawHost: TypeScriptLanguageHost, languages: Language<any>[]): LanguageContext {
-
-	let host = rawHost;
+	let host = projectHost;
 	let lastRootFiles = new Map<string, ts.IScriptSnapshot | undefined>();
 	let lastProjectVersion: number | string | undefined;
 
@@ -36,7 +34,7 @@ export function createLanguageContext(rawHost: TypeScriptLanguageHost, languages
 	}
 
 	return {
-		rawHost,
+		rawHost: projectHost,
 		host,
 		virtualFiles: new Proxy(virtualFiles, {
 			get: (target, property) => {

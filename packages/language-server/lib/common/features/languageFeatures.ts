@@ -359,7 +359,7 @@ export function register(
 		});
 	}
 	async function getProject(uri: string) {
-		return (await workspaces.getProject(uri))?.project;
+		return await workspaces.getProject(uri);
 	}
 	function fixTextEdit(item: vscode.CompletionItem) {
 		const insertReplaceSupport = initParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;

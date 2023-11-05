@@ -1,4 +1,4 @@
-import { VirtualFiles, VirtualFile, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, forEachEmbeddedFile, TypeScriptLanguageHost } from '@volar/language-core';
+import { VirtualFiles, VirtualFile, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, forEachEmbeddedFile, ProjectHost } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -168,7 +168,7 @@ export class MirrorMapWithDocument extends SourceMapWithDocuments<[MirrorBehavio
 
 export function createDocumentsAndSourceMaps(
 	env: ServiceEnvironment,
-	host: TypeScriptLanguageHost,
+	host: ProjectHost,
 	mapper: VirtualFiles,
 ) {
 
