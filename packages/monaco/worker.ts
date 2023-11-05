@@ -1,6 +1,6 @@
 import {
 	createLanguageService as _createLanguageService,
-	type TypeScriptLanguageHost,
+	type TypeScriptProjectHost,
 	type Config,
 	type ServiceEnvironment,
 	type SharedModules,
@@ -20,18 +20,18 @@ export function createServiceEnvironment(): ServiceEnvironment {
 	};
 }
 
-export function createLanguageHost(
+export function createProjectHost(
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
 	env: ServiceEnvironment,
 	rootPath: string,
 	compilerOptions: ts.CompilerOptions = {}
-): TypeScriptLanguageHost {
+): TypeScriptProjectHost {
 
 	let projectVersion = 0;
 
 	const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 	const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
-	const host: TypeScriptLanguageHost = {
+	const host: TypeScriptProjectHost = {
 		workspacePath: rootPath,
 		rootPath: rootPath,
 		getProjectVersion() {
@@ -81,7 +81,7 @@ export function createLanguageService<T = {}>(
 	modules: SharedModules,
 	env: ServiceEnvironment,
 	config: Config,
-	host: TypeScriptLanguageHost,
+	host: TypeScriptProjectHost,
 	extraApis: T = {} as any,
 ): LanguageService & T {
 

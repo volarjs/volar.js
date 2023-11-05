@@ -1,4 +1,4 @@
-import { FileSystem, LanguageService, ServiceEnvironment, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
+import { FileSystem, LanguageService, ServiceEnvironment, ProjectHost, createLanguageService } from '@volar/language-service';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
@@ -17,22 +17,10 @@ export interface ProjectContext extends WorkspacesContext {
 	};
 }
 
-export type Project = ReturnType<typeof createProject>;
-
 const globalSnapshots = new WeakMap<FileSystem, ReturnType<typeof createUriMap<ts.IScriptSnapshot | undefined>>>();
 
-export async function createProject(context: ProjectContext) {
+export async function createTypeScriptProject(context: ProjectContext) {
 
-	let projectVersion = 0;
-	let token = context.server.runtimeEnv.getCancellationToken();
-	let languageService: LanguageService | undefined;
-
-	const tsToken: ts.CancellationToken = {
-		isCancellationRequested() {
-			return token.isCancellationRequested;
-		},
-		throwIfCancellationRequested() { },
-	};
 	const { uriToFileName, fileNameToUri, fs } = context.server.runtimeEnv;
 	const env: ServiceEnvironment = {
 		uriToFileName,
@@ -48,16 +36,76 @@ export async function createProject(context: ProjectContext) {
 		onDidChangeWatchedFiles: context.server.onDidChangeWatchedFiles,
 	};
 
+	let existingOptions: ts.CompilerOptions | undefined;
+
+	for (const plugin of context.workspaces.plugins) {
+		if (plugin.resolveExistingOptions) {
+			existingOptions = plugin.resolveExistingOptions(existingOptions);
+		}
+	}
+
+	let parsedCommandLine: ts.ParsedCommandLine;
+
+	const project = await createProject(
+		async () => {
+			parsedCommandLine = await createParsedCommandLine(
+				context.workspaces.ts,
+				env,
+				uriToFileName(context.project.rootUri.toString()),
+				context.project.tsConfig,
+				context.workspaces.plugins,
+				existingOptions,
+			);
+			return parsedCommandLine.fileNames;
+		},
+		env,
+		context,
+		host => {
+			return {
+				...host,
+				getCompilationSettings: () => parsedCommandLine.options,
+				getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
+				getProjectReferences: () => parsedCommandLine.projectReferences,
+			};
+		}
+	);
+
+	return {
+		...project,
+		getParsedCommandLine: () => parsedCommandLine,
+	};
+}
+
+async function createProject(
+	getRootFiles: () => Promise<string[]>,
+	env: ServiceEnvironment,
+	context: ProjectContext,
+	resolveProjectHost: (host: ProjectHost) => ProjectHost
+) {
+
+	let rootFiles = await getRootFiles();
+	let projectVersion = 0;
+	let token = context.server.runtimeEnv.getCancellationToken();
+	let languageService: LanguageService | undefined;
+
+	const tsToken: ts.CancellationToken = {
+		isCancellationRequested() {
+			return token.isCancellationRequested;
+		},
+		throwIfCancellationRequested() { },
+	};
+	const { uriToFileName, fileNameToUri, fs } = context.server.runtimeEnv;
+
 	if (!globalSnapshots.has(fs)) {
 		globalSnapshots.set(fs, createUriMap(fileNameToUri));
 	}
 
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
-	const languageHost: TypeScriptLanguageHost = {
+	const projectHost = resolveProjectHost({
 		workspacePath: uriToFileName(context.project.workspaceUri.toString()),
 		rootPath: uriToFileName(context.project.rootUri.toString()),
 		getProjectVersion: () => projectVersion.toString(),
-		getScriptFileNames: () => parsedCommandLine.fileNames,
+		getScriptFileNames: () => rootFiles,
 		getScriptSnapshot: (fileName) => {
 			askedFiles.pathSet(fileName, true);
 			const doc = context.workspaces.documents.data.pathGet(fileName);
@@ -71,10 +119,7 @@ export async function createProject(context: ProjectContext) {
 		},
 		getLanguageId: (fileName) => context.workspaces.documents.data.pathGet(fileName)?.languageId,
 		getCancellationToken: () => tsToken,
-		getCompilationSettings: () => parsedCommandLine.options,
-		getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
-		getProjectReferences: () => parsedCommandLine.projectReferences,
-	};
+	});
 	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
 		projectVersion++;
 		token = context.server.runtimeEnv.getCancellationToken();
@@ -83,22 +128,6 @@ export async function createProject(context: ProjectContext) {
 		onWorkspaceFilesChanged(params.changes);
 	});
 
-	let existingOptions: ts.CompilerOptions | undefined;
-
-	for (const plugin of context.workspaces.plugins) {
-		if (plugin.resolveExistingOptions) {
-			existingOptions = plugin.resolveExistingOptions(existingOptions);
-		}
-	}
-
-	let parsedCommandLine = await createParsedCommandLine(
-		context.workspaces.ts,
-		env,
-		uriToFileName(context.project.rootUri.toString()),
-		context.project.tsConfig,
-		context.workspaces.plugins,
-		existingOptions,
-	);
 	let config = (
 		context.project.workspaceUri.scheme === 'file' ? loadConfig(
 			context.server.runtimeEnv.console,
@@ -111,7 +140,7 @@ export async function createProject(context: ProjectContext) {
 			config = await plugin.resolveConfig(config, {
 				...context,
 				env,
-				host: languageHost,
+				host: projectHost,
 			});
 		}
 	}
@@ -121,13 +150,12 @@ export async function createProject(context: ProjectContext) {
 	return {
 		context,
 		tsConfig: context.project.tsConfig,
-		languageHost,
+		languageHost: projectHost,
 		getLanguageService,
 		getLanguageServiceDontCreate: () => languageService,
-		getParsedCommandLine: () => parsedCommandLine,
 		tryAddFile: (fileName: string) => {
-			if (!parsedCommandLine.fileNames.includes(fileName)) {
-				parsedCommandLine.fileNames.push(fileName);
+			if (!rootFiles.includes(fileName)) {
+				rootFiles.push(fileName);
 				projectVersion++;
 				token = context.server.runtimeEnv.getCancellationToken();
 			}
@@ -142,7 +170,7 @@ export async function createProject(context: ProjectContext) {
 				{ typescript: context.workspaces.ts },
 				env,
 				config,
-				languageHost,
+				projectHost,
 			);
 		}
 		return languageService;
@@ -150,7 +178,7 @@ export async function createProject(context: ProjectContext) {
 	async function syncRootScriptSnapshots() {
 		const promises: Promise<void>[] = [];
 		let dirty = false;
-		for (const fileName of parsedCommandLine.fileNames) {
+		for (const fileName of rootFiles) {
 			const uri = fileNameToUri(fileName);
 			if (!globalSnapshots.get(fs)!.uriGet(uri)) {
 				dirty = true;
@@ -176,14 +204,7 @@ export async function createProject(context: ProjectContext) {
 		const creates = changes.filter(change => change.type === vscode.FileChangeType.Created);
 
 		if (creates.length) {
-			parsedCommandLine = await createParsedCommandLine(
-				context.workspaces.ts,
-				env,
-				uriToFileName(context.project.rootUri.toString()),
-				context.project.tsConfig,
-				context.workspaces.plugins,
-				existingOptions,
-			);
+			rootFiles = await getRootFiles();
 			if (await syncRootScriptSnapshots()) {
 				projectVersion++;
 			}

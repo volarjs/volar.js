@@ -1,12 +1,14 @@
-import type { FileKind, VirtualFile, LanguageContext } from '@volar/language-core';
+import type { FileKind, VirtualFile, VirtualFiles } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as path from 'path-browserify';
 import { matchFiles } from './typescript/utilities';
+import { TypeScriptProjectHost } from './projectHost';
 
 const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: WeakMap<ts.IScriptSnapshot, number>; }>();
 
 export function createLanguageServiceHost(
-	ctx: LanguageContext,
+	projectHost: TypeScriptProjectHost,
+	virtualFiles: VirtualFiles,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	sys: ts.System & {
 		version?: number;
@@ -20,11 +22,11 @@ export function createLanguageServiceHost(
 
 	const _tsHost: ts.LanguageServiceHost = {
 		...sys,
-		getCurrentDirectory: () => ctx.host.workspacePath,
-		getCompilationSettings: () => ctx.host.getCompilationSettings(),
-		getCancellationToken: ctx.host.getCancellationToken ? () => ctx.host.getCancellationToken!() : undefined,
-		getLocalizedDiagnosticMessages: ctx.host.getLocalizedDiagnosticMessages ? () => ctx.host.getLocalizedDiagnosticMessages!() : undefined,
-		getProjectReferences: ctx.host.getProjectReferences ? () => ctx.host.getProjectReferences!() : undefined,
+		getCurrentDirectory: () => projectHost.workspacePath,
+		getCompilationSettings: () => projectHost.getCompilationSettings(),
+		getCancellationToken: projectHost.getCancellationToken ? () => projectHost.getCancellationToken!() : undefined,
+		getLocalizedDiagnosticMessages: projectHost.getLocalizedDiagnosticMessages ? () => projectHost.getLocalizedDiagnosticMessages!() : undefined,
+		getProjectReferences: projectHost.getProjectReferences ? () => projectHost.getProjectReferences!() : undefined,
 		getDefaultLibFileName: (options) => {
 			try {
 				return ts.getDefaultLibFilePath(options);
@@ -57,7 +59,7 @@ export function createLanguageServiceHost(
 		getScriptKind(fileName) {
 
 			if (ts) {
-				if (ctx.virtualFiles.hasSource(fileName))
+				if (virtualFiles.hasSource(fileName))
 					return ts.ScriptKind.Deferred;
 
 				switch (path.extname(fileName)) {
@@ -79,7 +81,7 @@ export function createLanguageServiceHost(
 	};
 	const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
 
-	if (ctx.host.resolveModuleName) {
+	if (projectHost.resolveModuleName) {
 
 		// TODO: can this share between monorepo packages?
 		const moduleCache = ts.createModuleResolutionCache(
@@ -103,7 +105,7 @@ export function createLanguageServiceHost(
 			}
 			return moduleLiterals.map((moduleLiteral) => {
 				let moduleName = moduleLiteral.text;
-				moduleName = ctx.host.resolveModuleName!(moduleName, sourceFile.impliedNodeFormat);
+				moduleName = projectHost.resolveModuleName!(moduleName, sourceFile.impliedNodeFormat);
 				return ts.resolveModuleName(
 					moduleName,
 					containingFile,
@@ -128,7 +130,7 @@ export function createLanguageServiceHost(
 				moduleCache.clear();
 			}
 			return moduleNames.map((moduleName) => {
-				moduleName = ctx.host.resolveModuleName!(moduleName, sourceFile?.impliedNodeFormat);
+				moduleName = projectHost.resolveModuleName!(moduleName, sourceFile?.impliedNodeFormat);
 				return ts.resolveModuleName(
 					moduleName,
 					containingFile,
@@ -154,7 +156,7 @@ export function createLanguageServiceHost(
 
 	function sync() {
 
-		const newProjectVersion = ctx.host.getProjectVersion();
+		const newProjectVersion = projectHost.getProjectVersion();
 		const shouldUpdate = newProjectVersion !== lastProjectVersion;
 		if (!shouldUpdate)
 			return;
@@ -164,7 +166,7 @@ export function createLanguageServiceHost(
 		const newTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 		const newOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
-		for (const { root } of ctx.virtualFiles.allSources()) {
+		for (const { root } of virtualFiles.allSources()) {
 			forEachEmbeddedFile(root, embedded => {
 				if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
 					newTsVirtualFileSnapshots.add(embedded.snapshot);
@@ -187,15 +189,15 @@ export function createLanguageServiceHost(
 		oldOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
 
 		const tsFileNamesSet = new Set<string>();
-		for (const { root } of ctx.virtualFiles.allSources()) {
+		for (const { root } of virtualFiles.allSources()) {
 			forEachEmbeddedFile(root, embedded => {
 				if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
 					tsFileNamesSet.add(embedded.fileName); // virtual .ts
 				}
 			});
 		}
-		for (const fileName of ctx.host.getScriptFileNames()) {
-			if (!ctx.virtualFiles.hasSource(fileName)) {
+		for (const fileName of projectHost.getScriptFileNames()) {
+			if (!virtualFiles.hasSource(fileName)) {
 				tsFileNamesSet.add(fileName); // .ts
 			}
 		}
@@ -221,7 +223,7 @@ export function createLanguageServiceHost(
 			excludes,
 			includes,
 			sys?.useCaseSensitiveFileNames ?? false,
-			ctx.host.workspacePath,
+			projectHost.workspacePath,
 			depth,
 			(dirPath) => {
 
@@ -244,7 +246,7 @@ export function createLanguageServiceHost(
 			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
 		);
 		matches = matches.map(match => {
-			const [_, source] = ctx.virtualFiles.getVirtualFile(match);
+			const [_, source] = virtualFiles.getVirtualFile(match);
 			if (source) {
 				return source.fileName;
 			}
@@ -281,12 +283,12 @@ export function createLanguageServiceHost(
 
 	function getScriptSnapshot(fileName: string) {
 		// virtual files
-		const [virtualFile] = ctx.virtualFiles.getVirtualFile(fileName);
+		const [virtualFile] = virtualFiles.getVirtualFile(fileName);
 		if (virtualFile) {
 			return virtualFile.snapshot;
 		}
 		// root files / opened files
-		const tsScript = ctx.host.getScriptSnapshot(fileName);
+		const tsScript = projectHost.getScriptSnapshot(fileName);
 		if (tsScript) {
 			return tsScript;
 		}
@@ -308,8 +310,8 @@ export function createLanguageServiceHost(
 
 	function getScriptVersion(fileName: string) {
 		// virtual files / root files / opened files
-		const [virtualFile] = ctx.virtualFiles.getVirtualFile(fileName);
-		const snapshot = virtualFile?.snapshot ?? ctx.host.getScriptSnapshot(fileName);
+		const [virtualFile] = virtualFiles.getVirtualFile(fileName);
+		const snapshot = virtualFile?.snapshot ?? projectHost.getScriptSnapshot(fileName);
 		if (snapshot) {
 			if (!fileVersions.has(fileName)) {
 				fileVersions.set(fileName, { lastVersion: 0, snapshotVersions: new WeakMap() });
@@ -350,21 +352,21 @@ export function createLanguageServiceHost(
 
 			const sourceFileName = fileName.substring(0, fileName.lastIndexOf('.'));
 
-			if (!ctx.virtualFiles.hasSource(sourceFileName)) {
+			if (!virtualFiles.hasSource(sourceFileName)) {
 				const scriptSnapshot = getScriptSnapshot(sourceFileName);
 				if (scriptSnapshot) {
-					ctx.virtualFiles.updateSource(sourceFileName, scriptSnapshot, ctx.host.getLanguageId?.(sourceFileName));
+					virtualFiles.updateSource(sourceFileName, scriptSnapshot, projectHost.getLanguageId?.(sourceFileName));
 				}
 			}
 		}
 
 		// virtual files
-		if (ctx.virtualFiles.hasVirtualFile(fileName)) {
+		if (virtualFiles.hasVirtualFile(fileName)) {
 			return true;
 		}
 
 		// root files
-		if (ctx.host.getScriptSnapshot(fileName)) {
+		if (projectHost.getScriptSnapshot(fileName)) {
 			return true;
 		}
 

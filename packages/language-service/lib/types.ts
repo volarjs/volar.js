@@ -1,4 +1,4 @@
-import { Language, LanguageContext } from '@volar/language-core';
+import { Language, ProjectHost, VirtualFiles } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -59,7 +59,11 @@ interface Command<T> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface ServiceContext<Provide = any> extends LanguageContext {
+export interface ServiceContext<Provide = any> {
+	project: {
+		host: ProjectHost;
+		virtualFiles: VirtualFiles;
+	};
 	env: ServiceEnvironment;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
 	getTextDocument(uri: string): TextDocument | undefined;

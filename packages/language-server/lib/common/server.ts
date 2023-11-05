@@ -120,7 +120,28 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 			config.services ?? {},
 		);
 
-		await createLanguageServiceHost();
+		workspaces = createWorkspaces({
+			...context,
+			workspaces: {
+				ts,
+				tsLocalized,
+				initParams,
+				initOptions: options,
+				documents,
+				plugins,
+			},
+		}, roots);
+
+		(await import('./features/customFeatures.js')).register(connection, workspaces, context.server.runtimeEnv);
+		(await import('./features/languageFeatures.js')).register(
+			connection,
+			workspaces,
+			initParams,
+			options,
+			getSemanticTokensLegend(),
+			context.server.runtimeEnv,
+			documents,
+		);
 
 		try {
 			// show version on LSP logs
@@ -133,7 +154,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 
 		return result;
 	});
-	connection.onInitialized(async () => {
+	connection.onInitialized(() => {
 
 		context.server.configurationHost?.ready();
 		context.server.configurationHost?.onDidChangeConfiguration?.(updateHttpSettings);
@@ -172,6 +193,15 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 					}
 				});
 			}
+		}
+
+		for (const plugin of plugins) {
+			plugin.onInitialized?.(getLanguageService, context.server.runtimeEnv);
+		}
+
+		async function getLanguageService(uri: string) {
+			const project = await workspaces!.getProject(uri);
+			return project.getLanguageService();
 		}
 
 		async function updateHttpSettings() {
@@ -231,41 +261,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 				return readDirectoryCache.get(uri)!;
 			},
 		};
-	}
-
-	async function createLanguageServiceHost() {
-
-		workspaces = createWorkspaces({
-			...context,
-			workspaces: {
-				ts,
-				tsLocalized,
-				initParams,
-				initOptions: options,
-				documents,
-				plugins,
-			},
-		}, roots);
-
-		(await import('./features/customFeatures.js')).register(connection, workspaces, context.server.runtimeEnv);
-		(await import('./features/languageFeatures.js')).register(
-			connection,
-			workspaces,
-			initParams,
-			options,
-			getSemanticTokensLegend(),
-			context.server.runtimeEnv,
-			documents,
-		);
-
-		for (const plugin of plugins) {
-			plugin.onInitialized?.(getLanguageService, context.server.runtimeEnv);
-		}
-
-		async function getLanguageService(uri: string) {
-			const project = (await workspaces!.getProject(uri))?.project;
-			return project?.getLanguageService();
-		}
 	}
 
 	function getSemanticTokensLegend() {

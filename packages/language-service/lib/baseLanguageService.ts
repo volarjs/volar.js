@@ -1,4 +1,4 @@
-import { createLanguageContext, FileRangeCapabilities, TypeScriptLanguageHost } from '@volar/language-core';
+import { createProxyHostAndVirtualFiles, FileRangeCapabilities, ProjectHost, VirtualFiles } from '@volar/language-core';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createDocumentsAndSourceMaps } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
@@ -45,18 +45,18 @@ export function createLanguageService(
 	modules: SharedModules,
 	env: ServiceEnvironment,
 	config: Config,
-	languageHost: TypeScriptLanguageHost,
+	projectHost: ProjectHost,
 ) {
 
-	if (languageHost.workspacePath.indexOf('\\') >= 0 || languageHost.rootPath.indexOf('\\') >= 0) {
+	if (projectHost.workspacePath.indexOf('\\') >= 0 || projectHost.rootPath.indexOf('\\') >= 0) {
 		throw new Error('Volar: Current directory must be posix style.');
 	}
-	if (languageHost.getScriptFileNames().some(fileName => fileName.indexOf('\\') >= 0)) {
+	if (projectHost.getScriptFileNames().some(fileName => fileName.indexOf('\\') >= 0)) {
 		throw new Error('Volar: Script file names must be posix style.');
 	}
 
-	const languageContext = createLanguageContext(languageHost, Object.values(config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(modules, env, config, languageHost, languageContext);
+	const project = createProxyHostAndVirtualFiles(projectHost, Object.values(config.languages ?? {}).filter(notEmpty));
+	const context = createLanguageServicePluginContext(modules, env, config, project.host, project.virtualFiles);
 	return createLanguageServiceBase(context);
 }
 
@@ -64,15 +64,18 @@ function createLanguageServicePluginContext(
 	modules: SharedModules,
 	env: ServiceEnvironment,
 	config: Config,
-	host: TypeScriptLanguageHost,
-	languageContext: ReturnType<typeof createLanguageContext>,
+	projectHost: ProjectHost,
+	virtualFiles: VirtualFiles,
 ) {
 
-	const textDocumentMapper = createDocumentsAndSourceMaps(env, host, languageContext.virtualFiles);
+	const textDocumentMapper = createDocumentsAndSourceMaps(env, projectHost, virtualFiles);
 	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
 	const documentVersions = new Map<string, number>();
 	const context: ServiceContext = {
-		...languageContext,
+		project: {
+			host: projectHost,
+			virtualFiles,
+		},
 		env,
 		inject: (key, ...args) => {
 			for (const service of Object.values(context.services)) {
@@ -197,7 +200,7 @@ function createLanguageServicePluginContext(
 		}
 
 		const fileName = env.uriToFileName(uri);
-		const scriptSnapshot = host.getScriptSnapshot(fileName);
+		const scriptSnapshot = projectHost.getScriptSnapshot(fileName);
 
 		if (scriptSnapshot) {
 
@@ -211,7 +214,7 @@ function createLanguageServicePluginContext(
 
 				document = TextDocument.create(
 					uri,
-					host.getLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
+					projectHost.getLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
 					newVersion,
 					scriptSnapshot.getText(0, scriptSnapshot.getLength()),
 				);

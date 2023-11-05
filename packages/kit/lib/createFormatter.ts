@@ -1,4 +1,4 @@
-import { Config, FormattingOptions, TypeScriptLanguageHost, createLanguageService } from '@volar/language-service';
+import { Config, FormattingOptions, TypeScriptProjectHost, createLanguageService } from '@volar/language-service';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { asPosix, defaultCompilerOptions, fileNameToUri, fs, getConfiguration, uriToFileName } from './utils';
@@ -36,7 +36,7 @@ export function createFormatter(
 			console,
 		},
 		config,
-		createHost(),
+		createProjectHost(),
 	);
 
 	return {
@@ -75,9 +75,9 @@ export function createFormatter(
 		return content;
 	}
 
-	function createHost() {
+	function createProjectHost() {
 		let projectVersion = 0;
-		const host: TypeScriptLanguageHost = {
+		const host: TypeScriptProjectHost = {
 			workspacePath: '/',
 			rootPath: '/',
 			getCompilationSettings: () => compilerOptions,

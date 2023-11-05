@@ -1,4 +1,4 @@
-import type { TypeScriptLanguageHost } from '@volar/language-service';
+import type { TypeScriptProjectHost } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { asPosix, defaultCompilerOptions } from './utils';
@@ -45,7 +45,7 @@ export function createProject(
 function createProjectBase(rootPath: string, createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>) {
 
 	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
-	const languageHost: TypeScriptLanguageHost = {
+	const languageHost: TypeScriptProjectHost = {
 		workspacePath: rootPath,
 		rootPath: rootPath,
 		getCompilationSettings: () => {

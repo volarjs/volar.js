@@ -16,37 +16,35 @@ export function register(
 	const scriptVersionSnapshots = new WeakSet<ts.IScriptSnapshot>();
 
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
-		const project = (await workspaces.getProject(params.uri));
-		if (project?.tsconfig) {
-			return { uri: env.fileNameToUri(project.tsconfig) };
+		const project = await workspaces.getProject(params.uri);
+		if (typeof project.tsConfig === 'string') {
+			return { uri: env.fileNameToUri(project.tsConfig) };
 		}
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const project = await workspaces.getProject(document.uri);
-		if (project) {
-			const file = project.project?.getLanguageService()?.context.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
-			return file ? prune(file) : undefined;
+		const file = project.getLanguageService()?.context.project.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
+		return file ? prune(file) : undefined;
 
-			function prune(file: VirtualFile): VirtualFile {
-				let version = scriptVersions.get(file.fileName) ?? 0;
-				if (!scriptVersionSnapshots.has(file.snapshot)) {
-					version++;
-					scriptVersions.set(file.fileName, version);
-					scriptVersionSnapshots.add(file.snapshot);
-				}
-				return {
-					fileName: file.fileName,
-					kind: file.kind,
-					capabilities: file.capabilities,
-					embeddedFiles: file.embeddedFiles.map(prune),
-					version,
-				} as any;
+		function prune(file: VirtualFile): VirtualFile {
+			let version = scriptVersions.get(file.fileName) ?? 0;
+			if (!scriptVersionSnapshots.has(file.snapshot)) {
+				version++;
+				scriptVersions.set(file.fileName, version);
+				scriptVersionSnapshots.add(file.snapshot);
 			}
+			return {
+				fileName: file.fileName,
+				kind: file.kind,
+				capabilities: file.capabilities,
+				embeddedFiles: file.embeddedFiles.map(prune),
+				version,
+			} as any;
 		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
 		const project = await workspaces.getProject(params.sourceFileUri);
-		const service = project?.project?.getLanguageService();
+		const service = project.getLanguageService();
 		if (service) {
 			let content: string = '';
 			let codegenStacks: Stack[] = [];
@@ -72,27 +70,25 @@ export function register(
 		const fs: typeof import('fs') = await import(fsModeName);
 		const project = await workspaces.getProject(params.uri);
 
-		if (project) {
-			const ls = (await project.project)?.getLanguageServiceDontCreate();
-			if (ls) {
-				const rootPath = ls.context.env.uriToFileName(ls.context.env.rootUri.toString());
-				for (const { root } of ls.context.virtualFiles.allSources()) {
-					forEachEmbeddedFile(root, virtualFile => {
-						if (virtualFile.kind === FileKind.TypeScriptHostFile) {
-							if (virtualFile.fileName.startsWith(rootPath)) {
-								const snapshot = virtualFile.snapshot;
-								fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
-							}
+		const ls = project.getLanguageServiceDontCreate();
+		if (ls) {
+			const rootPath = ls.context.env.uriToFileName(ls.context.env.rootUri.toString());
+			for (const { root } of ls.context.project.virtualFiles.allSources()) {
+				forEachEmbeddedFile(root, virtualFile => {
+					if (virtualFile.kind === FileKind.TypeScriptHostFile) {
+						if (virtualFile.fileName.startsWith(rootPath)) {
+							const snapshot = virtualFile.snapshot;
+							fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
 						}
-					});
-				}
-				// global virtual files
-				for (const fileName of ls.context.host.getScriptFileNames()) {
-					if (!fs.existsSync(fileName)) {
-						const snapshot = ls.context.host.getScriptSnapshot(fileName);
-						if (snapshot) {
-							fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
-						}
+					}
+				});
+			}
+			// global virtual files
+			for (const fileName of ls.context.project.host.getScriptFileNames()) {
+				if (!fs.existsSync(fileName)) {
+					const snapshot = ls.context.project.host.getScriptSnapshot(fileName);
+					if (snapshot) {
+						fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
 					}
 				}
 			}

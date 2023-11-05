@@ -85,26 +85,26 @@ export interface VirtualFile {
 	embeddedFiles: VirtualFile[],
 }
 
-export interface Language<T extends VirtualFile = VirtualFile> {
-	resolveHost?(host: TypeScriptLanguageHost): TypeScriptLanguageHost;
+export interface Language<T extends VirtualFile = VirtualFile, P extends ProjectHost = ProjectHost> {
+	resolveHost?(host: P): P;
 	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	deleteVirtualFile?(virtualFile: T): void;
 }
 
-interface LanguageHost {
+export interface ProjectHost {
 	workspacePath: string;
 	rootPath: string;
 	getProjectVersion(): string;
 	getScriptFileNames(): string[];
 	getScriptSnapshot(fileName: string): ts.IScriptSnapshot | undefined;
 	getLanguageId?(fileName: string): string | undefined;
+	getCancellationToken?(): ts.HostCancellationToken;
 }
 
-export interface TypeScriptLanguageHost extends LanguageHost, Pick<
+export interface TypeScriptProjectHost extends ProjectHost, Pick<
 	ts.LanguageServiceHost,
-	'getCancellationToken'
-	| 'getLocalizedDiagnosticMessages'
+	'getLocalizedDiagnosticMessages'
 	| 'getCompilationSettings'
 	| 'getProjectReferences'
 > {

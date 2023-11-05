@@ -1,5 +1,5 @@
 import { FileSystem, Console, LanguageService, ServiceEnvironment, SharedModules } from '@volar/language-service';
-import type { TypeScriptLanguageHost } from '@volar/language-core';
+import type { ProjectHost } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { Config } from '@volar/language-service';
@@ -31,7 +31,7 @@ export interface LanguageServerPlugin {
 			config: Config,
 			ctx: {
 				env: ServiceEnvironment;
-				host: TypeScriptLanguageHost;
+				host: ProjectHost;
 			} & ProjectContext | undefined,
 		): Config | Promise<Config>;
 		resolveExistingOptions?(options: ts.CompilerOptions | undefined): ts.CompilerOptions | undefined;
