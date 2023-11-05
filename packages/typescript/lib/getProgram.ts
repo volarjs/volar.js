@@ -1,11 +1,10 @@
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import type * as embedded from '@volar/language-core';
-import type { TypeScriptProjectHost } from './projectHost';
+import type { TypeScriptProjectHost, VirtualFiles } from '@volar/language-core';
 
 export function getProgram(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	projectHost: TypeScriptProjectHost,
-	virtualFiles: embedded.VirtualFiles,
+	virtualFiles: VirtualFiles,
 	ls: ts.LanguageService,
 	sys: ts.System,
 ): ts.Program {
