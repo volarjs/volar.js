@@ -8,7 +8,7 @@ import { isFileInDir } from '../utils/isFileInDir';
 import { createUriMap } from '../utils/uriMap';
 import { ServerMode, ServerProjectProvider, TypeScriptServerPlugin } from '../types';
 import { TypeScriptServerProject, createTypeScriptServerProject } from './typescriptProject';
-import { WorkspacesContext } from './basicProjectProvider';
+import { WorkspacesContext, getWorkspaceFolder } from './basicProjectProvider';
 
 export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
@@ -68,7 +68,8 @@ export function createTypeScriptProjectProvider(
 					return await getOrCreateConfiguredProject(tsconfig);
 				}
 			}
-			return await getOrCreateInferredProject(uri, getWorkspaceFolder(URI.parse(uri)));
+			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolderManager, uriToFileName);
+			return await getOrCreateInferredProject(uri, workspaceFolder);
 		},
 		async getProjects() {
 			return await Promise.all([
@@ -226,7 +227,8 @@ export function createTypeScriptProjectProvider(
 		tsconfig = tsconfig.replace(/\\/g, '/');
 		let projectPromise = configProjects.pathGet(tsconfig);
 		if (!projectPromise) {
-			projectPromise = createTypeScriptServerProject(tsconfig, context, plugins, getWorkspaceFolder(URI.parse(fileNameToUri(tsconfig))));
+			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaces.workspaceFolderManager, uriToFileName);
+			projectPromise = createTypeScriptServerProject(tsconfig, context, plugins, workspaceFolder);
 			configProjects.pathSet(tsconfig, projectPromise);
 		}
 		return await projectPromise;
@@ -246,29 +248,6 @@ export function createTypeScriptProjectProvider(
 		project.tryAddFile(uriToFileName(uri));
 
 		return project;
-	}
-
-	function getWorkspaceFolder(uri: URI) {
-
-		const fileName = uriToFileName(uri.toString());
-
-		let folders = context.workspaces.workspaceFolderManager
-			.getAll()
-			.filter(({ uri }) => isFileInDir(fileName, uriToFileName(uri.toString())))
-			.sort((a, b) => b.uri.toString().length - a.uri.toString().length);
-
-		if (!folders.length) {
-			folders = context.workspaces.workspaceFolderManager.getAll();
-		}
-
-		if (!folders.length) {
-			folders = [{
-				name: '',
-				uri: uri.with({ path: '/' }),
-			}];
-		}
-
-		return folders[0];
 	}
 }
 

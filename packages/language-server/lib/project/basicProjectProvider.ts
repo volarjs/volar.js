@@ -24,13 +24,12 @@ export interface WorkspacesContext extends ServerContext {
 
 export function createBasicProjectProvider(context: WorkspacesContext, plugins: ReturnType<BasicServerPlugin>[]): ServerProjectProvider {
 
-	const { uriToFileName } = context.server.runtimeEnv;
 	const projects = new Map<ServiceEnvironment['workspaceFolder'], Promise<ServerProject>>();
 
 	return {
 		async getProject(uri) {
 
-			const workspaceFolder = getWorkspaceFolder(URI.parse(uri));
+			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolderManager, context.server.runtimeEnv.uriToFileName);
 
 			let project = projects.get(workspaceFolder);
 			if (!project) {
@@ -54,27 +53,31 @@ export function createBasicProjectProvider(context: WorkspacesContext, plugins: 
 			context.workspaces.reloadDiagnostics();
 		},
 	};
+}
 
-	function getWorkspaceFolder(uri: URI) {
+export function getWorkspaceFolder(
+	uri: string,
+	workspaceFolderManager: WorkspaceFolderManager,
+	uriToFileName: (uri: string) => string
+) {
 
-		const fileName = uriToFileName(uri.toString());
+	const fileName = uriToFileName(uri);
 
-		let folders = context.workspaces.workspaceFolderManager
-			.getAll()
-			.filter(({ uri }) => isFileInDir(fileName, uriToFileName(uri.toString())))
-			.sort((a, b) => b.uri.toString().length - a.uri.toString().length);
+	let folders = workspaceFolderManager
+		.getAll()
+		.filter(({ uri }) => isFileInDir(fileName, uriToFileName(uri.toString())))
+		.sort((a, b) => b.uri.toString().length - a.uri.toString().length);
 
-		if (!folders.length) {
-			folders = context.workspaces.workspaceFolderManager.getAll();
-		}
-
-		if (!folders.length) {
-			folders = [{
-				name: '',
-				uri: uri.with({ path: '/' }),
-			}];
-		}
-
-		return folders[0];
+	if (!folders.length) {
+		folders = workspaceFolderManager.getAll();
 	}
+
+	if (!folders.length) {
+		folders = [{
+			name: '',
+			uri: URI.parse(uri).with({ path: '/' }),
+		}];
+	}
+
+	return folders[0];
 }
