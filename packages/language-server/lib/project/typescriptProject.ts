@@ -3,10 +3,10 @@ import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { TypeScriptServerPlugin, ServerProject } from '../types';
-import { loadConfig } from '../config';
 import { UriMap, createUriMap } from '../utils/uriMap';
 import { createSys } from '@volar/typescript';
 import { WorkspacesContext } from './basicProjectProvider';
+import { getConfig } from '../config';
 
 const globalSnapshots = new WeakMap<FileSystem, ReturnType<typeof createUriMap<ts.IScriptSnapshot | undefined>>>();
 
@@ -20,7 +20,7 @@ export async function createTypeScriptServerProject(
 	tsconfig: string | ts.CompilerOptions,
 	context: WorkspacesContext,
 	plugins: ReturnType<TypeScriptServerPlugin>[],
-	workspaceFolder: ServiceEnvironment['workspaceFolder'],
+	serviceEnv: ServiceEnvironment,
 ): Promise<TypeScriptServerProject> {
 
 	let rootFiles = await getRootFiles();
@@ -36,18 +36,6 @@ export async function createTypeScriptServerProject(
 		throwIfCancellationRequested() { },
 	};
 	const { uriToFileName, fileNameToUri, fs } = context.server.runtimeEnv;
-	const env: ServiceEnvironment = {
-		workspaceFolder,
-		uriToFileName,
-		fileNameToUri,
-		fs,
-		console: context.server.runtimeEnv.console,
-		locale: context.server.initializeParams.locale,
-		clientCapabilities: context.server.initializeParams.capabilities,
-		getConfiguration: context.server.configurationHost?.getConfiguration,
-		onDidChangeConfiguration: context.server.configurationHost?.onDidChangeConfiguration,
-		onDidChangeWatchedFiles: context.server.onDidChangeWatchedFiles,
-	};
 
 	if (!globalSnapshots.has(fs)) {
 		globalSnapshots.set(fs, createUriMap(fileNameToUri));
@@ -56,7 +44,7 @@ export async function createTypeScriptServerProject(
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const typescriptProjectHost: TypeScriptProjectHost = {
 		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
-		getCurrentDirectory: () => uriToFileName(workspaceFolder.uri.toString()),
+		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder.uri.toString()),
 		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => rootFiles,
 		getScriptSnapshot: (fileName) => {
@@ -80,29 +68,16 @@ export async function createTypeScriptServerProject(
 		projectVersion++;
 		token = context.server.runtimeEnv.getCancellationToken();
 	});
-	const fileWatch = env.onDidChangeWatchedFiles?.(params => {
+	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => {
 		onWorkspaceFilesChanged(params.changes);
 	});
-
-	let config = (
-		workspaceFolder.uri.scheme === 'file' ? loadConfig(
-			context.server.runtimeEnv.console,
-			context.server.runtimeEnv.uriToFileName(workspaceFolder.uri.toString()),
-			context.workspaces.initOptions.configFilePath,
-		) : {}
-	) ?? {};
-
-	for (const plugin of plugins) {
-		if (plugin.resolveConfig) {
-			config = await plugin.resolveConfig(config, env);
-		}
-	}
+	const config = await getConfig(context, plugins, serviceEnv);
 
 	await syncRootScriptSnapshots();
 
 	return {
 		askedFiles,
-		workspaceFolder,
+		serviceEnv,
 		getLanguageService,
 		getLanguageServiceDontCreate: () => languageService,
 		tryAddFile: (fileName: string) => {
@@ -119,8 +94,8 @@ export async function createTypeScriptServerProject(
 	async function getRootFiles() {
 		parsedCommandLine = await createParsedCommandLine(
 			context.workspaces.ts,
-			env,
-			uriToFileName(workspaceFolder.uri.toString()),
+			serviceEnv,
+			uriToFileName(serviceEnv.workspaceFolder.uri.toString()),
 			tsconfig,
 			plugins,
 		);
@@ -130,7 +105,7 @@ export async function createTypeScriptServerProject(
 		if (!languageService) {
 			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
-				env,
+				serviceEnv,
 				createTypeScriptProject(typescriptProjectHost, Object.values(config.languages ?? {})),
 				config,
 			);

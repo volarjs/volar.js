@@ -33,7 +33,8 @@ export function createBasicProjectProvider(context: WorkspacesContext, plugins: 
 
 			let project = projects.get(workspaceFolder);
 			if (!project) {
-				project = createBasicServerProject(context, plugins, workspaceFolder);
+				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
+				project = createBasicServerProject(context, plugins, serviceEnv);
 				projects.set(workspaceFolder, project);
 			}
 
@@ -53,6 +54,22 @@ export function createBasicProjectProvider(context: WorkspacesContext, plugins: 
 			context.workspaces.reloadDiagnostics();
 		},
 	};
+}
+
+export function createServiceEnvironment(context: WorkspacesContext, workspaceFolder: ServiceEnvironment['workspaceFolder']) {
+	const env: ServiceEnvironment = {
+		workspaceFolder,
+		uriToFileName: context.server.runtimeEnv.uriToFileName,
+		fileNameToUri: context.server.runtimeEnv.fileNameToUri,
+		fs: context.server.runtimeEnv.fs,
+		console: context.server.runtimeEnv.console,
+		locale: context.server.initializeParams.locale,
+		clientCapabilities: context.server.initializeParams.capabilities,
+		getConfiguration: context.server.configurationHost?.getConfiguration,
+		onDidChangeConfiguration: context.server.configurationHost?.onDidChangeConfiguration,
+		onDidChangeWatchedFiles: context.server.onDidChangeWatchedFiles,
+	};
+	return env;
 }
 
 export function getWorkspaceFolder(

@@ -94,7 +94,7 @@ export interface InitializationOptions {
 }
 
 export interface ServerProject {
-	workspaceFolder: ServiceEnvironment['workspaceFolder'];
+	serviceEnv: ServiceEnvironment;
 	getLanguageService(): LanguageService;
 	getLanguageServiceDontCreate(): LanguageService | undefined;
 	dispose(): void;

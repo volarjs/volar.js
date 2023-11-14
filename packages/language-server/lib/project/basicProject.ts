@@ -1,46 +1,20 @@
 import { LanguageService, ServiceEnvironment, createFileProvider, createLanguageService } from '@volar/language-service';
-import { loadConfig } from '../config';
 import { BasicServerPlugin, ServerProject } from '../types';
 import { WorkspacesContext } from './basicProjectProvider';
+import { getConfig } from '../config';
 
 export async function createBasicServerProject(
 	context: WorkspacesContext,
 	plugins: ReturnType<BasicServerPlugin>[],
-	workspaceFolder: ServiceEnvironment['workspaceFolder'],
+	serviceEnv: ServiceEnvironment,
 ): Promise<ServerProject> {
 
 	let languageService: LanguageService | undefined;
 
-	const { uriToFileName, fileNameToUri, fs } = context.server.runtimeEnv;
-	const env: ServiceEnvironment = {
-		workspaceFolder,
-		uriToFileName,
-		fileNameToUri,
-		fs,
-		console: context.server.runtimeEnv.console,
-		locale: context.server.initializeParams.locale,
-		clientCapabilities: context.server.initializeParams.capabilities,
-		getConfiguration: context.server.configurationHost?.getConfiguration,
-		onDidChangeConfiguration: context.server.configurationHost?.onDidChangeConfiguration,
-		onDidChangeWatchedFiles: context.server.onDidChangeWatchedFiles,
-	};
-
-	let config = (
-		workspaceFolder.uri.scheme === 'file' ? loadConfig(
-			context.server.runtimeEnv.console,
-			context.server.runtimeEnv.uriToFileName(workspaceFolder.uri.toString()),
-			context.workspaces.initOptions.configFilePath,
-		) : {}
-	) ?? {};
-
-	for (const plugin of plugins) {
-		if (plugin.resolveConfig) {
-			config = await plugin.resolveConfig(config, env);
-		}
-	}
+	const config = await getConfig(context, plugins, serviceEnv);
 
 	return {
-		workspaceFolder,
+		serviceEnv,
 		getLanguageService,
 		getLanguageServiceDontCreate: () => languageService,
 		dispose() {
@@ -61,7 +35,7 @@ export async function createBasicServerProject(
 			});
 			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
-				env,
+				serviceEnv,
 				{ fileProvider },
 				config,
 			);

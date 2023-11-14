@@ -8,7 +8,7 @@ import { isFileInDir } from '../utils/isFileInDir';
 import { createUriMap } from '../utils/uriMap';
 import { ServerMode, ServerProjectProvider, TypeScriptServerPlugin } from '../types';
 import { TypeScriptServerProject, createTypeScriptServerProject } from './typescriptProject';
-import { WorkspacesContext, getWorkspaceFolder } from './basicProjectProvider';
+import { WorkspacesContext, createServiceEnvironment, getWorkspaceFolder } from './basicProjectProvider';
 
 export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
@@ -52,7 +52,7 @@ export function createTypeScriptProjectProvider(
 		for (const uri of configProjects.uriKeys()) {
 			const project = configProjects.uriGet(uri)!;
 			project.then(project => {
-				if (project.workspaceFolder.uri.toString() === folder.uri.toString()) {
+				if (project.serviceEnv.workspaceFolder.uri.toString() === folder.uri.toString()) {
 					configProjects.uriDelete(uri);
 					project.dispose();
 				}
@@ -228,7 +228,8 @@ export function createTypeScriptProjectProvider(
 		let projectPromise = configProjects.pathGet(tsconfig);
 		if (!projectPromise) {
 			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaces.workspaceFolders, uriToFileName);
-			projectPromise = createTypeScriptServerProject(tsconfig, context, plugins, workspaceFolder);
+			const serviceEnv = createServiceEnvironment(context, workspaceFolder);
+			projectPromise = createTypeScriptServerProject(tsconfig, context, plugins, serviceEnv);
 			configProjects.pathSet(tsconfig, projectPromise);
 		}
 		return await projectPromise;
@@ -239,7 +240,8 @@ export function createTypeScriptProjectProvider(
 		if (!inferredProjects.uriHas(workspaceFolder.uri.toString())) {
 			inferredProjects.uriSet(workspaceFolder.uri.toString(), (async () => {
 				const inferOptions = await getInferredCompilerOptions(context.server.configurationHost);
-				return createTypeScriptServerProject(inferOptions, context, plugins, workspaceFolder);
+				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
+				return createTypeScriptServerProject(inferOptions, context, plugins, serviceEnv);
 			})());
 		}
 
