@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
-import httpSchemaRequestHandler from './lib/common/schemaRequestHandlers/http';
-import { startLanguageServerBase } from './lib/common/server';
+import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
+import { startLanguageServerBase } from './lib/server';
 import { InitializationOptions, BasicServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
 import { FileSystem, FileType } from '@volar/language-service';
-import { createGetCancellationToken } from './lib/node/cancellationPipe';
-import { WorkspacesContext, createBasicProjectProvider } from './lib/typescriptServer/basicProjectProvider';
-import { createTypeScriptProjectProvider } from './lib/typescriptServer/typescriptProjectProvider';
+import { createGetCancellationToken } from './lib/cancellationToken';
+import { WorkspacesContext, createBasicProjectProvider } from './lib/project/basicProjectProvider';
+import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
 
 export * from './index';
 

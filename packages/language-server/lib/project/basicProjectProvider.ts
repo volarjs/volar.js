@@ -1,10 +1,10 @@
 import { ServiceEnvironment } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { URI } from 'vscode-uri';
-import { createDocuments } from '../common/documents';
-import { ServerContext } from '../common/server';
-import { isFileInDir } from '../common/utils/isFileInDir';
-import { WorkspaceFolderManager } from '../common/workspaceFolders';
+import { createDocumentManager } from '../documentManager';
+import { ServerContext } from '../server';
+import { isFileInDir } from '../utils/isFileInDir';
+import { WorkspaceFolderManager } from '../workspaceFolderManager';
 import { InitializationOptions, ServerProject, ServerProjectProvider, BasicServerPlugin } from '../types';
 import { createBasicServerProject } from './basicProject';
 
@@ -16,7 +16,7 @@ export interface WorkspacesContext extends ServerContext {
 		ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 		tsLocalized: ts.MapLike<string> | undefined;
 		workspaceFolderManager: WorkspaceFolderManager;
-		documents: ReturnType<typeof createDocuments>;
+		documents: ReturnType<typeof createDocumentManager>;
 		reloadDiagnostics(): void;
 		updateDiagnosticsAndSemanticTokens(): void;
 	};

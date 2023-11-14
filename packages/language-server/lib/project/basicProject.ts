@@ -1,5 +1,5 @@
 import { LanguageService, ServiceEnvironment, createFileProvider, createLanguageService } from '@volar/language-service';
-import { loadConfig } from '../common/utils/serverConfig';
+import { loadConfig } from '../config';
 import { BasicServerPlugin, ServerProject } from '../types';
 import { WorkspacesContext } from './basicProjectProvider';
 

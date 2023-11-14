@@ -3,7 +3,8 @@ import * as vscode from 'vscode-languageserver';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { createUriMap } from './utils/uriMap';
 import type * as _ from 'vscode-uri';
-import { ServerRuntimeEnvironment } from '../types';
+import { ServerRuntimeEnvironment } from './types';
+import { combineChangeRanges } from './utils/combineChangeRanges';
 
 interface IncrementalScriptSnapshotChange {
 	applied: boolean,
@@ -76,7 +77,7 @@ class IncrementalScriptSnapshot {
 							const start = oldIndex + 1;
 							const end = this.changes.indexOf(lastChange) + 1;
 							const changeRanges = this.changes.slice(start, end).map(change => change.changeRange!);
-							const result = combineContinuousChangeRanges.apply(null, changeRanges);
+							const result = combineChangeRanges.apply(null, changeRanges);
 							cache.set(oldSnapshot, result);
 						}
 						else {
@@ -151,36 +152,7 @@ class IncrementalScriptSnapshot {
 	}
 }
 
-export function combineContinuousChangeRanges(...changeRanges: ts.TextChangeRange[]) {
-	if (changeRanges.length === 1) {
-		return changeRanges[0];
-	}
-	let changeRange: ts.TextChangeRange = changeRanges[0];
-	for (let i = 1; i < changeRanges.length; i++) {
-		const nextChangeRange = changeRanges[i];
-		changeRange = _combineContinuousChangeRanges(changeRange, nextChangeRange);
-	}
-	return changeRange;
-}
-
-// https://tsplay.dev/mMldVN - @browsnet
-function _combineContinuousChangeRanges(a: ts.TextChangeRange, b: ts.TextChangeRange): ts.TextChangeRange {
-	const aStart = a.span.start;
-	const aEnd = a.span.start + a.span.length;
-	const aDiff = a.newLength - a.span.length;
-	const changeBegin = aStart + Math.min(a.span.length, a.newLength);
-	const rollback = (start: number) => start > changeBegin ? Math.max(aStart, start - aDiff) : start;
-	const bStart = rollback(b.span.start);
-	const bEnd = rollback(b.span.start + b.span.length);
-	const bDiff = b.newLength - b.span.length;
-	const start = Math.min(aStart, bStart);
-	const end = Math.max(aEnd, bEnd);
-	const length = end - start;
-	const newLength = aDiff + bDiff + length;
-	return { span: { start, length }, newLength };
-}
-
-export function createDocuments(
+export function createDocumentManager(
 	env: ServerRuntimeEnvironment,
 	connection: vscode.Connection,
 ) {

@@ -2,10 +2,10 @@ import { FileKind, FileRangeCapabilities, VirtualFile, forEachEmbeddedFile } fro
 import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
-import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../../protocol';
-import { ServerProjectProvider, ServerRuntimeEnvironment } from '../../types';
+import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';
+import { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
 
-export function register(
+export function registerEditorFeatures(
 	connection: vscode.Connection,
 	projectProvider: ServerProjectProvider,
 	env: ServerRuntimeEnvironment,

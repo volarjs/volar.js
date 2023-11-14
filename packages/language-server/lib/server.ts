@@ -3,13 +3,13 @@ import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, InitializationOptions, BasicServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment } from '../types.js';
+import { DiagnosticModel, InitializationOptions, BasicServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
-import { createDocuments } from './documents.js';
-import { setupCapabilities } from './utils/registerFeatures.js';
-import { loadConfig } from './utils/serverConfig.js';
-import { createWorkspaceFolderManager } from './workspaceFolders.js';
-import type { WorkspacesContext } from '../typescriptServer/basicProjectProvider.js';
+import { createDocumentManager } from './documentManager.js';
+import { setupCapabilities } from './setupCapabilities.js';
+import { loadConfig } from './config.js';
+import { createWorkspaceFolderManager } from './workspaceFolderManager.js';
+import type { WorkspacesContext } from './project/basicProjectProvider.js';
 
 export interface ServerContext {
 	server: {
@@ -32,7 +32,7 @@ export function startLanguageServerBase<Plugin extends BasicServerPlugin>(
 	let options: InitializationOptions;
 	let projectProvider: ServerProjectProvider;
 	let plugins: ReturnType<Plugin>[];
-	let documents: ReturnType<typeof createDocuments>;
+	let documents: ReturnType<typeof createDocumentManager>;
 	let context: ServerContext;
 	let ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 	let tsLocalized: {} | undefined;
@@ -75,7 +75,7 @@ export function startLanguageServerBase<Plugin extends BasicServerPlugin>(
 			modules: { typescript: ts },
 			env: context.server.runtimeEnv,
 		}) as ReturnType<Plugin>);
-		documents = createDocuments(context.server.runtimeEnv, connection);
+		documents = createDocumentManager(context.server.runtimeEnv, connection);
 
 		if (options.l10n) {
 			await l10n.config({ uri: options.l10n.location });
@@ -162,8 +162,8 @@ export function startLanguageServerBase<Plugin extends BasicServerPlugin>(
 		});
 		context.server.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
 
-		(await import('./features/customFeatures.js')).register(connection, projectProvider, context.server.runtimeEnv);
-		(await import('./features/languageFeatures.js')).register(
+		(await import('./register/registerEditorFeatures.js')).registerEditorFeatures(connection, projectProvider, context.server.runtimeEnv);
+		(await import('./register/registerLanguageFeatures.js')).registerLanguageFeatures(
 			connection,
 			projectProvider,
 			initParams,

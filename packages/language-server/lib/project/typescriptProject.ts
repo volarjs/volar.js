@@ -3,8 +3,8 @@ import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { TypeScriptServerPlugin, ServerProject } from '../types';
-import { loadConfig } from '../common/utils/serverConfig';
-import { UriMap, createUriMap } from '../common/utils/uriMap';
+import { loadConfig } from '../config';
+import { UriMap, createUriMap } from '../utils/uriMap';
 import { createSys } from '@volar/typescript';
 import { WorkspacesContext } from './basicProjectProvider';
 

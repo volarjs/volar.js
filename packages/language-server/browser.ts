@@ -1,12 +1,12 @@
 import * as vscode from 'vscode-languageserver/browser';
-import { startLanguageServerBase } from './lib/common/server';
+import { startLanguageServerBase } from './lib/server';
 import { BasicServerPlugin, ServerProjectProvider } from './lib/types';
-import httpSchemaRequestHandler from './lib/common/schemaRequestHandlers/http';
+import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { URI } from 'vscode-uri';
 import { FsReadFileRequest, FsReadDirectoryRequest, FsStatRequest } from './protocol';
 import { FileType } from '@volar/language-service';
-import { createBasicProjectProvider, type WorkspacesContext } from './lib/typescriptServer/basicProjectProvider';
-import { createTypeScriptProjectProvider } from './lib/typescriptServer/typescriptProjectProvider';
+import { createBasicProjectProvider, type WorkspacesContext } from './lib/project/basicProjectProvider';
+import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
 
 export * from './index';
 
