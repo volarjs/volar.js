@@ -15,7 +15,7 @@ export interface WorkspacesContext extends ServerContext {
 		initOptions: InitializationOptions;
 		ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 		tsLocalized: ts.MapLike<string> | undefined;
-		workspaceFolderManager: WorkspaceFolderManager;
+		workspaceFolders: WorkspaceFolderManager;
 		documents: ReturnType<typeof createDocumentManager>;
 		reloadDiagnostics(): void;
 		updateDiagnosticsAndSemanticTokens(): void;
@@ -29,7 +29,7 @@ export function createBasicProjectProvider(context: WorkspacesContext, plugins: 
 	return {
 		async getProject(uri) {
 
-			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolderManager, context.server.runtimeEnv.uriToFileName);
+			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolders, context.server.runtimeEnv.uriToFileName);
 
 			let project = projects.get(workspaceFolder);
 			if (!project) {

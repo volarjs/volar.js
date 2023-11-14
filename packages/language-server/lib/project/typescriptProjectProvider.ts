@@ -48,7 +48,7 @@ export function createTypeScriptProjectProvider(
 		}
 	});
 
-	context.workspaces.workspaceFolderManager.onDidRemove(folder => {
+	context.workspaces.workspaceFolders.onDidRemove(folder => {
 		for (const uri of configProjects.uriKeys()) {
 			const project = configProjects.uriGet(uri)!;
 			project.then(project => {
@@ -68,7 +68,7 @@ export function createTypeScriptProjectProvider(
 					return await getOrCreateConfiguredProject(tsconfig);
 				}
 			}
-			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolderManager, uriToFileName);
+			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolders, uriToFileName);
 			return await getOrCreateInferredProject(uri, workspaceFolder);
 		},
 		async getProjects() {
@@ -227,7 +227,7 @@ export function createTypeScriptProjectProvider(
 		tsconfig = tsconfig.replace(/\\/g, '/');
 		let projectPromise = configProjects.pathGet(tsconfig);
 		if (!projectPromise) {
-			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaces.workspaceFolderManager, uriToFileName);
+			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaces.workspaceFolders, uriToFileName);
 			projectPromise = createTypeScriptServerProject(tsconfig, context, plugins, workspaceFolder);
 			configProjects.pathSet(tsconfig, projectPromise);
 		}

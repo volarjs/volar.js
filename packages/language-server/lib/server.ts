@@ -148,7 +148,7 @@ export function startLanguageServerBase<Plugin extends BasicServerPlugin>(
 				tsLocalized,
 				initOptions: options,
 				documents,
-				workspaceFolderManager,
+				workspaceFolders: workspaceFolderManager,
 				reloadDiagnostics,
 				updateDiagnosticsAndSemanticTokens,
 			},
