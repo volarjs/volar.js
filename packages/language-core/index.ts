@@ -1,4 +1,4 @@
-export * from './lib/virtualFiles';
-export * from './lib/languageContext';
-export * from './lib/sourceMaps';
+export * from './lib/createFileProvider';
+export * from './lib/createTypeScriptProject';
+export * from './lib/mirrorMap';
 export * from './lib/types';

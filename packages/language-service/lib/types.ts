@@ -1,8 +1,8 @@
-import { Language, ProjectHost, VirtualFiles } from '@volar/language-core';
+import type { Language, Project } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import { URI } from 'vscode-uri';
-import { DocumentsAndSourceMaps } from './documents';
+import type { DocumentProvider } from './documents';
+import type { URI } from 'vscode-uri';
 
 export type * from 'vscode-languageserver-protocol';
 
@@ -10,17 +10,19 @@ export interface SharedModules {
 	typescript?: typeof import('typescript/lib/tsserverlibrary');
 }
 
-export interface ServiceEnvironment {
-
+export interface ServiceEnvironment extends RuntimeEnvironment {
+	workspaceFolder: {
+		name: string;
+		uri: URI;
+	};
 	locale?: string;
-	workspaceUri: URI;
-	rootUri: URI;
 	clientCapabilities?: vscode.ClientCapabilities;
 	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>;
 	onDidChangeConfiguration?(cb: () => void): vscode.Disposable;
 	onDidChangeWatchedFiles?(cb: (params: vscode.DidChangeWatchedFilesParams) => void): vscode.Disposable;
+}
 
-	// RuntimeEnvironment
+export interface RuntimeEnvironment {
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
 	fs?: FileSystem;
@@ -60,11 +62,8 @@ interface Command<T> {
 }
 
 export interface ServiceContext<Provide = any> {
-	project: {
-		host: ProjectHost;
-		virtualFiles: VirtualFiles;
-	};
 	env: ServiceEnvironment;
+	project: Project;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
 	getTextDocument(uri: string): TextDocument | undefined;
 	commands: {
@@ -72,7 +71,7 @@ export interface ServiceContext<Provide = any> {
 		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;
 		setSelection: Command<(position: vscode.Position) => vscode.Command | undefined>;
 	};
-	documents: DocumentsAndSourceMaps;
+	documents: DocumentProvider;
 	rules: { [id: string]: Rule; };
 	services: { [id: string]: ReturnType<Service>; };
 	ruleFixes?: {

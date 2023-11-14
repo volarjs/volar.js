@@ -118,7 +118,6 @@ type CacheMap = Map<
 		string,
 		{
 			documentVersion: number,
-			projectVersion: number | string | undefined,
 			errors: vscode.Diagnostic[] | undefined | null,
 		}
 	>
@@ -168,7 +167,7 @@ export function register(context: ServiceContext) {
 			syntax_rules: { errors: [] },
 			format_rules: { errors: [] },
 		}).get(uri)!;
-		const newSnapshot = context.project.host.getScriptSnapshot(context.env.uriToFileName(uri));
+		const newSnapshot = context.project.fileProvider.getSource(context.env.uriToFileName(uri))?.snapshot;
 
 		let updateCacheRangeFailed = false;
 		let errorsUpdated = false;
@@ -262,17 +261,9 @@ export function register(context: ServiceContext) {
 
 					const pluginCache = cacheMap.get(ruleId) ?? cacheMap.set(ruleId, new Map()).get(ruleId)!;
 					const cache = pluginCache.get(lintDocument.uri);
-					const projectVersion = (ruleType === RuleType.Semantic) ? context.project.host.getProjectVersion?.() : undefined;
 
-					if (ruleType === RuleType.Semantic) {
-						if (cache && cache.documentVersion === lintDocument.version && cache.projectVersion === projectVersion) {
-							return cache.errors;
-						}
-					}
-					else {
-						if (cache && cache.documentVersion === lintDocument.version) {
-							return cache.errors;
-						}
+					if (ruleType !== RuleType.Semantic && cache && cache.documentVersion === lintDocument.version) {
+						return cache.errors;
 					}
 
 					const reportResults: Parameters<RuleContext['report']>[] = [];
@@ -321,7 +312,6 @@ export function register(context: ServiceContext) {
 					pluginCache.set(lintDocument.uri, {
 						documentVersion: lintDocument.version,
 						errors,
-						projectVersion,
 					});
 
 					return errors;
@@ -364,17 +354,9 @@ export function register(context: ServiceContext) {
 					const serviceId = Object.keys(context.services).find(key => context.services[key] === service)!;
 					const serviceCache = cacheMap.get(serviceId) ?? cacheMap.set(serviceId, new Map()).get(serviceId)!;
 					const cache = serviceCache.get(document.uri);
-					const projectVersion = api === 'provideSemanticDiagnostics' ? context.project.host.getProjectVersion?.() : undefined;
 
-					if (api === 'provideSemanticDiagnostics') {
-						if (cache && cache.documentVersion === document.version && cache.projectVersion === projectVersion) {
-							return cache.errors;
-						}
-					}
-					else {
-						if (cache && cache.documentVersion === document.version) {
-							return cache.errors;
-						}
+					if (api !== 'provideSemanticDiagnostics' && cache && cache.documentVersion === document.version) {
+						return cache.errors;
 					}
 
 					const errors = await service[api]?.(document, token);
@@ -399,7 +381,6 @@ export function register(context: ServiceContext) {
 					serviceCache.set(document.uri, {
 						documentVersion: document.version,
 						errors,
-						projectVersion,
 					});
 
 					return errors;

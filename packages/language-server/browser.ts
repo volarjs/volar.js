@@ -1,10 +1,12 @@
 import * as vscode from 'vscode-languageserver/browser';
-import { startCommonLanguageServer } from './lib/common/server';
-import { LanguageServerPlugin } from './lib/types';
+import { startLanguageServerBase } from './lib/common/server';
+import { BasicServerPlugin, ServerProjectProvider } from './lib/types';
 import httpSchemaRequestHandler from './lib/common/schemaRequestHandlers/http';
 import { URI } from 'vscode-uri';
 import { FsReadFileRequest, FsReadDirectoryRequest, FsStatRequest } from './protocol';
 import { FileType } from '@volar/language-service';
+import { createBasicProjectProvider, type WorkspacesContext } from './lib/typescriptServer/basicProjectProvider';
+import { createTypeScriptProjectProvider } from './lib/typescriptServer/typescriptProjectProvider';
 
 export * from './index';
 
@@ -17,9 +19,34 @@ export function createConnection() {
 	return connection;
 }
 
-export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
+export function startBasicLanguageServer(
+	connection: vscode.Connection,
+	...plugins: BasicServerPlugin[]
+) {
+	return _startLanguageServer(
+		connection,
+		createBasicProjectProvider,
+		...plugins,
+	);
+}
 
-	startCommonLanguageServer(connection, plugins, () => ({
+export function startTypeScriptLanguageServer(
+	connection: vscode.Connection,
+	...plugins: BasicServerPlugin[]
+) {
+	return _startLanguageServer(
+		connection,
+		createTypeScriptProjectProvider,
+		...plugins,
+	);
+}
+
+function _startLanguageServer(
+	connection: vscode.Connection,
+	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<BasicServerPlugin>[]) => ServerProjectProvider,
+	...plugins: BasicServerPlugin[]
+) {
+	startLanguageServerBase(connection, plugins, createProjectProvider, () => ({
 		uriToFileName,
 		fileNameToUri,
 		console: connection.console,

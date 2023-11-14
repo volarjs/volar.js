@@ -5,6 +5,7 @@ import {
 	type ServiceEnvironment,
 	type SharedModules,
 	type LanguageService,
+	Project,
 } from '@volar/language-service';
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -12,10 +13,12 @@ import { URI } from 'vscode-uri';
 
 export function createServiceEnvironment(): ServiceEnvironment {
 	return {
+		workspaceFolder: {
+			uri: URI.file('/'),
+			name: '',
+		},
 		uriToFileName: uri => URI.parse(uri).fsPath.replace(/\\/g, '/'),
 		fileNameToUri: fileName => URI.file(fileName).toString(),
-		workspaceUri: URI.file('/'),
-		rootUri: URI.file('/'),
 		console,
 	};
 }
@@ -23,7 +26,6 @@ export function createServiceEnvironment(): ServiceEnvironment {
 export function createProjectHost(
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
 	env: ServiceEnvironment,
-	rootPath: string,
 	compilerOptions: ts.CompilerOptions = {}
 ): TypeScriptProjectHost {
 
@@ -32,8 +34,10 @@ export function createProjectHost(
 	const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 	const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
 	const host: TypeScriptProjectHost = {
-		workspacePath: rootPath,
-		rootPath: rootPath,
+		configFileName: undefined,
+		getCurrentDirectory() {
+			return env.uriToFileName(env.workspaceFolder.uri.toString(true));
+		},
 		getProjectVersion() {
 			const models = getMirrorModels();
 			if (modelVersions.size === getMirrorModels().length) {
@@ -80,16 +84,16 @@ export function createProjectHost(
 export function createLanguageService<T = {}>(
 	modules: SharedModules,
 	env: ServiceEnvironment,
+	project: Project,
 	config: Config,
-	host: TypeScriptProjectHost,
 	extraApis: T = {} as any,
 ): LanguageService & T {
 
 	const languageService = _createLanguageService(
 		modules,
 		env,
+		project,
 		config,
-		host,
 	);
 
 	class InnocentRabbit { };

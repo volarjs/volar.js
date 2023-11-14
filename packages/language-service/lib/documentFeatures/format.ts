@@ -32,7 +32,7 @@ export function register(context: ServiceContext) {
 		};
 
 		const source = context.documents.getSourceByUri(document.uri);
-		if (!source) {
+		if (!source?.language || !source.root) {
 			return onTypeParams
 				? (await tryFormat(document, onTypeParams.position, onTypeParams.ch))?.edits
 				: (await tryFormat(document, range, undefined))?.edits;
@@ -70,7 +70,7 @@ export function register(context: ServiceContext) {
 				if (onTypeParams && !isCodeBlock)
 					continue;
 
-				const docMap = createDocMap(file, source.fileName, tempSourceSnapshot);
+				const docMap = createDocMap(file, source.fileName, tempSourceSnapshot, source.languageId);
 				if (!docMap) continue;
 
 				let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
@@ -144,7 +144,7 @@ export function register(context: ServiceContext) {
 							virtualFile = file;
 						}
 					});
-					const docMap = createDocMap(virtualFile, source.fileName, tempSourceSnapshot);
+					const docMap = createDocMap(virtualFile, source.fileName, tempSourceSnapshot, source.languageId);
 					if (!docMap) continue;
 
 					const indentSensitiveLines = new Set<number>();
@@ -272,7 +272,7 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function createDocMap(file: VirtualFile, _sourceFileName: string, _sourceSnapshot: ts.IScriptSnapshot) {
+	function createDocMap(file: VirtualFile, _sourceFileName: string, _sourceSnapshot: ts.IScriptSnapshot, sourceLanguageId: string | undefined) {
 		const maps = updateVirtualFileMaps(file, (sourceFileName) => {
 			if (!sourceFileName) {
 				return [_sourceFileName, _sourceSnapshot];
@@ -282,8 +282,18 @@ export function register(context: ServiceContext) {
 			const [_, map] = maps.get(_sourceFileName)!;
 			const version = fakeVersion++;
 			return new SourceMapWithDocuments(
-				TextDocument.create(context.env.fileNameToUri(_sourceFileName), context.project.host.getLanguageId?.(_sourceFileName) ?? resolveCommonLanguageId(context.env.fileNameToUri(_sourceFileName)), version, _sourceSnapshot.getText(0, _sourceSnapshot.getLength())),
-				TextDocument.create(context.env.fileNameToUri(file.fileName), context.project.host.getLanguageId?.(file.fileName) ?? resolveCommonLanguageId(context.env.fileNameToUri(file.fileName)), version, file.snapshot.getText(0, file.snapshot.getLength())),
+				TextDocument.create(
+					context.env.fileNameToUri(_sourceFileName),
+					sourceLanguageId ?? resolveCommonLanguageId(context.env.fileNameToUri(_sourceFileName)),
+					version,
+					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
+				),
+				TextDocument.create(
+					context.env.fileNameToUri(file.fileName),
+					file.languageId,
+					version,
+					file.snapshot.getText(0, file.snapshot.getLength())
+				),
 				map,
 			);
 		}

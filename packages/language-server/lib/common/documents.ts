@@ -3,7 +3,7 @@ import * as vscode from 'vscode-languageserver';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { createUriMap } from './utils/uriMap';
 import type * as _ from 'vscode-uri';
-import { RuntimeEnvironment } from '../types';
+import { ServerRuntimeEnvironment } from '../types';
 
 interface IncrementalScriptSnapshotChange {
 	applied: boolean,
@@ -181,7 +181,7 @@ function _combineContinuousChangeRanges(a: ts.TextChangeRange, b: ts.TextChangeR
 }
 
 export function createDocuments(
-	env: RuntimeEnvironment,
+	env: ServerRuntimeEnvironment,
 	connection: vscode.Connection,
 ) {
 

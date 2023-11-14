@@ -3,7 +3,7 @@ import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { DocumentsAndSourceMaps } from '../documents';
+import { DocumentProvider } from '../documents';
 import { FileRangeCapabilities } from '@volar/language-core';
 import { NoneCancellationToken } from '../utils/cancellation';
 
@@ -183,7 +183,7 @@ export function mergeWorkspaceEdits(original: vscode.WorkspaceEdit, ...others: v
 
 export function embeddedEditToSourceEdit(
 	tsResult: vscode.WorkspaceEdit,
-	documents: DocumentsAndSourceMaps,
+	documents: DocumentProvider,
 	mode: 'fileName' | 'rename' | 'codeAction' | 'format',
 	versions: Record<string, number> = {},
 ) {

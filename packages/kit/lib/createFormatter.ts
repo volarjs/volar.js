@@ -1,99 +1,38 @@
-import { Config, FormattingOptions, TypeScriptProjectHost, createLanguageService } from '@volar/language-service';
+import { Config, FormattingOptions, ServiceEnvironment, createFileProvider, createLanguageService } from '@volar/language-service';
+import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { URI } from 'vscode-uri';
-import { asPosix, defaultCompilerOptions, fileNameToUri, fs, getConfiguration, uriToFileName } from './utils';
+import createKitProject from './createKitProject';
 
 export function createFormatter(
+	env: ServiceEnvironment,
 	config: Config,
-	compilerOptions = defaultCompilerOptions
+	project = createKitProject(config)
 ) {
 
-	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
+	let fakeUri = 'file:///dummy.txt';
+	let fakeFileName = '/dummy.txt';
 
-	let settings = {} as any;
-	let dummyScriptUri = 'file:///dummy.txt';
-	let fakeScriptFileName = '/dummy.txt';
-	let fakeScriptSnapshot = ts.ScriptSnapshot.fromString('');
-	let fakeScriptLanguageId: string | undefined;
-
+	const fileProvider = createFileProvider(Object.values(config.languages ?? {}), () => { });
 	const service = createLanguageService(
-		{ typescript: ts },
-		{
-			workspaceUri: URI.file('/'),
-			rootUri: URI.file('/'),
-			uriToFileName: uri => {
-				if (uri.startsWith(dummyScriptUri))
-					return uri.replace(dummyScriptUri, fakeScriptFileName);
-				return uriToFileName(uri);
-			},
-			fileNameToUri: fileName => {
-				if (fileName.startsWith(fakeScriptFileName))
-					return fileName.replace(fakeScriptFileName, dummyScriptUri);
-				return fileNameToUri(fileName);
-			},
-			getConfiguration: section => getConfiguration(settings, section),
-			fs,
-			console,
-		},
+		{ typescript: ts as any },
+		env,
+		project,
 		config,
-		createProjectHost(),
 	);
 
-	return {
-		formatFile,
-		formatCode,
-		get settings() {
-			return settings;
-		},
-		set settings(newValue) {
-			settings = newValue;
-		},
-	};
-
-	async function formatFile(fileName: string, options: FormattingOptions): Promise<string> {
-		fileName = asPosix(fileName);
-		const uri = fileNameToUri(fileName);
-		const document = service.context.getTextDocument(uri);
-		if (!document) throw `file not found: ${fileName}`;
-		const edits = await service.format(uri, options, undefined, undefined);
-		if (edits?.length) {
-			const newString = TextDocument.applyEdits(document, edits);
-			return newString;
-		}
-		return document.getText();
-	}
+	return { formatCode };
 
 	async function formatCode(content: string, languageId: string, options: FormattingOptions): Promise<string> {
-		fakeScriptSnapshot = ts.ScriptSnapshot.fromString(content);
-		fakeScriptLanguageId = languageId;
-		const document = service.context.getTextDocument(dummyScriptUri)!;
-		const edits = await service.format(dummyScriptUri, options, undefined, undefined);
+
+		fileProvider.updateSource(fakeFileName, ts.ScriptSnapshot.fromString(content), languageId);
+
+		const document = service.context.getTextDocument(fakeUri)!;
+		const edits = await service.format(fakeUri, options, undefined, undefined);
 		if (edits?.length) {
 			const newString = TextDocument.applyEdits(document, edits);
 			return newString;
 		}
-		return content;
-	}
 
-	function createProjectHost() {
-		let projectVersion = 0;
-		const host: TypeScriptProjectHost = {
-			workspacePath: '/',
-			rootPath: '/',
-			getCompilationSettings: () => compilerOptions,
-			getProjectVersion: () => (projectVersion++).toString(),
-			getScriptFileNames: () => fakeScriptSnapshot ? [fakeScriptFileName] : [],
-			getScriptSnapshot: (fileName) => {
-				if (fileName === fakeScriptFileName) {
-					return fakeScriptSnapshot;
-				}
-			},
-			getLanguageId: fileName => {
-				if (fileName === fakeScriptFileName) {
-					return fakeScriptLanguageId;
-				}
-			},
-		};
-		return host;
+		return content;
 	}
 }

@@ -3,27 +3,27 @@ import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../../protocol';
-import { RuntimeEnvironment } from '../../types';
-import type { Workspaces } from '../workspaces';
+import { ServerProjectProvider, ServerRuntimeEnvironment } from '../../types';
 
 export function register(
 	connection: vscode.Connection,
-	workspaces: Workspaces,
-	env: RuntimeEnvironment,
+	projectProvider: ServerProjectProvider,
+	env: ServerRuntimeEnvironment,
 ) {
 
 	const scriptVersions = new Map<string, number>();
 	const scriptVersionSnapshots = new WeakSet<ts.IScriptSnapshot>();
 
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
-		const project = await workspaces.getProject(params.uri);
-		if (typeof project.tsConfig === 'string') {
-			return { uri: env.fileNameToUri(project.tsConfig) };
+		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
+		const projectHost = languageService.context.project.typeScriptProjectHost;
+		if (projectHost?.configFileName) {
+			return { uri: env.fileNameToUri(projectHost.configFileName) };
 		}
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
-		const project = await workspaces.getProject(document.uri);
-		const file = project.getLanguageService()?.context.project.virtualFiles.getSource(env.uriToFileName(document.uri))?.root;
+		const languageService = (await projectProvider.getProject(document.uri)).getLanguageService();
+		const file = languageService.context.project.fileProvider.getSource(env.uriToFileName(document.uri))?.root;
 		return file ? prune(file) : undefined;
 
 		function prune(file: VirtualFile): VirtualFile {
@@ -43,50 +43,51 @@ export function register(
 		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
-		const project = await workspaces.getProject(params.sourceFileUri);
-		const service = project.getLanguageService();
-		if (service) {
-			let content: string = '';
-			let codegenStacks: Stack[] = [];
-			const mappings: Record<string, Mapping<FileRangeCapabilities>[]> = {};
-			for (const [file, map] of service.context.documents.getMapsByVirtualFileName(params.virtualFileName)) {
-				content = map.virtualFileDocument.getText();
-				codegenStacks = file.codegenStacks;
-				mappings[map.sourceFileDocument.uri] = map.map.mappings;
-			}
-			return {
-				content,
-				mappings,
-				codegenStacks,
-			};
+		const languageService = (await projectProvider.getProject(params.sourceFileUri)).getLanguageService();
+		let content: string = '';
+		let codegenStacks: Stack[] = [];
+		const mappings: Record<string, Mapping<FileRangeCapabilities>[]> = {};
+		for (const [file, map] of languageService.context.documents.getMapsByVirtualFileName(params.virtualFileName)) {
+			content = map.virtualFileDocument.getText();
+			codegenStacks = file.codegenStacks;
+			mappings[map.sourceFileDocument.uri] = map.map.mappings;
 		}
+		return {
+			content,
+			mappings,
+			codegenStacks,
+		};
 	});
 	connection.onNotification(ReloadProjectNotification.type, () => {
-		workspaces.reloadProjects();
+		projectProvider.reloadProjects();
 	});
 	connection.onNotification(WriteVirtualFilesNotification.type, async params => {
 
 		const fsModeName = 'fs'; // avoid bundle
 		const fs: typeof import('fs') = await import(fsModeName);
-		const project = await workspaces.getProject(params.uri);
+		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
 
-		const ls = project.getLanguageServiceDontCreate();
-		if (ls) {
-			const rootPath = ls.context.env.uriToFileName(ls.context.env.rootUri.toString());
-			for (const { root } of ls.context.project.virtualFiles.allSources()) {
-				forEachEmbeddedFile(root, virtualFile => {
-					if (virtualFile.kind === FileKind.TypeScriptHostFile) {
-						if (virtualFile.fileName.startsWith(rootPath)) {
-							const snapshot = virtualFile.snapshot;
-							fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
+		// global virtual files
+		if (languageService.context.project.typeScriptProjectHost) {
+
+			const rootPath = languageService.context.project.typeScriptProjectHost.getCurrentDirectory();
+
+			for (const [fileName] of languageService.context.project.fileProvider.sourceFiles) {
+				const source = languageService.context.project.fileProvider.getSource(fileName);
+				if (source?.root) {
+					forEachEmbeddedFile(source.root, virtualFile => {
+						if (virtualFile.kind === FileKind.TypeScriptHostFile) {
+							if (virtualFile.fileName.startsWith(rootPath)) {
+								const snapshot = virtualFile.snapshot;
+								fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
+							}
 						}
-					}
-				});
+					});
+				}
 			}
-			// global virtual files
-			for (const fileName of ls.context.project.host.getScriptFileNames()) {
+			for (const fileName of languageService.context.project.typeScriptProjectHost.getScriptFileNames()) {
 				if (!fs.existsSync(fileName)) {
-					const snapshot = ls.context.project.host.getScriptSnapshot(fileName);
+					const snapshot = languageService.context.project.typeScriptProjectHost.getScriptSnapshot(fileName);
 					if (snapshot) {
 						fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
 					}
@@ -101,13 +102,12 @@ export function register(
 			size: number;
 		}>();
 
-		for (const _project of [...workspaces.configProjects.values(), ...workspaces.inferredProjects.values()]) {
-			const project = await _project;
-			const service = project.getLanguageServiceDontCreate();
-			const languageService: ts.LanguageService | undefined = service?.context.inject('typescript/languageService');
-			const program = languageService?.getProgram();
-			if (program) {
-				const projectName = typeof project.tsConfig === 'string' ? project.tsConfig : (project.languageHost.workspacePath + '(inferred)');
+		for (const project of await projectProvider.getProjects()) {
+			const languageService = project.getLanguageService();
+			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject('typescript/languageService');
+			const program = tsLanguageService?.getProgram();
+			if (program && languageService.context.project.typeScriptProjectHost) {
+				const projectName = languageService.context.project.typeScriptProjectHost.configFileName ?? (languageService.context.project.typeScriptProjectHost.getCurrentDirectory() + '(inferred)');
 				const sourceFiles = program?.getSourceFiles() ?? [];
 				for (const sourceFile of sourceFiles) {
 					if (!sourceFilesData.has(sourceFile)) {

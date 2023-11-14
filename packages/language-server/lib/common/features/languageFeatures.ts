@@ -1,17 +1,16 @@
 import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../../protocol';
-import type { Workspaces } from '../workspaces';
-import { RuntimeEnvironment, InitializationOptions, ServerMode } from '../../types';
+import { ServerRuntimeEnvironment, InitializationOptions, ServerMode, ServerProjectProvider } from '../../types';
 import { createDocuments } from '../documents';
 
 export function register(
 	connection: vscode.Connection,
-	workspaces: Workspaces,
+	projectProvider: ServerProjectProvider,
 	initParams: vscode.InitializeParams,
 	initOptions: InitializationOptions,
 	semanticTokensLegend: vscode.SemanticTokensLegend,
-	runtime: RuntimeEnvironment,
+	runtime: ServerRuntimeEnvironment,
 	documents: ReturnType<typeof createDocuments>,
 ) {
 
@@ -216,20 +215,13 @@ export function register(
 	connection.onWorkspaceSymbol(async (params, token) => {
 
 		let results: vscode.WorkspaceSymbol[] = [];
-		let projects = [...workspaces.configProjects.values()];
 
-		if (!projects.length) {
-			projects = [...workspaces.inferredProjects.values()];
-		}
-
-		for (const project of projects) {
+		for (const project of await projectProvider.getProjects()) {
 
 			if (token.isCancellationRequested)
 				return;
 
-			const service = (await project).getLanguageService();
-
-			results = results.concat(await service.findWorkspaceSymbols(params.query, token));
+			results = results.concat(await project.getLanguageService().findWorkspaceSymbols(params.query, token));
 		}
 
 		return results;
@@ -336,30 +328,21 @@ export function register(
 					resolve(undefined);
 					return;
 				}
-				const project = await getProject(uri);
-				if (project) {
-					const service = project.getLanguageService();
-					try { // handle TS cancel throw
-						const result = await cb(service);
-						if (token.isCancellationRequested) {
-							resolve(undefined);
-							return;
-						}
-						resolve(result);
-					}
-					catch {
+				const languageService = (await projectProvider.getProject(uri)).getLanguageService();
+				try { // handle TS cancel throw
+					const result = await cb(languageService);
+					if (token.isCancellationRequested) {
 						resolve(undefined);
 						return;
 					}
+					resolve(result);
 				}
-				else {
+				catch {
 					resolve(undefined);
+					return;
 				}
 			});
 		});
-	}
-	async function getProject(uri: string) {
-		return await workspaces.getProject(uri);
 	}
 	function fixTextEdit(item: vscode.CompletionItem) {
 		const insertReplaceSupport = initParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;

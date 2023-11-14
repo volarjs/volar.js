@@ -1,19 +1,17 @@
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { MirrorMap } from './sourceMaps';
+import { MirrorMap } from './mirrorMap';
 import type { FileRangeCapabilities, Language, VirtualFile } from './types';
-
-export type VirtualFiles = ReturnType<typeof createVirtualFiles>;
 
 export interface Source {
 	fileName: string;
 	languageId: string | undefined;
 	snapshot: ts.IScriptSnapshot;
-	root: VirtualFile;
-	language: Language;
+	root?: VirtualFile;
+	language?: Language;
 }
 
-export function createVirtualFiles(languages: Language[]) {
+export function createFileProvider(languages: Language[], sync: (fileName: string) => void) {
 
 	const sourceFiles = new Map<string, Source>();
 	const virtualFiles = new Map<string, { virtualFile: VirtualFile, source: Source; }>();
@@ -21,9 +19,7 @@ export function createVirtualFiles(languages: Language[]) {
 	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, MirrorMap | undefined>();
 
 	return {
-		allSources() {
-			return Array.from(sourceFiles.values());
-		},
+		sourceFiles,
 		updateSource(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): VirtualFile | undefined {
 			const key = normalizePath(fileName);
 			const value = sourceFiles.get(key);
@@ -33,12 +29,17 @@ export function createVirtualFiles(languages: Language[]) {
 					this.deleteSource(fileName);
 					return this.updateSource(fileName, snapshot, languageId);
 				}
-				else {
+				else if (value.snapshot !== snapshot) {
 					value.snapshot = snapshot;
-					deleteVirtualFiles(value);
-					value.language.updateVirtualFile(value.root, snapshot);
-					updateVirtualFiles(value);
+					if (value.root && value.language) {
+						deleteVirtualFiles(value);
+						value.language.updateVirtualFile(value.root, snapshot);
+						updateVirtualFiles(value);
+					}
 					return value.root; // updated
+				}
+				else {
+					return value.root; // no change
 				}
 			}
 			for (const language of languages) {
@@ -50,27 +51,59 @@ export function createVirtualFiles(languages: Language[]) {
 					return virtualFile; // created
 				}
 			}
+			sourceFiles.set(key, { fileName, languageId, snapshot });
 		},
 		deleteSource(fileName: string) {
 			const key = normalizePath(fileName);
 			const value = sourceFiles.get(key);
 			if (value) {
-				value.language.deleteVirtualFile?.(value.root);
+				if (value.language && value.root) {
+					value.language.deleteVirtualFile?.(value.root);
+				}
 				sourceFiles.delete(key); // deleted
 				deleteVirtualFiles(value);
 			}
 		},
+		getMirrorMap(file: VirtualFile) {
+			if (!virtualFileToMirrorMap.has(file.snapshot)) {
+				virtualFileToMirrorMap.set(file.snapshot, file.mirrorBehaviorMappings ? new MirrorMap(file.mirrorBehaviorMappings) : undefined);
+			}
+			return virtualFileToMirrorMap.get(file.snapshot);
+		},
+		getMaps(virtualFile: VirtualFile) {
+
+			if (!virtualFileMaps.has(virtualFile.snapshot)) {
+				virtualFileMaps.set(virtualFile.snapshot, new Map());
+			}
+
+			updateVirtualFileMaps(virtualFile, sourceFileName => {
+				if (sourceFileName) {
+					const source = sourceFiles.get(normalizePath(sourceFileName))!;
+					return [sourceFileName, source.snapshot];
+				}
+				else {
+					const source = virtualFiles.get(normalizePath(virtualFile.fileName))!.source;
+					return [source.fileName, source.snapshot];
+				}
+			}, virtualFileMaps.get(virtualFile.snapshot));
+
+			return virtualFileMaps.get(virtualFile.snapshot)!;
+		},
 		getSource(fileName: string) {
+			sync(fileName);
 			const key = normalizePath(fileName);
 			return sourceFiles.get(key);
 		},
-		hasSource: (fileName: string) => sourceFiles.has(normalizePath(fileName)),
-		getMirrorMap: getMirrorMap,
-		getMaps: getMapsByVirtualFile,
+		hasSource(fileName: string) {
+			sync(fileName);
+			return sourceFiles.has(normalizePath(fileName));
+		},
 		hasVirtualFile(fileName: string) {
+			sync(fileName);
 			return !!virtualFiles.get(normalizePath(fileName));
 		},
 		getVirtualFile(fileName: string) {
+			sync(fileName);
 			const sourceAndVirtual = virtualFiles.get(normalizePath(fileName));
 			if (sourceAndVirtual) {
 				return [sourceAndVirtual.virtualFile, sourceAndVirtual.source] as const;
@@ -80,42 +113,19 @@ export function createVirtualFiles(languages: Language[]) {
 	};
 
 	function deleteVirtualFiles(source: Source) {
-		forEachEmbeddedFile(source.root, file => {
-			virtualFiles.delete(normalizePath(file.fileName));
-		});
+		if (source.root) {
+			forEachEmbeddedFile(source.root, file => {
+				virtualFiles.delete(normalizePath(file.fileName));
+			});
+		}
 	}
 
 	function updateVirtualFiles(source: Source) {
-		forEachEmbeddedFile(source.root, file => {
-			virtualFiles.set(normalizePath(file.fileName), { virtualFile: file, source });
-		});
-	}
-
-	function getMapsByVirtualFile(virtualFile: VirtualFile) {
-
-		if (!virtualFileMaps.has(virtualFile.snapshot)) {
-			virtualFileMaps.set(virtualFile.snapshot, new Map());
+		if (source.root) {
+			forEachEmbeddedFile(source.root, file => {
+				virtualFiles.set(normalizePath(file.fileName), { virtualFile: file, source });
+			});
 		}
-
-		updateVirtualFileMaps(virtualFile, sourceFileName => {
-			if (sourceFileName) {
-				const source = sourceFiles.get(normalizePath(sourceFileName))!;
-				return [sourceFileName, source.snapshot];
-			}
-			else {
-				const source = virtualFiles.get(normalizePath(virtualFile.fileName))!.source;
-				return [source.fileName, source.snapshot];
-			}
-		}, virtualFileMaps.get(virtualFile.snapshot));
-
-		return virtualFileMaps.get(virtualFile.snapshot)!;
-	}
-
-	function getMirrorMap(file: VirtualFile) {
-		if (!virtualFileToMirrorMap.has(file.snapshot)) {
-			virtualFileToMirrorMap.set(file.snapshot, file.mirrorBehaviorMappings ? new MirrorMap(file.mirrorBehaviorMappings) : undefined);
-		}
-		return virtualFileToMirrorMap.get(file.snapshot);
 	}
 }
 

@@ -1,8 +1,8 @@
-import { FileKind, VirtualFiles, forEachEmbeddedFile } from '@volar/language-core';
+import { FileKind, FileProvider, forEachEmbeddedFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function decorateLanguageServiceHost(
-	virtualFiles: VirtualFiles,
+	virtualFiles: FileProvider,
 	languageServiceHost: ts.LanguageServiceHost,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	exts: string[]

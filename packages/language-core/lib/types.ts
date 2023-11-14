@@ -1,5 +1,6 @@
 import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
+import { createFileProvider } from '..';
 
 export interface FileCapabilities {
 	diagnostic?: boolean;
@@ -77,6 +78,7 @@ export enum FileKind {
 export interface VirtualFile {
 	fileName: string,
 	snapshot: ts.IScriptSnapshot,
+	languageId: string,
 	kind: FileKind,
 	capabilities: FileCapabilities,
 	mappings: Mapping<FileRangeCapabilities>[],
@@ -85,28 +87,32 @@ export interface VirtualFile {
 	embeddedFiles: VirtualFile[],
 }
 
-export interface Language<T extends VirtualFile = VirtualFile, P extends ProjectHost = ProjectHost> {
-	resolveHost?(host: P): P;
+export interface Language<T extends VirtualFile = VirtualFile> {
 	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	deleteVirtualFile?(virtualFile: T): void;
+	resolveTypeScriptProjectHost?<T extends TypeScriptProjectHost>(host: T): T;
 }
 
-export interface ProjectHost {
-	workspacePath: string;
-	rootPath: string;
-	getProjectVersion(): string;
-	getScriptFileNames(): string[];
-	getScriptSnapshot(fileName: string): ts.IScriptSnapshot | undefined;
-	getLanguageId?(fileName: string): string | undefined;
-	getCancellationToken?(): ts.HostCancellationToken;
-}
-
-export interface TypeScriptProjectHost extends ProjectHost, Pick<
+export interface TypeScriptProjectHost extends Pick<
 	ts.LanguageServiceHost,
 	'getLocalizedDiagnosticMessages'
 	| 'getCompilationSettings'
 	| 'getProjectReferences'
+	| 'getCurrentDirectory'
+	| 'getScriptFileNames'
+	| 'getProjectVersion'
+	| 'getScriptSnapshot'
+	| 'getCancellationToken'
 > {
+	configFileName: string | undefined;
+	getLanguageId?(fileName: string): string | undefined;
 	resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string;
+}
+
+export type FileProvider = ReturnType<typeof createFileProvider>;
+
+export interface Project {
+	fileProvider: FileProvider;
+	typeScriptProjectHost?: TypeScriptProjectHost;
 }

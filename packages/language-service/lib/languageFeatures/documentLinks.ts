@@ -63,7 +63,7 @@ export function register(context: ServiceContext) {
 			arr => arr.flat(),
 		) ?? [];
 		const maps = context.documents.getMapsBySourceFileUri(uri);
-		const fictitiousLinks = maps ? getFictitiousLinks(context.documents.getDocumentByUri(maps.snapshot, uri), maps.maps) : [];
+		const fictitiousLinks = maps ? getFictitiousLinks(context.documents.getDocumentByUri(maps.snapshot, uri, undefined), maps.maps) : [];
 
 		return [
 			...pluginLinks,

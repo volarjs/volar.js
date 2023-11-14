@@ -2,10 +2,12 @@ import * as fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/common/schemaRequestHandlers/http';
-import { startCommonLanguageServer } from './lib/common/server';
-import { InitializationOptions, LanguageServerPlugin } from './lib/types';
+import { startLanguageServerBase } from './lib/common/server';
+import { InitializationOptions, BasicServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
 import { FileSystem, FileType } from '@volar/language-service';
 import { createGetCancellationToken } from './lib/node/cancellationPipe';
+import { WorkspacesContext, createBasicProjectProvider } from './lib/typescriptServer/basicProjectProvider';
+import { createTypeScriptProjectProvider } from './lib/typescriptServer/typescriptProjectProvider';
 
 export * from './index';
 
@@ -81,9 +83,34 @@ export function createConnection() {
 	return vscode.createConnection(vscode.ProposedFeatures.all);
 }
 
-export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
+export function startBasicLanguageServer(
+	connection: vscode.Connection,
+	...plugins: BasicServerPlugin[]
+) {
+	return _startLanguageServer(
+		connection,
+		createBasicProjectProvider,
+		...plugins,
+	);
+}
 
-	startCommonLanguageServer(connection, plugins, (_, options) => ({
+export function startTypeScriptLanguageServer(
+	connection: vscode.Connection,
+	...plugins: BasicServerPlugin[]
+) {
+	return _startLanguageServer(
+		connection,
+		createTypeScriptProjectProvider,
+		...plugins,
+	);
+}
+
+function _startLanguageServer(
+	connection: vscode.Connection,
+	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<TypeScriptServerPlugin>[]) => ServerProjectProvider,
+	...plugins: BasicServerPlugin[]
+) {
+	startLanguageServerBase(connection, plugins, createProjectProvider, (_, options) => ({
 		uriToFileName,
 		fileNameToUri,
 		console: connection.console,
@@ -128,6 +155,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			} catch { }
 		},
 		fs: createFs(options),
-		getCancellationToken: createGetCancellationToken(options.cancellationPipeName),
+		getCancellationToken: createGetCancellationToken(fs, options.cancellationPipeName),
 	}));
 }

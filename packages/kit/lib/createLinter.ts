@@ -1,40 +1,27 @@
-import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, ProjectHost, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
+import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { asPosix, fileNameToUri, fs, getConfiguration, uriToFileName } from './utils';
-import { URI } from 'vscode-uri';
+import createKitProject from './createKitProject';
+import { asPosix, fileNameToUri, uriToFileName } from './utils';
 
-export function createLinter(config: Config, projectHost: ProjectHost) {
+export function createLinter(
+	env: ServiceEnvironment,
+	config: Config,
+	project = createKitProject(config)
+) {
 
-	let settings = {} as any;
-
-	const ts = require('typescript') as typeof import('typescript/lib/tsserverlibrary');
 	const service = createLanguageService(
-		{ typescript: ts },
-		{
-			uriToFileName,
-			fileNameToUri,
-			workspaceUri: URI.parse(fileNameToUri(projectHost.workspacePath)),
-			rootUri: URI.parse(fileNameToUri(projectHost.rootPath)),
-			getConfiguration: section => getConfiguration(settings, section),
-			fs,
-			console,
-		},
+		{ typescript: ts as any },
+		env,
+		project,
 		config,
-		projectHost,
 	);
 
 	return {
+		env,
 		check,
 		fixErrors,
 		printErrors,
-		logErrors,
-		get settings() {
-			return settings;
-		},
-		set settings(newValue) {
-			settings = newValue;
-		},
 	};
 
 	function check(fileName: string) {
@@ -89,13 +76,6 @@ export function createLinter(config: Config, projectHost: ProjectHost) {
 			text = text.replace(`TS${diagnostic.code}`, (diagnostic.source ?? '') + (diagnostic.code ? `(${diagnostic.code})` : ''));
 		}
 		return text;
-	}
-
-	/**
-	 * @deprecated please use `printErrors()` instead of
-	 */
-	function logErrors(fileName: string, diagnostics: Diagnostic[], rootPath = process.cwd()) {
-		console.log(printErrors(fileName, diagnostics, rootPath));
 	}
 
 	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath: string) {
