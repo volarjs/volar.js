@@ -24,6 +24,9 @@ export function createFileProvider(languages: Language[], sync: (fileName: strin
 			const key = normalizePath(fileName);
 			const value = sourceFiles.get(key);
 			if (value) {
+				if (languageId === undefined && value.languageId !== undefined) {
+					languageId = value.languageId;
+				}
 				if (value.languageId !== languageId) {
 					// languageId changed
 					this.deleteSource(fileName);
