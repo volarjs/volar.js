@@ -1,4 +1,4 @@
-import type { FileKind, TypeScriptProjectHost, VirtualFile, FileProvider } from '@volar/language-core';
+import { type FileKind, type TypeScriptProjectHost, type VirtualFile, type FileProvider, resolveCommonLanguageId } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as path from 'path-browserify';
 import { matchFiles } from './typescript/utilities';
@@ -7,7 +7,6 @@ const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: We
 
 export function createLanguageServiceHost(
 	projectHost: TypeScriptProjectHost,
-	getLanguageId: (fileName: string) => string,
 	fileProvider: FileProvider,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	sys: ts.System & {
@@ -361,7 +360,7 @@ export function createLanguageServiceHost(
 			if (!fileProvider.hasSource(sourceFileName)) {
 				const scriptSnapshot = getScriptSnapshot(sourceFileName);
 				if (scriptSnapshot) {
-					fileProvider.updateSource(sourceFileName, scriptSnapshot, getLanguageId(sourceFileName));
+					fileProvider.updateSource(sourceFileName, scriptSnapshot, resolveCommonLanguageId(sourceFileName));
 				}
 			}
 		}

@@ -285,7 +285,7 @@ export function register(context: ServiceContext) {
 			return new SourceMapWithDocuments(
 				TextDocument.create(
 					context.env.fileNameToUri(_sourceFileName),
-					sourceLanguageId ?? resolveCommonLanguageId(context.env.fileNameToUri(_sourceFileName)),
+					sourceLanguageId ?? resolveCommonLanguageId(_sourceFileName),
 					version,
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),
