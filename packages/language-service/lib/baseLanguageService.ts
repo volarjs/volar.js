@@ -49,7 +49,7 @@ function createServiceContext(
 		env,
 		project,
 		inject: (key, ...args) => {
-			for (const service of Object.values(context.services)) {
+			for (const service of context.services) {
 				const provide = service.provide?.[key as any];
 				if (provide) {
 					return provide(...args as any);
@@ -186,10 +186,10 @@ export function createLanguageService(
 
 	return {
 
-		getTriggerCharacters: () => Object.values(context.services).map(service => service?.triggerCharacters ?? []).flat(),
-		getAutoFormatTriggerCharacters: () => Object.values(context.services).map(service => service?.autoFormatTriggerCharacters ?? []).flat(),
-		getSignatureHelpTriggerCharacters: () => Object.values(context.services).map(service => service?.signatureHelpTriggerCharacters ?? []).flat(),
-		getSignatureHelpRetriggerCharacters: () => Object.values(context.services).map(service => service?.signatureHelpRetriggerCharacters ?? []).flat(),
+		getTriggerCharacters: () => context.services.map(service => service.triggerCharacters ?? []).flat(),
+		getAutoFormatTriggerCharacters: () => context.services.map(service => service.autoFormatTriggerCharacters ?? []).flat(),
+		getSignatureHelpTriggerCharacters: () => context.services.map(service => service.signatureHelpTriggerCharacters ?? []).flat(),
+		getSignatureHelpRetriggerCharacters: () => context.services.map(service => service.signatureHelpRetriggerCharacters ?? []).flat(),
 
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),
@@ -225,7 +225,7 @@ export function createLanguageService(
 		getInlayHints: inlayHints.register(context),
 		doInlayHintResolve: inlayHintResolve.register(context),
 		callHierarchy: callHierarchy.register(context),
-		dispose: () => Object.values(context.services).forEach(service => service.dispose?.()),
+		dispose: () => context.services.forEach(service => service.dispose?.()),
 		context,
 	};
 }

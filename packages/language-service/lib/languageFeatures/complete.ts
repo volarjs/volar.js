@@ -124,7 +124,7 @@ export function register(context: ServiceContext) {
 
 				await visitEmbedded(context.documents, rootFile, async (_, map) => {
 
-					const services = Object.values(context.services).sort(sortServices);
+					const services = [...context.services].sort(sortServices);
 
 					let _data: FileRangeCapabilities | undefined;
 
@@ -201,7 +201,7 @@ export function register(context: ServiceContext) {
 
 			if (document = context.getTextDocument(uri)) {
 
-				const services = Object.values(context.services).sort(sortServices);
+				const services = [...context.services].sort(sortServices);
 
 				for (const service of services) {
 

@@ -149,7 +149,7 @@ export function register(context: ServiceContext) {
 
 					const indentSensitiveLines = new Set<number>();
 
-					for (const service of item.service.provideFormattingIndentSensitiveLines ? [item.service] : Object.values(context.services)) {
+					for (const service of item.service.provideFormattingIndentSensitiveLines ? [item.service] : context.services) {
 
 						if (token.isCancellationRequested)
 							break;
@@ -240,7 +240,7 @@ export function register(context: ServiceContext) {
 
 			let formatRange = range;
 
-			for (const service of Object.values(context.services)) {
+			for (const service of context.services) {
 
 				if (token.isCancellationRequested)
 					break;

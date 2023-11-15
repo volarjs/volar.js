@@ -220,7 +220,7 @@ export function register(context: ServiceContext) {
 			const errors = Object.values(lastResponse).flatMap(({ errors }) => errors);
 			errorMarkups[uri] = [];
 			for (const error of errors) {
-				for (const service of Object.values(context.services)) {
+				for (const service of context.services) {
 					const markup = await service.provideDiagnosticMarkupContent?.(error, token);
 					if (markup) {
 						errorMarkups[uri].push({ error, markup });
