@@ -100,7 +100,7 @@ export interface ServiceDiagnosticData {
 	version: number,
 	original: Pick<vscode.Diagnostic, 'data'>,
 	isFormat: boolean,
-	serviceId: string,
+	serviceIndex: number,
 	ruleFixIndex: number,
 	documentUri: string,
 }
@@ -112,7 +112,7 @@ interface Cache {
 }
 
 type CacheMap = Map<
-	number | string,
+	number,
 	Map<
 		string,
 		{
@@ -256,8 +256,8 @@ export function register(context: ServiceContext) {
 						}
 					}
 
-					const serviceId = Object.keys(context.services).find(key => context.services[key] === service)!;
-					const serviceCache = cacheMap.get(serviceId) ?? cacheMap.set(serviceId, new Map()).get(serviceId)!;
+					const serviceIndex = context.services.indexOf(service);
+					const serviceCache = cacheMap.get(serviceIndex) ?? cacheMap.set(serviceIndex, new Map()).get(serviceIndex)!;
 					const cache = serviceCache.get(document.uri);
 
 					if (api !== 'provideSemanticDiagnostics' && cache && cache.documentVersion === document.version) {
@@ -270,7 +270,7 @@ export function register(context: ServiceContext) {
 						error.data = {
 							uri,
 							version: newDocument!.version,
-							serviceId,
+							serviceIndex,
 							isFormat: false,
 							original: {
 								data: error.data,

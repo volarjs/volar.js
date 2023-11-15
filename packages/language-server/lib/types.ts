@@ -1,6 +1,11 @@
-import type { Config, Console, FileSystem, LanguageService, ServiceEnvironment, SharedModules } from '@volar/language-service';
+import type { Console, FileSystem, Language, LanguageService, Service, ServiceEnvironment, SharedModules } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
+
+export interface Config {
+	languages?: { [id: string]: Language; };
+	services?: { [id: string]: Service; };
+}
 
 export interface Timer {
 	setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;

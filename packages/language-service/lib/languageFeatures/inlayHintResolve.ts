@@ -9,7 +9,7 @@ export function register(context: ServiceContext) {
 
 		const data: InlayHintData | undefined = item.data;
 		if (data) {
-			const service = context.services[data.serviceId];
+			const service = context.services[data.serviceIndex];
 			if (!service.resolveInlayHint)
 				return item;
 

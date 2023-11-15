@@ -9,7 +9,7 @@ import { NoneCancellationToken } from '../utils/cancellation';
 export interface ServiceCompletionData {
 	uri: string;
 	original: Pick<vscode.CompletionItem, 'additionalTextEdits' | 'textEdit' | 'data'>;
-	serviceId: string;
+	serviceIndex: number;
 	virtualDocumentUri: string | undefined;
 }
 
@@ -73,7 +73,7 @@ export function register(context: ServiceContext) {
 										textEdit: oldItem.textEdit,
 										data: oldItem.data,
 									},
-									serviceId: Object.keys(context.services).find(key => context.services[key] === cacheData.service)!,
+									serviceIndex: context.services.indexOf(cacheData.service),
 									virtualDocumentUri: map.virtualFileDocument.uri,
 								} satisfies ServiceCompletionData,
 							);
@@ -100,7 +100,7 @@ export function register(context: ServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							serviceId: Object.keys(context.services).find(key => context.services[key] === cacheData.service)!,
+							serviceIndex: context.services.indexOf(cacheData.service),
 							virtualDocumentUri: undefined,
 						} satisfies ServiceCompletionData;
 					});
@@ -180,7 +180,7 @@ export function register(context: ServiceContext) {
 										textEdit: oldItem.textEdit,
 										data: oldItem.data,
 									},
-									serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+									serviceIndex: context.services.indexOf(service),
 									virtualDocumentUri: map.virtualFileDocument.uri,
 								} satisfies ServiceCompletionData,
 							);
@@ -241,7 +241,7 @@ export function register(context: ServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+							serviceIndex: context.services.indexOf(service),
 							virtualDocumentUri: undefined,
 						} satisfies ServiceCompletionData;
 					});

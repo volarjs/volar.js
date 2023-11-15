@@ -10,7 +10,7 @@ export function register(context: ServiceContext) {
 
 		const data: DocumentLinkData | undefined = item.data;
 		if (data) {
-			const service = context.services[data.serviceId];
+			const service = context.services[data.serviceIndex];
 			if (!service.resolveDocumentLink)
 				return item;
 

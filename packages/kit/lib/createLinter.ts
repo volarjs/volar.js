@@ -1,19 +1,19 @@
-import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, Project, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
+import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, Project, Service, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { asPosix, fileNameToUri, uriToFileName } from './utils';
 
 export function createLinter(
-	config: Config,
+	services: Service[],
 	env: ServiceEnvironment,
 	project: Project
 ) {
 
 	const service = createLanguageService(
 		{ typescript: ts as any },
+		services,
 		env,
 		project,
-		config,
 	);
 
 	return {

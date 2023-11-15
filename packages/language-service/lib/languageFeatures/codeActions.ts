@@ -12,7 +12,7 @@ export interface ServiceCodeActionData {
 	uri: string,
 	version: number,
 	original: Pick<vscode.CodeAction, 'data' | 'edit'>,
-	serviceId: string,
+	serviceIndex: number,
 }
 
 export function register(context: ServiceContext) {
@@ -77,13 +77,13 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested)
 					return;
 
-				const serviceId = Object.keys(context.services).find(key => context.services[key] === service);
+				const serviceIndex = context.services.indexOf(service);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
 					const data: ServiceDiagnosticData | undefined = diagnostic.data;
 					if (data && data.version !== sourceDocument.version) {
 						return false;
 					}
-					return data?.serviceId === serviceId;
+					return data?.serviceIndex === serviceIndex;
 				}).map(diagnostic => {
 					const data: ServiceDiagnosticData = diagnostic.data;
 					return {
@@ -105,7 +105,7 @@ export function register(context: ServiceContext) {
 							data: codeAction.data,
 							edit: codeAction.edit,
 						},
-						serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+						serviceIndex: context.services.indexOf(service),
 					} satisfies ServiceCodeActionData;
 				});
 

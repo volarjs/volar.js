@@ -35,9 +35,9 @@ export async function createSimpleServerProject(
 			});
 			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
+				Object.values(config.services ?? {}),
 				serviceEnv,
 				{ fileProvider },
-				config,
 			);
 		}
 		return languageService;

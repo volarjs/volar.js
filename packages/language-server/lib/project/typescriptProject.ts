@@ -105,9 +105,9 @@ export async function createTypeScriptServerProject(
 		if (!languageService) {
 			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
+				Object.values(config.services ?? {}),
 				serviceEnv,
 				createTypeScriptProject(typescriptProjectHost, Object.values(config.languages ?? {})),
-				config,
 			);
 		}
 		return languageService;

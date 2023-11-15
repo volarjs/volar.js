@@ -1,8 +1,8 @@
-import type { Language, Project } from '@volar/language-core';
+import type { Project } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { DocumentProvider } from './documents';
 import type { URI } from 'vscode-uri';
+import type { DocumentProvider } from './documents';
 
 export type * from 'vscode-languageserver-protocol';
 
@@ -72,7 +72,7 @@ export interface ServiceContext<Provide = any> {
 		setSelection: Command<(position: vscode.Position) => vscode.Command | undefined>;
 	};
 	documents: DocumentProvider;
-	services: { [id: string]: ReturnType<Service>; };
+	services: ReturnType<Service>[];
 }
 
 export type Result<T> = T | Thenable<T>;
@@ -142,9 +142,4 @@ export interface AutoInsertionContext {
 		rangeLength: number;
 		text: string;
 	};
-}
-
-export interface Config {
-	languages?: { [id: string]: Language; };
-	services?: { [id: string]: Service; };
 }

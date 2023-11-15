@@ -8,7 +8,7 @@ import { NoneCancellationToken } from '../utils/cancellation';
 export interface PluginCallHierarchyData {
 	uri: string,
 	original: Pick<vscode.CallHierarchyItem, 'data'>,
-	serviceId: string,
+	serviceIndex: number,
 	virtualDocumentUri: string | undefined,
 }
 
@@ -36,7 +36,7 @@ export function register(context: ServiceContext) {
 							original: {
 								data: item.data,
 							},
-							serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+							serviceIndex: context.services.indexOf(service),
 							virtualDocumentUri: map?.virtualFileDocument.uri,
 						} satisfies PluginCallHierarchyData;
 					});
@@ -57,7 +57,7 @@ export function register(context: ServiceContext) {
 
 			if (data) {
 
-				const service = context.services[data.serviceId];
+				const service = context.services[data.serviceIndex];
 
 				if (!service.provideCallHierarchyIncomingCalls)
 					return incomingItems;
@@ -113,7 +113,7 @@ export function register(context: ServiceContext) {
 
 			if (data) {
 
-				const service = context.services[data.serviceId];
+				const service = context.services[data.serviceIndex];
 
 				if (!service.provideCallHierarchyOutgoingCalls)
 					return items;

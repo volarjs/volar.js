@@ -24,7 +24,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { Config, ServiceContext, ServiceEnvironment, SharedModules } from './types';
+import { Service, ServiceContext, ServiceEnvironment, SharedModules } from './types';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
 import * as documentColors from './documentFeatures/documentColors';
@@ -41,7 +41,7 @@ function createServiceContext(
 	modules: SharedModules,
 	env: ServiceEnvironment,
 	project: Project,
-	config: Config,
+	services: Service[],
 ) {
 
 	const textDocumentMapper = createDocumentProvider(env, project);
@@ -57,7 +57,7 @@ function createServiceContext(
 			}
 			throw `No service provide ${key as any}`;
 		},
-		services: {},
+		services: [],
 		documents: textDocumentMapper,
 		commands: {
 			rename: {
@@ -136,11 +136,8 @@ function createServiceContext(
 		getTextDocument,
 	};
 
-	for (const serviceId in config.services ?? {}) {
-		const service = config.services?.[serviceId];
-		if (service) {
-			context.services[serviceId] = service(context, modules);
-		}
+	for (const service of services) {
+		context.services.push(service(context, modules));
 	}
 
 	return context;
@@ -180,12 +177,12 @@ function createServiceContext(
 
 export function createLanguageService(
 	modules: SharedModules,
+	services: Service[],
 	env: ServiceEnvironment,
 	project: Project,
-	config: Config,
 ) {
 
-	const context = createServiceContext(modules, env, project, config);
+	const context = createServiceContext(modules, env, project, services);
 
 	return {
 

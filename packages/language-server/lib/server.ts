@@ -1,9 +1,9 @@
-import { Config, FileSystem, standardSemanticTokensLegend } from '@volar/language-service/index.js';
+import { FileSystem, standardSemanticTokensLegend } from '@volar/language-service';
 import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, InitializationOptions, SimpleServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment } from './types.js';
+import { DiagnosticModel, InitializationOptions, SimpleServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment, Config } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
 import { createDocumentManager } from './documentManager.js';
 import { setupCapabilities } from './setupCapabilities.js';
@@ -138,7 +138,7 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 			options,
 			plugins,
 			getSemanticTokensLegend(),
-			config.services ?? {},
+			Object.values(config.services ?? {}),
 		);
 
 		projectProvider = createProjectProvider({

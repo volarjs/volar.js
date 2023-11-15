@@ -11,7 +11,7 @@ import { transformDocumentLinkTarget } from './documentLinkResolve';
 export interface DocumentLinkData {
 	uri: string,
 	original: Pick<vscode.DocumentLink, 'data'>,
-	serviceId: string,
+	serviceIndex: number,
 }
 
 export function register(context: ServiceContext) {
@@ -35,7 +35,7 @@ export function register(context: ServiceContext) {
 						original: {
 							data: link.data,
 						},
-						serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+						serviceIndex: context.services.indexOf(service),
 					} satisfies DocumentLinkData;
 				}
 

@@ -1,13 +1,14 @@
 import {
-	createLanguageService as _createLanguageService,
-	type TypeScriptProjectHost,
-	type Config,
-	type ServiceEnvironment,
-	type SharedModules,
-	type LanguageService,
+	Language,
 	Project,
+	Service,
+	createLanguageService as _createLanguageService,
 	createFileProvider,
 	createTypeScriptProject,
+	type LanguageService,
+	type ServiceEnvironment,
+	type SharedModules,
+	type TypeScriptProjectHost
 } from '@volar/language-service';
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -27,13 +28,13 @@ export function createServiceEnvironment(): ServiceEnvironment {
 
 export function createSimpleMonacoProject(
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
-	config: Config,
+	languages: Language[],
 	env: ServiceEnvironment
 ): Project {
 
 	const snapshots = new Map<string, [number, ts.IScriptSnapshot]>();
 	const fileProvider = createFileProvider(
-		Object.values(config.languages ?? {}),
+		languages,
 		fileName => {
 			const uri = env.fileNameToUri(fileName);
 			const models = getMirrorModels();
@@ -64,7 +65,7 @@ export function createSimpleMonacoProject(
 
 export function createTypeScriptMonacoProject(
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
-	config: Config,
+	languages: Language[],
 	env: ServiceEnvironment,
 	compilerOptions: ts.CompilerOptions
 ): Project {
@@ -117,14 +118,14 @@ export function createTypeScriptMonacoProject(
 			return compilerOptions;
 		},
 	};
-	const project = createTypeScriptProject(host, Object.values(config.languages ?? {}));
+	const project = createTypeScriptProject(host, languages);
 
 	return project;
 }
 
 export function createLanguageService<T = {}>(
 	modules: SharedModules,
-	config: Config,
+	services: Service[],
 	env: ServiceEnvironment,
 	project: Project,
 	extraApis: T = {} as any,
@@ -132,9 +133,9 @@ export function createLanguageService<T = {}>(
 
 	const languageService = _createLanguageService(
 		modules,
+		services,
 		env,
 		project,
-		config,
 	);
 
 	class InnocentRabbit { };

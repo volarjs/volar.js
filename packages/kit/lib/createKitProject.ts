@@ -1,14 +1,14 @@
-import { Config, FileChangeType, Project, ServiceEnvironment, TypeScriptProjectHost, createTypeScriptProject as _createTypeScriptProject, createFileProvider } from '@volar/language-service';
+import { FileChangeType, Language, Project, ServiceEnvironment, TypeScriptProjectHost, createTypeScriptProject as _createTypeScriptProject, createFileProvider } from '@volar/language-service';
+import * as fs from 'fs';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
-import * as fs from 'fs';
 import { asPosix, defaultCompilerOptions } from './utils';
 
-export default function createSimpleKitProject(config: Config): Project {
+export default function createSimpleKitProject(languages: Language[]): Project {
 
 	const fileMtimes = new Map<string, number>();
 	const fileProvider = createFileProvider(
-		Object.values(config.languages ?? {}),
+		languages,
 		fileName => {
 			if (fs.existsSync(fileName)) {
 				const stat = fs.statSync(fileName);
@@ -29,7 +29,7 @@ export default function createSimpleKitProject(config: Config): Project {
 }
 
 export function createTypeScriptInferredKitProject(
-	config: Config,
+	languages: Language[],
 	env: ServiceEnvironment,
 	rootPath: string,
 	getScriptFileNames: () => string[],
@@ -46,11 +46,11 @@ export function createTypeScriptInferredKitProject(
 		}),
 	);
 
-	return _createTypeScriptProject(projectHost, Object.values(config.languages ?? {}));
+	return _createTypeScriptProject(projectHost, languages);
 }
 
 export function createTypeScriptKitProject(
-	config: Config,
+	languages: Language[],
 	env: ServiceEnvironment,
 	sourceTsconfigPath: string,
 	extraFileExtensions: ts.FileExtensionInfo[] = [],
@@ -76,7 +76,7 @@ export function createTypeScriptKitProject(
 		},
 	);
 
-	return _createTypeScriptProject(projectHost, Object.values(config.languages ?? {}));
+	return _createTypeScriptProject(projectHost, languages);
 }
 
 function createTypeScriptProjectHost(
