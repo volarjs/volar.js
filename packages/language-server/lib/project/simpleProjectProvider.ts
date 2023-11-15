@@ -25,18 +25,18 @@ export function createSimpleProjectProvider(context: WorkspacesContext, plugins:
 	const projects = new Map<ServiceEnvironment['workspaceFolder'], Promise<ServerProject>>();
 
 	return {
-		async getProject(uri) {
+		getProject(uri) {
 
 			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolders, context.server.runtimeEnv.uriToFileName);
 
-			let project = projects.get(workspaceFolder);
-			if (!project) {
+			let projectPromise = projects.get(workspaceFolder);
+			if (!projectPromise) {
 				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-				project = createSimpleServerProject(context, plugins, serviceEnv);
-				projects.set(workspaceFolder, project);
+				projectPromise = createSimpleServerProject(context, plugins, serviceEnv);
+				projects.set(workspaceFolder, projectPromise);
 			}
 
-			return project;
+			return projectPromise;
 		},
 		async getProjects() {
 			return await Promise.all([...projects.values()]);

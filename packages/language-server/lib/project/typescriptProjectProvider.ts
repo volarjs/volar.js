@@ -223,7 +223,7 @@ export function createTypeScriptProjectProvider(
 		}
 	}
 
-	async function getOrCreateConfiguredProject(tsconfig: string) {
+	function getOrCreateConfiguredProject(tsconfig: string) {
 		tsconfig = tsconfig.replace(/\\/g, '/');
 		let projectPromise = configProjects.pathGet(tsconfig);
 		if (!projectPromise) {
@@ -232,7 +232,7 @@ export function createTypeScriptProjectProvider(
 			projectPromise = createTypeScriptServerProject(tsconfig, context, plugins, serviceEnv);
 			configProjects.pathSet(tsconfig, projectPromise);
 		}
-		return await projectPromise;
+		return projectPromise;
 	}
 
 	async function getOrCreateInferredProject(uri: string, workspaceFolder: ServiceEnvironment['workspaceFolder']) {
