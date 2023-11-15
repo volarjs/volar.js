@@ -106,7 +106,6 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getCancellationToken'
 > {
 	configFileName: string | undefined;
-	getLanguageId?(fileName: string): string | undefined;
 	resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string;
 }
 

@@ -1,7 +1,11 @@
 import { createFileProvider } from './createFileProvider';
 import { Language, TypeScriptProjectHost, Project } from './types';
 
-export function createTypeScriptProject(projectHost: TypeScriptProjectHost, languages: Language<any>[]): Project {
+export function createTypeScriptProject(
+	projectHost: TypeScriptProjectHost,
+	languages: Language<any>[],
+	getLanguageId: (fileName: string) => string,
+): Project {
 
 	for (const language of languages) {
 		if (language.resolveTypeScriptProjectHost) {
@@ -12,7 +16,7 @@ export function createTypeScriptProject(projectHost: TypeScriptProjectHost, lang
 	const fileProvider = createFileProvider(languages, fileName => {
 		const newSnapshot = projectHost.getScriptSnapshot(fileName);
 		if (newSnapshot) {
-			fileProvider.updateSource(fileName, newSnapshot, projectHost.getLanguageId?.(fileName));
+			fileProvider.updateSource(fileName, newSnapshot, getLanguageId(fileName));
 		}
 		else {
 			fileProvider.deleteSource(fileName);

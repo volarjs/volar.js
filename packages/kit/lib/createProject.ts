@@ -1,4 +1,4 @@
-import { FileChangeType, Language, Project, ServiceEnvironment, TypeScriptProjectHost, createTypeScriptProject as _createTypeScriptProject, createFileProvider } from '@volar/language-service';
+import { FileChangeType, Language, Project, ServiceEnvironment, TypeScriptProjectHost, createTypeScriptProject as _createTypeScriptProject, createFileProvider, resolveCommonLanguageId } from '@volar/language-service';
 import * as fs from 'fs';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
@@ -15,7 +15,7 @@ export default function createSimpleKitProject(languages: Language[]): Project {
 				if (stat.mtimeMs !== fileMtimes.get(fileName)) {
 					fileMtimes.set(fileName, stat.mtimeMs);
 					const text = fs.readFileSync(fileName, 'utf8');
-					fileProvider.updateSource(fileName, ts.ScriptSnapshot.fromString(text), undefined);
+					fileProvider.updateSource(fileName, ts.ScriptSnapshot.fromString(text), resolveCommonLanguageId(fileName));
 				}
 			}
 			else if (fileMtimes.has(fileName)) {
@@ -46,7 +46,7 @@ export function createTypeScriptInferredKitProject(
 		}),
 	);
 
-	return _createTypeScriptProject(projectHost, languages);
+	return _createTypeScriptProject(projectHost, languages, resolveCommonLanguageId);
 }
 
 export function createTypeScriptKitProject(
@@ -76,7 +76,7 @@ export function createTypeScriptKitProject(
 		},
 	);
 
-	return _createTypeScriptProject(projectHost, languages);
+	return _createTypeScriptProject(projectHost, languages, resolveCommonLanguageId);
 }
 
 function createTypeScriptProjectHost(

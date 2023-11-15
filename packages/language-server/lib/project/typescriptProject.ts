@@ -1,4 +1,4 @@
-import { FileSystem, LanguageService, ServiceEnvironment, createLanguageService, createTypeScriptProject, TypeScriptProjectHost } from '@volar/language-service';
+import { FileSystem, LanguageService, ServiceEnvironment, createLanguageService, createTypeScriptProject, TypeScriptProjectHost, resolveCommonLanguageId } from '@volar/language-service';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
@@ -58,7 +58,6 @@ export async function createTypeScriptServerProject(
 				return fsSnapshot;
 			}
 		},
-		getLanguageId: (fileName) => context.workspaces.documents.data.pathGet(fileName)?.languageId,
 		getCancellationToken: () => tsToken,
 		getCompilationSettings: () => parsedCommandLine.options,
 		getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
@@ -107,7 +106,11 @@ export async function createTypeScriptServerProject(
 				{ typescript: context.workspaces.ts },
 				Object.values(config.services ?? {}),
 				serviceEnv,
-				createTypeScriptProject(typescriptProjectHost, Object.values(config.languages ?? {})),
+				createTypeScriptProject(
+					typescriptProjectHost,
+					Object.values(config.languages ?? {}),
+					fileName => context.workspaces.documents.data.pathGet(fileName)?.languageId ?? resolveCommonLanguageId(fileName),
+				),
 			);
 		}
 		return languageService;

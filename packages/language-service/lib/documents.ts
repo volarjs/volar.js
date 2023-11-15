@@ -1,10 +1,9 @@
-import { FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, Project, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import { FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, Project, VirtualFile, forEachEmbeddedFile, Source } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { ServiceEnvironment } from './types';
-import { resolveCommonLanguageId } from './utils/common';
 
 export type DocumentProvider = ReturnType<typeof createDocumentProvider>;
 
@@ -205,6 +204,11 @@ export function createDocumentProvider(env: ServiceEnvironment, project: Project
 		},
 		getMapsBySourceFileName(fileName: string) {
 			const source = project.fileProvider.getSource(fileName);
+			if (source) {
+				return this.getMapsBySource(source);
+			}
+		},
+		getMapsBySource(source: Source) {
 			if (source?.root) {
 				const result: [VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>][] = [];
 				forEachEmbeddedFile(source.root, (virtualFile) => {
@@ -213,7 +217,7 @@ export function createDocumentProvider(env: ServiceEnvironment, project: Project
 							if (!map2DocMap.has(map)) {
 								map2DocMap.set(map, new SourceMapWithDocuments(
 									getDocumentByFileName(sourceSnapshot, sourceFileName, source.languageId),
-									getDocumentByFileName(virtualFile.snapshot, fileName, virtualFile.languageId),
+									getDocumentByFileName(virtualFile.snapshot, virtualFile.fileName, virtualFile.languageId),
 									map,
 								));
 							}
@@ -236,7 +240,7 @@ export function createDocumentProvider(env: ServiceEnvironment, project: Project
 				for (const [sourceFileName, [sourceSnapshot, map]] of project.fileProvider.getMaps(virtualFile)) {
 					if (!map2DocMap.has(map)) {
 						map2DocMap.set(map, new SourceMapWithDocuments(
-							getDocumentByFileName(sourceSnapshot, sourceFileName, project.fileProvider.getSource(sourceFileName)?.languageId),
+							getDocumentByFileName(sourceSnapshot, sourceFileName, project.fileProvider.getSource(sourceFileName)!.languageId),
 							getDocumentByFileName(virtualFile.snapshot, virtualFileName, virtualFile.languageId),
 							map,
 						));
@@ -245,22 +249,21 @@ export function createDocumentProvider(env: ServiceEnvironment, project: Project
 				}
 			}
 		},
-		getDocumentByUri(snapshot: ts.IScriptSnapshot, uri: string, languageId: string | undefined) {
+		getDocumentByUri(snapshot: ts.IScriptSnapshot, uri: string, languageId: string) {
 			return this.getDocumentByFileName(snapshot, env.uriToFileName(uri), languageId);
 		},
 		getDocumentByFileName,
 	};
 
-	function getDocumentByFileName(snapshot: ts.IScriptSnapshot, fileName: string, languageId: string | undefined) {
+	function getDocumentByFileName(snapshot: ts.IScriptSnapshot, fileName: string, languageId: string) {
 		if (!snapshot2Doc.has(snapshot)) {
 			snapshot2Doc.set(snapshot, new Map());
 		}
 		const map = snapshot2Doc.get(snapshot)!;
 		if (!map.has(fileName)) {
-			const uri = env.fileNameToUri(fileName);
 			map.set(fileName, TextDocument.create(
-				uri,
-				languageId ?? resolveCommonLanguageId(uri),
+				env.fileNameToUri(fileName),
+				languageId,
 				version++,
 				snapshot.getText(0, snapshot.getLength()),
 			));

@@ -7,6 +7,7 @@ const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: We
 
 export function createLanguageServiceHost(
 	projectHost: TypeScriptProjectHost,
+	getLanguageId: (fileName: string) => string,
 	fileProvider: FileProvider,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	sys: ts.System & {
@@ -360,7 +361,7 @@ export function createLanguageServiceHost(
 			if (!fileProvider.hasSource(sourceFileName)) {
 				const scriptSnapshot = getScriptSnapshot(sourceFileName);
 				if (scriptSnapshot) {
-					fileProvider.updateSource(sourceFileName, scriptSnapshot, projectHost.getLanguageId?.(sourceFileName));
+					fileProvider.updateSource(sourceFileName, scriptSnapshot, getLanguageId(sourceFileName));
 				}
 			}
 		}

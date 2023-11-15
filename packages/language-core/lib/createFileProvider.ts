@@ -5,7 +5,7 @@ import type { FileRangeCapabilities, Language, VirtualFile } from './types';
 
 export interface Source {
 	fileName: string;
-	languageId: string | undefined;
+	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 	root?: VirtualFile;
 	language?: Language;
@@ -20,13 +20,10 @@ export function createFileProvider(languages: Language[], sync: (fileName: strin
 
 	return {
 		sourceFiles,
-		updateSource(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): VirtualFile | undefined {
+		updateSource(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string): VirtualFile | undefined {
 			const key = normalizePath(fileName);
 			const value = sourceFiles.get(key);
 			if (value) {
-				if (languageId === undefined && value.languageId !== undefined) {
-					languageId = value.languageId;
-				}
 				if (value.languageId !== languageId) {
 					// languageId changed
 					this.deleteSource(fileName);

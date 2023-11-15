@@ -5,6 +5,7 @@ import {
 	createLanguageService as _createLanguageService,
 	createFileProvider,
 	createTypeScriptProject,
+	resolveCommonLanguageId,
 	type LanguageService,
 	type ServiceEnvironment,
 	type SharedModules,
@@ -51,7 +52,7 @@ export function createSimpleMonacoProject(
 					getChangeRange: () => undefined,
 				};
 				snapshots.set(fileName, [model.version, snapshot]);
-				fileProvider.updateSource(fileName, snapshot, undefined);
+				fileProvider.updateSource(fileName, snapshot, resolveCommonLanguageId(fileName));
 			}
 			else if (snapshots.has(uri)) {
 				snapshots.delete(fileName);
@@ -118,7 +119,11 @@ export function createTypeScriptMonacoProject(
 			return compilerOptions;
 		},
 	};
-	const project = createTypeScriptProject(host, languages);
+	const project = createTypeScriptProject(
+		host,
+		languages,
+		resolveCommonLanguageId
+	);
 
 	return project;
 }
