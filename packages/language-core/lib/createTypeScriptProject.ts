@@ -53,6 +53,8 @@ export function createTypeScriptProject(
 
 	return {
 		fileProvider,
-		typeScriptProjectHost: projectHost,
+		typescript: {
+			projectHost,
+		},
 	};
 }

@@ -16,7 +16,7 @@ export function registerEditorFeatures(
 
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
-		const projectHost = languageService.context.project.typeScriptProjectHost;
+		const projectHost = languageService.context.project.typescript?.projectHost;
 		if (projectHost?.configFileName) {
 			return { uri: env.fileNameToUri(projectHost.configFileName) };
 		}
@@ -68,9 +68,9 @@ export function registerEditorFeatures(
 		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
 
 		// global virtual files
-		if (languageService.context.project.typeScriptProjectHost) {
+		if (languageService.context.project.typescript?.projectHost) {
 
-			const rootPath = languageService.context.project.typeScriptProjectHost.getCurrentDirectory();
+			const rootPath = languageService.context.project.typescript?.projectHost.getCurrentDirectory();
 
 			for (const [fileName] of languageService.context.project.fileProvider.getAllSources()) {
 				const source = languageService.context.project.fileProvider.getSource(fileName);
@@ -85,9 +85,9 @@ export function registerEditorFeatures(
 					});
 				}
 			}
-			for (const fileName of languageService.context.project.typeScriptProjectHost.getScriptFileNames()) {
+			for (const fileName of languageService.context.project.typescript?.projectHost.getScriptFileNames()) {
 				if (!fs.existsSync(fileName)) {
-					const snapshot = languageService.context.project.typeScriptProjectHost.getScriptSnapshot(fileName);
+					const snapshot = languageService.context.project.typescript?.projectHost.getScriptSnapshot(fileName);
 					if (snapshot) {
 						fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
 					}
@@ -106,8 +106,8 @@ export function registerEditorFeatures(
 			const languageService = project.getLanguageService();
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
-			if (program && languageService.context.project.typeScriptProjectHost) {
-				const projectName = languageService.context.project.typeScriptProjectHost.configFileName ?? (languageService.context.project.typeScriptProjectHost.getCurrentDirectory() + '(inferred)');
+			if (program && languageService.context.project.typescript?.projectHost) {
+				const projectName = languageService.context.project.typescript?.projectHost.configFileName ?? (languageService.context.project.typescript?.projectHost.getCurrentDirectory() + '(inferred)');
 				const sourceFiles = program?.getSourceFiles() ?? [];
 				for (const sourceFile of sourceFiles) {
 					if (!sourceFilesData.has(sourceFile)) {

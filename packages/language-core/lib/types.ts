@@ -113,5 +113,7 @@ export type FileProvider = ReturnType<typeof createFileProvider>;
 
 export interface Project {
 	fileProvider: FileProvider;
-	typeScriptProjectHost?: TypeScriptProjectHost;
+	typescript?: {
+		projectHost: TypeScriptProjectHost;
+	};
 }
