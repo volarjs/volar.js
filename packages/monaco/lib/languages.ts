@@ -9,11 +9,6 @@ import { createLanguageFeaturesProvider } from './utils/provider';
 
 export namespace languages {
 
-	/**
-	 * @deprecated Use `registerProviders` instead.
-	 */
-	export const registerProvides = registerProviders;
-
 	export async function registerProviders(
 		worker: editor.MonacoWebWorker<LanguageService>,
 		language: _languages.LanguageSelector,

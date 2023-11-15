@@ -6,6 +6,8 @@ import {
 	type SharedModules,
 	type LanguageService,
 	Project,
+	createFileProvider,
+	createTypeScriptProject,
 } from '@volar/language-service';
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -23,11 +25,49 @@ export function createServiceEnvironment(): ServiceEnvironment {
 	};
 }
 
-export function createProjectHost(
+export function createSimpleMonacoProject(
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
+	config: Config,
+	env: ServiceEnvironment
+): Project {
+
+	const snapshots = new Map<string, [number, ts.IScriptSnapshot]>();
+	const fileProvider = createFileProvider(
+		Object.values(config.languages ?? {}),
+		fileName => {
+			const uri = env.fileNameToUri(fileName);
+			const models = getMirrorModels();
+			const model = models.find(model => model.uri.toString(true) === uri);
+			if (model) {
+				const oldVersion = snapshots.get(fileName)?.[0];
+				if (oldVersion === model.version) {
+					return;
+				}
+				const text = model.getValue();
+				const snapshot: ts.IScriptSnapshot = {
+					getText: (start, end) => text.substring(start, end),
+					getLength: () => text.length,
+					getChangeRange: () => undefined,
+				};
+				snapshots.set(fileName, [model.version, snapshot]);
+				fileProvider.updateSource(fileName, snapshot, undefined);
+			}
+			else if (snapshots.has(uri)) {
+				snapshots.delete(fileName);
+				fileProvider.deleteSource(fileName);
+			}
+		}
+	);
+
+	return { fileProvider };
+}
+
+export function createTypeScriptMonacoProject(
+	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
+	config: Config,
 	env: ServiceEnvironment,
-	compilerOptions: ts.CompilerOptions = {}
-): TypeScriptProjectHost {
+	compilerOptions: ts.CompilerOptions
+): Project {
 
 	let projectVersion = 0;
 
@@ -77,15 +117,16 @@ export function createProjectHost(
 			return compilerOptions;
 		},
 	};
+	const project = createTypeScriptProject(host, Object.values(config.languages ?? {}));
 
-	return host;
+	return project;
 }
 
 export function createLanguageService<T = {}>(
 	modules: SharedModules,
+	config: Config,
 	env: ServiceEnvironment,
 	project: Project,
-	config: Config,
 	extraApis: T = {} as any,
 ): LanguageService & T {
 
