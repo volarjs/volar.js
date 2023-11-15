@@ -3,10 +3,10 @@ import * as vscode from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { startLanguageServerBase } from './lib/server';
-import { InitializationOptions, BasicServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
+import { InitializationOptions, SimpleServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
 import { FileSystem, FileType } from '@volar/language-service';
 import { createGetCancellationToken } from './lib/cancellationToken';
-import { WorkspacesContext, createBasicProjectProvider } from './lib/project/basicProjectProvider';
+import { WorkspacesContext, createSimpleProjectProvider } from './lib/project/simpleProjectProvider';
 import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
 
 export * from './index';
@@ -83,32 +83,32 @@ export function createConnection() {
 	return vscode.createConnection(vscode.ProposedFeatures.all);
 }
 
-export function startBasicLanguageServer(
+export function startSimpleServer(
 	connection: vscode.Connection,
-	...plugins: BasicServerPlugin[]
+	...plugins: SimpleServerPlugin[]
 ) {
-	return _startLanguageServer(
+	return startServer(
 		connection,
-		createBasicProjectProvider,
+		createSimpleProjectProvider,
 		...plugins,
 	);
 }
 
-export function startTypeScriptLanguageServer(
+export function startTypeScriptServer(
 	connection: vscode.Connection,
-	...plugins: BasicServerPlugin[]
+	...plugins: SimpleServerPlugin[]
 ) {
-	return _startLanguageServer(
+	return startServer(
 		connection,
 		createTypeScriptProjectProvider,
 		...plugins,
 	);
 }
 
-function _startLanguageServer(
+function startServer(
 	connection: vscode.Connection,
 	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<TypeScriptServerPlugin>[]) => ServerProjectProvider,
-	...plugins: BasicServerPlugin[]
+	...plugins: SimpleServerPlugin[]
 ) {
 	startLanguageServerBase(connection, plugins, createProjectProvider, (_, options) => ({
 		uriToFileName,

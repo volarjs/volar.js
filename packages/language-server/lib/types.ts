@@ -20,11 +20,11 @@ export interface ServerRuntimeEnvironment {
 	console: Console;
 }
 
-export type TypeScriptServerPlugin = BasicServerPlugin<{
+export type TypeScriptServerPlugin = SimpleServerPlugin<{
 	extraFileExtensions?: ts.FileExtensionInfo[];
 }>;
 
-export interface BasicServerPlugin<T = {}> {
+export interface SimpleServerPlugin<T = {}> {
 	(ctx: {
 		initializationOptions: InitializationOptions;
 		modules: SharedModules;

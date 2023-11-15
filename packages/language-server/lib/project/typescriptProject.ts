@@ -5,7 +5,7 @@ import * as vscode from 'vscode-languageserver';
 import { TypeScriptServerPlugin, ServerProject } from '../types';
 import { UriMap, createUriMap } from '../utils/uriMap';
 import { createSys } from '@volar/typescript';
-import { WorkspacesContext } from './basicProjectProvider';
+import { WorkspacesContext } from './simpleProjectProvider';
 import { getConfig } from '../config';
 
 const globalSnapshots = new WeakMap<FileSystem, ReturnType<typeof createUriMap<ts.IScriptSnapshot | undefined>>>();

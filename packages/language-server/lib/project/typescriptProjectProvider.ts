@@ -8,7 +8,7 @@ import { isFileInDir } from '../utils/isFileInDir';
 import { createUriMap } from '../utils/uriMap';
 import { ServerMode, ServerProjectProvider, TypeScriptServerPlugin } from '../types';
 import { TypeScriptServerProject, createTypeScriptServerProject } from './typescriptProject';
-import { WorkspacesContext, createServiceEnvironment, getWorkspaceFolder } from './basicProjectProvider';
+import { WorkspacesContext, createServiceEnvironment, getWorkspaceFolder } from './simpleProjectProvider';
 
 export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 

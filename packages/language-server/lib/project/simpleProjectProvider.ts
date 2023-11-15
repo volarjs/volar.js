@@ -5,8 +5,8 @@ import { createDocumentManager } from '../documentManager';
 import { ServerContext } from '../server';
 import { isFileInDir } from '../utils/isFileInDir';
 import { WorkspaceFolderManager } from '../workspaceFolderManager';
-import { InitializationOptions, ServerProject, ServerProjectProvider, BasicServerPlugin } from '../types';
-import { createBasicServerProject } from './basicProject';
+import { InitializationOptions, ServerProject, ServerProjectProvider, SimpleServerPlugin } from '../types';
+import { createSimpleServerProject } from './simpleProject';
 
 export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
@@ -22,7 +22,7 @@ export interface WorkspacesContext extends ServerContext {
 	};
 }
 
-export function createBasicProjectProvider(context: WorkspacesContext, plugins: ReturnType<BasicServerPlugin>[]): ServerProjectProvider {
+export function createSimpleProjectProvider(context: WorkspacesContext, plugins: ReturnType<SimpleServerPlugin>[]): ServerProjectProvider {
 
 	const projects = new Map<ServiceEnvironment['workspaceFolder'], Promise<ServerProject>>();
 
@@ -34,7 +34,7 @@ export function createBasicProjectProvider(context: WorkspacesContext, plugins: 
 			let project = projects.get(workspaceFolder);
 			if (!project) {
 				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-				project = createBasicServerProject(context, plugins, serviceEnv);
+				project = createSimpleServerProject(context, plugins, serviceEnv);
 				projects.set(workspaceFolder, project);
 			}
 

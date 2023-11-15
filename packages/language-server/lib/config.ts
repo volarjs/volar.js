@@ -1,8 +1,8 @@
 import type { Config, Console, ServiceEnvironment } from '@volar/language-service';
-import type { WorkspacesContext } from './project/basicProjectProvider';
-import type { BasicServerPlugin } from '../lib/types';
+import type { WorkspacesContext } from './project/simpleProjectProvider';
+import type { SimpleServerPlugin } from '../lib/types';
 
-export async function getConfig(context: WorkspacesContext, plugins: ReturnType<BasicServerPlugin>[], serviceEnv: ServiceEnvironment) {
+export async function getConfig(context: WorkspacesContext, plugins: ReturnType<SimpleServerPlugin>[], serviceEnv: ServiceEnvironment) {
 
 	let config = (
 		serviceEnv.workspaceFolder.uri.scheme === 'file' ? loadConfig(

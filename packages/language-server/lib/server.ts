@@ -3,13 +3,13 @@ import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, InitializationOptions, BasicServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment } from './types.js';
+import { DiagnosticModel, InitializationOptions, SimpleServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
 import { createDocumentManager } from './documentManager.js';
 import { setupCapabilities } from './setupCapabilities.js';
 import { loadConfig } from './config.js';
 import { createWorkspaceFolderManager } from './workspaceFolderManager.js';
-import type { WorkspacesContext } from './project/basicProjectProvider.js';
+import type { WorkspacesContext } from './project/simpleProjectProvider.js';
 
 export interface ServerContext {
 	server: {
@@ -21,7 +21,7 @@ export interface ServerContext {
 	};
 }
 
-export function startLanguageServerBase<Plugin extends BasicServerPlugin>(
+export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 	connection: vscode.Connection,
 	_plugins: Plugin[],
 	createProjectProvider: (context: WorkspacesContext, plugin: ReturnType<Plugin>[]) => ServerProjectProvider,

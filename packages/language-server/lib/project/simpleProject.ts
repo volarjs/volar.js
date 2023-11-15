@@ -1,11 +1,11 @@
 import { LanguageService, ServiceEnvironment, createFileProvider, createLanguageService } from '@volar/language-service';
-import { BasicServerPlugin, ServerProject } from '../types';
-import { WorkspacesContext } from './basicProjectProvider';
+import { SimpleServerPlugin, ServerProject } from '../types';
+import { WorkspacesContext } from './simpleProjectProvider';
 import { getConfig } from '../config';
 
-export async function createBasicServerProject(
+export async function createSimpleServerProject(
 	context: WorkspacesContext,
-	plugins: ReturnType<BasicServerPlugin>[],
+	plugins: ReturnType<SimpleServerPlugin>[],
 	serviceEnv: ServiceEnvironment,
 ): Promise<ServerProject> {
 
