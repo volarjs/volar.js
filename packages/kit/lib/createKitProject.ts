@@ -4,7 +4,7 @@ import * as ts from 'typescript';
 import * as fs from 'fs';
 import { asPosix, defaultCompilerOptions } from './utils';
 
-export default function createKitProject(config: Config): Project {
+export default function createSimpleKitProject(config: Config): Project {
 
 	const fileMtimes = new Map<string, number>();
 	const fileProvider = createFileProvider(
@@ -29,8 +29,8 @@ export default function createKitProject(config: Config): Project {
 }
 
 export function createTypeScriptInferredKitProject(
-	env: ServiceEnvironment,
 	config: Config,
+	env: ServiceEnvironment,
 	rootPath: string,
 	getScriptFileNames: () => string[],
 	compilerOptions = defaultCompilerOptions
@@ -50,11 +50,10 @@ export function createTypeScriptInferredKitProject(
 }
 
 export function createTypeScriptKitProject(
-	env: ServiceEnvironment,
 	config: Config,
+	env: ServiceEnvironment,
 	sourceTsconfigPath: string,
 	extraFileExtensions: ts.FileExtensionInfo[] = [],
-	existingOptions?: ts.CompilerOptions
 ): Project {
 
 	const tsconfigPath = asPosix(sourceTsconfigPath);
@@ -67,7 +66,7 @@ export function createTypeScriptKitProject(
 				ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile),
 				ts.sys,
 				path.dirname(tsconfigPath),
-				existingOptions,
+				undefined,
 				tsconfigPath,
 				undefined,
 				extraFileExtensions,

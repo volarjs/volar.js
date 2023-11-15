@@ -1,13 +1,12 @@
-import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
+import { CodeActionTriggerKind, Config, Diagnostic, DiagnosticSeverity, Project, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits } from '@volar/language-service';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import createKitProject from './createKitProject';
 import { asPosix, fileNameToUri, uriToFileName } from './utils';
 
 export function createLinter(
-	env: ServiceEnvironment,
 	config: Config,
-	project = createKitProject(config)
+	env: ServiceEnvironment,
+	project: Project
 ) {
 
 	const service = createLanguageService(
