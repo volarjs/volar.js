@@ -1,8 +1,8 @@
-import type { TextDocument } from 'vscode-languageserver-textdocument';
-import { visitEmbedded } from './definePlugin';
-import { Service, ServiceContext, Rule, RuleContext, RuleType } from '../types';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
+import { Service, ServiceContext } from '../types';
+import { visitEmbedded } from './definePlugin';
 
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
@@ -87,109 +87,6 @@ export async function languageFeatureWorker<T, K>(
 			const embeddedResult = await safeCall(
 				() => worker(service, document, arg, undefined, undefined),
 				'service ' + serviceId + ' crashed on ' + uri,
-			);
-			if (!embeddedResult)
-				continue;
-
-			const result = transform(embeddedResult, undefined);
-			if (!result)
-				continue;
-
-			results.push(result);
-
-			if (!combineResult)
-				break;
-
-			const isEmptyArray = Array.isArray(result) && result.length === 0;
-
-			if (reportProgress && !isEmptyArray) {
-				reportProgress(combineResult(results));
-			}
-		}
-	}
-
-	if (combineResult && results.length > 0) {
-		return combineResult(results);
-	}
-	else if (results.length > 0) {
-		return results[0];
-	}
-}
-
-export async function ruleWorker<T>(
-	context: ServiceContext,
-	ruleType: RuleType,
-	uri: string,
-	isValidSourceMap: (file: VirtualFile) => boolean,
-	worker: (ruleId: string, rule: Rule, document: TextDocument, ruleCtx: RuleContext) => T,
-	transform: (result: NonNullable<Awaited<T>>, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined) => Awaited<T> | undefined,
-	combineResult?: (results: NonNullable<Awaited<T>>[]) => NonNullable<Awaited<T>>,
-	reportProgress?: (result: NonNullable<Awaited<T>>) => void,
-) {
-
-	const document = context.getTextDocument(uri);
-	const virtualFile = context.documents.getSourceByUri(uri)?.root;
-	const ruleCtx: RuleContext = {
-		env: context.env,
-		inject: context.inject,
-		report: () => { },
-	};
-
-	let results: NonNullable<Awaited<T>>[] = [];
-
-	if (virtualFile) {
-
-		await visitEmbedded(context.documents, virtualFile, async (file, map) => {
-
-			if (!isValidSourceMap(file)) {
-				return true;
-			}
-
-			for (const ruleId in context.rules) {
-
-				const rule = context.rules[ruleId];
-				if ((rule.type ?? RuleType.Syntax) !== ruleType) {
-					continue;
-				}
-
-				const embeddedResult = await safeCall(
-					() => worker(ruleId, rule, map.virtualFileDocument, ruleCtx),
-					'rule ' + ruleId + ' crashed on ' + map.virtualFileDocument.uri,
-				);
-				if (!embeddedResult)
-					continue;
-
-				const result = transform(embeddedResult!, map);
-				if (!result)
-					continue;
-
-				results.push(result!);
-
-				if (!combineResult)
-					return false;
-
-				const isEmptyArray = Array.isArray(result) && result.length === 0;
-
-				if (reportProgress && !isEmptyArray) {
-					reportProgress(combineResult(results));
-				}
-			}
-
-			return true;
-		});
-	}
-	else if (document) {
-
-		for (const ruleId in context.rules) {
-
-			const rule = context.rules[ruleId];
-			if ((rule.type ?? RuleType.Syntax) !== ruleType) {
-				continue;
-			}
-
-			const embeddedResult = await safeCall(
-				() => worker(ruleId, rule, document, ruleCtx),
-				'rule ' + ruleId + ' crashed on ' + document.uri,
 			);
 			if (!embeddedResult)
 				continue;

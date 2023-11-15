@@ -57,7 +57,6 @@ function createServiceContext(
 			}
 			throw `No service provide ${key as any}`;
 		},
-		rules: config.rules ?? {},
 		services: {},
 		documents: textDocumentMapper,
 		commands: {

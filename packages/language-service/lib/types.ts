@@ -72,15 +72,7 @@ export interface ServiceContext<Provide = any> {
 		setSelection: Command<(position: vscode.Position) => vscode.Command | undefined>;
 	};
 	documents: DocumentProvider;
-	rules: { [id: string]: Rule; };
 	services: { [id: string]: ReturnType<Service>; };
-	ruleFixes?: {
-		[uri: string]: {
-			[ruleId: string]: {
-				[ruleFixId: number]: [vscode.Diagnostic, RuleFix[]];
-			};
-		};
-	};
 }
 
 export type Result<T> = T | Thenable<T>;
@@ -152,46 +144,7 @@ export interface AutoInsertionContext {
 	};
 }
 
-export enum RuleType {
-	Format,
-	Syntax,
-	Semantic,
-};
-
-export interface Rule<Provide = any> {
-	type?: RuleType;
-	run(document: TextDocument, ctx: RuleContext<Provide>): void;
-}
-
-export interface RuleContext<Provide = any> {
-	env: ServiceEnvironment;
-	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
-	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
-}
-
-export interface RuleFix {
-	/**
-	 * Code action kind, like `quickfix` or `refactor`.
-	 * 
-	 * See https://code.visualstudio.com/api/references/vscode-api#CodeActionKind
-	 */
-	kinds?: vscode.CodeActionKind[];
-	/**
-	 * Title of the code action.
-	 */
-	title?: string;
-	/**
-	 * Edit to apply to the document.
-	 */
-	getEdits?(diagnostic: vscode.Diagnostic): NullableResult<vscode.TextEdit[]>;
-	/**
-	 * Cross-file edits to apply to the workspace.
-	 */
-	getWorkspaceEdit?(diagnostic: vscode.Diagnostic): NullableResult<vscode.WorkspaceEdit>;
-}
-
 export interface Config {
 	languages?: { [id: string]: Language; };
 	services?: { [id: string]: Service; };
-	rules?: { [id: string]: Rule; };
 }

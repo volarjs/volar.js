@@ -3,10 +3,10 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
-import { ServiceContext, RuleContext, RuleType } from '../types';
+import { ServiceContext } from '../types';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker, ruleWorker } from '../utils/featureWorkers';
+import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
 
 export function updateRange(
@@ -99,9 +99,8 @@ export interface ServiceDiagnosticData {
 	uri: string,
 	version: number,
 	original: Pick<vscode.Diagnostic, 'data'>,
-	type: 'service' | 'rule',
 	isFormat: boolean,
-	serviceOrRuleId: string,
+	serviceId: string,
 	ruleFixIndex: number,
 	documentUri: string,
 }
@@ -200,16 +199,10 @@ export function register(context: ServiceContext) {
 		}
 
 		if (mode === 'all' || mode === 'syntactic') {
-			await lintWorker(RuleType.Format, cacheMaps.format_rules, lastResponse.format_rules);
-			await doResponse();
-			await lintWorker(RuleType.Syntax, cacheMaps.syntax_rules, lastResponse.syntax_rules);
-			await doResponse();
 			await worker('provideDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
-			await doResponse();
 		}
 
 		if (mode === 'all' || mode === 'semantic') {
-			await lintWorker(RuleType.Semantic, cacheMaps.semantic_rules, lastResponse.semantic_rules);
 			await doResponse();
 			await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
 		}
@@ -235,94 +228,6 @@ export function register(context: ServiceContext) {
 				}
 			}
 			return errors;
-		}
-
-		async function lintWorker(
-			ruleType: RuleType,
-			cacheMap: CacheMap,
-			cache: Cache,
-		) {
-			const result = await ruleWorker(
-				context,
-				ruleType,
-				uri,
-				file => ruleType === RuleType.Format ? !!file.capabilities.documentFormatting : !!file.capabilities.diagnostic,
-				async (ruleId, rule, lintDocument, ruleCtx) => {
-
-					if (token) {
-						if (Date.now() - lastCheckCancelAt >= 5) {
-							await sleep(5); // wait for LSP event polling
-							lastCheckCancelAt = Date.now();
-						}
-						if (token.isCancellationRequested) {
-							return;
-						}
-					}
-
-					const pluginCache = cacheMap.get(ruleId) ?? cacheMap.set(ruleId, new Map()).get(ruleId)!;
-					const cache = pluginCache.get(lintDocument.uri);
-
-					if (ruleType !== RuleType.Semantic && cache && cache.documentVersion === lintDocument.version) {
-						return cache.errors;
-					}
-
-					const reportResults: Parameters<RuleContext['report']>[] = [];
-
-					ruleCtx.report = (error, ...fixes) => {
-
-						error.message ||= 'No message.';
-						error.source ||= 'rule';
-						error.code ||= ruleId;
-
-						reportResults.push([error, ...fixes]);
-					};
-
-					try {
-						await rule.run(lintDocument, ruleCtx);
-					}
-					catch (err) {
-						console.warn(`[volar/rules-api] ${ruleId} ${ruleType} error.`);
-						console.warn(err);
-					}
-
-					context.ruleFixes ??= {};
-					context.ruleFixes[lintDocument.uri] ??= {};
-					context.ruleFixes[lintDocument.uri][ruleId] ??= {};
-
-					reportResults?.forEach(([error, ...fixes], index) => {
-						context.ruleFixes![lintDocument.uri][ruleId][index] = [error, fixes];
-						error.data = {
-							uri,
-							version: newDocument!.version,
-							type: 'rule',
-							isFormat: ruleType === RuleType.Format,
-							serviceOrRuleId: ruleId,
-							original: {
-								data: error.data,
-							},
-							ruleFixIndex: index,
-							documentUri: lintDocument.uri,
-						} satisfies ServiceDiagnosticData;
-					});
-
-					errorsUpdated = true;
-
-					const errors = reportResults.map(reportResult => reportResult[0]);
-
-					pluginCache.set(lintDocument.uri, {
-						documentVersion: lintDocument.version,
-						errors,
-					});
-
-					return errors;
-				},
-				ruleType === RuleType.Format ? transformFormatErrorRange : transformErrorRange,
-				arr => arr.flat(),
-			);
-			if (result) {
-				cache.errors = result;
-				cache.snapshot = newSnapshot;
-			}
 		}
 
 		async function worker(
@@ -365,8 +270,7 @@ export function register(context: ServiceContext) {
 						error.data = {
 							uri,
 							version: newDocument!.version,
-							type: 'service',
-							serviceOrRuleId: serviceId,
+							serviceId,
 							isFormat: false,
 							original: {
 								data: error.data,
@@ -394,10 +298,6 @@ export function register(context: ServiceContext) {
 			}
 		}
 	};
-
-	function transformFormatErrorRange(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined) {
-		return transformErrorRangeBase(errors, map, () => true);
-	}
 
 	function transformErrorRange(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined) {
 		return transformErrorRangeBase(errors, map, data => typeof data.diagnostic === 'object' ? data.diagnostic.shouldReport() : !!data.diagnostic);
