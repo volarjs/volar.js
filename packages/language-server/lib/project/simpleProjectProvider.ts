@@ -8,8 +8,6 @@ import { WorkspaceFolderManager } from '../workspaceFolderManager';
 import { InitializationOptions, ServerProject, ServerProjectProvider, SimpleServerPlugin } from '../types';
 import { createSimpleServerProject } from './simpleProject';
 
-export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
-
 export interface WorkspacesContext extends ServerContext {
 	workspaces: {
 		initOptions: InitializationOptions;

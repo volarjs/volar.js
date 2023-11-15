@@ -10,7 +10,7 @@ import { ServerMode, ServerProjectProvider, TypeScriptServerPlugin } from '../ty
 import { TypeScriptServerProject, createTypeScriptServerProject } from './typescriptProject';
 import { WorkspacesContext, createServiceEnvironment, getWorkspaceFolder } from './simpleProjectProvider';
 
-export const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
+const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
 export function createTypeScriptProjectProvider(
 	context: WorkspacesContext,
