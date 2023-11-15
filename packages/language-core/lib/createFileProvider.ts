@@ -11,7 +11,7 @@ export interface Source {
 	language?: Language;
 }
 
-export function createFileProvider(languages: Language[], sync: (fileName: string) => void) {
+export function createFileProvider(languages: Language[], sync: () => void) {
 
 	const sourceFiles = new Map<string, Source>();
 	const virtualFiles = new Map<string, { virtualFile: VirtualFile, source: Source; }>();
@@ -19,7 +19,10 @@ export function createFileProvider(languages: Language[], sync: (fileName: strin
 	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, MirrorMap | undefined>();
 
 	return {
-		sourceFiles,
+		getAllSources() {
+			sync();
+			return sourceFiles;
+		},
 		updateSource(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string): VirtualFile | undefined {
 			const key = normalizePath(fileName);
 			const value = sourceFiles.get(key);
@@ -90,20 +93,20 @@ export function createFileProvider(languages: Language[], sync: (fileName: strin
 			return virtualFileMaps.get(virtualFile.snapshot)!;
 		},
 		getSource(fileName: string) {
-			sync(fileName);
+			sync();
 			const key = normalizePath(fileName);
 			return sourceFiles.get(key);
 		},
 		hasSource(fileName: string) {
-			sync(fileName);
+			sync();
 			return sourceFiles.has(normalizePath(fileName));
 		},
 		hasVirtualFile(fileName: string) {
-			sync(fileName);
+			sync();
 			return !!virtualFiles.get(normalizePath(fileName));
 		},
 		getVirtualFile(fileName: string) {
-			sync(fileName);
+			sync();
 			const sourceAndVirtual = virtualFiles.get(normalizePath(fileName));
 			if (sourceAndVirtual) {
 				return [sourceAndVirtual.virtualFile, sourceAndVirtual.source] as const;

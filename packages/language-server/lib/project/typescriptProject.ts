@@ -79,7 +79,7 @@ export async function createTypeScriptServerProject(
 		serviceEnv,
 		getLanguageService,
 		getLanguageServiceDontCreate: () => languageService,
-		tryAddFile: (fileName: string) => {
+		tryAddFile(fileName: string) {
 			if (!rootFiles.includes(fileName)) {
 				rootFiles.push(fileName);
 				projectVersion++;

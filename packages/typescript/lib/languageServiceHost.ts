@@ -166,7 +166,7 @@ export function createLanguageServiceHost(
 		const newTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 		const newOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
-		for (const [fileName] of fileProvider.sourceFiles) {
+		for (const [fileName] of fileProvider.getAllSources()) {
 			const source = fileProvider.getSource(fileName);
 			if (source?.root) {
 				forEachEmbeddedFile(source.root, embedded => {
@@ -192,7 +192,7 @@ export function createLanguageServiceHost(
 		oldOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
 
 		const tsFileNamesSet = new Set<string>();
-		for (const [fileName] of fileProvider.sourceFiles) {
+		for (const [fileName] of fileProvider.getAllSources()) {
 			const source = fileProvider.getSource(fileName);
 			if (source?.root) {
 				forEachEmbeddedFile(source.root, embedded => {

@@ -33,17 +33,20 @@ export function createSimpleMonacoProject(
 	env: ServiceEnvironment
 ): Project {
 
-	const snapshots = new Map<string, [number, ts.IScriptSnapshot]>();
+	const lastSnapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 	const fileProvider = createFileProvider(
 		languages,
-		fileName => {
-			const uri = env.fileNameToUri(fileName);
-			const models = getMirrorModels();
-			const model = models.find(model => model.uri.toString(true) === uri);
-			if (model) {
-				const oldVersion = snapshots.get(fileName)?.[0];
-				if (oldVersion === model.version) {
-					return;
+		() => {
+			if (!shouldUpdate())
+				return;
+
+			const remain = new Set<monaco.worker.IMirrorModel>(lastSnapshots.keys());
+
+			for (const model of getMirrorModels()) {
+				remain.delete(model);
+				const cache = lastSnapshots.get(model);
+				if (cache && cache[0] === model.version) {
+					continue;
 				}
 				const text = model.getValue();
 				const snapshot: ts.IScriptSnapshot = {
@@ -51,17 +54,27 @@ export function createSimpleMonacoProject(
 					getLength: () => text.length,
 					getChangeRange: () => undefined,
 				};
-				snapshots.set(fileName, [model.version, snapshot]);
+				const fileName = env.uriToFileName(model.uri.toString(true));
+				lastSnapshots.set(model, [model.version, snapshot]);
 				fileProvider.updateSource(fileName, snapshot, resolveCommonLanguageId(fileName));
-			}
-			else if (snapshots.has(uri)) {
-				snapshots.delete(fileName);
-				fileProvider.deleteSource(fileName);
 			}
 		}
 	);
 
 	return { fileProvider };
+
+	function shouldUpdate() {
+
+		const models = getMirrorModels();
+
+		if (lastSnapshots.size === models.length) {
+			if (models.every(model => lastSnapshots.get(model)?.[0] === model.version)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 }
 
 export function createTypeScriptMonacoProject(

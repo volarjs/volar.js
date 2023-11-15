@@ -1,6 +1,6 @@
 import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { createFileProvider } from '..';
+import type { createFileProvider } from '../lib/createFileProvider';
 
 export interface FileCapabilities {
 	diagnostic?: boolean;

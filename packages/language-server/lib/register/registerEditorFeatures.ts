@@ -72,7 +72,7 @@ export function registerEditorFeatures(
 
 			const rootPath = languageService.context.project.typeScriptProjectHost.getCurrentDirectory();
 
-			for (const [fileName] of languageService.context.project.fileProvider.sourceFiles) {
+			for (const [fileName] of languageService.context.project.fileProvider.getAllSources()) {
 				const source = languageService.context.project.fileProvider.getSource(fileName);
 				if (source?.root) {
 					forEachEmbeddedFile(source.root, virtualFile => {
