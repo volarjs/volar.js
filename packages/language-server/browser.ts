@@ -1,6 +1,6 @@
 import * as vscode from 'vscode-languageserver/browser';
 import { startLanguageServerBase } from './lib/server';
-import { SimpleServerPlugin, ServerProjectProvider } from './lib/types';
+import { SimpleServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { URI } from 'vscode-uri';
 import { FsReadFileRequest, FsReadDirectoryRequest, FsStatRequest } from './protocol';
@@ -32,7 +32,7 @@ export function startSimpleServer(
 
 export function startTypeScriptServer(
 	connection: vscode.Connection,
-	...plugins: SimpleServerPlugin[]
+	...plugins: TypeScriptServerPlugin[]
 ) {
 	return startServer(
 		connection,
@@ -41,10 +41,10 @@ export function startTypeScriptServer(
 	);
 }
 
-function startServer(
+function startServer<P extends SimpleServerPlugin<any, any>>(
 	connection: vscode.Connection,
-	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<SimpleServerPlugin>[]) => ServerProjectProvider,
-	...plugins: SimpleServerPlugin[]
+	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<P>[]) => ServerProjectProvider,
+	...plugins: P[]
 ) {
 	startLanguageServerBase(connection, plugins, createProjectProvider, () => ({
 		uriToFileName,

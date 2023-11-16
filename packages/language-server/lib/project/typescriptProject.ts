@@ -23,12 +23,6 @@ export async function createTypeScriptServerProject(
 	serviceEnv: ServiceEnvironment,
 ): Promise<TypeScriptServerProject> {
 
-	let rootFiles = await getRootFiles();
-	let projectVersion = 0;
-	let token = context.server.runtimeEnv.getCancellationToken();
-	let languageService: LanguageService | undefined;
-	let parsedCommandLine: ts.ParsedCommandLine;
-
 	const tsToken: ts.CancellationToken = {
 		isCancellationRequested() {
 			return token.isCancellationRequested;
@@ -36,6 +30,12 @@ export async function createTypeScriptServerProject(
 		throwIfCancellationRequested() { },
 	};
 	const { uriToFileName, fileNameToUri, fs } = context.server.runtimeEnv;
+
+	let parsedCommandLine: ts.ParsedCommandLine;
+	let rootFiles = await getRootFiles();
+	let projectVersion = 0;
+	let token = context.server.runtimeEnv.getCancellationToken();
+	let languageService: LanguageService | undefined;
 
 	if (!globalSnapshots.has(fs)) {
 		globalSnapshots.set(fs, createUriMap(fileNameToUri));
@@ -70,7 +70,7 @@ export async function createTypeScriptServerProject(
 	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => {
 		onWorkspaceFilesChanged(params.changes);
 	});
-	const config = await getConfig(context, plugins, serviceEnv);
+	const config = await getConfig<TypeScriptServerPlugin>(context, plugins, serviceEnv, typescriptProjectHost);
 
 	await syncRootScriptSnapshots();
 

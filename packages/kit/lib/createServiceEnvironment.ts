@@ -9,7 +9,7 @@ export function createServiceEnvironment(settings: any = {}): ServiceEnvironment
 
 	return {
 		workspaceFolder: {
-			uri: URI.parse('file:///'),
+			uri: URI.file(process.cwd()),
 			name: '',
 		},
 		uriToFileName,

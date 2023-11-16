@@ -110,7 +110,7 @@ export function createSys(
 				if (sys.directoryExists(rootPath)) {
 					// https://github.com/vuejs/language-tools/issues/2480
 					try {
-						// @ts-expect-error
+						// @ts-ignore
 						process.chdir(rootPath);
 					} catch { }
 				}

@@ -88,7 +88,7 @@ export interface VirtualFile {
 }
 
 export interface Language<T extends VirtualFile = VirtualFile> {
-	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string | undefined): T | undefined;
+	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	deleteVirtualFile?(virtualFile: T): void;
 	resolveTypeScriptProjectHost?<T extends TypeScriptProjectHost>(host: T): T;

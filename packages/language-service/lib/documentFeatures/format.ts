@@ -52,8 +52,6 @@ export function register(context: ServiceContext) {
 			if (embeddedFiles.length === 0)
 				break;
 
-			// if (level===2) continue;
-
 			let edits: vscode.TextEdit[] = [];
 			const toPatchIndent: {
 				virtualFileName: string;

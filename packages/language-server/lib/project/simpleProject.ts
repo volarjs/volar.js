@@ -16,7 +16,7 @@ export async function createSimpleServerProject(
 	let lastSnapshots = new Map<string, ts.IScriptSnapshot | undefined>();
 
 	const { uriToFileName } = context.server.runtimeEnv;
-	const config = await getConfig(context, plugins, serviceEnv);
+	const config = await getConfig(context, plugins, serviceEnv, undefined);
 
 	context.workspaces.documents.onDidChangeContent(() => {
 		shouldUpdate = true;

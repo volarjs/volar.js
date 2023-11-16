@@ -2,7 +2,12 @@ import type { Console, ServiceEnvironment } from '@volar/language-service';
 import type { WorkspacesContext } from './project/simpleProjectProvider';
 import type { Config, SimpleServerPlugin } from '../lib/types';
 
-export async function getConfig(context: WorkspacesContext, plugins: ReturnType<SimpleServerPlugin>[], serviceEnv: ServiceEnvironment) {
+export async function getConfig<T extends SimpleServerPlugin<any, any>>(
+	context: WorkspacesContext,
+	plugins: ReturnType<T>[],
+	serviceEnv: ServiceEnvironment,
+	extraData: T extends SimpleServerPlugin<infer _, infer K> ? K : never,
+) {
 
 	let config = (
 		serviceEnv.workspaceFolder.uri.scheme === 'file' ? loadConfig(
@@ -14,7 +19,7 @@ export async function getConfig(context: WorkspacesContext, plugins: ReturnType<
 
 	for (const plugin of plugins) {
 		if (plugin.resolveConfig) {
-			config = await plugin.resolveConfig(config, serviceEnv);
+			config = await plugin.resolveConfig(config, serviceEnv, extraData);
 		}
 	}
 

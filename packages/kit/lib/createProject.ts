@@ -6,7 +6,6 @@ import { asPosix, defaultCompilerOptions } from './utils';
 export function createTypeScriptInferredKitProject(
 	languages: Language[],
 	env: ServiceEnvironment,
-	rootPath: string,
 	getScriptFileNames: () => string[],
 	compilerOptions = defaultCompilerOptions
 ): Project {
@@ -14,7 +13,6 @@ export function createTypeScriptInferredKitProject(
 	const projectHost = createTypeScriptProjectHost(
 		env,
 		undefined,
-		rootPath,
 		() => ({
 			options: compilerOptions,
 			fileNames: getScriptFileNames().map(asPosix),
@@ -35,7 +33,6 @@ export function createTypeScriptKitProject(
 	const projectHost = createTypeScriptProjectHost(
 		env,
 		tsconfigPath,
-		path.dirname(tsconfigPath),
 		() => {
 			const parsed = ts.parseJsonSourceFileConfigFileContent(
 				ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile),
@@ -54,10 +51,9 @@ export function createTypeScriptKitProject(
 	return _createTypeScriptProject(projectHost, languages, resolveCommonLanguageId);
 }
 
-function createTypeScriptProjectHost(
+export function createTypeScriptProjectHost(
 	env: ServiceEnvironment,
 	tsconfig: string | undefined,
-	rootPath: string,
 	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>
 ) {
 
@@ -69,7 +65,7 @@ function createTypeScriptProjectHost(
 	const host: TypeScriptProjectHost = {
 		configFileName: tsconfig,
 		getCurrentDirectory: () => {
-			return rootPath;
+			return env.uriToFileName(env.workspaceFolder.uri.toString());
 		},
 		getCompilationSettings: () => {
 			return parsedCommandLine.options;
