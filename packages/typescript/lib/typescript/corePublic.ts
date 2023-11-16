@@ -116,7 +116,7 @@ namespace NativeCollections {
 	declare const self: any;
 
 	const globals = typeof globalThis !== "undefined" ? globalThis :
-		// @ts-ignore node global
+		// @ts-expect-error node global
 		typeof global !== "undefined" ? global :
 			typeof self !== "undefined" ? self :
 				undefined;
