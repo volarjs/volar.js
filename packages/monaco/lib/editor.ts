@@ -1,8 +1,8 @@
 import type { LanguageService } from '@volar/language-service';
 import type { editor as _editor, IDisposable, Uri } from 'monaco-editor-core';
-import { markers } from './utils/markers';
-import * as protocol2monaco from './utils/protocol2monaco';
-import * as monaco2protocol from './utils/monaco2protocol';
+import { markers } from './utils/markers.js';
+import * as protocol2monaco from './utils/protocol2monaco.js';
+import * as monaco2protocol from './utils/monaco2protocol.js';
 
 interface IInternalEditorModel extends _editor.IModel {
 	onDidChangeAttached(listener: () => void): IDisposable;
