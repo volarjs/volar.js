@@ -4,7 +4,4 @@
 	"references": [
 		{ "path": "../language-service/tsconfig.json" },
 	],
-	"compilerOptions": {
-		"esModuleInterop": true
-	},
 }
