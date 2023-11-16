@@ -223,8 +223,3 @@ export function searchExternalFiles(ts: typeof import('typescript/lib/tsserverli
 	const parsed = ts.parseJsonSourceFileConfigFileContent(config, parseHost, project.getCurrentDirectory());
 	return parsed.fileNames;
 }
-
-/**
- * @deprecated use `searchExternalFiles` instead
- */
-export const getExternalFiles = searchExternalFiles;
