@@ -2,6 +2,7 @@
 	"name": "@volar/monaco",
 	"version": "1.11.1",
 	"license": "MIT",
+	"type": "module",
 	"files": [
 		"**/*.js",
 		"**/*.d.ts"

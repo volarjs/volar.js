@@ -12,7 +12,7 @@ import {
 	type TypeScriptProjectHost
 } from '@volar/language-service';
 import type * as monaco from 'monaco-editor-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { URI } from 'vscode-uri';
 
 export function createServiceEnvironment(): ServiceEnvironment {
