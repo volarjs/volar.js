@@ -1,2 +1,2 @@
-export * from './lib/editor';
-export * from './lib/languages';
+export * from './lib/editor.js';
+export * from './lib/languages.js';
