@@ -137,10 +137,10 @@ export function createTypeScriptWorkerService<T = {}>(
 			};
 
 			return createTypeScriptProject(
-				projectHost,
 				languages,
-				resolveCommonLanguageId,
-				env.fileNameToUri
+				projectHost,
+				env.fileNameToUri,
+				resolveCommonLanguageId
 			);
 		},
 		extraApis
