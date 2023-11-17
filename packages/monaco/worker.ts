@@ -170,7 +170,10 @@ function createWorkerService<T = {}>(
 		project,
 	);
 
-	class WorkerService { };
+	class WorkerService {
+		env = env;
+		project = project;
+	};
 
 	for (const api in languageService) {
 		const isFunction = typeof (languageService as any)[api] === 'function';
