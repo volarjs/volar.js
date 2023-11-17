@@ -85,6 +85,7 @@ function createTypeScriptCheckerWorker(
 		check,
 		fixErrors,
 		printErrors,
+		projectHost,
 
 		// settings
 		get settings() {
