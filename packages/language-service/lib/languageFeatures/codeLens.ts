@@ -8,14 +8,14 @@ export interface ServiceCodeLensData {
 	kind: 'normal',
 	uri: string,
 	original: Pick<vscode.CodeLens, 'data'>,
-	serviceId: string,
+	serviceIndex: number,
 }
 
 export interface ServiceReferencesCodeLensData {
 	kind: 'references',
 	uri: string,
 	range: vscode.Range,
-	serviceId: string,
+	serviceIndex: number,
 }
 
 export function register(context: ServiceContext) {
@@ -34,7 +34,7 @@ export function register(context: ServiceContext) {
 
 				let codeLens = await service.provideCodeLenses?.(document, token);
 
-				const serviceId = Object.keys(context.services).find(key => context.services[key] === service)!;
+				const serviceIndex = context.services.indexOf(service);
 
 				codeLens?.forEach(codeLens => {
 					codeLens.data = {
@@ -43,7 +43,7 @@ export function register(context: ServiceContext) {
 						original: {
 							data: codeLens.data,
 						},
-						serviceId: serviceId,
+						serviceIndex,
 					} satisfies ServiceCodeLensData;
 				});
 
@@ -54,7 +54,7 @@ export function register(context: ServiceContext) {
 						kind: 'references',
 						uri,
 						range,
-						serviceId: serviceId,
+						serviceIndex,
 					} satisfies ServiceReferencesCodeLensData,
 				}));
 

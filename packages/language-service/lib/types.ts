@@ -1,8 +1,8 @@
-import { Language, ProjectHost, VirtualFiles } from '@volar/language-core';
+import type { Project } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import { URI } from 'vscode-uri';
-import { DocumentsAndSourceMaps } from './documents';
+import type { URI } from 'vscode-uri';
+import type { DocumentProvider } from './documents';
 
 export type * from 'vscode-languageserver-protocol';
 
@@ -10,17 +10,19 @@ export interface SharedModules {
 	typescript?: typeof import('typescript/lib/tsserverlibrary');
 }
 
-export interface ServiceEnvironment {
-
+export interface ServiceEnvironment extends RuntimeEnvironment {
+	workspaceFolder: {
+		name: string;
+		uri: URI;
+	};
 	locale?: string;
-	workspaceUri: URI;
-	rootUri: URI;
 	clientCapabilities?: vscode.ClientCapabilities;
 	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>;
 	onDidChangeConfiguration?(cb: () => void): vscode.Disposable;
 	onDidChangeWatchedFiles?(cb: (params: vscode.DidChangeWatchedFilesParams) => void): vscode.Disposable;
+}
 
-	// RuntimeEnvironment
+export interface RuntimeEnvironment {
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
 	fs?: FileSystem;
@@ -60,11 +62,8 @@ interface Command<T> {
 }
 
 export interface ServiceContext<Provide = any> {
-	project: {
-		host: ProjectHost;
-		virtualFiles: VirtualFiles;
-	};
 	env: ServiceEnvironment;
+	project: Project;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
 	getTextDocument(uri: string): TextDocument | undefined;
 	commands: {
@@ -72,16 +71,8 @@ export interface ServiceContext<Provide = any> {
 		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;
 		setSelection: Command<(position: vscode.Position) => vscode.Command | undefined>;
 	};
-	documents: DocumentsAndSourceMaps;
-	rules: { [id: string]: Rule; };
-	services: { [id: string]: ReturnType<Service>; };
-	ruleFixes?: {
-		[uri: string]: {
-			[ruleId: string]: {
-				[ruleFixId: number]: [vscode.Diagnostic, RuleFix[]];
-			};
-		};
-	};
+	documents: DocumentProvider;
+	services: ReturnType<Service>[];
 }
 
 export type Result<T> = T | Thenable<T>;
@@ -151,48 +142,4 @@ export interface AutoInsertionContext {
 		rangeLength: number;
 		text: string;
 	};
-}
-
-export enum RuleType {
-	Format,
-	Syntax,
-	Semantic,
-};
-
-export interface Rule<Provide = any> {
-	type?: RuleType;
-	run(document: TextDocument, ctx: RuleContext<Provide>): void;
-}
-
-export interface RuleContext<Provide = any> {
-	env: ServiceEnvironment;
-	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
-	report(error: vscode.Diagnostic, ...fixes: RuleFix[]): void;
-}
-
-export interface RuleFix {
-	/**
-	 * Code action kind, like `quickfix` or `refactor`.
-	 * 
-	 * See https://code.visualstudio.com/api/references/vscode-api#CodeActionKind
-	 */
-	kinds?: vscode.CodeActionKind[];
-	/**
-	 * Title of the code action.
-	 */
-	title?: string;
-	/**
-	 * Edit to apply to the document.
-	 */
-	getEdits?(diagnostic: vscode.Diagnostic): NullableResult<vscode.TextEdit[]>;
-	/**
-	 * Cross-file edits to apply to the workspace.
-	 */
-	getWorkspaceEdit?(diagnostic: vscode.Diagnostic): NullableResult<vscode.WorkspaceEdit>;
-}
-
-export interface Config {
-	languages?: { [id: string]: Language; };
-	services?: { [id: string]: Service; };
-	rules?: { [id: string]: Rule; };
 }

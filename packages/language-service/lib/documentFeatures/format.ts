@@ -1,9 +1,9 @@
-import { VirtualFile, forEachEmbeddedFile, updateVirtualFileMaps } from '@volar/language-core';
+import { VirtualFile, forEachEmbeddedFile, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext, Service } from '../types';
 import { SourceMap } from '@volar/source-map';
-import { isInsideRange, resolveCommonLanguageId, stringToSnapshot } from '../utils/common';
+import { isInsideRange, stringToSnapshot } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { SourceMapWithDocuments } from '../documents';
 import type * as ts from 'typescript/lib/tsserverlibrary';
@@ -32,7 +32,7 @@ export function register(context: ServiceContext) {
 		};
 
 		const source = context.documents.getSourceByUri(document.uri);
-		if (!source) {
+		if (!source?.language || !source.root) {
 			return onTypeParams
 				? (await tryFormat(document, onTypeParams.position, onTypeParams.ch))?.edits
 				: (await tryFormat(document, range, undefined))?.edits;
@@ -52,8 +52,6 @@ export function register(context: ServiceContext) {
 			if (embeddedFiles.length === 0)
 				break;
 
-			// if (level===2) continue;
-
 			let edits: vscode.TextEdit[] = [];
 			const toPatchIndent: {
 				virtualFileName: string;
@@ -70,7 +68,7 @@ export function register(context: ServiceContext) {
 				if (onTypeParams && !isCodeBlock)
 					continue;
 
-				const docMap = createDocMap(file, source.fileName, tempSourceSnapshot);
+				const docMap = createDocMap(file, source.fileName, tempSourceSnapshot, source.languageId);
 				if (!docMap) continue;
 
 				let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
@@ -144,12 +142,12 @@ export function register(context: ServiceContext) {
 							virtualFile = file;
 						}
 					});
-					const docMap = createDocMap(virtualFile, source.fileName, tempSourceSnapshot);
+					const docMap = createDocMap(virtualFile, source.fileName, tempSourceSnapshot, source.languageId);
 					if (!docMap) continue;
 
 					const indentSensitiveLines = new Set<number>();
 
-					for (const service of item.service.provideFormattingIndentSensitiveLines ? [item.service] : Object.values(context.services)) {
+					for (const service of item.service.provideFormattingIndentSensitiveLines ? [item.service] : context.services) {
 
 						if (token.isCancellationRequested)
 							break;
@@ -240,7 +238,7 @@ export function register(context: ServiceContext) {
 
 			let formatRange = range;
 
-			for (const service of Object.values(context.services)) {
+			for (const service of context.services) {
 
 				if (token.isCancellationRequested)
 					break;
@@ -272,7 +270,7 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function createDocMap(file: VirtualFile, _sourceFileName: string, _sourceSnapshot: ts.IScriptSnapshot) {
+	function createDocMap(file: VirtualFile, _sourceFileName: string, _sourceSnapshot: ts.IScriptSnapshot, sourceLanguageId: string | undefined) {
 		const maps = updateVirtualFileMaps(file, (sourceFileName) => {
 			if (!sourceFileName) {
 				return [_sourceFileName, _sourceSnapshot];
@@ -282,8 +280,18 @@ export function register(context: ServiceContext) {
 			const [_, map] = maps.get(_sourceFileName)!;
 			const version = fakeVersion++;
 			return new SourceMapWithDocuments(
-				TextDocument.create(context.env.fileNameToUri(_sourceFileName), context.project.host.getLanguageId?.(_sourceFileName) ?? resolveCommonLanguageId(context.env.fileNameToUri(_sourceFileName)), version, _sourceSnapshot.getText(0, _sourceSnapshot.getLength())),
-				TextDocument.create(context.env.fileNameToUri(file.fileName), context.project.host.getLanguageId?.(file.fileName) ?? resolveCommonLanguageId(context.env.fileNameToUri(file.fileName)), version, file.snapshot.getText(0, file.snapshot.getLength())),
+				TextDocument.create(
+					context.env.fileNameToUri(_sourceFileName),
+					sourceLanguageId ?? resolveCommonLanguageId(_sourceFileName),
+					version,
+					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
+				),
+				TextDocument.create(
+					context.env.fileNameToUri(file.fileName),
+					file.languageId,
+					version,
+					file.snapshot.getText(0, file.snapshot.getLength())
+				),
 				map,
 			);
 		}

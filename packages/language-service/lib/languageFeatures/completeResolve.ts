@@ -12,7 +12,7 @@ export function register(context: ServiceContext) {
 
 		if (data) {
 
-			const service = context.services[data.serviceId];
+			const service = context.services[data.serviceIndex];
 
 			if (!service.resolveCompletionItem)
 				return item;

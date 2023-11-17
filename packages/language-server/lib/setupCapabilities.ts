@@ -1,18 +1,16 @@
-import { DiagnosticModel, LanguageServerPlugin, InitializationOptions, ServerMode } from '../../types';
+import { Service } from '@volar/language-service';
+import { DiagnosticModel, SimpleServerPlugin, InitializationOptions, ServerMode } from './types';
 import * as vscode from 'vscode-languageserver';
-import { Config } from '@volar/language-service';
 
 export function setupCapabilities(
 	server: vscode.ServerCapabilities,
 	initOptions: InitializationOptions,
-	plugins: ReturnType<LanguageServerPlugin>[],
+	plugins: ReturnType<SimpleServerPlugin>[],
 	semanticTokensLegend: vscode.SemanticTokensLegend,
-	services: NonNullable<Config['services']>,
+	services: Service[],
 ) {
 
-	const serviceInstances = Object.values(services)
-		.map(service => typeof service === 'function' ? service(undefined, undefined) : service)
-		.filter((service): service is NonNullable<typeof service> => !!service);
+	const serviceInstances = services.map(service => service(undefined, undefined));
 	const serverMode = initOptions.serverMode ?? ServerMode.Semantic;
 
 	if (serverMode === ServerMode.Semantic || serverMode === ServerMode.Syntactic) {

@@ -10,7 +10,7 @@ export function register(context: ServiceContext) {
 
 		const symbolsList: vscode.WorkspaceSymbol[][] = [];
 
-		for (const service of Object.values(context.services)) {
+		for (const service of context.services) {
 
 			if (token.isCancellationRequested)
 				break;

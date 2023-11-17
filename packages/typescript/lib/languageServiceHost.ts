@@ -1,4 +1,4 @@
-import type { FileKind, TypeScriptProjectHost, VirtualFile, VirtualFiles } from '@volar/language-core';
+import { type FileKind, type TypeScriptProjectHost, type VirtualFile, type FileProvider, resolveCommonLanguageId } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as path from 'path-browserify';
 import { matchFiles } from './typescript/utilities';
@@ -7,7 +7,7 @@ const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: We
 
 export function createLanguageServiceHost(
 	projectHost: TypeScriptProjectHost,
-	virtualFiles: VirtualFiles,
+	fileProvider: FileProvider,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	sys: ts.System & {
 		version?: number;
@@ -21,7 +21,7 @@ export function createLanguageServiceHost(
 
 	const _tsHost: ts.LanguageServiceHost = {
 		...sys,
-		getCurrentDirectory: () => projectHost.workspacePath,
+		getCurrentDirectory: () => projectHost.getCurrentDirectory(),
 		getCompilationSettings: () => projectHost.getCompilationSettings(),
 		getCancellationToken: projectHost.getCancellationToken ? () => projectHost.getCancellationToken!() : undefined,
 		getLocalizedDiagnosticMessages: projectHost.getLocalizedDiagnosticMessages ? () => projectHost.getLocalizedDiagnosticMessages!() : undefined,
@@ -58,7 +58,7 @@ export function createLanguageServiceHost(
 		getScriptKind(fileName) {
 
 			if (ts) {
-				if (virtualFiles.hasSource(fileName))
+				if (fileProvider.hasSource(fileName))
 					return ts.ScriptKind.Deferred;
 
 				switch (path.extname(fileName)) {
@@ -155,8 +155,8 @@ export function createLanguageServiceHost(
 
 	function sync() {
 
-		const newProjectVersion = projectHost.getProjectVersion();
-		const shouldUpdate = newProjectVersion !== lastProjectVersion;
+		const newProjectVersion = projectHost.getProjectVersion?.();
+		const shouldUpdate = newProjectVersion === undefined || newProjectVersion !== lastProjectVersion;
 		if (!shouldUpdate)
 			return;
 
@@ -165,15 +165,18 @@ export function createLanguageServiceHost(
 		const newTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 		const newOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
-		for (const { root } of virtualFiles.allSources()) {
-			forEachEmbeddedFile(root, embedded => {
-				if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
-					newTsVirtualFileSnapshots.add(embedded.snapshot);
-				}
-				else {
-					newOtherVirtualFileSnapshots.add(embedded.snapshot);
-				}
-			});
+		for (const [fileName] of fileProvider.getAllSources()) {
+			const source = fileProvider.getSource(fileName);
+			if (source?.root) {
+				forEachEmbeddedFile(source.root, embedded => {
+					if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
+						newTsVirtualFileSnapshots.add(embedded.snapshot);
+					}
+					else {
+						newOtherVirtualFileSnapshots.add(embedded.snapshot);
+					}
+				});
+			}
 		}
 
 		if (!setEquals(oldTsVirtualFileSnapshots, newTsVirtualFileSnapshots)) {
@@ -188,15 +191,18 @@ export function createLanguageServiceHost(
 		oldOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
 
 		const tsFileNamesSet = new Set<string>();
-		for (const { root } of virtualFiles.allSources()) {
-			forEachEmbeddedFile(root, embedded => {
-				if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
-					tsFileNamesSet.add(embedded.fileName); // virtual .ts
-				}
-			});
+		for (const [fileName] of fileProvider.getAllSources()) {
+			const source = fileProvider.getSource(fileName);
+			if (source?.root) {
+				forEachEmbeddedFile(source.root, embedded => {
+					if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
+						tsFileNamesSet.add(embedded.fileName); // virtual .ts
+					}
+				});
+			}
 		}
 		for (const fileName of projectHost.getScriptFileNames()) {
-			if (!virtualFiles.hasSource(fileName)) {
+			if (!fileProvider.getSource(fileName)?.root) {
 				tsFileNamesSet.add(fileName); // .ts
 			}
 		}
@@ -222,7 +228,7 @@ export function createLanguageServiceHost(
 			excludes,
 			includes,
 			sys?.useCaseSensitiveFileNames ?? false,
-			projectHost.workspacePath,
+			projectHost.getCurrentDirectory(),
 			depth,
 			(dirPath) => {
 
@@ -245,7 +251,7 @@ export function createLanguageServiceHost(
 			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
 		);
 		matches = matches.map(match => {
-			const [_, source] = virtualFiles.getVirtualFile(match);
+			const [_, source] = fileProvider.getVirtualFile(match);
 			if (source) {
 				return source.fileName;
 			}
@@ -282,7 +288,7 @@ export function createLanguageServiceHost(
 
 	function getScriptSnapshot(fileName: string) {
 		// virtual files
-		const [virtualFile] = virtualFiles.getVirtualFile(fileName);
+		const [virtualFile] = fileProvider.getVirtualFile(fileName);
 		if (virtualFile) {
 			return virtualFile.snapshot;
 		}
@@ -309,7 +315,7 @@ export function createLanguageServiceHost(
 
 	function getScriptVersion(fileName: string) {
 		// virtual files / root files / opened files
-		const [virtualFile] = virtualFiles.getVirtualFile(fileName);
+		const [virtualFile] = fileProvider.getVirtualFile(fileName);
 		const snapshot = virtualFile?.snapshot ?? projectHost.getScriptSnapshot(fileName);
 		if (snapshot) {
 			if (!fileVersions.has(fileName)) {
@@ -351,16 +357,16 @@ export function createLanguageServiceHost(
 
 			const sourceFileName = fileName.substring(0, fileName.lastIndexOf('.'));
 
-			if (!virtualFiles.hasSource(sourceFileName)) {
+			if (!fileProvider.hasSource(sourceFileName)) {
 				const scriptSnapshot = getScriptSnapshot(sourceFileName);
 				if (scriptSnapshot) {
-					virtualFiles.updateSource(sourceFileName, scriptSnapshot, projectHost.getLanguageId?.(sourceFileName));
+					fileProvider.updateSource(sourceFileName, scriptSnapshot, resolveCommonLanguageId(sourceFileName));
 				}
 			}
 		}
 
 		// virtual files
-		if (virtualFiles.hasVirtualFile(fileName)) {
+		if (fileProvider.hasVirtualFile(fileName)) {
 			return true;
 		}
 

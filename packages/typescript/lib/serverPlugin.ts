@@ -1,8 +1,9 @@
-import { FileKind, VirtualFiles, forEachEmbeddedFile } from '@volar/language-core';
+import { FileKind, FileProvider, forEachEmbeddedFile } from '@volar/language-core';
+import { resolveCommonLanguageId } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function decorateLanguageServiceHost(
-	virtualFiles: VirtualFiles,
+	virtualFiles: FileProvider,
 	languageServiceHost: ts.LanguageServiceHost,
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	exts: string[]
@@ -175,7 +176,7 @@ export function decorateLanguageServiceHost(
 
 			if (text !== undefined) {
 				extraProjectVersion++;
-				const virtualFile = virtualFiles.updateSource(fileName, ts.ScriptSnapshot.fromString(text), undefined);
+				const virtualFile = virtualFiles.updateSource(fileName, ts.ScriptSnapshot.fromString(text), resolveCommonLanguageId(fileName));
 				if (virtualFile) {
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 					forEachEmbeddedFile(virtualFile, file => {
@@ -222,8 +223,3 @@ export function searchExternalFiles(ts: typeof import('typescript/lib/tsserverli
 	const parsed = ts.parseJsonSourceFileConfigFileContent(config, parseHost, project.getCurrentDirectory());
 	return parsed.fileNames;
 }
-
-/**
- * @deprecated use `searchExternalFiles` instead
- */
-export const getExternalFiles = searchExternalFiles;

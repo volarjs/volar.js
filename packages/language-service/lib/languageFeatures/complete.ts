@@ -9,7 +9,7 @@ import { NoneCancellationToken } from '../utils/cancellation';
 export interface ServiceCompletionData {
 	uri: string;
 	original: Pick<vscode.CompletionItem, 'additionalTextEdits' | 'textEdit' | 'data'>;
-	serviceId: string;
+	serviceIndex: number;
 	virtualDocumentUri: string | undefined;
 }
 
@@ -73,7 +73,7 @@ export function register(context: ServiceContext) {
 										textEdit: oldItem.textEdit,
 										data: oldItem.data,
 									},
-									serviceId: Object.keys(context.services).find(key => context.services[key] === cacheData.service)!,
+									serviceIndex: context.services.indexOf(cacheData.service),
 									virtualDocumentUri: map.virtualFileDocument.uri,
 								} satisfies ServiceCompletionData,
 							);
@@ -100,7 +100,7 @@ export function register(context: ServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							serviceId: Object.keys(context.services).find(key => context.services[key] === cacheData.service)!,
+							serviceIndex: context.services.indexOf(cacheData.service),
 							virtualDocumentUri: undefined,
 						} satisfies ServiceCompletionData;
 					});
@@ -124,7 +124,7 @@ export function register(context: ServiceContext) {
 
 				await visitEmbedded(context.documents, rootFile, async (_, map) => {
 
-					const services = Object.values(context.services).sort(sortServices);
+					const services = [...context.services].sort(sortServices);
 
 					let _data: FileRangeCapabilities | undefined;
 
@@ -180,7 +180,7 @@ export function register(context: ServiceContext) {
 										textEdit: oldItem.textEdit,
 										data: oldItem.data,
 									},
-									serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+									serviceIndex: context.services.indexOf(service),
 									virtualDocumentUri: map.virtualFileDocument.uri,
 								} satisfies ServiceCompletionData,
 							);
@@ -201,7 +201,7 @@ export function register(context: ServiceContext) {
 
 			if (document = context.getTextDocument(uri)) {
 
-				const services = Object.values(context.services).sort(sortServices);
+				const services = [...context.services].sort(sortServices);
 
 				for (const service of services) {
 
@@ -241,7 +241,7 @@ export function register(context: ServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+							serviceIndex: context.services.indexOf(service),
 							virtualDocumentUri: undefined,
 						} satisfies ServiceCompletionData;
 					});

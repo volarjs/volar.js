@@ -1,39 +1,46 @@
-import { Config, FileSystem, standardSemanticTokensLegend } from '@volar/language-service/index.js';
+import { FileSystem, standardSemanticTokensLegend } from '@volar/language-service';
 import * as l10n from '@vscode/l10n';
+import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { InitializationOptions, LanguageServerPlugin, RuntimeEnvironment, ServerMode } from '../types.js';
+import { DiagnosticModel, InitializationOptions, SimpleServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment, Config } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
-import { createDocuments } from './documents.js';
-import { setupCapabilities } from './utils/registerFeatures.js';
-import { loadConfig } from './utils/serverConfig.js';
-import { createWorkspaces } from './workspaces.js';
-import { configure as configureHttpRequests } from 'request-light';
+import { createDocumentManager } from './documentManager.js';
+import { setupCapabilities } from './setupCapabilities.js';
+import { loadConfig } from './config.js';
+import { createWorkspaceFolderManager } from './workspaceFolderManager.js';
+import type { WorkspacesContext } from './project/simpleProjectProvider.js';
 
 export interface ServerContext {
 	server: {
 		initializeParams: vscode.InitializeParams;
 		connection: vscode.Connection;
-		runtimeEnv: RuntimeEnvironment;
-		plugins: LanguageServerPlugin[];
+		runtimeEnv: ServerRuntimeEnvironment;
 		onDidChangeWatchedFiles: vscode.Connection['onDidChangeWatchedFiles'];
 		configurationHost: ReturnType<typeof createConfigurationHost> | undefined;
 	};
 }
 
-export function startCommonLanguageServer(connection: vscode.Connection, _plugins: LanguageServerPlugin[], getRuntimeEnv: (params: vscode.InitializeParams, options: InitializationOptions) => RuntimeEnvironment) {
+export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
+	connection: vscode.Connection,
+	_plugins: Plugin[],
+	createProjectProvider: (context: WorkspacesContext, plugin: ReturnType<Plugin>[]) => ServerProjectProvider,
+	getRuntimeEnv: (params: vscode.InitializeParams, options: InitializationOptions) => ServerRuntimeEnvironment,
+) {
 
 	let initParams: vscode.InitializeParams;
 	let options: InitializationOptions;
-	let roots: URI[] = [];
-	let workspaces: ReturnType<typeof createWorkspaces> | undefined;
-	let plugins: ReturnType<LanguageServerPlugin>[];
-	let documents: ReturnType<typeof createDocuments>;
+	let projectProvider: ServerProjectProvider;
+	let plugins: ReturnType<Plugin>[];
+	let documents: ReturnType<typeof createDocumentManager>;
 	let context: ServerContext;
 	let ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 	let tsLocalized: {} | undefined;
+	let semanticTokensReq = 0;
+	let documentUpdatedReq = 0;
 
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
+	const workspaceFolderManager = createWorkspaceFolderManager();
 
 	connection.onInitialize(async _params => {
 
@@ -48,7 +55,6 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 					...env,
 					fs: createFsWithCache(env.fs),
 				},
-				plugins: _plugins,
 				configurationHost: initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, connection) : undefined,
 				onDidChangeWatchedFiles: cb => {
 					didChangeWatchedFilesCallbacks.add(cb);
@@ -64,21 +70,36 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 		tsLocalized = initParams.locale
 			? await context.server.runtimeEnv.loadTypeScriptLocalized(options, initParams.locale)
 			: undefined;
-		plugins = context.server.plugins.map(plugin => plugin(options, { typescript: ts }));
-		documents = createDocuments(context.server.runtimeEnv, connection);
+		plugins = _plugins.map(plugin => plugin({
+			initializationOptions: options,
+			modules: { typescript: ts },
+			env: context.server.runtimeEnv,
+		}) as ReturnType<Plugin>);
+		documents = createDocumentManager(context.server.runtimeEnv, connection);
 
 		if (options.l10n) {
 			await l10n.config({ uri: options.l10n.location });
 		}
 
 		if (initParams.capabilities.workspace?.workspaceFolders && initParams.workspaceFolders) {
-			roots = initParams.workspaceFolders.map(folder => URI.parse(folder.uri));
+			for (const folder of initParams.workspaceFolders) {
+				workspaceFolderManager.add({
+					uri: URI.parse(folder.uri),
+					name: folder.name,
+				});
+			}
 		}
 		else if (initParams.rootUri) {
-			roots = [URI.parse(initParams.rootUri)];
+			workspaceFolderManager.add({
+				uri: URI.parse(initParams.rootUri),
+				name: '',
+			});
 		}
 		else if (initParams.rootPath) {
-			roots = [URI.file(initParams.rootPath)];
+			workspaceFolderManager.add({
+				uri: URI.file(initParams.rootPath),
+				name: '',
+			});
 		}
 
 		const result: vscode.InitializeResult = {
@@ -96,9 +117,9 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 
 		let config: Config = {};
 
-		for (const root of roots) {
-			if (root.scheme === 'file') {
-				const workspaceConfig = loadConfig(env.console, root.path, options.configFilePath);
+		for (const folder of workspaceFolderManager.getAll()) {
+			if (folder.uri.scheme === 'file') {
+				const workspaceConfig = loadConfig(env.console, folder.uri.path, options.configFilePath);
 				if (workspaceConfig) {
 					config = workspaceConfig;
 					break;
@@ -117,25 +138,34 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 			options,
 			plugins,
 			getSemanticTokensLegend(),
-			config.services ?? {},
+			Object.values(config.services ?? {}),
 		);
 
-		workspaces = createWorkspaces({
+		projectProvider = createProjectProvider({
 			...context,
 			workspaces: {
 				ts,
 				tsLocalized,
-				initParams,
 				initOptions: options,
 				documents,
-				plugins,
+				workspaceFolders: workspaceFolderManager,
+				reloadDiagnostics,
+				updateDiagnosticsAndSemanticTokens,
 			},
-		}, roots);
+		}, plugins);
 
-		(await import('./features/customFeatures.js')).register(connection, workspaces, context.server.runtimeEnv);
-		(await import('./features/languageFeatures.js')).register(
+		documents.onDidChangeContent(({ textDocument }) => {
+			updateDiagnostics(textDocument.uri);
+		});
+		documents.onDidClose(({ textDocument }) => {
+			context.server.connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
+		});
+		context.server.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
+
+		(await import('./register/registerEditorFeatures.js')).registerEditorFeatures(connection, projectProvider, context.server.runtimeEnv);
+		(await import('./register/registerLanguageFeatures.js')).registerLanguageFeatures(
 			connection,
-			workspaces,
+			projectProvider,
 			initParams,
 			options,
 			getSemanticTokensLegend(),
@@ -165,11 +195,17 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 
 				for (const folder of e.added) {
-					workspaces?.add(URI.parse(folder.uri));
+					workspaceFolderManager.add({
+						name: folder.name,
+						uri: URI.parse(folder.uri),
+					});
 				}
 
 				for (const folder of e.removed) {
-					workspaces?.remove(URI.parse(folder.uri));
+					workspaceFolderManager.remove({
+						name: folder.name,
+						uri: URI.parse(folder.uri),
+					});
 				}
 			});
 		}
@@ -196,12 +232,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 		}
 
 		for (const plugin of plugins) {
-			plugin.onInitialized?.(getLanguageService, context.server.runtimeEnv);
-		}
-
-		async function getLanguageService(uri: string) {
-			const project = await workspaces!.getProject(uri);
-			return project.getLanguageService();
+			plugin.onInitialized?.(projectProvider!);
 		}
 
 		async function updateHttpSettings() {
@@ -210,7 +241,7 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 		}
 	});
 	connection.onShutdown(async () => {
-		workspaces?.reloadProjects();
+		projectProvider?.reloadProjects();
 	});
 	connection.listen();
 
@@ -272,4 +303,88 @@ export function startCommonLanguageServer(connection: vscode.Connection, _plugin
 			tokenModifiers: [...standardSemanticTokensLegend.tokenModifiers, ...options.semanticTokensLegend.tokenModifiers],
 		};
 	}
+
+	function reloadDiagnostics() {
+		for (const doc of documents.data.values()) {
+			context.server.connection.sendDiagnostics({ uri: doc.uri, diagnostics: [] });
+		}
+
+		updateDiagnosticsAndSemanticTokens();
+	}
+
+	async function updateDiagnosticsAndSemanticTokens() {
+
+		const req = ++semanticTokensReq;
+
+		await updateDiagnostics();
+
+		const delay = 250;
+		await sleep(delay);
+
+		if (req === semanticTokensReq) {
+			if (context.server.initializeParams.capabilities.workspace?.semanticTokens?.refreshSupport) {
+				context.server.connection.languages.semanticTokens.refresh();
+			}
+			if (context.server.initializeParams.capabilities.workspace?.inlayHint?.refreshSupport) {
+				context.server.connection.languages.inlayHint.refresh();
+			}
+			if ((options.diagnosticModel ?? DiagnosticModel.Push) === DiagnosticModel.Pull) {
+				if (context.server.initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
+					context.server.connection.languages.diagnostics.refresh();
+				}
+			}
+		}
+	}
+
+	async function updateDiagnostics(docUri?: string) {
+
+		if ((options.diagnosticModel ?? DiagnosticModel.Push) !== DiagnosticModel.Push)
+			return;
+
+		const req = ++documentUpdatedReq;
+		const delay = 250;
+		const cancel = context.server.runtimeEnv.getCancellationToken({
+			get isCancellationRequested() {
+				return req !== documentUpdatedReq;
+			},
+			onCancellationRequested: vscode.Event.None,
+		});
+		const changeDoc = docUri ? documents.data.uriGet(docUri) : undefined;
+		const otherDocs = [...documents.data.values()].filter(doc => doc !== changeDoc);
+
+		if (changeDoc) {
+			await sleep(delay);
+			if (cancel.isCancellationRequested) {
+				return;
+			}
+			await sendDocumentDiagnostics(changeDoc.uri, changeDoc.version, cancel);
+		}
+
+		for (const doc of otherDocs) {
+			await sleep(delay);
+			if (cancel.isCancellationRequested) {
+				break;
+			}
+			await sendDocumentDiagnostics(doc.uri, doc.version, cancel);
+		}
+	}
+
+	async function sendDocumentDiagnostics(uri: string, version: number, cancel: vscode.CancellationToken) {
+
+		// fix https://github.com/vuejs/language-tools/issues/2627
+		if (options.serverMode === ServerMode.Syntactic) {
+			return;
+		}
+
+		const languageService = (await projectProvider!.getProject(uri)).getLanguageService();
+		const errors = await languageService.doValidation(uri, 'all', cancel, result => {
+			context.server.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
+		});
+
+		context.server.connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
+	}
+}
+
+function sleep(ms: number) {
+	return new Promise(resolve => setTimeout(resolve, ms));
 }

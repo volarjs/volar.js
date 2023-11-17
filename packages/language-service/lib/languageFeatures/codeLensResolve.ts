@@ -14,7 +14,7 @@ export function register(context: ServiceContext) {
 
 		if (data?.kind === 'normal') {
 
-			const service = context.services[data.serviceId];
+			const service = context.services[data.serviceIndex];
 			if (!service.resolveCodeLens)
 				return item;
 
@@ -28,7 +28,7 @@ export function register(context: ServiceContext) {
 
 			let references = await findReferences(data.uri, item.range.start, token) ?? [];
 
-			const service = context.services[data.serviceId];
+			const service = context.services[data.serviceIndex];
 			const document = context.getTextDocument(data.uri);
 
 			if (document && service.resolveReferencesCodeLensLocations) {

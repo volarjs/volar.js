@@ -1,6 +1,5 @@
-import { createProxyHostAndVirtualFiles, FileRangeCapabilities, ProjectHost, VirtualFiles } from '@volar/language-core';
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import { createDocumentsAndSourceMaps } from './documents';
+import { FileRangeCapabilities, Project } from '@volar/language-core';
+import { createDocumentProvider } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
 import * as callHierarchy from './languageFeatures/callHierarchy';
 import * as codeActionResolve from './languageFeatures/codeActionResolve';
@@ -25,8 +24,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { Config, ServiceContext, ServiceEnvironment, SharedModules } from './types';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import { Service, ServiceContext, ServiceEnvironment, SharedModules } from './types';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
 import * as documentColors from './documentFeatures/documentColors';
@@ -37,48 +35,21 @@ import * as linkedEditingRanges from './documentFeatures/linkedEditingRanges';
 import * as selectionRanges from './documentFeatures/selectionRanges';
 import type * as vscode from 'vscode-languageserver-protocol';
 
-import { notEmpty, resolveCommonLanguageId } from './utils/common';
+export type LanguageService = ReturnType<typeof createLanguageService>;
 
-export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
-
-export function createLanguageService(
+function createServiceContext(
 	modules: SharedModules,
 	env: ServiceEnvironment,
-	config: Config,
-	projectHost: ProjectHost,
+	project: Project,
+	services: Service[],
 ) {
 
-	if (projectHost.workspacePath.indexOf('\\') >= 0 || projectHost.rootPath.indexOf('\\') >= 0) {
-		throw new Error('Volar: Current directory must be posix style.');
-	}
-	if (projectHost.getScriptFileNames().some(fileName => fileName.indexOf('\\') >= 0)) {
-		throw new Error('Volar: Script file names must be posix style.');
-	}
-
-	const project = createProxyHostAndVirtualFiles(projectHost, Object.values(config.languages ?? {}).filter(notEmpty));
-	const context = createLanguageServicePluginContext(modules, env, config, project.host, project.virtualFiles);
-	return createLanguageServiceBase(context);
-}
-
-function createLanguageServicePluginContext(
-	modules: SharedModules,
-	env: ServiceEnvironment,
-	config: Config,
-	projectHost: ProjectHost,
-	virtualFiles: VirtualFiles,
-) {
-
-	const textDocumentMapper = createDocumentsAndSourceMaps(env, projectHost, virtualFiles);
-	const documents = new WeakMap<ts.IScriptSnapshot, TextDocument>();
-	const documentVersions = new Map<string, number>();
+	const textDocumentMapper = createDocumentProvider(env, project);
 	const context: ServiceContext = {
-		project: {
-			host: projectHost,
-			virtualFiles,
-		},
 		env,
+		project,
 		inject: (key, ...args) => {
-			for (const service of Object.values(context.services)) {
+			for (const service of context.services) {
 				const provide = service.provide?.[key as any];
 				if (provide) {
 					return provide(...args as any);
@@ -86,8 +57,7 @@ function createLanguageServicePluginContext(
 			}
 			throw `No service provide ${key as any}`;
 		},
-		rules: config.rules ?? {},
-		services: {},
+		services: [],
 		documents: textDocumentMapper,
 		commands: {
 			rename: {
@@ -166,11 +136,8 @@ function createLanguageServicePluginContext(
 		getTextDocument,
 	};
 
-	for (const serviceId in config.services ?? {}) {
-		const service = config.services?.[serviceId];
-		if (service) {
-			context.services[serviceId] = service(context, modules);
-		}
+	for (const service of services) {
+		context.services.push(service(context, modules));
 	}
 
 	return context;
@@ -200,40 +167,29 @@ function createLanguageServicePluginContext(
 		}
 
 		const fileName = env.uriToFileName(uri);
-		const scriptSnapshot = projectHost.getScriptSnapshot(fileName);
+		const source = project.fileProvider.getSource(fileName);
 
-		if (scriptSnapshot) {
-
-			let document = documents.get(scriptSnapshot);
-
-			if (!document) {
-
-				const newVersion = (documentVersions.get(uri.toLowerCase()) ?? 0) + 1;
-
-				documentVersions.set(uri.toLowerCase(), newVersion);
-
-				document = TextDocument.create(
-					uri,
-					projectHost.getLanguageId?.(fileName) ?? resolveCommonLanguageId(uri),
-					newVersion,
-					scriptSnapshot.getText(0, scriptSnapshot.getLength()),
-				);
-				documents.set(scriptSnapshot, document);
-			}
-
-			return document;
+		if (source) {
+			return context.documents.getDocumentByUri(source.snapshot, uri, source.languageId);
 		}
 	}
 }
 
-function createLanguageServiceBase(context: ServiceContext) {
+export function createLanguageService(
+	modules: SharedModules,
+	services: Service[],
+	env: ServiceEnvironment,
+	project: Project,
+) {
+
+	const context = createServiceContext(modules, env, project, services);
 
 	return {
 
-		getTriggerCharacters: () => Object.values(context.services).map(service => service?.triggerCharacters ?? []).flat(),
-		getAutoFormatTriggerCharacters: () => Object.values(context.services).map(service => service?.autoFormatTriggerCharacters ?? []).flat(),
-		getSignatureHelpTriggerCharacters: () => Object.values(context.services).map(service => service?.signatureHelpTriggerCharacters ?? []).flat(),
-		getSignatureHelpRetriggerCharacters: () => Object.values(context.services).map(service => service?.signatureHelpRetriggerCharacters ?? []).flat(),
+		getTriggerCharacters: () => context.services.map(service => service.triggerCharacters ?? []).flat(),
+		getAutoFormatTriggerCharacters: () => context.services.map(service => service.autoFormatTriggerCharacters ?? []).flat(),
+		getSignatureHelpTriggerCharacters: () => context.services.map(service => service.signatureHelpTriggerCharacters ?? []).flat(),
+		getSignatureHelpRetriggerCharacters: () => context.services.map(service => service.signatureHelpRetriggerCharacters ?? []).flat(),
 
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),
@@ -269,7 +225,7 @@ function createLanguageServiceBase(context: ServiceContext) {
 		getInlayHints: inlayHints.register(context),
 		doInlayHintResolve: inlayHintResolve.register(context),
 		callHierarchy: callHierarchy.register(context),
-		dispose: () => Object.values(context.services).forEach(service => service.dispose?.()),
+		dispose: () => context.services.forEach(service => service.dispose?.()),
 		context,
 	};
 }

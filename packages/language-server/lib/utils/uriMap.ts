@@ -11,6 +11,8 @@ interface Options<T> {
 	keys(): IterableIterator<string>;
 }
 
+export type UriMap<T> = ReturnType<typeof createUriMap<T>>;
+
 export function createUriMap<T>(
 	fileNameToUri: (fileName: string) => string,
 	map: Options<T> = new Map<string, T>()

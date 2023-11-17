@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import type { BaseLanguageClient, State } from 'vscode-languageclient';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '@volar/language-server/protocol';
 
-export async function activate(client: BaseLanguageClient) {
+export function activate(client: BaseLanguageClient) {
 
 	const subscriptions: vscode.Disposable[] = [];
 	const textDecoder = new TextDecoder();

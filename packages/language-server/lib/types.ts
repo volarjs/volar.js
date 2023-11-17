@@ -1,9 +1,11 @@
-import { FileSystem, Console, LanguageService, ServiceEnvironment, SharedModules } from '@volar/language-service';
-import type { ProjectHost } from '@volar/language-core';
+import type { Console, FileSystem, Language, LanguageService, Service, ServiceEnvironment, SharedModules, TypeScriptProjectHost } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import * as vscode from 'vscode-languageserver';
-import { Config } from '@volar/language-service';
-import { ProjectContext } from './common/project';
+import type * as vscode from 'vscode-languageserver';
+
+export interface Config {
+	languages?: { [id: string]: Language; };
+	services?: { [id: string]: Service; };
+}
 
 export interface Timer {
 	setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
@@ -11,7 +13,7 @@ export interface Timer {
 	// setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): vscode.Disposable;
 }
 
-export interface RuntimeEnvironment {
+export interface ServerRuntimeEnvironment {
 	uriToFileName(uri: string): string;
 	fileNameToUri(fileName: string): string;
 	loadTypeScript(options: InitializationOptions): Promise<typeof import('typescript/lib/tsserverlibrary') | undefined>;
@@ -23,20 +25,24 @@ export interface RuntimeEnvironment {
 	console: Console;
 }
 
-export interface LanguageServerPlugin {
-	(initOptions: InitializationOptions, modules: SharedModules): {
-		extraFileExtensions?: ts.FileExtensionInfo[];
+export type TypeScriptServerPlugin = SimpleServerPlugin<{
+	extraFileExtensions?: ts.FileExtensionInfo[];
+}, TypeScriptProjectHost>;
+
+export interface SimpleServerPlugin<T = {}, K = undefined> {
+	(ctx: {
+		initializationOptions: InitializationOptions;
+		modules: SharedModules;
+		env: ServerRuntimeEnvironment;
+	}): {
 		watchFileExtensions?: string[];
 		resolveConfig?(
 			config: Config,
-			ctx: {
-				env: ServiceEnvironment;
-				host: ProjectHost;
-			} & ProjectContext | undefined,
+			env?: ServiceEnvironment,
+			extraData?: K
 		): Config | Promise<Config>;
-		resolveExistingOptions?(options: ts.CompilerOptions | undefined): ts.CompilerOptions | undefined;
-		onInitialized?(getLanguageService: (uri: string) => Promise<LanguageService | undefined>, env: RuntimeEnvironment): void;
-	};
+		onInitialized?(projectManager: ServerProjectProvider): void;
+	} & T;
 }
 
 export enum ServerMode {
@@ -91,4 +97,17 @@ export interface InitializationOptions {
 	 */
 	semanticTokensLegend?: vscode.SemanticTokensLegend;
 	codegenStack?: boolean;
+}
+
+export interface ServerProject {
+	serviceEnv: ServiceEnvironment;
+	getLanguageService(): LanguageService;
+	getLanguageServiceDontCreate(): LanguageService | undefined;
+	dispose(): void;
+}
+
+export interface ServerProjectProvider {
+	getProject(uri: string): Promise<ServerProject>;
+	getProjects(): Promise<ServerProject[]>;
+	reloadProjects(): Promise<void> | void;
 }

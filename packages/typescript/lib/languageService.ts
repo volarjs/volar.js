@@ -1,7 +1,7 @@
-import { FileKind, VirtualFile, VirtualFiles, forEachEmbeddedFile } from '@volar/language-core';
+import { FileKind, VirtualFile, FileProvider, forEachEmbeddedFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
-export function decorateLanguageService(virtualFiles: VirtualFiles, languageService: ts.LanguageService, isTsPlugin: boolean) {
+export function decorateLanguageService(virtualFiles: FileProvider, languageService: ts.LanguageService, isTsPlugin: boolean) {
 
 	const _organizeImports = languageService.organizeImports.bind(languageService);
 	const _getDefinitionAtPosition = languageService.getDefinitionAtPosition.bind(languageService);
@@ -309,7 +309,7 @@ export function decorateLanguageService(virtualFiles: VirtualFiles, languageServ
 		if (isTsPlugin) {
 			let result: VirtualFile | undefined;
 			const source = virtualFiles.getSource(fileName);
-			if (source) {
+			if (source?.root) {
 				forEachEmbeddedFile(source.root, file => {
 					const ext = file.fileName.replace(fileName, '');
 					if (file.kind === FileKind.TypeScriptHostFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {

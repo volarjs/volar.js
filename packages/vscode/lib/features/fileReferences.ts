@@ -5,7 +5,7 @@ import { FindFileReferenceRequest } from '@volar/language-server/protocol';
 
 const localize = nls.loadMessageBundle();
 
-export async function activate(cmd: string, client: BaseLanguageClient) {
+export function activate(cmd: string, client: BaseLanguageClient) {
 	return vscode.commands.registerCommand(cmd, async (uri?: vscode.Uri) => {
 
 		// https://github.com/microsoft/vscode/blob/main/extensions/typescript-language-features/src/languageFeatures/fileReferences.ts

@@ -1,10 +1,9 @@
+import type { FileProvider } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import type { TypeScriptProjectHost, VirtualFiles } from '@volar/language-core';
 
 export function getProgram(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
-	projectHost: TypeScriptProjectHost,
-	virtualFiles: VirtualFiles,
+	fileProvider: FileProvider,
 	ls: ts.LanguageService,
 	sys: ts.System,
 ): ts.Program {
@@ -68,7 +67,7 @@ export function getProgram(
 
 		if (sourceFile) {
 
-			const [virtualFile, source] = virtualFiles.getVirtualFile(sourceFile.fileName);
+			const [virtualFile, source] = fileProvider.getVirtualFile(sourceFile.fileName);
 
 			if (virtualFile && source) {
 
@@ -107,14 +106,14 @@ export function getProgram(
 				&& diagnostic.length !== undefined
 			) {
 
-				const [virtualFile, source] = virtualFiles.getVirtualFile(diagnostic.file.fileName);
+				const [virtualFile, source] = fileProvider.getVirtualFile(diagnostic.file.fileName);
 
 				if (virtualFile && source) {
 
 					if (sys.fileExists?.(source.fileName) === false)
 						continue;
 
-					for (const [_, [sourceSnapshot, map]] of virtualFiles.getMaps(virtualFile)) {
+					for (const [_, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
 
 						if (sourceSnapshot !== source.snapshot)
 							continue;
@@ -161,7 +160,7 @@ export function getProgram(
 			if (!file) {
 
 				if (docText === undefined) {
-					const snapshot = projectHost.getScriptSnapshot(fileName);
+					const snapshot = fileProvider.getSource(fileName)?.snapshot;
 					if (snapshot) {
 						docText = snapshot.getText(0, snapshot.getLength());
 					}

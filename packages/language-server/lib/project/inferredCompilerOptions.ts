@@ -1,11 +1,11 @@
-import { ServiceEnvironment } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
+import type { createConfigurationHost } from '../configurationHost';
 
-export async function getInferredCompilerOptions(ctx: Pick<ServiceEnvironment, 'getConfiguration' | 'onDidChangeConfiguration'> | undefined) {
+export async function getInferredCompilerOptions(configurationHost: ReturnType<typeof createConfigurationHost> | undefined) {
 
 	let [implicitProjectConfig_1, implicitProjectConfig_2] = await Promise.all([
-		ctx?.getConfiguration?.<any>('js/ts.implicitProjectConfig'),
-		ctx?.getConfiguration?.<any>('javascript.implicitProjectConfig'),
+		configurationHost?.getConfiguration?.<any>('js/ts.implicitProjectConfig'),
+		configurationHost?.getConfiguration?.<any>('javascript.implicitProjectConfig'),
 	]);
 
 	implicitProjectConfig_1 = implicitProjectConfig_1 ?? {};

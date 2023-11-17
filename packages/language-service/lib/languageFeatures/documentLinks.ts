@@ -11,7 +11,7 @@ import { transformDocumentLinkTarget } from './documentLinkResolve';
 export interface DocumentLinkData {
 	uri: string,
 	original: Pick<vscode.DocumentLink, 'data'>,
-	serviceId: string,
+	serviceIndex: number,
 }
 
 export function register(context: ServiceContext) {
@@ -35,7 +35,7 @@ export function register(context: ServiceContext) {
 						original: {
 							data: link.data,
 						},
-						serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+						serviceIndex: context.services.indexOf(service),
 					} satisfies DocumentLinkData;
 				}
 
@@ -62,8 +62,9 @@ export function register(context: ServiceContext) {
 			}).filter(notEmpty),
 			arr => arr.flat(),
 		) ?? [];
+		const source = context.documents.getSourceByUri(uri);
 		const maps = context.documents.getMapsBySourceFileUri(uri);
-		const fictitiousLinks = maps ? getFictitiousLinks(context.documents.getDocumentByUri(maps.snapshot, uri), maps.maps) : [];
+		const fictitiousLinks = source && maps ? getFictitiousLinks(context.documents.getDocumentByUri(maps.snapshot, uri, source.languageId), maps.maps) : [];
 
 		return [
 			...pluginLinks,

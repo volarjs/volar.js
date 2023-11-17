@@ -11,20 +11,8 @@ import { NoneCancellationToken } from '../utils/cancellation';
 export interface ServiceCodeActionData {
 	uri: string,
 	version: number,
-	type: 'service',
 	original: Pick<vscode.CodeAction, 'data' | 'edit'>,
-	serviceId: string,
-}
-
-export interface RuleCodeActionData {
-	uri: string,
-	version: number,
-	documentUri: string,
-	type: 'rule',
-	isFormat: boolean,
-	ruleId: string,
-	ruleFixIndex: number,
-	index: number,
+	serviceIndex: number,
 }
 
 export function register(context: ServiceContext) {
@@ -89,13 +77,13 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested)
 					return;
 
-				const serviceId = Object.keys(context.services).find(key => context.services[key] === service);
+				const serviceIndex = context.services.indexOf(service);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
 					const data: ServiceDiagnosticData | undefined = diagnostic.data;
 					if (data && data.version !== sourceDocument.version) {
 						return false;
 					}
-					return data?.type === 'service' && data?.serviceOrRuleId === serviceId;
+					return data?.serviceIndex === serviceIndex;
 				}).map(diagnostic => {
 					const data: ServiceDiagnosticData = diagnostic.data;
 					return {
@@ -113,12 +101,11 @@ export function register(context: ServiceContext) {
 					codeAction.data = {
 						uri,
 						version: sourceDocument.version,
-						type: 'service',
 						original: {
 							data: codeAction.data,
 							edit: codeAction.edit,
 						},
-						serviceId: Object.keys(context.services).find(key => context.services[key] === service)!,
+						serviceIndex: context.services.indexOf(service),
 					} satisfies ServiceCodeActionData;
 				});
 
@@ -166,44 +153,6 @@ export function register(context: ServiceContext) {
 				// console.warn('[volar/rules-api] diagnostic version mismatch', data.version, sourceDocument.version);
 				continue;
 			}
-			if (data?.type === 'rule') {
-				const fixes = context.ruleFixes?.[data.documentUri]?.[data.serviceOrRuleId]?.[data.ruleFixIndex];
-				if (fixes) {
-					for (let i = 0; i < fixes[1].length; i++) {
-						const fix = fixes[1][i];
-						const matchKinds: (string | undefined)[] = [];
-						if (!codeActionContext.only) {
-							matchKinds.push(undefined);
-						}
-						else {
-							for (const kind of fix.kinds ?? ['quickfix']) {
-								const matchOnly = matchOnlyKind(codeActionContext.only, kind);
-								if (matchOnly) {
-									matchKinds.push(matchOnly);
-								}
-							}
-						}
-						for (const matchKind of matchKinds) {
-							const action: vscode.CodeAction = {
-								title: fix.title ?? `Fix: ${diagnostic.message}`,
-								kind: matchKind,
-								diagnostics: [diagnostic],
-								data: {
-									uri,
-									type: 'rule',
-									version: data.version,
-									isFormat: data.isFormat,
-									ruleId: data.serviceOrRuleId,
-									documentUri: data.documentUri,
-									ruleFixIndex: data.ruleFixIndex,
-									index: i,
-								} satisfies RuleCodeActionData,
-							};
-							ruleActions.push(action);
-						}
-					}
-				}
-			}
 		}
 
 		return [
@@ -211,22 +160,4 @@ export function register(context: ServiceContext) {
 			...ruleActions,
 		];
 	};
-}
-
-function matchOnlyKind(only: string[], kind: string) {
-	const b = kind.split('.');
-	for (const onlyKind of only) {
-		const a = onlyKind.split('.');
-		if (a.length <= b.length) {
-			let matchNum = 0;
-			for (let i = 0; i < a.length; i++) {
-				if (a[i] == b[i]) {
-					matchNum++;
-				}
-			}
-			if (matchNum === a.length) {
-				return onlyKind;
-			}
-		}
-	}
 }

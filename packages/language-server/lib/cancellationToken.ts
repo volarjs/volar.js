@@ -1,6 +1,9 @@
 import * as vscode from 'vscode-languageserver';
 
-export function createGetCancellationToken(_cancellationPipeName: string | undefined) {
+export function createGetCancellationToken(
+	fs: typeof import('fs'),
+	_cancellationPipeName: string | undefined
+) {
 
 	if (_cancellationPipeName === undefined) {
 		return (original?: vscode.CancellationToken) => {
@@ -9,7 +12,6 @@ export function createGetCancellationToken(_cancellationPipeName: string | undef
 	}
 
 	const cancellationPipeName = _cancellationPipeName;
-	const fs: typeof import('fs') = require('fs');
 
 	return getCancellationToken;
 

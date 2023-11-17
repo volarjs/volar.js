@@ -1,12 +1,15 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
-import httpSchemaRequestHandler from './lib/common/schemaRequestHandlers/http';
-import { startCommonLanguageServer } from './lib/common/server';
-import { InitializationOptions, LanguageServerPlugin } from './lib/types';
+import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
+import { startLanguageServerBase } from './lib/server';
+import { InitializationOptions, SimpleServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
 import { FileSystem, FileType } from '@volar/language-service';
-import { createGetCancellationToken } from './lib/node/cancellationPipe';
+import { createGetCancellationToken } from './lib/cancellationToken';
+import { WorkspacesContext, createSimpleProjectProvider } from './lib/project/simpleProjectProvider';
+import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
 
+export * from 'vscode-languageserver/node';
 export * from './index';
 
 export const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
@@ -81,9 +84,34 @@ export function createConnection() {
 	return vscode.createConnection(vscode.ProposedFeatures.all);
 }
 
-export function startLanguageServer(connection: vscode.Connection, ...plugins: LanguageServerPlugin[]) {
+export function startSimpleServer(
+	connection: vscode.Connection,
+	...plugins: SimpleServerPlugin[]
+) {
+	return startServer(
+		connection,
+		createSimpleProjectProvider,
+		...plugins,
+	);
+}
 
-	startCommonLanguageServer(connection, plugins, (_, options) => ({
+export function startTypeScriptServer(
+	connection: vscode.Connection,
+	...plugins: TypeScriptServerPlugin[]
+) {
+	return startServer(
+		connection,
+		createTypeScriptProjectProvider,
+		...plugins,
+	);
+}
+
+function startServer<P extends SimpleServerPlugin<any, any>>(
+	connection: vscode.Connection,
+	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<P>[]) => ServerProjectProvider,
+	...plugins: P[]
+) {
+	startLanguageServerBase(connection, plugins, createProjectProvider, (_, options) => ({
 		uriToFileName,
 		fileNameToUri,
 		console: connection.console,
@@ -128,6 +156,6 @@ export function startLanguageServer(connection: vscode.Connection, ...plugins: L
 			} catch { }
 		},
 		fs: createFs(options),
-		getCancellationToken: createGetCancellationToken(options.cancellationPipeName),
+		getCancellationToken: createGetCancellationToken(fs, options.cancellationPipeName),
 	}));
 }

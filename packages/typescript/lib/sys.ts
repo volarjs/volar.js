@@ -22,6 +22,7 @@ let currentCwd = '';
 export function createSys(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	env: ServiceEnvironment,
+	currentDirectory: string,
 ): ts.System & {
 	version: number;
 	sync(): Promise<number>;
@@ -29,7 +30,7 @@ export function createSys(
 
 	let version = 0;
 
-	const rootPath = env.uriToFileName(env.workspaceUri.toString());
+	const rootPath = currentDirectory;
 	const sys = ts.sys as ts.System | undefined;
 	const root: Dir = {
 		dirs: new Map(),
