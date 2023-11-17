@@ -166,7 +166,7 @@ export function register(context: ServiceContext) {
 			syntax_rules: { errors: [] },
 			format_rules: { errors: [] },
 		}).get(uri)!;
-		const newSnapshot = context.project.fileProvider.getSource(context.env.uriToFileName(uri))?.snapshot;
+		const newSnapshot = context.project.fileProvider.getSourceFile(uri)?.snapshot;
 
 		let updateCacheRangeFailed = false;
 		let errorsUpdated = false;
@@ -325,8 +325,11 @@ export function register(context: ServiceContext) {
 				const relatedInfos: vscode.DiagnosticRelatedInformation[] = [];
 
 				for (const info of _error.relatedInformation) {
-					if (context.documents.isVirtualFileUri(info.location.uri)) {
-						for (const [_, map] of context.documents.getMapsByVirtualFileUri(info.location.uri)) {
+
+					const [virtualFile] = context.project.fileProvider.getVirtualFile(info.location.uri);
+
+					if (virtualFile) {
+						for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
 							const range = map.toSourceRange(info.location.range, filter);
 							if (range) {
 								relatedInfos.push({

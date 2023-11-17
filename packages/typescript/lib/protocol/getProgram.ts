@@ -4,6 +4,10 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 export function getProgram(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	fileProvider: FileProvider,
+	{ fileNameToId, idToFileName }: {
+		fileNameToId(fileName: string): string;
+		idToFileName(id: string): string;
+	},
 	ls: ts.LanguageService,
 	sys: ts.System,
 ): ts.Program {
@@ -67,7 +71,8 @@ export function getProgram(
 
 		if (sourceFile) {
 
-			const [virtualFile, source] = fileProvider.getVirtualFile(sourceFile.fileName);
+			const uri = fileNameToId(sourceFile.fileName);
+			const [virtualFile, source] = fileProvider.getVirtualFile(uri);
 
 			if (virtualFile && source) {
 
@@ -106,11 +111,14 @@ export function getProgram(
 				&& diagnostic.length !== undefined
 			) {
 
-				const [virtualFile, source] = fileProvider.getVirtualFile(diagnostic.file.fileName);
+				const uri = fileNameToId(diagnostic.file.fileName);
+				const [virtualFile, source] = fileProvider.getVirtualFile(uri);
 
 				if (virtualFile && source) {
 
-					if (sys.fileExists?.(source.fileName) === false)
+					const sourceFileName = idToFileName(source.id);
+
+					if (sys.fileExists?.(sourceFileName) === false)
 						continue;
 
 					for (const [_, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
@@ -130,7 +138,7 @@ export function getProgram(
 								if (!reportEnd)
 									continue;
 
-								onMapping(diagnostic, source.fileName, start[0], end[0], source.snapshot.getText(0, source.snapshot.getLength()));
+								onMapping(diagnostic, sourceFileName, start[0], end[0], source.snapshot.getText(0, source.snapshot.getLength()));
 								break;
 							}
 							break;
@@ -160,7 +168,8 @@ export function getProgram(
 			if (!file) {
 
 				if (docText === undefined) {
-					const snapshot = fileProvider.getSource(fileName)?.snapshot;
+					const uri = fileNameToId(fileName);
+					const snapshot = fileProvider.getSourceFile(uri)?.snapshot;
 					if (snapshot) {
 						docText = snapshot.getText(0, snapshot.getLength());
 					}

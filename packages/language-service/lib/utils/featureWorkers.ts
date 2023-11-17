@@ -40,13 +40,13 @@ export async function languageFeatureWorker<T, K>(
 ) {
 
 	const document = context.getTextDocument(uri);
-	const virtualFile = context.documents.getSourceByUri(uri)?.root;
+	const virtualFile = context.project.fileProvider.getSourceFile(uri)?.root;
 
 	let results: NonNullable<Awaited<T>>[] = [];
 
 	if (virtualFile) {
 
-		await visitEmbedded(context.documents, virtualFile, async (file, map) => {
+		await visitEmbedded(context, virtualFile, async (file, map) => {
 
 			for (const mappedArg of transformArg(arg, map, file)) {
 

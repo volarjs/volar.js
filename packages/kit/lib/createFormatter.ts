@@ -9,7 +9,6 @@ export function createFormatter(
 ) {
 
 	let fakeUri = 'file:///dummy.txt';
-	let fakeFileName = '/dummy.txt';
 	let settings = {};
 
 	const env = createServiceEnvironment(() => settings);
@@ -36,7 +35,7 @@ export function createFormatter(
 
 	async function format(content: string, languageId: string, options: FormattingOptions): Promise<string> {
 
-		fileProvider.updateSource(fakeFileName, ts.ScriptSnapshot.fromString(content), languageId);
+		fileProvider.updateSourceFile(fakeUri, ts.ScriptSnapshot.fromString(content), languageId);
 
 		const document = service.context.getTextDocument(fakeUri)!;
 		const edits = await service.format(fakeUri, options, undefined, undefined);

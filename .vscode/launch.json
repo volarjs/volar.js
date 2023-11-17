@@ -11,7 +11,7 @@
 				"--extensionDevelopmentPath=${workspaceRoot}/packages/labs"
 			],
 			"outFiles": [
-				"${workspaceRoot}/*/*/out/**/*.js"
+				"${workspaceRoot}/extensions/labs/dist/**/*.js"
 			],
 		},
 	],

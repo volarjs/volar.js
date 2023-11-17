@@ -23,18 +23,19 @@ export function registerEditorFeatures(
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const languageService = (await projectProvider.getProject(document.uri)).getLanguageService();
-		const file = languageService.context.project.fileProvider.getSource(env.uriToFileName(document.uri))?.root;
+		const file = languageService.context.project.fileProvider.getSourceFile(document.uri)?.root;
 		return file ? prune(file) : undefined;
 
 		function prune(file: VirtualFile): VirtualFile {
-			let version = scriptVersions.get(file.fileName) ?? 0;
+			let version = scriptVersions.get(file.id) ?? 0;
 			if (!scriptVersionSnapshots.has(file.snapshot)) {
 				version++;
-				scriptVersions.set(file.fileName, version);
+				scriptVersions.set(file.id, version);
 				scriptVersionSnapshots.add(file.snapshot);
 			}
 			return {
-				fileName: file.fileName,
+				uri: file.id,
+				languageId: file.languageId,
 				kind: file.kind,
 				capabilities: file.capabilities,
 				embeddedFiles: file.embeddedFiles.map(prune),
@@ -47,10 +48,13 @@ export function registerEditorFeatures(
 		let content: string = '';
 		let codegenStacks: Stack[] = [];
 		const mappings: Record<string, Mapping<FileRangeCapabilities>[]> = {};
-		for (const [file, map] of languageService.context.documents.getMapsByVirtualFileName(params.virtualFileName)) {
-			content = map.virtualFileDocument.getText();
-			codegenStacks = file.codegenStacks;
-			mappings[map.sourceFileDocument.uri] = map.map.mappings;
+		const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(params.virtualFileName);
+		if (virtualFile) {
+			for (const map of languageService.context.documents.getMapsByVirtualFile(virtualFile)) {
+				content = map.virtualFileDocument.getText();
+				codegenStacks = virtualFile.codegenStacks;
+				mappings[map.sourceFileDocument.uri] = map.map.mappings;
+			}
 		}
 		return {
 			content,
@@ -70,16 +74,15 @@ export function registerEditorFeatures(
 		// global virtual files
 		if (languageService.context.project.typescript?.projectHost) {
 
-			const rootPath = languageService.context.project.typescript?.projectHost.getCurrentDirectory();
+			const rootUri = languageService.context.env.workspaceFolder.uri.toString();
 
-			for (const [fileName] of languageService.context.project.fileProvider.getAllSources()) {
-				const source = languageService.context.project.fileProvider.getSource(fileName);
-				if (source?.root) {
-					forEachEmbeddedFile(source.root, virtualFile => {
+			for (const sourceFile of languageService.context.project.fileProvider.getAllSourceFiles()) {
+				if (sourceFile.root) {
+					forEachEmbeddedFile(sourceFile.root, virtualFile => {
 						if (virtualFile.kind === FileKind.TypeScriptHostFile) {
-							if (virtualFile.fileName.startsWith(rootPath)) {
+							if (virtualFile.id.startsWith(rootUri)) {
 								const snapshot = virtualFile.snapshot;
-								fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
+								fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
 							}
 						}
 					});

@@ -26,7 +26,7 @@ export function register(context: ServiceContext) {
 							...item,
 							edit: embeddedEditToSourceEdit(
 								item.edit,
-								context.documents,
+								context,
 								'codeAction',
 								{ [data.uri]: data.version },
 							),

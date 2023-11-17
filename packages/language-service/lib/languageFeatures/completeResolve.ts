@@ -21,14 +21,19 @@ export function register(context: ServiceContext) {
 
 			if (data.virtualDocumentUri) {
 
-				for (const [_, map] of context.documents.getMapsByVirtualFileUri(data.virtualDocumentUri)) {
+				const [virtualFile] = context.project.fileProvider.getVirtualFile(data.virtualDocumentUri);
 
-					item = await service.resolveCompletionItem(item, token);
-					item = service.transformCompletionItem?.(item) ?? transformer.asCompletionItem(
-						item,
-						embeddedRange => map.toSourceRange(embeddedRange),
-						map.virtualFileDocument,
-					);
+				if (virtualFile) {
+
+					for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
+
+						item = await service.resolveCompletionItem(item, token);
+						item = service.transformCompletionItem?.(item) ?? transformer.asCompletionItem(
+							item,
+							embeddedRange => map.toSourceRange(embeddedRange),
+							map.virtualFileDocument,
+						);
+					}
 				}
 			}
 			else {

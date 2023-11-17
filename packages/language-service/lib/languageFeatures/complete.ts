@@ -48,7 +48,11 @@ export function register(context: ServiceContext) {
 
 				if (cacheData.virtualDocumentUri) {
 
-					for (const [_, map] of context.documents.getMapsByVirtualFileUri(cacheData.virtualDocumentUri)) {
+					const [virtualFile] = context.project.fileProvider.getVirtualFile(cacheData.virtualDocumentUri);
+					if (!virtualFile)
+						continue;
+
+					for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
 
 						for (const mapped of map.toGeneratedPositions(position, data => !!data.completion)) {
 
@@ -109,7 +113,7 @@ export function register(context: ServiceContext) {
 		}
 		else {
 
-			const rootFile = context.documents.getSourceByUri(uri)?.root;
+			const rootVirtualFile = context.project.fileProvider.getSourceFile(uri)?.root;
 
 			cache = {
 				uri,
@@ -120,9 +124,9 @@ export function register(context: ServiceContext) {
 			// monky fix https://github.com/johnsoncodehk/volar/issues/1358
 			let isFirstMapping = true;
 
-			if (rootFile) {
+			if (rootVirtualFile) {
 
-				await visitEmbedded(context.documents, rootFile, async (_, map) => {
+				await visitEmbedded(context, rootVirtualFile, async (_, map) => {
 
 					const services = [...context.services].sort(sortServices);
 

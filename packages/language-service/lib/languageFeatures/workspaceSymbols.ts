@@ -23,8 +23,11 @@ export function register(context: ServiceContext) {
 				continue;
 
 			const symbols = embeddedSymbols.map(symbol => transformer.asWorkspaceSymbol(symbol, loc => {
-				if (context.documents.isVirtualFileUri(loc.uri)) {
-					for (const [_, map] of context.documents.getMapsByVirtualFileUri(loc.uri)) {
+
+				const [virtualFile] = context.project.fileProvider.getVirtualFile(loc.uri);
+
+				if (virtualFile) {
+					for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
 						const range = map.toSourceRange(loc.range);
 						if (range) {
 							return { uri: map.sourceFileDocument.uri, range };

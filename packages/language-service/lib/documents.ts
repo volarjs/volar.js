@@ -1,9 +1,8 @@
-import { FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, Project, VirtualFile, forEachEmbeddedFile, Source } from '@volar/language-core';
+import { FileProvider, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { ServiceEnvironment } from './types';
 
 export type DocumentProvider = ReturnType<typeof createDocumentProvider>;
 
@@ -165,7 +164,7 @@ export class MirrorMapWithDocument extends SourceMapWithDocuments<[MirrorBehavio
 	}
 }
 
-export function createDocumentProvider(env: ServiceEnvironment, project: Project) {
+export function createDocumentProvider(fileProvider: FileProvider) {
 
 	let version = 0;
 
@@ -174,50 +173,16 @@ export function createDocumentProvider(env: ServiceEnvironment, project: Project
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
 
 	return {
-		getSourceByUri(sourceFileUri: string) {
-			return project.fileProvider.getSource(env.uriToFileName(sourceFileUri));
-		},
-		isVirtualFileUri(virtualFileUri: string) {
-			return project.fileProvider.hasVirtualFile(env.uriToFileName(virtualFileUri));
-		},
-		getVirtualFileByUri(virtualFileUri: string) {
-			return project.fileProvider.getVirtualFile(env.uriToFileName(virtualFileUri));
-		},
-		getMirrorMapByUri(virtualFileUri: string) {
-			const fileName = env.uriToFileName(virtualFileUri);
-			const [virtualFile] = project.fileProvider.getVirtualFile(fileName);
-			if (virtualFile) {
-				const map = project.fileProvider.getMirrorMap(virtualFile);
-				if (map) {
-					if (!mirrorMap2DocMirrorMap.has(map)) {
-						mirrorMap2DocMirrorMap.set(map, new MirrorMapWithDocument(
-							getDocumentByFileName(virtualFile.snapshot, fileName, virtualFile.languageId),
-							map,
-						));
-					}
-					return [virtualFile, mirrorMap2DocMirrorMap.get(map)!] as const;
-				}
-			}
-		},
-		getMapsBySourceFileUri(uri: string) {
-			return this.getMapsBySourceFileName(env.uriToFileName(uri));
-		},
-		getMapsBySourceFileName(fileName: string) {
-			const source = project.fileProvider.getSource(fileName);
-			if (source) {
-				return this.getMapsBySource(source);
-			}
-		},
-		getMapsBySource(source: Source) {
+		getMapsBySourceFile(source: SourceFile) {
 			if (source?.root) {
 				const result: [VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>][] = [];
 				forEachEmbeddedFile(source.root, (virtualFile) => {
-					for (const [sourceFileName, [sourceSnapshot, map]] of project.fileProvider.getMaps(virtualFile)) {
+					for (const [sourceUri, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
 						if (sourceSnapshot === source.snapshot) {
 							if (!map2DocMap.has(map)) {
 								map2DocMap.set(map, new SourceMapWithDocuments(
-									getDocumentByFileName(sourceSnapshot, sourceFileName, source.languageId),
-									getDocumentByFileName(virtualFile.snapshot, virtualFile.fileName, virtualFile.languageId),
+									getDocumentByUri(sourceUri, source.languageId, sourceSnapshot),
+									getDocumentByUri(virtualFile.id, virtualFile.languageId, virtualFile.snapshot),
 									map,
 								));
 							}
@@ -225,49 +190,49 @@ export function createDocumentProvider(env: ServiceEnvironment, project: Project
 						}
 					}
 				});
-				return {
-					snapshot: source.snapshot,
-					maps: result,
-				};
+				return result;
 			}
 		},
-		getMapsByVirtualFileUri(virtualFileUri: string) {
-			return this.getMapsByVirtualFileName(env.uriToFileName(virtualFileUri));
-		},
-		*getMapsByVirtualFileName(virtualFileName: string): IterableIterator<[VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>]> {
-			const [virtualFile] = project.fileProvider.getVirtualFile(virtualFileName);
-			if (virtualFile) {
-				for (const [sourceFileName, [sourceSnapshot, map]] of project.fileProvider.getMaps(virtualFile)) {
-					if (!map2DocMap.has(map)) {
-						map2DocMap.set(map, new SourceMapWithDocuments(
-							getDocumentByFileName(sourceSnapshot, sourceFileName, project.fileProvider.getSource(sourceFileName)!.languageId),
-							getDocumentByFileName(virtualFile.snapshot, virtualFileName, virtualFile.languageId),
-							map,
-						));
-					}
-					yield [virtualFile, map2DocMap.get(map)!];
+		*getMapsByVirtualFile(virtualFile: VirtualFile) {
+			for (const [sourceUri, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
+				if (!map2DocMap.has(map)) {
+					map2DocMap.set(map, new SourceMapWithDocuments(
+						getDocumentByUri(sourceUri, fileProvider.getSourceFile(sourceUri)!.languageId, sourceSnapshot),
+						getDocumentByUri(virtualFile.id, virtualFile.languageId, virtualFile.snapshot),
+						map,
+					));
 				}
+				yield map2DocMap.get(map)!;
 			}
 		},
-		getDocumentByUri(snapshot: ts.IScriptSnapshot, uri: string, languageId: string) {
-			return this.getDocumentByFileName(snapshot, env.uriToFileName(uri), languageId);
+		getMirrorMap(virtualFile: VirtualFile) {
+			const map = fileProvider.getMirrorMap(virtualFile);
+			if (map) {
+				if (!mirrorMap2DocMirrorMap.has(map)) {
+					mirrorMap2DocMirrorMap.set(map, new MirrorMapWithDocument(
+						getDocumentByUri(virtualFile.id, virtualFile.languageId, virtualFile.snapshot),
+						map,
+					));
+				}
+				return mirrorMap2DocMirrorMap.get(map)!;
+			}
 		},
-		getDocumentByFileName,
+		getDocumentByUri,
 	};
 
-	function getDocumentByFileName(snapshot: ts.IScriptSnapshot, fileName: string, languageId: string) {
+	function getDocumentByUri(uri: string, languageId: string, snapshot: ts.IScriptSnapshot) {
 		if (!snapshot2Doc.has(snapshot)) {
 			snapshot2Doc.set(snapshot, new Map());
 		}
 		const map = snapshot2Doc.get(snapshot)!;
-		if (!map.has(fileName)) {
-			map.set(fileName, TextDocument.create(
-				env.fileNameToUri(fileName),
+		if (!map.has(uri)) {
+			map.set(uri, TextDocument.create(
+				uri,
 				languageId,
 				version++,
 				snapshot.getText(0, snapshot.getLength()),
 			));
 		}
-		return map.get(fileName)!;
+		return map.get(uri)!;
 	}
 }

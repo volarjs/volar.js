@@ -3,19 +3,20 @@ import { Language, TypeScriptProjectHost, Project } from './types';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function createTypeScriptProject(
-	projectHost: TypeScriptProjectHost,
 	languages: Language<any>[],
-	getLanguageId: (fileName: string) => string,
+	projectHost: TypeScriptProjectHost,
+	fileNameToId: (fileName: string) => string,
+	getLanguageId: (fileName: string) => string
 ): Project {
 
 	for (const language of languages) {
-		if (language.resolveTypeScriptProjectHost) {
-			projectHost = language.resolveTypeScriptProjectHost(projectHost);
+		if (language.typescript?.resolveProjectHost) {
+			projectHost = language.typescript.resolveProjectHost(projectHost);
 		}
 	}
 
 	let lastRootFiles = new Map<string, ts.IScriptSnapshot | undefined>();
-	let lastProjectVersion: number | string | undefined;
+	let lastProjectVersion: string | undefined;
 
 	const fileProvider = createFileProvider(languages, () => {
 
@@ -34,17 +35,19 @@ export function createTypeScriptProject(
 		for (const [fileName, snapshot] of newRootFiles) {
 			remainRootFiles.delete(fileName);
 			if (lastRootFiles.get(fileName) !== newRootFiles.get(fileName)) {
+				const id = fileNameToId(fileName);
 				if (snapshot) {
-					fileProvider.updateSource(fileName, snapshot, getLanguageId(fileName));
+					fileProvider.updateSourceFile(id, snapshot, getLanguageId(fileName));
 				}
 				else {
-					fileProvider.deleteSource(fileName);
+					fileProvider.deleteSourceFile(id);
 				}
 			}
 		}
 
 		for (const fileName of remainRootFiles) {
-			fileProvider.deleteSource(fileName);
+			const id = fileNameToId(fileName);
+			fileProvider.deleteSourceFile(id);
 		}
 
 		lastRootFiles = newRootFiles;

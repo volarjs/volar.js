@@ -132,7 +132,7 @@ export function register(context: ServiceContext) {
 				if (action.edit) {
 					const edit = embeddedEditToSourceEdit(
 						action.edit,
-						context.documents,
+						context,
 						'codeAction',
 					);
 					if (!edit) {

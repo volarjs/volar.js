@@ -44,7 +44,7 @@ function createServiceContext(
 	services: Service[],
 ) {
 
-	const textDocumentMapper = createDocumentProvider(env, project);
+	const documents = createDocumentProvider(project.fileProvider);
 	const context: ServiceContext = {
 		env,
 		project,
@@ -58,7 +58,7 @@ function createServiceContext(
 			throw `No service provide ${key as any}`;
 		},
 		services: [],
-		documents: textDocumentMapper,
+		documents: documents,
 		commands: {
 			rename: {
 				create(uri, position) {
@@ -87,8 +87,9 @@ function createServiceContext(
 					}
 					const sourceReferences: vscode.Location[] = [];
 					for (const reference of locations) {
-						if (context.documents.isVirtualFileUri(reference.uri)) {
-							for (const [_, map] of context.documents.getMapsByVirtualFileUri(reference.uri)) {
+						const [virtualFile] = context.project.fileProvider.getVirtualFile(reference.uri);
+						if (virtualFile) {
+							for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
 								const range = map.toSourceRange(reference.range);
 								if (range) {
 									sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
@@ -143,34 +144,36 @@ function createServiceContext(
 	return context;
 
 	function toSourceLocation(uri: string, position: vscode.Position, filter?: (data: FileRangeCapabilities) => boolean) {
-		if (!textDocumentMapper.isVirtualFileUri(uri)) {
+
+		const [virtualFile] = project.fileProvider.getVirtualFile(uri);
+
+		if (!virtualFile) {
 			return { uri, position };
 		}
-		const map = textDocumentMapper.getVirtualFileByUri(uri);
-		if (map) {
-			for (const [_, map] of context.documents.getMapsByVirtualFileUri(uri)) {
-				const sourcePosition = map.toSourcePosition(position, filter);
-				if (sourcePosition) {
-					return {
-						uri: map.sourceFileDocument.uri,
-						position: sourcePosition,
-					};
-				}
+
+		for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
+			const sourcePosition = map.toSourcePosition(position, filter);
+			if (sourcePosition) {
+				return {
+					uri: map.sourceFileDocument.uri,
+					position: sourcePosition,
+				};
 			}
 		}
 	}
 
 	function getTextDocument(uri: string) {
 
-		for (const [_, map] of context.documents.getMapsByVirtualFileUri(uri)) {
-			return map.virtualFileDocument;
+		const [virtualFile] = project.fileProvider.getVirtualFile(uri);
+		if (virtualFile) {
+			for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
+				return map.virtualFileDocument;
+			}
 		}
 
-		const fileName = env.uriToFileName(uri);
-		const source = project.fileProvider.getSource(fileName);
-
-		if (source) {
-			return context.documents.getDocumentByUri(source.snapshot, uri, source.languageId);
+		const sourceFile = project.fileProvider.getSourceFile(uri);
+		if (sourceFile) {
+			return context.documents.getDocumentByUri(uri, sourceFile.languageId, sourceFile.snapshot);
 		}
 	}
 }

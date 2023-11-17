@@ -2,8 +2,9 @@
 
 require('esbuild').context({
 	entryPoints: {
-		extension: './src/extension.js',
+		extension: './src/extension.ts',
 	},
+	sourcemap: true,
 	bundle: true,
 	metafile: process.argv.includes('--metafile'),
 	outdir: './dist',

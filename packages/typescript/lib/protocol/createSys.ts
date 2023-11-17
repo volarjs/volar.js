@@ -1,7 +1,7 @@
 import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as path from 'path-browserify';
-import { matchFiles } from './typescript/utilities';
+import { matchFiles } from '../typescript/utilities';
 
 interface File {
 	text?: string;

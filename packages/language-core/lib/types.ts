@@ -75,10 +75,12 @@ export enum FileKind {
 	TypeScriptHostFile = 1,
 }
 
-export interface VirtualFile {
-	fileName: string,
-	snapshot: ts.IScriptSnapshot,
-	languageId: string,
+export interface SourceFile extends BaesFile {
+	root?: VirtualFile;
+	language?: Language;
+}
+
+export interface VirtualFile extends BaesFile {
 	kind: FileKind,
 	capabilities: FileCapabilities,
 	mappings: Mapping<FileRangeCapabilities>[],
@@ -87,11 +89,24 @@ export interface VirtualFile {
 	embeddedFiles: VirtualFile[],
 }
 
+export interface BaesFile {
+	/**
+	 * for language-server, kit, monaco, this is uri
+	 * 
+	 * for typescript server plugin, tsc, this is fileName
+	 */
+	id: string,
+	languageId: string,
+	snapshot: ts.IScriptSnapshot,
+}
+
 export interface Language<T extends VirtualFile = VirtualFile> {
-	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string): T | undefined;
+	createVirtualFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	deleteVirtualFile?(virtualFile: T): void;
-	resolveTypeScriptProjectHost?<T extends TypeScriptProjectHost>(host: T): T;
+	typescript?: {
+		resolveProjectHost?<T extends TypeScriptProjectHost>(host: T): T;
+	};
 }
 
 export interface TypeScriptProjectHost extends Pick<
