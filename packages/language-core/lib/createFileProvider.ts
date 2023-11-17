@@ -7,8 +7,8 @@ const caseSensitive = false; // TODO: use ts.sys.useCaseSensitiveFileNames
 
 export function createFileProvider(languages: Language[], sync: () => void) {
 
-	const sourceFileRegistry = new Map<string, SourceFile>(); // TODO: use uri map
-	const virtualFileRegistry = new Map<string, { virtualFile: VirtualFile, source: SourceFile; }>(); // TODO: use uri map
+	const sourceFileRegistry = new Map<string, SourceFile>();
+	const virtualFileRegistry = new Map<string, { virtualFile: VirtualFile, source: SourceFile; }>();
 	const virtualFileMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<FileRangeCapabilities>]>>();
 	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, MirrorMap | undefined>();
 	const normalizeId = caseSensitive
