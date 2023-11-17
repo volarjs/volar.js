@@ -76,7 +76,7 @@ export function registerEditorFeatures(
 
 			const rootUri = languageService.context.env.workspaceFolder.uri.toString();
 
-			for (const sourceFile of languageService.context.project.fileProvider.getAllSourceFiles().values()) {
+			for (const sourceFile of languageService.context.project.fileProvider.getAllSourceFiles()) {
 				if (sourceFile.root) {
 					forEachEmbeddedFile(sourceFile.root, virtualFile => {
 						if (virtualFile.kind === FileKind.TypeScriptHostFile) {

@@ -3,20 +3,25 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import { MirrorMap } from './mirrorMap';
 import type { FileRangeCapabilities, Language, SourceFile, VirtualFile } from './types';
 
+const caseSensitive = false; // TODO: use ts.sys.useCaseSensitiveFileNames
+
 export function createFileProvider(languages: Language[], sync: () => void) {
 
 	const sourceFileRegistry = new Map<string, SourceFile>(); // TODO: use uri map
 	const virtualFileRegistry = new Map<string, { virtualFile: VirtualFile, source: SourceFile; }>(); // TODO: use uri map
 	const virtualFileMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<FileRangeCapabilities>]>>();
 	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, MirrorMap | undefined>();
+	const normalizeId = caseSensitive
+		? (id: string) => id
+		: (id: string) => id.toLowerCase();
 
 	return {
 		getAllSourceFiles() {
 			sync();
-			return sourceFileRegistry;
+			return sourceFileRegistry.values();
 		},
 		updateSourceFile(id: string, snapshot: ts.IScriptSnapshot, languageId: string): VirtualFile | undefined {
-			const value = sourceFileRegistry.get(id);
+			const value = sourceFileRegistry.get(normalizeId(id));
 			if (value) {
 				if (value.languageId !== languageId) {
 					// languageId changed
@@ -40,20 +45,20 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 				const virtualFile = language.createVirtualFile(id, languageId, snapshot);
 				if (virtualFile) {
 					const source: SourceFile = { id: id, languageId, snapshot, root: virtualFile, language };
-					sourceFileRegistry.set(id, source);
+					sourceFileRegistry.set(normalizeId(id), source);
 					updateVirtualFiles(source);
 					return virtualFile; // created
 				}
 			}
-			sourceFileRegistry.set(id, { id: id, languageId, snapshot });
+			sourceFileRegistry.set(normalizeId(id), { id: id, languageId, snapshot });
 		},
 		deleteSourceFile(id: string) {
-			const value = sourceFileRegistry.get(id);
+			const value = sourceFileRegistry.get(normalizeId(id));
 			if (value) {
 				if (value.language && value.root) {
 					value.language.deleteVirtualFile?.(value.root);
 				}
-				sourceFileRegistry.delete(id); // deleted
+				sourceFileRegistry.delete(normalizeId(id)); // deleted
 				deleteVirtualFiles(value);
 			}
 		},
@@ -71,11 +76,11 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 
 			updateVirtualFileMaps(virtualFile, sourceId => {
 				if (sourceId) {
-					const sourceFile = sourceFileRegistry.get(sourceId)!;
+					const sourceFile = sourceFileRegistry.get(normalizeId(sourceId))!;
 					return [sourceId, sourceFile.snapshot];
 				}
 				else {
-					const source = virtualFileRegistry.get(virtualFile.id)!.source;
+					const source = virtualFileRegistry.get(normalizeId(virtualFile.id))!.source;
 					return [source.id, source.snapshot];
 				}
 			}, virtualFileMaps.get(virtualFile.snapshot));
@@ -84,11 +89,11 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 		},
 		getSourceFile(id: string) {
 			sync();
-			return sourceFileRegistry.get(id);
+			return sourceFileRegistry.get(normalizeId(id));
 		},
 		getVirtualFile(id: string) {
 			sync();
-			const sourceAndVirtual = virtualFileRegistry.get(id);
+			const sourceAndVirtual = virtualFileRegistry.get(normalizeId(id));
 			if (sourceAndVirtual) {
 				return [sourceAndVirtual.virtualFile, sourceAndVirtual.source] as const;
 			}
@@ -99,7 +104,7 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 	function deleteVirtualFiles(source: SourceFile) {
 		if (source.root) {
 			forEachEmbeddedFile(source.root, file => {
-				virtualFileRegistry.delete(file.id);
+				virtualFileRegistry.delete(normalizeId(file.id));
 			});
 		}
 	}
@@ -107,7 +112,7 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 	function updateVirtualFiles(source: SourceFile) {
 		if (source.root) {
 			forEachEmbeddedFile(source.root, file => {
-				virtualFileRegistry.set(file.id, { virtualFile: file, source });
+				virtualFileRegistry.set(normalizeId(file.id), { virtualFile: file, source });
 			});
 		}
 	}
