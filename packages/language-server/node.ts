@@ -9,6 +9,7 @@ import { createGetCancellationToken } from './lib/cancellationToken';
 import { WorkspacesContext, createSimpleProjectProvider } from './lib/project/simpleProjectProvider';
 import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
 
+export * from 'vscode-languageserver/node';
 export * from './index';
 
 export const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');

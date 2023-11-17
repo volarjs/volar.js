@@ -8,6 +8,7 @@ import { FileType } from '@volar/language-service';
 import { createSimpleProjectProvider, type WorkspacesContext } from './lib/project/simpleProjectProvider';
 import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
 
+export * from 'vscode-languageserver/browser';
 export * from './index';
 
 export function createConnection() {
