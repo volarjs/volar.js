@@ -75,26 +75,29 @@ export enum FileKind {
 	TypeScriptHostFile = 1,
 }
 
-export interface SourceFile {
-	// uri or posix fs path
-	id: string;
-	languageId: string;
-	snapshot: ts.IScriptSnapshot;
+export interface SourceFile extends BaesFile {
 	root?: VirtualFile;
 	language?: Language;
 }
 
-export interface VirtualFile {
-	// uri or posix fs path
-	id: string,
-	languageId: string,
-	snapshot: ts.IScriptSnapshot,
+export interface VirtualFile extends BaesFile {
 	kind: FileKind,
 	capabilities: FileCapabilities,
 	mappings: Mapping<FileRangeCapabilities>[],
 	codegenStacks: Stack[],
 	mirrorBehaviorMappings?: Mapping<[MirrorBehaviorCapabilities, MirrorBehaviorCapabilities]>[],
 	embeddedFiles: VirtualFile[],
+}
+
+export interface BaesFile {
+	/**
+	 * for language-server, kit, monaco, this is uri
+	 * 
+	 * for typescript server plugin, tsc, this is fileName
+	 */
+	id: string,
+	languageId: string,
+	snapshot: ts.IScriptSnapshot,
 }
 
 export interface Language<T extends VirtualFile = VirtualFile> {
