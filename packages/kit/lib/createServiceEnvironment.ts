@@ -1,11 +1,9 @@
-import { DidChangeWatchedFilesParams, FileSystem, FileType, NotificationHandler, ServiceEnvironment } from '@volar/language-service';
-import { fileNameToUri, uriToFileName } from './utils';
-import * as _fs from 'fs';
+import { FileSystem, FileType, ServiceEnvironment } from '@volar/language-service';
+import * as fs from 'fs';
 import { URI } from 'vscode-uri';
+import { fileNameToUri, uriToFileName } from './utils';
 
-export function createServiceEnvironment(settings: any = {}): ServiceEnvironment {
-
-	const didChangeWatchedFilesCallbacks = new Set<NotificationHandler<DidChangeWatchedFilesParams>>();
+export function createServiceEnvironment(getSettings: () => any): ServiceEnvironment {
 
 	return {
 		workspaceFolder: {
@@ -14,15 +12,8 @@ export function createServiceEnvironment(settings: any = {}): ServiceEnvironment
 		},
 		uriToFileName,
 		fileNameToUri,
-		onDidChangeWatchedFiles(cb) {
-			didChangeWatchedFilesCallbacks.add(cb);
-			return {
-				dispose: () => {
-					didChangeWatchedFilesCallbacks.delete(cb);
-				},
-			};
-		},
 		getConfiguration(section: string) {
+			const settings = getSettings();
 			if (section in settings) {
 				return settings[section];
 			}
@@ -45,16 +36,16 @@ export function createServiceEnvironment(settings: any = {}): ServiceEnvironment
 			}
 			return result;
 		},
-		fs,
+		fs: nodeFs,
 		console,
 	};
 }
 
-const fs: FileSystem = {
+const nodeFs: FileSystem = {
 	stat(uri) {
 		if (uri.startsWith('file://')) {
 			try {
-				const stats = _fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
+				const stats = fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
 				if (stats) {
 					return {
 						type: stats.isFile() ? FileType.File
@@ -75,7 +66,7 @@ const fs: FileSystem = {
 	readFile(uri, encoding) {
 		if (uri.startsWith('file://')) {
 			try {
-				return _fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
+				return fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
 			}
 			catch {
 				return undefined;
@@ -86,7 +77,7 @@ const fs: FileSystem = {
 		if (uri.startsWith('file://')) {
 			try {
 				const dirName = uriToFileName(uri);
-				const files = _fs.readdirSync(dirName, { withFileTypes: true });
+				const files = fs.readdirSync(dirName, { withFileTypes: true });
 				return files.map<[string, FileType]>(file => {
 					return [file.name, file.isFile() ? FileType.File
 						: file.isDirectory() ? FileType.Directory
