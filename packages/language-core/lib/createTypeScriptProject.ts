@@ -10,8 +10,8 @@ export function createTypeScriptProject(
 ): Project {
 
 	for (const language of languages) {
-		if (language.resolveTypeScriptProjectHost) {
-			projectHost = language.resolveTypeScriptProjectHost(projectHost);
+		if (language.typescript?.resolveProjectHost) {
+			projectHost = language.typescript.resolveProjectHost(projectHost);
 		}
 	}
 
