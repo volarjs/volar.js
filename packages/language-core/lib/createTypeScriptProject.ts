@@ -6,6 +6,7 @@ export function createTypeScriptProject(
 	projectHost: TypeScriptProjectHost,
 	languages: Language<any>[],
 	getLanguageId: (fileName: string) => string,
+	toId: (fileName: string) => string
 ): Project {
 
 	for (const language of languages) {
@@ -34,17 +35,19 @@ export function createTypeScriptProject(
 		for (const [fileName, snapshot] of newRootFiles) {
 			remainRootFiles.delete(fileName);
 			if (lastRootFiles.get(fileName) !== newRootFiles.get(fileName)) {
+				const uri = toId(fileName);
 				if (snapshot) {
-					fileProvider.updateSource(fileName, snapshot, getLanguageId(fileName));
+					fileProvider.updateSourceFile(uri, snapshot, getLanguageId(fileName));
 				}
 				else {
-					fileProvider.deleteSource(fileName);
+					fileProvider.deleteSourceFile(uri);
 				}
 			}
 		}
 
 		for (const fileName of remainRootFiles) {
-			fileProvider.deleteSource(fileName);
+			const uri = toId(fileName);
+			fileProvider.deleteSourceFile(uri);
 		}
 
 		lastRootFiles = newRootFiles;

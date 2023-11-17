@@ -75,10 +75,20 @@ export enum FileKind {
 	TypeScriptHostFile = 1,
 }
 
+export interface SourceFile {
+	// uri or posix fs path
+	id: string;
+	languageId: string;
+	snapshot: ts.IScriptSnapshot;
+	root?: VirtualFile;
+	language?: Language;
+}
+
 export interface VirtualFile {
-	fileName: string,
-	snapshot: ts.IScriptSnapshot,
+	// uri or posix fs path
+	id: string,
 	languageId: string,
+	snapshot: ts.IScriptSnapshot,
 	kind: FileKind,
 	capabilities: FileCapabilities,
 	mappings: Mapping<FileRangeCapabilities>[],
@@ -88,7 +98,7 @@ export interface VirtualFile {
 }
 
 export interface Language<T extends VirtualFile = VirtualFile> {
-	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string): T | undefined;
+	createVirtualFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	deleteVirtualFile?(virtualFile: T): void;
 	resolveTypeScriptProjectHost?<T extends TypeScriptProjectHost>(host: T): T;

@@ -48,7 +48,8 @@ export function register(context: ServiceContext) {
 
 						recursiveChecker.add({ uri: document.uri, range: { start: reference.range.start, end: reference.range.start } });
 
-						const mirrorMap = context.documents.getMirrorMapByUri(document.uri)?.[1];
+						const [virtualFile] = context.project.fileProvider.getVirtualFile(document.uri);
+						const mirrorMap = virtualFile ? context.documents.getMirrorMap(virtualFile) : undefined;
 
 						if (mirrorMap) {
 

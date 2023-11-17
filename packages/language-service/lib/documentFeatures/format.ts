@@ -31,8 +31,8 @@ export function register(context: ServiceContext) {
 			end: document.positionAt(document.getText().length),
 		};
 
-		const source = context.documents.getSourceByUri(document.uri);
-		if (!source?.language || !source.root) {
+		const sourceFile = context.project.fileProvider.getSourceFile(document.uri);
+		if (!sourceFile?.language || !sourceFile.root) {
 			return onTypeParams
 				? (await tryFormat(document, onTypeParams.position, onTypeParams.ch))?.edits
 				: (await tryFormat(document, range, undefined))?.edits;
@@ -40,8 +40,8 @@ export function register(context: ServiceContext) {
 
 		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 
-		let tempSourceSnapshot = source.snapshot;
-		const tempVirtualFile = source.language.createVirtualFile(source.fileName, source.snapshot, source.languageId)!;
+		let tempSourceSnapshot = sourceFile.snapshot;
+		const tempVirtualFile = sourceFile.language.createVirtualFile(sourceFile.id, sourceFile.languageId, sourceFile.snapshot)!;
 		const originalDocument = document;
 
 		let level = 0;
@@ -54,7 +54,7 @@ export function register(context: ServiceContext) {
 
 			let edits: vscode.TextEdit[] = [];
 			const toPatchIndent: {
-				virtualFileName: string;
+				virtualFileUri: string;
 				isCodeBlock: boolean;
 				service: ReturnType<Service>;
 			}[] = [];
@@ -68,7 +68,7 @@ export function register(context: ServiceContext) {
 				if (onTypeParams && !isCodeBlock)
 					continue;
 
-				const docMap = createDocMap(file, source.fileName, tempSourceSnapshot, source.languageId);
+				const docMap = createDocMap(file, sourceFile.id, sourceFile.languageId, tempSourceSnapshot);
 				if (!docMap) continue;
 
 				let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
@@ -96,7 +96,7 @@ export function register(context: ServiceContext) {
 					continue;
 
 				toPatchIndent.push({
-					virtualFileName: file.fileName,
+					virtualFileUri: file.id,
 					isCodeBlock,
 					service: embeddedCodeResult.service,
 				});
@@ -118,7 +118,7 @@ export function register(context: ServiceContext) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 				tempSourceSnapshot = stringToSnapshot(newText);
-				source.language.updateVirtualFile(tempVirtualFile, tempSourceSnapshot);
+				sourceFile.language.updateVirtualFile(tempVirtualFile, tempSourceSnapshot);
 			}
 
 			if (level > 1) {
@@ -138,11 +138,11 @@ export function register(context: ServiceContext) {
 
 					let virtualFile!: VirtualFile;
 					forEachEmbeddedFile(tempVirtualFile, file => {
-						if (file.fileName === item.virtualFileName) {
+						if (file.id === item.virtualFileUri) {
 							virtualFile = file;
 						}
 					});
-					const docMap = createDocMap(virtualFile, source.fileName, tempSourceSnapshot, source.languageId);
+					const docMap = createDocMap(virtualFile, sourceFile.id, sourceFile.languageId, tempSourceSnapshot);
 					if (!docMap) continue;
 
 					const indentSensitiveLines = new Set<number>();
@@ -191,7 +191,7 @@ export function register(context: ServiceContext) {
 						const newText = TextDocument.applyEdits(document, indentEdits);
 						document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 						tempSourceSnapshot = stringToSnapshot(newText);
-						source.language.updateVirtualFile(tempVirtualFile, tempSourceSnapshot);
+						sourceFile.language.updateVirtualFile(tempVirtualFile, tempSourceSnapshot);
 					}
 				}
 			}
@@ -270,29 +270,29 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function createDocMap(file: VirtualFile, _sourceFileName: string, _sourceSnapshot: ts.IScriptSnapshot, sourceLanguageId: string | undefined) {
+	function createDocMap(file: VirtualFile, sourceFileUri: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
 		const maps = updateVirtualFileMaps(file, (sourceFileName) => {
 			if (!sourceFileName) {
-				return [_sourceFileName, _sourceSnapshot];
+				return [sourceFileUri, _sourceSnapshot];
 			}
 		});
-		if (maps.has(_sourceFileName) && maps.get(_sourceFileName)![0] === _sourceSnapshot) {
-			const [_, map] = maps.get(_sourceFileName)!;
+		if (maps.has(sourceFileUri) && maps.get(sourceFileUri)![0] === _sourceSnapshot) {
+			const map = maps.get(sourceFileUri)!;
 			const version = fakeVersion++;
 			return new SourceMapWithDocuments(
 				TextDocument.create(
-					context.env.fileNameToUri(_sourceFileName),
-					sourceLanguageId ?? resolveCommonLanguageId(_sourceFileName),
+					sourceFileUri,
+					sourceLanguageId ?? resolveCommonLanguageId(sourceFileUri),
 					version,
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),
 				TextDocument.create(
-					context.env.fileNameToUri(file.fileName),
+					file.id,
 					file.languageId,
 					version,
 					file.snapshot.getText(0, file.snapshot.getLength())
 				),
-				map,
+				map[1],
 			);
 		}
 	}

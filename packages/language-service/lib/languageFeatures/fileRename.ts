@@ -9,15 +9,16 @@ export function register(context: ServiceContext) {
 
 	return async (oldUri: string, newUri: string, token = NoneCancellationToken) => {
 
-		const rootFile = context.documents.getSourceByUri(oldUri)?.root;
+		const sourceFile = context.project.fileProvider.getSourceFile(oldUri);
+		const rootFile = sourceFile?.root;
 
-		if (rootFile) {
+		if (sourceFile && rootFile) {
 
 			let tsExt: string | undefined;
 
-			forEachEmbeddedFile(rootFile, embedded => {
-				if (embedded.kind === FileKind.TypeScriptHostFile && embedded.fileName.replace(rootFile.fileName, '').match(/^\.(js|ts)x?$/)) {
-					tsExt = embedded.fileName.substring(embedded.fileName.lastIndexOf('.'));
+			forEachEmbeddedFile(rootFile, virtualFile => {
+				if (virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
+					tsExt = virtualFile.id.substring(virtualFile.id.lastIndexOf('.'));
 				}
 			});
 
@@ -43,7 +44,7 @@ export function register(context: ServiceContext) {
 
 				const result = embeddedEditToSourceEdit(
 					workspaceEdit,
-					context.documents,
+					context,
 					'fileName',
 				);
 

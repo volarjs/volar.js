@@ -1,11 +1,10 @@
-import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import * as dedupe from '../utils/dedupe';
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import { DocumentProvider } from '../documents';
 import { FileRangeCapabilities } from '@volar/language-core';
+import type * as vscode from 'vscode-languageserver-protocol';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
+import * as dedupe from '../utils/dedupe';
+import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: ServiceContext) {
 
@@ -74,7 +73,8 @@ export function register(context: ServiceContext) {
 
 								recursiveChecker.add({ uri: editUri, range: { start: textEdit.range.start, end: textEdit.range.start } });
 
-								const mirrorMap = context.documents.getMirrorMapByUri(editUri)?.[1];
+								const [virtualFile] = context.project.fileProvider.getVirtualFile(editUri);
+								const mirrorMap = virtualFile ? context.documents.getMirrorMap(virtualFile) : undefined;
 
 								if (mirrorMap) {
 
@@ -129,7 +129,7 @@ export function register(context: ServiceContext) {
 			(data) => {
 				return embeddedEditToSourceEdit(
 					data,
-					context.documents,
+					context,
 					'rename',
 				);
 			},
@@ -183,7 +183,7 @@ export function mergeWorkspaceEdits(original: vscode.WorkspaceEdit, ...others: v
 
 export function embeddedEditToSourceEdit(
 	tsResult: vscode.WorkspaceEdit,
-	documents: DocumentProvider,
+	{ documents, project }: ServiceContext,
 	mode: 'fileName' | 'rename' | 'codeAction' | 'format',
 	versions: Record<string, number> = {},
 ) {
@@ -196,55 +196,59 @@ export function embeddedEditToSourceEdit(
 		sourceResult.changeAnnotations ??= {};
 
 		const tsAnno = tsResult.changeAnnotations[tsUri];
+		const [virtualFile] = project.fileProvider.getVirtualFile(tsUri);
 
-		if (!documents.isVirtualFileUri(tsUri)) {
-			sourceResult.changeAnnotations[tsUri] = tsAnno;
-		}
-		else {
-			for (const [_, map] of documents.getMapsByVirtualFileUri(tsUri)) {
+		if (virtualFile) {
+			for (const map of documents.getMapsByVirtualFile(virtualFile)) {
 				// TODO: check capability?
 				const uri = map.sourceFileDocument.uri;
 				sourceResult.changeAnnotations[uri] = tsAnno;
 			}
+		}
+		else {
+			sourceResult.changeAnnotations[tsUri] = tsAnno;
 		}
 	}
 	for (const tsUri in tsResult.changes) {
 
 		sourceResult.changes ??= {};
 
-		if (!documents.isVirtualFileUri(tsUri)) {
-			sourceResult.changes[tsUri] = tsResult.changes[tsUri];
-			hasResult = true;
-			continue;
-		}
-		for (const [_, map] of documents.getMapsByVirtualFileUri(tsUri)) {
-			const tsEdits = tsResult.changes[tsUri];
-			for (const tsEdit of tsEdits) {
-				if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-					let _data: FileRangeCapabilities | undefined;
-					const range = map.toSourceRange(tsEdit.range, data => {
-						_data = data;
-						return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
-					});
-					if (range) {
-						let newText = tsEdit.newText;
-						if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
-							newText = _data.rename.apply(tsEdit.newText);
+		const [virtualFile] = project.fileProvider.getVirtualFile(tsUri);
+
+		if (virtualFile) {
+			for (const map of documents.getMapsByVirtualFile(virtualFile)) {
+				const tsEdits = tsResult.changes[tsUri];
+				for (const tsEdit of tsEdits) {
+					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
+						let _data: FileRangeCapabilities | undefined;
+						const range = map.toSourceRange(tsEdit.range, data => {
+							_data = data;
+							return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
+						});
+						if (range) {
+							let newText = tsEdit.newText;
+							if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
+								newText = _data.rename.apply(tsEdit.newText);
+							}
+							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
+							sourceResult.changes[map.sourceFileDocument.uri].push({ newText, range });
+							hasResult = true;
 						}
-						sourceResult.changes[map.sourceFileDocument.uri] ??= [];
-						sourceResult.changes[map.sourceFileDocument.uri].push({ newText, range });
-						hasResult = true;
 					}
-				}
-				else {
-					const range = map.toSourceRange(tsEdit.range);
-					if (range) {
-						sourceResult.changes[map.sourceFileDocument.uri] ??= [];
-						sourceResult.changes[map.sourceFileDocument.uri].push({ newText: tsEdit.newText, range });
-						hasResult = true;
+					else {
+						const range = map.toSourceRange(tsEdit.range);
+						if (range) {
+							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
+							sourceResult.changes[map.sourceFileDocument.uri].push({ newText: tsEdit.newText, range });
+							hasResult = true;
+						}
 					}
 				}
 			}
+		}
+		else {
+			sourceResult.changes[tsUri] = tsResult.changes[tsUri];
+			hasResult = true;
 		}
 	}
 	if (tsResult.documentChanges) {
@@ -254,8 +258,11 @@ export function embeddedEditToSourceEdit(
 
 			let sourceEdit: typeof tsDocEdit | undefined;
 			if ('textDocument' in tsDocEdit) {
-				if (documents.isVirtualFileUri(tsDocEdit.textDocument.uri)) {
-					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.textDocument.uri)) {
+
+				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.textDocument.uri);
+
+				if (virtualFile) {
+					for (const map of documents.getMapsByVirtualFile(virtualFile)) {
 						sourceEdit = {
 							textDocument: {
 								uri: map.sourceFileDocument.uri,
@@ -307,11 +314,11 @@ export function embeddedEditToSourceEdit(
 				sourceEdit = tsDocEdit; // TODO: remove .ts?
 			}
 			else if (tsDocEdit.kind === 'rename') {
-				if (!documents.isVirtualFileUri(tsDocEdit.oldUri)) {
-					sourceEdit = tsDocEdit;
-				}
-				else {
-					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.oldUri)) {
+
+				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.oldUri);
+
+				if (virtualFile) {
+					for (const map of documents.getMapsByVirtualFile(virtualFile)) {
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'rename',
@@ -322,13 +329,16 @@ export function embeddedEditToSourceEdit(
 						} satisfies vscode.RenameFile;
 					}
 				}
-			}
-			else if (tsDocEdit.kind === 'delete') {
-				if (!documents.isVirtualFileUri(tsDocEdit.uri)) {
+				else {
 					sourceEdit = tsDocEdit;
 				}
-				else {
-					for (const [_, map] of documents.getMapsByVirtualFileUri(tsDocEdit.uri)) {
+			}
+			else if (tsDocEdit.kind === 'delete') {
+
+				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.uri);
+
+				if (virtualFile) {
+					for (const map of documents.getMapsByVirtualFile(virtualFile)) {
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'delete',
@@ -337,6 +347,9 @@ export function embeddedEditToSourceEdit(
 							annotationId: tsDocEdit.annotationId,
 						} satisfies vscode.DeleteFile;
 					}
+				}
+				else {
+					sourceEdit = tsDocEdit;
 				}
 			}
 			if (sourceEdit) {

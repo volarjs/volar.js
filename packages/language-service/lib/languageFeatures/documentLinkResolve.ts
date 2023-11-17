@@ -30,9 +30,10 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 
 	const targetUri = URI.parse(target);
 	const clearUri = targetUri.with({ fragment: '' }).toString();
+	const [virtualFile] = context.project.fileProvider.getVirtualFile(clearUri);
 
-	if (context.documents.isVirtualFileUri(clearUri)) {
-		for (const [virtualFile, map] of context.documents.getMapsByVirtualFileUri(clearUri)) {
+	if (virtualFile) {
+		for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
 
 			if (!virtualFile.capabilities.documentSymbol) {
 				continue;

@@ -109,6 +109,7 @@ export async function createTypeScriptServerProject(
 				createTypeScriptProject(
 					typescriptProjectHost,
 					Object.values(config.languages ?? {}),
+					serviceEnv.fileNameToUri,
 					fileName => context.workspaces.documents.data.pathGet(fileName)?.languageId ?? resolveCommonLanguageId(fileName),
 				),
 			);

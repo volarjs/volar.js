@@ -15,7 +15,6 @@ export async function createSimpleServerProject(
 	let shouldUpdate = true;
 	let lastSnapshots = new Map<string, ts.IScriptSnapshot | undefined>();
 
-	const { uriToFileName } = context.server.runtimeEnv;
 	const config = await getConfig(context, plugins, serviceEnv, undefined);
 
 	context.workspaces.documents.onDidChangeContent(() => {
@@ -55,16 +54,16 @@ export async function createSimpleServerProject(
 					const newSnapshot = snapshot?.getSnapshot();
 					if (lastSnapshots.get(uri) !== snapshot) {
 						if (snapshot && newSnapshot) {
-							fileProvider.updateSource(uriToFileName(uri), newSnapshot, snapshot.languageId);
+							fileProvider.updateSourceFile(uri, newSnapshot, snapshot.languageId);
 						}
 						else {
-							fileProvider.deleteSource(uriToFileName(uri));
+							fileProvider.deleteSourceFile(uri);
 						}
 					}
 				}
 
 				for (const uri of remain) {
-					fileProvider.deleteSource(uriToFileName(uri));
+					fileProvider.deleteSourceFile(uri);
 				}
 
 				const _newSnapshots = new Map<string, ts.IScriptSnapshot | undefined>();

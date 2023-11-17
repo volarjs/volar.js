@@ -44,7 +44,8 @@ export function register(context: ServiceContext) {
 
 						recursiveChecker.add({ uri: reference.uri, range: { start: reference.range.start, end: reference.range.start } });
 
-						const mirrorMap = context.documents.getMirrorMapByUri(reference.uri)?.[1];
+						const [virtualFile] = context.project.fileProvider.getVirtualFile(reference.uri);
+						const mirrorMap = virtualFile ? context.documents.getMirrorMap(virtualFile) : undefined;
 
 						if (mirrorMap) {
 
@@ -73,8 +74,11 @@ export function register(context: ServiceContext) {
 				const results: vscode.Location[] = [];
 
 				for (const reference of data) {
-					if (context.documents.isVirtualFileUri(reference.uri)) {
-						for (const [_, map] of context.documents.getMapsByVirtualFileUri(reference.uri)) {
+
+					const [virtualFile] = context.project.fileProvider.getVirtualFile(reference.uri);
+
+					if (virtualFile) {
+						for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
 							const range = map.toSourceRange(reference.range, data => !!data.references);
 							if (range) {
 								results.push({

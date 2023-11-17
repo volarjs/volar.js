@@ -25,7 +25,7 @@ export function createSimpleWorkerService<T = {}>(
 	return createWorkerService(
 		modules,
 		services,
-		env => {
+		() => {
 
 			const lastSnapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const fileProvider = createFileProvider(
@@ -48,9 +48,9 @@ export function createSimpleWorkerService<T = {}>(
 							getLength: () => text.length,
 							getChangeRange: () => undefined,
 						};
-						const fileName = env.uriToFileName(model.uri.toString(true));
 						lastSnapshots.set(model, [model.version, snapshot]);
-						fileProvider.updateSource(fileName, snapshot, resolveCommonLanguageId(fileName));
+						const uri = model.uri.toString(true);
+						fileProvider.updateSourceFile(uri, snapshot, resolveCommonLanguageId(uri));
 					}
 				}
 			);
@@ -139,7 +139,8 @@ export function createTypeScriptWorkerService<T = {}>(
 			return createTypeScriptProject(
 				projectHost,
 				languages,
-				resolveCommonLanguageId
+				resolveCommonLanguageId,
+				env.fileNameToUri
 			);
 		},
 		extraApis

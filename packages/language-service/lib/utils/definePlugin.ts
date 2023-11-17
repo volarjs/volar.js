@@ -1,21 +1,23 @@
-import { DocumentProvider, SourceMapWithDocuments } from '../documents';
 import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
+import { SourceMapWithDocuments } from '../documents';
+import { ServiceContext } from '../types';
 
 export async function visitEmbedded(
-	documents: DocumentProvider,
+	context: ServiceContext,
 	current: VirtualFile,
 	cb: (file: VirtualFile, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>) => Promise<boolean>,
 	rootFile = current,
 ) {
 
 	for (const embedded of current.embeddedFiles) {
-		if (!await visitEmbedded(documents, embedded, cb, rootFile)) {
+		if (!await visitEmbedded(context, embedded, cb, rootFile)) {
 			return false;
 		}
 	}
 
-	for (const [_, map] of documents.getMapsByVirtualFileName(current.fileName)) {
-		if (documents.getSourceByUri(map.sourceFileDocument.uri)?.root === rootFile) {
+	for (const map of context.documents.getMapsByVirtualFile(current)) {
+		const sourceFile = context.project.fileProvider.getSourceFile(map.sourceFileDocument.uri);
+		if (sourceFile?.root === rootFile) {
 			if (!await cb(current, map)) {
 				return false;
 			}

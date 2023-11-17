@@ -1,36 +1,27 @@
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { MirrorMap } from './mirrorMap';
-import type { FileRangeCapabilities, Language, VirtualFile } from './types';
-
-export interface Source {
-	fileName: string;
-	languageId: string;
-	snapshot: ts.IScriptSnapshot;
-	root?: VirtualFile;
-	language?: Language;
-}
+import type { FileRangeCapabilities, Language, SourceFile, VirtualFile } from './types';
 
 export function createFileProvider(languages: Language[], sync: () => void) {
 
-	const sourceFiles = new Map<string, Source>();
-	const virtualFiles = new Map<string, { virtualFile: VirtualFile, source: Source; }>();
+	const sourceFileRegistry = new Map<string, SourceFile>(); // TODO: use uri map
+	const virtualFileRegistry = new Map<string, { virtualFile: VirtualFile, source: SourceFile; }>(); // TODO: use uri map
 	const virtualFileMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<FileRangeCapabilities>]>>();
 	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, MirrorMap | undefined>();
 
 	return {
-		getAllSources() {
+		getAllSourceFiles() {
 			sync();
-			return sourceFiles;
+			return sourceFileRegistry;
 		},
-		updateSource(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string): VirtualFile | undefined {
-			const key = normalizePath(fileName);
-			const value = sourceFiles.get(key);
+		updateSourceFile(id: string, snapshot: ts.IScriptSnapshot, languageId: string): VirtualFile | undefined {
+			const value = sourceFileRegistry.get(id);
 			if (value) {
 				if (value.languageId !== languageId) {
 					// languageId changed
-					this.deleteSource(fileName);
-					return this.updateSource(fileName, snapshot, languageId);
+					this.deleteSourceFile(id);
+					return this.updateSourceFile(id, snapshot, languageId);
 				}
 				else if (value.snapshot !== snapshot) {
 					value.snapshot = snapshot;
@@ -46,24 +37,23 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 				}
 			}
 			for (const language of languages) {
-				const virtualFile = language.createVirtualFile(fileName, snapshot, languageId);
+				const virtualFile = language.createVirtualFile(id, languageId, snapshot);
 				if (virtualFile) {
-					const source: Source = { fileName, languageId, snapshot, root: virtualFile, language };
-					sourceFiles.set(key, source);
+					const source: SourceFile = { id: id, languageId, snapshot, root: virtualFile, language };
+					sourceFileRegistry.set(id, source);
 					updateVirtualFiles(source);
 					return virtualFile; // created
 				}
 			}
-			sourceFiles.set(key, { fileName, languageId, snapshot });
+			sourceFileRegistry.set(id, { id: id, languageId, snapshot });
 		},
-		deleteSource(fileName: string) {
-			const key = normalizePath(fileName);
-			const value = sourceFiles.get(key);
+		deleteSourceFile(id: string) {
+			const value = sourceFileRegistry.get(id);
 			if (value) {
 				if (value.language && value.root) {
 					value.language.deleteVirtualFile?.(value.root);
 				}
-				sourceFiles.delete(key); // deleted
+				sourceFileRegistry.delete(id); // deleted
 				deleteVirtualFiles(value);
 			}
 		},
@@ -79,35 +69,26 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 				virtualFileMaps.set(virtualFile.snapshot, new Map());
 			}
 
-			updateVirtualFileMaps(virtualFile, sourceFileName => {
-				if (sourceFileName) {
-					const source = sourceFiles.get(normalizePath(sourceFileName))!;
-					return [sourceFileName, source.snapshot];
+			updateVirtualFileMaps(virtualFile, sourceId => {
+				if (sourceId) {
+					const sourceFile = sourceFileRegistry.get(sourceId)!;
+					return [sourceId, sourceFile.snapshot];
 				}
 				else {
-					const source = virtualFiles.get(normalizePath(virtualFile.fileName))!.source;
-					return [source.fileName, source.snapshot];
+					const source = virtualFileRegistry.get(virtualFile.id)!.source;
+					return [source.id, source.snapshot];
 				}
 			}, virtualFileMaps.get(virtualFile.snapshot));
 
 			return virtualFileMaps.get(virtualFile.snapshot)!;
 		},
-		getSource(fileName: string) {
+		getSourceFile(id: string) {
 			sync();
-			const key = normalizePath(fileName);
-			return sourceFiles.get(key);
+			return sourceFileRegistry.get(id);
 		},
-		hasSource(fileName: string) {
+		getVirtualFile(id: string) {
 			sync();
-			return sourceFiles.has(normalizePath(fileName));
-		},
-		hasVirtualFile(fileName: string) {
-			sync();
-			return !!virtualFiles.get(normalizePath(fileName));
-		},
-		getVirtualFile(fileName: string) {
-			sync();
-			const sourceAndVirtual = virtualFiles.get(normalizePath(fileName));
+			const sourceAndVirtual = virtualFileRegistry.get(id);
 			if (sourceAndVirtual) {
 				return [sourceAndVirtual.virtualFile, sourceAndVirtual.source] as const;
 			}
@@ -115,18 +96,18 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 		},
 	};
 
-	function deleteVirtualFiles(source: Source) {
+	function deleteVirtualFiles(source: SourceFile) {
 		if (source.root) {
 			forEachEmbeddedFile(source.root, file => {
-				virtualFiles.delete(normalizePath(file.fileName));
+				virtualFileRegistry.delete(file.id);
 			});
 		}
 	}
 
-	function updateVirtualFiles(source: Source) {
+	function updateVirtualFiles(source: SourceFile) {
 		if (source.root) {
 			forEachEmbeddedFile(source.root, file => {
-				virtualFiles.set(normalizePath(file.fileName), { virtualFile: file, source });
+				virtualFileRegistry.set(file.id, { virtualFile: file, source });
 			});
 		}
 	}
@@ -134,7 +115,7 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 
 export function updateVirtualFileMaps(
 	virtualFile: VirtualFile,
-	getSourceSnapshot: (source: string | undefined) => [string, ts.IScriptSnapshot] | undefined,
+	getSourceSnapshot: (sourceUri: string | undefined) => [string, ts.IScriptSnapshot] | undefined,
 	map: Map<string, [ts.IScriptSnapshot, SourceMap<FileRangeCapabilities>]> = new Map(),
 ) {
 
@@ -164,8 +145,4 @@ export function forEachEmbeddedFile(file: VirtualFile, cb: (embedded: VirtualFil
 	for (const embeddedFile of file.embeddedFiles) {
 		forEachEmbeddedFile(embeddedFile, cb);
 	}
-}
-
-function normalizePath(fileName: string) {
-	return fileName.replace(/\\/g, '/').toLowerCase();
 }

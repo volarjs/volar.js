@@ -53,7 +53,8 @@ export function register(
 
 						recursiveChecker.add({ uri: definition.targetUri, range: { start: definition.targetRange.start, end: definition.targetRange.start } });
 
-						const mirrorMap = context.documents.getMirrorMapByUri(definition.targetUri)?.[1];
+						const [virtualFile] = context.project.fileProvider.getVirtualFile(definition.targetUri);
+						const mirrorMap = virtualFile ? context.documents.getMirrorMap(virtualFile) : undefined;
 
 						if (mirrorMap) {
 
@@ -99,40 +100,45 @@ export function register(
 
 				let foundTargetSelectionRange = false;
 
-				for (const [_, targetSourceMap] of context.documents.getMapsByVirtualFileUri(link.targetUri)) {
+				const [targetVirtualFile] = context.project.fileProvider.getVirtualFile(link.targetUri);
 
-					const targetSelectionRange = targetSourceMap.toSourceRange(link.targetSelectionRange);
-					if (!targetSelectionRange)
-						continue;
+				if (targetVirtualFile) {
 
-					foundTargetSelectionRange = true;
+					for (const targetSourceMap of context.documents.getMapsByVirtualFile(targetVirtualFile)) {
 
-					let targetRange = targetSourceMap.toSourceRange(link.targetRange);
+						const targetSelectionRange = targetSourceMap.toSourceRange(link.targetSelectionRange);
+						if (!targetSelectionRange)
+							continue;
 
-					link.targetUri = targetSourceMap.sourceFileDocument.uri;
-					// loose range mapping to for template slots, slot properties
-					link.targetRange = targetRange ?? targetSelectionRange;
-					link.targetSelectionRange = targetSelectionRange;
-				}
+						foundTargetSelectionRange = true;
 
-				if (apiName === 'provideDefinition' && context.documents.isVirtualFileUri(link.targetUri) && !foundTargetSelectionRange) {
-					for (const [_, targetMap] of context.documents.getMapsByVirtualFileUri(link.targetUri)) {
-						if (targetMap && targetMap.sourceFileDocument.uri !== uri) {
-							return {
-								...link,
-								targetUri: targetMap.sourceFileDocument.uri,
-								targetRange: {
-									start: { line: 0, character: 0 },
-									end: { line: 0, character: 0 },
-								},
-								targetSelectionRange: {
-									start: { line: 0, character: 0 },
-									end: { line: 0, character: 0 },
-								},
-							};
-						}
+						let targetRange = targetSourceMap.toSourceRange(link.targetRange);
+
+						link.targetUri = targetSourceMap.sourceFileDocument.uri;
+						// loose range mapping to for template slots, slot properties
+						link.targetRange = targetRange ?? targetSelectionRange;
+						link.targetSelectionRange = targetSelectionRange;
 					}
-					return;
+
+					if (apiName === 'provideDefinition' && !foundTargetSelectionRange) {
+						for (const targetMap of context.documents.getMapsByVirtualFile(targetVirtualFile)) {
+							if (targetMap && targetMap.sourceFileDocument.uri !== uri) {
+								return {
+									...link,
+									targetUri: targetMap.sourceFileDocument.uri,
+									targetRange: {
+										start: { line: 0, character: 0 },
+										end: { line: 0, character: 0 },
+									},
+									targetSelectionRange: {
+										start: { line: 0, character: 0 },
+										end: { line: 0, character: 0 },
+									},
+								};
+							}
+						}
+						return;
+					}
 				}
 
 				return link;

@@ -26,13 +26,13 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	// apis
 	function organizeImports(args: ts.OrganizeImportsArgs, formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences | undefined): ReturnType<ts.LanguageService['organizeImports']> {
 		let edits: readonly ts.FileTextChanges[] = [];
-		const file = virtualFiles.getSource(args.fileName)?.root;
+		const file = virtualFiles.getSourceFile(args.fileName)?.root;
 		if (file) {
 			forEachEmbeddedFile(file, embeddedFile => {
 				if (embeddedFile.kind === FileKind.TypeScriptHostFile && embeddedFile.capabilities.codeAction) {
 					edits = edits.concat(_organizeImports({
 						...args,
-						fileName: embeddedFile.fileName,
+						fileName: embeddedFile.id,
 					}, formatOptions, preferences));
 				}
 			});
@@ -208,7 +208,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		if (source) {
 			return {
 				...changes,
-				fileName: source.fileName,
+				fileName: source.id,
 				textChanges: changes.textChanges.map(c => {
 					const span = transformSpan(changes.fileName, c.span);
 					if (span) {
@@ -250,7 +250,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			const [virtualFile, source] = getVirtualFile(documentSpan.fileName);
 			if (virtualFile && source) {
 				textSpan = {
-					fileName: source.fileName,
+					fileName: source.id,
 					textSpan: { start: 0, length: 0 },
 				};
 			}
@@ -288,7 +288,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				const sourceLoc = map.toSourceOffset(textSpan.start);
 				if (sourceLoc) {
 					return {
-						fileName: source.fileName,
+						fileName: source.id,
 						textSpan: {
 							start: sourceLoc[0],
 							length: textSpan.length,
@@ -308,12 +308,12 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	function getVirtualFile(fileName: string) {
 		if (isTsPlugin) {
 			let result: VirtualFile | undefined;
-			const source = virtualFiles.getSource(fileName);
+			const source = virtualFiles.getSourceFile(fileName);
 			if (source?.root) {
-				forEachEmbeddedFile(source.root, file => {
-					const ext = file.fileName.replace(fileName, '');
-					if (file.kind === FileKind.TypeScriptHostFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
-						result = file;
+				forEachEmbeddedFile(source.root, virtualFile => {
+					const ext = virtualFile.id.substring(fileName.length);
+					if (virtualFile.kind === FileKind.TypeScriptHostFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
+						result = virtualFile;
 					}
 				});
 			}
