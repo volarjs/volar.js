@@ -137,11 +137,12 @@ export function register(context: ServiceContext) {
 				for (const item of toPatchIndent) {
 
 					let virtualFile!: VirtualFile;
-					forEachEmbeddedFile(tempVirtualFile, file => {
+					for (const file of forEachEmbeddedFile(tempVirtualFile)) {
 						if (file.id === item.virtualFileUri) {
 							virtualFile = file;
+							break;
 						}
-					});
+					}
 					const docMap = createDocMap(virtualFile, sourceFile.id, sourceFile.languageId, tempSourceSnapshot);
 					if (!docMap) continue;
 

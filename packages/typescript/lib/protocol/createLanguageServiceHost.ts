@@ -1,4 +1,4 @@
-import { resolveCommonLanguageId, type FileKind, type FileProvider, type TypeScriptProjectHost, type VirtualFile } from '@volar/language-core';
+import { forEachEmbeddedFile, resolveCommonLanguageId, type FileKind, type FileProvider, type TypeScriptProjectHost } from '@volar/language-core';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { matchFiles } from '../typescript/utilities';
@@ -171,14 +171,14 @@ export function createLanguageServiceHost(
 
 		for (const sourceFile of fileProvider.getAllSourceFiles()) {
 			if (sourceFile.root) {
-				forEachEmbeddedFile(sourceFile.root, embedded => {
+				for (const embedded of forEachEmbeddedFile(sourceFile.root)) {
 					if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
 						newTsVirtualFileSnapshots.add(embedded.snapshot);
 					}
 					else {
 						newOtherVirtualFileSnapshots.add(embedded.snapshot);
 					}
-				});
+				}
 			}
 		}
 
@@ -196,11 +196,11 @@ export function createLanguageServiceHost(
 		const tsFileNamesSet = new Set<string>();
 		for (const sourceFile of fileProvider.getAllSourceFiles()) {
 			if (sourceFile.root) {
-				forEachEmbeddedFile(sourceFile.root, embedded => {
+				for (const embedded of forEachEmbeddedFile(sourceFile.root)) {
 					if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
 						tsFileNamesSet.add(idToFileName(embedded.id)); // virtual .ts
 					}
-				});
+				}
 			}
 		}
 		for (const fileName of projectHost.getScriptFileNames()) {
@@ -392,13 +392,6 @@ function setEquals<T>(a: Set<T>, b: Set<T>) {
 		if (!b.has(item)) return false;
 	}
 	return true;
-}
-
-function forEachEmbeddedFile(file: VirtualFile, cb: (embedded: VirtualFile) => void) {
-	cb(file);
-	for (const embeddedFile of file.embeddedFiles) {
-		forEachEmbeddedFile(embeddedFile, cb);
-	}
 }
 
 function normalizePath(fileName: string) {

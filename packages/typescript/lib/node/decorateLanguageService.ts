@@ -26,16 +26,16 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	// apis
 	function organizeImports(args: ts.OrganizeImportsArgs, formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences | undefined): ReturnType<ts.LanguageService['organizeImports']> {
 		let edits: readonly ts.FileTextChanges[] = [];
-		const file = virtualFiles.getSourceFile(args.fileName)?.root;
-		if (file) {
-			forEachEmbeddedFile(file, embeddedFile => {
+		const sourceFile = virtualFiles.getSourceFile(args.fileName);
+		if (sourceFile?.root) {
+			for (const embeddedFile of forEachEmbeddedFile(sourceFile.root)) {
 				if (embeddedFile.kind === FileKind.TypeScriptHostFile && embeddedFile.capabilities.codeAction) {
 					edits = edits.concat(_organizeImports({
 						...args,
 						fileName: embeddedFile.id,
 					}, formatOptions, preferences));
 				}
-			});
+			}
 		}
 		else {
 			return _organizeImports(args, formatOptions, preferences);
@@ -308,16 +308,16 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	function getVirtualFile(fileName: string) {
 		if (isTsPlugin) {
 			let result: VirtualFile | undefined;
-			const source = virtualFiles.getSourceFile(fileName);
-			if (source?.root) {
-				forEachEmbeddedFile(source.root, virtualFile => {
+			const sourceFile = virtualFiles.getSourceFile(fileName);
+			if (sourceFile?.root) {
+				for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
 					const ext = virtualFile.id.substring(fileName.length);
 					if (virtualFile.kind === FileKind.TypeScriptHostFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
 						result = virtualFile;
 					}
-				});
+				}
 			}
-			return [result, source] as const;
+			return [result, sourceFile] as const;
 		}
 		else {
 			return virtualFiles.getVirtualFile(fileName);

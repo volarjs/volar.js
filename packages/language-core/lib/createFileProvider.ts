@@ -103,17 +103,17 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 
 	function deleteVirtualFiles(source: SourceFile) {
 		if (source.root) {
-			forEachEmbeddedFile(source.root, file => {
+			for (const file of forEachEmbeddedFile(source.root)) {
 				virtualFileRegistry.delete(normalizeId(file.id));
-			});
+			}
 		}
 	}
 
 	function updateVirtualFiles(source: SourceFile) {
 		if (source.root) {
-			forEachEmbeddedFile(source.root, file => {
+			for (const file of forEachEmbeddedFile(source.root)) {
 				virtualFileRegistry.set(normalizeId(file.id), { virtualFile: file, source });
-			});
+			}
 		}
 	}
 }
@@ -145,9 +145,11 @@ export function updateVirtualFileMaps(
 	return map;
 }
 
-export function forEachEmbeddedFile(file: VirtualFile, cb: (embedded: VirtualFile) => void) {
-	cb(file);
+export function* forEachEmbeddedFile(file: VirtualFile): Generator<VirtualFile> {
+	yield file;
 	for (const embeddedFile of file.embeddedFiles) {
-		forEachEmbeddedFile(embeddedFile, cb);
+		for (const nextFile of forEachEmbeddedFile(embeddedFile)) {
+			yield nextFile;
+		}
 	}
 }

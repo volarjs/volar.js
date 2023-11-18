@@ -78,14 +78,12 @@ export function registerEditorFeatures(
 
 			for (const sourceFile of languageService.context.project.fileProvider.getAllSourceFiles()) {
 				if (sourceFile.root) {
-					forEachEmbeddedFile(sourceFile.root, virtualFile => {
-						if (virtualFile.kind === FileKind.TypeScriptHostFile) {
-							if (virtualFile.id.startsWith(rootUri)) {
-								const snapshot = virtualFile.snapshot;
-								fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
-							}
+					for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
+						if (virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.startsWith(rootUri)) {
+							const { snapshot } = virtualFile;
+							fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
 						}
-					});
+					}
 				}
 			}
 			for (const fileName of languageService.context.project.typescript?.projectHost.getScriptFileNames()) {

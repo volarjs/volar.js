@@ -10,17 +10,16 @@ export function register(context: ServiceContext) {
 	return async (oldUri: string, newUri: string, token = NoneCancellationToken) => {
 
 		const sourceFile = context.project.fileProvider.getSourceFile(oldUri);
-		const rootFile = sourceFile?.root;
 
-		if (sourceFile && rootFile) {
+		if (sourceFile?.root) {
 
 			let tsExt: string | undefined;
 
-			forEachEmbeddedFile(rootFile, virtualFile => {
+			for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
 				if (virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
 					tsExt = virtualFile.id.substring(virtualFile.id.lastIndexOf('.'));
 				}
-			});
+			}
 
 			if (!tsExt) {
 				return;

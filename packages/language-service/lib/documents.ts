@@ -176,7 +176,7 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 		getMapsBySourceFile(source: SourceFile) {
 			if (source?.root) {
 				const result: [VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>][] = [];
-				forEachEmbeddedFile(source.root, (virtualFile) => {
+				for (const virtualFile of forEachEmbeddedFile(source.root)) {
 					for (const [sourceUri, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
 						if (sourceSnapshot === source.snapshot) {
 							if (!map2DocMap.has(map)) {
@@ -189,7 +189,7 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 							result.push([virtualFile, map2DocMap.get(map)!]);
 						}
 					}
-				});
+				}
 				return result;
 			}
 		},

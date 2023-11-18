@@ -179,13 +179,13 @@ export function decorateLanguageServiceHost(
 				const virtualFile = virtualFiles.updateSourceFile(fileName, ts.ScriptSnapshot.fromString(text), resolveCommonLanguageId(fileName));
 				if (virtualFile) {
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					forEachEmbeddedFile(virtualFile, file => {
+					for (const file of forEachEmbeddedFile(virtualFile)) {
 						const ext = file.id.substring(fileName.length);
 						if (file.kind === FileKind.TypeScriptHostFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
 							extension = ext;
 							patchedText += file.snapshot.getText(0, file.snapshot.getLength());
 						}
-					});
+					}
 					snapshot = ts.ScriptSnapshot.fromString(patchedText);
 				}
 			}
