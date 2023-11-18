@@ -194,18 +194,17 @@ export function createLanguageServiceHost(
 		oldOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
 
 		const tsFileNamesSet = new Set<string>();
-		for (const sourceFile of fileProvider.getAllSourceFiles()) {
-			if (sourceFile.root) {
+		for (const fileName of projectHost.getScriptFileNames()) {
+			const uri = fileNameToId(fileName);
+			const sourceFile = fileProvider.getSourceFile(uri);
+			if (sourceFile?.root) {
 				for (const embedded of forEachEmbeddedFile(sourceFile.root)) {
 					if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
 						tsFileNamesSet.add(idToFileName(embedded.id)); // virtual .ts
 					}
 				}
 			}
-		}
-		for (const fileName of projectHost.getScriptFileNames()) {
-			const uri = fileNameToId(fileName);
-			if (!fileProvider.getSourceFile(uri)?.root) {
+			else {
 				tsFileNamesSet.add(fileName); // .ts
 			}
 		}
