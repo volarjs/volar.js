@@ -125,7 +125,7 @@ export function createTypeScriptWorkerService<T = {}>(
 				undefined,
 				projectHost,
 				{
-					idToFileName: env.uriToFileName,
+					fileIdToFileName: env.uriToFileName,
 					fileNameToId: env.fileNameToUri,
 					getLanguageId: id => resolveCommonLanguageId(id),
 				}

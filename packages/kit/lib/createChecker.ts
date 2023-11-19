@@ -79,7 +79,7 @@ function createTypeScriptCheckerWorker(
 		configFileName,
 		projectHost,
 		{
-			idToFileName: env.uriToFileName,
+			fileIdToFileName: env.uriToFileName,
 			fileNameToId: env.fileNameToUri,
 			getLanguageId: resolveCommonLanguageId,
 		},

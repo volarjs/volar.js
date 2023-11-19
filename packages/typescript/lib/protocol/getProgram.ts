@@ -4,9 +4,9 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 export function getProgram(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	fileProvider: FileProvider,
-	{ fileNameToId, idToFileName }: {
+	{ fileNameToId, fileIdToFileName }: {
 		fileNameToId(fileName: string): string;
-		idToFileName(id: string): string;
+		fileIdToFileName(id: string): string;
 	},
 	ls: ts.LanguageService,
 	sys: ts.System,
@@ -116,7 +116,7 @@ export function getProgram(
 
 				if (virtualFile && source) {
 
-					const sourceFileName = idToFileName(source.id);
+					const sourceFileName = fileIdToFileName(source.id);
 
 					if (sys.fileExists?.(sourceFileName) === false)
 						continue;

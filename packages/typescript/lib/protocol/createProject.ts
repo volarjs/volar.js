@@ -27,16 +27,16 @@ export function createProject(
 	languages: Language<any>[],
 	configFileName: string | undefined,
 	projectHost: ProjectHost,
-	{ fileNameToId, idToFileName, getLanguageId }: {
+	{ fileNameToId, fileIdToFileName, getLanguageId }: {
 		fileNameToId(fileName: string): string;
-		idToFileName(id: string): string;
+		fileIdToFileName(id: string): string;
 		getLanguageId(id: string): string;
 	},
 ): Project {
 
 	const fileProvider = createFileProvider(languages, (id) => {
 
-		const fileName = idToFileName(id);
+		const fileName = fileIdToFileName(id);
 
 		// opened files
 		let snapshot = projectHost.getScriptSnapshot(fileName);
@@ -271,7 +271,7 @@ export function createProject(
 					for (const embedded of forEachEmbeddedFile(sourceFile.root)) {
 						if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
 							newTsVirtualFileSnapshots.add(embedded.snapshot);
-							tsFileNamesSet.add(idToFileName(embedded.id)); // virtual .ts
+							tsFileNamesSet.add(fileIdToFileName(embedded.id)); // virtual .ts
 						}
 						else {
 							newOtherVirtualFileSnapshots.add(embedded.snapshot);
@@ -340,7 +340,7 @@ export function createProject(
 			matches = matches.map(match => {
 				const [_, source] = fileProvider.getVirtualFile(fileNameToId(match));
 				if (source) {
-					return idToFileName(source.id);
+					return fileIdToFileName(source.id);
 				}
 				return match;
 			});

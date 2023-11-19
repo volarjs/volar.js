@@ -105,7 +105,7 @@ export async function createTypeScriptServerProject(
 				typeof tsconfig === 'string' ? tsconfig : undefined,
 				projectHost,
 				{
-					idToFileName: serviceEnv.uriToFileName,
+					fileIdToFileName: serviceEnv.uriToFileName,
 					fileNameToId: serviceEnv.fileNameToUri,
 					getLanguageId: id => context.workspaces.documents.data.pathGet(id)?.languageId ?? resolveCommonLanguageId(id),
 				}
