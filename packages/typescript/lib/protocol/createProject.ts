@@ -1,9 +1,21 @@
-import { createFileProvider, Language, TypeScriptProjectHost, Project } from '@volar/language-core';
+import { createFileProvider, Language, Project } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { createLanguageServiceHost } from './createLanguageServiceHost';
 
 const scriptVersions = new Map<string, { lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>();
 const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
+
+export interface ProjectHost extends Pick<
+	ts.LanguageServiceHost,
+	'getLocalizedDiagnosticMessages'
+	| 'getCompilationSettings'
+	| 'getProjectReferences'
+	| 'getCurrentDirectory'
+	| 'getScriptFileNames'
+	| 'getProjectVersion'
+	| 'getScriptSnapshot'
+	| 'getCancellationToken'
+> { }
 
 export function createProject(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
@@ -12,7 +24,7 @@ export function createProject(
 	},
 	languages: Language<any>[],
 	configFileName: string | undefined,
-	projectHost: TypeScriptProjectHost,
+	projectHost: ProjectHost,
 	{ fileNameToId, idToFileName, getLanguageId }: {
 		fileNameToId(fileName: string): string;
 		idToFileName(id: string): string;

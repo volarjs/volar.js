@@ -1,14 +1,15 @@
-import { forEachEmbeddedFile, type FileKind, type FileProvider, type TypeScriptProjectHost } from '@volar/language-core';
+import { forEachEmbeddedFile, type FileKind, type FileProvider } from '@volar/language-core';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { matchFiles } from '../typescript/utilities';
+import type { ProjectHost } from './createProject';
 
 export function createLanguageServiceHost(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	sys: ts.System & {
 		version?: number;
 	},
-	projectHost: TypeScriptProjectHost,
+	projectHost: ProjectHost,
 	fileProvider: FileProvider,
 	{ fileNameToId, idToFileName, getScriptVersion }: {
 		fileNameToId(fileName: string): string;
@@ -21,6 +22,8 @@ export function createLanguageServiceHost(
 	let tsProjectVersion = 0;
 	let tsFileNames: string[] = [];
 	let tsDirectories = new Set<string>();
+	let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
+	let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
 	const languageServiceHost: ts.LanguageServiceHost = {
 		...sys,
@@ -99,9 +102,6 @@ export function createLanguageServiceHost(
 			return 0;
 		},
 	};
-
-	let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
-	let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
 	return new Proxy(languageServiceHost, {
 		get: (target, property: keyof ts.LanguageServiceHost) => {

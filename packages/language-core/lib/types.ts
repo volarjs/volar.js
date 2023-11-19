@@ -110,18 +110,6 @@ export interface Language<T extends VirtualFile = VirtualFile> {
 	};
 }
 
-export interface TypeScriptProjectHost extends Pick<
-	ts.LanguageServiceHost,
-	'getLocalizedDiagnosticMessages'
-	| 'getCompilationSettings'
-	| 'getProjectReferences'
-	| 'getCurrentDirectory'
-	| 'getScriptFileNames'
-	| 'getProjectVersion'
-	| 'getScriptSnapshot'
-	| 'getCancellationToken'
-> { }
-
 export type FileProvider = ReturnType<typeof createFileProvider>;
 
 export interface Project {
