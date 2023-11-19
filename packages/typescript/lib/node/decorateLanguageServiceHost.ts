@@ -176,10 +176,10 @@ export function decorateLanguageServiceHost(
 
 			if (text !== undefined) {
 				extraProjectVersion++;
-				const virtualFile = virtualFiles.updateSourceFile(fileName, ts.ScriptSnapshot.fromString(text), resolveCommonLanguageId(fileName));
-				if (virtualFile) {
+				const sourceFile = virtualFiles.updateSourceFile(fileName, ts.ScriptSnapshot.fromString(text), resolveCommonLanguageId(fileName));
+				if (sourceFile.root) {
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					for (const file of forEachEmbeddedFile(virtualFile)) {
+					for (const file of forEachEmbeddedFile(sourceFile.root)) {
 						const ext = file.id.substring(fileName.length);
 						if (file.kind === FileKind.TypeScriptHostFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
 							extension = ext;

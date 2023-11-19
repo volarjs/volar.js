@@ -5,7 +5,7 @@ import type { FileRangeCapabilities, Language, SourceFile, VirtualFile } from '.
 
 const caseSensitive = false; // TODO: use ts.sys.useCaseSensitiveFileNames
 
-export function createFileProvider(languages: Language[], sync: () => void) {
+export function createFileProvider(languages: Language[], sync: (sourceFileId: string) => void) {
 
 	const sourceFileRegistry = new Map<string, SourceFile>();
 	const virtualFileRegistry = new Map<string, { virtualFile: VirtualFile, source: SourceFile; }>();
@@ -16,11 +16,8 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 		: (id: string) => id.toLowerCase();
 
 	return {
-		getAllSourceFiles() {
-			sync();
-			return sourceFileRegistry.values();
-		},
-		updateSourceFile(id: string, snapshot: ts.IScriptSnapshot, languageId: string): VirtualFile | undefined {
+		updateSourceFile(id: string, snapshot: ts.IScriptSnapshot, languageId: string): SourceFile {
+
 			const value = sourceFileRegistry.get(normalizeId(id));
 			if (value) {
 				if (value.languageId !== languageId) {
@@ -29,28 +26,35 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 					return this.updateSourceFile(id, snapshot, languageId);
 				}
 				else if (value.snapshot !== snapshot) {
+					// updated
 					value.snapshot = snapshot;
 					if (value.root && value.language) {
 						deleteVirtualFiles(value);
 						value.language.updateVirtualFile(value.root, snapshot);
 						updateVirtualFiles(value);
 					}
-					return value.root; // updated
+					return value;
 				}
 				else {
-					return value.root; // no change
+					// not changed
+					return value;
 				}
 			}
+
 			for (const language of languages) {
 				const virtualFile = language.createVirtualFile(id, languageId, snapshot);
 				if (virtualFile) {
+					// created
 					const source: SourceFile = { id: id, languageId, snapshot, root: virtualFile, language };
 					sourceFileRegistry.set(normalizeId(id), source);
 					updateVirtualFiles(source);
-					return virtualFile; // created
+					return source;
 				}
 			}
-			sourceFileRegistry.set(normalizeId(id), { id: id, languageId, snapshot });
+
+			const source: SourceFile = { id: id, languageId, snapshot };
+			sourceFileRegistry.set(normalizeId(id), source);
+			return source;
 		},
 		deleteSourceFile(id: string) {
 			const value = sourceFileRegistry.get(normalizeId(id));
@@ -88,14 +92,17 @@ export function createFileProvider(languages: Language[], sync: () => void) {
 			return virtualFileMaps.get(virtualFile.snapshot)!;
 		},
 		getSourceFile(id: string) {
-			sync();
+			sync(id);
 			return sourceFileRegistry.get(normalizeId(id));
 		},
 		getVirtualFile(id: string) {
-			sync();
-			const sourceAndVirtual = virtualFileRegistry.get(normalizeId(id));
+			let sourceAndVirtual = virtualFileRegistry.get(normalizeId(id));
 			if (sourceAndVirtual) {
-				return [sourceAndVirtual.virtualFile, sourceAndVirtual.source] as const;
+				sync(sourceAndVirtual.source.id);
+				sourceAndVirtual = virtualFileRegistry.get(normalizeId(id));
+				if (sourceAndVirtual) {
+					return [sourceAndVirtual.virtualFile, sourceAndVirtual.source] as const;
+				}
 			}
 			return [undefined, undefined] as const;
 		},

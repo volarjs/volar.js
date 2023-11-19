@@ -1,12 +1,13 @@
 import { createFileProvider } from './createFileProvider';
 import { Language, TypeScriptProjectHost, Project } from './types';
-import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function createTypeScriptProject(
 	languages: Language<any>[],
 	projectHost: TypeScriptProjectHost,
-	fileNameToId: (fileName: string) => string,
-	getLanguageId: (fileName: string) => string
+	{ idToFileName, getLanguageId }: {
+		idToFileName(id: string): string;
+		getLanguageId(id: string): string;
+	},
 ): Project {
 
 	for (const language of languages) {
@@ -15,43 +16,15 @@ export function createTypeScriptProject(
 		}
 	}
 
-	let lastRootFiles = new Map<string, ts.IScriptSnapshot | undefined>();
-	let lastProjectVersion: string | undefined;
-
-	const fileProvider = createFileProvider(languages, () => {
-
-		const newProjectVersion = projectHost.getProjectVersion?.();
-		const shouldUpdate = newProjectVersion == undefined || newProjectVersion !== lastProjectVersion;
-		if (!shouldUpdate)
-			return;
-
-		const newRootFiles = new Map<string, ts.IScriptSnapshot | undefined>();
-		const remainRootFiles = new Set(lastRootFiles.keys());
-
-		for (const rootFileName of projectHost.getScriptFileNames()) {
-			newRootFiles.set(rootFileName, projectHost.getScriptSnapshot(rootFileName));
+	const fileProvider = createFileProvider(languages, (id) => {
+		const fileName = idToFileName(id);
+		const snapshot = projectHost.getScriptSnapshot(fileName);
+		if (snapshot) {
+			fileProvider.updateSourceFile(id, snapshot, getLanguageId(id));
 		}
-
-		for (const [fileName, snapshot] of newRootFiles) {
-			remainRootFiles.delete(fileName);
-			if (lastRootFiles.get(fileName) !== newRootFiles.get(fileName)) {
-				const id = fileNameToId(fileName);
-				if (snapshot) {
-					fileProvider.updateSourceFile(id, snapshot, getLanguageId(fileName));
-				}
-				else {
-					fileProvider.deleteSourceFile(id);
-				}
-			}
-		}
-
-		for (const fileName of remainRootFiles) {
-			const id = fileNameToId(fileName);
+		else {
 			fileProvider.deleteSourceFile(id);
 		}
-
-		lastRootFiles = newRootFiles;
-		lastProjectVersion = newProjectVersion;
 	});
 
 	return {

@@ -26,21 +26,15 @@ export function createSimpleWorkerService<T = {}>(
 		modules,
 		services,
 		() => {
-
-			const lastSnapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
+			const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const fileProvider = createFileProvider(
 				languages,
-				() => {
-					if (!shouldUpdate())
-						return;
-
-					const remain = new Set<monaco.worker.IMirrorModel>(lastSnapshots.keys());
-
-					for (const model of getMirrorModels()) {
-						remain.delete(model);
-						const cache = lastSnapshots.get(model);
+				(uri) => {
+					const model = getMirrorModels().find(model => model.uri.toString(true) === uri);
+					if (model) {
+						const cache = snapshots.get(model);
 						if (cache && cache[0] === model.version) {
-							continue;
+							return;
 						}
 						const text = model.getValue();
 						const snapshot: ts.IScriptSnapshot = {
@@ -48,27 +42,16 @@ export function createSimpleWorkerService<T = {}>(
 							getLength: () => text.length,
 							getChangeRange: () => undefined,
 						};
-						lastSnapshots.set(model, [model.version, snapshot]);
-						const uri = model.uri.toString(true);
+						snapshots.set(model, [model.version, snapshot]);
 						fileProvider.updateSourceFile(uri, snapshot, resolveCommonLanguageId(uri));
+					}
+					else {
+						fileProvider.deleteSourceFile(uri);
 					}
 				}
 			);
 
 			return { fileProvider };
-
-			function shouldUpdate() {
-
-				const models = getMirrorModels();
-
-				if (lastSnapshots.size === models.length) {
-					if (models.every(model => lastSnapshots.get(model)?.[0] === model.version)) {
-						return false;
-					}
-				}
-
-				return true;
-			}
 		},
 		extraApis
 	);
@@ -139,8 +122,10 @@ export function createTypeScriptWorkerService<T = {}>(
 			return createTypeScriptProject(
 				languages,
 				projectHost,
-				env.fileNameToUri,
-				resolveCommonLanguageId
+				{
+					idToFileName: env.uriToFileName,
+					getLanguageId: resolveCommonLanguageId,
+				}
 			);
 		},
 		extraApis

@@ -147,8 +147,8 @@ export function createLanguageServiceHost(
 		};
 	}
 
-	let oldTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
-	let oldOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
+	let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
+	let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
 	return new Proxy(_tsHost, {
 		get: (target, property: keyof ts.LanguageServiceHost) => {
@@ -168,46 +168,37 @@ export function createLanguageServiceHost(
 
 		const newTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 		const newOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
-
-		for (const sourceFile of fileProvider.getAllSourceFiles()) {
-			if (sourceFile.root) {
-				for (const embedded of forEachEmbeddedFile(sourceFile.root)) {
-					if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
-						newTsVirtualFileSnapshots.add(embedded.snapshot);
-					}
-					else {
-						newOtherVirtualFileSnapshots.add(embedded.snapshot);
-					}
-				}
-			}
-		}
-
-		if (!setEquals(oldTsVirtualFileSnapshots, newTsVirtualFileSnapshots)) {
-			tsProjectVersion++;
-		}
-		else if (setEquals(oldOtherVirtualFileSnapshots, newOtherVirtualFileSnapshots)) {
-			// no any meta language files update, it mean project version was update by source files this time
-			tsProjectVersion++;
-		}
-
-		oldTsVirtualFileSnapshots = newTsVirtualFileSnapshots;
-		oldOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
-
 		const tsFileNamesSet = new Set<string>();
+
 		for (const fileName of projectHost.getScriptFileNames()) {
 			const uri = fileNameToId(fileName);
 			const sourceFile = fileProvider.getSourceFile(uri);
 			if (sourceFile?.root) {
 				for (const embedded of forEachEmbeddedFile(sourceFile.root)) {
 					if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
+						newTsVirtualFileSnapshots.add(embedded.snapshot);
 						tsFileNamesSet.add(idToFileName(embedded.id)); // virtual .ts
+					}
+					else {
+						newOtherVirtualFileSnapshots.add(embedded.snapshot);
 					}
 				}
 			}
 			else {
-				tsFileNamesSet.add(fileName); // .ts
+				tsFileNamesSet.add(fileName);
 			}
 		}
+
+		if (!setEquals(lastTsVirtualFileSnapshots, newTsVirtualFileSnapshots)) {
+			tsProjectVersion++;
+		}
+		else if (setEquals(lastOtherVirtualFileSnapshots, newOtherVirtualFileSnapshots)) {
+			// no any meta language files update, it mean project version was update by source files this time
+			tsProjectVersion++;
+		}
+
+		lastTsVirtualFileSnapshots = newTsVirtualFileSnapshots;
+		lastOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
 		tsFileNames = [...tsFileNamesSet];
 
 		// Update tsDirectories for `directoryExists()`

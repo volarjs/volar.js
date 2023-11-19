@@ -17,7 +17,7 @@ interface IncrementalScriptSnapshotChange {
 	snapshot: WeakRef<ts.IScriptSnapshot> | undefined,
 }
 
-export class IncrementalScriptSnapshot {
+class IncrementalScriptSnapshot {
 
 	private document: TextDocument;
 	uri: string;
