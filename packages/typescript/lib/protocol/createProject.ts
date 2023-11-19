@@ -27,8 +27,8 @@ export function createProject(
 	languages: Language<any>[],
 	configFileName: string | undefined,
 	projectHost: ProjectHost,
-	{ fileNameToId, fileIdToFileName, getLanguageId }: {
-		fileNameToId(fileName: string): string;
+	{ fileNameToFileId, fileIdToFileName, getLanguageId }: {
+		fileNameToFileId(fileName: string): string;
 		fileIdToFileName(id: string): string;
 		getLanguageId(id: string): string;
 	},
@@ -206,7 +206,7 @@ export function createProject(
 			getScriptVersion,
 			getScriptSnapshot(fileName) {
 
-				const uri = fileNameToId(fileName);
+				const uri = fileNameToFileId(fileName);
 				const virtualFile = fileProvider.getVirtualFile(uri)[0];
 				if (virtualFile) {
 					return virtualFile.snapshot;
@@ -220,7 +220,7 @@ export function createProject(
 			getScriptKind(fileName) {
 
 				if (ts) {
-					if (fileProvider.getSourceFile(fileNameToId(fileName)))
+					if (fileProvider.getSourceFile(fileNameToFileId(fileName)))
 						return ts.ScriptKind.Deferred;
 
 					switch (path.extname(fileName)) {
@@ -265,7 +265,7 @@ export function createProject(
 			const tsFileNamesSet = new Set<string>();
 
 			for (const fileName of projectHost.getScriptFileNames()) {
-				const uri = fileNameToId(fileName);
+				const uri = fileNameToFileId(fileName);
 				const sourceFile = fileProvider.getSourceFile(uri);
 				if (sourceFile?.root) {
 					for (const embedded of forEachEmbeddedFile(sourceFile.root)) {
@@ -338,7 +338,7 @@ export function createProject(
 				sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
 			);
 			matches = matches.map(match => {
-				const [_, source] = fileProvider.getVirtualFile(fileNameToId(match));
+				const [_, source] = fileProvider.getVirtualFile(fileNameToFileId(match));
 				if (source) {
 					return fileIdToFileName(source.id);
 				}
@@ -399,7 +399,7 @@ export function createProject(
 				const sourceFileName = fileName.endsWith('.d.ts')
 					? fileName.substring(0, fileName.lastIndexOf('.d.ts'))
 					: fileName.substring(0, fileName.lastIndexOf('.'));
-				const sourceFileUri = fileNameToId(sourceFileName);
+				const sourceFileUri = fileNameToFileId(sourceFileName);
 
 				fileProvider.getSourceFile(sourceFileUri); // trigger sync
 			}
@@ -415,7 +415,7 @@ export function createProject(
 			}
 
 			const version = scriptVersions.get(fileName)!;
-			const virtualFile = fileProvider.getVirtualFile(fileNameToId(fileName))[0];
+			const virtualFile = fileProvider.getVirtualFile(fileNameToFileId(fileName))[0];
 			if (virtualFile) {
 				if (!version.map.has(virtualFile.snapshot)) {
 					version.map.set(virtualFile.snapshot, version.lastVersion++);
@@ -425,7 +425,7 @@ export function createProject(
 
 			const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
 			if (isOpenedFile) {
-				const sourceFile = fileProvider.getSourceFile(fileNameToId(fileName));
+				const sourceFile = fileProvider.getSourceFile(fileNameToFileId(fileName));
 				if (sourceFile && !sourceFile.root) {
 					if (!version.map.has(sourceFile.snapshot)) {
 						version.map.set(sourceFile.snapshot, version.lastVersion++);

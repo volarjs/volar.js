@@ -8,12 +8,11 @@ import {
 	type LanguageService,
 	type ServiceEnvironment,
 	type SharedModules,
-	type TypeScriptProjectHost
 } from '@volar/language-service';
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { URI } from 'vscode-uri';
-import { createProject, createSys } from '@volar/typescript';
+import { createProject, createSys, ProjectHost } from '@volar/typescript';
 
 export function createSimpleWorkerService<T = {}>(
 	modules: SharedModules,
@@ -74,7 +73,7 @@ export function createTypeScriptWorkerService<T = {}>(
 
 			const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
-			const projectHost: TypeScriptProjectHost = {
+			const projectHost: ProjectHost = {
 				getCurrentDirectory() {
 					return env.uriToFileName(env.workspaceFolder.uri.toString(true));
 				},
@@ -126,7 +125,7 @@ export function createTypeScriptWorkerService<T = {}>(
 				projectHost,
 				{
 					fileIdToFileName: env.uriToFileName,
-					fileNameToId: env.fileNameToUri,
+					fileNameToFileId: env.fileNameToUri,
 					getLanguageId: id => resolveCommonLanguageId(id),
 				}
 			);

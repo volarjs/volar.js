@@ -1,10 +1,10 @@
-import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, Language, NotificationHandler, Service, ServiceEnvironment, TypeScriptProjectHost, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId } from '@volar/language-service';
+import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, Language, NotificationHandler, Service, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
 import { asPosix, defaultCompilerOptions, fileNameToUri, uriToFileName } from './utils';
-import { createProject } from '@volar/typescript';
+import { createProject, ProjectHost } from '@volar/typescript';
 
 export function createTypeScriptChecker(
 	languages: Language[],
@@ -54,7 +54,7 @@ function createTypeScriptCheckerWorker(
 	languages: Language[],
 	services: Service[],
 	configFileName: string | undefined,
-	getTypeScriptProjectHost: (env: ServiceEnvironment) => TypeScriptProjectHost
+	getProjectHost: (env: ServiceEnvironment) => ProjectHost
 ) {
 
 	let settings = {};
@@ -71,7 +71,7 @@ function createTypeScriptCheckerWorker(
 		};
 	};
 
-	const projectHost = getTypeScriptProjectHost(env);
+	const projectHost = getProjectHost(env);
 	const project = createProject(
 		ts as any,
 		ts.sys,
@@ -80,7 +80,7 @@ function createTypeScriptCheckerWorker(
 		projectHost,
 		{
 			fileIdToFileName: env.uriToFileName,
-			fileNameToId: env.fileNameToUri,
+			fileNameToFileId: env.fileNameToUri,
 			getLanguageId: resolveCommonLanguageId,
 		},
 	);
@@ -214,7 +214,7 @@ function createTypeScriptProjectHost(
 	let projectVersion = 0;
 	let shouldCheckRootFiles = false;
 
-	const host: TypeScriptProjectHost = {
+	const host: ProjectHost = {
 		getCurrentDirectory: () => {
 			return env.uriToFileName(env.workspaceFolder.uri.toString());
 		},
