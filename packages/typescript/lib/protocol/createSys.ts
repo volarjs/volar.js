@@ -24,6 +24,7 @@ export function createSys(
 	env: ServiceEnvironment,
 	currentDirectory: string,
 ): ts.System & {
+	version: number;
 	sync(): Promise<number>;
 } & Disposable {
 
@@ -89,6 +90,9 @@ export function createSys(
 		resolvePath,
 		fileExists,
 		directoryExists,
+		get version() {
+			return version;
+		},
 		async sync() {
 			while (promises.size) {
 				await Promise.all(promises);

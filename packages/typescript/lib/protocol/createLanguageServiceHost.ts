@@ -1,9 +1,7 @@
-import { forEachEmbeddedFile, resolveCommonLanguageId, type FileKind, type FileProvider, type TypeScriptProjectHost } from '@volar/language-core';
+import { forEachEmbeddedFile, type FileKind, type FileProvider, type TypeScriptProjectHost } from '@volar/language-core';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { matchFiles } from '../typescript/utilities';
-
-const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: WeakMap<ts.IScriptSnapshot, number>; }>();
 
 export function createLanguageServiceHost(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
@@ -12,9 +10,10 @@ export function createLanguageServiceHost(
 	},
 	projectHost: TypeScriptProjectHost,
 	fileProvider: FileProvider,
-	{ fileNameToId, idToFileName }: {
+	{ fileNameToId, idToFileName, getScriptVersion }: {
 		fileNameToId(fileName: string): string;
 		idToFileName(id: string): string;
+		getScriptVersion(fileName: string): string;
 	},
 ) {
 
@@ -38,10 +37,14 @@ export function createLanguageServiceHost(
 				return `/node_modules/typescript/lib/${ts.getDefaultLibFileName(options)}`;
 			}
 		},
-		useCaseSensitiveFileNames: () => sys.useCaseSensitiveFileNames,
-		getNewLine: () => sys.newLine,
-		readFile: fileName => {
-			const snapshot = getScriptSnapshot(fileName);
+		useCaseSensitiveFileNames() {
+			return sys.useCaseSensitiveFileNames;
+		},
+		getNewLine() {
+			return sys.newLine;
+		},
+		readFile(fileName) {
+			const snapshot = this.getScriptSnapshot(fileName);
 			if (snapshot) {
 				return snapshot.getText(0, snapshot.getLength());
 			}
@@ -56,9 +59,23 @@ export function createLanguageServiceHost(
 		getTypeRootsVersion: () => {
 			return sys.version ?? -1; // TODO: only update for /node_modules changes?
 		},
-		getScriptFileNames: () => tsFileNames,
+		getScriptFileNames() {
+			return tsFileNames;
+		},
 		getScriptVersion,
-		getScriptSnapshot,
+		getScriptSnapshot(fileName) {
+
+			const uri = fileNameToId(fileName);
+			const virtualFile = fileProvider.getVirtualFile(uri)[0];
+			if (virtualFile) {
+				return virtualFile.snapshot;
+			}
+
+			const sourceFile = fileProvider.getSourceFile(uri);
+			if (sourceFile && !sourceFile.root) {
+				return sourceFile.snapshot;
+			}
+		},
 		getScriptKind(fileName) {
 
 			if (ts) {
@@ -82,70 +99,6 @@ export function createLanguageServiceHost(
 			return 0;
 		},
 	};
-	const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
-
-	// if (projectHost.resolveModuleName) {
-
-	// 	// TODO: can this share between monorepo packages?
-	// 	const moduleCache = ts.createModuleResolutionCache(
-	// 		languageServiceHost.getCurrentDirectory(),
-	// 		languageServiceHost.useCaseSensitiveFileNames ? s => s : s => s.toLowerCase(),
-	// 		languageServiceHost.getCompilationSettings()
-	// 	);
-
-	// 	let lastSysVersion = sys.version;
-
-	// 	languageServiceHost.resolveModuleNameLiterals = (
-	// 		moduleLiterals,
-	// 		containingFile,
-	// 		redirectedReference,
-	// 		options,
-	// 		sourceFile
-	// 	) => {
-	// 		if (lastSysVersion !== sys.version) {
-	// 			lastSysVersion = sys.version;
-	// 			moduleCache.clear();
-	// 		}
-	// 		return moduleLiterals.map((moduleLiteral) => {
-	// 			let moduleName = moduleLiteral.text;
-	// 			moduleName = projectHost.resolveModuleName!(moduleName, sourceFile.impliedNodeFormat);
-	// 			return ts.resolveModuleName(
-	// 				moduleName,
-	// 				containingFile,
-	// 				options,
-	// 				languageServiceHost,
-	// 				moduleCache,
-	// 				redirectedReference,
-	// 				sourceFile.impliedNodeFormat
-	// 			);
-	// 		});
-	// 	};
-	// 	languageServiceHost.resolveModuleNames = (
-	// 		moduleNames,
-	// 		containingFile,
-	// 		_reusedNames,
-	// 		redirectedReference,
-	// 		options,
-	// 		sourceFile
-	// 	) => {
-	// 		if (lastSysVersion !== sys.version) {
-	// 			lastSysVersion = sys.version;
-	// 			moduleCache.clear();
-	// 		}
-	// 		return moduleNames.map((moduleName) => {
-	// 			moduleName = projectHost.resolveModuleName!(moduleName, sourceFile?.impliedNodeFormat);
-	// 			return ts.resolveModuleName(
-	// 				moduleName,
-	// 				containingFile,
-	// 				options,
-	// 				languageServiceHost,
-	// 				moduleCache,
-	// 				redirectedReference,
-	// 				sourceFile?.impliedNodeFormat
-	// 			).resolvedModule;
-	// 		});
-	// 	};
-	// }
 
 	let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
@@ -282,53 +235,6 @@ export function createLanguageServiceHost(
 		return [...names];
 	}
 
-	function getScriptSnapshot(fileName: string) {
-		// virtual files
-		const uri = fileNameToId(fileName);
-		const [virtualFile] = fileProvider.getVirtualFile(uri);
-		if (virtualFile) {
-			return virtualFile.snapshot;
-		}
-		// root files / opened files
-		const tsScript = projectHost.getScriptSnapshot(fileName);
-		if (tsScript) {
-			return tsScript;
-		}
-		// fs files
-		const cache = fsFileSnapshots.get(fileName);
-		const modifiedTime = sys.getModifiedTime?.(fileName)?.valueOf();
-		if (!cache || cache[0] !== modifiedTime) {
-			if (sys.fileExists(fileName)) {
-				const text = sys.readFile(fileName);
-				const snapshot = text !== undefined ? ts.ScriptSnapshot.fromString(text) : undefined;
-				fsFileSnapshots.set(fileName, [modifiedTime, snapshot]);
-			}
-			else {
-				fsFileSnapshots.set(fileName, [modifiedTime, undefined]);
-			}
-		}
-		return fsFileSnapshots.get(fileName)?.[1];
-	}
-
-	function getScriptVersion(fileName: string) {
-		// virtual files / root files / opened files
-		const uri = fileNameToId(fileName);
-		const [virtualFile] = fileProvider.getVirtualFile(uri);
-		const snapshot = virtualFile?.snapshot ?? projectHost.getScriptSnapshot(fileName);
-		if (snapshot) {
-			if (!fileVersions.has(fileName)) {
-				fileVersions.set(fileName, { lastVersion: 0, snapshotVersions: new WeakMap() });
-			}
-			const version = fileVersions.get(fileName)!;
-			if (!version.snapshotVersions.has(snapshot)) {
-				version.snapshotVersions.set(snapshot, version.lastVersion++);
-			}
-			return version.snapshotVersions.get(snapshot)!.toString();
-		}
-		// fs files
-		return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '';
-	}
-
 	function directoryExists(dirName: string): boolean {
 		return tsDirectories.has(normalizePath(dirName)) || sys.directoryExists(dirName);
 	}
@@ -352,30 +258,16 @@ export function createLanguageServiceHost(
 			 * We try to create virtual file here.
 			 */
 
-			const sourceFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+			const sourceFileName = fileName.endsWith('.d.ts')
+				? fileName.substring(0, fileName.lastIndexOf('.d.ts'))
+				: fileName.substring(0, fileName.lastIndexOf('.'));
 			const sourceFileUri = fileNameToId(sourceFileName);
 
-			if (!fileProvider.getSourceFile(sourceFileUri)) {
-				const scriptSnapshot = getScriptSnapshot(sourceFileName);
-				if (scriptSnapshot) {
-					fileProvider.updateSourceFile(sourceFileUri, scriptSnapshot, resolveCommonLanguageId(sourceFileName));
-				}
-			}
+			fileProvider.getSourceFile(sourceFileUri); // trigger sync
 		}
 
 		// virtual files
-		const uri = fileNameToId(fileName);
-		if (fileProvider.getVirtualFile(uri)[0]) {
-			return true;
-		}
-
-		// root files
-		if (projectHost.getScriptSnapshot(fileName)) {
-			return true;
-		}
-
-		// fs files
-		return !!sys.fileExists(fileName);
+		return getScriptVersion(fileName) !== '';
 	}
 }
 

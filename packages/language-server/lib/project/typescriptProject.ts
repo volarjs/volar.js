@@ -1,4 +1,4 @@
-import { FileSystem, LanguageService, ServiceEnvironment, createLanguageService, TypeScriptProjectHost, resolveCommonLanguageId, Project } from '@volar/language-service';
+import { FileSystem, LanguageService, ServiceEnvironment, createLanguageService, TypeScriptProjectHost, resolveCommonLanguageId } from '@volar/language-service';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
@@ -41,7 +41,6 @@ export async function createTypeScriptServerProject(
 	let projectVersion = 0;
 	let token = context.server.runtimeEnv.getCancellationToken();
 	let languageService: LanguageService | undefined;
-	let project: Project | undefined;
 
 	if (!globalSnapshots.has(fs)) {
 		globalSnapshots.set(fs, createUriMap(fileNameToUri));
@@ -111,7 +110,7 @@ export async function createTypeScriptServerProject(
 				getProjectReferences: () => parsedCommandLine.projectReferences,
 			};
 			const sys = createSys(ts, serviceEnv, projectHost.getCurrentDirectory());
-			project = createProject(
+			const project = createProject(
 				ts,
 				sys,
 				Object.values(config.languages ?? {}),
@@ -184,7 +183,7 @@ export async function createTypeScriptServerProject(
 		}
 	}
 	function dispose() {
-		project?.typescript?.sys.dispose?.();
+		languageService?.context.project.typescript?.sys.dispose?.();
 		languageService?.dispose();
 		fileWatch?.dispose();
 		docChangeWatcher.dispose();
