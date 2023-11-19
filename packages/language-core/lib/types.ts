@@ -105,7 +105,8 @@ export interface Language<T extends VirtualFile = VirtualFile> {
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	deleteVirtualFile?(virtualFile: T): void;
 	typescript?: {
-		resolveProjectHost?<T extends TypeScriptProjectHost>(host: T): T;
+		resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string | undefined;
+		resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
 	};
 }
 
@@ -120,8 +121,6 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getScriptSnapshot'
 	| 'getCancellationToken'
 > {
-	configFileName: string | undefined;
-	resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string;
 }
 
 export type FileProvider = ReturnType<typeof createFileProvider>;
@@ -129,6 +128,11 @@ export type FileProvider = ReturnType<typeof createFileProvider>;
 export interface Project {
 	fileProvider: FileProvider;
 	typescript?: {
-		projectHost: TypeScriptProjectHost;
+		configFileName: string | undefined;
+		sys: ts.System & {
+			dispose?(): void;
+			sync?(): Promise<number>;
+		};
+		languageServiceHost: ts.LanguageServiceHost;
 	};
 }

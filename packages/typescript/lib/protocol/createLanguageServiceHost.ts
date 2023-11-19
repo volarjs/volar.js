@@ -6,15 +6,15 @@ import { matchFiles } from '../typescript/utilities';
 const fileVersions = new Map<string, { lastVersion: number; snapshotVersions: WeakMap<ts.IScriptSnapshot, number>; }>();
 
 export function createLanguageServiceHost(
+	ts: typeof import('typescript/lib/tsserverlibrary'),
+	sys: ts.System & {
+		version?: number;
+	},
 	projectHost: TypeScriptProjectHost,
 	fileProvider: FileProvider,
 	{ fileNameToId, idToFileName }: {
 		fileNameToId(fileName: string): string;
 		idToFileName(id: string): string;
-	},
-	ts: typeof import('typescript/lib/tsserverlibrary'),
-	sys: ts.System & {
-		version?: number;
 	},
 ) {
 
@@ -23,13 +23,13 @@ export function createLanguageServiceHost(
 	let tsFileNames: string[] = [];
 	let tsDirectories = new Set<string>();
 
-	const _tsHost: ts.LanguageServiceHost = {
+	const languageServiceHost: ts.LanguageServiceHost = {
 		...sys,
-		getCurrentDirectory: () => projectHost.getCurrentDirectory(),
-		getCompilationSettings: () => projectHost.getCompilationSettings(),
-		getCancellationToken: projectHost.getCancellationToken ? () => projectHost.getCancellationToken!() : undefined,
-		getLocalizedDiagnosticMessages: projectHost.getLocalizedDiagnosticMessages ? () => projectHost.getLocalizedDiagnosticMessages!() : undefined,
-		getProjectReferences: projectHost.getProjectReferences ? () => projectHost.getProjectReferences!() : undefined,
+		getCurrentDirectory: projectHost.getCurrentDirectory,
+		getCompilationSettings: projectHost.getCompilationSettings,
+		getCancellationToken: projectHost.getCancellationToken,
+		getLocalizedDiagnosticMessages: projectHost.getLocalizedDiagnosticMessages,
+		getProjectReferences: projectHost.getProjectReferences,
 		getDefaultLibFileName: (options) => {
 			try {
 				return ts.getDefaultLibFilePath(options);
@@ -84,77 +84,80 @@ export function createLanguageServiceHost(
 	};
 	const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
 
-	if (projectHost.resolveModuleName) {
+	// if (projectHost.resolveModuleName) {
 
-		// TODO: can this share between monorepo packages?
-		const moduleCache = ts.createModuleResolutionCache(
-			_tsHost.getCurrentDirectory(),
-			_tsHost.useCaseSensitiveFileNames ? s => s : s => s.toLowerCase(),
-			_tsHost.getCompilationSettings()
-		);
+	// 	// TODO: can this share between monorepo packages?
+	// 	const moduleCache = ts.createModuleResolutionCache(
+	// 		languageServiceHost.getCurrentDirectory(),
+	// 		languageServiceHost.useCaseSensitiveFileNames ? s => s : s => s.toLowerCase(),
+	// 		languageServiceHost.getCompilationSettings()
+	// 	);
 
-		let lastSysVersion = sys.version;
+	// 	let lastSysVersion = sys.version;
 
-		_tsHost.resolveModuleNameLiterals = (
-			moduleLiterals,
-			containingFile,
-			redirectedReference,
-			options,
-			sourceFile
-		) => {
-			if (lastSysVersion !== sys.version) {
-				lastSysVersion = sys.version;
-				moduleCache.clear();
-			}
-			return moduleLiterals.map((moduleLiteral) => {
-				let moduleName = moduleLiteral.text;
-				moduleName = projectHost.resolveModuleName!(moduleName, sourceFile.impliedNodeFormat);
-				return ts.resolveModuleName(
-					moduleName,
-					containingFile,
-					options,
-					_tsHost,
-					moduleCache,
-					redirectedReference,
-					sourceFile.impliedNodeFormat
-				);
-			});
-		};
-		_tsHost.resolveModuleNames = (
-			moduleNames,
-			containingFile,
-			_reusedNames,
-			redirectedReference,
-			options,
-			sourceFile
-		) => {
-			if (lastSysVersion !== sys.version) {
-				lastSysVersion = sys.version;
-				moduleCache.clear();
-			}
-			return moduleNames.map((moduleName) => {
-				moduleName = projectHost.resolveModuleName!(moduleName, sourceFile?.impliedNodeFormat);
-				return ts.resolveModuleName(
-					moduleName,
-					containingFile,
-					options,
-					_tsHost,
-					moduleCache,
-					redirectedReference,
-					sourceFile?.impliedNodeFormat
-				).resolvedModule;
-			});
-		};
-	}
+	// 	languageServiceHost.resolveModuleNameLiterals = (
+	// 		moduleLiterals,
+	// 		containingFile,
+	// 		redirectedReference,
+	// 		options,
+	// 		sourceFile
+	// 	) => {
+	// 		if (lastSysVersion !== sys.version) {
+	// 			lastSysVersion = sys.version;
+	// 			moduleCache.clear();
+	// 		}
+	// 		return moduleLiterals.map((moduleLiteral) => {
+	// 			let moduleName = moduleLiteral.text;
+	// 			moduleName = projectHost.resolveModuleName!(moduleName, sourceFile.impliedNodeFormat);
+	// 			return ts.resolveModuleName(
+	// 				moduleName,
+	// 				containingFile,
+	// 				options,
+	// 				languageServiceHost,
+	// 				moduleCache,
+	// 				redirectedReference,
+	// 				sourceFile.impliedNodeFormat
+	// 			);
+	// 		});
+	// 	};
+	// 	languageServiceHost.resolveModuleNames = (
+	// 		moduleNames,
+	// 		containingFile,
+	// 		_reusedNames,
+	// 		redirectedReference,
+	// 		options,
+	// 		sourceFile
+	// 	) => {
+	// 		if (lastSysVersion !== sys.version) {
+	// 			lastSysVersion = sys.version;
+	// 			moduleCache.clear();
+	// 		}
+	// 		return moduleNames.map((moduleName) => {
+	// 			moduleName = projectHost.resolveModuleName!(moduleName, sourceFile?.impliedNodeFormat);
+	// 			return ts.resolveModuleName(
+	// 				moduleName,
+	// 				containingFile,
+	// 				options,
+	// 				languageServiceHost,
+	// 				moduleCache,
+	// 				redirectedReference,
+	// 				sourceFile?.impliedNodeFormat
+	// 			).resolvedModule;
+	// 		});
+	// 	};
+	// }
 
 	let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
-	return new Proxy(_tsHost, {
+	return new Proxy(languageServiceHost, {
 		get: (target, property: keyof ts.LanguageServiceHost) => {
 			sync();
 			return target[property];
 		},
+		set: (target, property: keyof ts.LanguageServiceHost, value) => {
+			return (target as any)[property] = value;
+		}
 	}) as ts.LanguageServiceHost;
 
 	function sync() {

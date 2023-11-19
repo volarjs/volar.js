@@ -1,4 +1,4 @@
-import type { Console, FileSystem, Language, LanguageService, Service, ServiceEnvironment, SharedModules, TypeScriptProjectHost } from '@volar/language-service';
+import type { Console, FileSystem, Language, LanguageService, Service, ServiceEnvironment, SharedModules } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
 
@@ -27,7 +27,10 @@ export interface ServerRuntimeEnvironment {
 
 export type TypeScriptServerPlugin = SimpleServerPlugin<{
 	extraFileExtensions?: ts.FileExtensionInfo[];
-}, TypeScriptProjectHost>;
+}, {
+	configFileName: string | undefined;
+	parsedCommandLine: ts.ParsedCommandLine;
+}>;
 
 export interface SimpleServerPlugin<T = {}, K = undefined> {
 	(ctx: {

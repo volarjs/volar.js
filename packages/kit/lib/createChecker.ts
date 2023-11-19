@@ -1,9 +1,10 @@
-import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, Language, NotificationHandler, Service, ServiceEnvironment, TypeScriptProjectHost, createLanguageService, createTypeScriptProject, mergeWorkspaceEdits, resolveCommonLanguageId } from '@volar/language-service';
+import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, Language, NotificationHandler, Service, ServiceEnvironment, TypeScriptProjectHost, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
 import { asPosix, defaultCompilerOptions, fileNameToUri, uriToFileName } from './utils';
+import { createProject } from '@volar/typescript';
 
 export function createTypeScriptChecker(
 	languages: Language[],
@@ -11,11 +12,10 @@ export function createTypeScriptChecker(
 	tsconfig: string,
 	extraFileExtensions: ts.FileExtensionInfo[] = []
 ) {
-	return createTypeScriptCheckerWorker(languages, services, env => {
-		const tsconfigPath = asPosix(tsconfig);
+	const tsconfigPath = asPosix(tsconfig);
+	return createTypeScriptCheckerWorker(languages, services, tsconfigPath, env => {
 		return createTypeScriptProjectHost(
 			env,
-			tsconfigPath,
 			() => {
 				const parsed = ts.parseJsonSourceFileConfigFileContent(
 					ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile),
@@ -39,10 +39,9 @@ export function createTypeScriptInferredChecker(
 	getScriptFileNames: () => string[],
 	compilerOptions = defaultCompilerOptions
 ) {
-	return createTypeScriptCheckerWorker(languages, services, env => {
+	return createTypeScriptCheckerWorker(languages, services, undefined, env => {
 		return createTypeScriptProjectHost(
 			env,
-			undefined,
 			() => ({
 				options: compilerOptions,
 				fileNames: getScriptFileNames().map(asPosix),
@@ -54,6 +53,7 @@ export function createTypeScriptInferredChecker(
 function createTypeScriptCheckerWorker(
 	languages: Language[],
 	services: Service[],
+	configFileName: string | undefined,
 	getTypeScriptProjectHost: (env: ServiceEnvironment) => TypeScriptProjectHost
 ) {
 
@@ -72,10 +72,18 @@ function createTypeScriptCheckerWorker(
 	};
 
 	const projectHost = getTypeScriptProjectHost(env);
-	const project = createTypeScriptProject(languages, projectHost, {
-		idToFileName: env.uriToFileName,
-		getLanguageId: resolveCommonLanguageId,
-	});
+	const project = createProject(
+		ts as any,
+		ts.sys,
+		languages,
+		configFileName,
+		projectHost,
+		{
+			idToFileName: env.uriToFileName,
+			fileNameToId: env.fileNameToUri,
+			getLanguageId: resolveCommonLanguageId,
+		},
+	);
 	const service = createLanguageService(
 		{ typescript: ts as any },
 		services,
@@ -198,7 +206,6 @@ function createTypeScriptCheckerWorker(
 
 function createTypeScriptProjectHost(
 	env: ServiceEnvironment,
-	tsconfig: string | undefined,
 	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>
 ) {
 
@@ -208,7 +215,6 @@ function createTypeScriptProjectHost(
 	let shouldCheckRootFiles = false;
 
 	const host: TypeScriptProjectHost = {
-		configFileName: tsconfig,
 		getCurrentDirectory: () => {
 			return env.uriToFileName(env.workspaceFolder.uri.toString());
 		},

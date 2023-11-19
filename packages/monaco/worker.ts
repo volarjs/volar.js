@@ -4,7 +4,6 @@ import {
 	Service,
 	createLanguageService as _createLanguageService,
 	createFileProvider,
-	createTypeScriptProject,
 	resolveCommonLanguageId,
 	type LanguageService,
 	type ServiceEnvironment,
@@ -14,6 +13,7 @@ import {
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { URI } from 'vscode-uri';
+import { createProject, createSys } from '@volar/typescript';
 
 export function createSimpleWorkerService<T = {}>(
 	modules: SharedModules,
@@ -58,7 +58,7 @@ export function createSimpleWorkerService<T = {}>(
 }
 
 export function createTypeScriptWorkerService<T = {}>(
-	modules: SharedModules,
+	ts: typeof import('typescript/lib/tsserverlibrary.js'),
 	languages: Language[],
 	services: Service[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
@@ -66,7 +66,7 @@ export function createTypeScriptWorkerService<T = {}>(
 	extraApis: T = {} as any,
 ) {
 	return createWorkerService(
-		modules,
+		{ typescript: ts as any },
 		services,
 		env => {
 
@@ -75,7 +75,6 @@ export function createTypeScriptWorkerService<T = {}>(
 			const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
 			const projectHost: TypeScriptProjectHost = {
-				configFileName: undefined,
 				getCurrentDirectory() {
 					return env.uriToFileName(env.workspaceFolder.uri.toString(true));
 				},
@@ -118,15 +117,21 @@ export function createTypeScriptWorkerService<T = {}>(
 					return compilerOptions;
 				},
 			};
-
-			return createTypeScriptProject(
+			const sys = createSys(ts, env, projectHost.getCurrentDirectory());
+			const project = createProject(
+				ts,
+				sys,
 				languages,
+				undefined,
 				projectHost,
 				{
 					idToFileName: env.uriToFileName,
-					getLanguageId: resolveCommonLanguageId,
+					fileNameToId: env.fileNameToUri,
+					getLanguageId: id => resolveCommonLanguageId(id),
 				}
 			);
+
+			return project;
 		},
 		extraApis
 	);

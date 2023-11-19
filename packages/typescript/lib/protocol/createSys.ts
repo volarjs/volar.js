@@ -24,7 +24,6 @@ export function createSys(
 	env: ServiceEnvironment,
 	currentDirectory: string,
 ): ts.System & {
-	version: number;
 	sync(): Promise<number>;
 } & Disposable {
 
@@ -70,9 +69,6 @@ export function createSys(
 	});
 
 	return {
-		get version() {
-			return version;
-		},
 		dispose() {
 			fileWatcher?.dispose();
 		},
