@@ -17,7 +17,11 @@ export interface ProjectHost extends Pick<
 	| 'getProjectVersion'
 	| 'getScriptSnapshot'
 	| 'getCancellationToken'
-> { }
+> {
+	fileNameToFileId(fileName: string): string;
+	fileIdToFileName(id: string): string;
+	getLanguageId(id: string): string;
+}
 
 export function createProject(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
@@ -27,16 +31,11 @@ export function createProject(
 	languages: Language<any>[],
 	configFileName: string | undefined,
 	projectHost: ProjectHost,
-	{ fileNameToFileId, fileIdToFileName, getLanguageId }: {
-		fileNameToFileId(fileName: string): string;
-		fileIdToFileName(id: string): string;
-		getLanguageId(id: string): string;
-	},
 ): Project {
 
 	const fileProvider = createFileProvider(languages, (id) => {
 
-		const fileName = fileIdToFileName(id);
+		const fileName = projectHost.fileIdToFileName(id);
 
 		// opened files
 		let snapshot = projectHost.getScriptSnapshot(fileName);
@@ -59,7 +58,7 @@ export function createProject(
 		}
 
 		if (snapshot) {
-			fileProvider.updateSourceFile(id, snapshot, getLanguageId(id));
+			fileProvider.updateSourceFile(id, snapshot, projectHost.getLanguageId(id));
 		}
 		else {
 			fileProvider.deleteSourceFile(id);
@@ -206,7 +205,7 @@ export function createProject(
 			getScriptVersion,
 			getScriptSnapshot(fileName) {
 
-				const uri = fileNameToFileId(fileName);
+				const uri = projectHost.fileNameToFileId(fileName);
 				const virtualFile = fileProvider.getVirtualFile(uri)[0];
 				if (virtualFile) {
 					return virtualFile.snapshot;
@@ -220,7 +219,7 @@ export function createProject(
 			getScriptKind(fileName) {
 
 				if (ts) {
-					if (fileProvider.getSourceFile(fileNameToFileId(fileName)))
+					if (fileProvider.getSourceFile(projectHost.fileNameToFileId(fileName)))
 						return ts.ScriptKind.Deferred;
 
 					switch (path.extname(fileName)) {
@@ -265,13 +264,13 @@ export function createProject(
 			const tsFileNamesSet = new Set<string>();
 
 			for (const fileName of projectHost.getScriptFileNames()) {
-				const uri = fileNameToFileId(fileName);
+				const uri = projectHost.fileNameToFileId(fileName);
 				const sourceFile = fileProvider.getSourceFile(uri);
 				if (sourceFile?.root) {
 					for (const embedded of forEachEmbeddedFile(sourceFile.root)) {
 						if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
 							newTsVirtualFileSnapshots.add(embedded.snapshot);
-							tsFileNamesSet.add(fileIdToFileName(embedded.id)); // virtual .ts
+							tsFileNamesSet.add(projectHost.fileIdToFileName(embedded.id)); // virtual .ts
 						}
 						else {
 							newOtherVirtualFileSnapshots.add(embedded.snapshot);
@@ -338,9 +337,9 @@ export function createProject(
 				sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
 			);
 			matches = matches.map(match => {
-				const [_, source] = fileProvider.getVirtualFile(fileNameToFileId(match));
+				const [_, source] = fileProvider.getVirtualFile(projectHost.fileNameToFileId(match));
 				if (source) {
-					return fileIdToFileName(source.id);
+					return projectHost.fileIdToFileName(source.id);
 				}
 				return match;
 			});
@@ -399,7 +398,7 @@ export function createProject(
 				const sourceFileName = fileName.endsWith('.d.ts')
 					? fileName.substring(0, fileName.lastIndexOf('.d.ts'))
 					: fileName.substring(0, fileName.lastIndexOf('.'));
-				const sourceFileUri = fileNameToFileId(sourceFileName);
+				const sourceFileUri = projectHost.fileNameToFileId(sourceFileName);
 
 				fileProvider.getSourceFile(sourceFileUri); // trigger sync
 			}
@@ -415,7 +414,7 @@ export function createProject(
 			}
 
 			const version = scriptVersions.get(fileName)!;
-			const virtualFile = fileProvider.getVirtualFile(fileNameToFileId(fileName))[0];
+			const virtualFile = fileProvider.getVirtualFile(projectHost.fileNameToFileId(fileName))[0];
 			if (virtualFile) {
 				if (!version.map.has(virtualFile.snapshot)) {
 					version.map.set(virtualFile.snapshot, version.lastVersion++);
@@ -425,7 +424,7 @@ export function createProject(
 
 			const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
 			if (isOpenedFile) {
-				const sourceFile = fileProvider.getSourceFile(fileNameToFileId(fileName));
+				const sourceFile = fileProvider.getSourceFile(projectHost.fileNameToFileId(fileName));
 				if (sourceFile && !sourceFile.root) {
 					if (!version.map.has(sourceFile.snapshot)) {
 						version.map.set(sourceFile.snapshot, version.lastVersion++);

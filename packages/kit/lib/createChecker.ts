@@ -78,11 +78,6 @@ function createTypeScriptCheckerWorker(
 		languages,
 		configFileName,
 		projectHost,
-		{
-			fileIdToFileName: env.uriToFileName,
-			fileNameToFileId: env.fileNameToUri,
-			getLanguageId: resolveCommonLanguageId,
-		},
 	);
 	const service = createLanguageService(
 		{ typescript: ts as any },
@@ -241,6 +236,9 @@ function createTypeScriptProjectHost(
 			}
 			return scriptSnapshotsCache.get(fileName);
 		},
+		fileIdToFileName: env.uriToFileName,
+		fileNameToFileId: env.fileNameToUri,
+		getLanguageId: resolveCommonLanguageId,
 	};
 
 	env.onDidChangeWatchedFiles?.(({ changes }) => {

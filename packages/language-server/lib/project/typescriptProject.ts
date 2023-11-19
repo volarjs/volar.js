@@ -48,6 +48,9 @@ export async function createTypeScriptServerProject(
 		getCompilationSettings: () => parsedCommandLine.options,
 		getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
 		getProjectReferences: () => parsedCommandLine.projectReferences,
+		fileIdToFileName: serviceEnv.uriToFileName,
+		fileNameToFileId: serviceEnv.fileNameToUri,
+		getLanguageId: id => context.workspaces.documents.data.pathGet(id)?.languageId ?? resolveCommonLanguageId(id),
 	};
 	const sys = createSys(ts, serviceEnv, projectHost.getCurrentDirectory());
 
@@ -104,11 +107,6 @@ export async function createTypeScriptServerProject(
 				Object.values(config.languages ?? {}),
 				typeof tsconfig === 'string' ? tsconfig : undefined,
 				projectHost,
-				{
-					fileIdToFileName: serviceEnv.uriToFileName,
-					fileNameToFileId: serviceEnv.fileNameToUri,
-					getLanguageId: id => context.workspaces.documents.data.pathGet(id)?.languageId ?? resolveCommonLanguageId(id),
-				}
 			);
 			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
