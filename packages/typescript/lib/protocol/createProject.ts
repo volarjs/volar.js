@@ -3,6 +3,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import { createLanguageServiceHost } from './createLanguageServiceHost';
 
 const scriptVersions = new Map<string, { lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>();
+const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
 
 export function createProject(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
@@ -19,12 +20,11 @@ export function createProject(
 	},
 ): Project {
 
-	const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
 	const fileProvider = createFileProvider(languages, (id) => {
 
 		const fileName = idToFileName(id);
 
-		// root files / opened files
+		// opened files
 		let snapshot = projectHost.getScriptSnapshot(fileName);
 
 		if (!snapshot) {
@@ -165,8 +165,8 @@ export function createProject(
 			return version.map.get(virtualFile.snapshot)!.toString();
 		}
 
-		const isRootFile = !!projectHost.getScriptSnapshot(fileName);
-		if (isRootFile) {
+		const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
+		if (isOpenedFile) {
 			const sourceFile = fileProvider.getSourceFile(fileNameToId(fileName));
 			if (sourceFile && !sourceFile.root) {
 				if (!version.map.has(sourceFile.snapshot)) {

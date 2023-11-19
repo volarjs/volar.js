@@ -120,8 +120,7 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getProjectVersion'
 	| 'getScriptSnapshot'
 	| 'getCancellationToken'
-> {
-}
+> { }
 
 export type FileProvider = ReturnType<typeof createFileProvider>;
 
