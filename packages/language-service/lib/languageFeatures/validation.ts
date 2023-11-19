@@ -154,11 +154,11 @@ export function register(context: ServiceContext) {
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
 
-		const newDocument = context.getTextDocument(uri);
-		if (!newDocument) {
+		const sourceFile = context.project.fileProvider.getSourceFile(uri);
+		if (!sourceFile)
 			return [];
-		}
 
+		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const lastResponse = lastResponses.get(uri) ?? lastResponses.set(uri, {
 			semantic: { errors: [] },
 			syntactic: { errors: [] },
@@ -166,7 +166,6 @@ export function register(context: ServiceContext) {
 			syntax_rules: { errors: [] },
 			format_rules: { errors: [] },
 		}).get(uri)!;
-		const newSnapshot = context.project.fileProvider.getSourceFile(uri)?.snapshot;
 
 		let updateCacheRangeFailed = false;
 		let errorsUpdated = false;
@@ -176,18 +175,18 @@ export function register(context: ServiceContext) {
 
 			const oldSnapshot = cache.snapshot;
 			const oldDocument = cache.document;
-			const change = oldSnapshot ? newSnapshot?.getChangeRange(oldSnapshot) : undefined;
+			const change = oldSnapshot ? sourceFile.snapshot.getChangeRange(oldSnapshot) : undefined;
 
-			cache.snapshot = newSnapshot;
-			cache.document = newDocument;
+			cache.snapshot = sourceFile.snapshot;
+			cache.document = document;
 
-			if (!updateCacheRangeFailed && newDocument && oldSnapshot && oldDocument && newSnapshot && change) {
+			if (!updateCacheRangeFailed && oldDocument && change) {
 				const changeRange = {
 					range: {
 						start: oldDocument.positionAt(change.span.start),
 						end: oldDocument.positionAt(change.span.start + change.span.length),
 					},
-					newEnd: newDocument.positionAt(change.span.start + change.newLength),
+					newEnd: document.positionAt(change.span.start + change.newLength),
 				};
 				for (const error of cache.errors) {
 					if (!updateRange(error.range, changeRange)) {
@@ -269,7 +268,7 @@ export function register(context: ServiceContext) {
 					errors?.forEach(error => {
 						error.data = {
 							uri,
-							version: newDocument!.version,
+							version: document!.version,
 							serviceIndex,
 							isFormat: false,
 							original: {
@@ -294,7 +293,7 @@ export function register(context: ServiceContext) {
 			);
 			if (result) {
 				cache.errors = result;
-				cache.snapshot = newSnapshot;
+				cache.snapshot = sourceFile?.snapshot;
 			}
 		}
 	};
@@ -329,7 +328,7 @@ export function register(context: ServiceContext) {
 					const [virtualFile] = context.project.fileProvider.getVirtualFile(info.location.uri);
 
 					if (virtualFile) {
-						for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
+						for (const map of context.documents.getMaps(virtualFile)) {
 							const range = map.toSourceRange(info.location.range, filter);
 							if (range) {
 								relatedInfos.push({

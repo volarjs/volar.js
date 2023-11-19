@@ -19,13 +19,14 @@ export function register(context: ServiceContext) {
 
 	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = NoneCancellationToken) => {
 
-		const sourceDocument = context.getTextDocument(uri);
-		if (!sourceDocument)
+		const sourceFile = context.project.fileProvider.getSourceFile(uri);
+		if (!sourceFile)
 			return;
 
+		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const offsetRange = {
-			start: sourceDocument.offsetAt(range.start),
-			end: sourceDocument.offsetAt(range.end),
+			start: document.offsetAt(range.start),
+			end: document.offsetAt(range.end),
 		};
 		const transformedCodeActions = new WeakSet<vscode.CodeAction>();
 		const pluginActions = await languageFeatureWorker(
@@ -80,7 +81,7 @@ export function register(context: ServiceContext) {
 				const serviceIndex = context.services.indexOf(service);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
 					const data: ServiceDiagnosticData | undefined = diagnostic.data;
-					if (data && data.version !== sourceDocument.version) {
+					if (data && data.version !== document.version) {
 						return false;
 					}
 					return data?.serviceIndex === serviceIndex;
@@ -100,7 +101,7 @@ export function register(context: ServiceContext) {
 				codeActions?.forEach(codeAction => {
 					codeAction.data = {
 						uri,
-						version: sourceDocument.version,
+						version: document.version,
 						original: {
 							data: codeAction.data,
 							edit: codeAction.edit,
@@ -149,7 +150,7 @@ export function register(context: ServiceContext) {
 
 		for (const diagnostic of codeActionContext.diagnostics) {
 			const data: ServiceDiagnosticData | undefined = diagnostic.data;
-			if (data && data.version !== sourceDocument.version) {
+			if (data && data.version !== document.version) {
 				// console.warn('[volar/rules-api] diagnostic version mismatch', data.version, sourceDocument.version);
 				continue;
 			}

@@ -1,7 +1,6 @@
 import * as transformer from '../transformer';
 import type { FileRangeCapabilities } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { Service, ServiceContext } from '../types';
 import { visitEmbedded } from '../utils/definePlugin';
 import { NoneCancellationToken } from '../utils/cancellation';
@@ -34,7 +33,7 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken,
 	) => {
 
-		let document: TextDocument | undefined;
+		const sourceFile = context.project.fileProvider.getSourceFile(uri);
 
 		if (
 			completionContext?.triggerKind === 3 satisfies typeof vscode.CompletionTriggerKind.TriggerForIncompleteCompletions
@@ -52,7 +51,7 @@ export function register(context: ServiceContext) {
 					if (!virtualFile)
 						continue;
 
-					for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
+					for (const map of context.documents.getMaps(virtualFile)) {
 
 						for (const mapped of map.toGeneratedPositions(position, data => !!data.completion)) {
 
@@ -84,11 +83,12 @@ export function register(context: ServiceContext) {
 						}
 					}
 				}
-				else if (document = context.getTextDocument(uri)) {
+				else if (sourceFile) {
 
 					if (!cacheData.service.provideCompletionItems)
 						continue;
 
+					const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 					const completionList = await cacheData.service.provideCompletionItems(document, position, completionContext, token);
 
 					if (!completionList) {
@@ -203,8 +203,9 @@ export function register(context: ServiceContext) {
 				});
 			}
 
-			if (document = context.getTextDocument(uri)) {
+			if (sourceFile) {
 
+				const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 				const services = [...context.services].sort(sortServices);
 
 				for (const service of services) {

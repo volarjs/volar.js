@@ -89,7 +89,7 @@ function createServiceContext(
 					for (const reference of locations) {
 						const [virtualFile] = context.project.fileProvider.getVirtualFile(reference.uri);
 						if (virtualFile) {
-							for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
+							for (const map of context.documents.getMaps(virtualFile)) {
 								const range = map.toSourceRange(reference.range);
 								if (range) {
 									sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
@@ -134,7 +134,6 @@ function createServiceContext(
 				}
 			},
 		},
-		getTextDocument,
 	};
 
 	for (const service of services) {
@@ -151,7 +150,7 @@ function createServiceContext(
 			return { uri, position };
 		}
 
-		for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
+		for (const map of context.documents.getMaps(virtualFile)) {
 			const sourcePosition = map.toSourcePosition(position, filter);
 			if (sourcePosition) {
 				return {
@@ -159,21 +158,6 @@ function createServiceContext(
 					position: sourcePosition,
 				};
 			}
-		}
-	}
-
-	function getTextDocument(uri: string) {
-
-		const [virtualFile] = project.fileProvider.getVirtualFile(uri);
-		if (virtualFile) {
-			for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
-				return map.virtualFileDocument;
-			}
-		}
-
-		const sourceFile = project.fileProvider.getSourceFile(uri);
-		if (sourceFile) {
-			return context.documents.getDocumentByUri(uri, sourceFile.languageId, sourceFile.snapshot);
 		}
 	}
 }

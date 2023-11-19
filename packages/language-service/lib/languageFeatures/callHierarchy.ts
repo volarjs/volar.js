@@ -174,7 +174,7 @@ export function register(context: ServiceContext) {
 		if (!virtualFile)
 			return [tsItem, tsRanges];
 
-		for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
+		for (const map of context.documents.getMaps(virtualFile)) {
 
 			let range = map.toSourceRange(tsItem.range);
 			if (!range) {

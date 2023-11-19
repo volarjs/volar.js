@@ -104,7 +104,7 @@ export function register(
 
 				if (targetVirtualFile) {
 
-					for (const targetSourceMap of context.documents.getMapsByVirtualFile(targetVirtualFile)) {
+					for (const targetSourceMap of context.documents.getMaps(targetVirtualFile)) {
 
 						const targetSelectionRange = targetSourceMap.toSourceRange(link.targetSelectionRange);
 						if (!targetSelectionRange)
@@ -121,7 +121,7 @@ export function register(
 					}
 
 					if (apiName === 'provideDefinition' && !foundTargetSelectionRange) {
-						for (const targetMap of context.documents.getMapsByVirtualFile(targetVirtualFile)) {
+						for (const targetMap of context.documents.getMaps(targetVirtualFile)) {
 							if (targetMap && targetMap.sourceFileDocument.uri !== uri) {
 								return {
 									...link,

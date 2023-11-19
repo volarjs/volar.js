@@ -15,11 +15,11 @@ export function register(context: ServiceContext) {
 
 	return async (uri: string, range: vscode.Range, token = NoneCancellationToken) => {
 
-		const document = context.getTextDocument(uri);
-
-		if (!document)
+		const sourceFile = context.project.fileProvider.getSourceFile(uri);
+		if (!sourceFile)
 			return;
 
+		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const offsetRange = {
 			start: document.offsetAt(range.start),
 			end: document.offsetAt(range.end),

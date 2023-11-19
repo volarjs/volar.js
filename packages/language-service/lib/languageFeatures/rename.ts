@@ -199,7 +199,7 @@ export function embeddedEditToSourceEdit(
 		const [virtualFile] = project.fileProvider.getVirtualFile(tsUri);
 
 		if (virtualFile) {
-			for (const map of documents.getMapsByVirtualFile(virtualFile)) {
+			for (const map of documents.getMaps(virtualFile)) {
 				// TODO: check capability?
 				const uri = map.sourceFileDocument.uri;
 				sourceResult.changeAnnotations[uri] = tsAnno;
@@ -216,7 +216,7 @@ export function embeddedEditToSourceEdit(
 		const [virtualFile] = project.fileProvider.getVirtualFile(tsUri);
 
 		if (virtualFile) {
-			for (const map of documents.getMapsByVirtualFile(virtualFile)) {
+			for (const map of documents.getMaps(virtualFile)) {
 				const tsEdits = tsResult.changes[tsUri];
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
@@ -262,7 +262,7 @@ export function embeddedEditToSourceEdit(
 				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.textDocument.uri);
 
 				if (virtualFile) {
-					for (const map of documents.getMapsByVirtualFile(virtualFile)) {
+					for (const map of documents.getMaps(virtualFile)) {
 						sourceEdit = {
 							textDocument: {
 								uri: map.sourceFileDocument.uri,
@@ -318,7 +318,7 @@ export function embeddedEditToSourceEdit(
 				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.oldUri);
 
 				if (virtualFile) {
-					for (const map of documents.getMapsByVirtualFile(virtualFile)) {
+					for (const map of documents.getMaps(virtualFile)) {
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'rename',
@@ -338,7 +338,7 @@ export function embeddedEditToSourceEdit(
 				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.uri);
 
 				if (virtualFile) {
-					for (const map of documents.getMapsByVirtualFile(virtualFile)) {
+					for (const map of documents.getMaps(virtualFile)) {
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'delete',

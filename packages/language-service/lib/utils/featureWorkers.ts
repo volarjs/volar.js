@@ -39,14 +39,17 @@ export async function languageFeatureWorker<T, K>(
 	reportProgress?: (result: NonNullable<Awaited<T>>) => void,
 ) {
 
-	const document = context.getTextDocument(uri);
-	const virtualFile = context.project.fileProvider.getSourceFile(uri)?.root;
+	const sourceFile = context.project.fileProvider.getSourceFile(uri);
+	if (!sourceFile)
+		return;
+
+	const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 
 	let results: NonNullable<Awaited<T>>[] = [];
 
-	if (virtualFile) {
+	if (sourceFile.root) {
 
-		await visitEmbedded(context, virtualFile, async (file, map) => {
+		await visitEmbedded(context, sourceFile.root, async (file, map) => {
 
 			for (const mappedArg of transformArg(arg, map, file)) {
 
@@ -80,7 +83,7 @@ export async function languageFeatureWorker<T, K>(
 			return true;
 		});
 	}
-	else if (document) {
+	else {
 
 		for (const [serviceId, service] of Object.entries(context.services)) {
 

@@ -123,8 +123,9 @@ function createTypeScriptCheckerWorker(
 	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		const document = service.context.getTextDocument(uri);
-		if (document) {
+		const sourceFile = service.context.project.fileProvider.getSourceFile(uri);
+		if (sourceFile) {
+			const document = service.context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 			const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
 			const codeActions = await service.doCodeActions(uri, range, { diagnostics, only, triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked });
 			if (codeActions) {
@@ -138,8 +139,9 @@ function createTypeScriptCheckerWorker(
 					for (const uri in rootEdit.changes ?? {}) {
 						const edits = rootEdit.changes![uri];
 						if (edits.length) {
-							const editDocument = service.context.getTextDocument(uri);
-							if (editDocument) {
+							const editFile = service.context.project.fileProvider.getSourceFile(uri);
+							if (editFile) {
+								const editDocument = service.context.documents.get(uri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, edits);
 								await writeFile(uriToFileName(uri), newString);
 							}
@@ -147,8 +149,9 @@ function createTypeScriptCheckerWorker(
 					}
 					for (const change of rootEdit.documentChanges ?? []) {
 						if ('textDocument' in change) {
-							const editDocument = service.context.getTextDocument(change.textDocument.uri);
-							if (editDocument) {
+							const editFile = service.context.project.fileProvider.getSourceFile(change.textDocument.uri);
+							if (editFile) {
+								const editDocument = service.context.documents.get(change.textDocument.uri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, change.edits);
 								await writeFile(uriToFileName(change.textDocument.uri), newString);
 							}
@@ -171,7 +174,8 @@ function createTypeScriptCheckerWorker(
 	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath: string) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		const document = service.context.getTextDocument(uri)!;
+		const sourceFile = service.context.project.fileProvider.getSourceFile(uri)!;
+		const document = service.context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
 			category: diagnostic.severity === 1 satisfies typeof DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
 			code: diagnostic.code as number,

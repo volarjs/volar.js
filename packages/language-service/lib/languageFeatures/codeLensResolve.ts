@@ -29,10 +29,14 @@ export function register(context: ServiceContext) {
 			let references = await findReferences(data.uri, item.range.start, token) ?? [];
 
 			const service = context.services[data.serviceIndex];
-			const document = context.getTextDocument(data.uri);
 
-			if (document && service.resolveReferencesCodeLensLocations) {
-				references = await service.resolveReferencesCodeLensLocations(document, data.range, references, token);
+			if (service.resolveReferencesCodeLensLocations) {
+				const file = context.project.fileProvider.getVirtualFile(data.uri)[0]
+					?? context.project.fileProvider.getSourceFile(data.uri);
+				if (file) {
+					const document = context.documents.get(data.uri, file.languageId, file.snapshot);
+					references = await service.resolveReferencesCodeLensLocations(document, data.range, references, token);
+				}
 			}
 
 			item.command = context.commands.showReferences.create(data.uri, data.range.start, references);

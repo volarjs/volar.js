@@ -15,11 +15,11 @@ export function register(context: ServiceContext) {
 		reportProgress?: (tokens: vscode.SemanticTokens) => void,
 	): Promise<vscode.SemanticTokens | undefined> => {
 
-		const document = context.getTextDocument(uri);
-
-		if (!document)
+		const sourceFile = context.project.fileProvider.getSourceFile(uri);
+		if (!sourceFile)
 			return;
 
+		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const offsetRange: [number, number] = range ? [
 			document.offsetAt(range.start),
 			document.offsetAt(range.end),

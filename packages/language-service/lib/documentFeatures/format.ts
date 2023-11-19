@@ -23,16 +23,18 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken
 	) => {
 
-		let document = context.getTextDocument(uri);
-		if (!document) return;
+		const sourceFile = context.project.fileProvider.getSourceFile(uri);
+		if (!sourceFile)
+			return;
+
+		let document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 
 		range ??= {
 			start: document.positionAt(0),
 			end: document.positionAt(document.getText().length),
 		};
 
-		const sourceFile = context.project.fileProvider.getSourceFile(document.uri);
-		if (!sourceFile?.language || !sourceFile.root) {
+		if (!sourceFile.language || !sourceFile.root) {
 			return onTypeParams
 				? (await tryFormat(document, onTypeParams.position, onTypeParams.ch))?.edits
 				: (await tryFormat(document, range, undefined))?.edits;

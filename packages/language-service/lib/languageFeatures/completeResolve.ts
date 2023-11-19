@@ -25,7 +25,7 @@ export function register(context: ServiceContext) {
 
 				if (virtualFile) {
 
-					for (const map of context.documents.getMapsByVirtualFile(virtualFile)) {
+					for (const map of context.documents.getMaps(virtualFile)) {
 
 						item = await service.resolveCompletionItem(item, token);
 						item = service.transformCompletionItem?.(item) ?? transformer.asCompletionItem(

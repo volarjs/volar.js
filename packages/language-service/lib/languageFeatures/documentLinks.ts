@@ -1,11 +1,9 @@
+import { forEachEmbeddedFile } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
-import { documentFeatureWorker } from '../utils/featureWorkers';
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import { SourceMapWithDocuments } from '../documents';
-import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
-import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { notEmpty } from '../utils/common';
+import { documentFeatureWorker } from '../utils/featureWorkers';
 import { transformDocumentLinkTarget } from './documentLinkResolve';
 
 export interface DocumentLinkData {
@@ -62,36 +60,40 @@ export function register(context: ServiceContext) {
 			}).filter(notEmpty),
 			arr => arr.flat(),
 		) ?? [];
-		const sourceFile = context.project.fileProvider.getSourceFile(uri);
-		const maps = sourceFile ? context.documents.getMapsBySourceFile(sourceFile) : undefined;
-		const fictitiousLinks = sourceFile && maps ? getFictitiousLinks(context.documents.getDocumentByUri(uri, sourceFile.languageId, sourceFile.snapshot), maps) : [];
 
 		return [
 			...pluginLinks,
-			...fictitiousLinks,
+			...getFictitiousLinks(),
 		];
 
-		function getFictitiousLinks(document: TextDocument, maps: [VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>][]) {
+		function getFictitiousLinks() {
 
 			const result: vscode.DocumentLink[] = [];
+			const sourceFile = context.project.fileProvider.getSourceFile(uri);
 
-			for (const [_, map] of maps) {
+			if (sourceFile?.root) {
+				const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+				for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
+					for (const [_, [sourceSnapshot, map]] of context.project.fileProvider.getMaps(virtualFile)) {
+						if (sourceSnapshot === sourceFile.snapshot) {
+							for (const mapped of map.mappings) {
 
-				for (const mapped of map.map.mappings) {
+								if (!mapped.data.displayWithLink)
+									continue;
 
-					if (!mapped.data.displayWithLink)
-						continue;
+								if (mapped.sourceRange[0] === mapped.sourceRange[1])
+									continue;
 
-					if (mapped.sourceRange[0] === mapped.sourceRange[1])
-						continue;
-
-					result.push({
-						range: {
-							start: document.positionAt(mapped.sourceRange[0]),
-							end: document.positionAt(mapped.sourceRange[1]),
-						},
-						target: uri, // TODO
-					});
+								result.push({
+									range: {
+										start: document.positionAt(mapped.sourceRange[0]),
+										end: document.positionAt(mapped.sourceRange[1]),
+									},
+									target: uri, // TODO
+								});
+							}
+						}
+					}
 				}
 			}
 

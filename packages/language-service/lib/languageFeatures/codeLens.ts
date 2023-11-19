@@ -52,7 +52,7 @@ export function register(context: ServiceContext) {
 					range,
 					data: {
 						kind: 'references',
-						uri,
+						uri: document.uri,
 						range,
 						serviceIndex,
 					} satisfies ServiceReferencesCodeLensData,

@@ -50,7 +50,7 @@ export function registerEditorFeatures(
 		const mappings: Record<string, Mapping<FileRangeCapabilities>[]> = {};
 		const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(params.virtualFileName);
 		if (virtualFile) {
-			for (const map of languageService.context.documents.getMapsByVirtualFile(virtualFile)) {
+			for (const map of languageService.context.documents.getMaps(virtualFile)) {
 				content = map.virtualFileDocument.getText();
 				codegenStacks = virtualFile.codegenStacks;
 				mappings[map.sourceFileDocument.uri] = map.map.mappings;

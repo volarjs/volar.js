@@ -65,7 +65,6 @@ export interface ServiceContext<Provide = any> {
 	env: ServiceEnvironment;
 	project: Project;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
-	getTextDocument(uri: string): TextDocument | undefined;
 	commands: {
 		showReferences: Command<(uri: string, position: vscode.Position, locations: vscode.Location[]) => vscode.Command | undefined>;
 		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;
