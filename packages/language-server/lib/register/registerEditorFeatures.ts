@@ -76,21 +76,23 @@ export function registerEditorFeatures(
 
 			const rootUri = languageService.context.env.workspaceFolder.uri.toString();
 
-			for (const sourceFile of languageService.context.project.fileProvider.getAllSourceFiles()) {
-				if (sourceFile.root) {
-					for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
-						if (virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.startsWith(rootUri)) {
-							const { snapshot } = virtualFile;
-							fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
-						}
-					}
-				}
-			}
-			for (const fileName of languageService.context.project.typescript?.projectHost.getScriptFileNames()) {
+			for (const fileName of languageService.context.project.typescript.projectHost.getScriptFileNames()) {
 				if (!fs.existsSync(fileName)) {
-					const snapshot = languageService.context.project.typescript?.projectHost.getScriptSnapshot(fileName);
+					const snapshot = languageService.context.project.typescript.projectHost.getScriptSnapshot(fileName);
 					if (snapshot) {
 						fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
+					}
+				}
+				else {
+					const uri = languageService.context.env.fileNameToUri(fileName);
+					const sourceFile = languageService.context.project.fileProvider.getSourceFile(uri);
+					if (sourceFile?.root) {
+						for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
+							if (virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.startsWith(rootUri)) {
+								const { snapshot } = virtualFile;
+								fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
+							}
+						}
 					}
 				}
 			}

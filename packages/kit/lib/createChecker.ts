@@ -72,7 +72,10 @@ function createTypeScriptCheckerWorker(
 	};
 
 	const projectHost = getTypeScriptProjectHost(env);
-	const project = createTypeScriptProject(languages, projectHost, env.fileNameToUri, resolveCommonLanguageId);
+	const project = createTypeScriptProject(languages, projectHost, {
+		idToFileName: env.uriToFileName,
+		getLanguageId: resolveCommonLanguageId,
+	});
 	const service = createLanguageService(
 		{ typescript: ts as any },
 		services,

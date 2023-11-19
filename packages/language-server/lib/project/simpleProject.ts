@@ -2,8 +2,6 @@ import { LanguageService, ServiceEnvironment, createFileProvider, createLanguage
 import { SimpleServerPlugin, ServerProject } from '../types';
 import { WorkspacesContext } from './simpleProjectProvider';
 import { getConfig } from '../config';
-import type * as ts from 'typescript/lib/tsserverlibrary';
-import type { IncrementalScriptSnapshot } from '../documentManager';
 
 export async function createSimpleServerProject(
 	context: WorkspacesContext,
@@ -12,17 +10,8 @@ export async function createSimpleServerProject(
 ): Promise<ServerProject> {
 
 	let languageService: LanguageService | undefined;
-	let shouldUpdate = true;
-	let lastSnapshots = new Map<string, ts.IScriptSnapshot | undefined>();
 
 	const config = await getConfig(context, plugins, serviceEnv, undefined);
-
-	context.workspaces.documents.onDidChangeContent(() => {
-		shouldUpdate = true;
-	});
-	context.workspaces.documents.onDidClose(() => {
-		shouldUpdate = true;
-	});
 
 	return {
 		serviceEnv,
@@ -35,44 +24,14 @@ export async function createSimpleServerProject(
 
 	function getLanguageService() {
 		if (!languageService) {
-			const fileProvider = createFileProvider(Object.values(config.languages ?? {}), () => {
-
-				if (!shouldUpdate)
-					return;
-
-				shouldUpdate = false;
-
-				const newSnapshots = new Map<string, IncrementalScriptSnapshot | undefined>();
-				const remain = new Set(lastSnapshots.keys());
-
-				for (const uri of context.workspaces.documents.data.uriKeys()) {
-					newSnapshots.set(uri, context.workspaces.documents.data.uriGet(uri));
+			const fileProvider = createFileProvider(Object.values(config.languages ?? {}), (uri) => {
+				const script = context.workspaces.documents.data.uriGet(uri);
+				if (script) {
+					fileProvider.updateSourceFile(uri, script.getSnapshot(), script.languageId);
 				}
-
-				for (const [uri, snapshot] of newSnapshots) {
-					remain.delete(uri);
-					const newSnapshot = snapshot?.getSnapshot();
-					if (lastSnapshots.get(uri) !== snapshot) {
-						if (snapshot && newSnapshot) {
-							fileProvider.updateSourceFile(uri, newSnapshot, snapshot.languageId);
-						}
-						else {
-							fileProvider.deleteSourceFile(uri);
-						}
-					}
-				}
-
-				for (const uri of remain) {
+				else {
 					fileProvider.deleteSourceFile(uri);
 				}
-
-				const _newSnapshots = new Map<string, ts.IScriptSnapshot | undefined>();
-
-				for (const [uri, snapshot] of newSnapshots) {
-					_newSnapshots.set(uri, snapshot?.getSnapshot());
-				}
-
-				lastSnapshots = _newSnapshots;
 			});
 			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
