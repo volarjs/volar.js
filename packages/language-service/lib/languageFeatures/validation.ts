@@ -288,7 +288,7 @@ export function register(context: ServiceContext) {
 						errors,
 						map,
 						data => typeof data.diagnostics === 'object'
-							? data.diagnostics.shouldReport
+							? data.diagnostics.shouldReport()
 							: (data.diagnostics ?? true)
 					);
 				},

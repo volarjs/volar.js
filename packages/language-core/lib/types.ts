@@ -31,7 +31,7 @@ export interface VirtualFile extends BaesFile {
 
 export interface CodeInformations {
 	diagnostics?: boolean | {
-		shouldReport: boolean;
+		shouldReport(): boolean;
 	};
 	renameEdits?: boolean | {
 		shouldRename: boolean;
@@ -40,7 +40,10 @@ export interface CodeInformations {
 		resolveEditText?(newText: string): string;
 	};
 	formattingEdits?: boolean;
-	completionItems?: boolean;
+	completionItems?: boolean | {
+		isAdditional?: boolean;
+		onlyImport?: boolean;
+	};
 	definitions?: boolean;
 	references?: boolean;
 	foldingRanges?: boolean;

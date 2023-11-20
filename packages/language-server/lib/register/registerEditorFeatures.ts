@@ -37,7 +37,6 @@ export function registerEditorFeatures(
 				uri: file.id,
 				languageId: file.languageId,
 				kind: file.kind,
-				capabilities: file.capabilities,
 				embeddedFiles: file.embeddedFiles.map(prune),
 				version,
 			} as any;

@@ -53,7 +53,7 @@ export function register(context: ServiceContext) {
 
 					for (const map of context.documents.getMaps(virtualFile)) {
 
-						for (const mapped of map.toGeneratedPositions(position, data => data.completionItems ?? true)) {
+						for (const mapped of map.toGeneratedPositions(position, data => !!data.completionItems ?? true)) {
 
 							if (!cacheData.service.provideCompletionItems)
 								continue;
@@ -134,7 +134,7 @@ export function register(context: ServiceContext) {
 
 					for (const mapped of map.toGeneratedPositions(position, data => {
 						_data = data;
-						return data.completionItems ?? true;
+						return !!data.completionItems ?? true;
 					})) {
 
 						for (const service of services) {
@@ -151,7 +151,7 @@ export function register(context: ServiceContext) {
 							if (completionContext?.triggerCharacter && !service.triggerCharacters?.includes(completionContext.triggerCharacter))
 								continue;
 
-							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.additional || service.isAdditionalCompletion;
+							const isAdditional = _data && typeof _data.completionItems === 'object' && _data.completionItems.isAdditional || service.isAdditionalCompletion;
 
 							if (cache!.mainCompletion && (!isAdditional || cache?.mainCompletion.documentUri !== map.virtualFileDocument.uri))
 								continue;
@@ -165,7 +165,7 @@ export function register(context: ServiceContext) {
 							if (!embeddedCompletionList || !embeddedCompletionList.items.length)
 								continue;
 
-							if (typeof _data?.completion === 'object' && _data.completion.autoImportOnly) {
+							if (typeof _data?.completionItems === 'object' && _data.completionItems.onlyImport) {
 								embeddedCompletionList.items = embeddedCompletionList.items.filter(item => !!item.labelDetails);
 							}
 

@@ -28,11 +28,11 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		let edits: readonly ts.FileTextChanges[] = [];
 		const sourceFile = virtualFiles.getSourceFile(args.fileName);
 		if (sourceFile?.root) {
-			for (const embeddedFile of forEachEmbeddedFile(sourceFile.root)) {
-				if (embeddedFile.kind === FileKind.TypeScriptHostFile && embeddedFile.capabilities.codeAction) {
+			for (const file of forEachEmbeddedFile(sourceFile.root)) {
+				if (file.kind === FileKind.TypeScriptHostFile && file.mappings.some(mapping => mapping.data.codeActions)) {
 					edits = edits.concat(_organizeImports({
 						...args,
-						fileName: embeddedFile.id,
+						fileName: file.id,
 					}, formatOptions, preferences));
 				}
 			}

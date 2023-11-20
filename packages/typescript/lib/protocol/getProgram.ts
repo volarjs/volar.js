@@ -76,7 +76,7 @@ export function getProgram(
 
 			if (virtualFile && source) {
 
-				if (!virtualFile.capabilities.diagnostic)
+				if (!virtualFile.mappings.some(mapping => mapping.data.diagnostics ?? true))
 					return [] as any;
 
 				const errors = transformDiagnostics(ls.getProgram()?.[api](sourceFile, cancellationToken) ?? []);
