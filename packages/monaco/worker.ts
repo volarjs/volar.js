@@ -116,8 +116,8 @@ export function createTypeScriptWorkerService<T = {}>(
 				getCompilationSettings() {
 					return compilerOptions;
 				},
-				fileIdToFileName: env.uriToFileName,
-				fileNameToFileId: env.fileNameToUri,
+				getFileName: env.uriToFileName,
+				getFileId: env.fileNameToUri,
 				getLanguageId: id => resolveCommonLanguageId(id),
 			};
 			const sys = createSys(ts, env, projectHost.getCurrentDirectory());

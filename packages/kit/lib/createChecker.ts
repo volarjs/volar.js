@@ -236,8 +236,8 @@ function createTypeScriptProjectHost(
 			}
 			return scriptSnapshotsCache.get(fileName);
 		},
-		fileIdToFileName: env.uriToFileName,
-		fileNameToFileId: env.fileNameToUri,
+		getFileName: env.uriToFileName,
+		getFileId: env.fileNameToUri,
 		getLanguageId: resolveCommonLanguageId,
 	};
 
