@@ -44,7 +44,7 @@ export function createLanguageService(
 	project: Project,
 ) {
 
-	const context = createServiceContext(modules, env, project, services);
+	const context = createServiceContext();
 
 	return {
 
@@ -90,134 +90,129 @@ export function createLanguageService(
 		dispose: () => context.services.forEach(service => service.dispose?.()),
 		context,
 	};
-}
 
-function createServiceContext(
-	modules: SharedModules,
-	env: ServiceEnvironment,
-	project: Project,
-	services: Service[],
-) {
+	function createServiceContext() {
 
-	const documents = createDocumentProvider(project.fileProvider);
-	const context: ServiceContext = {
-		env,
-		project,
-		inject: (key, ...args) => {
-			for (const service of context.services) {
-				const provide = service.provide?.[key as any];
-				if (provide) {
-					return provide(...args as any);
+		const documents = createDocumentProvider(project.fileProvider);
+		const context: ServiceContext = {
+			env,
+			project,
+			inject: (key, ...args) => {
+				for (const service of context.services) {
+					const provide = service.provide?.[key as any];
+					if (provide) {
+						return provide(...args as any);
+					}
 				}
-			}
-			throw `No service provide ${key as any}`;
-		},
-		services: [],
-		documents: documents,
-		commands: {
-			rename: {
-				create(uri, position) {
-					const source = toSourceLocation(
-						uri,
-						position,
-						data => typeof data.renameEdits === 'object'
-							? data.renameEdits.shouldRename
-							: (data.renameEdits ?? true)
-					);
-					if (!source) {
-						return;
-					}
-					return {
-						title: '',
-						command: 'editor.action.rename',
-						arguments: [
-							source.uri,
-							source.position,
-						],
-					};
-				},
-				is(command) {
-					return command.command === 'editor.action.rename';
-				},
+				throw `No service provide ${key as any}`;
 			},
-			showReferences: {
-				create(uri, position, locations) {
-					const source = toSourceLocation(uri, position);
-					if (!source) {
-						return;
-					}
-					const sourceReferences: vscode.Location[] = [];
-					for (const reference of locations) {
-						const [virtualFile] = context.project.fileProvider.getVirtualFile(reference.uri);
-						if (virtualFile) {
-							for (const map of context.documents.getMaps(virtualFile)) {
-								const range = map.toSourceRange(reference.range);
-								if (range) {
-									sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
+			services: [],
+			documents: documents,
+			commands: {
+				rename: {
+					create(uri, position) {
+						const source = toSourceLocation(
+							uri,
+							position,
+							data => typeof data.renameEdits === 'object'
+								? data.renameEdits.shouldRename
+								: (data.renameEdits ?? true)
+						);
+						if (!source) {
+							return;
+						}
+						return {
+							title: '',
+							command: 'editor.action.rename',
+							arguments: [
+								source.uri,
+								source.position,
+							],
+						};
+					},
+					is(command) {
+						return command.command === 'editor.action.rename';
+					},
+				},
+				showReferences: {
+					create(uri, position, locations) {
+						const source = toSourceLocation(uri, position);
+						if (!source) {
+							return;
+						}
+						const sourceReferences: vscode.Location[] = [];
+						for (const reference of locations) {
+							const [virtualFile] = context.project.fileProvider.getVirtualFile(reference.uri);
+							if (virtualFile) {
+								for (const map of context.documents.getMaps(virtualFile)) {
+									const range = map.toSourceRange(reference.range);
+									if (range) {
+										sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
+									}
 								}
 							}
+							else {
+								sourceReferences.push(reference);
+							}
 						}
-						else {
-							sourceReferences.push(reference);
-						}
+						return {
+							title: locations.length === 1 ? '1 reference' : `${locations.length} references`,
+							command: 'editor.action.showReferences',
+							arguments: [
+								source.uri,
+								source.position,
+								sourceReferences,
+							],
+						};
+					},
+					is(command) {
+						return command.command === 'editor.action.showReferences';
+					},
+				},
+				setSelection: {
+					create(position: vscode.Position) {
+						return {
+							title: '',
+							command: 'setSelection',
+							arguments: [{
+								selection: {
+									selectionStartLineNumber: position.line + 1,
+									positionLineNumber: position.line + 1,
+									selectionStartColumn: position.character + 1,
+									positionColumn: position.character + 1,
+								},
+							}],
+						};
+					},
+					is(command) {
+						return command.command === 'setSelection';
 					}
-					return {
-						title: locations.length === 1 ? '1 reference' : `${locations.length} references`,
-						command: 'editor.action.showReferences',
-						arguments: [
-							source.uri,
-							source.position,
-							sourceReferences,
-						],
-					};
-				},
-				is(command) {
-					return command.command === 'editor.action.showReferences';
 				},
 			},
-			setSelection: {
-				create(position: vscode.Position) {
-					return {
-						title: '',
-						command: 'setSelection',
-						arguments: [{
-							selection: {
-								selectionStartLineNumber: position.line + 1,
-								positionLineNumber: position.line + 1,
-								selectionStartColumn: position.character + 1,
-								positionColumn: position.character + 1,
-							},
-						}],
-					};
-				},
-				is(command) {
-					return command.command === 'setSelection';
-				}
-			},
-		},
-	};
+		};
 
-	for (const service of services) {
-		context.services.push(service(context, modules));
-	}
-
-	return context;
-
-	function toSourceLocation(uri: string, position: vscode.Position, filter?: (data: CodeInformations) => boolean) {
-
-		const [virtualFile] = project.fileProvider.getVirtualFile(uri);
-
-		if (!virtualFile) {
-			return { uri, position };
+		for (const service of services) {
+			context.services.push(service(context, modules));
 		}
 
-		for (const map of context.documents.getMaps(virtualFile)) {
-			const sourcePosition = map.toSourcePosition(position, filter);
-			if (sourcePosition) {
-				return {
-					uri: map.sourceFileDocument.uri,
-					position: sourcePosition,
-				};
+		return context;
+
+		function toSourceLocation(uri: string, position: vscode.Position, filter?: (data: CodeInformations) => boolean) {
+
+			const [virtualFile] = project.fileProvider.getVirtualFile(uri);
+
+			if (!virtualFile) {
+				return { uri, position };
+			}
+
+			for (const map of context.documents.getMaps(virtualFile)) {
+				const sourcePosition = map.toSourcePosition(position, filter);
+				if (sourcePosition) {
+					return {
+						uri: map.sourceFileDocument.uri,
+						position: sourcePosition,
+					};
+				}
 			}
 		}
 	}
