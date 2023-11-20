@@ -37,6 +37,61 @@ import type * as vscode from 'vscode-languageserver-protocol';
 
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
+export function createLanguageService(
+	modules: SharedModules,
+	services: Service[],
+	env: ServiceEnvironment,
+	project: Project,
+) {
+
+	const context = createServiceContext(modules, env, project, services);
+
+	return {
+
+		getTriggerCharacters: () => context.services.map(service => service.triggerCharacters ?? []).flat(),
+		getAutoFormatTriggerCharacters: () => context.services.map(service => service.autoFormatTriggerCharacters ?? []).flat(),
+		getSignatureHelpTriggerCharacters: () => context.services.map(service => service.signatureHelpTriggerCharacters ?? []).flat(),
+		getSignatureHelpRetriggerCharacters: () => context.services.map(service => service.signatureHelpRetriggerCharacters ?? []).flat(),
+
+		format: format.register(context),
+		getFoldingRanges: foldingRanges.register(context),
+		getSelectionRanges: selectionRanges.register(context),
+		findLinkedEditingRanges: linkedEditingRanges.register(context),
+		findDocumentSymbols: documentSymbols.register(context),
+		findDocumentColors: documentColors.register(context),
+		getColorPresentations: colorPresentations.register(context),
+
+		doValidation: diagnostics.register(context),
+		findReferences: references.register(context),
+		findFileReferences: fileReferences.register(context),
+		findDefinition: definition.register(context, 'provideDefinition', data => data.definitions ?? true, data => data.definition ?? true),
+		findTypeDefinition: definition.register(context, 'provideTypeDefinition', data => data.definitions ?? true, data => data.definition ?? true),
+		findImplementations: definition.register(context, 'provideImplementation', data => data.references ?? true, () => false),
+		prepareRename: renamePrepare.register(context),
+		doRename: rename.register(context),
+		getEditsForFileRename: fileRename.register(context),
+		getSemanticTokens: semanticTokens.register(context),
+		doHover: hover.register(context),
+		doComplete: completions.register(context),
+		doCodeActions: codeActions.register(context),
+		doCodeActionResolve: codeActionResolve.register(context),
+		doCompletionResolve: completionResolve.register(context),
+		getSignatureHelp: signatureHelp.register(context),
+		doCodeLens: codeLens.register(context),
+		doCodeLensResolve: codeLensResolve.register(context),
+		findDocumentHighlights: documentHighlight.register(context),
+		findDocumentLinks: documentLink.register(context),
+		doDocumentLinkResolve: documentLinkResolve.register(context),
+		findWorkspaceSymbols: workspaceSymbol.register(context),
+		doAutoInsert: autoInsert.register(context),
+		getInlayHints: inlayHints.register(context),
+		doInlayHintResolve: inlayHintResolve.register(context),
+		callHierarchy: callHierarchy.register(context),
+		dispose: () => context.services.forEach(service => service.dispose?.()),
+		context,
+	};
+}
+
 function createServiceContext(
 	modules: SharedModules,
 	env: ServiceEnvironment,
@@ -166,59 +221,4 @@ function createServiceContext(
 			}
 		}
 	}
-}
-
-export function createLanguageService(
-	modules: SharedModules,
-	services: Service[],
-	env: ServiceEnvironment,
-	project: Project,
-) {
-
-	const context = createServiceContext(modules, env, project, services);
-
-	return {
-
-		getTriggerCharacters: () => context.services.map(service => service.triggerCharacters ?? []).flat(),
-		getAutoFormatTriggerCharacters: () => context.services.map(service => service.autoFormatTriggerCharacters ?? []).flat(),
-		getSignatureHelpTriggerCharacters: () => context.services.map(service => service.signatureHelpTriggerCharacters ?? []).flat(),
-		getSignatureHelpRetriggerCharacters: () => context.services.map(service => service.signatureHelpRetriggerCharacters ?? []).flat(),
-
-		format: format.register(context),
-		getFoldingRanges: foldingRanges.register(context),
-		getSelectionRanges: selectionRanges.register(context),
-		findLinkedEditingRanges: linkedEditingRanges.register(context),
-		findDocumentSymbols: documentSymbols.register(context),
-		findDocumentColors: documentColors.register(context),
-		getColorPresentations: colorPresentations.register(context),
-
-		doValidation: diagnostics.register(context),
-		findReferences: references.register(context),
-		findFileReferences: fileReferences.register(context),
-		findDefinition: definition.register(context, 'provideDefinition', data => data.definitions ?? true, data => data.definition ?? true),
-		findTypeDefinition: definition.register(context, 'provideTypeDefinition', data => data.definitions ?? true, data => data.definition ?? true),
-		findImplementations: definition.register(context, 'provideImplementation', data => data.references ?? true, () => false),
-		prepareRename: renamePrepare.register(context),
-		doRename: rename.register(context),
-		getEditsForFileRename: fileRename.register(context),
-		getSemanticTokens: semanticTokens.register(context),
-		doHover: hover.register(context),
-		doComplete: completions.register(context),
-		doCodeActions: codeActions.register(context),
-		doCodeActionResolve: codeActionResolve.register(context),
-		doCompletionResolve: completionResolve.register(context),
-		getSignatureHelp: signatureHelp.register(context),
-		doCodeLens: codeLens.register(context),
-		doCodeLensResolve: codeLensResolve.register(context),
-		findDocumentHighlights: documentHighlight.register(context),
-		findDocumentLinks: documentLink.register(context),
-		doDocumentLinkResolve: documentLinkResolve.register(context),
-		findWorkspaceSymbols: workspaceSymbol.register(context),
-		doAutoInsert: autoInsert.register(context),
-		getInlayHints: inlayHints.register(context),
-		doInlayHintResolve: inlayHintResolve.register(context),
-		callHierarchy: callHierarchy.register(context),
-		dispose: () => context.services.forEach(service => service.dispose?.()),
-		context,
-	};
 }
