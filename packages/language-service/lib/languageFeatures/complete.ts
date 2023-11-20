@@ -1,9 +1,9 @@
 import type { CodeInformations } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { Service, ServiceContext } from '../types';
-import { visitEmbedded } from '../utils/definePlugin';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformCompletionList } from '../utils/transform';
+import { visitEmbedded } from '../utils/featureWorkers';
 
 export interface ServiceCompletionData {
 	uri: string;

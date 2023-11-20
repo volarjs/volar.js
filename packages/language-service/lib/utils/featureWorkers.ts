@@ -1,8 +1,7 @@
-import { CodeInformations } from '@volar/language-core';
+import { CodeInformations, VirtualFile } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import { Service, ServiceContext } from '../types';
-import { visitEmbedded } from './definePlugin';
 
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
@@ -112,4 +111,29 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 	catch (err) {
 		console.warn(errorMsg, err);
 	}
+}
+
+export async function visitEmbedded(
+	context: ServiceContext,
+	current: VirtualFile,
+	cb: (file: VirtualFile, sourceMap: SourceMapWithDocuments<CodeInformations>) => Promise<boolean>,
+	rootFile = current,
+) {
+
+	for (const embedded of current.embeddedFiles) {
+		if (!await visitEmbedded(context, embedded, cb, rootFile)) {
+			return false;
+		}
+	}
+
+	for (const map of context.documents.getMaps(current)) {
+		const sourceFile = context.project.fileProvider.getSourceFile(map.sourceFileDocument.uri);
+		if (sourceFile?.root === rootFile) {
+			if (!await cb(current, map)) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
