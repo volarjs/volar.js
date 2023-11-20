@@ -2,20 +2,6 @@ import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { createFileProvider } from '../lib/createFileProvider';
 
-export interface MirrorBehaviorCapabilities {
-	references?: boolean;
-	definition?: boolean;
-	rename?: boolean;
-}
-
-export namespace MirrorBehaviorCapabilities {
-	export const full: MirrorBehaviorCapabilities = {
-		references: true,
-		definition: true,
-		rename: true,
-	};
-}
-
 export enum FileKind {
 	TextFile = 0,
 	TypeScriptHostFile = 1,
@@ -24,9 +10,15 @@ export enum FileKind {
 export interface VirtualFile extends BaesFile {
 	kind: FileKind;
 	mappings: Mapping<CodeInformations>[];
-	codegenStacks?: Stack[];
-	mirrorBehaviorMappings?: Mapping<[MirrorBehaviorCapabilities, MirrorBehaviorCapabilities]>[];
 	embeddedFiles: VirtualFile[];
+	codegenStacks?: Stack[];
+	mirrorCodeMappings?: Mapping<[MirrorCodeInformations, MirrorCodeInformations]>[];
+}
+
+export interface MirrorCodeInformations {
+	reference?: boolean;
+	rename?: boolean;
+	definition?: boolean;
 }
 
 export interface CodeInformations {

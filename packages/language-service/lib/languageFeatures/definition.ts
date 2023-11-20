@@ -1,4 +1,4 @@
-import { CodeInformations, MirrorBehaviorCapabilities } from '@volar/language-core';
+import { CodeInformations, MirrorCodeInformations } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
@@ -12,7 +12,7 @@ export function register(
 	context: ServiceContext,
 	apiName: 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
 	isValidPosition: (data: CodeInformations) => boolean,
-	isValidMirrorPosition: (mirrorData: MirrorBehaviorCapabilities) => boolean,
+	isValidMirrorPosition: (mirrorData: MirrorCodeInformations) => boolean,
 ) {
 
 	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {

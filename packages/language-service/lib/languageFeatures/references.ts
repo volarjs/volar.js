@@ -51,7 +51,7 @@ export function register(context: ServiceContext) {
 
 							for (const mapped of mirrorMap.findMirrorPositions(reference.range.start)) {
 
-								if (!mapped[1].references)
+								if (!mapped[1].reference)
 									continue;
 
 								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: mapped[0], end: mapped[0] } }))
