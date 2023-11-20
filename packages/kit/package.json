@@ -13,6 +13,7 @@
 	},
 	"dependencies": {
 		"@volar/language-service": "1.11.1",
+		"@volar/typescript": "1.11.1",
 		"typesafe-path": "^0.2.2",
 		"vscode-languageserver-textdocument": "^1.0.11",
 		"vscode-uri": "^3.0.8"

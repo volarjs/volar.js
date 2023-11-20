@@ -70,9 +70,6 @@ export function createSys(
 	});
 
 	return {
-		get version() {
-			return version;
-		},
 		dispose() {
 			fileWatcher?.dispose();
 		},
@@ -93,6 +90,9 @@ export function createSys(
 		resolvePath,
 		fileExists,
 		directoryExists,
+		get version() {
+			return version;
+		},
 		async sync() {
 			while (promises.size) {
 				await Promise.all(promises);
@@ -110,7 +110,7 @@ export function createSys(
 				if (sys.directoryExists(rootPath)) {
 					// https://github.com/vuejs/language-tools/issues/2480
 					try {
-						// @ts-expect-error
+						// @ts-ignore
 						process.chdir(rootPath);
 					} catch { }
 				}

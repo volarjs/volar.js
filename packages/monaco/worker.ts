@@ -4,16 +4,15 @@ import {
 	Service,
 	createLanguageService as _createLanguageService,
 	createFileProvider,
-	createTypeScriptProject,
 	resolveCommonLanguageId,
 	type LanguageService,
 	type ServiceEnvironment,
 	type SharedModules,
-	type TypeScriptProjectHost
 } from '@volar/language-service';
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { URI } from 'vscode-uri';
+import { createProject, createSys, ProjectHost } from '@volar/typescript';
 
 export function createSimpleWorkerService<T = {}>(
 	modules: SharedModules,
@@ -29,6 +28,7 @@ export function createSimpleWorkerService<T = {}>(
 			const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const fileProvider = createFileProvider(
 				languages,
+				false,
 				(uri) => {
 					const model = getMirrorModels().find(model => model.uri.toString(true) === uri);
 					if (model) {
@@ -58,7 +58,7 @@ export function createSimpleWorkerService<T = {}>(
 }
 
 export function createTypeScriptWorkerService<T = {}>(
-	modules: SharedModules,
+	ts: typeof import('typescript/lib/tsserverlibrary.js'),
 	languages: Language[],
 	services: Service[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
@@ -66,7 +66,7 @@ export function createTypeScriptWorkerService<T = {}>(
 	extraApis: T = {} as any,
 ) {
 	return createWorkerService(
-		modules,
+		{ typescript: ts as any },
 		services,
 		env => {
 
@@ -74,8 +74,7 @@ export function createTypeScriptWorkerService<T = {}>(
 
 			const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
-			const projectHost: TypeScriptProjectHost = {
-				configFileName: undefined,
+			const projectHost: ProjectHost = {
 				getCurrentDirectory() {
 					return env.uriToFileName(env.workspaceFolder.uri.toString(true));
 				},
@@ -117,16 +116,20 @@ export function createTypeScriptWorkerService<T = {}>(
 				getCompilationSettings() {
 					return compilerOptions;
 				},
+				getFileName: env.uriToFileName,
+				getFileId: env.fileNameToUri,
+				getLanguageId: id => resolveCommonLanguageId(id),
 			};
-
-			return createTypeScriptProject(
+			const sys = createSys(ts, env, projectHost.getCurrentDirectory());
+			const project = createProject(
+				ts,
+				sys,
 				languages,
+				undefined,
 				projectHost,
-				{
-					idToFileName: env.uriToFileName,
-					getLanguageId: resolveCommonLanguageId,
-				}
 			);
+
+			return project;
 		},
 		extraApis
 	);

@@ -4,9 +4,9 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 export function getProgram(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	fileProvider: FileProvider,
-	{ fileNameToId, idToFileName }: {
-		fileNameToId(fileName: string): string;
-		idToFileName(id: string): string;
+	{ getFileId, getFileName }: {
+		getFileId(fileName: string): string;
+		getFileName(id: string): string;
 	},
 	ls: ts.LanguageService,
 	sys: ts.System,
@@ -71,7 +71,7 @@ export function getProgram(
 
 		if (sourceFile) {
 
-			const uri = fileNameToId(sourceFile.fileName);
+			const uri = getFileId(sourceFile.fileName);
 			const [virtualFile, source] = fileProvider.getVirtualFile(uri);
 
 			if (virtualFile && source) {
@@ -111,12 +111,12 @@ export function getProgram(
 				&& diagnostic.length !== undefined
 			) {
 
-				const uri = fileNameToId(diagnostic.file.fileName);
+				const uri = getFileId(diagnostic.file.fileName);
 				const [virtualFile, source] = fileProvider.getVirtualFile(uri);
 
 				if (virtualFile && source) {
 
-					const sourceFileName = idToFileName(source.id);
+					const sourceFileName = getFileName(source.id);
 
 					if (sys.fileExists?.(sourceFileName) === false)
 						continue;
@@ -168,7 +168,7 @@ export function getProgram(
 			if (!file) {
 
 				if (docText === undefined) {
-					const uri = fileNameToId(fileName);
+					const uri = getFileId(fileName);
 					const snapshot = fileProvider.getSourceFile(uri)?.snapshot;
 					if (snapshot) {
 						docText = snapshot.getText(0, snapshot.getLength());

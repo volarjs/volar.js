@@ -3,9 +3,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import { MirrorMap } from './mirrorMap';
 import type { FileRangeCapabilities, Language, SourceFile, VirtualFile } from './types';
 
-const caseSensitive = false; // TODO: use ts.sys.useCaseSensitiveFileNames
-
-export function createFileProvider(languages: Language[], sync: (sourceFileId: string) => void) {
+export function createFileProvider(languages: Language[], caseSensitive: boolean, sync: (sourceFileId: string) => void) {
 
 	const sourceFileRegistry = new Map<string, SourceFile>();
 	const virtualFileRegistry = new Map<string, { virtualFile: VirtualFile, source: SourceFile; }>();

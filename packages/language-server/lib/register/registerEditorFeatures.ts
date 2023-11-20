@@ -1,4 +1,4 @@
-import { FileKind, FileRangeCapabilities, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import { FileKind, FileRangeCapabilities, VirtualFile } from '@volar/language-core';
 import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
@@ -16,9 +16,9 @@ export function registerEditorFeatures(
 
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
-		const projectHost = languageService.context.project.typescript?.projectHost;
-		if (projectHost?.configFileName) {
-			return { uri: env.fileNameToUri(projectHost.configFileName) };
+		const configFileName = languageService.context.project.typescript?.configFileName;
+		if (configFileName) {
+			return { uri: env.fileNameToUri(configFileName) };
 		}
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
@@ -71,28 +71,25 @@ export function registerEditorFeatures(
 		const fs: typeof import('fs') = await import(fsModeName);
 		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
 
-		// global virtual files
-		if (languageService.context.project.typescript?.projectHost) {
+		if (languageService.context.project.typescript?.languageServiceHost) {
 
 			const rootUri = languageService.context.env.workspaceFolder.uri.toString();
+			const { languageServiceHost } = languageService.context.project.typescript;
 
-			for (const fileName of languageService.context.project.typescript.projectHost.getScriptFileNames()) {
+			for (const fileName of languageServiceHost.getScriptFileNames()) {
 				if (!fs.existsSync(fileName)) {
-					const snapshot = languageService.context.project.typescript.projectHost.getScriptSnapshot(fileName);
+					// global virtual files
+					const snapshot = languageServiceHost.getScriptSnapshot(fileName);
 					if (snapshot) {
 						fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
 					}
 				}
 				else {
 					const uri = languageService.context.env.fileNameToUri(fileName);
-					const sourceFile = languageService.context.project.fileProvider.getSourceFile(uri);
-					if (sourceFile?.root) {
-						for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
-							if (virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.startsWith(rootUri)) {
-								const { snapshot } = virtualFile;
-								fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
-							}
-						}
+					const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(uri);
+					if (virtualFile && virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.startsWith(rootUri)) {
+						const { snapshot } = virtualFile;
+						fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
 					}
 				}
 			}
@@ -109,9 +106,10 @@ export function registerEditorFeatures(
 			const languageService = project.getLanguageService();
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
-			if (program && languageService.context.project.typescript?.projectHost) {
-				const projectName = languageService.context.project.typescript?.projectHost.configFileName ?? (languageService.context.project.typescript?.projectHost.getCurrentDirectory() + '(inferred)');
-				const sourceFiles = program?.getSourceFiles() ?? [];
+			if (program && languageService.context.project.typescript) {
+				const { configFileName, languageServiceHost } = languageService.context.project.typescript;
+				const projectName = configFileName ?? (languageServiceHost.getCurrentDirectory() + '(inferred)');
+				const sourceFiles = program.getSourceFiles() ?? [];
 				for (const sourceFile of sourceFiles) {
 					if (!sourceFilesData.has(sourceFile)) {
 						let nodes = 0;
