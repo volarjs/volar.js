@@ -84,7 +84,7 @@ export function register(context: ServiceContext) {
 
 									for (const mapped of mirrorMap.findMirrorPositions(textEdit.range.start)) {
 
-										if (!mapped[1].rename)
+										if (!(mapped[1].rename ?? true))
 											continue;
 
 										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: mapped[0], end: mapped[0] } }))

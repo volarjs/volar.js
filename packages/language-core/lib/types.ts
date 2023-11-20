@@ -19,6 +19,7 @@ export interface MirrorCodeInformations {
 	reference?: boolean;
 	rename?: boolean;
 	definition?: boolean;
+	highlight?: boolean;
 }
 
 export interface CodeInformations {
