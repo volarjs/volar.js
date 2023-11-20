@@ -3,6 +3,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import { forEachEmbeddedFile, type FileKind } from '@volar/language-core';
 import * as path from 'path-browserify';
 import { matchFiles } from '../typescript/utilities';
+import type { createSys } from './createSys';
 
 const scriptVersions = new Map<string, { lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>();
 const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
@@ -19,15 +20,13 @@ export interface ProjectHost extends Pick<
 	| 'getCancellationToken'
 > {
 	fileNameToFileId(fileName: string): string;
-	fileIdToFileName(id: string): string;
+	fileIdToFileName(fileId: string): string;
 	getLanguageId(id: string): string;
 }
 
 export function createProject(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
-	sys: ts.System & {
-		version?: number;
-	},
+	sys: ReturnType<typeof createSys> | ts.System,
 	languages: Language<any>[],
 	configFileName: string | undefined,
 	projectHost: ProjectHost,
@@ -82,7 +81,7 @@ export function createProject(
 			languageServiceHost.getCompilationSettings()
 		);
 
-		let lastSysVersion = sys.version;
+		let lastSysVersion = 'version' in sys ? sys.version : undefined;
 
 		languageServiceHost.resolveModuleNameLiterals = (
 			moduleLiterals,
@@ -91,7 +90,7 @@ export function createProject(
 			options,
 			sourceFile
 		) => {
-			if (lastSysVersion !== sys.version) {
+			if ('version' in sys && lastSysVersion !== sys.version) {
 				lastSysVersion = sys.version;
 				moduleCache.clear();
 			}
@@ -121,7 +120,7 @@ export function createProject(
 			options,
 			sourceFile
 		) => {
-			if (lastSysVersion !== sys.version) {
+			if ('version' in sys && lastSysVersion !== sys.version) {
 				lastSysVersion = sys.version;
 				moduleCache.clear();
 			}
@@ -150,6 +149,7 @@ export function createProject(
 			configFileName,
 			sys,
 			languageServiceHost,
+			synchronizeFileSystem: 'sync' in sys ? () => sys.sync!() : undefined,
 		},
 	};
 
@@ -183,27 +183,149 @@ export function createProject(
 			getNewLine() {
 				return sys.newLine;
 			},
+			getTypeRootsVersion: () => {
+				return 'version' in sys ? sys.version : -1; // TODO: only update for /node_modules changes?
+			},
+			// need sync
+			getDirectories(dirName): string[] {
+				sync();
+				return [...new Set([
+					...getVirtualFileDirectories(dirName),
+					...sys.getDirectories(dirName),
+				])];
+			},
+			directoryExists(dirName: string): boolean {
+				sync();
+				return tsDirectories.has(dirName) || sys.directoryExists(dirName);
+			},
 			readFile(fileName) {
+				sync();
 				const snapshot = this.getScriptSnapshot(fileName);
 				if (snapshot) {
 					return snapshot.getText(0, snapshot.getLength());
 				}
 			},
-			readDirectory,
-			getDirectories,
-			directoryExists,
-			fileExists,
-			getProjectVersion: () => {
-				return tsProjectVersion + ':' + sys.version;
+			fileExists(fileName) {
+				sync();
+				// fill external virtual files
+				const ext = fileName.substring(fileName.lastIndexOf('.'));
+				if (
+					ext === '.js'
+					|| ext === '.ts'
+					|| ext === '.jsx'
+					|| ext === '.tsx'
+				) {
+
+					/**
+					 * If try to access a external .vue file that outside of the project,
+					 * the file will not process by language service host,
+					 * so virtual file will not be created.
+					 * 
+					 * We try to create virtual file here.
+					 */
+
+					const sourceFileName = fileName.endsWith('.d.ts')
+						? fileName.substring(0, fileName.lastIndexOf('.d.ts'))
+						: fileName.substring(0, fileName.lastIndexOf('.'));
+					const sourceFileUri = projectHost.fileNameToFileId(sourceFileName);
+
+					fileProvider.getSourceFile(sourceFileUri); // trigger sync
+				}
+
+				// virtual files
+				return this.getScriptVersion(fileName) !== '';
 			},
-			getTypeRootsVersion: () => {
-				return sys.version ?? -1; // TODO: only update for /node_modules changes?
+			readDirectory(
+				dirName: string,
+				extensions?: readonly string[],
+				excludes?: readonly string[],
+				includes?: readonly string[],
+				depth?: number,
+			): string[] {
+				sync();
+				let matches = matchFiles(
+					dirName,
+					extensions,
+					excludes,
+					includes,
+					sys?.useCaseSensitiveFileNames ?? false,
+					projectHost.getCurrentDirectory(),
+					depth,
+					(dirPath) => {
+
+						const files: string[] = [];
+
+						for (const fileName of tsFileNames) {
+							if (fileName.toLowerCase().startsWith(dirPath.toLowerCase())) {
+								const baseName = fileName.substring(dirPath.length);
+								if (baseName.indexOf('/') === -1) {
+									files.push(baseName);
+								}
+							}
+						}
+
+						return {
+							files,
+							directories: getVirtualFileDirectories(dirPath),
+						};
+					},
+					sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
+				);
+				matches = matches.map(match => {
+					const [_, source] = fileProvider.getVirtualFile(projectHost.fileNameToFileId(match));
+					if (source) {
+						return projectHost.fileIdToFileName(source.id);
+					}
+					return match;
+				});
+				return [...new Set([
+					...matches,
+					...sys.readDirectory(dirName, extensions, excludes, includes, depth),
+				])];
+			},
+			getProjectVersion() {
+				sync();
+				return tsProjectVersion + ('version' in sys ? `:${sys.version}` : '');
 			},
 			getScriptFileNames() {
+				sync();
 				return tsFileNames;
 			},
-			getScriptVersion,
+			getScriptVersion(fileName: string): string {
+				sync();
+
+				if (!scriptVersions.has(fileName)) {
+					scriptVersions.set(fileName, { lastVersion: 0, map: new WeakMap() });
+				}
+
+				const version = scriptVersions.get(fileName)!;
+				const virtualFile = fileProvider.getVirtualFile(projectHost.fileNameToFileId(fileName))[0];
+				if (virtualFile) {
+					if (!version.map.has(virtualFile.snapshot)) {
+						version.map.set(virtualFile.snapshot, version.lastVersion++);
+					}
+					return version.map.get(virtualFile.snapshot)!.toString();
+				}
+
+				const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
+				if (isOpenedFile) {
+					const sourceFile = fileProvider.getSourceFile(projectHost.fileNameToFileId(fileName));
+					if (sourceFile && !sourceFile.root) {
+						if (!version.map.has(sourceFile.snapshot)) {
+							version.map.set(sourceFile.snapshot, version.lastVersion++);
+						}
+						return version.map.get(sourceFile.snapshot)!.toString();
+					}
+				}
+
+				if (sys.fileExists(fileName)) {
+					return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '0';
+				}
+
+				return '';
+			},
 			getScriptSnapshot(fileName) {
+				sync();
 
 				const uri = projectHost.fileNameToFileId(fileName);
 				const virtualFile = fileProvider.getVirtualFile(uri)[0];
@@ -217,6 +339,7 @@ export function createProject(
 				}
 			},
 			getScriptKind(fileName) {
+				sync();
 
 				if (ts) {
 					if (fileProvider.getSourceFile(projectHost.fileNameToFileId(fileName)))
@@ -240,15 +363,7 @@ export function createProject(
 			},
 		};
 
-		return new Proxy(languageServiceHost, {
-			get: (target, property: keyof ts.LanguageServiceHost) => {
-				sync();
-				return target[property];
-			},
-			set: (target, property: keyof ts.LanguageServiceHost, value) => {
-				return (target as any)[property] = value;
-			}
-		}) as ts.LanguageServiceHost;
+		return languageServiceHost;
 
 		function sync() {
 
@@ -301,61 +416,6 @@ export function createProject(
 			}
 		}
 
-		function readDirectory(
-			dirName: string,
-			extensions?: readonly string[],
-			excludes?: readonly string[],
-			includes?: readonly string[],
-			depth?: number,
-		): string[] {
-			let matches = matchFiles(
-				dirName,
-				extensions,
-				excludes,
-				includes,
-				sys?.useCaseSensitiveFileNames ?? false,
-				projectHost.getCurrentDirectory(),
-				depth,
-				(dirPath) => {
-
-					const files: string[] = [];
-
-					for (const fileName of tsFileNames) {
-						if (fileName.toLowerCase().startsWith(dirPath.toLowerCase())) {
-							const baseName = fileName.substring(dirPath.length);
-							if (baseName.indexOf('/') === -1) {
-								files.push(baseName);
-							}
-						}
-					}
-
-					return {
-						files,
-						directories: getVirtualFileDirectories(dirPath),
-					};
-				},
-				sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
-			);
-			matches = matches.map(match => {
-				const [_, source] = fileProvider.getVirtualFile(projectHost.fileNameToFileId(match));
-				if (source) {
-					return projectHost.fileIdToFileName(source.id);
-				}
-				return match;
-			});
-			return [...new Set([
-				...matches,
-				...sys.readDirectory(dirName, extensions, excludes, includes, depth),
-			])];
-		}
-
-		function getDirectories(dirName: string): string[] {
-			return [...new Set([
-				...getVirtualFileDirectories(dirName),
-				...sys.getDirectories(dirName),
-			])];
-		}
-
 		function getVirtualFileDirectories(dirName: string): string[] {
 
 			const names = new Set<string>();
@@ -370,74 +430,6 @@ export function createProject(
 			}
 
 			return [...names];
-		}
-
-		function directoryExists(dirName: string): boolean {
-			return tsDirectories.has(dirName) || sys.directoryExists(dirName);
-		}
-
-		function fileExists(fileName: string) {
-
-			// fill external virtual files
-			const ext = fileName.substring(fileName.lastIndexOf('.'));
-			if (
-				ext === '.js'
-				|| ext === '.ts'
-				|| ext === '.jsx'
-				|| ext === '.tsx'
-			) {
-
-				/**
-				 * If try to access a external .vue file that outside of the project,
-				 * the file will not process by language service host,
-				 * so virtual file will not be created.
-				 * 
-				 * We try to create virtual file here.
-				 */
-
-				const sourceFileName = fileName.endsWith('.d.ts')
-					? fileName.substring(0, fileName.lastIndexOf('.d.ts'))
-					: fileName.substring(0, fileName.lastIndexOf('.'));
-				const sourceFileUri = projectHost.fileNameToFileId(sourceFileName);
-
-				fileProvider.getSourceFile(sourceFileUri); // trigger sync
-			}
-
-			// virtual files
-			return getScriptVersion(fileName) !== '';
-		}
-
-		function getScriptVersion(fileName: string): string {
-
-			if (!scriptVersions.has(fileName)) {
-				scriptVersions.set(fileName, { lastVersion: 0, map: new WeakMap() });
-			}
-
-			const version = scriptVersions.get(fileName)!;
-			const virtualFile = fileProvider.getVirtualFile(projectHost.fileNameToFileId(fileName))[0];
-			if (virtualFile) {
-				if (!version.map.has(virtualFile.snapshot)) {
-					version.map.set(virtualFile.snapshot, version.lastVersion++);
-				}
-				return version.map.get(virtualFile.snapshot)!.toString();
-			}
-
-			const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
-			if (isOpenedFile) {
-				const sourceFile = fileProvider.getSourceFile(projectHost.fileNameToFileId(fileName));
-				if (sourceFile && !sourceFile.root) {
-					if (!version.map.has(sourceFile.snapshot)) {
-						version.map.set(sourceFile.snapshot, version.lastVersion++);
-					}
-					return version.map.get(sourceFile.snapshot)!.toString();
-				}
-			}
-
-			if (sys.fileExists(fileName)) {
-				return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '0';
-			}
-
-			return '';
 		}
 	}
 }

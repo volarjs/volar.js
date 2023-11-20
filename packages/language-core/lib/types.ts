@@ -116,10 +116,8 @@ export interface Project {
 	fileProvider: FileProvider;
 	typescript?: {
 		configFileName: string | undefined;
-		sys: ts.System & {
-			dispose?(): void;
-			sync?(): Promise<number>;
-		};
+		sys: ts.System;
 		languageServiceHost: ts.LanguageServiceHost;
+		synchronizeFileSystem?(): Promise<number>;
 	};
 }
