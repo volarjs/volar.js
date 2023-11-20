@@ -32,7 +32,7 @@ export function createProject(
 	projectHost: ProjectHost,
 ): Project {
 
-	const fileProvider = createFileProvider(languages, (id) => {
+	const fileProvider = createFileProvider(languages, sys.useCaseSensitiveFileNames, (id) => {
 
 		const fileName = projectHost.fileIdToFileName(id);
 
