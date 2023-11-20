@@ -63,21 +63,24 @@ export function register(context: ServiceContext) {
 
 				return codeLens;
 			},
-			(data, map) => data
-				.map(codeLens => {
+			(data, map) => {
+				if (!map) {
+					return data;
+				}
+				return data
+					.map(codeLens => {
 
-					if (!map)
-						return codeLens;
 
-					const range = map.toSourceRange(codeLens.range);
-					if (range) {
-						return {
-							...codeLens,
-							range,
-						};
-					}
-				})
-				.filter(notEmpty),
+						const range = map.toSourceRange(codeLens.range);
+						if (range) {
+							return {
+								...codeLens,
+								range,
+							};
+						}
+					})
+					.filter(notEmpty);
+			},
 			arr => arr.flat(),
 		) ?? [];
 	};
