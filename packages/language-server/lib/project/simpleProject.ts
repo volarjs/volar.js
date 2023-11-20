@@ -24,7 +24,7 @@ export async function createSimpleServerProject(
 
 	function getLanguageService() {
 		if (!languageService) {
-			const fileProvider = createFileProvider(Object.values(config.languages ?? {}), (uri) => {
+			const fileProvider = createFileProvider(Object.values(config.languages ?? {}), false, (uri) => {
 				const script = context.workspaces.documents.data.uriGet(uri);
 				if (script) {
 					fileProvider.updateSourceFile(uri, script.getSnapshot(), script.languageId);

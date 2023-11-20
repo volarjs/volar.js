@@ -12,7 +12,7 @@ export function createFormatter(
 	let settings = {};
 
 	const env = createServiceEnvironment(() => settings);
-	const fileProvider = createFileProvider(languages, () => { });
+	const fileProvider = createFileProvider(languages, false, () => { });
 	const service = createLanguageService(
 		{ typescript: ts as any },
 		services,

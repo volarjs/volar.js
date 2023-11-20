@@ -28,6 +28,7 @@ export function createSimpleWorkerService<T = {}>(
 			const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const fileProvider = createFileProvider(
 				languages,
+				false,
 				(uri) => {
 					const model = getMirrorModels().find(model => model.uri.toString(true) === uri);
 					if (model) {
