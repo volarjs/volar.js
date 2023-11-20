@@ -15,7 +15,7 @@ export function register(context: ServiceContext) {
 
 	return async (uri: string, token = NoneCancellationToken) => {
 
-		const pluginLinks = await documentFeatureWorker(
+		return await documentFeatureWorker(
 			context,
 			uri,
 			map => map.map.mappings.some(mapping => mapping.data.links ?? true),
@@ -62,7 +62,5 @@ export function register(context: ServiceContext) {
 			},
 			arr => arr.flat(),
 		) ?? [];
-
-		return pluginLinks;
 	};
 }
