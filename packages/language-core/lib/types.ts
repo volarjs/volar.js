@@ -24,7 +24,7 @@ export enum FileKind {
 export interface VirtualFile extends BaesFile {
 	kind: FileKind;
 	mappings: Mapping<CodeInformations>[];
-	codegenStacks: Stack[];
+	codegenStacks?: Stack[];
 	mirrorBehaviorMappings?: Mapping<[MirrorBehaviorCapabilities, MirrorBehaviorCapabilities]>[];
 	embeddedFiles: VirtualFile[];
 }
