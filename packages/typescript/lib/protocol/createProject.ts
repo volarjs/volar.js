@@ -200,7 +200,7 @@ export function createProject(
 			},
 			readFile(fileName) {
 				sync();
-				const snapshot = this.getScriptSnapshot(fileName);
+				const snapshot = getScriptSnapshot(fileName);
 				if (snapshot) {
 					return snapshot.getText(0, snapshot.getLength());
 				}
@@ -233,7 +233,7 @@ export function createProject(
 				}
 
 				// virtual files
-				return this.getScriptVersion(fileName) !== '';
+				return getScriptVersion(fileName) !== '';
 			},
 			readDirectory(
 				dirName: string,
@@ -291,53 +291,6 @@ export function createProject(
 				sync();
 				return tsFileNames;
 			},
-			getScriptVersion(fileName: string): string {
-				sync();
-
-				if (!scriptVersions.has(fileName)) {
-					scriptVersions.set(fileName, { lastVersion: 0, map: new WeakMap() });
-				}
-
-				const version = scriptVersions.get(fileName)!;
-				const virtualFile = fileProvider.getVirtualFile(projectHost.fileNameToFileId(fileName))[0];
-				if (virtualFile) {
-					if (!version.map.has(virtualFile.snapshot)) {
-						version.map.set(virtualFile.snapshot, version.lastVersion++);
-					}
-					return version.map.get(virtualFile.snapshot)!.toString();
-				}
-
-				const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
-				if (isOpenedFile) {
-					const sourceFile = fileProvider.getSourceFile(projectHost.fileNameToFileId(fileName));
-					if (sourceFile && !sourceFile.root) {
-						if (!version.map.has(sourceFile.snapshot)) {
-							version.map.set(sourceFile.snapshot, version.lastVersion++);
-						}
-						return version.map.get(sourceFile.snapshot)!.toString();
-					}
-				}
-
-				if (sys.fileExists(fileName)) {
-					return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '0';
-				}
-
-				return '';
-			},
-			getScriptSnapshot(fileName) {
-				sync();
-
-				const uri = projectHost.fileNameToFileId(fileName);
-				const virtualFile = fileProvider.getVirtualFile(uri)[0];
-				if (virtualFile) {
-					return virtualFile.snapshot;
-				}
-
-				const sourceFile = fileProvider.getSourceFile(uri);
-				if (sourceFile && !sourceFile.root) {
-					return sourceFile.snapshot;
-				}
-			},
 			getScriptKind(fileName) {
 				sync();
 
@@ -361,6 +314,8 @@ export function createProject(
 
 				return 0;
 			},
+			getScriptVersion,
+			getScriptSnapshot,
 		};
 
 		return languageServiceHost;
@@ -414,6 +369,55 @@ export function createProject(
 			for (const fileName of tsFileNames) {
 				tsDirectories.add(path.dirname(fileName));
 			}
+		}
+
+		function getScriptSnapshot(fileName: string) {
+			sync();
+
+			const uri = projectHost.fileNameToFileId(fileName);
+			const virtualFile = fileProvider.getVirtualFile(uri)[0];
+			if (virtualFile) {
+				return virtualFile.snapshot;
+			}
+
+			const sourceFile = fileProvider.getSourceFile(uri);
+			if (sourceFile && !sourceFile.root) {
+				return sourceFile.snapshot;
+			}
+		}
+
+		function getScriptVersion(fileName: string): string {
+			sync();
+
+			if (!scriptVersions.has(fileName)) {
+				scriptVersions.set(fileName, { lastVersion: 0, map: new WeakMap() });
+			}
+
+			const version = scriptVersions.get(fileName)!;
+			const virtualFile = fileProvider.getVirtualFile(projectHost.fileNameToFileId(fileName))[0];
+			if (virtualFile) {
+				if (!version.map.has(virtualFile.snapshot)) {
+					version.map.set(virtualFile.snapshot, version.lastVersion++);
+				}
+				return version.map.get(virtualFile.snapshot)!.toString();
+			}
+
+			const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
+			if (isOpenedFile) {
+				const sourceFile = fileProvider.getSourceFile(projectHost.fileNameToFileId(fileName));
+				if (sourceFile && !sourceFile.root) {
+					if (!version.map.has(sourceFile.snapshot)) {
+						version.map.set(sourceFile.snapshot, version.lastVersion++);
+					}
+					return version.map.get(sourceFile.snapshot)!.toString();
+				}
+			}
+
+			if (sys.fileExists(fileName)) {
+				return sys.getModifiedTime?.(fileName)?.valueOf().toString() ?? '0';
+			}
+
+			return '';
 		}
 
 		function getVirtualFileDirectories(dirName: string): string[] {
