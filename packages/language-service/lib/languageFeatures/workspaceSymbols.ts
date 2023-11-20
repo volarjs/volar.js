@@ -1,8 +1,8 @@
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformWorkspaceSymbol } from '../utils/transform';
 
 export function register(context: ServiceContext) {
 
@@ -21,7 +21,7 @@ export function register(context: ServiceContext) {
 			if (!embeddedSymbols) {
 				continue;
 			}
-			const symbols = embeddedSymbols.map(symbol => transformer.asWorkspaceSymbol(symbol, loc => {
+			const symbols = embeddedSymbols.map(symbol => transformWorkspaceSymbol(symbol, loc => {
 
 				const [virtualFile] = context.project.fileProvider.getVirtualFile(loc.uri);
 

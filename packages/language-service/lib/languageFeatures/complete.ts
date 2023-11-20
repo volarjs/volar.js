@@ -1,9 +1,9 @@
-import * as transformer from '../transformer';
 import type { CodeInformations } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { Service, ServiceContext } from '../types';
 import { visitEmbedded } from '../utils/definePlugin';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformCompletionList } from '../utils/transform';
 
 export interface ServiceCompletionData {
 	uri: string;
@@ -65,7 +65,7 @@ export function register(context: ServiceContext) {
 								continue;
 							}
 
-							cacheData.list = transformer.asCompletionList(
+							cacheData.list = transformCompletionList(
 								embeddedCompletionList,
 								range => map.toSourceRange(range),
 								map.virtualFileDocument,
@@ -173,7 +173,7 @@ export function register(context: ServiceContext) {
 								cache!.mainCompletion = { documentUri: map.virtualFileDocument.uri };
 							}
 
-							const completionList = transformer.asCompletionList(
+							const completionList = transformCompletionList(
 								embeddedCompletionList,
 								range => map.toSourceRange(range),
 								map.virtualFileDocument,

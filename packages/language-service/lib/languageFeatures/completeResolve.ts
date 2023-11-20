@@ -1,8 +1,8 @@
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { ServiceCompletionData } from './complete';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformCompletionItem } from '../utils/transform';
 
 export function register(context: ServiceContext) {
 
@@ -28,7 +28,7 @@ export function register(context: ServiceContext) {
 					for (const map of context.documents.getMaps(virtualFile)) {
 
 						item = await service.resolveCompletionItem(item, token);
-						item = service.transformCompletionItem?.(item) ?? transformer.asCompletionItem(
+						item = service.transformCompletionItem?.(item) ?? transformCompletionItem(
 							item,
 							embeddedRange => map.toSourceRange(embeddedRange),
 							map.virtualFileDocument,

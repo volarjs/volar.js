@@ -1,4 +1,3 @@
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
@@ -7,6 +6,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import { embeddedEditToSourceEdit } from './rename';
 import { ServiceDiagnosticData } from './validation';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformLocations } from '../utils/transform';
 
 export interface ServiceCodeActionData {
 	uri: string,
@@ -37,7 +37,7 @@ export function register(context: ServiceContext) {
 				if (map.map.mappings.some(mapping => mapping.data.codeActions ?? true)) {
 
 					const _codeActionContext: vscode.CodeActionContext = {
-						diagnostics: transformer.asLocations(
+						diagnostics: transformLocations(
 							codeActionContext.diagnostics,
 							range => map.toGeneratedRange(range),
 						),

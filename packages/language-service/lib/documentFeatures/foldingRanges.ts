@@ -1,9 +1,9 @@
 import type { ServiceContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
-import * as transformer from '../transformer';
 import { NoneCancellationToken } from '../utils/cancellation';
 
 import type * as _ from 'vscode-languageserver-protocol';
+import { transformFoldingRanges } from '../utils/transform';
 
 export function register(context: ServiceContext) {
 
@@ -23,7 +23,7 @@ export function register(context: ServiceContext) {
 				if (!map) {
 					return data;
 				}
-				return transformer.asFoldingRanges(
+				return transformFoldingRanges(
 					data,
 					range => map.toSourceRange(range, data => data.foldingRanges ?? true)
 				);

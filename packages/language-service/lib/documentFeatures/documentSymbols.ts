@@ -1,9 +1,9 @@
 import type { ServiceContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { isInsideRange, notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformDocumentSymbol } from '../utils/transform';
 
 export function register(context: ServiceContext) {
 
@@ -24,7 +24,7 @@ export function register(context: ServiceContext) {
 					return data;
 				}
 				return data
-					.map(symbol => transformer.asDocumentSymbol(
+					.map(symbol => transformDocumentSymbol(
 						symbol,
 						range => map.toSourceRange(range, data => data.symbols ?? true),
 					))

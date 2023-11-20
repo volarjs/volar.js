@@ -3,7 +3,7 @@ export * from './lib/baseLanguageService';
 export * from './lib/documents';
 export { mergeWorkspaceEdits } from './lib/languageFeatures/rename';
 export * from './lib/types';
-export * as transformer from './lib/transformer';
+export * as transformer from './lib/utils/transform';
 
 import type * as vscode from 'vscode-languageserver-protocol';
 

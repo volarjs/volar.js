@@ -1,9 +1,9 @@
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformTextEdit } from '../utils/transform';
 
 export interface InlayHintData {
 	uri: string,
@@ -89,7 +89,7 @@ export function register(context: ServiceContext) {
 							data => data.inlayHints ?? true,
 						);
 						const edits = _inlayHint.textEdits
-							?.map(textEdit => transformer.asTextEdit(textEdit, range => map!.toSourceRange(range), map.virtualFileDocument))
+							?.map(textEdit => transformTextEdit(textEdit, range => map!.toSourceRange(range), map.virtualFileDocument))
 							.filter(notEmpty);
 
 						if (position) {
