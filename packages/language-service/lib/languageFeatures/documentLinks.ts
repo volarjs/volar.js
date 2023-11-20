@@ -63,43 +63,6 @@ export function register(context: ServiceContext) {
 			arr => arr.flat(),
 		) ?? [];
 
-		return [
-			...pluginLinks,
-			// ...getFictitiousLinks(),
-		];
-
-		// function getFictitiousLinks() {
-
-		// 	const result: vscode.DocumentLink[] = [];
-		// 	const sourceFile = context.project.fileProvider.getSourceFile(uri);
-
-		// 	if (sourceFile?.root) {
-		// 		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-		// 		for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
-		// 			for (const [_, [sourceSnapshot, map]] of context.project.fileProvider.getMaps(virtualFile)) {
-		// 				if (sourceSnapshot === sourceFile.snapshot) {
-		// 					for (const mapped of map.mappings) {
-
-		// 						if (!mapped.data.displayWithLink)
-		// 							continue;
-
-		// 						if (mapped.sourceRange[0] === mapped.sourceRange[1])
-		// 							continue;
-
-		// 						result.push({
-		// 							range: {
-		// 								start: document.positionAt(mapped.sourceRange[0]),
-		// 								end: document.positionAt(mapped.sourceRange[1]),
-		// 							},
-		// 							target: uri, // TODO
-		// 						});
-		// 					}
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-
-		// 	return result;
-		// }
+		return pluginLinks;
 	};
 }
