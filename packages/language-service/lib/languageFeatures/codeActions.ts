@@ -3,10 +3,9 @@ import type { ServiceContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import { embeddedEditToSourceEdit } from './rename';
 import { ServiceDiagnosticData } from './validation';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { transformLocations } from '../utils/transform';
+import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
 
 export interface ServiceCodeActionData {
 	uri: string,
@@ -125,7 +124,7 @@ export function register(context: ServiceContext) {
 						return action;
 
 					if (action.edit) {
-						const edit = embeddedEditToSourceEdit(
+						const edit = transformWorkspaceEdit(
 							action.edit,
 							context,
 							'codeAction',

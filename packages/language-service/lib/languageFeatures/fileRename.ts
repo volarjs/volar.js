@@ -1,5 +1,5 @@
 import type { ServiceContext } from '../types';
-import { embeddedEditToSourceEdit } from './rename';
+import { transformWorkspaceEdit } from '../utils/transform';
 import type * as _ from 'vscode-languageserver-protocol';
 import * as dedupe from '../utils/dedupe';
 import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
@@ -41,7 +41,7 @@ export function register(context: ServiceContext) {
 
 			if (workspaceEdit) {
 
-				const result = embeddedEditToSourceEdit(
+				const result = transformWorkspaceEdit(
 					workspaceEdit,
 					context,
 					'fileName',

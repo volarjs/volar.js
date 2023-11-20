@@ -1,5 +1,7 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from './common';
+import { ServiceContext } from '../types';
+import { CodeInformations } from '@volar/language-core';
 
 export function transformCompletionItem<T extends vscode.CompletionItem>(
 	item: T,
@@ -232,4 +234,207 @@ export function transformWorkspaceSymbol(symbol: vscode.WorkspaceSymbol, getOthe
 		...symbol,
 		location: loc,
 	};
+}
+
+export function transformWorkspaceEdit(
+	edit: vscode.WorkspaceEdit,
+	{ documents, project }: ServiceContext,
+	mode: 'fileName' | 'rename' | 'codeAction' | 'format',
+	versions: Record<string, number> = {},
+) {
+
+	const sourceResult: vscode.WorkspaceEdit = {};
+	let hasResult = false;
+
+	for (const tsUri in edit.changeAnnotations) {
+
+		sourceResult.changeAnnotations ??= {};
+
+		const tsAnno = edit.changeAnnotations[tsUri];
+		const [virtualFile] = project.fileProvider.getVirtualFile(tsUri);
+
+		if (virtualFile) {
+			for (const map of documents.getMaps(virtualFile)) {
+				// TODO: check capability?
+				const uri = map.sourceFileDocument.uri;
+				sourceResult.changeAnnotations[uri] = tsAnno;
+			}
+		}
+		else {
+			sourceResult.changeAnnotations[tsUri] = tsAnno;
+		}
+	}
+	for (const tsUri in edit.changes) {
+
+		sourceResult.changes ??= {};
+
+		const [virtualFile] = project.fileProvider.getVirtualFile(tsUri);
+
+		if (virtualFile) {
+			for (const map of documents.getMaps(virtualFile)) {
+				const tsEdits = edit.changes[tsUri];
+				for (const tsEdit of tsEdits) {
+					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
+
+						let _data: CodeInformations | undefined;
+
+						const range = map.toSourceRange(tsEdit.range, data => {
+							_data = data;
+							return typeof data.renameEdits === 'object'
+								? data.renameEdits.shouldEdit
+								: (data.renameEdits ?? true);
+						});
+
+						if (range) {
+							let newText = tsEdit.newText;
+							if (_data && typeof _data.renameEdits === 'object' && _data.renameEdits.resolveEditText) {
+								newText = _data.renameEdits.resolveEditText(tsEdit.newText);
+							}
+							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
+							sourceResult.changes[map.sourceFileDocument.uri].push({ newText, range });
+							hasResult = true;
+						}
+					}
+					else {
+						const range = map.toSourceRange(tsEdit.range);
+						if (range) {
+							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
+							sourceResult.changes[map.sourceFileDocument.uri].push({ newText: tsEdit.newText, range });
+							hasResult = true;
+						}
+					}
+				}
+			}
+		}
+		else {
+			sourceResult.changes[tsUri] = edit.changes[tsUri];
+			hasResult = true;
+		}
+	}
+	if (edit.documentChanges) {
+		for (const tsDocEdit of edit.documentChanges) {
+
+			sourceResult.documentChanges ??= [];
+
+			let sourceEdit: typeof tsDocEdit | undefined;
+			if ('textDocument' in tsDocEdit) {
+
+				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.textDocument.uri);
+
+				if (virtualFile) {
+					for (const map of documents.getMaps(virtualFile)) {
+						sourceEdit = {
+							textDocument: {
+								uri: map.sourceFileDocument.uri,
+								version: versions[map.sourceFileDocument.uri] ?? null,
+							},
+							edits: [],
+						} satisfies vscode.TextDocumentEdit;
+						for (const tsEdit of tsDocEdit.edits) {
+							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
+								let _data: CodeInformations | undefined;
+								const range = map.toSourceRange(tsEdit.range, data => {
+									_data = data;
+									// fix https://github.com/johnsoncodehk/volar/issues/1091
+									return typeof data.renameEdits === 'object'
+										? data.renameEdits.shouldEdit
+										: (data.renameEdits ?? true);
+								});
+								if (range) {
+									let newText = tsEdit.newText;
+									if (_data && typeof _data.renameEdits === 'object' && _data.renameEdits.resolveEditText) {
+										newText = _data.renameEdits.resolveEditText(tsEdit.newText);
+									}
+									sourceEdit.edits.push({
+										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
+										newText,
+										range,
+									});
+								}
+							}
+							else {
+								const range = map.toSourceRange(tsEdit.range);
+								if (range) {
+									sourceEdit.edits.push({
+										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
+										newText: tsEdit.newText,
+										range,
+									});
+								}
+							}
+						}
+						if (!sourceEdit.edits.length) {
+							sourceEdit = undefined;
+						}
+					}
+				}
+				else {
+					sourceEdit = tsDocEdit;
+				}
+			}
+			else if (tsDocEdit.kind === 'create') {
+				sourceEdit = tsDocEdit; // TODO: remove .ts?
+			}
+			else if (tsDocEdit.kind === 'rename') {
+
+				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.oldUri);
+
+				if (virtualFile) {
+					for (const map of documents.getMaps(virtualFile)) {
+						// TODO: check capability?
+						sourceEdit = {
+							kind: 'rename',
+							oldUri: map.sourceFileDocument.uri,
+							newUri: tsDocEdit.newUri /* TODO: remove .ts? */,
+							options: tsDocEdit.options,
+							annotationId: tsDocEdit.annotationId,
+						} satisfies vscode.RenameFile;
+					}
+				}
+				else {
+					sourceEdit = tsDocEdit;
+				}
+			}
+			else if (tsDocEdit.kind === 'delete') {
+
+				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.uri);
+
+				if (virtualFile) {
+					for (const map of documents.getMaps(virtualFile)) {
+						// TODO: check capability?
+						sourceEdit = {
+							kind: 'delete',
+							uri: map.sourceFileDocument.uri,
+							options: tsDocEdit.options,
+							annotationId: tsDocEdit.annotationId,
+						} satisfies vscode.DeleteFile;
+					}
+				}
+				else {
+					sourceEdit = tsDocEdit;
+				}
+			}
+			if (sourceEdit) {
+				pushEditToDocumentChanges(sourceResult.documentChanges, sourceEdit);
+				hasResult = true;
+			}
+		}
+	}
+	if (hasResult) {
+		return sourceResult;
+	}
+}
+
+export function pushEditToDocumentChanges(arr: NonNullable<vscode.WorkspaceEdit['documentChanges']>, item: NonNullable<vscode.WorkspaceEdit['documentChanges']>[number]) {
+	const current = arr.find(edit =>
+		'textDocument' in edit
+		&& 'textDocument' in item
+		&& edit.textDocument.uri === item.textDocument.uri
+	) as vscode.TextDocumentEdit | undefined;
+	if (current) {
+		current.edits.push(...(item as vscode.TextDocumentEdit).edits);
+	}
+	else {
+		arr.push(item);
+	}
 }
