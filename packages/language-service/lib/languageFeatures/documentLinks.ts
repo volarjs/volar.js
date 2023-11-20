@@ -1,4 +1,3 @@
-import { forEachEmbeddedFile } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
@@ -19,11 +18,12 @@ export function register(context: ServiceContext) {
 		const pluginLinks = await documentFeatureWorker(
 			context,
 			uri,
-			file => !!file.capabilities.documentSymbol,
+			map => map.map.mappings.some(mapping => mapping.data.links ?? true),
 			async (service, document) => {
 
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
+				}
 
 				const links = await service.provideDocumentLinks?.(document, token);
 
@@ -39,65 +39,67 @@ export function register(context: ServiceContext) {
 
 				return links;
 			},
-			(links, map) => links.map(link => {
-
-				if (!map)
-					return link;
-
-				const range = map.toSourceRange(link.range);
-				if (!range)
-					return;
-
-				link = {
-					...link,
-					range,
-				};
-
-				if (link.target)
-					link.target = transformDocumentLinkTarget(link.target, context);
-
-				return link;
-			}).filter(notEmpty),
+			(links, map) => {
+				if (!map) {
+					return links;
+				}
+				return links
+					.map(link => {
+						const range = map.toSourceRange(link.range, data => data.links ?? true);
+						if (!range) {
+							return;
+						}
+						link = {
+							...link,
+							range,
+						};
+						if (link.target) {
+							link.target = transformDocumentLinkTarget(link.target, context);
+						}
+						return link;
+					})
+					.filter(notEmpty);
+			},
 			arr => arr.flat(),
 		) ?? [];
 
 		return [
 			...pluginLinks,
-			...getFictitiousLinks(),
+			// ...getFictitiousLinks(),
 		];
 
-		function getFictitiousLinks() {
+		// function getFictitiousLinks() {
 
-			const result: vscode.DocumentLink[] = [];
-			const sourceFile = context.project.fileProvider.getSourceFile(uri);
+		// 	const result: vscode.DocumentLink[] = [];
+		// 	const sourceFile = context.project.fileProvider.getSourceFile(uri);
 
-			if (sourceFile?.root) {
-				const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-				for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
-					for (const [_, [sourceSnapshot, map]] of context.project.fileProvider.getMaps(virtualFile)) {
-						if (sourceSnapshot === sourceFile.snapshot) {
-							for (const mapped of map.mappings) {
+		// 	if (sourceFile?.root) {
+		// 		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+		// 		for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
+		// 			for (const [_, [sourceSnapshot, map]] of context.project.fileProvider.getMaps(virtualFile)) {
+		// 				if (sourceSnapshot === sourceFile.snapshot) {
+		// 					for (const mapped of map.mappings) {
 
-								if (!mapped.data.displayWithLink)
-									continue;
+		// 						if (!mapped.data.displayWithLink)
+		// 							continue;
 
-								if (mapped.sourceRange[0] === mapped.sourceRange[1])
-									continue;
+		// 						if (mapped.sourceRange[0] === mapped.sourceRange[1])
+		// 							continue;
 
-								result.push({
-									range: {
-										start: document.positionAt(mapped.sourceRange[0]),
-										end: document.positionAt(mapped.sourceRange[1]),
-									},
-									target: uri, // TODO
-								});
-							}
-						}
-					}
-				}
-			}
+		// 						result.push({
+		// 							range: {
+		// 								start: document.positionAt(mapped.sourceRange[0]),
+		// 								end: document.positionAt(mapped.sourceRange[1]),
+		// 							},
+		// 							target: uri, // TODO
+		// 						});
+		// 					}
+		// 				}
+		// 			}
+		// 		}
+		// 	}
 
-			return result;
-		}
+		// 	return result;
+		// }
 	};
 }

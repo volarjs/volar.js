@@ -128,13 +128,13 @@ export function getProgram(
 
 						for (const start of map.toSourceOffsets(diagnostic.start)) {
 
-							const reportStart = typeof start[1].data.diagnostic === 'object' ? start[1].data.diagnostic.shouldReport() : !!start[1].data.diagnostic;
+							const reportStart = typeof start[1].data.diagnostics === 'object' ? start[1].data.diagnostics.shouldReport() : !!start[1].data.diagnostics;
 							if (!reportStart)
 								continue;
 
 							for (const end of map.toSourceOffsets(diagnostic.start + diagnostic.length, true)) {
 
-								const reportEnd = typeof end[1].data.diagnostic === 'object' ? end[1].data.diagnostic.shouldReport() : !!end[1].data.diagnostic;
+								const reportEnd = typeof end[1].data.diagnostics === 'object' ? end[1].data.diagnostics.shouldReport() : !!end[1].data.diagnostics;
 								if (!reportEnd)
 									continue;
 

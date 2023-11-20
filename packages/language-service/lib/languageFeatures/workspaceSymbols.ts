@@ -11,17 +11,16 @@ export function register(context: ServiceContext) {
 		const symbolsList: vscode.WorkspaceSymbol[][] = [];
 
 		for (const service of context.services) {
-
-			if (token.isCancellationRequested)
+			if (token.isCancellationRequested) {
 				break;
-
-			if (!service.provideWorkspaceSymbols)
+			}
+			if (!service.provideWorkspaceSymbols) {
 				continue;
-
+			}
 			const embeddedSymbols = await service.provideWorkspaceSymbols(query, token);
-			if (!embeddedSymbols)
+			if (!embeddedSymbols) {
 				continue;
-
+			}
 			const symbols = embeddedSymbols.map(symbol => transformer.asWorkspaceSymbol(symbol, loc => {
 
 				const [virtualFile] = context.project.fileProvider.getVirtualFile(loc.uri);

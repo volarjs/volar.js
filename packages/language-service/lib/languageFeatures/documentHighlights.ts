@@ -13,15 +13,13 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			position,
-			(position, map) => map.toGeneratedPositions(position,
-				// note https://github.com/johnsoncodehk/volar/issues/2009
-				data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename
-			),
+			() => position,
+			map => map.toGeneratedPositions(position, data => data.highlights ?? true),
 			async (service, document, position) => {
 
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
+				}
 
 				const recursiveChecker = dedupe.createLocationSet();
 				const result: vscode.DocumentHighlight[] = [];
@@ -73,19 +71,21 @@ export function register(context: ServiceContext) {
 					}
 				}
 			},
-			(data, map) => data.map(highlight => {
+			(data, map) => data
+				.map(highlight => {
 
-				if (!map)
-					return highlight;
+					if (!map)
+						return highlight;
 
-				const range = map.toSourceRange(highlight.range);
-				if (range) {
-					return {
-						...highlight,
-						range,
-					};
-				}
-			}).filter(notEmpty),
+					const range = map.toSourceRange(highlight.range, data => data.highlights ?? true);
+					if (range) {
+						return {
+							...highlight,
+							range,
+						};
+					}
+				})
+				.filter(notEmpty),
 			arr => arr.flat(),
 		);
 	};

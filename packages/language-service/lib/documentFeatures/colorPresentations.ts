@@ -11,38 +11,42 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			range,
-			(range, map, file) => {
-				if (file.capabilities.documentSymbol) // TODO: add color capability setting
-					return map.toGeneratedRanges(range);
-				return [];
+			() => range,
+			function* (map) {
+				for (const mappedRange of map.toGeneratedRanges(range, data => data.colors ?? true)) {
+					yield mappedRange;
+				}
 			},
 			(service, document, range) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				return service.provideColorPresentations?.(document, color, range, token);
 			},
-			(data, map) => map ? data.map(cp => {
-
-				if (cp.textEdit) {
-					const range = map.toSourceRange(cp.textEdit.range);
-					if (!range)
-						return undefined;
-					cp.textEdit.range = range;
+			(data, map) => {
+				if (!map) {
+					return data;
 				}
-
-				if (cp.additionalTextEdits) {
-					for (const textEdit of cp.additionalTextEdits) {
-						const range = map.toSourceRange(textEdit.range);
-						if (!range)
-							return undefined;
-						textEdit.range = range;
-					}
-				}
-				return cp;
-			}).filter(notEmpty) : data,
+				return data
+					.map(colorPresentation => {
+						if (colorPresentation.textEdit) {
+							const range = map.toSourceRange(colorPresentation.textEdit.range);
+							if (!range)
+								return undefined;
+							colorPresentation.textEdit.range = range;
+						}
+						if (colorPresentation.additionalTextEdits) {
+							for (const textEdit of colorPresentation.additionalTextEdits) {
+								const range = map.toSourceRange(textEdit.range);
+								if (!range)
+									return undefined;
+								textEdit.range = range;
+							}
+						}
+						return colorPresentation;
+					})
+					.filter(notEmpty);
+			},
 		);
 	};
 }

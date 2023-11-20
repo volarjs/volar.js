@@ -1,4 +1,4 @@
-import { FileRangeCapabilities, Project } from '@volar/language-core';
+import { CodeInformations, Project } from '@volar/language-core';
 import { createDocumentProvider } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
 import * as callHierarchy from './languageFeatures/callHierarchy';
@@ -62,7 +62,13 @@ function createServiceContext(
 		commands: {
 			rename: {
 				create(uri, position) {
-					const source = toSourceLocation(uri, position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename);
+					const source = toSourceLocation(
+						uri,
+						position,
+						data => typeof data.renameEdits === 'object'
+							? data.renameEdits.shouldRename
+							: (data.renameEdits ?? true)
+					);
 					if (!source) {
 						return;
 					}
@@ -142,7 +148,7 @@ function createServiceContext(
 
 	return context;
 
-	function toSourceLocation(uri: string, position: vscode.Position, filter?: (data: FileRangeCapabilities) => boolean) {
+	function toSourceLocation(uri: string, position: vscode.Position, filter?: (data: CodeInformations) => boolean) {
 
 		const [virtualFile] = project.fileProvider.getVirtualFile(uri);
 
@@ -189,9 +195,9 @@ export function createLanguageService(
 		doValidation: diagnostics.register(context),
 		findReferences: references.register(context),
 		findFileReferences: fileReferences.register(context),
-		findDefinition: definition.register(context, 'provideDefinition', data => !!data.definition, data => !!data.definition),
-		findTypeDefinition: definition.register(context, 'provideTypeDefinition', data => !!data.definition, data => !!data.definition),
-		findImplementations: definition.register(context, 'provideImplementation', data => !!data.references, () => false),
+		findDefinition: definition.register(context, 'provideDefinition', data => data.definitions ?? true, data => !!data.definition),
+		findTypeDefinition: definition.register(context, 'provideTypeDefinition', data => data.definitions ?? true, data => !!data.definition),
+		findImplementations: definition.register(context, 'provideImplementation', data => data.references ?? true, () => false),
 		prepareRename: renamePrepare.register(context),
 		doRename: rename.register(context),
 		getEditsForFileRename: fileRename.register(context),

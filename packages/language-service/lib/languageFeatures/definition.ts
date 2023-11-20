@@ -1,17 +1,17 @@
+import { CodeInformations, MirrorBehaviorCapabilities } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import * as dedupe from '../utils/dedupe';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { FileRangeCapabilities, MirrorBehaviorCapabilities } from '@volar/language-core';
 import { SourceMapWithDocuments } from '../documents';
-import { notEmpty } from '../utils/common';
+import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { notEmpty } from '../utils/common';
+import * as dedupe from '../utils/dedupe';
+import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(
 	context: ServiceContext,
 	apiName: 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
-	isValidMapping: (data: FileRangeCapabilities) => boolean,
+	isValidPosition: (data: CodeInformations) => boolean,
 	isValidMirrorPosition: (mirrorData: MirrorBehaviorCapabilities) => boolean,
 ) {
 
@@ -20,12 +20,13 @@ export function register(
 		return languageFeatureWorker(
 			context,
 			uri,
-			position,
-			(position, map) => map.toGeneratedPositions(position, isValidMapping),
+			() => position,
+			map => map.toGeneratedPositions(position, isValidPosition),
 			async (service, document, position) => {
 
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
+				}
 
 				const recursiveChecker = dedupe.createLocationSet();
 				const result: vscode.LocationLink[] = [];
@@ -86,11 +87,11 @@ export function register(
 					}
 				}
 			},
-			(data, sourceMap) => data.map(link => {
+			(data, map) => data.map(link => {
 
-				if (link.originSelectionRange && sourceMap) {
+				if (link.originSelectionRange && map) {
 
-					const originSelectionRange = toSourcePositionPreferSurroundedPosition(sourceMap, link.originSelectionRange, position);
+					const originSelectionRange = toSourcePositionPreferSurroundedPosition(map, link.originSelectionRange, position);
 
 					if (!originSelectionRange)
 						return;

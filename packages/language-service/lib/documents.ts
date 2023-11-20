@@ -1,4 +1,4 @@
-import { FileProvider, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import { FileProvider, CodeInformations, MirrorBehaviorCapabilities, MirrorMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
@@ -168,7 +168,7 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 
 	let version = 0;
 
-	const map2DocMap = new WeakMap<SourceMap<FileRangeCapabilities>, SourceMapWithDocuments<FileRangeCapabilities>>();
+	const map2DocMap = new WeakMap<SourceMap<CodeInformations>, SourceMapWithDocuments<CodeInformations>>();
 	const mirrorMap2DocMirrorMap = new WeakMap<MirrorMap, MirrorMapWithDocument>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
 
@@ -176,7 +176,7 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 		get,
 		getSourceFileMaps(source: SourceFile) {
 			if (source?.root) {
-				const result: [VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>][] = [];
+				const result: [VirtualFile, SourceMapWithDocuments<CodeInformations>][] = [];
 				for (const virtualFile of forEachEmbeddedFile(source.root)) {
 					for (const [sourceUri, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
 						if (sourceSnapshot === source.snapshot) {

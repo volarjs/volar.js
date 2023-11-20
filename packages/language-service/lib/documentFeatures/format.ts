@@ -63,7 +63,7 @@ export function register(context: ServiceContext) {
 
 			for (const file of embeddedFiles) {
 
-				if (!file.capabilities.documentFormatting)
+				if (!file.mappings.some(mapping => mapping.data.formattingEdits ?? true))
 					continue;
 
 				const isCodeBlock = file.mappings.length === 1 && file.mappings[0].generatedRange[0] === 0 && file.mappings[0].generatedRange[1] === file.snapshot.getLength();

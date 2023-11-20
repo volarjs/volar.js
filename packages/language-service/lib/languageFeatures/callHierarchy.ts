@@ -21,15 +21,13 @@ export function register(context: ServiceContext) {
 			return languageFeatureWorker(
 				context,
 				uri,
-				position,
-				(position, map) => map.toGeneratedPositions(position, data => !!data.references),
+				() => position,
+				map => map.toGeneratedPositions(position, data => data.references ?? true),
 				async (service, document, position, map) => {
-
-					if (token.isCancellationRequested)
+					if (token.isCancellationRequested) {
 						return;
-
+					}
 					const items = await service.provideCallHierarchyItems?.(document, position, token);
-
 					items?.forEach(item => {
 						item.data = {
 							uri,
@@ -40,12 +38,16 @@ export function register(context: ServiceContext) {
 							virtualDocumentUri: map?.virtualFileDocument.uri,
 						} satisfies PluginCallHierarchyData;
 					});
-
 					return items;
 				},
-				(data, sourceMap) => !sourceMap ? data : data
-					.map(item => transformCallHierarchyItem(item, [])?.[0])
-					.filter(notEmpty),
+				(data, map) => {
+					if (!map) {
+						return data;
+					}
+					return data
+						.map(item => transformCallHierarchyItem(item, [])?.[0])
+						.filter(notEmpty);
+				},
 				arr => dedupe.withLocations(arr.flat()),
 			);
 		},

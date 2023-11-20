@@ -1,5 +1,5 @@
 import * as transformer from '../transformer';
-import type { FileRangeCapabilities } from '@volar/language-core';
+import type { CodeInformations } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { Service, ServiceContext } from '../types';
 import { visitEmbedded } from '../utils/definePlugin';
@@ -53,7 +53,7 @@ export function register(context: ServiceContext) {
 
 					for (const map of context.documents.getMaps(virtualFile)) {
 
-						for (const mapped of map.toGeneratedPositions(position, data => !!data.completion)) {
+						for (const mapped of map.toGeneratedPositions(position, data => data.completionItems ?? true)) {
 
 							if (!cacheData.service.provideCompletionItems)
 								continue;
@@ -130,11 +130,11 @@ export function register(context: ServiceContext) {
 
 					const services = [...context.services].sort(sortServices);
 
-					let _data: FileRangeCapabilities | undefined;
+					let _data: CodeInformations | undefined;
 
 					for (const mapped of map.toGeneratedPositions(position, data => {
 						_data = data;
-						return !!data.completion;
+						return data.completionItems ?? true;
 					})) {
 
 						for (const service of services) {

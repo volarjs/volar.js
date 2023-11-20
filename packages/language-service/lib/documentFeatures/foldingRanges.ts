@@ -12,15 +12,22 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			file => !!file.capabilities.foldingRange,
+			map => map.map.mappings.some(mapping => mapping.data.foldingRanges ?? true),
 			(service, document) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				return service.provideFoldingRanges?.(document, token);
 			},
-			(data, map) => map ? transformer.asFoldingRanges(data, range => map.toSourceRange(range)) : data,
+			(data, map) => {
+				if (!map) {
+					return data;
+				}
+				return transformer.asFoldingRanges(
+					data,
+					range => map.toSourceRange(range, data => data.foldingRanges ?? true)
+				);
+			},
 			arr => arr.flat(),
 		);
 	};

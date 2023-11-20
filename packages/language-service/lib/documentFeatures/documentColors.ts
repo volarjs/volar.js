@@ -11,24 +11,29 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			file => !!file.capabilities.documentSymbol, // TODO: add color capability setting
+			map => map.map.mappings.some(mapping => mapping.data.colors ?? true),
 			(service, document) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				return service.provideDocumentColors?.(document, token);
 			},
-			(data, map) => map ? data.map<vscode.ColorInformation | undefined>(color => {
-
-				const range = map.toSourceRange(color.range);
-				if (range) {
-					return {
-						range,
-						color: color.color,
-					};
+			(data, map) => {
+				if (!map) {
+					return data;
 				}
-			}).filter(notEmpty) : data,
+				return data
+					.map<vscode.ColorInformation | undefined>(color => {
+						const range = map.toSourceRange(color.range, data => data.colors ?? true);
+						if (range) {
+							return {
+								range,
+								color: color.color,
+							};
+						}
+					})
+					.filter(notEmpty);
+			},
 			arr => arr.flat(),
 		);
 	};

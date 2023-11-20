@@ -1,4 +1,4 @@
-import { FileRangeCapabilities } from '@volar/language-core';
+import { CodeInformations } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext } from '../types';
@@ -10,36 +10,40 @@ export function register(context: ServiceContext) {
 
 	return (uri: string, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
 
-		let _data: FileRangeCapabilities | undefined;
-
 		return languageFeatureWorker(
 			context,
 			uri,
-			{ position, newName },
-			function* (arg, map) {
-				for (const mapped of map.toGeneratedPositions(arg.position, data => {
+			() => ({ position, newName }),
+			function* (map) {
+
+				let _data: CodeInformations = {};
+
+				for (const mappedPosition of map.toGeneratedPositions(position, data => {
 					_data = data;
-					return typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename;
+					return typeof data.renameEdits === 'object'
+						? data.renameEdits.shouldRename
+						: (data.renameEdits ?? true);
 				})) {
-
-					let newName = arg.newName;
-
-					if (_data && typeof _data.rename === 'object' && _data.rename.normalize) {
-						newName = _data.rename.normalize(arg.newName);
+					let newNewName = newName;
+					if (typeof _data.renameEdits === 'object' && _data.renameEdits.resolveNewName) {
+						newNewName = _data.renameEdits.resolveNewName(newName);
 					}
-
-					yield { position: mapped, newName };
+					yield {
+						position: mappedPosition,
+						newName: newNewName,
+					};
 				};
 			},
-			async (service, document, arg) => {
+			async (service, document, params) => {
 
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
+				}
 
 				const recursiveChecker = dedupe.createLocationSet();
 				let result: vscode.WorkspaceEdit | undefined;
 
-				await withMirrors(document, arg.position, arg.newName);
+				await withMirrors(document, params.position, params.newName);
 
 				return result;
 
@@ -220,15 +224,20 @@ export function embeddedEditToSourceEdit(
 				const tsEdits = tsResult.changes[tsUri];
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-						let _data: FileRangeCapabilities | undefined;
+
+						let _data: CodeInformations | undefined;
+
 						const range = map.toSourceRange(tsEdit.range, data => {
 							_data = data;
-							return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
+							return typeof data.renameEdits === 'object'
+								? data.renameEdits.shouldEdit
+								: (data.renameEdits ?? true);
 						});
+
 						if (range) {
 							let newText = tsEdit.newText;
-							if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
-								newText = _data.rename.apply(tsEdit.newText);
+							if (_data && typeof _data.renameEdits === 'object' && _data.renameEdits.resolveEditText) {
+								newText = _data.renameEdits.resolveEditText(tsEdit.newText);
 							}
 							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
 							sourceResult.changes[map.sourceFileDocument.uri].push({ newText, range });
@@ -272,16 +281,18 @@ export function embeddedEditToSourceEdit(
 						} satisfies vscode.TextDocumentEdit;
 						for (const tsEdit of tsDocEdit.edits) {
 							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-								let _data: FileRangeCapabilities | undefined;
+								let _data: CodeInformations | undefined;
 								const range = map.toSourceRange(tsEdit.range, data => {
 									_data = data;
 									// fix https://github.com/johnsoncodehk/volar/issues/1091
-									return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
+									return typeof data.renameEdits === 'object'
+										? data.renameEdits.shouldEdit
+										: (data.renameEdits ?? true);
 								});
 								if (range) {
 									let newText = tsEdit.newText;
-									if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
-										newText = _data.rename.apply(tsEdit.newText);
+									if (_data && typeof _data.renameEdits === 'object' && _data.renameEdits.resolveEditText) {
+										newText = _data.renameEdits.resolveEditText(tsEdit.newText);
 									}
 									sourceEdit.edits.push({
 										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,

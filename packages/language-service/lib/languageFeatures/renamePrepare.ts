@@ -10,13 +10,17 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			position,
-			(position, map) => map.toGeneratedPositions(position, data => typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename),
+			() => position,
+			map => map.toGeneratedPositions(
+				position,
+				data => typeof data.renameEdits === 'object'
+					? data.renameEdits.shouldRename
+					: (data.renameEdits ?? true)
+			),
 			(service, document, position) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				return service.provideRenameRange?.(document, position, token);
 			},
 			(item, map) => {
@@ -29,13 +33,11 @@ export function register(context: ServiceContext) {
 				return item;
 			},
 			prepares => {
-
 				for (const prepare of prepares) {
 					if ('start' in prepare && 'end' in prepare) {
 						return prepare; // if has any valid range, ignore other errors
 					}
 				}
-
 				return prepares[0] as vscode.ResponseError;
 			},
 		);

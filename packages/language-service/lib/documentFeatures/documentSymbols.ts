@@ -12,22 +12,24 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			file => !!file.capabilities.documentSymbol,
+			map => map.map.mappings.some(mapping => mapping.data.symbols ?? true),
 			async (service, document) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				return service.provideDocumentSymbols?.(document, token);
 			},
-			(data, map) => map
-				? data
+			(data, map) => {
+				if (!map) {
+					return data;
+				}
+				return data
 					.map(symbol => transformer.asDocumentSymbol(
 						symbol,
-						range => map.toSourceRange(range),
+						range => map.toSourceRange(range, data => data.symbols ?? true),
 					))
-					.filter(notEmpty)
-				: data,
+					.filter(notEmpty);
+			},
 			results => {
 				for (let i = 0; i < results.length; i++) {
 					for (let j = 0; j < results.length; j++) {

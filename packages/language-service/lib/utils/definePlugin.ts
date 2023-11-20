@@ -1,11 +1,11 @@
-import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
+import { CodeInformations, VirtualFile } from '@volar/language-core';
 import { SourceMapWithDocuments } from '../documents';
 import { ServiceContext } from '../types';
 
 export async function visitEmbedded(
 	context: ServiceContext,
 	current: VirtualFile,
-	cb: (file: VirtualFile, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>) => Promise<boolean>,
+	cb: (file: VirtualFile, sourceMap: SourceMapWithDocuments<CodeInformations>) => Promise<boolean>,
 	rootFile = current,
 ) {
 

@@ -12,8 +12,8 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			position,
-			(position, map) => map.toGeneratedPositions(position, data => !!data.references),
+			() => position,
+			map => map.toGeneratedPositions(position, data => data.references ?? true),
 			async (service, document, position) => {
 
 				if (token.isCancellationRequested)

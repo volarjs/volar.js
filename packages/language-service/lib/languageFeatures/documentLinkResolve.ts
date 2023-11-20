@@ -35,7 +35,7 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 	if (virtualFile) {
 		for (const map of context.documents.getMaps(virtualFile)) {
 
-			if (!virtualFile.capabilities.documentSymbol) {
+			if (!map.map.mappings.some(mapping => mapping.data.links ?? true)) {
 				continue;
 			}
 

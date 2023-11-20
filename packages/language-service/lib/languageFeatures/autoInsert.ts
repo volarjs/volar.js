@@ -10,19 +10,19 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			{ position, autoInsertContext },
-			function* (arg, map) {
-				for (const position of map.toGeneratedPositions(arg.position, data => !!data.completion)) {
+			() => ({ position, autoInsertContext }),
+			function* (map) {
+				for (const mappedPosition of map.toGeneratedPositions(position, data => data.autoInserts ?? true)) {
 
-					const rangeOffset = map.map.toGeneratedOffset(arg.autoInsertContext.lastChange.rangeOffset)?.[0];
-					const range = map.toGeneratedRange(arg.autoInsertContext.lastChange.range);
+					const rangeOffset = map.map.toGeneratedOffset(autoInsertContext.lastChange.rangeOffset)?.[0];
+					const range = map.toGeneratedRange(autoInsertContext.lastChange.range);
 
 					if (rangeOffset !== undefined && range) {
 						yield {
-							position,
+							position: mappedPosition,
 							autoInsertContext: {
 								lastChange: {
-									...arg.autoInsertContext.lastChange,
+									...autoInsertContext.lastChange,
 									rangeOffset,
 									range,
 								},
@@ -33,16 +33,16 @@ export function register(context: ServiceContext) {
 				}
 			},
 			(service, document, arg) => {
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
+				}
 				return service.provideAutoInsertionEdit?.(document, arg.position, arg.autoInsertContext, token);
 			},
 			(item, map) => {
-
-				if (!map || typeof item === 'string')
+				if (!map || typeof item === 'string') {
 					return item;
-
-				const range = map.toSourceRange(item.range);
+				}
+				const range = map.toSourceRange(item.range, data => data.autoInserts ?? true);
 				if (range) {
 					item.range = range;
 					return item;

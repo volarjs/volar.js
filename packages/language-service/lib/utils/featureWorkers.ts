@@ -1,4 +1,4 @@
-import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
+import { CodeInformations } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import { Service, ServiceContext } from '../types';
@@ -7,23 +7,22 @@ import { visitEmbedded } from './definePlugin';
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
 	uri: string,
-	isValidSourceMap: (file: VirtualFile, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>) => boolean,
-	worker: (service: ReturnType<Service>, document: TextDocument) => T,
-	transform: (result: NonNullable<Awaited<T>>, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined) => Awaited<T> | undefined,
-	combineResult?: (results: NonNullable<Awaited<T>>[]) => NonNullable<Awaited<T>>,
+	valid: (map: SourceMapWithDocuments<CodeInformations>) => boolean,
+	worker: (service: ReturnType<Service>, document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
+	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformations>) => T | undefined,
+	combineResult?: (results: T[]) => T,
 ) {
 	return languageFeatureWorker(
 		context,
 		uri,
-		undefined,
-		(_, map, file) => {
-			if (isValidSourceMap(file, map)) {
-				return [undefined];
+		() => void 0,
+		function* (map) {
+			if (valid(map)) {
+				yield;
 			}
-			return [];
 		},
 		worker,
-		transform,
+		transformResult,
 		combineResult,
 	);
 }
@@ -31,39 +30,35 @@ export async function documentFeatureWorker<T>(
 export async function languageFeatureWorker<T, K>(
 	context: ServiceContext,
 	uri: string,
-	arg: K,
-	transformArg: (arg: K, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>, file: VirtualFile) => Generator<K> | K[],
-	worker: (service: ReturnType<Service>, document: TextDocument, arg: K, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined, file: VirtualFile | undefined) => T,
-	transform: (result: NonNullable<Awaited<T>>, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined) => Awaited<T> | undefined,
-	combineResult?: (results: NonNullable<Awaited<T>>[]) => NonNullable<Awaited<T>>,
-	reportProgress?: (result: NonNullable<Awaited<T>>) => void,
+	getReadDocParams: () => K,
+	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformations>) => Generator<K>,
+	worker: (service: ReturnType<Service>, document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformations>) => Thenable<T | null | undefined> | T | null | undefined,
+	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformations>) => T | undefined,
+	combineResult?: (results: T[]) => T,
 ) {
 
 	const sourceFile = context.project.fileProvider.getSourceFile(uri);
 	if (!sourceFile)
 		return;
 
-	const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-
-	let results: NonNullable<Awaited<T>>[] = [];
+	let results: T[] = [];
 
 	if (sourceFile.root) {
 
-		await visitEmbedded(context, sourceFile.root, async (file, map) => {
+		await visitEmbedded(context, sourceFile.root, async (_file, map) => {
 
-			for (const mappedArg of transformArg(arg, map, file)) {
+			for (const mappedArg of eachVirtualDocParams(map)) {
 
 				for (const [serviceId, service] of Object.entries(context.services)) {
 
 					const embeddedResult = await safeCall(
-						() => worker(service, map.virtualFileDocument, mappedArg, map, file),
+						() => worker(service, map.virtualFileDocument, mappedArg, map),
 						'service ' + serviceId + ' crashed on ' + map.virtualFileDocument.uri,
 					);
 					if (!embeddedResult)
 						continue;
 
-					const result = transform(embeddedResult!, map);
-
+					const result = transformResult(embeddedResult!, map);
 					if (!result)
 						continue;
 
@@ -71,12 +66,6 @@ export async function languageFeatureWorker<T, K>(
 
 					if (!combineResult)
 						return false;
-
-					const isEmptyArray = Array.isArray(result) && result.length === 0;
-
-					if (reportProgress && !isEmptyArray) {
-						reportProgress(combineResult(results));
-					}
 				}
 			}
 
@@ -85,16 +74,19 @@ export async function languageFeatureWorker<T, K>(
 	}
 	else {
 
+		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+		const params = getReadDocParams();
+
 		for (const [serviceId, service] of Object.entries(context.services)) {
 
 			const embeddedResult = await safeCall(
-				() => worker(service, document, arg, undefined, undefined),
+				() => worker(service, document, params, undefined),
 				'service ' + serviceId + ' crashed on ' + uri,
 			);
 			if (!embeddedResult)
 				continue;
 
-			const result = transform(embeddedResult, undefined);
+			const result = transformResult(embeddedResult, undefined);
 			if (!result)
 				continue;
 
@@ -102,12 +94,6 @@ export async function languageFeatureWorker<T, K>(
 
 			if (!combineResult)
 				break;
-
-			const isEmptyArray = Array.isArray(result) && result.length === 0;
-
-			if (reportProgress && !isEmptyArray) {
-				reportProgress(combineResult(results));
-			}
 		}
 	}
 
@@ -119,7 +105,7 @@ export async function languageFeatureWorker<T, K>(
 	}
 }
 
-export async function safeCall<T>(cb: () => Promise<T> | T, errorMsg?: string) {
+export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) {
 	try {
 		return await cb();
 	}

@@ -1,4 +1,4 @@
-import type { FileRangeCapabilities } from '@volar/language-server';
+import type { CodeInformations } from '@volar/language-server';
 import { SourceMap, Stack } from '@volar/source-map';
 import { ExportsInfoForLabs, TextDocument } from '@volar/vscode';
 import * as vscode from 'vscode';
@@ -138,7 +138,7 @@ export async function activate(info: ExportsInfoForLabs) {
 		));
 	}
 
-	const virtualUriToSourceMap = new Map<string, [string, number, SourceMap<FileRangeCapabilities>][]>();
+	const virtualUriToSourceMap = new Map<string, [string, number, SourceMap<CodeInformations>][]>();
 	const virtualUriToStacks = new Map<string, Stack[]>();
 	const virtualDocuments = new Map<string, TextDocument>();
 
