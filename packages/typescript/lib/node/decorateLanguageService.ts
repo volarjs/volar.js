@@ -103,9 +103,9 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				for (const [mirrorOffset, data] of mirrorMap.findMirrorOffsets(ref.textSpan.start)) {
 					if ((mode === 'definition' || mode === 'typeDefinition' || mode === 'implementation') && !(data.definition ?? true))
 						continue;
-					if ((mode === 'references') && !(data.reference ?? true))
+					if (mode === 'references' && !(data.reference ?? true))
 						continue;
-					if ((mode === 'rename') && !(data.rename ?? true))
+					if (mode === 'rename' && !(data.rename ?? true))
 						continue;
 					if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
 						continue;
