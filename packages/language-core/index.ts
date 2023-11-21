@@ -1,4 +1,4 @@
-export * from './lib/createFileProvider';
+export * from './lib/fileProvider';
 export * from './lib/linkedCodeMap';
 export * from './lib/types';
 
