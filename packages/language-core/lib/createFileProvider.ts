@@ -27,7 +27,7 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 					// updated
 					value.snapshot = snapshot;
 					if (value.root && value.language) {
-						deleteVirtualFiles(value);
+						disposeVirtualFiles(value);
 						value.language.updateVirtualFile(value.root, snapshot);
 						updateVirtualFiles(value);
 					}
@@ -58,10 +58,10 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 			const value = sourceFileRegistry.get(normalizeId(id));
 			if (value) {
 				if (value.language && value.root) {
-					value.language.deleteVirtualFile?.(value.root);
+					value.language.disposeVirtualFile?.(value.root);
 				}
 				sourceFileRegistry.delete(normalizeId(id)); // deleted
-				deleteVirtualFiles(value);
+				disposeVirtualFiles(value);
 			}
 		},
 		getMirrorMap(file: VirtualFile) {
@@ -106,7 +106,7 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 		},
 	};
 
-	function deleteVirtualFiles(source: SourceFile) {
+	function disposeVirtualFiles(source: SourceFile) {
 		if (source.root) {
 			for (const file of forEachEmbeddedFile(source.root)) {
 				virtualFileRegistry.delete(normalizeId(file.id));
