@@ -215,7 +215,7 @@ export function createDocumentManager(
 
 	return {
 		data: snapshots,
-		onDidChangeContent: (cb: (params: vscode.DidChangeTextDocumentParams) => void): vscode.Disposable => {
+		onDidChangeContent(cb: (params: vscode.DidChangeTextDocumentParams) => void): vscode.Disposable {
 			onDidChangeContents.add(cb);
 			return {
 				dispose() {
@@ -223,7 +223,7 @@ export function createDocumentManager(
 				},
 			};
 		},
-		onDidClose: (cb: (params: vscode.DidCloseTextDocumentParams) => void): vscode.Disposable => {
+		onDidClose(cb: (params: vscode.DidCloseTextDocumentParams) => void): vscode.Disposable {
 			onDidCloses.add(cb);
 			return {
 				dispose() {
