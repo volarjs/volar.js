@@ -1,13 +1,13 @@
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { MirrorMap } from './mirrorMap';
-import type { CodeInformations, Language, SourceFile, VirtualFile } from './types';
+import type { CodeInformation, Language, SourceFile, VirtualFile } from './types';
 
 export function createFileProvider(languages: Language[], caseSensitive: boolean, sync: (sourceFileId: string) => void) {
 
 	const sourceFileRegistry = new Map<string, SourceFile>();
 	const virtualFileRegistry = new Map<string, { virtualFile: VirtualFile, source: SourceFile; }>();
-	const virtualFileMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformations>]>>();
+	const virtualFileMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>>();
 	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, MirrorMap | undefined>();
 	const normalizeId = caseSensitive
 		? (id: string) => id
@@ -131,7 +131,7 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 export function updateVirtualFileMaps(
 	virtualFile: VirtualFile,
 	getSourceSnapshot: (sourceUri: string | undefined) => [string, ts.IScriptSnapshot] | undefined,
-	map: Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformations>]> = new Map(),
+	map: Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]> = new Map(),
 ) {
 
 	const sources = new Set<string | undefined>();

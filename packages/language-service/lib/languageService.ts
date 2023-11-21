@@ -1,4 +1,4 @@
-import { CodeInformations, Project } from '@volar/language-core';
+import { CodeInformation, Project } from '@volar/language-core';
 import { createDocumentProvider } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
 import * as callHierarchy from './languageFeatures/callHierarchy';
@@ -197,7 +197,7 @@ export function createLanguageService(
 
 		return context;
 
-		function toSourceLocation(uri: string, position: vscode.Position, filter?: (data: CodeInformations) => boolean) {
+		function toSourceLocation(uri: string, position: vscode.Position, filter?: (data: CodeInformation) => boolean) {
 
 			const [virtualFile] = project.fileProvider.getVirtualFile(uri);
 

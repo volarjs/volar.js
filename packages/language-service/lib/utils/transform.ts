@@ -1,7 +1,7 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from './common';
 import { ServiceContext } from '../types';
-import { CodeInformations } from '@volar/language-core';
+import { CodeInformation } from '@volar/language-core';
 
 export function transformCompletionItem<T extends vscode.CompletionItem>(
 	item: T,
@@ -276,7 +276,7 @@ export function transformWorkspaceEdit(
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
 
-						let _data: CodeInformations | undefined;
+						let _data: CodeInformation | undefined;
 
 						const range = map.toSourceRange(tsEdit.range, data => {
 							_data = data;
@@ -332,7 +332,7 @@ export function transformWorkspaceEdit(
 						} satisfies vscode.TextDocumentEdit;
 						for (const tsEdit of tsDocEdit.edits) {
 							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-								let _data: CodeInformations | undefined;
+								let _data: CodeInformation | undefined;
 								const range = map.toSourceRange(tsEdit.range, data => {
 									_data = data;
 									// fix https://github.com/johnsoncodehk/volar/issues/1091

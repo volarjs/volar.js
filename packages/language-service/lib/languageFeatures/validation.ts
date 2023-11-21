@@ -1,4 +1,4 @@
-import { CodeInformations } from '@volar/language-core';
+import { CodeInformation } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -301,7 +301,7 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function transformErrorRangeBase(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<CodeInformations> | undefined, filter: (data: CodeInformations) => boolean) {
+	function transformErrorRangeBase(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<CodeInformation> | undefined, filter: (data: CodeInformation) => boolean) {
 
 		const result: vscode.Diagnostic[] = [];
 

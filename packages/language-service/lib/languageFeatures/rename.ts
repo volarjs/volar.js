@@ -1,4 +1,4 @@
-import { CodeInformations } from '@volar/language-core';
+import { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext } from '../types';
@@ -17,7 +17,7 @@ export function register(context: ServiceContext) {
 			() => ({ position, newName }),
 			function* (map) {
 
-				let _data: CodeInformations = {};
+				let _data: CodeInformation = {};
 
 				for (const mappedPosition of map.toGeneratedPositions(position, data => {
 					_data = data;

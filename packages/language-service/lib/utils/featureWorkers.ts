@@ -1,4 +1,4 @@
-import { CodeInformations, VirtualFile } from '@volar/language-core';
+import { CodeInformation, VirtualFile } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import { Service, ServiceContext } from '../types';
@@ -6,9 +6,9 @@ import { Service, ServiceContext } from '../types';
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
 	uri: string,
-	valid: (map: SourceMapWithDocuments<CodeInformations>) => boolean,
+	valid: (map: SourceMapWithDocuments<CodeInformation>) => boolean,
 	worker: (service: ReturnType<Service>, document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
-	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformations>) => T | undefined,
+	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
 	return languageFeatureWorker(
@@ -30,9 +30,9 @@ export async function languageFeatureWorker<T, K>(
 	context: ServiceContext,
 	uri: string,
 	getReadDocParams: () => K,
-	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformations>) => Generator<K>,
-	worker: (service: ReturnType<Service>, document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformations>) => Thenable<T | null | undefined> | T | null | undefined,
-	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformations>) => T | undefined,
+	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformation>) => Generator<K>,
+	worker: (service: ReturnType<Service>, document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
+	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
 
@@ -116,7 +116,7 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 export async function visitEmbedded(
 	context: ServiceContext,
 	current: VirtualFile,
-	cb: (file: VirtualFile, sourceMap: SourceMapWithDocuments<CodeInformations>) => Promise<boolean>,
+	cb: (file: VirtualFile, sourceMap: SourceMapWithDocuments<CodeInformation>) => Promise<boolean>,
 	rootFile = current,
 ) {
 

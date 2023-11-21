@@ -1,4 +1,4 @@
-import type { CodeInformations } from '@volar/language-core';
+import type { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { Service, ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
@@ -130,7 +130,7 @@ export function register(context: ServiceContext) {
 
 					const services = [...context.services].sort(sortServices);
 
-					let _data: CodeInformations | undefined;
+					let _data: CodeInformation | undefined;
 
 					for (const mapped of map.toGeneratedPositions(position, data => {
 						_data = data;

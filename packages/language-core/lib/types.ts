@@ -7,24 +7,24 @@ export interface SourceFile extends BaseFile {
 }
 
 export interface VirtualFile extends BaseFile {
-	mappings: Mapping<CodeInformations>[];
+	mappings: Mapping<CodeInformation>[];
 	embeddedFiles: VirtualFile[];
 	typescript?: {
 		scriptKind: ts.ScriptKind;
 		isLanguageServiceSourceFile?: boolean;
 	};
 	codegenStacks?: Stack[];
-	mirrorCodeMappings?: Mapping<[MirrorCodeInformations, MirrorCodeInformations]>[];
+	mirrorCodeMappings?: Mapping<[MirrorCodeInformation, MirrorCodeInformation]>[];
 }
 
-export interface MirrorCodeInformations {
+export interface MirrorCodeInformation {
 	reference?: boolean;
 	rename?: boolean;
 	definition?: boolean;
 	highlight?: boolean;
 }
 
-export interface CodeInformations {
+export interface CodeInformation {
 	diagnostics?: boolean | {
 		shouldReport(): boolean;
 	};
