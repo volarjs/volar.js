@@ -1,6 +1,6 @@
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { MirrorMap } from './mirrorMap';
+import { LinkedCodeMap } from './linkedCodeMap';
 import type { CodeInformation, Language, SourceFile, VirtualFile } from './types';
 
 export function createFileProvider(languages: Language[], caseSensitive: boolean, sync: (sourceFileId: string) => void) {
@@ -8,7 +8,7 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 	const sourceFileRegistry = new Map<string, SourceFile>();
 	const virtualFileRegistry = new Map<string, { virtualFile: VirtualFile, source: SourceFile; }>();
 	const virtualFileMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>>();
-	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, MirrorMap | undefined>();
+	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, LinkedCodeMap | undefined>();
 	const normalizeId = caseSensitive
 		? (id: string) => id
 		: (id: string) => id.toLowerCase();
@@ -71,7 +71,7 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 		},
 		getMirrorMap(file: VirtualFile) {
 			if (!virtualFileToMirrorMap.has(file.snapshot)) {
-				virtualFileToMirrorMap.set(file.snapshot, file.linkedCodeMappings ? new MirrorMap(file.linkedCodeMappings) : undefined);
+				virtualFileToMirrorMap.set(file.snapshot, file.linkedCodeMappings ? new LinkedCodeMap(file.linkedCodeMappings) : undefined);
 			}
 			return virtualFileToMirrorMap.get(file.snapshot);
 		},

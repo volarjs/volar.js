@@ -100,7 +100,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (!mirrorMap)
 					continue;
 
-				for (const [mirrorOffset, data] of mirrorMap.findMirrorOffsets(ref.textSpan.start)) {
+				for (const [mirrorOffset, data] of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
 					if ((mode === 'definition' || mode === 'typeDefinition' || mode === 'implementation') && !(data.definition ?? true))
 						continue;
 					if (mode === 'references' && !(data.reference ?? true))
@@ -151,7 +151,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (!mirrorMap)
 					continue;
 
-				for (const [mirrorOffset, data] of mirrorMap.findMirrorOffsets(ref.textSpan.start)) {
+				for (const [mirrorOffset, data] of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
 					if (!(data.definition ?? true))
 						continue;
 					if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
@@ -190,7 +190,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 					if (!mirrorMap)
 						continue;
 
-					for (const [mirrorOffset, data] of mirrorMap.findMirrorOffsets(ref.textSpan.start)) {
+					for (const [mirrorOffset, data] of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
 						if (!(data.reference ?? true))
 							continue;
 						if (loopChecker.has(ref.fileName + ':' + mirrorOffset))

@@ -1,5 +1,5 @@
 export * from './lib/createFileProvider';
-export * from './lib/mirrorMap';
+export * from './lib/linkedCodeMap';
 export * from './lib/types';
 
 export function resolveCommonLanguageId(fileNameOrUri: string) {

@@ -1,4 +1,4 @@
-import { FileProvider, CodeInformation, LinkedCodeTrigger, MirrorMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import { FileProvider, CodeInformation, LinkedCodeTrigger, LinkedCodeMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
@@ -150,7 +150,7 @@ export class SourceMapWithDocuments<Data = any> {
 export class MirrorMapWithDocument extends SourceMapWithDocuments<[LinkedCodeTrigger, LinkedCodeTrigger]> {
 	constructor(
 		public document: TextDocument,
-		map: MirrorMap,
+		map: LinkedCodeMap,
 	) {
 		super(document, document, map);
 	}
@@ -169,7 +169,7 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 	let version = 0;
 
 	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments<CodeInformation>>();
-	const mirrorMap2DocMirrorMap = new WeakMap<MirrorMap, MirrorMapWithDocument>();
+	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, MirrorMapWithDocument>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
 
 	return {
