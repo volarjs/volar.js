@@ -1,4 +1,4 @@
-import { FileKind, CodeInformations, VirtualFile } from '@volar/language-core';
+import { CodeInformations, VirtualFile } from '@volar/language-core';
 import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
@@ -36,7 +36,7 @@ export function registerEditorFeatures(
 			return {
 				uri: file.id,
 				languageId: file.languageId,
-				kind: file.kind,
+				typescript: file.typescript,
 				embeddedFiles: file.embeddedFiles.map(prune),
 				version,
 			} as any;
@@ -86,7 +86,7 @@ export function registerEditorFeatures(
 				else {
 					const uri = languageService.context.env.fileNameToUri(fileName);
 					const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(uri);
-					if (virtualFile && virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.startsWith(rootUri)) {
+					if (virtualFile?.typescript?.isProjectFile && virtualFile.id.startsWith(rootUri)) {
 						const { snapshot } = virtualFile;
 						fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
 					}
