@@ -11,7 +11,6 @@ export interface VirtualFile extends BaseFile {
 	embeddedFiles: VirtualFile[];
 	typescript?: {
 		scriptKind: ts.ScriptKind;
-		isLanguageServiceSourceFile?: boolean;
 	};
 	codegenStacks?: Stack[];
 	linkedCodeMappings?: Mapping<[LinkedCodeTrigger, LinkedCodeTrigger]>[];

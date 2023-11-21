@@ -344,7 +344,7 @@ export function createProject(
 				const sourceFile = fileProvider.getSourceFile(uri);
 				if (sourceFile?.virtualFile) {
 					for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-						if (file.typescript?.isLanguageServiceSourceFile) {
+						if (file.typescript) {
 							newTsVirtualFileSnapshots.add(file.snapshot);
 							tsFileNamesSet.add(projectHost.getFileName(file.id)); // virtual .ts
 						}

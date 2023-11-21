@@ -87,7 +87,7 @@ export function registerEditorFeatures(
 				else {
 					const uri = languageService.context.env.fileNameToUri(fileName);
 					const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(uri);
-					if (virtualFile?.typescript?.isLanguageServiceSourceFile && virtualFile.id.startsWith(rootUri)) {
+					if (virtualFile?.typescript && virtualFile.id.startsWith(rootUri)) {
 						const { snapshot } = virtualFile;
 						fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
 					}
