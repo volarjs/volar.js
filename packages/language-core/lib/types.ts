@@ -14,10 +14,10 @@ export interface VirtualFile extends BaseFile {
 		isLanguageServiceSourceFile?: boolean;
 	};
 	codegenStacks?: Stack[];
-	mirrorCodeMappings?: Mapping<[MirrorCodeInformation, MirrorCodeInformation]>[];
+	linkedCodeMappings?: Mapping<[LinkedCodeTrigger, LinkedCodeTrigger]>[];
 }
 
-export interface MirrorCodeInformation {
+export interface LinkedCodeTrigger {
 	reference?: boolean;
 	rename?: boolean;
 	definition?: boolean;

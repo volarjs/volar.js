@@ -1,7 +1,7 @@
 import * as SourceMaps from '@volar/source-map';
-import { MirrorCodeInformation } from './types';
+import { LinkedCodeTrigger } from './types';
 
-export class MirrorMap extends SourceMaps.SourceMap<[MirrorCodeInformation, MirrorCodeInformation]> {
+export class MirrorMap extends SourceMaps.SourceMap<[LinkedCodeTrigger, LinkedCodeTrigger]> {
 	*findMirrorOffsets(start: number) {
 		for (const mapped of this.toGeneratedOffsets(start)) {
 			yield [mapped[0], mapped[1].data[1]] as const;

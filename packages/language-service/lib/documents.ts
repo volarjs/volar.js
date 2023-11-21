@@ -1,4 +1,4 @@
-import { FileProvider, CodeInformation, MirrorCodeInformation, MirrorMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import { FileProvider, CodeInformation, LinkedCodeTrigger, MirrorMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
@@ -147,7 +147,7 @@ export class SourceMapWithDocuments<Data = any> {
 	}
 }
 
-export class MirrorMapWithDocument extends SourceMapWithDocuments<[MirrorCodeInformation, MirrorCodeInformation]> {
+export class MirrorMapWithDocument extends SourceMapWithDocuments<[LinkedCodeTrigger, LinkedCodeTrigger]> {
 	constructor(
 		public document: TextDocument,
 		map: MirrorMap,

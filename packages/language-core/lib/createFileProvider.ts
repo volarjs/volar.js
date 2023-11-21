@@ -71,7 +71,7 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 		},
 		getMirrorMap(file: VirtualFile) {
 			if (!virtualFileToMirrorMap.has(file.snapshot)) {
-				virtualFileToMirrorMap.set(file.snapshot, file.mirrorCodeMappings ? new MirrorMap(file.mirrorCodeMappings) : undefined);
+				virtualFileToMirrorMap.set(file.snapshot, file.linkedCodeMappings ? new MirrorMap(file.linkedCodeMappings) : undefined);
 			}
 			return virtualFileToMirrorMap.get(file.snapshot);
 		},
