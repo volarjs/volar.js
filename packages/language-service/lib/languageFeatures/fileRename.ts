@@ -11,11 +11,11 @@ export function register(context: ServiceContext) {
 
 		const sourceFile = context.project.fileProvider.getSourceFile(oldUri);
 
-		if (sourceFile?.root) {
+		if (sourceFile?.virtualFile) {
 
 			let tsExt: string | undefined;
 
-			for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
+			for (const virtualFile of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
 				if (virtualFile.typescript?.isLanguageServiceSourceFile && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
 					tsExt = virtualFile.id.substring(virtualFile.id.lastIndexOf('.'));
 				}

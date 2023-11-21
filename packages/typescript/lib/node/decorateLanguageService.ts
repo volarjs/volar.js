@@ -27,8 +27,8 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	function organizeImports(args: ts.OrganizeImportsArgs, formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences | undefined): ReturnType<ts.LanguageService['organizeImports']> {
 		let edits: readonly ts.FileTextChanges[] = [];
 		const sourceFile = virtualFiles.getSourceFile(args.fileName);
-		if (sourceFile?.root) {
-			for (const file of forEachEmbeddedFile(sourceFile.root)) {
+		if (sourceFile?.virtualFile) {
+			for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
 				if (file.typescript?.isLanguageServiceSourceFile && file.mappings.some(mapping => mapping.data.codeActions)) {
 					edits = edits.concat(_organizeImports({
 						...args,
@@ -309,8 +309,8 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		if (isTsPlugin) {
 			let result: VirtualFile | undefined;
 			const sourceFile = virtualFiles.getSourceFile(fileName);
-			if (sourceFile?.root) {
-				for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
+			if (sourceFile?.virtualFile) {
+				for (const virtualFile of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
 					const ext = virtualFile.id.substring(fileName.length);
 					if (virtualFile.typescript?.isLanguageServiceSourceFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
 						result = virtualFile;

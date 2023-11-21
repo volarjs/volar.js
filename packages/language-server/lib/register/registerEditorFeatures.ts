@@ -23,8 +23,8 @@ export function registerEditorFeatures(
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const languageService = (await projectProvider.getProject(document.uri)).getLanguageService();
-		const file = languageService.context.project.fileProvider.getSourceFile(document.uri)?.root;
-		return file ? prune(file) : undefined;
+		const virtualFile = languageService.context.project.fileProvider.getSourceFile(document.uri)?.virtualFile;
+		return virtualFile ? prune(virtualFile[0]) : undefined;
 
 		function prune(file: VirtualFile): VirtualFile {
 			let version = scriptVersions.get(file.id) ?? 0;
@@ -34,12 +34,13 @@ export function registerEditorFeatures(
 				scriptVersionSnapshots.add(file.snapshot);
 			}
 			return {
-				uri: file.id,
+				id: file.id,
 				languageId: file.languageId,
 				typescript: file.typescript,
 				embeddedFiles: file.embeddedFiles.map(prune),
+				// @ts-expect-error
 				version,
-			} as any;
+			};
 		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async params => {

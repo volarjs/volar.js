@@ -61,8 +61,9 @@ export function activate(context: vscode.ExtensionContext) {
 				sourceUriToVirtualUris.set(element.sourceDocumentUri, virtualFileUris);
 
 				let label = path.basename(element.virtualFile.id);
-				const version = (element.virtualFile as any).version;
-				label += ` (kind: ${element.virtualFile.kind}, version: ${version})`;
+				// @ts-expect-error
+				const version = element.virtualFile.version;
+				label += ` (ts: ${element.virtualFile.typescript?.isLanguageServiceSourceFile}, version: ${version})`;
 				return {
 					iconPath: element.client.clientOptions.initializationOptions.codegenStack ? new vscode.ThemeIcon('debug-breakpoint') : new vscode.ThemeIcon('file'),
 					label,

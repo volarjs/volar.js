@@ -26,9 +26,9 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 				else if (value.snapshot !== snapshot) {
 					// updated
 					value.snapshot = snapshot;
-					if (value.root && value.language) {
+					if (value.virtualFile) {
 						disposeVirtualFiles(value);
-						value.language.updateVirtualFile(value.root, snapshot);
+						value.virtualFile[1].updateVirtualFile(value.virtualFile[0], snapshot);
 						updateVirtualFiles(value);
 					}
 					return value;
@@ -43,7 +43,12 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 				const virtualFile = language.createVirtualFile(id, languageId, snapshot);
 				if (virtualFile) {
 					// created
-					const source: SourceFile = { id: id, languageId, snapshot, root: virtualFile, language };
+					const source: SourceFile = {
+						id,
+						languageId,
+						snapshot,
+						virtualFile: [virtualFile, language],
+					};
 					sourceFileRegistry.set(normalizeId(id), source);
 					updateVirtualFiles(source);
 					return source;
@@ -57,8 +62,8 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 		deleteSourceFile(id: string) {
 			const value = sourceFileRegistry.get(normalizeId(id));
 			if (value) {
-				if (value.language && value.root) {
-					value.language.disposeVirtualFile?.(value.root);
+				if (value.virtualFile) {
+					value.virtualFile[1].disposeVirtualFile?.(value.virtualFile[0]);
 				}
 				sourceFileRegistry.delete(normalizeId(id)); // deleted
 				disposeVirtualFiles(value);
@@ -107,16 +112,16 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 	};
 
 	function disposeVirtualFiles(source: SourceFile) {
-		if (source.root) {
-			for (const file of forEachEmbeddedFile(source.root)) {
+		if (source.virtualFile) {
+			for (const file of forEachEmbeddedFile(source.virtualFile[0])) {
 				virtualFileRegistry.delete(normalizeId(file.id));
 			}
 		}
 	}
 
 	function updateVirtualFiles(source: SourceFile) {
-		if (source.root) {
-			for (const file of forEachEmbeddedFile(source.root)) {
+		if (source.virtualFile) {
+			for (const file of forEachEmbeddedFile(source.virtualFile[0])) {
 				virtualFileRegistry.set(normalizeId(file.id), { virtualFile: file, source });
 			}
 		}

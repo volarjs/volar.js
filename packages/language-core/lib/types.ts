@@ -2,6 +2,10 @@ import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { createFileProvider } from '../lib/createFileProvider';
 
+export interface SourceFile extends BaseFile {
+	virtualFile?: [VirtualFile, Language];
+}
+
 export interface VirtualFile extends BaseFile {
 	mappings: Mapping<CodeInformations>[];
 	embeddedFiles: VirtualFile[];
@@ -51,11 +55,6 @@ export interface CodeInformations {
 	semanticTokens?: boolean;
 	hover?: boolean;
 	signatureHelps?: boolean;
-}
-
-export interface SourceFile extends BaseFile {
-	root?: VirtualFile;
-	language?: Language;
 }
 
 export interface BaseFile {

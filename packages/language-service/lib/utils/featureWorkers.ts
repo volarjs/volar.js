@@ -42,9 +42,9 @@ export async function languageFeatureWorker<T, K>(
 
 	let results: T[] = [];
 
-	if (sourceFile.root) {
+	if (sourceFile.virtualFile) {
 
-		await visitEmbedded(context, sourceFile.root, async (_file, map) => {
+		await visitEmbedded(context, sourceFile.virtualFile[0], async (_file, map) => {
 
 			for (const mappedArg of eachVirtualDocParams(map)) {
 
@@ -128,7 +128,7 @@ export async function visitEmbedded(
 
 	for (const map of context.documents.getMaps(current)) {
 		const sourceFile = context.project.fileProvider.getSourceFile(map.sourceFileDocument.uri);
-		if (sourceFile?.root === rootFile) {
+		if (sourceFile?.virtualFile?.[0] === rootFile) {
 			if (!await cb(current, map)) {
 				return false;
 			}

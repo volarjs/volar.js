@@ -113,7 +113,7 @@ export function register(context: ServiceContext) {
 		}
 		else {
 
-			const rootVirtualFile = context.project.fileProvider.getSourceFile(uri)?.root;
+			const rootVirtualFile = context.project.fileProvider.getSourceFile(uri)?.virtualFile?.[0];
 
 			cache = {
 				uri,

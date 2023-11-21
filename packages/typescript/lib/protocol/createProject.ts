@@ -298,7 +298,7 @@ export function createProject(
 					return virtualFile.typescript.scriptKind;
 				}
 				const sourceFile = fileProvider.getSourceFile(projectHost.getFileId(fileName));
-				if (sourceFile?.root) {
+				if (sourceFile?.virtualFile) {
 					return ts.ScriptKind.Deferred;
 				}
 				switch (path.extname(fileName)) {
@@ -342,8 +342,8 @@ export function createProject(
 			for (const fileName of projectHost.getScriptFileNames()) {
 				const uri = projectHost.getFileId(fileName);
 				const sourceFile = fileProvider.getSourceFile(uri);
-				if (sourceFile?.root) {
-					for (const file of forEachEmbeddedFile(sourceFile.root)) {
+				if (sourceFile?.virtualFile) {
+					for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
 						if (file.typescript?.isLanguageServiceSourceFile) {
 							newTsVirtualFileSnapshots.add(file.snapshot);
 							tsFileNamesSet.add(projectHost.getFileName(file.id)); // virtual .ts
@@ -387,7 +387,7 @@ export function createProject(
 			}
 
 			const sourceFile = fileProvider.getSourceFile(uri);
-			if (sourceFile && !sourceFile.root) {
+			if (sourceFile && !sourceFile.virtualFile) {
 				return sourceFile.snapshot;
 			}
 		}
@@ -411,7 +411,7 @@ export function createProject(
 			const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
 			if (isOpenedFile) {
 				const sourceFile = fileProvider.getSourceFile(projectHost.getFileId(fileName));
-				if (sourceFile && !sourceFile.root) {
+				if (sourceFile && !sourceFile.virtualFile) {
 					if (!version.map.has(sourceFile.snapshot)) {
 						version.map.set(sourceFile.snapshot, version.lastVersion++);
 					}

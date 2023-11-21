@@ -175,9 +175,9 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 	return {
 		get,
 		getSourceFileMaps(source: SourceFile) {
-			if (source?.root) {
+			if (source.virtualFile) {
 				const result: [VirtualFile, SourceMapWithDocuments<CodeInformations>][] = [];
-				for (const virtualFile of forEachEmbeddedFile(source.root)) {
+				for (const virtualFile of forEachEmbeddedFile(source.virtualFile[0])) {
 					for (const [sourceUri, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
 						if (sourceSnapshot === source.snapshot) {
 							if (!map2DocMap.has(map)) {
