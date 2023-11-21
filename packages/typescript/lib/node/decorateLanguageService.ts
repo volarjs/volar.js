@@ -29,7 +29,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		const sourceFile = virtualFiles.getSourceFile(args.fileName);
 		if (sourceFile?.root) {
 			for (const file of forEachEmbeddedFile(sourceFile.root)) {
-				if (file.typescript?.isProjectFile && file.mappings.some(mapping => mapping.data.codeActions)) {
+				if (file.typescript?.isLanguageServiceSourceFile && file.mappings.some(mapping => mapping.data.codeActions)) {
 					edits = edits.concat(_organizeImports({
 						...args,
 						fileName: file.id,
@@ -312,7 +312,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			if (sourceFile?.root) {
 				for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
 					const ext = virtualFile.id.substring(fileName.length);
-					if (virtualFile.typescript?.isProjectFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
+					if (virtualFile.typescript?.isLanguageServiceSourceFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
 						result = virtualFile;
 					}
 				}

@@ -16,7 +16,7 @@ export function register(context: ServiceContext) {
 			let tsExt: string | undefined;
 
 			for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
-				if (virtualFile.typescript?.isProjectFile && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
+				if (virtualFile.typescript?.isLanguageServiceSourceFile && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
 					tsExt = virtualFile.id.substring(virtualFile.id.lastIndexOf('.'));
 				}
 			}

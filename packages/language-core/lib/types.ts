@@ -7,7 +7,7 @@ export interface VirtualFile extends BaseFile {
 	embeddedFiles: VirtualFile[];
 	typescript?: {
 		scriptKind: ts.ScriptKind;
-		isProjectFile?: boolean;
+		isLanguageServiceSourceFile?: boolean;
 	};
 	codegenStacks?: Stack[];
 	mirrorCodeMappings?: Mapping<[MirrorCodeInformations, MirrorCodeInformations]>[];
