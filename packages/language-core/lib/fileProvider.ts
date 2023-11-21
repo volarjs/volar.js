@@ -9,8 +9,8 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 
 	const sourceFileRegistry = new Map<string, SourceFile>();
 	const virtualFileRegistry = new Map<string, [VirtualFile, SourceFile]>();
-	const virtualFileMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>>();
-	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, LinkedCodeMap | undefined>();
+	const virtualFileToMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>>();
+	const virtualFileToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, LinkedCodeMap | undefined>();
 	const normalizeId = caseSensitive
 		? (id: string) => id
 		: (id: string) => id.toLowerCase();
@@ -72,15 +72,15 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 			}
 		},
 		getMirrorMap(file: VirtualFile) {
-			if (!virtualFileToMirrorMap.has(file.snapshot)) {
-				virtualFileToMirrorMap.set(file.snapshot, file.linkedCodeMappings ? new LinkedCodeMap(file.linkedCodeMappings) : undefined);
+			if (!virtualFileToLinkedCodeMap.has(file.snapshot)) {
+				virtualFileToLinkedCodeMap.set(file.snapshot, file.linkedCodeMappings ? new LinkedCodeMap(file.linkedCodeMappings) : undefined);
 			}
-			return virtualFileToMirrorMap.get(file.snapshot);
+			return virtualFileToLinkedCodeMap.get(file.snapshot);
 		},
 		getMaps(virtualFile: VirtualFile) {
 
-			if (!virtualFileMaps.has(virtualFile.snapshot)) {
-				virtualFileMaps.set(virtualFile.snapshot, new Map());
+			if (!virtualFileToMaps.has(virtualFile.snapshot)) {
+				virtualFileToMaps.set(virtualFile.snapshot, new Map());
 			}
 
 			updateVirtualFileMaps(virtualFile, sourceId => {
@@ -92,9 +92,9 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 					const sourceFile = virtualFileRegistry.get(normalizeId(virtualFile.id))![1];
 					return [sourceFile.id, sourceFile.snapshot];
 				}
-			}, virtualFileMaps.get(virtualFile.snapshot));
+			}, virtualFileToMaps.get(virtualFile.snapshot));
 
-			return virtualFileMaps.get(virtualFile.snapshot)!;
+			return virtualFileToMaps.get(virtualFile.snapshot)!;
 		},
 		getSourceFile(id: string) {
 			sync(id);
