@@ -1,8 +1,8 @@
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformWorkspaceSymbol } from '../utils/transform';
 
 export function register(context: ServiceContext) {
 
@@ -11,18 +11,17 @@ export function register(context: ServiceContext) {
 		const symbolsList: vscode.WorkspaceSymbol[][] = [];
 
 		for (const service of context.services) {
-
-			if (token.isCancellationRequested)
+			if (token.isCancellationRequested) {
 				break;
-
-			if (!service.provideWorkspaceSymbols)
+			}
+			if (!service.provideWorkspaceSymbols) {
 				continue;
-
+			}
 			const embeddedSymbols = await service.provideWorkspaceSymbols(query, token);
-			if (!embeddedSymbols)
+			if (!embeddedSymbols) {
 				continue;
-
-			const symbols = embeddedSymbols.map(symbol => transformer.asWorkspaceSymbol(symbol, loc => {
+			}
+			const symbols = embeddedSymbols.map(symbol => transformWorkspaceSymbol(symbol, loc => {
 
 				const [virtualFile] = context.project.fileProvider.getVirtualFile(loc.uri);
 

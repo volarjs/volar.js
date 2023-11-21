@@ -34,7 +34,7 @@ export function register(context: ServiceContext) {
 			end: document.positionAt(document.getText().length),
 		};
 
-		if (!sourceFile.language || !sourceFile.root) {
+		if (!sourceFile.virtualFile) {
 			return onTypeParams
 				? (await tryFormat(document, onTypeParams.position, onTypeParams.ch))?.edits
 				: (await tryFormat(document, range, undefined))?.edits;
@@ -43,7 +43,7 @@ export function register(context: ServiceContext) {
 		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 
 		let tempSourceSnapshot = sourceFile.snapshot;
-		const tempVirtualFile = sourceFile.language.createVirtualFile(sourceFile.id, sourceFile.languageId, sourceFile.snapshot)!;
+		const tempVirtualFile = sourceFile.virtualFile[1].createVirtualFile(sourceFile.id, sourceFile.languageId, sourceFile.snapshot)!;
 		const originalDocument = document;
 
 		let level = 0;
@@ -63,7 +63,7 @@ export function register(context: ServiceContext) {
 
 			for (const file of embeddedFiles) {
 
-				if (!file.capabilities.documentFormatting)
+				if (!file.mappings.some(mapping => mapping.data.formattingEdits ?? true))
 					continue;
 
 				const isCodeBlock = file.mappings.length === 1 && file.mappings[0].generatedRange[0] === 0 && file.mappings[0].generatedRange[1] === file.snapshot.getLength();
@@ -120,7 +120,7 @@ export function register(context: ServiceContext) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 				tempSourceSnapshot = stringToSnapshot(newText);
-				sourceFile.language.updateVirtualFile(tempVirtualFile, tempSourceSnapshot);
+				sourceFile.virtualFile[1].updateVirtualFile(tempVirtualFile, tempSourceSnapshot);
 			}
 
 			if (level > 1) {
@@ -194,7 +194,7 @@ export function register(context: ServiceContext) {
 						const newText = TextDocument.applyEdits(document, indentEdits);
 						document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 						tempSourceSnapshot = stringToSnapshot(newText);
-						sourceFile.language.updateVirtualFile(tempVirtualFile, tempSourceSnapshot);
+						sourceFile.virtualFile[1].updateVirtualFile(tempVirtualFile, tempSourceSnapshot);
 					}
 				}
 			}

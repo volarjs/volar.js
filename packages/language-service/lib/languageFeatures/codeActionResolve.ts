@@ -1,8 +1,8 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { ServiceCodeActionData } from './codeActions';
-import { embeddedEditToSourceEdit } from './rename';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformWorkspaceEdit } from '../utils/transform';
 
 export function register(context: ServiceContext) {
 
@@ -24,7 +24,7 @@ export function register(context: ServiceContext) {
 					item.edit
 						? {
 							...item,
-							edit: embeddedEditToSourceEdit(
+							edit: transformWorkspaceEdit(
 								item.edit,
 								context,
 								'codeAction',

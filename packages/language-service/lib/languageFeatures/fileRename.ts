@@ -1,8 +1,8 @@
 import type { ServiceContext } from '../types';
-import { embeddedEditToSourceEdit } from './rename';
+import { transformWorkspaceEdit } from '../utils/transform';
 import type * as _ from 'vscode-languageserver-protocol';
 import * as dedupe from '../utils/dedupe';
-import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
+import { forEachEmbeddedFile } from '@volar/language-core';
 import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
@@ -11,12 +11,12 @@ export function register(context: ServiceContext) {
 
 		const sourceFile = context.project.fileProvider.getSourceFile(oldUri);
 
-		if (sourceFile?.root) {
+		if (sourceFile?.virtualFile) {
 
 			let tsExt: string | undefined;
 
-			for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
-				if (virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
+			for (const virtualFile of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
+				if (virtualFile.typescript && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
 					tsExt = virtualFile.id.substring(virtualFile.id.lastIndexOf('.'));
 				}
 			}
@@ -41,7 +41,7 @@ export function register(context: ServiceContext) {
 
 			if (workspaceEdit) {
 
-				const result = embeddedEditToSourceEdit(
+				const result = transformWorkspaceEdit(
 					workspaceEdit,
 					context,
 					'fileName',

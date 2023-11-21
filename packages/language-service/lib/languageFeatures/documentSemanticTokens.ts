@@ -12,7 +12,7 @@ export function register(context: ServiceContext) {
 		range: vscode.Range | undefined,
 		legend: vscode.SemanticTokensLegend,
 		token = NoneCancellationToken,
-		reportProgress?: (tokens: vscode.SemanticTokens) => void,
+		_reportProgress?: (tokens: vscode.SemanticTokens) => void, // TODO
 	): Promise<vscode.SemanticTokens | undefined> => {
 
 		const sourceFile = context.project.fileProvider.getSourceFile(uri);
@@ -20,73 +20,78 @@ export function register(context: ServiceContext) {
 			return;
 
 		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-		const offsetRange: [number, number] = range ? [
-			document.offsetAt(range.start),
-			document.offsetAt(range.end),
-		] : [
-			0,
-			document.getText().length,
-		];
+		if (!range) {
+			range = {
+				start: { line: 0, character: 0 },
+				end: { line: document.lineCount - 1, character: document.getText().length },
+			};
+		}
 
 		const tokens = await languageFeatureWorker(
 			context,
 			uri,
-			offsetRange,
-			function* (offsetRange, map) {
+			() => range!,
+			function* (map) {
 
-				let range: [number, number] | undefined;
+				let result: [number, number] | undefined;
+
+				const start = document.offsetAt(range!.start);
+				const end = document.offsetAt(range!.end);
 
 				for (const mapping of map.map.mappings) {
 
 					if (
 						mapping.data.semanticTokens
-						&& mapping.sourceRange[1] > offsetRange[0]
-						&& mapping.sourceRange[0] < offsetRange[1]
+						&& mapping.sourceRange[1] > start
+						&& mapping.sourceRange[0] < end
 					) {
-						if (!range) {
-							range = [...mapping.generatedRange];
+						if (!result) {
+							result = [...mapping.generatedRange];
 						}
 						else {
-							range[0] = Math.min(range[0], mapping.generatedRange[0]);
-							range[1] = Math.max(range[1], mapping.generatedRange[1]);
+							result[0] = Math.min(result[0], mapping.generatedRange[0]);
+							result[1] = Math.max(result[1], mapping.generatedRange[1]);
 						}
 					}
 				}
 
-				if (range) {
-					yield range;
+				if (result) {
+					yield {
+						start: map.virtualFileDocument.positionAt(result[0]),
+						end: map.virtualFileDocument.positionAt(result[1]),
+					};
 				}
 			},
-			(service, document, offsetRange) => {
+			(service, document, range) => {
 
 				if (token?.isCancellationRequested)
 					return;
 
 				return service.provideDocumentSemanticTokens?.(
 					document,
-					{
-						start: document.positionAt(offsetRange[0]),
-						end: document.positionAt(offsetRange[1]),
-					},
+					range,
 					legend,
 					token,
 				);
 			},
-			(tokens, map) => tokens.map<SemanticToken | undefined>(_token => {
-
-				if (!map)
-					return _token;
-
-				const range = map.toSourceRange({
-					start: { line: _token[0], character: _token[1] },
-					end: { line: _token[0], character: _token[1] + _token[2] },
-				}, data => !!data.semanticTokens);
-				if (range) {
-					return [range.start.line, range.start.character, range.end.character - range.start.character, _token[3], _token[4]];
+			(tokens, map) => {
+				if (!map) {
+					return tokens;
 				}
-			}).filter(notEmpty),
+				return tokens
+					.map<SemanticToken | undefined>(_token => {
+						const range = map.toSourceRange({
+							start: { line: _token[0], character: _token[1] },
+							end: { line: _token[0], character: _token[1] + _token[2] },
+						}, data => !!data.semanticTokens);
+						if (range) {
+							return [range.start.line, range.start.character, range.end.character - range.start.character, _token[3], _token[4]];
+						}
+					})
+					.filter(notEmpty);
+			},
 			tokens => tokens.flat(),
-			tokens => reportProgress?.(buildTokens(tokens)), // TODO: this has no effect with LSP
+			// tokens => reportProgress?.(buildTokens(tokens)), // TODO: this has no effect with LSP
 		);
 		if (tokens) {
 			return buildTokens(tokens);

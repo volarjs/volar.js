@@ -1,14 +1,16 @@
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { MirrorMap } from './mirrorMap';
-import type { FileRangeCapabilities, Language, SourceFile, VirtualFile } from './types';
+import { LinkedCodeMap } from './linkedCodeMap';
+import type { CodeInformation, Language, SourceFile, VirtualFile } from './types';
+
+export type FileProvider = ReturnType<typeof createFileProvider>;
 
 export function createFileProvider(languages: Language[], caseSensitive: boolean, sync: (sourceFileId: string) => void) {
 
 	const sourceFileRegistry = new Map<string, SourceFile>();
-	const virtualFileRegistry = new Map<string, { virtualFile: VirtualFile, source: SourceFile; }>();
-	const virtualFileMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<FileRangeCapabilities>]>>();
-	const virtualFileToMirrorMap = new WeakMap<ts.IScriptSnapshot, MirrorMap | undefined>();
+	const virtualFileRegistry = new Map<string, [VirtualFile, SourceFile]>();
+	const virtualFileToMaps = new WeakMap<ts.IScriptSnapshot, Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>>();
+	const virtualFileToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, LinkedCodeMap | undefined>();
 	const normalizeId = caseSensitive
 		? (id: string) => id
 		: (id: string) => id.toLowerCase();
@@ -26,9 +28,9 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 				else if (value.snapshot !== snapshot) {
 					// updated
 					value.snapshot = snapshot;
-					if (value.root && value.language) {
-						deleteVirtualFiles(value);
-						value.language.updateVirtualFile(value.root, snapshot);
+					if (value.virtualFile) {
+						disposeVirtualFiles(value);
+						value.virtualFile[1].updateVirtualFile(value.virtualFile[0], snapshot);
 						updateVirtualFiles(value);
 					}
 					return value;
@@ -43,7 +45,12 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 				const virtualFile = language.createVirtualFile(id, languageId, snapshot);
 				if (virtualFile) {
 					// created
-					const source: SourceFile = { id: id, languageId, snapshot, root: virtualFile, language };
+					const source: SourceFile = {
+						id,
+						languageId,
+						snapshot,
+						virtualFile: [virtualFile, language],
+					};
 					sourceFileRegistry.set(normalizeId(id), source);
 					updateVirtualFiles(source);
 					return source;
@@ -57,23 +64,23 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 		deleteSourceFile(id: string) {
 			const value = sourceFileRegistry.get(normalizeId(id));
 			if (value) {
-				if (value.language && value.root) {
-					value.language.deleteVirtualFile?.(value.root);
+				if (value.virtualFile) {
+					value.virtualFile[1].disposeVirtualFile?.(value.virtualFile[0]);
 				}
 				sourceFileRegistry.delete(normalizeId(id)); // deleted
-				deleteVirtualFiles(value);
+				disposeVirtualFiles(value);
 			}
 		},
 		getMirrorMap(file: VirtualFile) {
-			if (!virtualFileToMirrorMap.has(file.snapshot)) {
-				virtualFileToMirrorMap.set(file.snapshot, file.mirrorBehaviorMappings ? new MirrorMap(file.mirrorBehaviorMappings) : undefined);
+			if (!virtualFileToLinkedCodeMap.has(file.snapshot)) {
+				virtualFileToLinkedCodeMap.set(file.snapshot, file.linkedCodeMappings ? new LinkedCodeMap(file.linkedCodeMappings) : undefined);
 			}
-			return virtualFileToMirrorMap.get(file.snapshot);
+			return virtualFileToLinkedCodeMap.get(file.snapshot);
 		},
 		getMaps(virtualFile: VirtualFile) {
 
-			if (!virtualFileMaps.has(virtualFile.snapshot)) {
-				virtualFileMaps.set(virtualFile.snapshot, new Map());
+			if (!virtualFileToMaps.has(virtualFile.snapshot)) {
+				virtualFileToMaps.set(virtualFile.snapshot, new Map());
 			}
 
 			updateVirtualFileMaps(virtualFile, sourceId => {
@@ -82,12 +89,12 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 					return [sourceId, sourceFile.snapshot];
 				}
 				else {
-					const source = virtualFileRegistry.get(normalizeId(virtualFile.id))!.source;
-					return [source.id, source.snapshot];
+					const sourceFile = virtualFileRegistry.get(normalizeId(virtualFile.id))![1];
+					return [sourceFile.id, sourceFile.snapshot];
 				}
-			}, virtualFileMaps.get(virtualFile.snapshot));
+			}, virtualFileToMaps.get(virtualFile.snapshot));
 
-			return virtualFileMaps.get(virtualFile.snapshot)!;
+			return virtualFileToMaps.get(virtualFile.snapshot)!;
 		},
 		getSourceFile(id: string) {
 			sync(id);
@@ -96,28 +103,28 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 		getVirtualFile(id: string) {
 			let sourceAndVirtual = virtualFileRegistry.get(normalizeId(id));
 			if (sourceAndVirtual) {
-				sync(sourceAndVirtual.source.id);
+				sync(sourceAndVirtual[1].id);
 				sourceAndVirtual = virtualFileRegistry.get(normalizeId(id));
 				if (sourceAndVirtual) {
-					return [sourceAndVirtual.virtualFile, sourceAndVirtual.source] as const;
+					return sourceAndVirtual;
 				}
 			}
 			return [undefined, undefined] as const;
 		},
 	};
 
-	function deleteVirtualFiles(source: SourceFile) {
-		if (source.root) {
-			for (const file of forEachEmbeddedFile(source.root)) {
+	function disposeVirtualFiles(source: SourceFile) {
+		if (source.virtualFile) {
+			for (const file of forEachEmbeddedFile(source.virtualFile[0])) {
 				virtualFileRegistry.delete(normalizeId(file.id));
 			}
 		}
 	}
 
 	function updateVirtualFiles(source: SourceFile) {
-		if (source.root) {
-			for (const file of forEachEmbeddedFile(source.root)) {
-				virtualFileRegistry.set(normalizeId(file.id), { virtualFile: file, source });
+		if (source.virtualFile) {
+			for (const file of forEachEmbeddedFile(source.virtualFile[0])) {
+				virtualFileRegistry.set(normalizeId(file.id), [file, source]);
 			}
 		}
 	}
@@ -126,7 +133,7 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 export function updateVirtualFileMaps(
 	virtualFile: VirtualFile,
 	getSourceSnapshot: (sourceUri: string | undefined) => [string, ts.IScriptSnapshot] | undefined,
-	map: Map<string, [ts.IScriptSnapshot, SourceMap<FileRangeCapabilities>]> = new Map(),
+	map: Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]> = new Map(),
 ) {
 
 	const sources = new Set<string | undefined>();

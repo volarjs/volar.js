@@ -18,11 +18,12 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			position,
-			(position, map) => map.toGeneratedPositions(position, data => !!data.completion),
+			() => position,
+			map => map.toGeneratedPositions(position, data => data.signatureHelps ?? true),
 			(service, document, position) => {
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
+				}
 				if (
 					signatureHelpContext?.triggerKind === 2 satisfies typeof vscode.SignatureHelpTriggerKind.TriggerCharacter
 					&& signatureHelpContext.triggerCharacter

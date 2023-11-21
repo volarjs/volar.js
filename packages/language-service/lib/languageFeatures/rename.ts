@@ -1,45 +1,50 @@
-import { FileRangeCapabilities } from '@volar/language-core';
+import { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
+import { pushEditToDocumentChanges, transformWorkspaceEdit } from '../utils/transform';
 
 export function register(context: ServiceContext) {
 
 	return (uri: string, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
 
-		let _data: FileRangeCapabilities | undefined;
-
 		return languageFeatureWorker(
 			context,
 			uri,
-			{ position, newName },
-			function* (arg, map) {
-				for (const mapped of map.toGeneratedPositions(arg.position, data => {
+			() => ({ position, newName }),
+			function* (map) {
+
+				let _data: CodeInformation = {};
+
+				for (const mappedPosition of map.toGeneratedPositions(position, data => {
 					_data = data;
-					return typeof data.rename === 'object' ? !!data.rename.normalize : !!data.rename;
+					return typeof data.renameEdits === 'object'
+						? data.renameEdits.shouldRename
+						: (data.renameEdits ?? true);
 				})) {
-
-					let newName = arg.newName;
-
-					if (_data && typeof _data.rename === 'object' && _data.rename.normalize) {
-						newName = _data.rename.normalize(arg.newName);
+					let newNewName = newName;
+					if (typeof _data.renameEdits === 'object' && _data.renameEdits.resolveNewName) {
+						newNewName = _data.renameEdits.resolveNewName(newName);
 					}
-
-					yield { position: mapped, newName };
+					yield {
+						position: mappedPosition,
+						newName: newNewName,
+					};
 				};
 			},
-			async (service, document, arg) => {
+			async (service, document, params) => {
 
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
+				}
 
 				const recursiveChecker = dedupe.createLocationSet();
 				let result: vscode.WorkspaceEdit | undefined;
 
-				await withMirrors(document, arg.position, arg.newName);
+				await withMirrors(document, params.position, params.newName);
 
 				return result;
 
@@ -80,7 +85,7 @@ export function register(context: ServiceContext) {
 
 									for (const mapped of mirrorMap.findMirrorPositions(textEdit.range.start)) {
 
-										if (!mapped[1].rename)
+										if (!(mapped[1].rename ?? true))
 											continue;
 
 										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: mapped[0], end: mapped[0] } }))
@@ -127,7 +132,7 @@ export function register(context: ServiceContext) {
 				}
 			},
 			(data) => {
-				return embeddedEditToSourceEdit(
+				return transformWorkspaceEdit(
 					data,
 					context,
 					'rename',
@@ -178,201 +183,5 @@ export function mergeWorkspaceEdits(original: vscode.WorkspaceEdit, ...others: v
 				pushEditToDocumentChanges(original.documentChanges, docChange);
 			}
 		}
-	}
-}
-
-export function embeddedEditToSourceEdit(
-	tsResult: vscode.WorkspaceEdit,
-	{ documents, project }: ServiceContext,
-	mode: 'fileName' | 'rename' | 'codeAction' | 'format',
-	versions: Record<string, number> = {},
-) {
-
-	const sourceResult: vscode.WorkspaceEdit = {};
-	let hasResult = false;
-
-	for (const tsUri in tsResult.changeAnnotations) {
-
-		sourceResult.changeAnnotations ??= {};
-
-		const tsAnno = tsResult.changeAnnotations[tsUri];
-		const [virtualFile] = project.fileProvider.getVirtualFile(tsUri);
-
-		if (virtualFile) {
-			for (const map of documents.getMaps(virtualFile)) {
-				// TODO: check capability?
-				const uri = map.sourceFileDocument.uri;
-				sourceResult.changeAnnotations[uri] = tsAnno;
-			}
-		}
-		else {
-			sourceResult.changeAnnotations[tsUri] = tsAnno;
-		}
-	}
-	for (const tsUri in tsResult.changes) {
-
-		sourceResult.changes ??= {};
-
-		const [virtualFile] = project.fileProvider.getVirtualFile(tsUri);
-
-		if (virtualFile) {
-			for (const map of documents.getMaps(virtualFile)) {
-				const tsEdits = tsResult.changes[tsUri];
-				for (const tsEdit of tsEdits) {
-					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-						let _data: FileRangeCapabilities | undefined;
-						const range = map.toSourceRange(tsEdit.range, data => {
-							_data = data;
-							return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
-						});
-						if (range) {
-							let newText = tsEdit.newText;
-							if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
-								newText = _data.rename.apply(tsEdit.newText);
-							}
-							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
-							sourceResult.changes[map.sourceFileDocument.uri].push({ newText, range });
-							hasResult = true;
-						}
-					}
-					else {
-						const range = map.toSourceRange(tsEdit.range);
-						if (range) {
-							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
-							sourceResult.changes[map.sourceFileDocument.uri].push({ newText: tsEdit.newText, range });
-							hasResult = true;
-						}
-					}
-				}
-			}
-		}
-		else {
-			sourceResult.changes[tsUri] = tsResult.changes[tsUri];
-			hasResult = true;
-		}
-	}
-	if (tsResult.documentChanges) {
-		for (const tsDocEdit of tsResult.documentChanges) {
-
-			sourceResult.documentChanges ??= [];
-
-			let sourceEdit: typeof tsDocEdit | undefined;
-			if ('textDocument' in tsDocEdit) {
-
-				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.textDocument.uri);
-
-				if (virtualFile) {
-					for (const map of documents.getMaps(virtualFile)) {
-						sourceEdit = {
-							textDocument: {
-								uri: map.sourceFileDocument.uri,
-								version: versions[map.sourceFileDocument.uri] ?? null,
-							},
-							edits: [],
-						} satisfies vscode.TextDocumentEdit;
-						for (const tsEdit of tsDocEdit.edits) {
-							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-								let _data: FileRangeCapabilities | undefined;
-								const range = map.toSourceRange(tsEdit.range, data => {
-									_data = data;
-									// fix https://github.com/johnsoncodehk/volar/issues/1091
-									return typeof data.rename === 'object' ? !!data.rename.apply : !!data.rename;
-								});
-								if (range) {
-									let newText = tsEdit.newText;
-									if (_data && typeof _data.rename === 'object' && _data.rename.apply) {
-										newText = _data.rename.apply(tsEdit.newText);
-									}
-									sourceEdit.edits.push({
-										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
-										newText,
-										range,
-									});
-								}
-							}
-							else {
-								const range = map.toSourceRange(tsEdit.range);
-								if (range) {
-									sourceEdit.edits.push({
-										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
-										newText: tsEdit.newText,
-										range,
-									});
-								}
-							}
-						}
-						if (!sourceEdit.edits.length) {
-							sourceEdit = undefined;
-						}
-					}
-				}
-				else {
-					sourceEdit = tsDocEdit;
-				}
-			}
-			else if (tsDocEdit.kind === 'create') {
-				sourceEdit = tsDocEdit; // TODO: remove .ts?
-			}
-			else if (tsDocEdit.kind === 'rename') {
-
-				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.oldUri);
-
-				if (virtualFile) {
-					for (const map of documents.getMaps(virtualFile)) {
-						// TODO: check capability?
-						sourceEdit = {
-							kind: 'rename',
-							oldUri: map.sourceFileDocument.uri,
-							newUri: tsDocEdit.newUri /* TODO: remove .ts? */,
-							options: tsDocEdit.options,
-							annotationId: tsDocEdit.annotationId,
-						} satisfies vscode.RenameFile;
-					}
-				}
-				else {
-					sourceEdit = tsDocEdit;
-				}
-			}
-			else if (tsDocEdit.kind === 'delete') {
-
-				const [virtualFile] = project.fileProvider.getVirtualFile(tsDocEdit.uri);
-
-				if (virtualFile) {
-					for (const map of documents.getMaps(virtualFile)) {
-						// TODO: check capability?
-						sourceEdit = {
-							kind: 'delete',
-							uri: map.sourceFileDocument.uri,
-							options: tsDocEdit.options,
-							annotationId: tsDocEdit.annotationId,
-						} satisfies vscode.DeleteFile;
-					}
-				}
-				else {
-					sourceEdit = tsDocEdit;
-				}
-			}
-			if (sourceEdit) {
-				pushEditToDocumentChanges(sourceResult.documentChanges, sourceEdit);
-				hasResult = true;
-			}
-		}
-	}
-	if (hasResult) {
-		return sourceResult;
-	}
-}
-
-function pushEditToDocumentChanges(arr: NonNullable<vscode.WorkspaceEdit['documentChanges']>, item: NonNullable<vscode.WorkspaceEdit['documentChanges']>[number]) {
-	const current = arr.find(edit =>
-		'textDocument' in edit
-		&& 'textDocument' in item
-		&& edit.textDocument.uri === item.textDocument.uri
-	) as vscode.TextDocumentEdit | undefined;
-	if (current) {
-		current.edits.push(...(item as vscode.TextDocumentEdit).edits);
-	}
-	else {
-		arr.push(item);
 	}
 }

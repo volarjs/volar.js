@@ -1,4 +1,4 @@
-import { FileKind, FileProvider, forEachEmbeddedFile } from '@volar/language-core';
+import { FileProvider, forEachEmbeddedFile } from '@volar/language-core';
 import { resolveCommonLanguageId } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
@@ -14,6 +14,7 @@ export function decorateLanguageServiceHost(
 	const scripts = new Map<string, {
 		version: string;
 		snapshot: ts.IScriptSnapshot | undefined;
+		kind: ts.ScriptKind;
 		extension: string;
 	}>();
 
@@ -113,18 +114,7 @@ export function decorateLanguageServiceHost(
 				updateScript(fileName);
 				const script = scripts.get(fileName);
 				if (script) {
-					if (script.extension.endsWith('.js')) {
-						return ts.ScriptKind.JS;
-					}
-					if (script.extension.endsWith('.jsx')) {
-						return ts.ScriptKind.JSX;
-					}
-					if (script.extension.endsWith('.ts')) {
-						return ts.ScriptKind.TS;
-					}
-					if (script.extension.endsWith('.tsx')) {
-						return ts.ScriptKind.TSX;
-					}
+					return script.kind;
 				}
 				return ts.ScriptKind.Deferred;
 			}
@@ -169,24 +159,25 @@ export function decorateLanguageServiceHost(
 
 		if (version !== scripts.get(fileName)?.version) {
 
-			const text = languageServiceHost.readFile(fileName);
-
-			let snapshot: ts.IScriptSnapshot | undefined;
 			let extension = '.ts';
+			let snapshotSnapshot: ts.IScriptSnapshot | undefined;
+			let scriptKind = ts.ScriptKind.TS;
 
+			const text = languageServiceHost.readFile(fileName);
 			if (text !== undefined) {
 				extraProjectVersion++;
 				const sourceFile = virtualFiles.updateSourceFile(fileName, ts.ScriptSnapshot.fromString(text), resolveCommonLanguageId(fileName));
-				if (sourceFile.root) {
+				if (sourceFile.virtualFile) {
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					for (const file of forEachEmbeddedFile(sourceFile.root)) {
+					for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
 						const ext = file.id.substring(fileName.length);
-						if (file.kind === FileKind.TypeScriptHostFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
+						if (file.typescript && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
 							extension = ext;
+							scriptKind = file.typescript.scriptKind;
 							patchedText += file.snapshot.getText(0, file.snapshot.getLength());
 						}
 					}
-					snapshot = ts.ScriptSnapshot.fromString(patchedText);
+					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
 				}
 			}
 			else if (virtualFiles.getSourceFile(fileName)) {
@@ -196,8 +187,9 @@ export function decorateLanguageServiceHost(
 
 			scripts.set(fileName, {
 				version,
-				snapshot,
 				extension,
+				snapshot: snapshotSnapshot,
+				kind: scriptKind,
 			});
 		}
 

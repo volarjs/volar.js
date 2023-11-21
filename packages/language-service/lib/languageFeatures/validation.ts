@@ -1,4 +1,4 @@
-import { FileRangeCapabilities } from '@volar/language-core';
+import { CodeInformation } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -6,7 +6,7 @@ import { SourceMapWithDocuments } from '../documents';
 import { ServiceContext } from '../types';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { documentFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
 
 export function updateRange(
@@ -234,15 +234,10 @@ export function register(context: ServiceContext) {
 			cacheMap: CacheMap,
 			cache: Cache,
 		) {
-			const result = await languageFeatureWorker(
+			const result = await documentFeatureWorker(
 				context,
 				uri,
-				true,
-				function* (arg, _, file) {
-					if (file.capabilities.diagnostic) {
-						yield arg;
-					}
-				},
+				map => map.map.mappings.some(mapping => mapping.data.diagnostics ?? true),
 				async (service, document) => {
 
 					if (token) {
@@ -288,7 +283,15 @@ export function register(context: ServiceContext) {
 
 					return errors;
 				},
-				transformErrorRange,
+				(errors, map) => {
+					return transformErrorRangeBase(
+						errors,
+						map,
+						data => typeof data.diagnostics === 'object'
+							? data.diagnostics.shouldReport()
+							: (data.diagnostics ?? true)
+					);
+				},
 				arr => dedupe.withDiagnostics(arr.flat()),
 			);
 			if (result) {
@@ -298,11 +301,7 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function transformErrorRange(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined) {
-		return transformErrorRangeBase(errors, map, data => typeof data.diagnostic === 'object' ? data.diagnostic.shouldReport() : !!data.diagnostic);
-	}
-
-	function transformErrorRangeBase(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<FileRangeCapabilities> | undefined, filter: (data: FileRangeCapabilities) => boolean) {
+	function transformErrorRangeBase(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<CodeInformation> | undefined, filter: (data: CodeInformation) => boolean) {
 
 		const result: vscode.Diagnostic[] = [];
 

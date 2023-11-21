@@ -1,9 +1,9 @@
-import * as transformer from '../transformer';
-import type { FileRangeCapabilities } from '@volar/language-core';
+import type { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { Service, ServiceContext } from '../types';
-import { visitEmbedded } from '../utils/definePlugin';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformCompletionList } from '../utils/transform';
+import { visitEmbedded } from '../utils/featureWorkers';
 
 export interface ServiceCompletionData {
 	uri: string;
@@ -53,7 +53,7 @@ export function register(context: ServiceContext) {
 
 					for (const map of context.documents.getMaps(virtualFile)) {
 
-						for (const mapped of map.toGeneratedPositions(position, data => !!data.completion)) {
+						for (const mapped of map.toGeneratedPositions(position, data => !!data.completionItems ?? true)) {
 
 							if (!cacheData.service.provideCompletionItems)
 								continue;
@@ -65,7 +65,7 @@ export function register(context: ServiceContext) {
 								continue;
 							}
 
-							cacheData.list = transformer.asCompletionList(
+							cacheData.list = transformCompletionList(
 								embeddedCompletionList,
 								range => map.toSourceRange(range),
 								map.virtualFileDocument,
@@ -113,7 +113,7 @@ export function register(context: ServiceContext) {
 		}
 		else {
 
-			const rootVirtualFile = context.project.fileProvider.getSourceFile(uri)?.root;
+			const rootVirtualFile = context.project.fileProvider.getSourceFile(uri)?.virtualFile?.[0];
 
 			cache = {
 				uri,
@@ -130,11 +130,11 @@ export function register(context: ServiceContext) {
 
 					const services = [...context.services].sort(sortServices);
 
-					let _data: FileRangeCapabilities | undefined;
+					let _data: CodeInformation | undefined;
 
 					for (const mapped of map.toGeneratedPositions(position, data => {
 						_data = data;
-						return !!data.completion;
+						return !!data.completionItems ?? true;
 					})) {
 
 						for (const service of services) {
@@ -151,7 +151,7 @@ export function register(context: ServiceContext) {
 							if (completionContext?.triggerCharacter && !service.triggerCharacters?.includes(completionContext.triggerCharacter))
 								continue;
 
-							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.additional || service.isAdditionalCompletion;
+							const isAdditional = _data && typeof _data.completionItems === 'object' && _data.completionItems.isAdditional || service.isAdditionalCompletion;
 
 							if (cache!.mainCompletion && (!isAdditional || cache?.mainCompletion.documentUri !== map.virtualFileDocument.uri))
 								continue;
@@ -165,7 +165,7 @@ export function register(context: ServiceContext) {
 							if (!embeddedCompletionList || !embeddedCompletionList.items.length)
 								continue;
 
-							if (typeof _data?.completion === 'object' && _data.completion.autoImportOnly) {
+							if (typeof _data?.completionItems === 'object' && _data.completionItems.onlyImport) {
 								embeddedCompletionList.items = embeddedCompletionList.items.filter(item => !!item.labelDetails);
 							}
 
@@ -173,7 +173,7 @@ export function register(context: ServiceContext) {
 								cache!.mainCompletion = { documentUri: map.virtualFileDocument.uri };
 							}
 
-							const completionList = transformer.asCompletionList(
+							const completionList = transformCompletionList(
 								embeddedCompletionList,
 								range => map.toSourceRange(range),
 								map.virtualFileDocument,

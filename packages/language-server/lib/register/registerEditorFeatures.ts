@@ -1,4 +1,4 @@
-import { FileKind, FileRangeCapabilities, VirtualFile } from '@volar/language-core';
+import { CodeInformation, VirtualFile } from '@volar/language-core';
 import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
@@ -23,8 +23,8 @@ export function registerEditorFeatures(
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const languageService = (await projectProvider.getProject(document.uri)).getLanguageService();
-		const file = languageService.context.project.fileProvider.getSourceFile(document.uri)?.root;
-		return file ? prune(file) : undefined;
+		const virtualFile = languageService.context.project.fileProvider.getSourceFile(document.uri)?.virtualFile;
+		return virtualFile ? prune(virtualFile[0]) : undefined;
 
 		function prune(file: VirtualFile): VirtualFile {
 			let version = scriptVersions.get(file.id) ?? 0;
@@ -34,25 +34,25 @@ export function registerEditorFeatures(
 				scriptVersionSnapshots.add(file.snapshot);
 			}
 			return {
-				uri: file.id,
+				id: file.id,
 				languageId: file.languageId,
-				kind: file.kind,
-				capabilities: file.capabilities,
+				typescript: file.typescript,
 				embeddedFiles: file.embeddedFiles.map(prune),
+				// @ts-expect-error
 				version,
-			} as any;
+			};
 		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
 		const languageService = (await projectProvider.getProject(params.sourceFileUri)).getLanguageService();
 		let content: string = '';
 		let codegenStacks: Stack[] = [];
-		const mappings: Record<string, Mapping<FileRangeCapabilities>[]> = {};
+		const mappings: Record<string, Mapping<CodeInformation>[]> = {};
 		const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(params.virtualFileName);
 		if (virtualFile) {
 			for (const map of languageService.context.documents.getMaps(virtualFile)) {
 				content = map.virtualFileDocument.getText();
-				codegenStacks = virtualFile.codegenStacks;
+				codegenStacks = virtualFile.codegenStacks ?? [];
 				mappings[map.sourceFileDocument.uri] = map.map.mappings;
 			}
 		}
@@ -87,7 +87,7 @@ export function registerEditorFeatures(
 				else {
 					const uri = languageService.context.env.fileNameToUri(fileName);
 					const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(uri);
-					if (virtualFile && virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.startsWith(rootUri)) {
+					if (virtualFile?.typescript && virtualFile.id.startsWith(rootUri)) {
 						const { snapshot } = virtualFile;
 						fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
 					}

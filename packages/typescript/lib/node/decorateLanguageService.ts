@@ -1,4 +1,4 @@
-import { FileKind, VirtualFile, FileProvider, forEachEmbeddedFile } from '@volar/language-core';
+import { VirtualFile, FileProvider, forEachEmbeddedFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function decorateLanguageService(virtualFiles: FileProvider, languageService: ts.LanguageService, isTsPlugin: boolean) {
@@ -27,12 +27,12 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	function organizeImports(args: ts.OrganizeImportsArgs, formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences | undefined): ReturnType<ts.LanguageService['organizeImports']> {
 		let edits: readonly ts.FileTextChanges[] = [];
 		const sourceFile = virtualFiles.getSourceFile(args.fileName);
-		if (sourceFile?.root) {
-			for (const embeddedFile of forEachEmbeddedFile(sourceFile.root)) {
-				if (embeddedFile.kind === FileKind.TypeScriptHostFile && embeddedFile.capabilities.codeAction) {
+		if (sourceFile?.virtualFile) {
+			for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
+				if (file.typescript && file.mappings.some(mapping => mapping.data.codeActions)) {
 					edits = edits.concat(_organizeImports({
 						...args,
-						fileName: embeddedFile.id,
+						fileName: file.id,
 					}, formatOptions, preferences));
 				}
 			}
@@ -100,12 +100,12 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (!mirrorMap)
 					continue;
 
-				for (const [mirrorOffset, data] of mirrorMap.findMirrorOffsets(ref.textSpan.start)) {
-					if ((mode === 'definition' || mode === 'typeDefinition' || mode === 'implementation') && !data.definition)
+				for (const [mirrorOffset, data] of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
+					if ((mode === 'definition' || mode === 'typeDefinition' || mode === 'implementation') && !(data.definition ?? true))
 						continue;
-					if ((mode === 'references') && !data.references)
+					if (mode === 'references' && !(data.reference ?? true))
 						continue;
-					if ((mode === 'rename') && !data.rename)
+					if (mode === 'rename' && !(data.rename ?? true))
 						continue;
 					if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
 						continue;
@@ -151,8 +151,8 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (!mirrorMap)
 					continue;
 
-				for (const [mirrorOffset, data] of mirrorMap.findMirrorOffsets(ref.textSpan.start)) {
-					if (!data.definition)
+				for (const [mirrorOffset, data] of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
+					if (!(data.definition ?? true))
 						continue;
 					if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
 						continue;
@@ -190,8 +190,8 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 					if (!mirrorMap)
 						continue;
 
-					for (const [mirrorOffset, data] of mirrorMap.findMirrorOffsets(ref.textSpan.start)) {
-						if (!data.references)
+					for (const [mirrorOffset, data] of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
+						if (!(data.reference ?? true))
 							continue;
 						if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
 							continue;
@@ -309,10 +309,10 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		if (isTsPlugin) {
 			let result: VirtualFile | undefined;
 			const sourceFile = virtualFiles.getSourceFile(fileName);
-			if (sourceFile?.root) {
-				for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
+			if (sourceFile?.virtualFile) {
+				for (const virtualFile of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
 					const ext = virtualFile.id.substring(fileName.length);
-					if (virtualFile.kind === FileKind.TypeScriptHostFile && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
+					if (virtualFile.typescript && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
 						result = virtualFile;
 					}
 				}

@@ -1,4 +1,4 @@
-import { FileProvider, FileRangeCapabilities, MirrorBehaviorCapabilities, MirrorMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
+import { FileProvider, CodeInformation, LinkedCodeTrigger, LinkedCodeMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
 import { Mapping, SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
@@ -147,10 +147,10 @@ export class SourceMapWithDocuments<Data = any> {
 	}
 }
 
-export class MirrorMapWithDocument extends SourceMapWithDocuments<[MirrorBehaviorCapabilities, MirrorBehaviorCapabilities]> {
+export class MirrorMapWithDocument extends SourceMapWithDocuments<[LinkedCodeTrigger, LinkedCodeTrigger]> {
 	constructor(
 		public document: TextDocument,
-		map: MirrorMap,
+		map: LinkedCodeMap,
 	) {
 		super(document, document, map);
 	}
@@ -168,16 +168,16 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 
 	let version = 0;
 
-	const map2DocMap = new WeakMap<SourceMap<FileRangeCapabilities>, SourceMapWithDocuments<FileRangeCapabilities>>();
-	const mirrorMap2DocMirrorMap = new WeakMap<MirrorMap, MirrorMapWithDocument>();
+	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments<CodeInformation>>();
+	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, MirrorMapWithDocument>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
 
 	return {
 		get,
 		getSourceFileMaps(source: SourceFile) {
-			if (source?.root) {
-				const result: [VirtualFile, SourceMapWithDocuments<FileRangeCapabilities>][] = [];
-				for (const virtualFile of forEachEmbeddedFile(source.root)) {
+			if (source.virtualFile) {
+				const result: [VirtualFile, SourceMapWithDocuments<CodeInformation>][] = [];
+				for (const virtualFile of forEachEmbeddedFile(source.virtualFile[0])) {
 					for (const [sourceUri, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
 						if (sourceSnapshot === source.snapshot) {
 							if (!map2DocMap.has(map)) {

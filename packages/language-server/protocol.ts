@@ -1,5 +1,5 @@
 import * as vscode from 'vscode-languageserver-protocol';
-import type { VirtualFile, FileRangeCapabilities } from '@volar/language-core';
+import type { VirtualFile, CodeInformation } from '@volar/language-core';
 import type { Mapping, Stack } from '@volar/source-map';
 import type { FileStat, FileType } from '@volar/language-service';
 
@@ -81,7 +81,7 @@ export namespace GetVirtualFileRequest {
 	};
 	export type ResponseType = {
 		content: string;
-		mappings: Record<string, Mapping<FileRangeCapabilities>[]>;
+		mappings: Record<string, Mapping<CodeInformation>[]>;
 		codegenStacks: Stack[];
 	};
 	export type ErrorType = never;

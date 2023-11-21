@@ -11,8 +11,15 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			position,
-			(position, map) => map.toGeneratedPositions(position, data => !!data.completion),
+			() => position,
+			function* (map) {
+				for (const pos of map.toGeneratedPositions(
+					position,
+					data => data.linkedEditingRanges ?? true
+				)) {
+					yield pos;
+				}
+			},
 			(service, document, position) => {
 
 				if (token.isCancellationRequested)
@@ -20,10 +27,18 @@ export function register(context: ServiceContext) {
 
 				return service.provideLinkedEditingRanges?.(document, position, token);
 			},
-			(data, map) => map ? ({
-				wordPattern: data.wordPattern,
-				ranges: data.ranges.map(range => map.toSourceRange(range)).filter(notEmpty),
-			}) : data,
+			(ranges, map) => {
+				if (!map) {
+					return ranges;
+				}
+				return {
+					wordPattern: ranges.wordPattern,
+					ranges: ranges.ranges.map(range => map.toSourceRange(
+						range,
+						data => data.linkedEditingRanges ?? true
+					)).filter(notEmpty),
+				};
+			},
 		);
 	};
 }

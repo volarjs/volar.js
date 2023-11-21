@@ -12,20 +12,18 @@ export function register(context: ServiceContext) {
 		let hover = await languageFeatureWorker(
 			context,
 			uri,
-			position,
-			(position, map) => map.toGeneratedPositions(position, data => !!data.hover),
+			() => position,
+			map => map.toGeneratedPositions(position, data => data.hover ?? true),
 			(service, document, position) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				return service.provideHover?.(document, position, token);
 			},
 			(item, map) => {
-
-				if (!map || !item.range)
+				if (!map || !item.range) {
 					return item;
-
+				}
 				const range = map.toSourceRange(item.range);
 				if (range) {
 					item.range = range;

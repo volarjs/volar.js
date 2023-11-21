@@ -1,5 +1,5 @@
 import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { documentFeatureWorker } from '../utils/featureWorkers';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
@@ -22,16 +22,14 @@ export function register(context: ServiceContext) {
 
 	return async (uri: string, token = NoneCancellationToken) => {
 
-		return await languageFeatureWorker(
+		return await documentFeatureWorker(
 			context,
 			uri,
-			undefined,
-			(arg) => [arg],
+			map => map.map.mappings.some(mapping => mapping.data.codeLenses ?? true),
 			async (service, document) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				let codeLens = await service.provideCodeLenses?.(document, token);
 
 				const serviceIndex = context.services.indexOf(service);
@@ -65,19 +63,24 @@ export function register(context: ServiceContext) {
 
 				return codeLens;
 			},
-			(data, map) => data.map(codeLens => {
-
-				if (!map)
-					return codeLens;
-
-				const range = map.toSourceRange(codeLens.range);
-				if (range) {
-					return {
-						...codeLens,
-						range,
-					};
+			(data, map) => {
+				if (!map) {
+					return data;
 				}
-			}).filter(notEmpty),
+				return data
+					.map(codeLens => {
+
+
+						const range = map.toSourceRange(codeLens.range);
+						if (range) {
+							return {
+								...codeLens,
+								range,
+							};
+						}
+					})
+					.filter(notEmpty);
+			},
 			arr => arr.flat(),
 		) ?? [];
 	};

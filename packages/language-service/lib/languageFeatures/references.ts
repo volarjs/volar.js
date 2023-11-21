@@ -12,8 +12,8 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			position,
-			(position, map) => map.toGeneratedPositions(position, data => !!data.references),
+			() => position,
+			map => map.toGeneratedPositions(position, data => data.references ?? true),
 			async (service, document, position) => {
 
 				if (token.isCancellationRequested)
@@ -51,7 +51,7 @@ export function register(context: ServiceContext) {
 
 							for (const mapped of mirrorMap.findMirrorPositions(reference.range.start)) {
 
-								if (!mapped[1].references)
+								if (!(mapped[1].reference ?? true))
 									continue;
 
 								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: mapped[0], end: mapped[0] } }))

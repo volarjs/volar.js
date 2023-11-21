@@ -1,12 +1,11 @@
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import { embeddedEditToSourceEdit } from './rename';
 import { ServiceDiagnosticData } from './validation';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
 
 export interface ServiceCodeActionData {
 	uri: string,
@@ -32,52 +31,48 @@ export function register(context: ServiceContext) {
 		const pluginActions = await languageFeatureWorker(
 			context,
 			uri,
-			{ range, codeActionContext },
-			(_arg, map, file) => {
+			() => ({ range, codeActionContext }),
+			function* (map) {
+				if (map.map.mappings.some(mapping => mapping.data.codeActions ?? true)) {
 
-				if (!file.capabilities.codeAction)
-					return [];
+					const _codeActionContext: vscode.CodeActionContext = {
+						diagnostics: transformLocations(
+							codeActionContext.diagnostics,
+							range => map.toGeneratedRange(range),
+						),
+						only: codeActionContext.only,
+					};
 
-				const _codeActionContext: vscode.CodeActionContext = {
-					diagnostics: transformer.asLocations(
-						codeActionContext.diagnostics,
-						range => map.toGeneratedRange(range),
-					),
-					only: codeActionContext.only,
-				};
+					let minStart: number | undefined;
+					let maxEnd: number | undefined;
 
-				let minStart: number | undefined;
-				let maxEnd: number | undefined;
-
-				for (const mapping of map.map.mappings) {
-					const overlapRange = getOverlapRange(offsetRange.start, offsetRange.end, mapping.sourceRange[0], mapping.sourceRange[1]);
-					if (overlapRange) {
-						const start = map.map.toGeneratedOffset(overlapRange.start)?.[0];
-						const end = map.map.toGeneratedOffset(overlapRange.end)?.[0];
-						if (start !== undefined && end !== undefined) {
-							minStart = minStart === undefined ? start : Math.min(start, minStart);
-							maxEnd = maxEnd === undefined ? end : Math.max(end, maxEnd);
+					for (const mapping of map.map.mappings) {
+						const overlapRange = getOverlapRange(offsetRange.start, offsetRange.end, mapping.sourceRange[0], mapping.sourceRange[1]);
+						if (overlapRange) {
+							const start = map.map.toGeneratedOffset(overlapRange.start)?.[0];
+							const end = map.map.toGeneratedOffset(overlapRange.end)?.[0];
+							if (start !== undefined && end !== undefined) {
+								minStart = minStart === undefined ? start : Math.min(start, minStart);
+								maxEnd = maxEnd === undefined ? end : Math.max(end, maxEnd);
+							}
 						}
 					}
-				}
 
-				if (minStart !== undefined && maxEnd !== undefined) {
-					return [{
-						range: {
-							start: map.virtualFileDocument.positionAt(minStart),
-							end: map.virtualFileDocument.positionAt(maxEnd),
-						},
-						codeActionContext: _codeActionContext,
-					}];
+					if (minStart !== undefined && maxEnd !== undefined) {
+						yield {
+							range: {
+								start: map.virtualFileDocument.positionAt(minStart),
+								end: map.virtualFileDocument.positionAt(maxEnd),
+							},
+							codeActionContext: _codeActionContext,
+						};
+					}
 				}
-
-				return [];
 			},
 			async (service, document, { range, codeActionContext }, map) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				const serviceIndex = context.services.indexOf(service);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
 					const data: ServiceDiagnosticData | undefined = diagnostic.data;
@@ -122,28 +117,27 @@ export function register(context: ServiceContext) {
 
 				return codeActions;
 			},
-			(actions, map) => actions.map(action => {
+			actions => actions
+				.map(action => {
 
-				if (transformedCodeActions.has(action))
-					return action;
+					if (transformedCodeActions.has(action))
+						return action;
 
-				if (!map)
-					return action;
-
-				if (action.edit) {
-					const edit = embeddedEditToSourceEdit(
-						action.edit,
-						context,
-						'codeAction',
-					);
-					if (!edit) {
-						return;
+					if (action.edit) {
+						const edit = transformWorkspaceEdit(
+							action.edit,
+							context,
+							'codeAction',
+						);
+						if (!edit) {
+							return;
+						}
+						action.edit = edit;
 					}
-					action.edit = edit;
-				}
 
-				return action;
-			}).filter(notEmpty),
+					return action;
+				})
+				.filter(notEmpty),
 			arr => dedupe.withCodeAction(arr.flat()),
 		);
 		const ruleActions: vscode.CodeAction[] = [];

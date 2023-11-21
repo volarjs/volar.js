@@ -1,9 +1,9 @@
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformTextEdit } from '../utils/transform';
 
 export interface InlayHintData {
 	uri: string,
@@ -28,15 +28,16 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			range,
-			(_arg, map, file) => {
+			() => range,
+			function* (map) {
 
 				/**
 				 * copy from ./codeActions.ts
 				 */
 
-				if (!file.capabilities.inlayHint)
-					return [];
+				if (!map.map.mappings.some(mapping => mapping.data.inlayHints ?? true)) {
+					return;
+				}
 
 				let minStart: number | undefined;
 				let maxEnd: number | undefined;
@@ -54,19 +55,16 @@ export function register(context: ServiceContext) {
 				}
 
 				if (minStart !== undefined && maxEnd !== undefined) {
-					return [{
+					yield {
 						start: map.virtualFileDocument.positionAt(minStart),
 						end: map.virtualFileDocument.positionAt(maxEnd),
-					}];
+					};
 				}
-
-				return [];
 			},
 			async (service, document, arg) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				const hints = await service.provideInlayHints?.(document, arg, token);
 				hints?.forEach(link => {
 					link.data = {
@@ -80,24 +78,30 @@ export function register(context: ServiceContext) {
 
 				return hints;
 			},
-			(inlayHints, map) => inlayHints.map((_inlayHint): vscode.InlayHint | undefined => {
-
-				if (!map)
-					return _inlayHint;
-
-				const position = map.toSourcePosition(_inlayHint.position, data => !!data.semanticTokens /* todo */);
-				const edits = _inlayHint.textEdits
-					?.map(textEdit => transformer.asTextEdit(textEdit, range => map!.toSourceRange(range), map.virtualFileDocument))
-					.filter(notEmpty);
-
-				if (position) {
-					return {
-						..._inlayHint,
-						position,
-						textEdits: edits,
-					};
+			(inlayHints, map) => {
+				if (!map) {
+					return inlayHints;
 				}
-			}).filter(notEmpty),
+				return inlayHints
+					.map((_inlayHint): vscode.InlayHint | undefined => {
+						const position = map.toSourcePosition(
+							_inlayHint.position,
+							data => data.inlayHints ?? true,
+						);
+						const edits = _inlayHint.textEdits
+							?.map(textEdit => transformTextEdit(textEdit, range => map!.toSourceRange(range), map.virtualFileDocument))
+							.filter(notEmpty);
+
+						if (position) {
+							return {
+								..._inlayHint,
+								position,
+								textEdits: edits,
+							};
+						}
+					})
+					.filter(notEmpty);
+			},
 			arr => arr.flat(),
 		);
 	};

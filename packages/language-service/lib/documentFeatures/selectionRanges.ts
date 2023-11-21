@@ -1,9 +1,9 @@
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { isInsideRange, notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformSelectionRanges } from '../utils/transform';
 
 export function register(context: ServiceContext) {
 
@@ -12,17 +12,16 @@ export function register(context: ServiceContext) {
 		return languageFeatureWorker(
 			context,
 			uri,
-			positions,
-			(positions, map, file) => {
-				if (file.capabilities.documentFormatting) {
+			() => positions,
+			function* (map) {
+				if (map.map.mappings.some(mapping => mapping.data.selectionRanges)) {
 					const result = positions
-						.map(position => map.toGeneratedPosition(position))
+						.map(position => map.toGeneratedPosition(position, data => data.selectionRanges ?? true))
 						.filter(notEmpty);
 					if (result.length) {
-						return [result];
+						yield result;
 					}
 				}
-				return [];
 			},
 			(service, document, positions) => {
 
@@ -31,7 +30,15 @@ export function register(context: ServiceContext) {
 
 				return service.provideSelectionRanges?.(document, positions, token);
 			},
-			(item, map) => map ? transformer.asSelectionRanges(item, range => map.toSourceRange(range)) : item,
+			(data, map) => {
+				if (!map) {
+					return data;
+				}
+				return transformSelectionRanges(
+					data,
+					range => map.toSourceRange(range, data => data.selectionRanges ?? true)
+				);
+			},
 			results => {
 				const result: vscode.SelectionRange[] = [];
 				for (let i = 0; i < positions.length; i++) {

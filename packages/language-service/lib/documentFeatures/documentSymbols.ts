@@ -1,9 +1,9 @@
 import type { ServiceContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
-import * as transformer from '../transformer';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { isInsideRange, notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformDocumentSymbol } from '../utils/transform';
 
 export function register(context: ServiceContext) {
 
@@ -12,22 +12,24 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			file => !!file.capabilities.documentSymbol,
+			map => map.map.mappings.some(mapping => mapping.data.symbols ?? true),
 			async (service, document) => {
-
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
-
+				}
 				return service.provideDocumentSymbols?.(document, token);
 			},
-			(data, map) => map
-				? data
-					.map(symbol => transformer.asDocumentSymbol(
+			(data, map) => {
+				if (!map) {
+					return data;
+				}
+				return data
+					.map(symbol => transformDocumentSymbol(
 						symbol,
-						range => map.toSourceRange(range),
+						range => map.toSourceRange(range, data => data.symbols ?? true),
 					))
-					.filter(notEmpty)
-				: data,
+					.filter(notEmpty);
+			},
 			results => {
 				for (let i = 0; i < results.length; i++) {
 					for (let j = 0; j < results.length; j++) {
