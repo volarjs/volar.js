@@ -1,6 +1,6 @@
 import { createFileProvider, Language, Project } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { forEachEmbeddedFile, type FileKind } from '@volar/language-core';
+import { forEachEmbeddedFile } from '@volar/language-core';
 import * as path from 'path-browserify';
 import { matchFiles } from '../typescript/utilities';
 import type { createSys } from './createSys';
@@ -293,26 +293,32 @@ export function createProject(
 			},
 			getScriptKind(fileName) {
 				sync();
-
-				if (ts) {
-					if (fileProvider.getSourceFile(projectHost.getFileId(fileName)))
-						return ts.ScriptKind.Deferred;
-
-					switch (path.extname(fileName)) {
-						case '.js': return ts.ScriptKind.JS;
-						case '.cjs': return ts.ScriptKind.JS;
-						case '.mjs': return ts.ScriptKind.JS;
-						case '.jsx': return ts.ScriptKind.JSX;
-						case '.ts': return ts.ScriptKind.TS;
-						case '.cts': return ts.ScriptKind.TS;
-						case '.mts': return ts.ScriptKind.TS;
-						case '.tsx': return ts.ScriptKind.TSX;
-						case '.json': return ts.ScriptKind.JSON;
-						default: return ts.ScriptKind.Unknown;
-					}
+				const virtualFile = fileProvider.getVirtualFile(projectHost.getFileId(fileName))[0];
+				if (virtualFile?.typescript) {
+					return virtualFile.typescript.scriptKind;
 				}
-
-				return 0;
+				const sourceFile = fileProvider.getSourceFile(projectHost.getFileId(fileName));
+				if (sourceFile?.root) {
+					return ts.ScriptKind.Deferred;
+				}
+				switch (path.extname(fileName)) {
+					case '.js':
+					case '.cjs':
+					case '.mjs':
+						return ts.ScriptKind.JS;
+					case '.jsx':
+						return ts.ScriptKind.JSX;
+					case '.ts':
+					case '.cts':
+					case '.mts':
+						return ts.ScriptKind.TS;
+					case '.tsx':
+						return ts.ScriptKind.TSX;
+					case '.json':
+						return ts.ScriptKind.JSON;
+					default:
+						return ts.ScriptKind.Unknown;
+				}
 			},
 			getScriptVersion,
 			getScriptSnapshot,
@@ -337,13 +343,13 @@ export function createProject(
 				const uri = projectHost.getFileId(fileName);
 				const sourceFile = fileProvider.getSourceFile(uri);
 				if (sourceFile?.root) {
-					for (const embedded of forEachEmbeddedFile(sourceFile.root)) {
-						if (embedded.kind === 1 satisfies FileKind.TypeScriptHostFile) {
-							newTsVirtualFileSnapshots.add(embedded.snapshot);
-							tsFileNamesSet.add(projectHost.getFileName(embedded.id)); // virtual .ts
+					for (const file of forEachEmbeddedFile(sourceFile.root)) {
+						if (file.typescript?.isProjectFile) {
+							newTsVirtualFileSnapshots.add(file.snapshot);
+							tsFileNamesSet.add(projectHost.getFileName(file.id)); // virtual .ts
 						}
 						else {
-							newOtherVirtualFileSnapshots.add(embedded.snapshot);
+							newOtherVirtualFileSnapshots.add(file.snapshot);
 						}
 					}
 				}

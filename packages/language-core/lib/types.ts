@@ -2,15 +2,13 @@ import { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { createFileProvider } from '../lib/createFileProvider';
 
-export enum FileKind {
-	TextFile = 0,
-	TypeScriptHostFile = 1,
-}
-
-export interface VirtualFile extends BaesFile {
-	kind: FileKind;
+export interface VirtualFile extends BaseFile {
 	mappings: Mapping<CodeInformations>[];
 	embeddedFiles: VirtualFile[];
+	typescript?: {
+		scriptKind: ts.ScriptKind;
+		isProjectFile?: boolean;
+	};
 	codegenStacks?: Stack[];
 	mirrorCodeMappings?: Mapping<[MirrorCodeInformations, MirrorCodeInformations]>[];
 }
@@ -55,12 +53,12 @@ export interface CodeInformations {
 	signatureHelps?: boolean;
 }
 
-export interface SourceFile extends BaesFile {
+export interface SourceFile extends BaseFile {
 	root?: VirtualFile;
 	language?: Language;
 }
 
-export interface BaesFile {
+export interface BaseFile {
 	/**
 	 * for language-server, kit, monaco, this is uri
 	 * 

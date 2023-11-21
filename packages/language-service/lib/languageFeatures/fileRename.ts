@@ -2,7 +2,7 @@ import type { ServiceContext } from '../types';
 import { transformWorkspaceEdit } from '../utils/transform';
 import type * as _ from 'vscode-languageserver-protocol';
 import * as dedupe from '../utils/dedupe';
-import { FileKind, forEachEmbeddedFile } from '@volar/language-core';
+import { forEachEmbeddedFile } from '@volar/language-core';
 import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
@@ -16,7 +16,7 @@ export function register(context: ServiceContext) {
 			let tsExt: string | undefined;
 
 			for (const virtualFile of forEachEmbeddedFile(sourceFile.root)) {
-				if (virtualFile.kind === FileKind.TypeScriptHostFile && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
+				if (virtualFile.typescript?.isProjectFile && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
 					tsExt = virtualFile.id.substring(virtualFile.id.lastIndexOf('.'));
 				}
 			}
