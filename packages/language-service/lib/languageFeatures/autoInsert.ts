@@ -14,7 +14,7 @@ export function register(context: ServiceContext) {
 			function* (map) {
 				for (const mappedPosition of map.toGeneratedPositions(position, data => data.autoInserts ?? true)) {
 
-					const rangeOffset = map.map.toGeneratedOffset(autoInsertContext.lastChange.rangeOffset)?.[0];
+					const rangeOffset = map.map.getGeneratedOffset(autoInsertContext.lastChange.rangeOffset)?.[0];
 					const range = map.toGeneratedRange(autoInsertContext.lastChange.range);
 
 					if (rangeOffset !== undefined && range) {

@@ -1,11 +1,12 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import type { ServiceDiagnosticData } from './validation';
-import { NoneCancellationToken } from '../utils/cancellation';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
+import type { ServiceDiagnosticData } from './validation';
+import { MappingKey } from '@volar/language-core';
 
 export interface ServiceCodeActionData {
 	uri: string,
@@ -33,7 +34,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => ({ range, codeActionContext }),
 			function* (map) {
-				if (map.map.mappings.some(mapping => mapping.data.codeActions ?? true)) {
+				if (map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].codeActions ?? true)) {
 
 					const _codeActionContext: vscode.CodeActionContext = {
 						diagnostics: transformLocations(
@@ -46,11 +47,11 @@ export function register(context: ServiceContext) {
 					let minStart: number | undefined;
 					let maxEnd: number | undefined;
 
-					for (const mapping of map.map.mappings) {
-						const overlapRange = getOverlapRange(offsetRange.start, offsetRange.end, mapping.sourceRange[0], mapping.sourceRange[1]);
+					for (const mapping of map.map.codeMappings) {
+						const overlapRange = getOverlapRange(offsetRange.start, offsetRange.end, mapping[MappingKey.SOURCE_CODE_RANGE][0], mapping[MappingKey.SOURCE_CODE_RANGE][1]);
 						if (overlapRange) {
-							const start = map.map.toGeneratedOffset(overlapRange.start)?.[0];
-							const end = map.map.toGeneratedOffset(overlapRange.end)?.[0];
+							const start = map.map.getGeneratedOffset(overlapRange.start)?.[0];
+							const end = map.map.getGeneratedOffset(overlapRange.end)?.[0];
 							if (start !== undefined && end !== undefined) {
 								minStart = minStart === undefined ? start : Math.min(start, minStart);
 								maxEnd = maxEnd === undefined ? end : Math.max(end, maxEnd);

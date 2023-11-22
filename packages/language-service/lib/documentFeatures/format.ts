@@ -1,8 +1,7 @@
-import { VirtualFile, forEachEmbeddedFile, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
+import { MappingKey, SourceMap, VirtualFile, forEachEmbeddedFile, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext, Service } from '../types';
-import type { SourceMap } from '@volar/source-map';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { SourceMapWithDocuments } from '../documents';
@@ -63,10 +62,10 @@ export function register(context: ServiceContext) {
 
 			for (const file of embeddedFiles) {
 
-				if (!file.mappings.some(mapping => mapping.data.formattingEdits ?? true))
+				if (!file.mappings.some(mapping => mapping[MappingKey.DATA].formattingEdits ?? true))
 					continue;
 
-				const isCodeBlock = file.mappings.length === 1 && file.mappings[0].generatedRange[0] === 0 && file.mappings[0].generatedRange[1] === file.snapshot.getLength();
+				const isCodeBlock = file.mappings.length === 1 && file.mappings[0][MappingKey.GENERATED_CODE_RANGE][0] === 0 && file.mappings[0][MappingKey.GENERATED_CODE_RANGE][1] === file.snapshot.getLength();
 				if (onTypeParams && !isCodeBlock)
 					continue;
 
@@ -309,11 +308,11 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 		initialIndent = '';
 	}
 
-	for (let i = 0; i < map.mappings.length; i++) {
+	for (let i = 0; i < map.codeMappings.length; i++) {
 
-		const mapping = map.mappings[i];
-		const firstLineIndent = getBaseIndent(mapping.sourceRange[0]);
-		const text = document.getText().substring(mapping.sourceRange[0], mapping.sourceRange[1]);
+		const mapping = map.codeMappings[i];
+		const firstLineIndent = getBaseIndent(mapping[MappingKey.SOURCE_CODE_RANGE][0]);
+		const text = document.getText().substring(mapping[MappingKey.SOURCE_CODE_RANGE][0], mapping[MappingKey.SOURCE_CODE_RANGE][1]);
 		const lines = text.split('\n');
 		const baseIndent = firstLineIndent + initialIndent;
 		let lineOffset = lines[0].length + 1;
@@ -326,8 +325,8 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 			indentTextEdits.push({
 				newText: '\n' + baseIndent,
 				range: {
-					start: document.positionAt(mapping.sourceRange[0]),
-					end: document.positionAt(mapping.sourceRange[0]),
+					start: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0]),
+					end: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0]),
 				},
 			});
 		}
@@ -336,8 +335,8 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 			indentTextEdits.push({
 				newText: '\n',
 				range: {
-					start: document.positionAt(mapping.sourceRange[1]),
-					end: document.positionAt(mapping.sourceRange[1]),
+					start: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][1]),
+					end: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][1]),
 				},
 			});
 			insertedFinalNewLine = true;
@@ -350,8 +349,8 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 					indentTextEdits.push({
 						newText: isLastLine ? firstLineIndent : baseIndent,
 						range: {
-							start: document.positionAt(mapping.sourceRange[0] + lineOffset),
-							end: document.positionAt(mapping.sourceRange[0] + lineOffset),
+							start: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0] + lineOffset),
+							end: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0] + lineOffset),
 						},
 					});
 				}

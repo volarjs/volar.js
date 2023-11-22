@@ -1,7 +1,6 @@
-import * as vscode from 'vscode-languageserver-protocol';
-import type { VirtualFile, CodeInformation } from '@volar/language-core';
-import type { Mapping, Stack } from '@volar/source-map';
+import type { CodeInformation, Mapping, Stack, VirtualFile } from '@volar/language-core';
 import type { FileStat, FileType } from '@volar/language-service';
+import * as vscode from 'vscode-languageserver-protocol';
 
 /**
  * Server request client

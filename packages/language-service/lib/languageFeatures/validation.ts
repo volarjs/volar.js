@@ -1,13 +1,13 @@
-import type { CodeInformation } from '@volar/language-core';
+import { MappingKey, type CodeInformation } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { documentFeatureWorker } from '../utils/featureWorkers';
-import { NoneCancellationToken } from '../utils/cancellation';
 
 export function updateRange(
 	range: vscode.Range,
@@ -237,7 +237,7 @@ export function register(context: ServiceContext) {
 			const result = await documentFeatureWorker(
 				context,
 				uri,
-				map => map.map.mappings.some(mapping => mapping.data.diagnostics ?? true),
+				map => map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].diagnostics ?? true),
 				async (service, document) => {
 
 					if (token) {

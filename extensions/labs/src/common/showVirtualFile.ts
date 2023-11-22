@@ -54,7 +54,7 @@ export async function activate(info: ExportsInfoForLabs) {
 				}[] = [];
 
 				for (const [sourceUri, _, map] of maps) {
-					const source = map.toSourceOffset(document.offsetAt(position));
+					const source = map.getSourceOffset(document.offsetAt(position));
 					if (source) {
 						data.push({
 							uri: sourceUri,
@@ -83,14 +83,14 @@ export async function activate(info: ExportsInfoForLabs) {
 				if (!stacks) return;
 
 				const offset = document.offsetAt(position);
-				const stack = stacks.find(stack => stack.range[0] <= offset && offset <= stack.range[1]);
+				const stack = stacks.find(stack => stack[1][0] <= offset && offset <= stack[1][1]);
 				if (!stack) return;
 
-				const line = Number(stack.source.split(':').at(-2));
-				const character = Number(stack.source.split(':').at(-1));
-				const fileName = stack.source.split(':').slice(0, -2).join(':');
+				const line = Number(stack[0].split(':').at(-2));
+				const character = Number(stack[0].split(':').at(-1));
+				const fileName = stack[0].split(':').slice(0, -2).join(':');
 				const link: vscode.DefinitionLink = {
-					originSelectionRange: new vscode.Range(document.positionAt(stack.range[0]), document.positionAt(stack.range[1])),
+					originSelectionRange: new vscode.Range(document.positionAt(stack[1][0]), document.positionAt(stack[1][1])),
 					targetUri: vscode.Uri.file(fileName),
 					targetRange: new vscode.Range(line - 1, character - 1, line - 1, character - 1),
 				};
@@ -193,14 +193,14 @@ export async function activate(info: ExportsInfoForLabs) {
 				for (const [sourceUri, sourceVersion, map] of sources) {
 					const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
 					if (sourceEditor && sourceEditor.document.version === sourceVersion) {
-						const mappingDecorationRanges = map.mappings.map(mapping => new vscode.Range(
-							sourceEditor.document.positionAt(mapping.sourceRange[0]),
-							sourceEditor.document.positionAt(mapping.sourceRange[1]),
+						const mappingDecorationRanges = map.codeMappings.map(mapping => new vscode.Range(
+							sourceEditor.document.positionAt(mapping[1][0]),
+							sourceEditor.document.positionAt(mapping[1][1]),
 						));
 						sourceEditor.setDecorations(mappingDecorationType, mappingDecorationRanges);
-						virtualRanges1 = virtualRanges1.concat(map.mappings.map(mapping => new vscode.Range(
-							getGeneratedPosition(virtualUri, mapping.generatedRange[0]),
-							getGeneratedPosition(virtualUri, mapping.generatedRange[1]),
+						virtualRanges1 = virtualRanges1.concat(map.codeMappings.map(mapping => new vscode.Range(
+							getGeneratedPosition(virtualUri, mapping[2][0]),
+							getGeneratedPosition(virtualUri, mapping[2][1]),
 						)));
 
 						/**
@@ -214,40 +214,40 @@ export async function activate(info: ExportsInfoForLabs) {
 
 							if (vscode.window.activeTextEditor === sourceEditor) {
 
-								const mappedStart = [...map.toGeneratedOffsets(startOffset)];
-								const mappedEnd = [...map.toGeneratedOffsets(endOffset, true)];
+								const mappedStart = [...map.getGeneratedOffsets(startOffset)];
+								const mappedEnd = [...map.getGeneratedOffsets(endOffset, true)];
 
 								sourceEditor.setDecorations(mappingSelectionDecorationType, mappedStart.map(mapped => new vscode.Range(
-									sourceEditor.document.positionAt(mapped[1].sourceRange[0]),
-									sourceEditor.document.positionAt(mapped[1].sourceRange[1]),
+									sourceEditor.document.positionAt(mapped[1][1][0]),
+									sourceEditor.document.positionAt(mapped[1][1][1]),
 								)));
 								sourceEditor.setDecorations(mappingCursorDecorationType, [selection]);
 
 								virtualRanges2 = virtualRanges2.concat(mappedStart.map(mapped => new vscode.Range(
-									getGeneratedPosition(virtualUri, mapped[1].generatedRange[0]),
-									getGeneratedPosition(virtualUri, mapped[1].generatedRange[1]),
+									getGeneratedPosition(virtualUri, mapped[1][2][0]),
+									getGeneratedPosition(virtualUri, mapped[1][2][1]),
 								)));
 								virtualRanges3 = virtualRanges3.concat(mappedStart.map(mapped => new vscode.Range(
 									getGeneratedPosition(virtualUri, mapped[0]),
 									getGeneratedPosition(virtualUri, mappedEnd.find(mapped2 => mapped[1] === mapped2[1])?.[0] ?? mapped[0]),
 								)));
 
-								const mapped = mappedStart.sort((a, b) => a[1].generatedRange[0] - b[1].generatedRange[0])[0];
+								const mapped = mappedStart.sort((a, b) => a[1][2][0] - b[1][2][0])[0];
 								if (mapped) {
 									virtualEditor.revealRange(new vscode.Range(
-										getGeneratedPosition(virtualUri, mapped[1].generatedRange[0]),
-										getGeneratedPosition(virtualUri, mapped[1].generatedRange[1]),
+										getGeneratedPosition(virtualUri, mapped[1][2][0]),
+										getGeneratedPosition(virtualUri, mapped[1][2][1]),
 									));
 								}
 							}
 							else if (vscode.window.activeTextEditor === virtualEditor) {
 
-								const mappedStart = [...map.toSourceOffsets(startOffset)];
-								const mappedEnd = [...map.toSourceOffsets(endOffset, true)];
+								const mappedStart = [...map.getSourceOffsets(startOffset)];
+								const mappedEnd = [...map.getSourceOffsets(endOffset, true)];
 
 								sourceEditor.setDecorations(mappingSelectionDecorationType, mappedStart.map(mapped => new vscode.Range(
-									sourceEditor.document.positionAt(mapped[1].sourceRange[0]),
-									sourceEditor.document.positionAt(mapped[1].sourceRange[1]),
+									sourceEditor.document.positionAt(mapped[1][1][0]),
+									sourceEditor.document.positionAt(mapped[1][1][1]),
 								)));
 								sourceEditor.setDecorations(mappingCursorDecorationType, mappedStart.map(mapped => new vscode.Range(
 									sourceEditor.document.positionAt(mapped[0]),
@@ -255,16 +255,16 @@ export async function activate(info: ExportsInfoForLabs) {
 								)));
 
 								virtualRanges2 = virtualRanges2.concat(mappedStart.map(mapped => new vscode.Range(
-									getGeneratedPosition(virtualUri, mapped[1].generatedRange[0]),
-									getGeneratedPosition(virtualUri, mapped[1].generatedRange[1]),
+									getGeneratedPosition(virtualUri, mapped[1][2][0]),
+									getGeneratedPosition(virtualUri, mapped[1][2][1]),
 								)));
 								virtualRanges3 = virtualRanges3.concat(selection);
 
-								const mapped = mappedStart.sort((a, b) => a[1].sourceRange[0] - b[1].sourceRange[0])[0];
+								const mapped = mappedStart.sort((a, b) => a[1][1][0] - b[1][1][0])[0];
 								if (mapped) {
 									sourceEditor.revealRange(new vscode.Range(
-										sourceEditor.document.positionAt(mapped[1].sourceRange[0]),
-										sourceEditor.document.positionAt(mapped[1].sourceRange[1]),
+										sourceEditor.document.positionAt(mapped[1][1][0]),
+										sourceEditor.document.positionAt(mapped[1][1][1]),
 									));
 								}
 							}

@@ -1,5 +1,4 @@
-import type { CodeInformation, VirtualFile } from '@volar/language-core';
-import type { Mapping, Stack } from '@volar/source-map';
+import type { CodeInformation, Mapping, Stack, VirtualFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
 import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';
@@ -53,7 +52,7 @@ export function registerEditorFeatures(
 			for (const map of languageService.context.documents.getMaps(virtualFile)) {
 				content = map.virtualFileDocument.getText();
 				codegenStacks = virtualFile.codegenStacks ?? [];
-				mappings[map.sourceFileDocument.uri] = map.map.mappings;
+				mappings[map.sourceFileDocument.uri] = map.map.codeMappings;
 			}
 		}
 		return {

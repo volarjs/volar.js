@@ -1,8 +1,9 @@
-import type { ServiceContext } from '../types';
-import { documentFeatureWorker } from '../utils/featureWorkers';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { notEmpty } from '../utils/common';
+import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { notEmpty } from '../utils/common';
+import { documentFeatureWorker } from '../utils/featureWorkers';
+import { MappingKey } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -11,7 +12,7 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.mappings.some(mapping => mapping.data.colors ?? true),
+			map => map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].colors ?? true),
 			(service, document) => {
 				if (token.isCancellationRequested) {
 					return;

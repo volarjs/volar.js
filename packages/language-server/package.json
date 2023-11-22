@@ -24,7 +24,6 @@
 		"vscode-uri": "^3.0.8"
 	},
 	"devDependencies": {
-		"@types/path-browserify": "latest",
-		"@volar/source-map": "1.11.1"
+		"@types/path-browserify": "latest"
 	}
 }

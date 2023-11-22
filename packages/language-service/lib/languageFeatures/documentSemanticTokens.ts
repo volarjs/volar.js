@@ -1,9 +1,10 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { SemanticToken, ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
-import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { notEmpty } from '../utils/common';
+import { languageFeatureWorker } from '../utils/featureWorkers';
+import { MappingKey } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -38,19 +39,18 @@ export function register(context: ServiceContext) {
 				const start = document.offsetAt(range!.start);
 				const end = document.offsetAt(range!.end);
 
-				for (const mapping of map.map.mappings) {
-
+				for (const mapping of map.map.codeMappings) {
 					if (
-						mapping.data.semanticTokens
-						&& mapping.sourceRange[1] > start
-						&& mapping.sourceRange[0] < end
+						mapping[MappingKey.DATA].semanticTokens
+						&& mapping[MappingKey.SOURCE_CODE_RANGE][1] > start
+						&& mapping[MappingKey.SOURCE_CODE_RANGE][0] < end
 					) {
 						if (!result) {
-							result = [...mapping.generatedRange];
+							result = [...mapping[MappingKey.GENERATED_CODE_RANGE]];
 						}
 						else {
-							result[0] = Math.min(result[0], mapping.generatedRange[0]);
-							result[1] = Math.max(result[1], mapping.generatedRange[1]);
+							result[0] = Math.min(result[0], mapping[MappingKey.GENERATED_CODE_RANGE][0]);
+							result[1] = Math.max(result[1], mapping[MappingKey.GENERATED_CODE_RANGE][1]);
 						}
 					}
 				}

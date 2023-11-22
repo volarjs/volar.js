@@ -1,8 +1,9 @@
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { MappingKey } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { isInsideRange, notEmpty } from '../utils/common';
+import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isInsideRange, notEmpty } from '../utils/common';
+import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformSelectionRanges } from '../utils/transform';
 
 export function register(context: ServiceContext) {
@@ -14,7 +15,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => positions,
 			function* (map) {
-				if (map.map.mappings.some(mapping => mapping.data.selectionRanges)) {
+				if (map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].selectionRanges)) {
 					const result = positions
 						.map(position => map.toGeneratedPosition(position, data => data.selectionRanges ?? true))
 						.filter(notEmpty);
