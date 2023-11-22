@@ -1,8 +1,9 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import type { DocumentLinkData } from './documentLinks';
-import { NoneCancellationToken } from '../utils/cancellation';
 import { URI } from 'vscode-uri';
+import type { ServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
+import type { DocumentLinkData } from './documentLinks';
+import { MappingKey } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -35,7 +36,7 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 	if (virtualFile) {
 		for (const map of context.documents.getMaps(virtualFile)) {
 
-			if (!map.map.codeMappings.some(mapping => mapping[3].links ?? true)) {
+			if (!map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].links ?? true)) {
 				continue;
 			}
 
@@ -46,7 +47,7 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 
 			if (range) {
 				const startLine = Number(range[1]) - 1;
-				const startCharacter = Number(range[3] ?? 1) - 1;
+				const startCharacter = Number(range[MappingKey.DATA] ?? 1) - 1;
 				if (range[5] !== undefined) {
 					const endLine = Number(range[5]) - 1;
 					const endCharacter = Number(range[7] ?? 1) - 1;

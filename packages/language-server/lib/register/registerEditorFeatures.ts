@@ -1,5 +1,4 @@
-import type { CodeInformation, VirtualFile } from '@volar/language-core';
-import type { Mapping, Stack } from '@volar/source-map';
+import type { CodeInformation, Mapping, Stack, VirtualFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
 import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';

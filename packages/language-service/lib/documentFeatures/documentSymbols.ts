@@ -4,6 +4,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { isInsideRange, notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformDocumentSymbol } from '../utils/transform';
+import { MappingKey } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -12,7 +13,7 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.codeMappings.some(mapping => mapping[3].symbols ?? true),
+			map => map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].symbols ?? true),
 			async (service, document) => {
 				if (token.isCancellationRequested) {
 					return;

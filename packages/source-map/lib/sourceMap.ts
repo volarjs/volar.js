@@ -1,10 +1,14 @@
 import { binarySearch } from './binarySearch';
 import { translateOffset } from './translateOffset';
 
-export type CodeRangeKey = 1 | 2;
+export enum MappingKey {
+	SOURCE_FILE = 0,
+	SOURCE_CODE_RANGE = 1,
+	GENERATED_CODE_RANGE = 2,
+	DATA = 3,
+}
 
-export const sourceCodeRangeKey: CodeRangeKey = 1;
-export const generatedCodeRangeKey: CodeRangeKey = 2;
+export type CodeRangeKey = typeof MappingKey.SOURCE_CODE_RANGE | typeof MappingKey.GENERATED_CODE_RANGE;
 
 export type Mapping<T = any> = [
 	sourceFile: string | undefined,
@@ -31,23 +35,23 @@ export class SourceMap<Data = any> {
 	constructor(public readonly codeMappings: Mapping<Data>[]) { }
 
 	getSourceOffset(generatedOffset: number, offsetBasedOnEnd = false) {
-		for (const mapped of this.findMatching(generatedOffset, generatedCodeRangeKey, sourceCodeRangeKey, offsetBasedOnEnd)) {
+		for (const mapped of this.findMatching(generatedOffset, MappingKey.GENERATED_CODE_RANGE, MappingKey.SOURCE_CODE_RANGE, offsetBasedOnEnd)) {
 			return mapped;
 		}
 	}
 
 	getGeneratedOffset(sourceOffset: number, offsetBasedOnEnd = false) {
-		for (const mapped of this.findMatching(sourceOffset, sourceCodeRangeKey, generatedCodeRangeKey, offsetBasedOnEnd)) {
+		for (const mapped of this.findMatching(sourceOffset, MappingKey.SOURCE_CODE_RANGE, MappingKey.GENERATED_CODE_RANGE, offsetBasedOnEnd)) {
 			return mapped;
 		}
 	}
 
 	getSourceOffsets(generatedOffset: number, offsetBasedOnEnd = false) {
-		return this.findMatching(generatedOffset, generatedCodeRangeKey, sourceCodeRangeKey, offsetBasedOnEnd);
+		return this.findMatching(generatedOffset, MappingKey.GENERATED_CODE_RANGE, MappingKey.SOURCE_CODE_RANGE, offsetBasedOnEnd);
 	}
 
 	getGeneratedOffsets(sourceOffset: number, offsetBasedOnEnd = false) {
-		return this.findMatching(sourceOffset, sourceCodeRangeKey, generatedCodeRangeKey, offsetBasedOnEnd);
+		return this.findMatching(sourceOffset, MappingKey.SOURCE_CODE_RANGE, MappingKey.GENERATED_CODE_RANGE, offsetBasedOnEnd);
 	}
 
 	* findMatching(offset: number, fromRange: CodeRangeKey, toRange: CodeRangeKey, offsetBasedOnEnd: boolean) {
@@ -69,9 +73,9 @@ export class SourceMap<Data = any> {
 	}
 
 	private getMemoBasedOnRange(fromRange: CodeRangeKey) {
-		return fromRange === sourceCodeRangeKey
-			? this.sourceCodeRangeMemo ??= this.createMemo(sourceCodeRangeKey)
-			: this.generatedCodeRangeMemo ??= this.createMemo(sourceCodeRangeKey);
+		return fromRange === MappingKey.SOURCE_CODE_RANGE
+			? this.sourceCodeRangeMemo ??= this.createMemo(MappingKey.SOURCE_CODE_RANGE)
+			: this.generatedCodeRangeMemo ??= this.createMemo(MappingKey.SOURCE_CODE_RANGE);
 	}
 
 	private createMemo(key: CodeRangeKey): RangeMemo<Data> {

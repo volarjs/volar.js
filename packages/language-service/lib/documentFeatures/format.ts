@@ -1,8 +1,7 @@
-import { VirtualFile, forEachEmbeddedFile, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
+import { MappingKey, SourceMap, VirtualFile, forEachEmbeddedFile, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext, Service } from '../types';
-import type { SourceMap } from '@volar/source-map';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { SourceMapWithDocuments } from '../documents';
@@ -63,7 +62,7 @@ export function register(context: ServiceContext) {
 
 			for (const file of embeddedFiles) {
 
-				if (!file.mappings.some(mapping => mapping[3].formattingEdits ?? true))
+				if (!file.mappings.some(mapping => mapping[MappingKey.DATA].formattingEdits ?? true))
 					continue;
 
 				const isCodeBlock = file.mappings.length === 1 && file.mappings[0][2][0] === 0 && file.mappings[0][2][1] === file.snapshot.getLength();

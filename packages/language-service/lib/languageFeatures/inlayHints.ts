@@ -4,6 +4,7 @@ import { getOverlapRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformTextEdit } from '../utils/transform';
+import { MappingKey } from '@volar/language-core';
 
 export interface InlayHintData {
 	uri: string,
@@ -35,7 +36,7 @@ export function register(context: ServiceContext) {
 				 * copy from ./codeActions.ts
 				 */
 
-				if (!map.map.codeMappings.some(mapping => mapping[3].inlayHints ?? true)) {
+				if (!map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].inlayHints ?? true)) {
 					return;
 				}
 

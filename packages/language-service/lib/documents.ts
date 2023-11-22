@@ -1,5 +1,4 @@
-import { FileProvider, CodeInformation, LinkedCodeTrigger, LinkedCodeMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
-import { generatedCodeRangeKey, type CodeRangeKey, type Mapping, type SourceMap, sourceCodeRangeKey, translateOffset } from '@volar/source-map';
+import { FileProvider, CodeInformation, LinkedCodeTrigger, LinkedCodeMap, SourceFile, VirtualFile, forEachEmbeddedFile, SourceMap, Mapping, MappingKey, CodeRangeKey, translateOffset } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -91,12 +90,12 @@ export class SourceMapWithDocuments<Data = any> {
 
 	public * toSourcePositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true, offsetBasedOnEnd?: boolean) {
 		let hasResult = false;
-		for (const mapped of this.toPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, generatedCodeRangeKey, sourceCodeRangeKey, offsetBasedOnEnd ?? false)) {
+		for (const mapped of this.toPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, MappingKey.GENERATED_CODE_RANGE, MappingKey.SOURCE_CODE_RANGE, offsetBasedOnEnd ?? false)) {
 			hasResult = true;
 			yield mapped;
 		}
 		if (!hasResult && offsetBasedOnEnd === undefined) {
-			for (const mapped of this.toPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, generatedCodeRangeKey, sourceCodeRangeKey, true)) {
+			for (const mapped of this.toPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, MappingKey.GENERATED_CODE_RANGE, MappingKey.SOURCE_CODE_RANGE, true)) {
 				yield mapped;
 			}
 		}
@@ -104,12 +103,12 @@ export class SourceMapWithDocuments<Data = any> {
 
 	public * toGeneratedPositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true, offsetBasedOnEnd?: boolean) {
 		let hasResult = false;
-		for (const mapped of this.toPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, sourceCodeRangeKey, generatedCodeRangeKey, offsetBasedOnEnd ?? false)) {
+		for (const mapped of this.toPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, MappingKey.SOURCE_CODE_RANGE, MappingKey.GENERATED_CODE_RANGE, offsetBasedOnEnd ?? false)) {
 			hasResult = true;
 			yield mapped;
 		}
 		if (!hasResult && offsetBasedOnEnd === undefined) {
-			for (const mapped of this.toPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, sourceCodeRangeKey, generatedCodeRangeKey, true)) {
+			for (const mapped of this.toPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, MappingKey.SOURCE_CODE_RANGE, MappingKey.GENERATED_CODE_RANGE, true)) {
 				yield mapped;
 			}
 		}
@@ -125,7 +124,7 @@ export class SourceMapWithDocuments<Data = any> {
 		offsetBasedOnEnd: boolean
 	) {
 		for (const mapped of this.map.findMatching(fromDoc.offsetAt(position), from, to, offsetBasedOnEnd)) {
-			if (!filter(mapped[1][3])) {
+			if (!filter(mapped[1][MappingKey.DATA])) {
 				continue;
 			}
 			yield [toDoc.positionAt(mapped[0]), mapped[1]] as const;
@@ -133,14 +132,14 @@ export class SourceMapWithDocuments<Data = any> {
 	}
 
 	protected matchSourcePosition(position: vscode.Position, mapping: Mapping, offsetBasedOnEnd: boolean) {
-		let offset = translateOffset(this.virtualFileDocument.offsetAt(position), mapping[generatedCodeRangeKey], mapping[sourceCodeRangeKey], offsetBasedOnEnd);
+		let offset = translateOffset(this.virtualFileDocument.offsetAt(position), mapping[MappingKey.GENERATED_CODE_RANGE], mapping[MappingKey.SOURCE_CODE_RANGE], offsetBasedOnEnd);
 		if (offset !== undefined) {
 			return this.sourceFileDocument.positionAt(offset);
 		}
 	}
 
 	protected matchGeneratedPosition(position: vscode.Position, mapping: Mapping, offsetBasedOnEnd: boolean) {
-		let offset = translateOffset(this.sourceFileDocument.offsetAt(position), mapping[sourceCodeRangeKey], mapping[generatedCodeRangeKey], offsetBasedOnEnd);
+		let offset = translateOffset(this.sourceFileDocument.offsetAt(position), mapping[MappingKey.SOURCE_CODE_RANGE], mapping[MappingKey.GENERATED_CODE_RANGE], offsetBasedOnEnd);
 		if (offset !== undefined) {
 			return this.virtualFileDocument.positionAt(offset);
 		}
@@ -156,10 +155,10 @@ export class MirrorMapWithDocument extends SourceMapWithDocuments<[LinkedCodeTri
 	}
 	*findMirrorPositions(start: vscode.Position) {
 		for (const mapped of this.toGeneratedPositionsBase(start)) {
-			yield [mapped[0], mapped[1][3][1]] as const;
+			yield [mapped[0], mapped[1][MappingKey.DATA][1]] as const;
 		}
 		for (const mapped of this.toSourcePositionsBase(start)) {
-			yield [mapped[0], mapped[1][3][0]] as const;
+			yield [mapped[0], mapped[1][MappingKey.DATA][0]] as const;
 		}
 	}
 }

@@ -1,9 +1,10 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { SemanticToken, ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
-import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { notEmpty } from '../utils/common';
+import { languageFeatureWorker } from '../utils/featureWorkers';
+import { MappingKey } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -40,7 +41,7 @@ export function register(context: ServiceContext) {
 
 				for (const mapping of map.map.codeMappings) {
 					if (
-						mapping[3].semanticTokens
+						mapping[MappingKey.DATA].semanticTokens
 						&& mapping[1][1] > start
 						&& mapping[1][0] < end
 					) {
@@ -84,7 +85,7 @@ export function register(context: ServiceContext) {
 							end: { line: _token[0], character: _token[1] + _token[2] },
 						}, data => !!data.semanticTokens);
 						if (range) {
-							return [range.start.line, range.start.character, range.end.character - range.start.character, _token[3], _token[4]];
+							return [range.start.line, range.start.character, range.end.character - range.start.character, _token[MappingKey.DATA], _token[4]];
 						}
 					})
 					.filter(notEmpty);

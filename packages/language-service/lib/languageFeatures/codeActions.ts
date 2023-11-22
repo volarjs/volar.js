@@ -1,11 +1,12 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import type { ServiceDiagnosticData } from './validation';
-import { NoneCancellationToken } from '../utils/cancellation';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
+import type { ServiceDiagnosticData } from './validation';
+import { MappingKey } from '@volar/language-core';
 
 export interface ServiceCodeActionData {
 	uri: string,
@@ -33,7 +34,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => ({ range, codeActionContext }),
 			function* (map) {
-				if (map.map.codeMappings.some(mapping => mapping[3].codeActions ?? true)) {
+				if (map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].codeActions ?? true)) {
 
 					const _codeActionContext: vscode.CodeActionContext = {
 						diagnostics: transformLocations(
