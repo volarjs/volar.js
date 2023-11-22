@@ -1,4 +1,4 @@
-import { createFileProvider, Language, Project } from '@volar/language-core';
+import { createFileProvider, FileMap, Language, Project } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { forEachEmbeddedFile } from '@volar/language-core';
 import * as path from 'path-browserify';
@@ -157,8 +157,8 @@ export function createProject(
 
 		let lastProjectVersion: number | string | undefined;
 		let tsProjectVersion = 0;
-		let tsFileNames: string[] = [];
-		let tsDirectories = new Set<string>();
+		let tsFileRegistry = new FileMap<boolean>(sys.useCaseSensitiveFileNames);
+		let tsFileDirectoryRegistry = new FileMap<boolean>(sys.useCaseSensitiveFileNames);
 		let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 		let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
@@ -187,26 +187,26 @@ export function createProject(
 				return 'version' in sys ? sys.version : -1; // TODO: only update for /node_modules changes?
 			},
 			// need sync
-			getDirectories(dirName): string[] {
-				sync();
+			getDirectories(dirName) {
+				syncProject();
 				return [...new Set([
 					...getVirtualFileDirectories(dirName),
 					...sys.getDirectories(dirName),
 				])];
 			},
-			directoryExists(dirName: string): boolean {
-				sync();
-				return tsDirectories.has(dirName) || sys.directoryExists(dirName);
+			directoryExists(dirName) {
+				syncProject();
+				return tsFileDirectoryRegistry.has(dirName) || sys.directoryExists(dirName);
 			},
 			readFile(fileName) {
-				sync();
+				syncProject();
 				const snapshot = getScriptSnapshot(fileName);
 				if (snapshot) {
 					return snapshot.getText(0, snapshot.getLength());
 				}
 			},
 			fileExists(fileName) {
-				sync();
+				syncProject();
 				// fill external virtual files
 				const ext = fileName.substring(fileName.lastIndexOf('.'));
 				if (
@@ -215,14 +215,6 @@ export function createProject(
 					|| ext === '.jsx'
 					|| ext === '.tsx'
 				) {
-
-					/**
-					 * If try to access a external .vue file that outside of the project,
-					 * the file will not process by language service host,
-					 * so virtual file will not be created.
-					 * 
-					 * We try to create virtual file here.
-					 */
 
 					const sourceFileName = fileName.endsWith('.d.ts')
 						? fileName.substring(0, fileName.lastIndexOf('.d.ts'))
@@ -235,14 +227,8 @@ export function createProject(
 				// virtual files
 				return getScriptVersion(fileName) !== '';
 			},
-			readDirectory(
-				dirName: string,
-				extensions?: readonly string[],
-				excludes?: readonly string[],
-				includes?: readonly string[],
-				depth?: number,
-			): string[] {
-				sync();
+			readDirectory(dirName, extensions?, excludes?, includes?, depth?) {
+				syncProject();
 				let matches = matchFiles(
 					dirName,
 					extensions,
@@ -255,7 +241,7 @@ export function createProject(
 
 						const files: string[] = [];
 
-						for (const fileName of tsFileNames) {
+						for (const fileName of tsFileRegistry.keys()) {
 							if (fileName.toLowerCase().startsWith(dirPath.toLowerCase())) {
 								const baseName = fileName.substring(dirPath.length);
 								if (baseName.indexOf('/') === -1) {
@@ -284,15 +270,15 @@ export function createProject(
 				])];
 			},
 			getProjectVersion() {
-				sync();
+				syncProject();
 				return tsProjectVersion + ('version' in sys ? `:${sys.version}` : '');
 			},
 			getScriptFileNames() {
-				sync();
-				return tsFileNames;
+				syncProject();
+				return [...tsFileRegistry.keys()];
 			},
 			getScriptKind(fileName) {
-				sync();
+				syncProject();
 				const virtualFile = fileProvider.getVirtualFile(projectHost.getFileId(fileName))[0];
 				if (virtualFile?.typescript) {
 					return virtualFile.typescript.scriptKind;
@@ -326,7 +312,7 @@ export function createProject(
 
 		return languageServiceHost;
 
-		function sync() {
+		function syncProject() {
 
 			const newProjectVersion = projectHost.getProjectVersion?.();
 			const shouldUpdate = newProjectVersion === undefined || newProjectVersion !== lastProjectVersion;
@@ -368,17 +354,21 @@ export function createProject(
 
 			lastTsVirtualFileSnapshots = newTsVirtualFileSnapshots;
 			lastOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
-			tsFileNames = [...tsFileNamesSet];
+			tsFileRegistry.clear();
+
+			for (const fileName of tsFileNamesSet) {
+				tsFileRegistry.set(fileName, true);
+			}
 
 			// Update tsDirectories for `directoryExists()`
-			tsDirectories.clear();
-			for (const fileName of tsFileNames) {
-				tsDirectories.add(path.dirname(fileName));
+			tsFileDirectoryRegistry.clear();
+			for (const fileName of tsFileNamesSet) {
+				tsFileDirectoryRegistry.set(path.dirname(fileName), true);
 			}
 		}
 
 		function getScriptSnapshot(fileName: string) {
-			sync();
+			syncProject();
 
 			const uri = projectHost.getFileId(fileName);
 			const virtualFile = fileProvider.getVirtualFile(uri)[0];
@@ -393,7 +383,7 @@ export function createProject(
 		}
 
 		function getScriptVersion(fileName: string): string {
-			sync();
+			syncProject();
 
 			if (!scriptVersions.has(fileName)) {
 				scriptVersions.set(fileName, { lastVersion: 0, map: new WeakMap() });
@@ -430,7 +420,7 @@ export function createProject(
 
 			const names = new Set<string>();
 
-			for (const fileName of tsFileNames) {
+			for (const fileName of tsFileRegistry.keys()) {
 				if (fileName.toLowerCase().startsWith(dirName.toLowerCase())) {
 					const path = fileName.substring(dirName.length);
 					if (path.indexOf('/') >= 0) {
