@@ -83,7 +83,6 @@ export async function activate(info: ExportsInfoForLabs) {
 				if (!stacks) return;
 
 				const offset = document.offsetAt(position);
-				const stack = stacks.find(stack => stack.range[0] <= offset && offset <= stack.range[1]);
 				const stack = stacks.find(stack => stack[1][0] <= offset && offset <= stack[1][1]);
 				if (!stack) return;
 
