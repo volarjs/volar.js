@@ -3,7 +3,7 @@ import * as vscode from 'vscode-languageserver';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { createUriMap } from './utils/uriMap';
 import type * as _ from 'vscode-uri';
-import { ServerRuntimeEnvironment } from './types';
+import type { ServerRuntimeEnvironment } from './types';
 import { combineChangeRanges } from './utils/combineChangeRanges';
 
 interface IncrementalScriptSnapshotChange {

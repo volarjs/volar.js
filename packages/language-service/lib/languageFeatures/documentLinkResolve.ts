@@ -1,6 +1,6 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
-import { DocumentLinkData } from './documentLinks';
+import type { DocumentLinkData } from './documentLinks';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { URI } from 'vscode-uri';
 

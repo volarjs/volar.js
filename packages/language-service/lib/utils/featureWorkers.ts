@@ -1,7 +1,7 @@
-import { CodeInformation, VirtualFile } from '@volar/language-core';
+import type { CodeInformation, VirtualFile } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import { SourceMapWithDocuments } from '../documents';
-import { Service, ServiceContext } from '../types';
+import type { SourceMapWithDocuments } from '../documents';
+import type { Service, ServiceContext } from '../types';
 
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,

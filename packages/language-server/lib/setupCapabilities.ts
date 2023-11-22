@@ -1,4 +1,4 @@
-import { Service } from '@volar/language-service';
+import type { Service } from '@volar/language-service';
 import { DiagnosticModel, SimpleServerPlugin, InitializationOptions, ServerMode } from './types';
 import * as vscode from 'vscode-languageserver';
 

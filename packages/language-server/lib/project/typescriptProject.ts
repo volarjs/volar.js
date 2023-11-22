@@ -4,9 +4,9 @@ import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { getConfig } from '../config';
-import { ServerProject, TypeScriptServerPlugin } from '../types';
+import type { ServerProject, TypeScriptServerPlugin } from '../types';
 import { UriMap, createUriMap } from '../utils/uriMap';
-import { WorkspacesContext } from './simpleProjectProvider';
+import type { WorkspacesContext } from './simpleProjectProvider';
 
 export interface TypeScriptServerProject extends ServerProject {
 	askedFiles: UriMap<boolean>;

@@ -1,7 +1,7 @@
-import { CodeInformation, LinkedCodeTrigger } from '@volar/language-core';
+import type { CodeInformation, LinkedCodeTrigger } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import { SourceMapWithDocuments } from '../documents';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
+import type { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';

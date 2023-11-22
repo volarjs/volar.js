@@ -1,4 +1,4 @@
-import { Segment, StackNode } from 'muggle-string';
+import type { Segment, StackNode } from 'muggle-string';
 
 export * from 'muggle-string';
 

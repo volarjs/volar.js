@@ -1,9 +1,9 @@
-import { CodeInformation, VirtualFile } from '@volar/language-core';
-import { Mapping, Stack } from '@volar/source-map';
+import type { CodeInformation, VirtualFile } from '@volar/language-core';
+import type { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import * as vscode from 'vscode-languageserver';
+import type * as vscode from 'vscode-languageserver';
 import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';
-import { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
+import type { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
 
 export function registerEditorFeatures(
 	connection: vscode.Connection,

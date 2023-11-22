@@ -3,7 +3,7 @@ import type { ServiceContext } from '../types';
 import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import { ServiceDiagnosticData } from './validation';
+import type { ServiceDiagnosticData } from './validation';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
 

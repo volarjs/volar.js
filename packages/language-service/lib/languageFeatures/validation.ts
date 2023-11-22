@@ -1,9 +1,9 @@
-import { CodeInformation } from '@volar/language-core';
+import type { CodeInformation } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import { SourceMapWithDocuments } from '../documents';
-import { ServiceContext } from '../types';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
+import type { SourceMapWithDocuments } from '../documents';
+import type { ServiceContext } from '../types';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { documentFeatureWorker } from '../utils/featureWorkers';

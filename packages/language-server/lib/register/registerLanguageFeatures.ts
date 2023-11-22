@@ -2,7 +2,7 @@ import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
 import { ServerRuntimeEnvironment, InitializationOptions, ServerMode, ServerProjectProvider } from '../types';
-import { createDocumentManager } from '../documentManager';
+import type { createDocumentManager } from '../documentManager';
 
 export function registerLanguageFeatures(
 	connection: vscode.Connection,

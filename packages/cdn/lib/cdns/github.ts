@@ -1,5 +1,5 @@
 import type { FileType, FileSystem, FileStat } from '@volar/language-service';
-import { UriResolver } from '../types';
+import type { UriResolver } from '../types';
 import { fetchJson, fetchText } from '../utils';
 
 export function createGitHubUriResolver(fileNameBase: string, owner: string, repo: string, branch: string): UriResolver {

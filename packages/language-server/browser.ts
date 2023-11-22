@@ -1,6 +1,6 @@
 import * as vscode from 'vscode-languageserver/browser';
 import { startLanguageServerBase } from './lib/server';
-import { SimpleServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
+import type { SimpleServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { URI } from 'vscode-uri';
 import { FsReadFileRequest, FsReadDirectoryRequest, FsStatRequest } from './protocol';

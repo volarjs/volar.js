@@ -1,5 +1,5 @@
 import * as SourceMaps from '@volar/source-map';
-import { LinkedCodeTrigger } from './types';
+import type { LinkedCodeTrigger } from './types';
 
 export class LinkedCodeMap extends SourceMaps.SourceMap<[LinkedCodeTrigger, LinkedCodeTrigger]> {
 	*toLinkedOffsets(start: number) {

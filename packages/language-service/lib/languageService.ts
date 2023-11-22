@@ -1,4 +1,4 @@
-import { CodeInformation, Project } from '@volar/language-core';
+import type { CodeInformation, Project } from '@volar/language-core';
 import { createDocumentProvider } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
 import * as callHierarchy from './languageFeatures/callHierarchy';
@@ -24,7 +24,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
-import { Service, ServiceContext, ServiceEnvironment, SharedModules } from './types';
+import type { Service, ServiceContext, ServiceEnvironment, SharedModules } from './types';
 
 import * as colorPresentations from './documentFeatures/colorPresentations';
 import * as documentColors from './documentFeatures/documentColors';

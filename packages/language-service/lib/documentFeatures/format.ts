@@ -2,7 +2,7 @@ import { VirtualFile, forEachEmbeddedFile, resolveCommonLanguageId, updateVirtua
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext, Service } from '../types';
-import { SourceMap } from '@volar/source-map';
+import type { SourceMap } from '@volar/source-map';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { SourceMapWithDocuments } from '../documents';

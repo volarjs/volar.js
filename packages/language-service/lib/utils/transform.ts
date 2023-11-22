@@ -1,7 +1,7 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from './common';
-import { ServiceContext } from '../types';
-import { CodeInformation } from '@volar/language-core';
+import type { ServiceContext } from '../types';
+import type { CodeInformation } from '@volar/language-core';
 
 export function transformCompletionItem<T extends vscode.CompletionItem>(
 	item: T,
