@@ -33,10 +33,10 @@ Here is an example of a `Mapping`:
 
 ```ts
 let mapping: Mapping<MyDataType> = [
-    '.../sourceFile.ts',
-    [10, 20],
-    [30, 40],
-    myData,
+    '.../sourceFile.ts', // sourceFile
+    [10, 20], // sourceCodeRange
+    [30, 40], // generatedCodeRange
+    myData, // data
 ];
 ```
 
