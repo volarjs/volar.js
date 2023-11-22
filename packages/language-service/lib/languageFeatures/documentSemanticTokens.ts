@@ -38,19 +38,18 @@ export function register(context: ServiceContext) {
 				const start = document.offsetAt(range!.start);
 				const end = document.offsetAt(range!.end);
 
-				for (const mapping of map.map.mappings) {
-
+				for (const mapping of map.map.codeMappings) {
 					if (
-						mapping.data.semanticTokens
-						&& mapping.sourceRange[1] > start
-						&& mapping.sourceRange[0] < end
+						mapping[3].semanticTokens
+						&& mapping[1][1] > start
+						&& mapping[1][0] < end
 					) {
 						if (!result) {
-							result = [...mapping.generatedRange];
+							result = [...mapping[2]];
 						}
 						else {
-							result[0] = Math.min(result[0], mapping.generatedRange[0]);
-							result[1] = Math.max(result[1], mapping.generatedRange[1]);
+							result[0] = Math.min(result[0], mapping[2][0]);
+							result[1] = Math.max(result[1], mapping[2][1]);
 						}
 					}
 				}

@@ -11,7 +11,7 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.mappings.some(mapping => mapping.data.colors ?? true),
+			map => map.map.codeMappings.some(mapping => mapping[3].colors ?? true),
 			(service, document) => {
 				if (token.isCancellationRequested) {
 					return;

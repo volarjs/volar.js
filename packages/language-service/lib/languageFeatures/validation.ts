@@ -237,7 +237,7 @@ export function register(context: ServiceContext) {
 			const result = await documentFeatureWorker(
 				context,
 				uri,
-				map => map.map.mappings.some(mapping => mapping.data.diagnostics ?? true),
+				map => map.map.codeMappings.some(mapping => mapping[3].diagnostics ?? true),
 				async (service, document) => {
 
 					if (token) {

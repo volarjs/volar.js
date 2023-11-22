@@ -1,10 +1,10 @@
 import { binarySearch } from './binarySearch';
 import { translateOffset } from './translateOffset';
 
-type CodeRangeKey = 1 | 2;
+export type CodeRangeKey = 1 | 2;
 
-const sourceCodeRangeKey: CodeRangeKey = 1;
-const generatedCodeRangeKey: CodeRangeKey = 1;
+export const sourceCodeRangeKey: CodeRangeKey = 1;
+export const generatedCodeRangeKey: CodeRangeKey = 2;
 
 export type Mapping<T = any> = [
 	sourceFile: string | undefined,
@@ -30,33 +30,27 @@ export class SourceMap<Data = any> {
 
 	constructor(public readonly codeMappings: Mapping<Data>[]) { }
 
-	public getSourceOffset(generatedOffset: number, offsetBasedOnEnd = false) {
-		return this.findFirstMatch(generatedOffset, generatedCodeRangeKey, sourceCodeRangeKey, offsetBasedOnEnd);
-	}
-
-	public getGeneratedOffset(sourceOffset: number, offsetBasedOnEnd = false) {
-		return this.findFirstMatch(sourceOffset, sourceCodeRangeKey, generatedCodeRangeKey, offsetBasedOnEnd);
-	}
-
-	public getSourceOffsets(generatedOffset: number, offsetBasedOnEnd = false) {
-		return this.findAllMatches(generatedOffset, generatedCodeRangeKey, sourceCodeRangeKey, offsetBasedOnEnd);
-	}
-
-	public getGeneratedOffsets(sourceOffset: number, offsetBasedOnEnd = false) {
-		return this.findAllMatches(sourceOffset, sourceCodeRangeKey, generatedCodeRangeKey, offsetBasedOnEnd);
-	}
-
-	private findFirstMatch(offset: number, fromRange: CodeRangeKey, toRange: CodeRangeKey, offsetBasedOnEnd: boolean) {
-		for (const mapped of this.findMatching(offset, fromRange, toRange, offsetBasedOnEnd)) {
+	getSourceOffset(generatedOffset: number, offsetBasedOnEnd = false) {
+		for (const mapped of this.findMatching(generatedOffset, generatedCodeRangeKey, sourceCodeRangeKey, offsetBasedOnEnd)) {
 			return mapped;
 		}
 	}
 
-	private findAllMatches(offset: number, fromRange: CodeRangeKey, toRange: CodeRangeKey, offsetBasedOnEnd: boolean) {
-		return this.findMatching(offset, fromRange, toRange, offsetBasedOnEnd);
+	getGeneratedOffset(sourceOffset: number, offsetBasedOnEnd = false) {
+		for (const mapped of this.findMatching(sourceOffset, sourceCodeRangeKey, generatedCodeRangeKey, offsetBasedOnEnd)) {
+			return mapped;
+		}
 	}
 
-	private * findMatching(offset: number, fromRange: CodeRangeKey, toRange: CodeRangeKey, offsetBasedOnEnd: boolean) {
+	getSourceOffsets(generatedOffset: number, offsetBasedOnEnd = false) {
+		return this.findMatching(generatedOffset, generatedCodeRangeKey, sourceCodeRangeKey, offsetBasedOnEnd);
+	}
+
+	getGeneratedOffsets(sourceOffset: number, offsetBasedOnEnd = false) {
+		return this.findMatching(sourceOffset, sourceCodeRangeKey, generatedCodeRangeKey, offsetBasedOnEnd);
+	}
+
+	* findMatching(offset: number, fromRange: CodeRangeKey, toRange: CodeRangeKey, offsetBasedOnEnd: boolean) {
 		const memo = this.getMemoBasedOnRange(fromRange);
 		if (memo.offsets.length === 0) return;
 

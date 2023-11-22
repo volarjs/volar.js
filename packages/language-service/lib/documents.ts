@@ -1,5 +1,5 @@
 import { FileProvider, CodeInformation, LinkedCodeTrigger, LinkedCodeMap, SourceFile, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
-import type { Mapping, SourceMap } from '@volar/source-map';
+import { generatedCodeRangeKey, type CodeRangeKey, type Mapping, type SourceMap, sourceCodeRangeKey, translateOffset } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -47,8 +47,8 @@ export class SourceMapWithDocuments<Data = any> {
 		api2: 'matchSourcePosition' | 'matchGeneratedPosition'
 	) {
 		const failedLookUps: (readonly [vscode.Position, Mapping<Data>])[] = [];
-		for (const mapped of this[api](range.start, filter, 'left')) {
-			const end = this[api2](range.end, mapped[1], 'right');
+		for (const mapped of this[api](range.start, filter, false)) {
+			const end = this[api2](range.end, mapped[1], true);
 			if (end) {
 				yield { start: mapped[0], end } as vscode.Range;
 			}
@@ -57,7 +57,7 @@ export class SourceMapWithDocuments<Data = any> {
 			}
 		}
 		for (const failedLookUp of failedLookUps) {
-			for (const mapped of this[api](range.end, filter, 'right')) {
+			for (const mapped of this[api](range.end, filter, true)) {
 				yield { start: failedLookUp[0], end: mapped[0] } as vscode.Range;
 			}
 		}
@@ -65,51 +65,51 @@ export class SourceMapWithDocuments<Data = any> {
 
 	// Position APIs
 
-	public toSourcePosition(position: vscode.Position, filter: (data: Data) => boolean = () => true, baseOffset?: 'left' | 'right') {
-		for (const mapped of this.toSourcePositions(position, filter, baseOffset)) {
+	public toSourcePosition(position: vscode.Position, filter: (data: Data) => boolean = () => true, offsetBasedOnEnd = false) {
+		for (const mapped of this.toSourcePositions(position, filter, offsetBasedOnEnd)) {
 			return mapped;
 		}
 	}
 
-	public toGeneratedPosition(position: vscode.Position, filter: (data: Data) => boolean = () => true, baseOffset?: 'left' | 'right') {
-		for (const mapped of this.toGeneratedPositions(position, filter, baseOffset)) {
+	public toGeneratedPosition(position: vscode.Position, filter: (data: Data) => boolean = () => true, offsetBasedOnEnd = false) {
+		for (const mapped of this.toGeneratedPositions(position, filter, offsetBasedOnEnd)) {
 			return mapped;
 		}
 	}
 
-	public * toSourcePositions(position: vscode.Position, filter: (data: Data) => boolean = () => true, baseOffset?: 'left' | 'right') {
-		for (const mapped of this.toSourcePositionsBase(position, filter, baseOffset)) {
+	public * toSourcePositions(position: vscode.Position, filter: (data: Data) => boolean = () => true, offsetBasedOnEnd = false) {
+		for (const mapped of this.toSourcePositionsBase(position, filter, offsetBasedOnEnd)) {
 			yield mapped[0];
 		}
 	}
 
-	public * toGeneratedPositions(position: vscode.Position, filter: (data: Data) => boolean = () => true, baseOffset?: 'left' | 'right') {
-		for (const mapped of this.toGeneratedPositionsBase(position, filter, baseOffset)) {
+	public * toGeneratedPositions(position: vscode.Position, filter: (data: Data) => boolean = () => true, offsetBasedOnEnd = false) {
+		for (const mapped of this.toGeneratedPositionsBase(position, filter, offsetBasedOnEnd)) {
 			yield mapped[0];
 		}
 	}
 
-	public * toSourcePositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true, baseOffset?: 'left' | 'right') {
+	public * toSourcePositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true, offsetBasedOnEnd?: boolean) {
 		let hasResult = false;
-		for (const mapped of this.toPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, 'generatedRange', 'sourceRange', baseOffset ?? 'left')) {
+		for (const mapped of this.toPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, generatedCodeRangeKey, sourceCodeRangeKey, offsetBasedOnEnd ?? false)) {
 			hasResult = true;
 			yield mapped;
 		}
-		if (!hasResult && baseOffset === undefined) {
-			for (const mapped of this.toPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, 'generatedRange', 'sourceRange', 'right')) {
+		if (!hasResult && offsetBasedOnEnd === undefined) {
+			for (const mapped of this.toPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, generatedCodeRangeKey, sourceCodeRangeKey, true)) {
 				yield mapped;
 			}
 		}
 	}
 
-	public * toGeneratedPositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true, baseOffset?: 'left' | 'right') {
+	public * toGeneratedPositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true, offsetBasedOnEnd?: boolean) {
 		let hasResult = false;
-		for (const mapped of this.toPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, 'sourceRange', 'generatedRange', baseOffset ?? 'left')) {
+		for (const mapped of this.toPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, sourceCodeRangeKey, generatedCodeRangeKey, offsetBasedOnEnd ?? false)) {
 			hasResult = true;
 			yield mapped;
 		}
-		if (!hasResult && baseOffset === undefined) {
-			for (const mapped of this.toPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, 'sourceRange', 'generatedRange', 'right')) {
+		if (!hasResult && offsetBasedOnEnd === undefined) {
+			for (const mapped of this.toPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, sourceCodeRangeKey, generatedCodeRangeKey, true)) {
 				yield mapped;
 			}
 		}
@@ -120,27 +120,27 @@ export class SourceMapWithDocuments<Data = any> {
 		filter: (data: Data) => boolean,
 		fromDoc: TextDocument,
 		toDoc: TextDocument,
-		from: 'sourceRange' | 'generatedRange',
-		to: 'sourceRange' | 'generatedRange',
-		baseOffset: 'left' | 'right',
+		from: CodeRangeKey,
+		to: CodeRangeKey,
+		offsetBasedOnEnd: boolean
 	) {
-		for (const mapped of this.map.matching(fromDoc.offsetAt(position), from, to, baseOffset === 'right')) {
-			if (!filter(mapped[1].data)) {
+		for (const mapped of this.map.findMatching(fromDoc.offsetAt(position), from, to, offsetBasedOnEnd)) {
+			if (!filter(mapped[1][3])) {
 				continue;
 			}
 			yield [toDoc.positionAt(mapped[0]), mapped[1]] as const;
 		}
 	}
 
-	protected matchSourcePosition(position: vscode.Position, mapping: Mapping, baseOffset: 'left' | 'right') {
-		let offset = this.map.matchOffset(this.virtualFileDocument.offsetAt(position), mapping['generatedRange'], mapping['sourceRange'], baseOffset === 'right');
+	protected matchSourcePosition(position: vscode.Position, mapping: Mapping, offsetBasedOnEnd: boolean) {
+		let offset = translateOffset(this.virtualFileDocument.offsetAt(position), mapping[generatedCodeRangeKey], mapping[sourceCodeRangeKey], offsetBasedOnEnd);
 		if (offset !== undefined) {
 			return this.sourceFileDocument.positionAt(offset);
 		}
 	}
 
-	protected matchGeneratedPosition(position: vscode.Position, mapping: Mapping, baseOffset: 'left' | 'right') {
-		let offset = this.map.matchOffset(this.sourceFileDocument.offsetAt(position), mapping['sourceRange'], mapping['generatedRange'], baseOffset === 'right');
+	protected matchGeneratedPosition(position: vscode.Position, mapping: Mapping, offsetBasedOnEnd: boolean) {
+		let offset = translateOffset(this.sourceFileDocument.offsetAt(position), mapping[sourceCodeRangeKey], mapping[generatedCodeRangeKey], offsetBasedOnEnd);
 		if (offset !== undefined) {
 			return this.virtualFileDocument.positionAt(offset);
 		}
@@ -156,10 +156,10 @@ export class MirrorMapWithDocument extends SourceMapWithDocuments<[LinkedCodeTri
 	}
 	*findMirrorPositions(start: vscode.Position) {
 		for (const mapped of this.toGeneratedPositionsBase(start)) {
-			yield [mapped[0], mapped[1].data[1]] as const;
+			yield [mapped[0], mapped[1][3][1]] as const;
 		}
 		for (const mapped of this.toSourcePositionsBase(start)) {
-			yield [mapped[0], mapped[1].data[0]] as const;
+			yield [mapped[0], mapped[1][3][0]] as const;
 		}
 	}
 }

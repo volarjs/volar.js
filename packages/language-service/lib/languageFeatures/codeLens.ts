@@ -25,7 +25,7 @@ export function register(context: ServiceContext) {
 		return await documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.mappings.some(mapping => mapping.data.codeLenses ?? true),
+			map => map.map.codeMappings.some(mapping => mapping[3].codeLenses ?? true),
 			async (service, document) => {
 				if (token.isCancellationRequested) {
 					return;

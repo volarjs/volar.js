@@ -12,7 +12,7 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.mappings.some(mapping => mapping.data.symbols ?? true),
+			map => map.map.codeMappings.some(mapping => mapping[3].symbols ?? true),
 			async (service, document) => {
 				if (token.isCancellationRequested) {
 					return;

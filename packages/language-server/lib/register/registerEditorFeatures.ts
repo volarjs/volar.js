@@ -53,7 +53,7 @@ export function registerEditorFeatures(
 			for (const map of languageService.context.documents.getMaps(virtualFile)) {
 				content = map.virtualFileDocument.getText();
 				codegenStacks = virtualFile.codegenStacks ?? [];
-				mappings[map.sourceFileDocument.uri] = map.map.mappings;
+				mappings[map.sourceFileDocument.uri] = map.map.codeMappings;
 			}
 		}
 		return {

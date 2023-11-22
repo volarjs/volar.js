@@ -14,7 +14,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => positions,
 			function* (map) {
-				if (map.map.mappings.some(mapping => mapping.data.selectionRanges)) {
+				if (map.map.codeMappings.some(mapping => mapping[3].selectionRanges)) {
 					const result = positions
 						.map(position => map.toGeneratedPosition(position, data => data.selectionRanges ?? true))
 						.filter(notEmpty);

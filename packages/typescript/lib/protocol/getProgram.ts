@@ -76,7 +76,7 @@ export function getProgram(
 
 			if (virtualFile && source) {
 
-				if (!virtualFile.mappings.some(mapping => mapping.data.diagnostics ?? true))
+				if (!virtualFile.mappings.some(mapping => mapping[3].diagnostics ?? true))
 					return [] as any;
 
 				const errors = transformDiagnostics(ls.getProgram()?.[api](sourceFile, cancellationToken) ?? []);
@@ -126,15 +126,15 @@ export function getProgram(
 						if (sourceSnapshot !== source.snapshot)
 							continue;
 
-						for (const start of map.toSourceOffsets(diagnostic.start)) {
+						for (const start of map.getSourceOffsets(diagnostic.start)) {
 
-							const reportStart = typeof start[1].data.diagnostics === 'object' ? start[1].data.diagnostics.shouldReport() : !!start[1].data.diagnostics;
+							const reportStart = typeof start[1][3].diagnostics === 'object' ? start[1][3].diagnostics.shouldReport() : !!start[1][3].diagnostics;
 							if (!reportStart)
 								continue;
 
-							for (const end of map.toSourceOffsets(diagnostic.start + diagnostic.length, true)) {
+							for (const end of map.getSourceOffsets(diagnostic.start + diagnostic.length, true)) {
 
-								const reportEnd = typeof end[1].data.diagnostics === 'object' ? end[1].data.diagnostics.shouldReport() : !!end[1].data.diagnostics;
+								const reportEnd = typeof end[1][3].diagnostics === 'object' ? end[1][3].diagnostics.shouldReport() : !!end[1][3].diagnostics;
 								if (!reportEnd)
 									continue;
 

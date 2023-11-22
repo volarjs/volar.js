@@ -29,7 +29,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		const sourceFile = virtualFiles.getSourceFile(args.fileName);
 		if (sourceFile?.virtualFile) {
 			for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-				if (file.typescript && file.mappings.some(mapping => mapping.data.codeActions)) {
+				if (file.typescript && file.mappings.some(mapping => mapping[3].codeActions)) {
 					edits = edits.concat(_organizeImports({
 						...args,
 						fileName: file.id,
@@ -285,7 +285,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (source.snapshot !== sourceSnapshot)
 					continue;
 
-				const sourceLoc = map.toSourceOffset(textSpan.start);
+				const sourceLoc = map.getSourceOffset(textSpan.start);
 				if (sourceLoc) {
 					return {
 						fileName: source.id,
