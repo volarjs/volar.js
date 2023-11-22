@@ -199,32 +199,14 @@ export function createProject(
 				return tsFileDirectoryRegistry.has(dirName) || sys.directoryExists(dirName);
 			},
 			readFile(fileName) {
-				syncProject();
+				syncSourceFile(fileName);
 				const snapshot = getScriptSnapshot(fileName);
 				if (snapshot) {
 					return snapshot.getText(0, snapshot.getLength());
 				}
 			},
 			fileExists(fileName) {
-				syncProject();
-				// fill external virtual files
-				const ext = fileName.substring(fileName.lastIndexOf('.'));
-				if (
-					ext === '.js'
-					|| ext === '.ts'
-					|| ext === '.jsx'
-					|| ext === '.tsx'
-				) {
-
-					const sourceFileName = fileName.endsWith('.d.ts')
-						? fileName.substring(0, fileName.lastIndexOf('.d.ts'))
-						: fileName.substring(0, fileName.lastIndexOf('.'));
-					const sourceFileUri = projectHost.getFileId(sourceFileName);
-
-					fileProvider.getSourceFile(sourceFileUri); // trigger sync
-				}
-
-				// virtual files
+				syncSourceFile(fileName);
 				return getScriptVersion(fileName) !== '';
 			},
 			readDirectory(dirName, extensions?, excludes?, includes?, depth?) {
@@ -278,7 +260,7 @@ export function createProject(
 				return [...tsFileRegistry.keys()];
 			},
 			getScriptKind(fileName) {
-				syncProject();
+				syncSourceFile(fileName);
 				const virtualFile = fileProvider.getVirtualFile(projectHost.getFileId(fileName))[0];
 				if (virtualFile?.typescript) {
 					return virtualFile.typescript.scriptKind;
@@ -311,6 +293,17 @@ export function createProject(
 		};
 
 		return languageServiceHost;
+
+		function syncSourceFile(tsFileName: string) {
+			for (const language of languages) {
+				if (language.typescript) {
+					const sourceFileName = language.typescript.resolveSourceFileName(tsFileName);
+					if (sourceFileName) {
+						fileProvider.getSourceFile(projectHost.getFileId(sourceFileName)); // trigger sync
+					}
+				}
+			}
+		}
 
 		function syncProject() {
 
@@ -368,7 +361,7 @@ export function createProject(
 		}
 
 		function getScriptSnapshot(fileName: string) {
-			syncProject();
+			syncSourceFile(fileName);
 
 			const uri = projectHost.getFileId(fileName);
 			const virtualFile = fileProvider.getVirtualFile(uri)[0];
@@ -383,7 +376,7 @@ export function createProject(
 		}
 
 		function getScriptVersion(fileName: string): string {
-			syncProject();
+			syncSourceFile(fileName);
 
 			if (!scriptVersions.has(fileName)) {
 				scriptVersions.set(fileName, { lastVersion: 0, map: new WeakMap() });

@@ -72,6 +72,7 @@ export interface Language<T extends VirtualFile = VirtualFile> {
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	disposeVirtualFile?(virtualFile: T): void;
 	typescript?: {
+		resolveSourceFileName(tsFileName: string): string | undefined;
 		resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string | undefined;
 		resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
 	};
