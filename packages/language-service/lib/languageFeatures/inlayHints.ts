@@ -44,7 +44,7 @@ export function register(context: ServiceContext) {
 				let maxEnd: number | undefined;
 
 				for (const mapping of map.map.codeMappings) {
-					const overlapRange = getOverlapRange(offsetRange.start, offsetRange.end, mapping[1][0], mapping[1][1]);
+					const overlapRange = getOverlapRange(offsetRange.start, offsetRange.end, mapping[MappingKey.SOURCE_CODE_RANGE][0], mapping[MappingKey.SOURCE_CODE_RANGE][1]);
 					if (overlapRange) {
 						const start = map.map.getGeneratedOffset(overlapRange.start)?.[0];
 						const end = map.map.getGeneratedOffset(overlapRange.end)?.[0];

@@ -65,7 +65,7 @@ export function register(context: ServiceContext) {
 				if (!file.mappings.some(mapping => mapping[MappingKey.DATA].formattingEdits ?? true))
 					continue;
 
-				const isCodeBlock = file.mappings.length === 1 && file.mappings[0][2][0] === 0 && file.mappings[0][2][1] === file.snapshot.getLength();
+				const isCodeBlock = file.mappings.length === 1 && file.mappings[0][MappingKey.GENERATED_CODE_RANGE][0] === 0 && file.mappings[0][MappingKey.GENERATED_CODE_RANGE][1] === file.snapshot.getLength();
 				if (onTypeParams && !isCodeBlock)
 					continue;
 
@@ -311,8 +311,8 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 	for (let i = 0; i < map.codeMappings.length; i++) {
 
 		const mapping = map.codeMappings[i];
-		const firstLineIndent = getBaseIndent(mapping[1][0]);
-		const text = document.getText().substring(mapping[1][0], mapping[1][1]);
+		const firstLineIndent = getBaseIndent(mapping[MappingKey.SOURCE_CODE_RANGE][0]);
+		const text = document.getText().substring(mapping[MappingKey.SOURCE_CODE_RANGE][0], mapping[MappingKey.SOURCE_CODE_RANGE][1]);
 		const lines = text.split('\n');
 		const baseIndent = firstLineIndent + initialIndent;
 		let lineOffset = lines[0].length + 1;
@@ -325,8 +325,8 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 			indentTextEdits.push({
 				newText: '\n' + baseIndent,
 				range: {
-					start: document.positionAt(mapping[1][0]),
-					end: document.positionAt(mapping[1][0]),
+					start: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0]),
+					end: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0]),
 				},
 			});
 		}
@@ -335,8 +335,8 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 			indentTextEdits.push({
 				newText: '\n',
 				range: {
-					start: document.positionAt(mapping[1][1]),
-					end: document.positionAt(mapping[1][1]),
+					start: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][1]),
+					end: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][1]),
 				},
 			});
 			insertedFinalNewLine = true;
@@ -349,8 +349,8 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 					indentTextEdits.push({
 						newText: isLastLine ? firstLineIndent : baseIndent,
 						range: {
-							start: document.positionAt(mapping[1][0] + lineOffset),
-							end: document.positionAt(mapping[1][0] + lineOffset),
+							start: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0] + lineOffset),
+							end: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0] + lineOffset),
 						},
 					});
 				}

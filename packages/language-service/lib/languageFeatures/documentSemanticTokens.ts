@@ -42,15 +42,15 @@ export function register(context: ServiceContext) {
 				for (const mapping of map.map.codeMappings) {
 					if (
 						mapping[MappingKey.DATA].semanticTokens
-						&& mapping[1][1] > start
-						&& mapping[1][0] < end
+						&& mapping[MappingKey.SOURCE_CODE_RANGE][1] > start
+						&& mapping[MappingKey.SOURCE_CODE_RANGE][0] < end
 					) {
 						if (!result) {
-							result = [...mapping[2]];
+							result = [...mapping[MappingKey.GENERATED_CODE_RANGE]];
 						}
 						else {
-							result[0] = Math.min(result[0], mapping[2][0]);
-							result[1] = Math.max(result[1], mapping[2][1]);
+							result[0] = Math.min(result[0], mapping[MappingKey.GENERATED_CODE_RANGE][0]);
+							result[1] = Math.max(result[1], mapping[MappingKey.GENERATED_CODE_RANGE][1]);
 						}
 					}
 				}
@@ -85,7 +85,7 @@ export function register(context: ServiceContext) {
 							end: { line: _token[0], character: _token[1] + _token[2] },
 						}, data => !!data.semanticTokens);
 						if (range) {
-							return [range.start.line, range.start.character, range.end.character - range.start.character, _token[MappingKey.DATA], _token[4]];
+							return [range.start.line, range.start.character, range.end.character - range.start.character, _token[3], _token[4]];
 						}
 					})
 					.filter(notEmpty);

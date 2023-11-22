@@ -9,12 +9,11 @@ export function buildMappings<T>(chunks: Segment<T>[]) {
 			length += segment.length;
 		}
 		else {
-			mappings.push([
-				segment[1],
-				typeof segment[2] === 'number' ? [segment[2], segment[2] + segment[0].length] : segment[2],
-				[length, length + segment[0].length],
-				segment[MappingKey.DATA]!,
-			]);
+			const mapping = [] as unknown as Mapping<T>;
+			mapping[MappingKey.SOURCE_FILE] = segment[1];
+			mapping[MappingKey.SOURCE_CODE_RANGE] = typeof segment[2] === 'number' ? [segment[2], segment[2] + segment[0].length] : segment[2];
+			mapping[MappingKey.GENERATED_CODE_RANGE] = [length, length + segment[0].length];
+			mapping[MappingKey.DATA] = segment[3]!;
 			length += segment[0].length;
 		}
 	}

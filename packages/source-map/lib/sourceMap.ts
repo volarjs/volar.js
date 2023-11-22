@@ -1,6 +1,8 @@
 import { binarySearch } from './binarySearch';
 import { translateOffset } from './translateOffset';
 
+export type CodeRangeKey = typeof MappingKey.SOURCE_CODE_RANGE | typeof MappingKey.GENERATED_CODE_RANGE;
+
 export enum MappingKey {
 	SOURCE_FILE = 0,
 	SOURCE_CODE_RANGE = 1,
@@ -8,19 +10,22 @@ export enum MappingKey {
 	DATA = 3,
 }
 
-export type CodeRangeKey = typeof MappingKey.SOURCE_CODE_RANGE | typeof MappingKey.GENERATED_CODE_RANGE;
+export enum StackKey {
+	SOURCE_FILE = 0,
+	CODE_RANGE = 1,
+}
 
-export type Mapping<T = any> = [
-	sourceFile: string | undefined,
-	sourceCodeRange: [number, number],
-	generatedCodeRange: [number, number],
-	data: T,
-];
+export type Mapping<T = any> = {
+	[MappingKey.SOURCE_FILE]: string | undefined;
+	[MappingKey.SOURCE_CODE_RANGE]: [number, number];
+	[MappingKey.GENERATED_CODE_RANGE]: [number, number];
+	[MappingKey.DATA]: T;
+};
 
-export type Stack = [
-	sourceFile: string,
-	codeRange: [number, number],
-];
+export type Stack = {
+	[MappingKey.SOURCE_FILE]: string;
+	[MappingKey.SOURCE_CODE_RANGE]: [number, number];
+};
 
 interface RangeMemo<Data> {
 	offsets: number[];
