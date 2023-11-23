@@ -296,11 +296,9 @@ export function createProject(
 
 		function syncSourceFile(tsFileName: string) {
 			for (const language of languages) {
-				if (language.typescript) {
-					const sourceFileName = language.typescript.resolveSourceFileName(tsFileName);
-					if (sourceFileName) {
-						fileProvider.getSourceFile(projectHost.getFileId(sourceFileName)); // trigger sync
-					}
+				const sourceFileName = language.typescript?.resolveSourceFileName(tsFileName);
+				if (sourceFileName) {
+					fileProvider.getSourceFile(projectHost.getFileId(sourceFileName)); // trigger sync
 				}
 			}
 		}
