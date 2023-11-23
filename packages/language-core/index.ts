@@ -1,6 +1,7 @@
 export * from './lib/fileProvider';
 export * from './lib/linkedCodeMap';
 export * from './lib/types';
+export * from './lib/utils';
 export * from '@volar/source-map';
 
 export function resolveCommonLanguageId(fileNameOrUri: string) {
