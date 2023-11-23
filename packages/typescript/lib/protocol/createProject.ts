@@ -158,7 +158,6 @@ export function createProject(
 		let lastProjectVersion: number | string | undefined;
 		let tsProjectVersion = 0;
 		let tsFileRegistry = new FileMap<boolean>(sys.useCaseSensitiveFileNames);
-		let tsFileDirectoryRegistry = new FileMap<boolean>(sys.useCaseSensitiveFileNames);
 		let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 		let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
@@ -193,10 +192,6 @@ export function createProject(
 					...getVirtualFileDirectories(dirName),
 					...sys.getDirectories(dirName),
 				])];
-			},
-			directoryExists(dirName) {
-				syncProject();
-				return tsFileDirectoryRegistry.has(dirName) || sys.directoryExists(dirName);
 			},
 			readFile(fileName) {
 				syncSourceFile(fileName);
@@ -349,12 +344,6 @@ export function createProject(
 
 			for (const fileName of tsFileNamesSet) {
 				tsFileRegistry.set(fileName, true);
-			}
-
-			// Update tsDirectories for `directoryExists()`
-			tsFileDirectoryRegistry.clear();
-			for (const fileName of tsFileNamesSet) {
-				tsFileDirectoryRegistry.set(path.dirname(fileName), true);
 			}
 		}
 
