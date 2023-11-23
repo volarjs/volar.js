@@ -209,7 +209,7 @@ export function createProject(
 				syncSourceFile(fileName);
 				return getScriptVersion(fileName) !== '';
 			},
-			readDirectory(dirName, extensions?, excludes?, includes?, depth?) {
+			readDirectory(dirName, extensions, excludes, includes, depth) {
 				syncProject();
 				let matches = matchFiles(
 					dirName,
