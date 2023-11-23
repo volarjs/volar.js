@@ -283,6 +283,19 @@ export function createProject(
 					...sys.readDirectory(dirName, extensions, excludes, includes, depth),
 				])];
 			},
+			realpath(path) {
+				const match = /^(?<path>.+\.vue)\.(?<extension>.+)$/.exec(path)
+				return match?.groups ? `${sys.realpath(match.groups.path)}.${match.groups.extension}` : sys.realpath(path)
+			},
+			getParsedCommandLine: (path) => {
+				const possibleExtensions = ['ts', 'tsx']
+				const commandLine = ts.getParsedCommandLineOfConfigFile(path, undefined, sys)
+				if (!commandLine) return undefined 
+				return { 
+					...commandLine, 
+					fileNames: commandLine.fileNames.flatMap(name => name.endsWith('.vue') ? possibleExtensions.map(ext => `${name}.${ext}`) : [name])
+				}
+			},
 			getProjectVersion() {
 				sync();
 				return tsProjectVersion + ('version' in sys ? `:${sys.version}` : '');
