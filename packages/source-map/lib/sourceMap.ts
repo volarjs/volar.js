@@ -80,7 +80,7 @@ export class SourceMap<Data = any> {
 	private getMemoBasedOnRange(fromRange: CodeRangeKey) {
 		return fromRange === MappingKey.SOURCE_CODE_RANGE
 			? this.sourceCodeRangeMemo ??= this.createMemo(MappingKey.SOURCE_CODE_RANGE)
-			: this.generatedCodeRangeMemo ??= this.createMemo(MappingKey.SOURCE_CODE_RANGE);
+			: this.generatedCodeRangeMemo ??= this.createMemo(MappingKey.GENERATED_CODE_RANGE);
 	}
 
 	private createMemo(key: CodeRangeKey): RangeMemo<Data> {

@@ -1,10 +1,10 @@
+import type { GetVirtualFilesRequest } from '@volar/language-server';
+import type * as lsp from '@volar/vscode';
 import type { ExportsInfoForLabs } from '@volar/vscode';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as lsp from '@volar/vscode';
 import { getIconPath, useVolarExtensions } from '../common/shared';
-import type { GetVirtualFilesRequest } from '@volar/language-server';
-import { sourceUriToVirtualUris, virtualUriToSourceUri, activate as activateShowVirtualFiles } from '../common/showVirtualFile';
+import { activate as activateShowVirtualFiles, sourceUriToVirtualUris, virtualUriToSourceUri } from '../common/showVirtualFile';
 
 interface LanguageClientItem {
 	extension: vscode.Extension<ExportsInfoForLabs>;

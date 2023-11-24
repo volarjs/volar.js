@@ -15,6 +15,7 @@ export function buildMappings<T>(chunks: Segment<T>[]) {
 			mapping[MappingKey.GENERATED_CODE_RANGE] = [length, length + segment[0].length];
 			mapping[MappingKey.DATA] = segment[3]!;
 			length += segment[0].length;
+			mappings.push(mapping);
 		}
 	}
 	return mappings;

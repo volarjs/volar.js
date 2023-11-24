@@ -80,7 +80,7 @@ export type SemanticToken = [number, number, number, number, number];
 
 type ServiceProvide<P> = P extends undefined ? { provide?: undefined; } : { provide: P; };
 
-export type Service<P = any> = {
+export interface Service<P = any> {
 	(context: ServiceContext | undefined, modules: SharedModules | undefined): {
 		isAdditionalCompletion?: boolean; // volar specific
 		triggerCharacters?: string[];
@@ -132,7 +132,7 @@ export type Service<P = any> = {
 		transformCodeAction?(item: vscode.CodeAction): vscode.CodeAction | undefined; // volar specific
 		dispose?(): void;
 	} & ServiceProvide<P>;
-};
+}
 
 export interface AutoInsertionContext {
 	lastChange: {

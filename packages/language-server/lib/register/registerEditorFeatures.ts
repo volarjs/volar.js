@@ -47,7 +47,7 @@ export function registerEditorFeatures(
 		let content: string = '';
 		let codegenStacks: Stack[] = [];
 		const mappings: Record<string, Mapping<CodeInformation>[]> = {};
-		const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(params.virtualFileName);
+		const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(env.fileNameToUri(params.virtualFileName));
 		if (virtualFile) {
 			for (const map of languageService.context.documents.getMaps(virtualFile)) {
 				content = map.virtualFileDocument.getText();
