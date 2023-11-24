@@ -10,10 +10,10 @@ importers:
     optionalDependencies:
       '@lerna-lite/cli':
         specifier: latest
-        version: 2.7.0(@lerna-lite/publish@2.7.0)(@lerna-lite/version@2.7.0)(typescript@5.2.2)
+        version: 2.7.2(@lerna-lite/publish@2.7.2)(@lerna-lite/version@2.7.2)(typescript@5.2.2)
       '@lerna-lite/publish':
         specifier: latest
-        version: 2.7.0(typescript@5.2.2)
+        version: 2.7.2(typescript@5.2.2)
     devDependencies:
       typescript:
         specifier: latest
@@ -153,8 +153,8 @@ importers:
         specifier: 1.11.1
         version: link:../language-service
       monaco-languageserver-types:
-        specifier: ^0.2.2
-        version: 0.2.3
+        specifier: ^0.3.0
+        version: 0.3.0
       monaco-types:
         specifier: ^0.1.0
         version: 0.1.0
@@ -680,8 +680,8 @@ packages:
     resolution: {integrity: sha512-eF2rxCRulEKXHTRiDrDy6erMYWqNw4LPdQ8UQA4huuxaQsVeRPFl2oM8oDGxMFhJUWZf9McpLtJasDDZb/Bpeg==}
     dev: true
 
-  /@lerna-lite/cli@2.7.0(@lerna-lite/publish@2.7.0)(@lerna-lite/version@2.7.0)(typescript@5.2.2):
-    resolution: {integrity: sha512-O6x75UFU87dk8CL8Zq4N2WBYP1jmYQOw8Xi+jpJiSNY29VuewnbijVpkslkvCdxEe2Qu7zqTV4TBGHT6fa5Z1Q==}
+  /@lerna-lite/cli@2.7.2(@lerna-lite/publish@2.7.2)(@lerna-lite/version@2.7.2)(typescript@5.2.2):
+    resolution: {integrity: sha512-NDd4wx8bJUoK+A5MUvti+fTAoP8VHn3oaLMxEcJUd3l2Qxh8JjREzK1GfjQXBjr6esVqNDpPP+2jOSlDVuV4UQ==}
     engines: {node: '>=16.15.0', npm: '>=8.5.0'}
     hasBin: true
     requiresBuild: true
@@ -706,10 +706,10 @@ packages:
       '@lerna-lite/watch':
         optional: true
     dependencies:
-      '@lerna-lite/core': 2.7.0(typescript@5.2.2)
-      '@lerna-lite/init': 2.7.0(typescript@5.2.2)
-      '@lerna-lite/publish': 2.7.0(typescript@5.2.2)
-      '@lerna-lite/version': 2.7.0(@lerna-lite/publish@2.7.0)(typescript@5.2.2)
+      '@lerna-lite/core': 2.7.2(typescript@5.2.2)
+      '@lerna-lite/init': 2.7.2(typescript@5.2.2)
+      '@lerna-lite/publish': 2.7.2(typescript@5.2.2)
+      '@lerna-lite/version': 2.7.2(@lerna-lite/publish@2.7.2)(typescript@5.2.2)
       dedent: 1.5.1
       dotenv: 16.3.1
       import-local: 3.1.0
@@ -723,8 +723,8 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/core@2.7.0(typescript@5.2.2):
-    resolution: {integrity: sha512-/Z7VCL0hRWJdgSyvJWxkyYJCsD71B3CXBtSz7HFD2+v5cXUW4Ex6teiM81M/oHtMky4wANtSxoeIMED292pfPg==}
+  /@lerna-lite/core@2.7.2(typescript@5.2.2):
+    resolution: {integrity: sha512-jtF5UEfegU2ZY6tR6vIO9+IzGaCDfGTXd+nQwrRHa5CHP19DFTXRnsleRPA78iYfp1y8Z47SZwvIIVYpHzAxjw==}
     engines: {node: '>=16.15.0', npm: '>=8.5.0'}
     requiresBuild: true
     dependencies:
@@ -761,12 +761,12 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/init@2.7.0(typescript@5.2.2):
-    resolution: {integrity: sha512-cV5tCKqcDbbOAiuQEe89o7bILG/S8tEUlfTIBUuwknZK55TM+7YSuKY0Cdemq9H1hpCSUJRk0xZm4j+tyoWXpA==}
+  /@lerna-lite/init@2.7.2(typescript@5.2.2):
+    resolution: {integrity: sha512-ilXXzQG/T7HZ+Uy8YH7uouaNMvvY0HG/9qqUVIo4IFQQJ1Y3er+3i7caSTjhtMsrS6wX+Yctku0oDU6Dc8WRRw==}
     engines: {node: '>=16.15.0', npm: '>=8.5.0'}
     requiresBuild: true
     dependencies:
-      '@lerna-lite/core': 2.7.0(typescript@5.2.2)
+      '@lerna-lite/core': 2.7.2(typescript@5.2.2)
       fs-extra: 11.1.1
       p-map: 6.0.0
       write-json-file: 5.0.0
@@ -777,14 +777,14 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/publish@2.7.0(typescript@5.2.2):
-    resolution: {integrity: sha512-tuPRdY0+MhSNiCtVwM0m+N36qajVMCMY9UoUH3ku5cirprW3sKuNPoJKWz02hGPFKdQr+w6WeO29ksTlNgNwOA==}
+  /@lerna-lite/publish@2.7.2(typescript@5.2.2):
+    resolution: {integrity: sha512-ANp+/OroYqaxyXqzs5ql1FEWZiQRM0FD2kkJgT3gpPZEahVsoYxuoDcIRnwRD5R6WiNepLQKz2+PMlY8Aqkm/Q==}
     engines: {node: '>=16.15.0', npm: '>=8.5.0'}
     requiresBuild: true
     dependencies:
-      '@lerna-lite/cli': 2.7.0(@lerna-lite/publish@2.7.0)(@lerna-lite/version@2.7.0)(typescript@5.2.2)
-      '@lerna-lite/core': 2.7.0(typescript@5.2.2)
-      '@lerna-lite/version': 2.7.0(@lerna-lite/publish@2.7.0)(typescript@5.2.2)
+      '@lerna-lite/cli': 2.7.2(@lerna-lite/publish@2.7.2)(@lerna-lite/version@2.7.2)(typescript@5.2.2)
+      '@lerna-lite/core': 2.7.2(typescript@5.2.2)
+      '@lerna-lite/version': 2.7.2(@lerna-lite/publish@2.7.2)(typescript@5.2.2)
       '@npmcli/arborist': 7.2.1
       byte-size: 8.1.1
       chalk: 5.3.0
@@ -821,17 +821,17 @@ packages:
     dev: false
     optional: true
 
-  /@lerna-lite/version@2.7.0(@lerna-lite/publish@2.7.0)(typescript@5.2.2):
-    resolution: {integrity: sha512-8+3HPd6y+vnNvCmJ0u/ouiwKdN54QCIGRF0du1yUj/Ts+6QA0hZAAGxfpq9nGIS5wPDMHS7ebrHeck0xbK3mSw==}
+  /@lerna-lite/version@2.7.2(@lerna-lite/publish@2.7.2)(typescript@5.2.2):
+    resolution: {integrity: sha512-rd8sdEBcKEiMX93YaftHDPc8oXoVmcdOnE4VMXFShRue/e5++RenUyCrDssyOJRujvNMcvgYeoDQ+xf6/3A00A==}
     engines: {node: '>=16.15.0', npm: '>=8.5.0'}
     requiresBuild: true
     dependencies:
-      '@lerna-lite/cli': 2.7.0(@lerna-lite/publish@2.7.0)(@lerna-lite/version@2.7.0)(typescript@5.2.2)
-      '@lerna-lite/core': 2.7.0(typescript@5.2.2)
+      '@lerna-lite/cli': 2.7.2(@lerna-lite/publish@2.7.2)(@lerna-lite/version@2.7.2)(typescript@5.2.2)
+      '@lerna-lite/core': 2.7.2(typescript@5.2.2)
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 19.0.13
       chalk: 5.3.0
-      conventional-changelog-angular: 6.0.0
+      conventional-changelog-angular: 7.0.0
       conventional-changelog-core: 5.0.2
       conventional-changelog-writer: 6.0.1
       conventional-commits-parser: 5.0.0
@@ -2059,9 +2059,9 @@ packages:
     dev: false
     optional: true
 
-  /conventional-changelog-angular@6.0.0:
-    resolution: {integrity: sha512-6qLgrBF4gueoC7AFVHu51nHL9pF9FRjXrH+ceVf7WmAfH3gs+gEYOkvxhjMPjZu57I4AGUGoNTY8V7Hrgf1uqg==}
-    engines: {node: '>=14'}
+  /conventional-changelog-angular@7.0.0:
+    resolution: {integrity: sha512-ROjNchA9LgfNMTTFSIWPzebCwOGFdgkEq45EnvvrmSLvCtAw0HSmrCs7/ty+wAeYUZyNay0YMUNYFTRL72PkBQ==}
+    engines: {node: '>=16'}
     requiresBuild: true
     dependencies:
       compare-func: 2.0.0
@@ -3982,11 +3982,12 @@ packages:
     resolution: {integrity: sha512-gPhXfbi0RCnIRXMUzkvjRc8tUiD56lkuw7uRr2dUv00owYthFRlyot2R0ECFuA5F3YKei4OlFjALDahxIC/6Jg==}
     dev: true
 
-  /monaco-languageserver-types@0.2.3:
-    resolution: {integrity: sha512-QyV5R7s+rJ87bX1sRioMJZULWiTnMp0Vm+RLILgMEL0SqWuBsQBSW0EZunr4xMZhv6Qun3UZNCN4JrCCLURcgQ==}
+  /monaco-languageserver-types@0.3.0:
+    resolution: {integrity: sha512-dnBIgTeqeqHdIpDwRX4lbKxDmSPLmZeZ0FmJ7utY/ApWYQo/X6PTC0WZ2rPnDD04lgsA++DgHn6B4ows4JyV/A==}
     dependencies:
       monaco-types: 0.1.0
       vscode-languageserver-protocol: 3.17.5
+      vscode-uri: 3.0.8
     dev: false
 
   /monaco-types@0.1.0:
