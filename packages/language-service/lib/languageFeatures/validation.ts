@@ -1,4 +1,4 @@
-import { MappingKey, type CodeInformation } from '@volar/language-core';
+import type { CodeInformation } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
@@ -237,7 +237,7 @@ export function register(context: ServiceContext) {
 			const result = await documentFeatureWorker(
 				context,
 				uri,
-				map => map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].diagnostics ?? true),
+				map => map.map.codeMappings.some(mapping => mapping.data.diagnostics ?? true),
 				async (service, document) => {
 
 					if (token) {

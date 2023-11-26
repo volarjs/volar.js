@@ -6,7 +6,6 @@ import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
 import type { ServiceDiagnosticData } from './validation';
-import { MappingKey } from '@volar/language-core';
 
 export interface ServiceCodeActionData {
 	uri: string,
@@ -34,7 +33,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => ({ range, codeActionContext }),
 			function* (map) {
-				if (map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].codeActions ?? true)) {
+				if (map.map.codeMappings.some(mapping => mapping.data.codeActions ?? true)) {
 
 					const _codeActionContext: vscode.CodeActionContext = {
 						diagnostics: transformLocations(
@@ -48,7 +47,13 @@ export function register(context: ServiceContext) {
 					let maxEnd: number | undefined;
 
 					for (const mapping of map.map.codeMappings) {
-						const overlapRange = getOverlapRange(offsetRange.start, offsetRange.end, mapping[MappingKey.SOURCE_CODE_RANGE][0], mapping[MappingKey.SOURCE_CODE_RANGE][1]);
+						const overlapRange = getOverlapRange(
+							offsetRange.start,
+							offsetRange.end,
+							mapping.sourceOffsets[0],
+							mapping.sourceOffsets[mapping.sourceOffsets.length - 1]
+							+ mapping.lengths[mapping.lengths.length - 1]
+						);
 						if (overlapRange) {
 							const start = map.map.getGeneratedOffset(overlapRange.start)?.[0];
 							const end = map.map.getGeneratedOffset(overlapRange.end)?.[0];

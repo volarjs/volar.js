@@ -1,4 +1,4 @@
-import { MappingKey, SourceMap } from '@volar/source-map';
+import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { LinkedCodeMap } from './linkedCodeMap';
 import type { CodeInformation, Language, SourceFile, VirtualFile } from './types';
@@ -138,17 +138,17 @@ export function updateVirtualFileMaps(
 
 	for (const mapping of virtualFile.mappings) {
 
-		if (sources.has(mapping[MappingKey.SOURCE_FILE]))
+		if (sources.has(mapping.source))
 			continue;
 
-		sources.add(mapping[MappingKey.SOURCE_FILE]);
+		sources.add(mapping.source);
 
-		const source = getSourceSnapshot(mapping[MappingKey.SOURCE_FILE]);
+		const source = getSourceSnapshot(mapping.source);
 		if (!source)
 			continue;
 
 		if (!map.has(source[0]) || map.get(source[0])![0] !== source[1]) {
-			map.set(source[0], [source[1], new SourceMap(virtualFile.mappings.filter(mapping2 => mapping2[MappingKey.SOURCE_FILE] === mapping[MappingKey.SOURCE_FILE]))]);
+			map.set(source[0], [source[1], new SourceMap(virtualFile.mappings.filter(mapping2 => mapping2.source === mapping.source))]);
 		}
 	}
 
