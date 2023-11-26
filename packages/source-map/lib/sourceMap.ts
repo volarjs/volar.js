@@ -3,10 +3,6 @@ import { translateOffset } from './translateOffset';
 
 export type CodeRangeKey = 'sourceOffsets' | 'generatedOffsets';
 
-export enum MappingKey {
-	SOURCE_CODE_RANGE = 1,
-}
-
 export interface Mapping<T = any> {
 	source?: string;
 	sourceOffsets: number[];
@@ -15,15 +11,15 @@ export interface Mapping<T = any> {
 	data: T;
 }
 
-interface RangeMemo<Data> {
+interface MappingMemo<Data> {
 	offsets: number[];
 	mappings: Set<Mapping<Data>>[];
 }
 
 export class SourceMap<Data = any> {
 
-	private sourceCodeRangeMemo: RangeMemo<Data> | undefined;
-	private generatedCodeRangeMemo: RangeMemo<Data> | undefined;
+	private sourceCodeOffsetsMemo: MappingMemo<Data> | undefined;
+	private generatedCodeOffsetsMemo: MappingMemo<Data> | undefined;
 
 	constructor(public readonly codeMappings: Mapping<Data>[]) { }
 
@@ -67,11 +63,11 @@ export class SourceMap<Data = any> {
 
 	private getMemoBasedOnRange(fromRange: CodeRangeKey) {
 		return fromRange === 'sourceOffsets'
-			? this.sourceCodeRangeMemo ??= this.createMemo('sourceOffsets')
-			: this.generatedCodeRangeMemo ??= this.createMemo('generatedOffsets');
+			? this.sourceCodeOffsetsMemo ??= this.createMemo('sourceOffsets')
+			: this.generatedCodeOffsetsMemo ??= this.createMemo('generatedOffsets');
 	}
 
-	private createMemo(key: CodeRangeKey): RangeMemo<Data> {
+	private createMemo(key: CodeRangeKey): MappingMemo<Data> {
 		const offsetsSet = new Set<number>();
 		for (const mapping of this.codeMappings) {
 			for (let i = 0; i < mapping[key].length; i++) {

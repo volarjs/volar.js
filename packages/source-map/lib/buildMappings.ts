@@ -11,7 +11,7 @@ export function buildMappings<T>(chunks: Segment<T>[]) {
 		else {
 			mappings.push({
 				source: segment[1],
-				sourceOffsets: [typeof segment[2] === 'number' ? segment[2] : segment[2][0]],
+				sourceOffsets: [segment[2]],
 				generatedOffsets: [length],
 				lengths: [segment[0].length],
 				data: segment[3]!,
