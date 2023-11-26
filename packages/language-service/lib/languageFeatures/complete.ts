@@ -53,7 +53,7 @@ export function register(context: ServiceContext) {
 
 					for (const map of context.documents.getMaps(virtualFile)) {
 
-						for (const mapped of map.toGeneratedPositions(position, data => !!data.completionItems ?? true)) {
+						for (const mapped of map.toGeneratedPositions(position, data => !!(data.completionItems ?? true))) {
 
 							if (!cacheData.service.provideCompletionItems)
 								continue;
@@ -134,7 +134,7 @@ export function register(context: ServiceContext) {
 
 					for (const mapped of map.toGeneratedPositions(position, data => {
 						_data = data;
-						return !!data.completionItems ?? true;
+						return !!(data.completionItems ?? true);
 					})) {
 
 						for (const service of services) {
@@ -175,7 +175,7 @@ export function register(context: ServiceContext) {
 
 							const completionList = transformCompletionList(
 								embeddedCompletionList,
-								range => map.toSourceRange(range),
+								range => map.toSourceRange(range, data => !!(data.completionItems ?? true)),
 								map.virtualFileDocument,
 								(newItem, oldItem) => newItem.data = {
 									uri,
