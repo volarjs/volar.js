@@ -67,7 +67,7 @@ export function register(context: ServiceContext) {
 
 				const isCodeBlock = file.mappings.length === 1
 					&& file.mappings[0].sourceOffsets.length === 1
-					&& file.mappings[0].sourceOffsets[0] === 0
+					&& file.mappings[0].generatedOffsets[0] === 0
 					&& file.mappings[0].lengths[0] === file.snapshot.getLength();
 				if (onTypeParams && !isCodeBlock)
 					continue;
