@@ -158,8 +158,6 @@ export function updateVirtualFileMaps(
 export function* forEachEmbeddedFile(file: VirtualFile): Generator<VirtualFile> {
 	yield file;
 	for (const embeddedFile of file.embeddedFiles) {
-		for (const nextFile of forEachEmbeddedFile(embeddedFile)) {
-			yield nextFile;
-		}
+		yield* forEachEmbeddedFile(embeddedFile);
 	}
 }
