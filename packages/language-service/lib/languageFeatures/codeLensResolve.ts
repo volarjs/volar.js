@@ -26,20 +26,24 @@ export function register(context: ServiceContext) {
 
 		if (data?.kind === 'references') {
 
-			let references = await findReferences(data.uri, item.range.start, token) ?? [];
+			let references = await findReferences(data.sourceFileUri, item.range.start, token) ?? [];
 
 			const service = context.services[data.serviceIndex];
 
 			if (service.resolveReferencesCodeLensLocations) {
-				const file = context.project.fileProvider.getVirtualFile(data.uri)[0]
-					?? context.project.fileProvider.getSourceFile(data.uri);
-				if (file) {
-					const document = context.documents.get(data.uri, file.languageId, file.snapshot);
-					references = await service.resolveReferencesCodeLensLocations(document, data.range, references, token);
+				const virtualFile = context.project.fileProvider.getVirtualFile(data.workerFileUri)[0];
+				const sourceFile = context.project.fileProvider.getSourceFile(data.workerFileUri);
+				if (virtualFile) {
+					const document = context.documents.get(virtualFile.id, virtualFile.languageId, virtualFile.snapshot);
+					references = await service.resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
+				}
+				else if (sourceFile && !sourceFile?.virtualFile) {
+					const document = context.documents.get(sourceFile.id, sourceFile.languageId, sourceFile.snapshot);
+					references = await service.resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
 				}
 			}
 
-			item.command = context.commands.showReferences.create(data.uri, data.range.start, references);
+			item.command = context.commands.showReferences.create(data.sourceFileUri, item.range.start, references);
 		}
 
 		return item;

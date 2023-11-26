@@ -13,8 +13,9 @@ export interface ServiceCodeLensData {
 
 export interface ServiceReferencesCodeLensData {
 	kind: 'references',
-	uri: string,
-	range: vscode.Range,
+	sourceFileUri: string,
+	workerFileUri: string,
+	workerFileRange: vscode.Range,
 	serviceIndex: number,
 }
 
@@ -50,8 +51,9 @@ export function register(context: ServiceContext) {
 					range,
 					data: {
 						kind: 'references',
-						uri,
-						range,
+						sourceFileUri: uri,
+						workerFileUri: document.uri,
+						workerFileRange: range,
 						serviceIndex,
 					} satisfies ServiceReferencesCodeLensData,
 				}));
@@ -69,8 +71,6 @@ export function register(context: ServiceContext) {
 				}
 				return data
 					.map(codeLens => {
-
-
 						const range = map.toSourceRange(codeLens.range);
 						if (range) {
 							return {

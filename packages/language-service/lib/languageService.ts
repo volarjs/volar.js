@@ -1,4 +1,4 @@
-import type { CodeInformation, Project } from '@volar/language-core';
+import type { Project } from '@volar/language-core';
 import { createDocumentProvider } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
 import * as callHierarchy from './languageFeatures/callHierarchy';
@@ -111,22 +111,12 @@ export function createLanguageService(
 			commands: {
 				rename: {
 					create(uri, position) {
-						const source = toSourceLocation(
-							uri,
-							position,
-							data => typeof data.renameEdits === 'object'
-								? data.renameEdits.shouldRename
-								: (data.renameEdits ?? true)
-						);
-						if (!source) {
-							return;
-						}
 						return {
 							title: '',
 							command: 'editor.action.rename',
 							arguments: [
-								source.uri,
-								source.position,
+								uri,
+								position,
 							],
 						};
 					},
@@ -136,32 +126,13 @@ export function createLanguageService(
 				},
 				showReferences: {
 					create(uri, position, locations) {
-						const source = toSourceLocation(uri, position);
-						if (!source) {
-							return;
-						}
-						const sourceReferences: vscode.Location[] = [];
-						for (const reference of locations) {
-							const [virtualFile] = context.project.fileProvider.getVirtualFile(reference.uri);
-							if (virtualFile) {
-								for (const map of context.documents.getMaps(virtualFile)) {
-									const range = map.toSourceRange(reference.range);
-									if (range) {
-										sourceReferences.push({ uri: map.sourceFileDocument.uri, range });
-									}
-								}
-							}
-							else {
-								sourceReferences.push(reference);
-							}
-						}
 						return {
 							title: locations.length === 1 ? '1 reference' : `${locations.length} references`,
 							command: 'editor.action.showReferences',
 							arguments: [
-								source.uri,
-								source.position,
-								sourceReferences,
+								uri,
+								position,
+								locations,
 							],
 						};
 					},
@@ -196,24 +167,5 @@ export function createLanguageService(
 		}
 
 		return context;
-
-		function toSourceLocation(uri: string, position: vscode.Position, filter?: (data: CodeInformation) => boolean) {
-
-			const [virtualFile] = project.fileProvider.getVirtualFile(uri);
-
-			if (!virtualFile) {
-				return { uri, position };
-			}
-
-			for (const map of context.documents.getMaps(virtualFile)) {
-				const sourcePosition = map.toSourcePosition(position, filter);
-				if (sourcePosition) {
-					return {
-						uri: map.sourceFileDocument.uri,
-						position: sourcePosition,
-					};
-				}
-			}
-		}
 	}
 }
