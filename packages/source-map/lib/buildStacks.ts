@@ -1,5 +1,9 @@
 import type { Segment, StackNode } from 'muggle-string';
-import type { Stack } from './sourceMap';
+
+export interface Stack {
+	source: string;
+	range: [number, number];
+}
 
 export function buildStacks<T>(chunks: Segment<T>[], stacks: StackNode[]) {
 	let offset = 0;
@@ -17,10 +21,10 @@ export function buildStacks<T>(chunks: Segment<T>[], stacks: StackNode[]) {
 			}
 		}
 		index += stack.length;
-		result.push([
-			stack.stack,
-			[start, offset],
-		]);
+		result.push({
+			source: stack.stack,
+			range: [start, offset],
+		});
 	}
 	return result;
 }

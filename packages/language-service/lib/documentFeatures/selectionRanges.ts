@@ -1,4 +1,3 @@
-import { MappingKey } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
@@ -15,7 +14,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => positions,
 			function* (map) {
-				if (map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].selectionRanges)) {
+				if (map.map.codeMappings.some(mapping => mapping.data.selectionRanges)) {
 					const result = positions
 						.map(position => map.toGeneratedPosition(position, data => data.selectionRanges ?? true))
 						.filter(notEmpty);
