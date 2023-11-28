@@ -24,6 +24,7 @@ import * as renamePrepare from './languageFeatures/renamePrepare';
 import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
+import * as documentDrop from './languageFeatures/documentDrop';
 import type { Service, ServiceContext, ServiceEnvironment, SharedModules } from './types';
 
 import type * as vscode from 'vscode-languageserver-protocol';
@@ -84,6 +85,7 @@ export function createLanguageService(
 		doDocumentLinkResolve: documentLinkResolve.register(context),
 		findWorkspaceSymbols: workspaceSymbol.register(context),
 		doAutoInsert: autoInsert.register(context),
+		doDocumentDrop: documentDrop.register(context),
 		getInlayHints: inlayHints.register(context),
 		doInlayHintResolve: inlayHintResolve.register(context),
 		callHierarchy: callHierarchy.register(context),
