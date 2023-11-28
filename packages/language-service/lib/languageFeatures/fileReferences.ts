@@ -4,6 +4,7 @@ import * as dedupe from '../utils/dedupe';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isReferencesEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -28,7 +29,7 @@ export function register(context: ServiceContext) {
 					}
 
 					for (const map of context.documents.getMaps(virtualFile)) {
-						const range = map.toSourceRange(reference.range, data => data.references ?? true);
+						const range = map.toSourceRange(reference.range, isReferencesEnabled);
 						if (range) {
 							reference.uri = map.sourceFileDocument.uri;
 							reference.range = range;

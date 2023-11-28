@@ -1,4 +1,4 @@
-import type { CodeInformation } from '@volar/language-core';
+import { isDiagnosticsEnabled, type CodeInformation, shouldReportDiagnostics } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
@@ -237,7 +237,7 @@ export function register(context: ServiceContext) {
 			const result = await documentFeatureWorker(
 				context,
 				uri,
-				map => map.map.codeMappings.some(mapping => mapping.data.diagnostics ?? true),
+				map => map.map.codeMappings.some(mapping => isDiagnosticsEnabled(mapping.data)),
 				async (service, document) => {
 
 					if (token) {
@@ -284,13 +284,7 @@ export function register(context: ServiceContext) {
 					return errors;
 				},
 				(errors, map) => {
-					return transformErrorRangeBase(
-						errors,
-						map,
-						data => typeof data.diagnostics === 'object'
-							? data.diagnostics.shouldReport()
-							: (data.diagnostics ?? true)
-					);
+					return transformErrorRangeBase(errors, map, shouldReportDiagnostics);
 				},
 				arr => dedupe.withDiagnostics(arr.flat()),
 			);

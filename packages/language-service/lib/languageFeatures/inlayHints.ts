@@ -4,6 +4,7 @@ import { getOverlapRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformTextEdit } from '../utils/transform';
+import { isInlayHintsEnabled } from '@volar/language-core';
 
 export interface InlayHintData {
 	uri: string,
@@ -35,7 +36,7 @@ export function register(context: ServiceContext) {
 				 * copy from ./codeActions.ts
 				 */
 
-				if (!map.map.codeMappings.some(mapping => mapping.data.inlayHints ?? true)) {
+				if (!map.map.codeMappings.some(mapping => isInlayHintsEnabled(mapping.data))) {
 					return;
 				}
 
@@ -90,10 +91,7 @@ export function register(context: ServiceContext) {
 				}
 				return inlayHints
 					.map((_inlayHint): vscode.InlayHint | undefined => {
-						const position = map.toSourcePosition(
-							_inlayHint.position,
-							data => data.inlayHints ?? true,
-						);
+						const position = map.toSourcePosition(_inlayHint.position, isInlayHintsEnabled);
 						const edits = _inlayHint.textEdits
 							?.map(textEdit => transformTextEdit(textEdit, range => map!.toSourceRange(range), map.virtualFileDocument))
 							.filter(notEmpty);

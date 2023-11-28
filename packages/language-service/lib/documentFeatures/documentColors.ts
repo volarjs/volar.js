@@ -1,3 +1,4 @@
+import { isColorEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
@@ -11,7 +12,7 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.codeMappings.some(mapping => mapping.data.colors ?? true),
+			map => map.map.codeMappings.some(mapping => isColorEnabled(mapping.data)),
 			(service, document) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -24,7 +25,7 @@ export function register(context: ServiceContext) {
 				}
 				return data
 					.map<vscode.ColorInformation | undefined>(color => {
-						const range = map.toSourceRange(color.range, data => data.colors ?? true);
+						const range = map.toSourceRange(color.range, isColorEnabled);
 						if (range) {
 							return {
 								range,

@@ -4,6 +4,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isReferencesEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -13,7 +14,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, data => data.references ?? true),
+			map => map.toGeneratedPositions(position, isReferencesEnabled),
 			async (service, document, position) => {
 
 				if (token.isCancellationRequested)
@@ -79,7 +80,7 @@ export function register(context: ServiceContext) {
 
 					if (virtualFile) {
 						for (const map of context.documents.getMaps(virtualFile)) {
-							const range = map.toSourceRange(reference.range, data => !!data.references);
+							const range = map.toSourceRange(reference.range, isReferencesEnabled);
 							if (range) {
 								results.push({
 									uri: map.sourceFileDocument.uri,

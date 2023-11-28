@@ -1,4 +1,4 @@
-import { VirtualFile, FileProvider, forEachEmbeddedFile } from '@volar/language-core';
+import { FileProvider, VirtualFile, forEachEmbeddedFile, isCodeActionsEnabled } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function decorateLanguageService(virtualFiles: FileProvider, languageService: ts.LanguageService, isTsPlugin: boolean) {
@@ -29,7 +29,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		const sourceFile = virtualFiles.getSourceFile(args.fileName);
 		if (sourceFile?.virtualFile) {
 			for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-				if (file.typescript && file.mappings.some(mapping => mapping.data.codeActions)) {
+				if (file.typescript && file.mappings.some(mapping => isCodeActionsEnabled(mapping.data))) {
 					edits = edits.concat(_organizeImports({
 						...args,
 						fileName: file.id,
@@ -100,13 +100,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (!mirrorMap)
 					continue;
 
-				for (const [mirrorOffset, data] of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
-					if ((mode === 'definition' || mode === 'typeDefinition' || mode === 'implementation') && !(data.definition ?? true))
-						continue;
-					if (mode === 'references' && !(data.reference ?? true))
-						continue;
-					if (mode === 'rename' && !(data.rename ?? true))
-						continue;
+				for (const mirrorOffset of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
 					if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
 						continue;
 					withMirrors(ref.fileName, mirrorOffset);
@@ -151,9 +145,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (!mirrorMap)
 					continue;
 
-				for (const [mirrorOffset, data] of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
-					if (!(data.definition ?? true))
-						continue;
+				for (const mirrorOffset of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
 					if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
 						continue;
 					withMirrors(ref.fileName, mirrorOffset);
@@ -190,9 +182,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 					if (!mirrorMap)
 						continue;
 
-					for (const [mirrorOffset, data] of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
-						if (!(data.reference ?? true))
-							continue;
+					for (const mirrorOffset of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
 						if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
 							continue;
 						withMirrors(ref.fileName, mirrorOffset);

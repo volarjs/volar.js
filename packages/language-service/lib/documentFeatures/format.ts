@@ -1,4 +1,4 @@
-import { SourceMap, VirtualFile, forEachEmbeddedFile, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
+import { SourceMap, VirtualFile, forEachEmbeddedFile, isFormattingEnabled, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext, Service } from '../types';
@@ -62,7 +62,7 @@ export function register(context: ServiceContext) {
 
 			for (const file of embeddedFiles) {
 
-				if (!file.mappings.some(mapping => mapping.data.formattingEdits ?? true))
+				if (!file.mappings.some(mapping => isFormattingEnabled(mapping.data)))
 					continue;
 
 				const isCodeBlock = file.mappings.length === 1
