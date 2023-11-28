@@ -3,6 +3,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isLinkedEditingEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -13,10 +14,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => position,
 			function* (map) {
-				for (const pos of map.toGeneratedPositions(
-					position,
-					data => data.linkedEditingRanges ?? true
-				)) {
+				for (const pos of map.toGeneratedPositions(position, isLinkedEditingEnabled)) {
 					yield pos;
 				}
 			},
@@ -33,10 +31,9 @@ export function register(context: ServiceContext) {
 				}
 				return {
 					wordPattern: ranges.wordPattern,
-					ranges: ranges.ranges.map(range => map.toSourceRange(
-						range,
-						data => data.linkedEditingRanges ?? true
-					)).filter(notEmpty),
+					ranges: ranges.ranges
+						.map(range => map.toSourceRange(range, isLinkedEditingEnabled))
+						.filter(notEmpty),
 				};
 			},
 		);

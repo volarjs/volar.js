@@ -3,6 +3,7 @@ import { URI } from 'vscode-uri';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import type { DocumentLinkData } from './documentLinks';
+import { isDocumentLinkEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -35,7 +36,7 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 	if (virtualFile) {
 		for (const map of context.documents.getMaps(virtualFile)) {
 
-			if (!map.map.codeMappings.some(mapping => mapping.data.links ?? true)) {
+			if (!map.map.codeMappings.some(mapping => isDocumentLinkEnabled(mapping.data))) {
 				continue;
 			}
 

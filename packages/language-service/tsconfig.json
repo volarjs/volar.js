@@ -4,6 +4,5 @@
 	"exclude": [ "tests" ],
 	"references": [
 		{ "path": "../language-core/tsconfig.json" },
-		{ "path": "../source-map/tsconfig.json" },
 	],
 }

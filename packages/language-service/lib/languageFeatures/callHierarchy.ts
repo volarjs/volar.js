@@ -4,6 +4,7 @@ import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isCallHierarchyEnabled } from '@volar/language-core';
 
 export interface PluginCallHierarchyData {
 	uri: string,
@@ -22,7 +23,7 @@ export function register(context: ServiceContext) {
 				context,
 				uri,
 				() => position,
-				map => map.toGeneratedPositions(position, data => data.references ?? true),
+				map => map.toGeneratedPositions(position, data => isCallHierarchyEnabled(data)),
 				async (service, document, position, map) => {
 					if (token.isCancellationRequested) {
 						return;

@@ -1,7 +1,7 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from './common';
 import type { ServiceContext } from '../types';
-import type { CodeInformation } from '@volar/language-core';
+import { type CodeInformation, resolveRenameEditText, isRenameEnabled } from '@volar/language-core';
 
 export function transformCompletionItem<T extends vscode.CompletionItem>(
 	item: T,
@@ -276,22 +276,19 @@ export function transformWorkspaceEdit(
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
 
-						let _data: CodeInformation | undefined;
+						let _data!: CodeInformation;
 
 						const range = map.toSourceRange(tsEdit.range, data => {
 							_data = data;
-							return typeof data.renameEdits === 'object'
-								? data.renameEdits.shouldEdit
-								: (data.renameEdits ?? true);
+							return isRenameEnabled(data);
 						});
 
 						if (range) {
-							let newText = tsEdit.newText;
-							if (_data && typeof _data.renameEdits === 'object' && _data.renameEdits.resolveEditText) {
-								newText = _data.renameEdits.resolveEditText(tsEdit.newText);
-							}
 							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
-							sourceResult.changes[map.sourceFileDocument.uri].push({ newText, range });
+							sourceResult.changes[map.sourceFileDocument.uri].push({
+								newText: resolveRenameEditText(tsEdit.newText, _data),
+								range,
+							});
 							hasResult = true;
 						}
 					}
@@ -332,22 +329,16 @@ export function transformWorkspaceEdit(
 						} satisfies vscode.TextDocumentEdit;
 						for (const tsEdit of tsDocEdit.edits) {
 							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-								let _data: CodeInformation | undefined;
+								let _data!: CodeInformation;
 								const range = map.toSourceRange(tsEdit.range, data => {
 									_data = data;
 									// fix https://github.com/johnsoncodehk/volar/issues/1091
-									return typeof data.renameEdits === 'object'
-										? data.renameEdits.shouldEdit
-										: (data.renameEdits ?? true);
+									return isRenameEnabled(data);
 								});
 								if (range) {
-									let newText = tsEdit.newText;
-									if (_data && typeof _data.renameEdits === 'object' && _data.renameEdits.resolveEditText) {
-										newText = _data.renameEdits.resolveEditText(tsEdit.newText);
-									}
 									sourceEdit.edits.push({
 										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
-										newText,
+										newText: resolveRenameEditText(tsEdit.newText, _data),
 										range,
 									});
 								}

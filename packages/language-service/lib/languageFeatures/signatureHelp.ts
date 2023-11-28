@@ -2,6 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isSignatureHelpEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -19,7 +20,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, data => data.signatureHelps ?? true),
+			map => map.toGeneratedPositions(position, isSignatureHelpEnabled),
 			(service, document, position) => {
 				if (token.isCancellationRequested) {
 					return;

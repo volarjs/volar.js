@@ -2,6 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext, AutoInsertionContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isAutoInsertEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -12,7 +13,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => ({ position, autoInsertContext }),
 			function* (map) {
-				for (const mappedPosition of map.toGeneratedPositions(position, data => data.autoInserts ?? true)) {
+				for (const mappedPosition of map.toGeneratedPositions(position, isAutoInsertEnabled)) {
 
 					const rangeOffset = map.map.getGeneratedOffset(autoInsertContext.lastChange.rangeOffset)?.[0];
 					const range = map.toGeneratedRange(autoInsertContext.lastChange.range);
@@ -28,7 +29,6 @@ export function register(context: ServiceContext) {
 								},
 							},
 						};
-						break;
 					}
 				}
 			},
@@ -42,7 +42,7 @@ export function register(context: ServiceContext) {
 				if (!map || typeof item === 'string') {
 					return item;
 				}
-				const range = map.toSourceRange(item.range, data => data.autoInserts ?? true);
+				const range = map.toSourceRange(item.range, isAutoInsertEnabled);
 				if (range) {
 					item.range = range;
 					return item;

@@ -3,6 +3,7 @@ import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
+import { isCodeLensEnabled } from '@volar/language-core';
 
 export interface ServiceCodeLensData {
 	kind: 'normal',
@@ -26,7 +27,7 @@ export function register(context: ServiceContext) {
 		return await documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.codeMappings.some(mapping => mapping.data.codeLenses ?? true),
+			map => map.map.codeMappings.some(mapping => isCodeLensEnabled(mapping.data)),
 			async (service, document) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -71,7 +72,7 @@ export function register(context: ServiceContext) {
 				}
 				return data
 					.map(codeLens => {
-						const range = map.toSourceRange(codeLens.range);
+						const range = map.toSourceRange(codeLens.range, isCodeLensEnabled);
 						if (range) {
 							return {
 								...codeLens,

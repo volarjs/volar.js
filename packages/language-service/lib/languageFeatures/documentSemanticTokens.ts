@@ -4,6 +4,7 @@ import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
+import { isSemanticTokensEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -42,7 +43,7 @@ export function register(context: ServiceContext) {
 				const end = document.offsetAt(range!.end);
 
 				for (const mapping of map.map.codeMappings) {
-					if (mapping.data.semanticTokens) {
+					if (isSemanticTokensEnabled(mapping.data)) {
 						for (let i = 0; i < mapping.sourceOffsets.length; i++) {
 							if (
 								mapping.sourceOffsets[i] + mapping.lengths[i] > start
@@ -91,7 +92,7 @@ export function register(context: ServiceContext) {
 						const range = map.toSourceRange({
 							start: { line: _token[0], character: _token[1] },
 							end: { line: _token[0], character: _token[1] + _token[2] },
-						}, data => !!data.semanticTokens);
+						}, isSemanticTokensEnabled);
 						if (range) {
 							return [range.start.line, range.start.character, range.end.character - range.start.character, _token[3], _token[4]];
 						}

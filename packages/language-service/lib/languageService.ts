@@ -1,4 +1,4 @@
-import type { Project } from '@volar/language-core';
+import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type Project } from '@volar/language-core';
 import { createDocumentProvider } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
 import * as callHierarchy from './languageFeatures/callHierarchy';
@@ -10,14 +10,14 @@ import * as completions from './languageFeatures/complete';
 import * as completionResolve from './languageFeatures/completeResolve';
 import * as definition from './languageFeatures/definition';
 import * as documentHighlight from './languageFeatures/documentHighlights';
-import * as documentLink from './languageFeatures/documentLinks';
 import * as documentLinkResolve from './languageFeatures/documentLinkResolve';
+import * as documentLink from './languageFeatures/documentLinks';
 import * as semanticTokens from './languageFeatures/documentSemanticTokens';
 import * as fileReferences from './languageFeatures/fileReferences';
 import * as fileRename from './languageFeatures/fileRename';
 import * as hover from './languageFeatures/hover';
-import * as inlayHints from './languageFeatures/inlayHints';
 import * as inlayHintResolve from './languageFeatures/inlayHintResolve';
+import * as inlayHints from './languageFeatures/inlayHints';
 import * as references from './languageFeatures/references';
 import * as rename from './languageFeatures/rename';
 import * as renamePrepare from './languageFeatures/renamePrepare';
@@ -26,14 +26,14 @@ import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
 import type { Service, ServiceContext, ServiceEnvironment, SharedModules } from './types';
 
+import type * as vscode from 'vscode-languageserver-protocol';
 import * as colorPresentations from './documentFeatures/colorPresentations';
 import * as documentColors from './documentFeatures/documentColors';
 import * as documentSymbols from './documentFeatures/documentSymbols';
 import * as foldingRanges from './documentFeatures/foldingRanges';
 import * as format from './documentFeatures/format';
-import * as linkedEditingRanges from './documentFeatures/linkedEditingRanges';
+import * as linkedEditing from './documentFeatures/linkedEditingRanges';
 import * as selectionRanges from './documentFeatures/selectionRanges';
-import type * as vscode from 'vscode-languageserver-protocol';
 
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
@@ -56,7 +56,7 @@ export function createLanguageService(
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),
 		getSelectionRanges: selectionRanges.register(context),
-		findLinkedEditingRanges: linkedEditingRanges.register(context),
+		findLinkedEditingRanges: linkedEditing.register(context),
 		findDocumentSymbols: documentSymbols.register(context),
 		findDocumentColors: documentColors.register(context),
 		getColorPresentations: colorPresentations.register(context),
@@ -64,9 +64,9 @@ export function createLanguageService(
 		doValidation: diagnostics.register(context),
 		findReferences: references.register(context),
 		findFileReferences: fileReferences.register(context),
-		findDefinition: definition.register(context, 'provideDefinition', data => data.definitions ?? true, data => data.definition ?? true),
-		findTypeDefinition: definition.register(context, 'provideTypeDefinition', data => data.definitions ?? true, data => data.definition ?? true),
-		findImplementations: definition.register(context, 'provideImplementation', data => data.references ?? true, () => false),
+		findDefinition: definition.register(context, 'provideDefinition', isDefinitionEnabled, data => data.definition ?? true),
+		findTypeDefinition: definition.register(context, 'provideTypeDefinition', isTypeDefinitionEnabled, data => data.definition ?? true),
+		findImplementations: definition.register(context, 'provideImplementation', isImplementationEnabled, () => false),
 		prepareRename: renamePrepare.register(context),
 		doRename: rename.register(context),
 		getEditsForFileRename: fileRename.register(context),
