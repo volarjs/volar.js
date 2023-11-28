@@ -13,14 +13,7 @@ export interface VirtualFile extends BaseFile {
 		scriptKind: ts.ScriptKind;
 	};
 	codegenStacks?: Stack[];
-	linkedCodeMappings?: Mapping<[LinkedCodeTrigger, LinkedCodeTrigger]>[];
-}
-
-export interface LinkedCodeTrigger {
-	reference?: boolean;
-	rename?: boolean;
-	definition?: boolean;
-	highlight?: boolean;
+	linkedNavigationMappings?: Mapping[];
 }
 
 export interface CodeInformation {

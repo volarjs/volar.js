@@ -1,13 +1,12 @@
 import { SourceMap } from '@volar/source-map';
-import type { LinkedCodeTrigger } from './types';
 
-export class LinkedCodeMap extends SourceMap<[LinkedCodeTrigger, LinkedCodeTrigger]> {
+export class LinkedCodeMap extends SourceMap {
 	*toLinkedOffsets(start: number) {
 		for (const mapped of this.getGeneratedOffsets(start)) {
-			yield [mapped[0], mapped[1].data[1]] as const;
+			yield mapped[0];
 		}
 		for (const mapped of this.getSourceOffsets(start)) {
-			yield [mapped[0], mapped[1].data[0]] as const;
+			yield mapped[0];
 		}
 	}
 }
