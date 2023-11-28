@@ -122,6 +122,7 @@ export interface Service<P = any> {
 		provideAutoInsertionEdit?(document: TextDocument, position: vscode.Position, context: AutoInsertionContext, token: vscode.CancellationToken): NullableResult<string | vscode.TextEdit>; // volar specific
 		provideFileRenameEdits?(oldUri: string, newUri: string, token: vscode.CancellationToken): NullableResult<vscode.WorkspaceEdit>; // volar specific
 		provideFormattingIndentSensitiveLines?(document: TextDocument, token: vscode.CancellationToken): NullableResult<number[]>; // volar specific
+		provideDocumentDropEdits?(document: TextDocument, position: vscode.Position, dataTransfer: Map<string, DataTransferItem>, token: vscode.CancellationToken): NullableResult<DocumentDropEdit>; // volar specific
 		resolveCodeLens?(codeLens: vscode.CodeLens, token: vscode.CancellationToken): Result<vscode.CodeLens>;
 		resolveCodeAction?(codeAction: vscode.CodeAction, token: vscode.CancellationToken): Result<vscode.CodeAction>;
 		resolveCompletionItem?(item: vscode.CompletionItem, token: vscode.CancellationToken): Result<vscode.CompletionItem>,
@@ -132,6 +133,24 @@ export interface Service<P = any> {
 		transformCodeAction?(item: vscode.CodeAction): vscode.CodeAction | undefined; // volar specific
 		dispose?(): void;
 	} & ServiceProvide<P>;
+}
+
+export interface DocumentDropEdit {
+	insertText: string;
+	insertTextFormat: vscode.InsertTextFormat;
+	additionalEdit?: vscode.WorkspaceEdit;
+}
+
+export interface DataTransferItem {
+	value: any;
+	asString(): Thenable<string>;
+	asFile(): DataTransferFile | undefined;
+}
+
+export interface DataTransferFile {
+	name: string;
+	uri?: string;
+	data(): Thenable<Uint8Array>;
 }
 
 export interface AutoInsertionContext {

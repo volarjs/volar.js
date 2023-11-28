@@ -1,8 +1,19 @@
 import type { CodeInformation, Mapping, Stack, VirtualFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
-import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';
+import {
+	GetMatchTsConfigRequest,
+	GetVirtualFileRequest,
+	GetVirtualFilesRequest,
+	LoadedTSFilesMetaRequest,
+	ReloadProjectNotification,
+	WriteVirtualFilesNotification,
+	DocumentDropRequest,
+	DocumentDrop_DataTransferItemAsStringRequest,
+	DocumentDrop_DataTransferItemFileDataRequest
+} from '../../protocol';
 import type { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
+import type { DataTransferItem } from '@volar/language-service';
 
 export function registerEditorFeatures(
 	connection: vscode.Connection,
@@ -13,6 +24,33 @@ export function registerEditorFeatures(
 	const scriptVersions = new Map<string, number>();
 	const scriptVersionSnapshots = new WeakSet<ts.IScriptSnapshot>();
 
+	connection.onRequest(DocumentDropRequest.type, async ({ textDocument, position, dataTransfer }, token) => {
+
+		const dataTransferMap = new Map<string, DataTransferItem>();
+
+		for (const item of dataTransfer) {
+			dataTransferMap.set(item.mimeType, {
+				value: item.value,
+				asString() {
+					return connection.sendRequest(DocumentDrop_DataTransferItemAsStringRequest.type, { mimeType: item.mimeType });
+				},
+				asFile() {
+					if (item.file) {
+						return {
+							name: item.file.name,
+							uri: item.file.uri,
+							data() {
+								return connection.sendRequest(DocumentDrop_DataTransferItemFileDataRequest.type, { mimeType: item.mimeType });
+							},
+						};
+					}
+				},
+			});
+		}
+
+		const languageService = (await projectProvider.getProject(textDocument.uri)).getLanguageService();
+		return languageService.doDocumentDrop(textDocument.uri, position, dataTransferMap, token);
+	});
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
 		const configFileName = languageService.context.project.typescript?.configFileName;
