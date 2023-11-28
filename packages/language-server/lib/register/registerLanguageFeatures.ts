@@ -72,7 +72,7 @@ export function registerLanguageFeatures(
 		return worker(params.textDocument.uri, token, async service => {
 			lastCompleteUri = params.textDocument.uri;
 			lastCompleteLs = service;
-			const document = documents.data.uriGet(params.textDocument.uri)?.getDocument();
+			const document = documents.get(params.textDocument.uri)?.getDocument();
 			const list = await service.doComplete(
 				params.textDocument.uri,
 				params.position,

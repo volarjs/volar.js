@@ -1,9 +1,6 @@
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import * as vscode from 'vscode-languageserver';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import { createUriMap } from './utils/uriMap';
-import type * as _ from 'vscode-uri';
-import type { ServerRuntimeEnvironment } from './types';
+import * as vscode from 'vscode-languageserver';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import { combineChangeRanges } from './utils/combineChangeRanges';
 
 interface IncrementalScriptSnapshotChange {
@@ -45,13 +42,13 @@ class IncrementalScriptSnapshot {
 		return this.document.languageId;
 	}
 
-	update(params: vscode.DidChangeTextDocumentParams) {
-		TextDocument.update(this.document, params.contentChanges, params.textDocument.version);
+	update(contentChanges: vscode.TextDocumentContentChangeEvent[], version: number) {
+		TextDocument.update(this.document, contentChanges, version);
 		this.changes = [
 			{
 				applied: true,
 				changeRange: undefined,
-				version: params.textDocument.version,
+				version: version,
 				contentChange: undefined,
 				snapshot: undefined,
 			}
@@ -152,84 +149,19 @@ class IncrementalScriptSnapshot {
 	}
 }
 
-export function createDocumentManager(
-	env: ServerRuntimeEnvironment,
-	connection: vscode.Connection,
-) {
+export function createDocumentManager(connection: vscode.Connection) {
 
-	const snapshots = createUriMap<IncrementalScriptSnapshot>(env.fileNameToUri);
-	const onDidChangeContents = new Set<(params: vscode.DidChangeTextDocumentParams) => void>();
-	const onDidCloses = new Set<(params: vscode.DidCloseTextDocumentParams) => void>();
-
-	connection.onDidOpenTextDocument(params => {
-
-		if (params.textDocument.uri.startsWith('git:/'))
-			return;
-
-		snapshots.uriSet(params.textDocument.uri, new IncrementalScriptSnapshot(
-			params.textDocument.uri,
-			params.textDocument.languageId,
-			params.textDocument.version,
-			params.textDocument.text,
-		));
-		for (const cb of onDidChangeContents) {
-			cb({ textDocument: params.textDocument, contentChanges: [{ text: params.textDocument.text }] });
-		}
-	});
-	connection.onDidChangeTextDocument(params => {
-
-		if (params.textDocument.uri.startsWith('git:/'))
-			return;
-
-		const incrementalSnapshot = snapshots.uriGet(params.textDocument.uri);
-		if (incrementalSnapshot) {
-			if (params.contentChanges.every(vscode.TextDocumentContentChangeEvent.isIncremental)) {
-				for (const contentChange of params.contentChanges) {
-					incrementalSnapshot.changes.push({
-						applied: false,
-						changeRange: undefined,
-						contentChange,
-						version: params.textDocument.version,
-						snapshot: undefined,
-					});
-				}
-			}
-			else {
-				incrementalSnapshot.update(params);
-			}
-		}
-		for (const cb of onDidChangeContents) {
-			cb(params);
-		}
-	});
-	connection.onDidCloseTextDocument(params => {
-
-		if (params.textDocument.uri.startsWith('git:/'))
-			return;
-
-		snapshots.uriDelete(params.textDocument.uri);
-		for (const cb of onDidCloses) {
-			cb(params);
-		}
-	});
-
-	return {
-		data: snapshots,
-		onDidChangeContent(cb: (params: vscode.DidChangeTextDocumentParams) => void): vscode.Disposable {
-			onDidChangeContents.add(cb);
-			return {
-				dispose() {
-					onDidChangeContents.delete(cb);
-				},
-			};
+	const documents = new vscode.TextDocuments<IncrementalScriptSnapshot>({
+		create(uri, languageId, version, text) {
+			return new IncrementalScriptSnapshot(uri, languageId, version, text);
 		},
-		onDidClose(cb: (params: vscode.DidCloseTextDocumentParams) => void): vscode.Disposable {
-			onDidCloses.add(cb);
-			return {
-				dispose() {
-					onDidCloses.delete(cb);
-				},
-			};
+		update(snapshot, params, version) {
+			snapshot.update(params, version);
+			return snapshot;
 		},
-	};
+	});
+
+	documents.listen(connection);
+
+	return documents;
 }

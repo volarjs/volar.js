@@ -75,7 +75,7 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 			modules: { typescript: ts },
 			env: context.server.runtimeEnv,
 		}) as ReturnType<Plugin>);
-		documents = createDocumentManager(context.server.runtimeEnv, connection);
+		documents = createDocumentManager(connection);
 
 		if (options.l10n) {
 			await l10n.config({ uri: options.l10n.location });
@@ -154,11 +154,11 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 			},
 		}, plugins);
 
-		documents.onDidChangeContent(({ textDocument }) => {
-			updateDiagnostics(textDocument.uri);
+		documents.onDidChangeContent(({ document }) => {
+			updateDiagnostics(document.uri);
 		});
-		documents.onDidClose(({ textDocument }) => {
-			context.server.connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
+		documents.onDidClose(({ document }) => {
+			context.server.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		});
 		context.server.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
 
@@ -305,10 +305,9 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 	}
 
 	function reloadDiagnostics() {
-		for (const doc of documents.data.values()) {
-			context.server.connection.sendDiagnostics({ uri: doc.uri, diagnostics: [] });
+		for (const document of documents.all()) {
+			context.server.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		}
-
 		updateDiagnosticsAndSemanticTokens();
 	}
 
@@ -349,8 +348,8 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 			},
 			onCancellationRequested: vscode.Event.None,
 		});
-		const changeDoc = docUri ? documents.data.uriGet(docUri) : undefined;
-		const otherDocs = [...documents.data.values()].filter(doc => doc !== changeDoc);
+		const changeDoc = docUri ? documents.get(docUri) : undefined;
+		const otherDocs = [...documents.all()].filter(doc => doc !== changeDoc);
 
 		if (changeDoc) {
 			await sleep(delay);

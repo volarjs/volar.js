@@ -39,7 +39,7 @@ export async function createTypeScriptServerProject(
 		getScriptFileNames: () => rootFiles,
 		getScriptSnapshot: (fileName) => {
 			askedFiles.pathSet(fileName, true);
-			const doc = context.workspaces.documents.data.pathGet(fileName);
+			const doc = context.workspaces.documents.get(fileNameToUri(fileName));
 			if (doc) {
 				return doc.getSnapshot();
 			}
@@ -50,7 +50,7 @@ export async function createTypeScriptServerProject(
 		getProjectReferences: () => parsedCommandLine.projectReferences,
 		getFileName: serviceEnv.uriToFileName,
 		getFileId: serviceEnv.fileNameToUri,
-		getLanguageId: id => context.workspaces.documents.data.pathGet(id)?.languageId ?? resolveCommonLanguageId(id),
+		getLanguageId: uri => context.workspaces.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
 	};
 	const sys = createSys(ts, serviceEnv, projectHost.getCurrentDirectory());
 
