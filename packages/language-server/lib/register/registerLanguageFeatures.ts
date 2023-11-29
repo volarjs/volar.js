@@ -2,7 +2,7 @@ import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
 import { ServerRuntimeEnvironment, InitializationOptions, ServerMode, ServerProjectProvider } from '../types';
-import type { createDocumentManager } from '../documentManager';
+import type { SnapshotDocument } from '@volar/snapshot-document';
 
 export function registerLanguageFeatures(
 	connection: vscode.Connection,
@@ -11,7 +11,7 @@ export function registerLanguageFeatures(
 	initOptions: InitializationOptions,
 	semanticTokensLegend: vscode.SemanticTokensLegend,
 	runtime: ServerRuntimeEnvironment,
-	documents: ReturnType<typeof createDocumentManager>,
+	documents: vscode.TextDocuments<SnapshotDocument>,
 ) {
 
 	let lastCompleteUri: string;

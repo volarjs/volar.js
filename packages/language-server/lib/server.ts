@@ -5,11 +5,11 @@ import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { DiagnosticModel, InitializationOptions, SimpleServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment, Config } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
-import { createDocumentManager } from './documentManager.js';
 import { setupCapabilities } from './setupCapabilities.js';
 import { loadConfig } from './config.js';
 import { createWorkspaceFolderManager } from './workspaceFolderManager.js';
 import type { WorkspacesContext } from './project/simpleProjectProvider.js';
+import { SnapshotDocument } from '@volar/snapshot-document';
 
 export interface ServerContext {
 	server: {
@@ -32,12 +32,22 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 	let options: InitializationOptions;
 	let projectProvider: ServerProjectProvider;
 	let plugins: ReturnType<Plugin>[];
-	let documents: ReturnType<typeof createDocumentManager>;
 	let context: ServerContext;
 	let ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 	let tsLocalized: {} | undefined;
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
+
+	const documents = new vscode.TextDocuments({
+		create(uri, languageId, version, text) {
+			return new SnapshotDocument(uri, languageId, version, text);
+		},
+		update(snapshot, contentChanges, version) {
+			snapshot.update(contentChanges, version);
+			return snapshot;
+		},
+	});
+	documents.listen(connection);
 
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 	const workspaceFolderManager = createWorkspaceFolderManager();
@@ -75,7 +85,6 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 			modules: { typescript: ts },
 			env: context.server.runtimeEnv,
 		}) as ReturnType<Plugin>);
-		documents = createDocumentManager(connection);
 
 		if (options.l10n) {
 			await l10n.config({ uri: options.l10n.location });
