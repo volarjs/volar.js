@@ -75,17 +75,14 @@ export function register(context: ServiceContext) {
 
 								if (mirrorMap) {
 
-									for (const mapped of mirrorMap.findMirrorPositions(textEdit.range.start)) {
+									for (const linkedPos of mirrorMap.findMirrorPositions(textEdit.range.start)) {
 
-										if (!(mapped[1].rename ?? true))
-											continue;
-
-										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: mapped[0], end: mapped[0] } }))
+										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
 											continue;
 
 										foundMirrorPosition = true;
 
-										await withMirrors(mirrorMap.document, mapped[0], newName);
+										await withMirrors(mirrorMap.document, linkedPos, newName);
 									}
 								}
 

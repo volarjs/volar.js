@@ -134,16 +134,13 @@ export class SourceMapWithDocuments<Data = any> {
 export class MirrorMapWithDocument extends SourceMapWithDocuments {
 	constructor(
 		public document: TextDocument,
-		map: LinkedCodeMap,
+		private linkedMap: LinkedCodeMap,
 	) {
-		super(document, document, map);
+		super(document, document, linkedMap);
 	}
-	*findMirrorPositions(start: vscode.Position) {
-		for (const mapped of this.toGeneratedPositionsBase(start)) {
-			yield [mapped[0], mapped[1].data[1]] as const;
-		}
-		for (const mapped of this.toSourcePositionsBase(start)) {
-			yield [mapped[0], mapped[1].data[0]] as const;
+	*findMirrorPositions(posotion: vscode.Position) {
+		for (const linkedPosition of this.linkedMap.toLinkedOffsets(this.document.offsetAt(posotion))) {
+			yield this.document.positionAt(linkedPosition);
 		}
 	}
 }

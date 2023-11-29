@@ -58,14 +58,14 @@ export function register(
 
 						if (mirrorMap) {
 
-							for (const mapped of mirrorMap.findMirrorPositions(definition.targetSelectionRange.start)) {
+							for (const linkedPos of mirrorMap.findMirrorPositions(definition.targetSelectionRange.start)) {
 
-								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: mapped[0], end: mapped[0] } }))
+								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
 									continue;
 
 								foundMirrorPosition = true;
 
-								await withMirrors(mirrorMap.document, mapped[0], originDefinition ?? definition);
+								await withMirrors(mirrorMap.document, linkedPos, originDefinition ?? definition);
 							}
 						}
 
