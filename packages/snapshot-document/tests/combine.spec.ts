@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { combineChangeRanges } from '../lib/utils/combineChangeRanges';
+import { combineChangeRanges } from '../lib/combine';
 
-describe(`Test combineContinuousChangeRanges()`, () => {
+describe(`combine change ranges`, () => {
 
 	it(`12345 -> a12345 -> ab12345`, () => {
 		expect(combineChangeRanges(
