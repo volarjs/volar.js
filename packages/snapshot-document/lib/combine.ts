@@ -1,19 +1,16 @@
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function combineChangeRanges(...changeRanges: ts.TextChangeRange[]) {
-	if (changeRanges.length === 1) {
-		return changeRanges[0];
-	}
 	let changeRange: ts.TextChangeRange = changeRanges[0];
 	for (let i = 1; i < changeRanges.length; i++) {
 		const nextChangeRange = changeRanges[i];
-		changeRange = _combineContinuousChangeRanges(changeRange, nextChangeRange);
+		changeRange = combineTwoChanges(changeRange, nextChangeRange);
 	}
 	return changeRange;
 }
 
 // https://tsplay.dev/mMldVN - @browsnet
-function _combineContinuousChangeRanges(a: ts.TextChangeRange, b: ts.TextChangeRange): ts.TextChangeRange {
+function combineTwoChanges(a: ts.TextChangeRange, b: ts.TextChangeRange): ts.TextChangeRange {
 	const aStart = a.span.start;
 	const aEnd = a.span.start + a.span.length;
 	const aDiff = a.newLength - a.span.length;
