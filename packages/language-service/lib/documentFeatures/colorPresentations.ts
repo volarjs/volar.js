@@ -3,6 +3,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isColorEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -13,7 +14,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => range,
 			function* (map) {
-				for (const mappedRange of map.toGeneratedRanges(range, data => data.colors ?? true)) {
+				for (const mappedRange of map.toGeneratedRanges(range, isColorEnabled)) {
 					yield mappedRange;
 				}
 			},

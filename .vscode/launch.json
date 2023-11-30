@@ -8,7 +8,7 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}/packages/labs"
+				"--extensionDevelopmentPath=${workspaceRoot}/extensions/labs"
 			],
 			"outFiles": [
 				"${workspaceRoot}/extensions/labs/dist/**/*.js"

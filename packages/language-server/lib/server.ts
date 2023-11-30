@@ -5,11 +5,11 @@ import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { DiagnosticModel, InitializationOptions, SimpleServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment, Config } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
-import { createDocumentManager } from './documentManager.js';
 import { setupCapabilities } from './setupCapabilities.js';
 import { loadConfig } from './config.js';
 import { createWorkspaceFolderManager } from './workspaceFolderManager.js';
 import type { WorkspacesContext } from './project/simpleProjectProvider.js';
+import { SnapshotDocument } from '@volar/snapshot-document';
 
 export interface ServerContext {
 	server: {
@@ -32,12 +32,22 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 	let options: InitializationOptions;
 	let projectProvider: ServerProjectProvider;
 	let plugins: ReturnType<Plugin>[];
-	let documents: ReturnType<typeof createDocumentManager>;
 	let context: ServerContext;
 	let ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 	let tsLocalized: {} | undefined;
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
+
+	const documents = new vscode.TextDocuments({
+		create(uri, languageId, version, text) {
+			return new SnapshotDocument(uri, languageId, version, text);
+		},
+		update(snapshot, contentChanges, version) {
+			snapshot.update(contentChanges, version);
+			return snapshot;
+		},
+	});
+	documents.listen(connection);
 
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 	const workspaceFolderManager = createWorkspaceFolderManager();
@@ -75,7 +85,6 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 			modules: { typescript: ts },
 			env: context.server.runtimeEnv,
 		}) as ReturnType<Plugin>);
-		documents = createDocumentManager(context.server.runtimeEnv, connection);
 
 		if (options.l10n) {
 			await l10n.config({ uri: options.l10n.location });
@@ -154,11 +163,11 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 			},
 		}, plugins);
 
-		documents.onDidChangeContent(({ textDocument }) => {
-			updateDiagnostics(textDocument.uri);
+		documents.onDidChangeContent(({ document }) => {
+			updateDiagnostics(document.uri);
 		});
-		documents.onDidClose(({ textDocument }) => {
-			context.server.connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
+		documents.onDidClose(({ document }) => {
+			context.server.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		});
 		context.server.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
 
@@ -305,10 +314,9 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 	}
 
 	function reloadDiagnostics() {
-		for (const doc of documents.data.values()) {
-			context.server.connection.sendDiagnostics({ uri: doc.uri, diagnostics: [] });
+		for (const document of documents.all()) {
+			context.server.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		}
-
 		updateDiagnosticsAndSemanticTokens();
 	}
 
@@ -349,8 +357,8 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 			},
 			onCancellationRequested: vscode.Event.None,
 		});
-		const changeDoc = docUri ? documents.data.uriGet(docUri) : undefined;
-		const otherDocs = [...documents.data.values()].filter(doc => doc !== changeDoc);
+		const changeDoc = docUri ? documents.get(docUri) : undefined;
+		const otherDocs = [...documents.all()].filter(doc => doc !== changeDoc);
 
 		if (changeDoc) {
 			await sleep(delay);

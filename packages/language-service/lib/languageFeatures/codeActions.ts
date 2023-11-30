@@ -6,7 +6,7 @@ import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
 import type { ServiceDiagnosticData } from './validation';
-import { MappingKey } from '@volar/language-core';
+import { isCodeActionsEnabled } from '@volar/language-core';
 
 export interface ServiceCodeActionData {
 	uri: string,
@@ -29,12 +29,13 @@ export function register(context: ServiceContext) {
 			end: document.offsetAt(range.end),
 		};
 		const transformedCodeActions = new WeakSet<vscode.CodeAction>();
-		const pluginActions = await languageFeatureWorker(
+
+		return await languageFeatureWorker(
 			context,
 			uri,
 			() => ({ range, codeActionContext }),
 			function* (map) {
-				if (map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].codeActions ?? true)) {
+				if (map.map.codeMappings.some(mapping => isCodeActionsEnabled(mapping.data))) {
 
 					const _codeActionContext: vscode.CodeActionContext = {
 						diagnostics: transformLocations(
@@ -48,7 +49,13 @@ export function register(context: ServiceContext) {
 					let maxEnd: number | undefined;
 
 					for (const mapping of map.map.codeMappings) {
-						const overlapRange = getOverlapRange(offsetRange.start, offsetRange.end, mapping[MappingKey.SOURCE_CODE_RANGE][0], mapping[MappingKey.SOURCE_CODE_RANGE][1]);
+						const overlapRange = getOverlapRange(
+							offsetRange.start,
+							offsetRange.end,
+							mapping.sourceOffsets[0],
+							mapping.sourceOffsets[mapping.sourceOffsets.length - 1]
+							+ mapping.lengths[mapping.lengths.length - 1]
+						);
 						if (overlapRange) {
 							const start = map.map.getGeneratedOffset(overlapRange.start)?.[0];
 							const end = map.map.getGeneratedOffset(overlapRange.end)?.[0];
@@ -70,7 +77,7 @@ export function register(context: ServiceContext) {
 					}
 				}
 			},
-			async (service, document, { range, codeActionContext }, map) => {
+			async (service, document, { range, codeActionContext }) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
@@ -106,7 +113,7 @@ export function register(context: ServiceContext) {
 					} satisfies ServiceCodeActionData;
 				});
 
-				if (codeActions && map && service.transformCodeAction) {
+				if (codeActions && service.transformCodeAction) {
 					for (let i = 0; i < codeActions.length; i++) {
 						const transformed = service.transformCodeAction(codeActions[i]);
 						if (transformed) {
@@ -141,19 +148,5 @@ export function register(context: ServiceContext) {
 				.filter(notEmpty),
 			arr => dedupe.withCodeAction(arr.flat()),
 		);
-		const ruleActions: vscode.CodeAction[] = [];
-
-		for (const diagnostic of codeActionContext.diagnostics) {
-			const data: ServiceDiagnosticData | undefined = diagnostic.data;
-			if (data && data.version !== document.version) {
-				// console.warn('[volar/rules-api] diagnostic version mismatch', data.version, sourceDocument.version);
-				continue;
-			}
-		}
-
-		return [
-			...pluginActions ?? [],
-			...ruleActions,
-		];
 	};
 }

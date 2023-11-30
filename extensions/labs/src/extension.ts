@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
 import * as serverView from './views/serversView';
 import * as virtualFilesView from './views/virtualFilesView';
 

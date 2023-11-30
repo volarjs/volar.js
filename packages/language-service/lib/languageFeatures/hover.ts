@@ -4,6 +4,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import { isInsideRange } from '../utils/common';
 import { errorMarkups } from './validation';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isHoverEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -13,7 +14,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, data => data.hover ?? true),
+			map => map.toGeneratedPositions(position, isHoverEnabled),
 			(service, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -24,11 +25,8 @@ export function register(context: ServiceContext) {
 				if (!map || !item.range) {
 					return item;
 				}
-				const range = map.toSourceRange(item.range);
-				if (range) {
-					item.range = range;
-					return item;
-				}
+				item.range = map.toSourceRange(item.range, isHoverEnabled);
+				return item;
 			},
 			(hovers): vscode.Hover => ({
 				contents: {

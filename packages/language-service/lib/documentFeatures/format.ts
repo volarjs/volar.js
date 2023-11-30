@@ -1,4 +1,4 @@
-import { MappingKey, SourceMap, VirtualFile, forEachEmbeddedFile, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
+import { SourceMap, VirtualFile, forEachEmbeddedFile, isFormattingEnabled, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext, Service } from '../types';
@@ -62,10 +62,13 @@ export function register(context: ServiceContext) {
 
 			for (const file of embeddedFiles) {
 
-				if (!file.mappings.some(mapping => mapping[MappingKey.DATA].formattingEdits ?? true))
+				if (!file.mappings.some(mapping => isFormattingEnabled(mapping.data)))
 					continue;
 
-				const isCodeBlock = file.mappings.length === 1 && file.mappings[0][MappingKey.GENERATED_CODE_RANGE][0] === 0 && file.mappings[0][MappingKey.GENERATED_CODE_RANGE][1] === file.snapshot.getLength();
+				const isCodeBlock = file.mappings.length === 1
+					&& file.mappings[0].sourceOffsets.length === 1
+					&& file.mappings[0].generatedOffsets[0] === 0
+					&& file.mappings[0].lengths[0] === file.snapshot.getLength();
 				if (onTypeParams && !isCodeBlock)
 					continue;
 
@@ -311,50 +314,54 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 	for (let i = 0; i < map.codeMappings.length; i++) {
 
 		const mapping = map.codeMappings[i];
-		const firstLineIndent = getBaseIndent(mapping[MappingKey.SOURCE_CODE_RANGE][0]);
-		const text = document.getText().substring(mapping[MappingKey.SOURCE_CODE_RANGE][0], mapping[MappingKey.SOURCE_CODE_RANGE][1]);
-		const lines = text.split('\n');
-		const baseIndent = firstLineIndent + initialIndent;
-		let lineOffset = lines[0].length + 1;
-		let insertedFinalNewLine = false;
 
-		if (!text.trim())
-			continue;
+		for (let j = 0; j < mapping.sourceOffsets.length; j++) {
 
-		if (isCodeBlock && text.trimStart().length === text.length) {
-			indentTextEdits.push({
-				newText: '\n' + baseIndent,
-				range: {
-					start: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0]),
-					end: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0]),
-				},
-			});
-		}
+			const firstLineIndent = getBaseIndent(mapping.sourceOffsets[j]);
+			const text = document.getText().substring(mapping.sourceOffsets[j], mapping.sourceOffsets[j] + mapping.lengths[j]);
+			const lines = text.split('\n');
+			const baseIndent = firstLineIndent + initialIndent;
+			let lineOffset = lines[0].length + 1;
+			let insertedFinalNewLine = false;
 
-		if (isCodeBlock && text.trimEnd().length === text.length) {
-			indentTextEdits.push({
-				newText: '\n',
-				range: {
-					start: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][1]),
-					end: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][1]),
-				},
-			});
-			insertedFinalNewLine = true;
-		}
+			if (!text.trim())
+				continue;
 
-		if (baseIndent && lines.length > 1) {
-			for (let i = 1; i < lines.length; i++) {
-				if (lines[i].trim() || i === lines.length - 1) {
-					const isLastLine = i === lines.length - 1 && !insertedFinalNewLine;
-					indentTextEdits.push({
-						newText: isLastLine ? firstLineIndent : baseIndent,
-						range: {
-							start: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0] + lineOffset),
-							end: document.positionAt(mapping[MappingKey.SOURCE_CODE_RANGE][0] + lineOffset),
-						},
-					});
+			if (isCodeBlock && text.trimStart().length === text.length) {
+				indentTextEdits.push({
+					newText: '\n' + baseIndent,
+					range: {
+						start: document.positionAt(mapping.sourceOffsets[j]),
+						end: document.positionAt(mapping.sourceOffsets[j]),
+					},
+				});
+			}
+
+			if (isCodeBlock && text.trimEnd().length === text.length) {
+				indentTextEdits.push({
+					newText: '\n',
+					range: {
+						start: document.positionAt(mapping.sourceOffsets[j] + mapping.lengths[j]),
+						end: document.positionAt(mapping.sourceOffsets[j] + mapping.lengths[j]),
+					},
+				});
+				insertedFinalNewLine = true;
+			}
+
+			if (baseIndent && lines.length > 1) {
+				for (let i = 1; i < lines.length; i++) {
+					if (lines[i].trim() || i === lines.length - 1) {
+						const isLastLine = i === lines.length - 1 && !insertedFinalNewLine;
+						indentTextEdits.push({
+							newText: isLastLine ? firstLineIndent : baseIndent,
+							range: {
+								start: document.positionAt(mapping.sourceOffsets[j] + lineOffset),
+								end: document.positionAt(mapping.sourceOffsets[j] + lineOffset),
+							},
+						});
+					}
+					lineOffset += lines[i].length + 1;
 				}
-				lineOffset += lines[i].length + 1;
 			}
 		}
 	}

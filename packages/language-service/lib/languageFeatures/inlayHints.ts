@@ -4,7 +4,7 @@ import { getOverlapRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformTextEdit } from '../utils/transform';
-import { MappingKey } from '@volar/language-core';
+import { isInlayHintsEnabled } from '@volar/language-core';
 
 export interface InlayHintData {
 	uri: string,
@@ -36,7 +36,7 @@ export function register(context: ServiceContext) {
 				 * copy from ./codeActions.ts
 				 */
 
-				if (!map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].inlayHints ?? true)) {
+				if (!map.map.codeMappings.some(mapping => isInlayHintsEnabled(mapping.data))) {
 					return;
 				}
 
@@ -44,7 +44,13 @@ export function register(context: ServiceContext) {
 				let maxEnd: number | undefined;
 
 				for (const mapping of map.map.codeMappings) {
-					const overlapRange = getOverlapRange(offsetRange.start, offsetRange.end, mapping[MappingKey.SOURCE_CODE_RANGE][0], mapping[MappingKey.SOURCE_CODE_RANGE][1]);
+					const overlapRange = getOverlapRange(
+						offsetRange.start,
+						offsetRange.end,
+						mapping.sourceOffsets[0],
+						mapping.sourceOffsets[mapping.sourceOffsets.length - 1]
+						+ mapping.lengths[mapping.lengths.length - 1]
+					);
 					if (overlapRange) {
 						const start = map.map.getGeneratedOffset(overlapRange.start)?.[0];
 						const end = map.map.getGeneratedOffset(overlapRange.end)?.[0];
@@ -85,10 +91,7 @@ export function register(context: ServiceContext) {
 				}
 				return inlayHints
 					.map((_inlayHint): vscode.InlayHint | undefined => {
-						const position = map.toSourcePosition(
-							_inlayHint.position,
-							data => data.inlayHints ?? true,
-						);
+						const position = map.toSourcePosition(_inlayHint.position, isInlayHintsEnabled);
 						const edits = _inlayHint.textEdits
 							?.map(textEdit => transformTextEdit(textEdit, range => map!.toSourceRange(range), map.virtualFileDocument))
 							.filter(notEmpty);

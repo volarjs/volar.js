@@ -13,47 +13,31 @@ export interface VirtualFile extends BaseFile {
 		scriptKind: ts.ScriptKind;
 	};
 	codegenStacks?: Stack[];
-	linkedCodeMappings?: Mapping<[LinkedCodeTrigger, LinkedCodeTrigger]>[];
-}
-
-export interface LinkedCodeTrigger {
-	reference?: boolean;
-	rename?: boolean;
-	definition?: boolean;
-	highlight?: boolean;
+	linkedNavigationMappings?: Mapping[];
 }
 
 export interface CodeInformation {
-	diagnostics?: boolean | {
-		shouldReport(): boolean;
+	/** virtual code is expected to support verification */
+	verification: boolean | {
+		shouldReport?(): boolean;
 	};
-	renameEdits?: boolean | {
-		shouldRename: boolean;
-		shouldEdit: boolean;
-		resolveNewName?(newName: string): string;
-		resolveEditText?(newText: string): string;
-	};
-	formattingEdits?: boolean;
-	completionItems?: boolean | {
+	/** virtual code is expected to support assisted completion */
+	completion: boolean | {
 		isAdditional?: boolean;
 		onlyImport?: boolean;
 	};
-	definitions?: boolean;
-	references?: boolean;
-	foldingRanges?: boolean;
-	inlayHints?: boolean;
-	codeActions?: boolean;
-	symbols?: boolean;
-	selectionRanges?: boolean;
-	linkedEditingRanges?: boolean;
-	colors?: boolean;
-	autoInserts?: boolean;
-	codeLenses?: boolean;
-	highlights?: boolean;
-	links?: boolean;
-	semanticTokens?: boolean;
-	hover?: boolean;
-	signatureHelps?: boolean;
+	/** virtual code is expected correctly reflect semantic of the source code */
+	semantic: boolean;
+	/** virtual code is expected correctly reflect reference relationships of the source code */
+	navigation: boolean | {
+		shouldRename?(): boolean;
+		resolveRenameNewName?(newName: string): string;
+		resolveRenameEditText?(newText: string): string;
+	};
+	/** virtual code is expected correctly reflect the structural information of the source code */
+	structure: boolean;
+	/** virtual code is expected correctly reflect the format information of the source code */
+	format: boolean;
 }
 
 export interface BaseFile {
@@ -72,6 +56,7 @@ export interface Language<T extends VirtualFile = VirtualFile> {
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	disposeVirtualFile?(virtualFile: T): void;
 	typescript?: {
+		resolveSourceFileName(tsFileName: string): string | undefined;
 		resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string | undefined;
 		resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
 	};

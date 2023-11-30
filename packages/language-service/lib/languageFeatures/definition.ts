@@ -1,4 +1,4 @@
-import type { CodeInformation, LinkedCodeTrigger } from '@volar/language-core';
+import type { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
@@ -11,8 +11,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 export function register(
 	context: ServiceContext,
 	apiName: 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
-	isValidPosition: (data: CodeInformation) => boolean,
-	isValidMirrorPosition: (mirrorData: LinkedCodeTrigger) => boolean,
+	isValidPosition: (data: CodeInformation) => boolean
 ) {
 
 	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
@@ -59,17 +58,14 @@ export function register(
 
 						if (mirrorMap) {
 
-							for (const mapped of mirrorMap.findMirrorPositions(definition.targetSelectionRange.start)) {
+							for (const linkedPos of mirrorMap.findMirrorPositions(definition.targetSelectionRange.start)) {
 
-								if (!isValidMirrorPosition(mapped[1]))
-									continue;
-
-								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: mapped[0], end: mapped[0] } }))
+								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
 									continue;
 
 								foundMirrorPosition = true;
 
-								await withMirrors(mirrorMap.document, mapped[0], originDefinition ?? definition);
+								await withMirrors(mirrorMap.document, linkedPos, originDefinition ?? definition);
 							}
 						}
 

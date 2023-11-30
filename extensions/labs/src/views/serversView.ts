@@ -1,12 +1,12 @@
-import { type ExportsInfoForLabs } from '@volar/vscode';
 import { LoadedTSFilesMetaRequest } from '@volar/language-server/protocol';
-import * as path from 'path';
+import type { ExportsInfoForLabs } from '@volar/vscode';
+import * as lsp from '@volar/vscode';
 import * as fs from 'fs';
 import * as os from 'os';
+import * as path from 'path';
 import * as vscode from 'vscode';
-import * as lsp from '@volar/vscode';
-import { useVolarExtensions, getIconPath } from '../common/shared';
 import { quickPick } from '../common/quickPick';
+import { getIconPath, useVolarExtensions } from '../common/shared';
 
 interface LanguageClientItem {
 	extension: vscode.Extension<ExportsInfoForLabs>;

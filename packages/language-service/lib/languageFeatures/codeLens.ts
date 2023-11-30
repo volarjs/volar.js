@@ -3,7 +3,7 @@ import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
-import { MappingKey } from '@volar/language-core';
+import { isCodeLensEnabled } from '@volar/language-core';
 
 export interface ServiceCodeLensData {
 	kind: 'normal',
@@ -14,8 +14,9 @@ export interface ServiceCodeLensData {
 
 export interface ServiceReferencesCodeLensData {
 	kind: 'references',
-	uri: string,
-	range: vscode.Range,
+	sourceFileUri: string,
+	workerFileUri: string,
+	workerFileRange: vscode.Range,
 	serviceIndex: number,
 }
 
@@ -26,7 +27,7 @@ export function register(context: ServiceContext) {
 		return await documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].codeLenses ?? true),
+			map => map.map.codeMappings.some(mapping => isCodeLensEnabled(mapping.data)),
 			async (service, document) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -51,8 +52,9 @@ export function register(context: ServiceContext) {
 					range,
 					data: {
 						kind: 'references',
-						uri: document.uri,
-						range,
+						sourceFileUri: uri,
+						workerFileUri: document.uri,
+						workerFileRange: range,
 						serviceIndex,
 					} satisfies ServiceReferencesCodeLensData,
 				}));
@@ -70,9 +72,7 @@ export function register(context: ServiceContext) {
 				}
 				return data
 					.map(codeLens => {
-
-
-						const range = map.toSourceRange(codeLens.range);
+						const range = map.toSourceRange(codeLens.range, isCodeLensEnabled);
 						if (range) {
 							return {
 								...codeLens,

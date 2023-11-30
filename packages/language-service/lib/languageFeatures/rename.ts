@@ -1,4 +1,4 @@
-import type { CodeInformation } from '@volar/language-core';
+import { isRenameEnabled, type CodeInformation, resolveRenameNewName } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext } from '../types';
@@ -16,22 +16,14 @@ export function register(context: ServiceContext) {
 			uri,
 			() => ({ position, newName }),
 			function* (map) {
-
-				let _data: CodeInformation = {};
-
+				let _data!: CodeInformation;
 				for (const mappedPosition of map.toGeneratedPositions(position, data => {
 					_data = data;
-					return typeof data.renameEdits === 'object'
-						? data.renameEdits.shouldRename
-						: (data.renameEdits ?? true);
+					return isRenameEnabled(data);
 				})) {
-					let newNewName = newName;
-					if (typeof _data.renameEdits === 'object' && _data.renameEdits.resolveNewName) {
-						newNewName = _data.renameEdits.resolveNewName(newName);
-					}
 					yield {
 						position: mappedPosition,
-						newName: newNewName,
+						newName: resolveRenameNewName(newName, _data),
 					};
 				};
 			},
@@ -83,17 +75,14 @@ export function register(context: ServiceContext) {
 
 								if (mirrorMap) {
 
-									for (const mapped of mirrorMap.findMirrorPositions(textEdit.range.start)) {
+									for (const linkedPos of mirrorMap.findMirrorPositions(textEdit.range.start)) {
 
-										if (!(mapped[1].rename ?? true))
-											continue;
-
-										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: mapped[0], end: mapped[0] } }))
+										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
 											continue;
 
 										foundMirrorPosition = true;
 
-										await withMirrors(mirrorMap.document, mapped[0], newName);
+										await withMirrors(mirrorMap.document, linkedPos, newName);
 									}
 								}
 

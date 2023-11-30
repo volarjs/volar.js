@@ -4,7 +4,7 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import { transformDocumentLinkTarget } from './documentLinkResolve';
-import { MappingKey } from '@volar/language-core';
+import { isDocumentLinkEnabled } from '@volar/language-core';
 
 export interface DocumentLinkData {
 	uri: string,
@@ -19,7 +19,7 @@ export function register(context: ServiceContext) {
 		return await documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].links ?? true),
+			map => map.map.codeMappings.some(mapping => isDocumentLinkEnabled(mapping.data)),
 			async (service, document) => {
 
 				if (token.isCancellationRequested) {
@@ -46,7 +46,7 @@ export function register(context: ServiceContext) {
 				}
 				return links
 					.map(link => {
-						const range = map.toSourceRange(link.range, data => data.links ?? true);
+						const range = map.toSourceRange(link.range, isDocumentLinkEnabled);
 						if (!range) {
 							return;
 						}

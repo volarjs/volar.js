@@ -2,6 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isRenameEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -11,12 +12,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(
-				position,
-				data => typeof data.renameEdits === 'object'
-					? data.renameEdits.shouldRename
-					: (data.renameEdits ?? true)
-			),
+			map => map.toGeneratedPositions(position, isRenameEnabled),
 			(service, document, position) => {
 				if (token.isCancellationRequested) {
 					return;

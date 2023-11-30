@@ -1,10 +1,10 @@
-import { MappingKey } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isInsideRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformSelectionRanges } from '../utils/transform';
+import { isSelectionRangesEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -15,13 +15,11 @@ export function register(context: ServiceContext) {
 			uri,
 			() => positions,
 			function* (map) {
-				if (map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].selectionRanges)) {
-					const result = positions
-						.map(position => map.toGeneratedPosition(position, data => data.selectionRanges ?? true))
-						.filter(notEmpty);
-					if (result.length) {
-						yield result;
-					}
+				const result = positions
+					.map(position => map.toGeneratedPosition(position, isSelectionRangesEnabled))
+					.filter(notEmpty);
+				if (result.length) {
+					yield result;
 				}
 			},
 			(service, document, positions) => {
@@ -37,7 +35,7 @@ export function register(context: ServiceContext) {
 				}
 				return transformSelectionRanges(
 					data,
-					range => map.toSourceRange(range, data => data.selectionRanges ?? true)
+					range => map.toSourceRange(range, isSelectionRangesEnabled)
 				);
 			},
 			results => {

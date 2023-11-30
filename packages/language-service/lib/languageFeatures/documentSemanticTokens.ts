@@ -4,7 +4,7 @@ import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import { MappingKey } from '@volar/language-core';
+import { isSemanticTokensEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -34,31 +34,40 @@ export function register(context: ServiceContext) {
 			() => range!,
 			function* (map) {
 
-				let result: [number, number] | undefined;
+				let result: {
+					start: number;
+					end: number;
+				} | undefined;
 
 				const start = document.offsetAt(range!.start);
 				const end = document.offsetAt(range!.end);
 
 				for (const mapping of map.map.codeMappings) {
-					if (
-						mapping[MappingKey.DATA].semanticTokens
-						&& mapping[MappingKey.SOURCE_CODE_RANGE][1] > start
-						&& mapping[MappingKey.SOURCE_CODE_RANGE][0] < end
-					) {
-						if (!result) {
-							result = [...mapping[MappingKey.GENERATED_CODE_RANGE]];
-						}
-						else {
-							result[0] = Math.min(result[0], mapping[MappingKey.GENERATED_CODE_RANGE][0]);
-							result[1] = Math.max(result[1], mapping[MappingKey.GENERATED_CODE_RANGE][1]);
+					if (isSemanticTokensEnabled(mapping.data)) {
+						for (let i = 0; i < mapping.sourceOffsets.length; i++) {
+							if (
+								mapping.sourceOffsets[i] + mapping.lengths[i] > start
+								&& mapping.sourceOffsets[i] < end
+							) {
+								if (!result) {
+									result = {
+										start: mapping.generatedOffsets[i],
+										end: mapping.generatedOffsets[i] + mapping.lengths[i],
+									};
+								}
+								else {
+									result.start = Math.min(result.start, mapping.generatedOffsets[i]);
+									result.end = Math.max(result.end, mapping.generatedOffsets[i] + mapping.lengths[i]);
+								}
+							}
 						}
 					}
 				}
 
 				if (result) {
 					yield {
-						start: map.virtualFileDocument.positionAt(result[0]),
-						end: map.virtualFileDocument.positionAt(result[1]),
+						start: map.virtualFileDocument.positionAt(result.start),
+						end: map.virtualFileDocument.positionAt(result.end),
 					};
 				}
 			},
@@ -83,7 +92,7 @@ export function register(context: ServiceContext) {
 						const range = map.toSourceRange({
 							start: { line: _token[0], character: _token[1] },
 							end: { line: _token[0], character: _token[1] + _token[2] },
-						}, data => !!data.semanticTokens);
+						}, isSemanticTokensEnabled);
 						if (range) {
 							return [range.start.line, range.start.character, range.end.character - range.start.character, _token[3], _token[4]];
 						}

@@ -5,6 +5,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import * as dedupe from '../utils/dedupe';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { isHighlightEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -14,7 +15,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, data => data.highlights ?? true),
+			map => map.toGeneratedPositions(position, isHighlightEnabled),
 			async (service, document, position) => {
 
 				if (token.isCancellationRequested) {
@@ -51,17 +52,14 @@ export function register(context: ServiceContext) {
 
 						if (mirrorMap) {
 
-							for (const mapped of mirrorMap.findMirrorPositions(reference.range.start)) {
+							for (const linkedPos of mirrorMap.findMirrorPositions(reference.range.start)) {
 
-								if (!(mapped[1].highlight ?? true))
-									continue;
-
-								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: mapped[0], end: mapped[0] } }))
+								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
 									continue;
 
 								foundMirrorPosition = true;
 
-								await withMirrors(mirrorMap.document, mapped[0]);
+								await withMirrors(mirrorMap.document, linkedPos);
 							}
 						}
 
@@ -77,7 +75,7 @@ export function register(context: ServiceContext) {
 					if (!map)
 						return highlight;
 
-					const range = map.toSourceRange(highlight.range, data => data.highlights ?? true);
+					const range = map.toSourceRange(highlight.range, isHighlightEnabled);
 					if (range) {
 						return {
 							...highlight,

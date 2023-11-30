@@ -4,7 +4,7 @@ import { NoneCancellationToken } from '../utils/cancellation';
 
 import type * as _ from 'vscode-languageserver-protocol';
 import { transformFoldingRanges } from '../utils/transform';
-import { MappingKey } from '@volar/language-core';
+import { isFoldingRangesEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
@@ -13,7 +13,7 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.codeMappings.some(mapping => mapping[MappingKey.DATA].foldingRanges ?? true),
+			map => map.map.codeMappings.some(mapping => isFoldingRangesEnabled(mapping.data)),
 			(service, document) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -26,7 +26,7 @@ export function register(context: ServiceContext) {
 				}
 				return transformFoldingRanges(
 					data,
-					range => map.toSourceRange(range, data => data.foldingRanges ?? true)
+					range => map.toSourceRange(range, isFoldingRangesEnabled)
 				);
 			},
 			arr => arr.flat(),

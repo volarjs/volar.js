@@ -1,5 +1,5 @@
 import type { CodeInformation, Mapping, Stack, VirtualFile } from '@volar/language-core';
-import type { FileStat, FileType } from '@volar/language-service';
+import type { FileStat, FileType, DocumentDropEdit } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver-protocol';
 
 /**
@@ -85,4 +85,42 @@ export namespace GetVirtualFileRequest {
 	};
 	export type ErrorType = never;
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFile');
+}
+
+/**
+ * Document Drop
+ */
+
+export namespace DocumentDropRequest {
+	export type ParamsType = vscode.TextDocumentPositionParams & {
+		dataTransfer: {
+			mimeType: string;
+			value: any;
+			file?: {
+				name: string;
+				uri?: string;
+			};
+		}[];
+	};
+	export type ResponseType = DocumentDropEdit | null | undefined;
+	export type ErrorType = never;
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/documentDrop');
+}
+
+export namespace DocumentDrop_DataTransferItemAsStringRequest {
+	export type ParamsType = {
+		mimeType: string;
+	};
+	export type ResponseType = string;
+	export type ErrorType = never;
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/documentDrop/asString');
+}
+
+export namespace DocumentDrop_DataTransferItemFileDataRequest {
+	export type ParamsType = {
+		mimeType: string;
+	};
+	export type ResponseType = Uint8Array;
+	export type ErrorType = never;
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/documentDrop/fileData');
 }
