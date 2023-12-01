@@ -1,4 +1,4 @@
-import { CodeInformation, FileProvider, VirtualFile, forEachEmbeddedFile, isCodeActionsEnabled, isCodeLensEnabled, isCompletionEnabled, isDefinitionEnabled, isDiagnosticsEnabled, isHoverEnabled, isReferencesEnabled, shouldReportDiagnostics } from '@volar/language-core';
+import { CodeInformation, FileProvider, forEachEmbeddedFile, isCodeActionsEnabled, isCodeLensEnabled, isCompletionEnabled, isDefinitionEnabled, isDiagnosticsEnabled, isHoverEnabled, isReferencesEnabled, shouldReportDiagnostics } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function decorateLanguageService(virtualFiles: FileProvider, languageService: ts.LanguageService, isTsPlugin: boolean) {
