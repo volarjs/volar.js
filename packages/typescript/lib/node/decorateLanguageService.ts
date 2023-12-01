@@ -42,20 +42,18 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		return edits.map(edit => transformFileTextChanges(edit, isCodeLensEnabled)).filter(notEmpty);
 	};
 	languageService.getQuickInfoAtPosition = (fileName, position) => {
-		const [virtualFile, sourceFile] = getVirtualFile(fileName);
-		if (virtualFile && sourceFile) {
-			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
-				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
-					if (isHoverEnabled(mapping.data)) {
-						const result = getQuickInfoAtPosition(fileName, sourceFile.snapshot.getLength() + generateOffset);
-						if (result) {
-							const textSpan = transformSpan(fileName, result.textSpan, isHoverEnabled)?.textSpan;
-							if (textSpan) {
-								return {
-									...result,
-									textSpan,
-								};
-							}
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile && sourceFile && map) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (isHoverEnabled(mapping.data)) {
+					const result = getQuickInfoAtPosition(fileName, sourceFile.snapshot.getLength() + generateOffset);
+					if (result) {
+						const textSpan = transformSpan(fileName, result.textSpan, isHoverEnabled)?.textSpan;
+						if (textSpan) {
+							return {
+								...result,
+								textSpan,
+							};
 						}
 					}
 				}
@@ -71,13 +69,11 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		let textSpan: ts.TextSpan | undefined;
 		let symbols: ts.DefinitionInfo[] = [];
 
-		const [virtualFile, sourceFile] = getVirtualFile(fileName);
-		if (virtualFile && sourceFile) {
-			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
-				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
-					if (isDefinitionEnabled(mapping.data)) {
-						withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
-					}
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile && sourceFile && map) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (isDefinitionEnabled(mapping.data)) {
+					withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
 				}
 			}
 		}
@@ -109,7 +105,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 
 				loopChecker.add(ref.fileName + ':' + ref.textSpan.start);
 
-				const [virtualFile] = getVirtualFile(ref.fileName);
+				const [virtualFile] = getVirtualFileAndMap(ref.fileName);
 				if (!virtualFile)
 					continue;
 
@@ -130,13 +126,11 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		const loopChecker = new Set<string>();
 		let symbols: ts.ReferencedSymbol[] = [];
 
-		const [virtualFile, sourceFile] = getVirtualFile(fileName);
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
 		if (virtualFile && sourceFile) {
-			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
-				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
-					if (isReferencesEnabled(mapping.data)) {
-						withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
-					}
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (isReferencesEnabled(mapping.data)) {
+					withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
 				}
 			}
 		}
@@ -158,7 +152,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 
 					loopChecker.add(ref.fileName + ':' + ref.textSpan.start);
 
-					const [virtualFile] = getVirtualFile(ref.fileName);
+					const [virtualFile] = getVirtualFileAndMap(ref.fileName);
 					if (!virtualFile)
 						continue;
 
@@ -176,35 +170,33 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		}
 	};
 	languageService.getSyntacticDiagnostics = (fileName) => {
-		const [virtualFile, sourceFile] = getVirtualFile(fileName);
-		if (virtualFile && sourceFile) {
-			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
-				if (map.codeMappings.some(mapping => isDiagnosticsEnabled(mapping.data))) {
-					let result = getSyntacticDiagnostics(fileName);
-					if (result) {
-						result = result
-							.map(diagnostic => {
-								if (!transformedDiagnosticWithLocations.has(diagnostic)) {
-									transformedDiagnosticWithLocations.set(diagnostic, undefined);
-									let offset = diagnostic.start;
-									if (isTsPlugin) {
-										offset -= sourceFile.snapshot.getLength();
-									}
-									for (const [sourceOffset, mapping] of map.getSourceOffsets(offset)) {
-										if (shouldReportDiagnostics(mapping.data)) {
-											transformedDiagnosticWithLocations.set(diagnostic, {
-												...diagnostic,
-												start: sourceOffset,
-											});
-										}
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile && sourceFile && map) {
+			if (map.codeMappings.some(mapping => isDiagnosticsEnabled(mapping.data))) {
+				let result = getSyntacticDiagnostics(fileName);
+				if (result) {
+					result = result
+						.map(diagnostic => {
+							if (!transformedDiagnosticWithLocations.has(diagnostic)) {
+								transformedDiagnosticWithLocations.set(diagnostic, undefined);
+								let offset = diagnostic.start;
+								if (isTsPlugin) {
+									offset -= sourceFile.snapshot.getLength();
+								}
+								for (const [sourceOffset, mapping] of map.getSourceOffsets(offset)) {
+									if (shouldReportDiagnostics(mapping.data)) {
+										transformedDiagnosticWithLocations.set(diagnostic, {
+											...diagnostic,
+											start: sourceOffset,
+										});
 									}
 								}
-								return transformedDiagnosticWithLocations.get(diagnostic);
-							})
-							.filter(notEmpty);
-					}
-					return result;
+							}
+							return transformedDiagnosticWithLocations.get(diagnostic);
+						})
+						.filter(notEmpty);
 				}
+				return result;
 			}
 			return [];
 		}
@@ -213,38 +205,36 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		}
 	};
 	languageService.getSemanticDiagnostics = (fileName) => {
-		const [virtualFile, sourceFile] = getVirtualFile(fileName);
-		if (virtualFile && sourceFile) {
-			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
-				if (map.codeMappings.some(mapping => isDiagnosticsEnabled(mapping.data))) {
-					let result = getSemanticDiagnostics(fileName);
-					if (result) {
-						result = result
-							.map(diagnostic => {
-								if (!transformedDiagnostics.has(diagnostic)) {
-									transformedDiagnostics.set(diagnostic, undefined);
-									if (diagnostic.start === undefined) {
-										return diagnostic;
-									}
-									let offset = diagnostic.start;
-									if (isTsPlugin) {
-										offset -= sourceFile.snapshot.getLength();
-									}
-									for (const [sourceOffset, mapping] of map.getSourceOffsets(offset)) {
-										if (shouldReportDiagnostics(mapping.data)) {
-											transformedDiagnostics.set(diagnostic, {
-												...diagnostic,
-												start: sourceOffset,
-											});
-										}
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile && sourceFile && map) {
+			if (map.codeMappings.some(mapping => isDiagnosticsEnabled(mapping.data))) {
+				let result = getSemanticDiagnostics(fileName);
+				if (result) {
+					result = result
+						.map(diagnostic => {
+							if (!transformedDiagnostics.has(diagnostic)) {
+								transformedDiagnostics.set(diagnostic, undefined);
+								if (diagnostic.start === undefined) {
+									return diagnostic;
+								}
+								let offset = diagnostic.start;
+								if (isTsPlugin) {
+									offset -= sourceFile.snapshot.getLength();
+								}
+								for (const [sourceOffset, mapping] of map.getSourceOffsets(offset)) {
+									if (shouldReportDiagnostics(mapping.data)) {
+										transformedDiagnostics.set(diagnostic, {
+											...diagnostic,
+											start: sourceOffset,
+										});
 									}
 								}
-								return transformedDiagnostics.get(diagnostic);
-							})
-							.filter(notEmpty);
-					}
-					return result;
+							}
+							return transformedDiagnostics.get(diagnostic);
+						})
+						.filter(notEmpty);
 				}
+				return result;
 			}
 			return [];
 		}
@@ -303,18 +293,16 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	};
 	// not working
 	languageService.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
-		const [virtualFile, sourceFile] = getVirtualFile(fileName);
-		if (virtualFile && sourceFile) {
-			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
-				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
-					if (isCompletionEnabled(mapping.data)) {
-						const result = getCompletionsAtPosition(fileName, sourceFile.snapshot.getLength() + generateOffset, options, formattingSettings);
-						if (result) {
-							for (const entry of result.entries) {
-								entry.replacementSpan = transformSpan(fileName, entry.replacementSpan, isCompletionEnabled)?.textSpan;
-							}
-							result.optionalReplacementSpan = transformSpan(fileName, result.optionalReplacementSpan, isCompletionEnabled)?.textSpan;
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile && sourceFile && map) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (isCompletionEnabled(mapping.data)) {
+					const result = getCompletionsAtPosition(fileName, sourceFile.snapshot.getLength() + generateOffset, options, formattingSettings);
+					if (result) {
+						for (const entry of result.entries) {
+							entry.replacementSpan = transformSpan(fileName, entry.replacementSpan, isCompletionEnabled)?.textSpan;
 						}
+						result.optionalReplacementSpan = transformSpan(fileName, result.optionalReplacementSpan, isCompletionEnabled)?.textSpan;
 					}
 				}
 			}
@@ -344,13 +332,11 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		const loopChecker = new Set<string>();
 		let symbols: T[] = [];
 
-		const [virtualFile, sourceFile] = getVirtualFile(fileName);
-		if (virtualFile && sourceFile) {
-			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
-				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
-					if (mapping.data.navigation) {
-						withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
-					}
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile && sourceFile && map) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (mapping.data.navigation) {
+					withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
 				}
 			}
 		}
@@ -370,7 +356,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			for (const ref of _symbols) {
 				loopChecker.add(ref.fileName + ':' + ref.textSpan.start);
 
-				const [virtualFile] = getVirtualFile(ref.fileName);
+				const [virtualFile] = getVirtualFileAndMap(ref.fileName);
 				if (!virtualFile)
 					continue;
 
@@ -389,7 +375,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 
 	// transforms
 	function transformFileTextChanges(changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
-		const [_, source] = getVirtualFile(changes.fileName);
+		const [_, source] = getVirtualFileAndMap(changes.fileName);
 		if (source) {
 			return {
 				...changes,
@@ -432,7 +418,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	function transformDocumentSpanLike<T extends ts.DocumentSpan>(documentSpan: T, isDefinition: boolean, filter: (data: CodeInformation) => boolean): T | undefined {
 		let textSpan = transformSpan(documentSpan.fileName, documentSpan.textSpan, filter);
 		if (isDefinition && !textSpan) {
-			const [virtualFile, source] = getVirtualFile(documentSpan.fileName);
+			const [virtualFile, source] = getVirtualFileAndMap(documentSpan.fileName);
 			if (virtualFile && source) {
 				textSpan = {
 					fileName: source.id,
@@ -460,29 +446,23 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	} | undefined {
 		if (!fileName) return;
 		if (!textSpan) return;
-		const [virtualFile, source] = getVirtualFile(fileName);
-		if (virtualFile && source) {
+		const [virtualFile, source, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile && source && map) {
 			if (isTsPlugin) {
 				textSpan = {
 					start: textSpan.start - source.snapshot.getLength(),
 					length: textSpan.length,
 				};
 			}
-			for (const [_, [sourceSnapshot, map]] of virtualFiles.getMaps(virtualFile)) {
-
-				if (source.snapshot !== sourceSnapshot)
-					continue;
-
-				for (const sourceLoc of map.getSourceOffsets(textSpan.start)) {
-					if (filter(sourceLoc[1].data)) {
-						return {
-							fileName: source.id,
-							textSpan: {
-								start: sourceLoc[0],
-								length: textSpan.length,
-							},
-						};
-					}
+			for (const sourceLoc of map.getSourceOffsets(textSpan.start)) {
+				if (filter(sourceLoc[1].data)) {
+					return {
+						fileName: source.id,
+						textSpan: {
+							start: sourceLoc[0],
+							length: textSpan.length,
+						},
+					};
 				}
 			}
 		}
@@ -494,23 +474,33 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		}
 	}
 
-	function getVirtualFile(fileName: string) {
+	function getVirtualFileAndMap(fileName: string) {
 		if (isTsPlugin) {
-			let result: VirtualFile | undefined;
 			const sourceFile = virtualFiles.getSourceFile(fileName);
 			if (sourceFile?.virtualFile) {
 				for (const virtualFile of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
 					const ext = virtualFile.id.substring(fileName.length);
 					if (virtualFile.typescript && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
-						result = virtualFile;
+						for (const map of virtualFiles.getMaps(virtualFile)) {
+							if (map[1][0] === sourceFile.snapshot) {
+								return [virtualFile, sourceFile, map[1][1]] as const;
+							}
+						}
 					}
 				}
 			}
-			return [result, sourceFile] as const;
 		}
 		else {
-			return virtualFiles.getVirtualFile(fileName);
+			const [virtualFile, sourceFile] = virtualFiles.getVirtualFile(fileName);
+			if (virtualFile && sourceFile) {
+				for (const map of virtualFiles.getMaps(virtualFile)) {
+					if (map[1][0] === sourceFile.snapshot) {
+						return [virtualFile, sourceFile, map[1][1]] as const;
+					}
+				}
+			}
 		}
+		return [undefined, undefined, undefined] as const;
 	}
 }
 
