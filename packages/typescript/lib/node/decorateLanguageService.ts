@@ -43,7 +43,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	};
 	languageService.getQuickInfoAtPosition = (fileName, position) => {
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
-		if (virtualFile && sourceFile && map) {
+		if (virtualFile) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isHoverEnabled(mapping.data)) {
 					const result = getQuickInfoAtPosition(fileName, sourceFile.snapshot.getLength() + generateOffset);
@@ -70,7 +70,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		let symbols: ts.DefinitionInfo[] = [];
 
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
-		if (virtualFile && sourceFile && map) {
+		if (virtualFile) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isDefinitionEnabled(mapping.data)) {
 					withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
@@ -127,7 +127,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		let symbols: ts.ReferencedSymbol[] = [];
 
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
-		if (virtualFile && sourceFile) {
+		if (virtualFile) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isReferencesEnabled(mapping.data)) {
 					withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
@@ -171,7 +171,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	};
 	languageService.getSyntacticDiagnostics = (fileName) => {
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
-		if (virtualFile && sourceFile && map) {
+		if (virtualFile) {
 			if (map.codeMappings.some(mapping => isDiagnosticsEnabled(mapping.data))) {
 				let result = getSyntacticDiagnostics(fileName);
 				if (result) {
@@ -206,7 +206,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	};
 	languageService.getSemanticDiagnostics = (fileName) => {
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
-		if (virtualFile && sourceFile && map) {
+		if (virtualFile) {
 			if (map.codeMappings.some(mapping => isDiagnosticsEnabled(mapping.data))) {
 				let result = getSemanticDiagnostics(fileName);
 				if (result) {
@@ -294,7 +294,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	// not working
 	languageService.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
-		if (virtualFile && sourceFile && map) {
+		if (virtualFile) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isCompletionEnabled(mapping.data)) {
 					const result = getCompletionsAtPosition(fileName, sourceFile.snapshot.getLength() + generateOffset, options, formattingSettings);
@@ -333,7 +333,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		let symbols: T[] = [];
 
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
-		if (virtualFile && sourceFile && map) {
+		if (virtualFile) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (mapping.data.navigation) {
 					withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
@@ -419,7 +419,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		let textSpan = transformSpan(documentSpan.fileName, documentSpan.textSpan, filter);
 		if (isDefinition && !textSpan) {
 			const [virtualFile, source] = getVirtualFileAndMap(documentSpan.fileName);
-			if (virtualFile && source) {
+			if (virtualFile) {
 				textSpan = {
 					fileName: source.id,
 					textSpan: { start: 0, length: 0 },
@@ -447,7 +447,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		if (!fileName) return;
 		if (!textSpan) return;
 		const [virtualFile, source, map] = getVirtualFileAndMap(fileName);
-		if (virtualFile && source && map) {
+		if (virtualFile) {
 			if (isTsPlugin) {
 				textSpan = {
 					start: textSpan.start - source.snapshot.getLength(),
@@ -492,7 +492,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		}
 		else {
 			const [virtualFile, sourceFile] = virtualFiles.getVirtualFile(fileName);
-			if (virtualFile && sourceFile) {
+			if (virtualFile) {
 				for (const map of virtualFiles.getMaps(virtualFile)) {
 					if (map[1][0] === sourceFile.snapshot) {
 						return [virtualFile, sourceFile, map[1][1]] as const;
