@@ -1,36 +1,35 @@
-import { FileProvider, VirtualFile, forEachEmbeddedFile, isCodeActionsEnabled } from '@volar/language-core';
+import { CodeInformation, FileProvider, VirtualFile, forEachEmbeddedFile, isCodeActionsEnabled, isCodeLensEnabled, isCompletionEnabled, isDefinitionEnabled, isDiagnosticsEnabled, isHoverEnabled, isReferencesEnabled, shouldReportDiagnostics } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function decorateLanguageService(virtualFiles: FileProvider, languageService: ts.LanguageService, isTsPlugin: boolean) {
 
-	const _organizeImports = languageService.organizeImports.bind(languageService);
-	const _getDefinitionAtPosition = languageService.getDefinitionAtPosition.bind(languageService);
-	const _getDefinitionAndBoundSpan = languageService.getDefinitionAndBoundSpan.bind(languageService);
-	const _getTypeDefinitionAtPosition = languageService.getTypeDefinitionAtPosition.bind(languageService);
-	const _getImplementationAtPosition = languageService.getImplementationAtPosition.bind(languageService);
-	const _getFileReferences = languageService.getFileReferences.bind(languageService);
-	const _findRenameLocations = languageService.findRenameLocations.bind(languageService);
-	const _getReferencesAtPosition = languageService.getReferencesAtPosition.bind(languageService);
-	const _findReferences = languageService.findReferences.bind(languageService);
+	const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
+	const transformedDiagnosticWithLocations = new WeakMap<ts.DiagnosticWithLocation, ts.DiagnosticWithLocation | undefined>();
 
-	languageService.organizeImports = organizeImports;
-	languageService.getDefinitionAtPosition = getDefinitionAtPosition;
-	languageService.getDefinitionAndBoundSpan = getDefinitionAndBoundSpan;
-	languageService.getTypeDefinitionAtPosition = getTypeDefinitionAtPosition;
-	languageService.getImplementationAtPosition = getImplementationAtPosition;
-	languageService.findRenameLocations = findRenameLocations;
-	languageService.getReferencesAtPosition = getReferencesAtPosition;
-	languageService.getFileReferences = getFileReferences;
-	languageService.findReferences = findReferences;
+	const {
+		organizeImports,
+		getQuickInfoAtPosition,
+		getCompletionsAtPosition,
+		getCompletionEntryDetails,
+		getDefinitionAndBoundSpan,
+		findReferences,
+		getDefinitionAtPosition,
+		getTypeDefinitionAtPosition,
+		getImplementationAtPosition,
+		getFileReferences,
+		findRenameLocations,
+		getReferencesAtPosition,
+		getSyntacticDiagnostics,
+		getSemanticDiagnostics,
+	} = languageService;
 
-	// apis
-	function organizeImports(args: ts.OrganizeImportsArgs, formatOptions: ts.FormatCodeSettings, preferences: ts.UserPreferences | undefined): ReturnType<ts.LanguageService['organizeImports']> {
+	languageService.organizeImports = (args, formatOptions, preferences) => {
 		let edits: readonly ts.FileTextChanges[] = [];
 		const sourceFile = virtualFiles.getSourceFile(args.fileName);
 		if (sourceFile?.virtualFile) {
 			for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
 				if (file.typescript && file.mappings.some(mapping => isCodeActionsEnabled(mapping.data))) {
-					edits = edits.concat(_organizeImports({
+					edits = edits.concat(organizeImports({
 						...args,
 						fileName: file.id,
 					}, formatOptions, preferences));
@@ -38,95 +37,68 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			}
 		}
 		else {
-			return _organizeImports(args, formatOptions, preferences);
+			return organizeImports(args, formatOptions, preferences);
 		}
-		return edits.map(transformFileTextChanges).filter(notEmpty);
-	}
-	function getReferencesAtPosition(fileName: string, position: number): ReturnType<ts.LanguageService['getReferencesAtPosition']> {
-		return findLocations(fileName, position, 'references') as ts.ReferenceEntry[];
-	}
-	function getFileReferences(fileName: string): ReturnType<ts.LanguageService['getFileReferences']> {
-		return findLocations(fileName, -1, 'fileReferences') as ts.ReferenceEntry[];
-	}
-	function getDefinitionAtPosition(fileName: string, position: number): ReturnType<ts.LanguageService['getDefinitionAtPosition']> {
-		return findLocations(fileName, position, 'definition') as ts.DefinitionInfo[];
-	}
-	function getTypeDefinitionAtPosition(fileName: string, position: number): ReturnType<ts.LanguageService['getDefinitionAtPosition']> {
-		return findLocations(fileName, position, 'typeDefinition') as ts.DefinitionInfo[];
-	}
-	function getImplementationAtPosition(fileName: string, position: number): ReturnType<ts.LanguageService['getImplementationAtPosition']> {
-		return findLocations(fileName, position, 'implementation') as ts.ImplementationLocation[];
-	}
-	function findRenameLocations(fileName: string, position: number, findInStrings: boolean, findInComments: boolean, preferences: ts.UserPreferences | boolean | undefined): ReturnType<ts.LanguageService['findRenameLocations']> {
-		return findLocations(fileName, position, 'rename', findInStrings, findInComments, preferences as ts.UserPreferences) as ts.RenameLocation[];
-	}
-	function findLocations(
-		fileName: string,
-		position: number,
-		mode: 'definition' | 'typeDefinition' | 'references' | 'fileReferences' | 'implementation' | 'rename',
-		findInStrings = false,
-		findInComments = false,
-		preferences?: ts.UserPreferences
-	) {
-
-		const loopChecker = new Set<string>();
-		let symbols: (ts.DefinitionInfo | ts.ReferenceEntry | ts.ImplementationLocation | ts.RenameLocation)[] = [];
-
-		withMirrors(fileName, position);
-
-		return symbols.map(s => transformDocumentSpanLike(s, mode === 'definition')).filter(notEmpty);
-
-		function withMirrors(fileName: string, position: number) {
-			if (loopChecker.has(fileName + ':' + position))
-				return;
-			loopChecker.add(fileName + ':' + position);
-			const _symbols = mode === 'definition' ? _getDefinitionAtPosition(fileName, position)
-				: mode === 'typeDefinition' ? _getTypeDefinitionAtPosition(fileName, position)
-					: mode === 'references' ? _getReferencesAtPosition(fileName, position)
-						: mode === 'fileReferences' ? _getFileReferences(fileName)
-							: mode === 'implementation' ? _getImplementationAtPosition(fileName, position)
-								: mode === 'rename' && preferences ? _findRenameLocations(fileName, position, findInStrings, findInComments, preferences)
-									: undefined;
-			if (!_symbols) return;
-			symbols = symbols.concat(_symbols);
-			for (const ref of _symbols) {
-				loopChecker.add(ref.fileName + ':' + ref.textSpan.start);
-
-				const [virtualFile] = getVirtualFile(ref.fileName);
-				if (!virtualFile)
-					continue;
-
-				const mirrorMap = virtualFiles.getMirrorMap(virtualFile);
-				if (!mirrorMap)
-					continue;
-
-				for (const mirrorOffset of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
-					if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
-						continue;
-					withMirrors(ref.fileName, mirrorOffset);
+		return edits.map(edit => transformFileTextChanges(edit, isCodeLensEnabled)).filter(notEmpty);
+	};
+	languageService.getQuickInfoAtPosition = (fileName, position) => {
+		const [virtualFile, sourceFile] = getVirtualFile(fileName);
+		if (virtualFile && sourceFile) {
+			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
+				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+					if (isHoverEnabled(mapping.data)) {
+						const result = getQuickInfoAtPosition(fileName, sourceFile.snapshot.getLength() + generateOffset);
+						if (result) {
+							const textSpan = transformSpan(fileName, result.textSpan, isHoverEnabled)?.textSpan;
+							if (textSpan) {
+								return {
+									...result,
+									textSpan,
+								};
+							}
+						}
+					}
 				}
 			}
 		}
-	}
-	function getDefinitionAndBoundSpan(fileName: string, position: number): ReturnType<ts.LanguageService['getDefinitionAndBoundSpan']> {
+		else {
+			return getQuickInfoAtPosition(fileName, position);
+		}
+	};
+	languageService.getDefinitionAndBoundSpan = (fileName, position) => {
 
 		const loopChecker = new Set<string>();
 		let textSpan: ts.TextSpan | undefined;
 		let symbols: ts.DefinitionInfo[] = [];
 
-		withMirrors(fileName, position);
+		const [virtualFile, sourceFile] = getVirtualFile(fileName);
+		if (virtualFile && sourceFile) {
+			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
+				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+					if (isDefinitionEnabled(mapping.data)) {
+						withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
+					}
+				}
+			}
+		}
+		else {
+			withLinkedCode(fileName, position);
+		}
+
+		textSpan = transformSpan(fileName, textSpan, isDefinitionEnabled)?.textSpan;
 
 		if (!textSpan) return;
+
 		return {
-			textSpan: textSpan,
-			definitions: symbols?.map(s => transformDocumentSpanLike(s, true)).filter(notEmpty),
+			textSpan,
+			definitions: symbols?.map(s => transformDocumentSpanLike(s, true, isDefinitionEnabled)).filter(notEmpty),
 		};
 
-		function withMirrors(fileName: string, position: number) {
+		function withLinkedCode(fileName: string, position: number) {
 			if (loopChecker.has(fileName + ':' + position))
 				return;
 			loopChecker.add(fileName + ':' + position);
-			const _symbols = _getDefinitionAndBoundSpan(fileName, position);
+			const _symbols = getDefinitionAndBoundSpan(fileName, position);
 			if (!_symbols) return;
 			if (!textSpan) {
 				textSpan = _symbols.textSpan;
@@ -148,25 +120,37 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				for (const mirrorOffset of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
 					if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
 						continue;
-					withMirrors(ref.fileName, mirrorOffset);
+					withLinkedCode(ref.fileName, mirrorOffset);
 				}
 			}
 		}
-	}
-	function findReferences(fileName: string, position: number): ReturnType<ts.LanguageService['findReferences']> {
+	};
+	languageService.findReferences = (fileName, position) => {
 
 		const loopChecker = new Set<string>();
 		let symbols: ts.ReferencedSymbol[] = [];
 
-		withMirrors(fileName, position);
+		const [virtualFile, sourceFile] = getVirtualFile(fileName);
+		if (virtualFile && sourceFile) {
+			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
+				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+					if (isReferencesEnabled(mapping.data)) {
+						withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
+					}
+				}
+			}
+		}
+		else {
+			withLinkedCode(fileName, position);
+		}
 
-		return symbols.map(s => transformReferencedSymbol(s)).filter(notEmpty);
+		return symbols.map(s => transformReferencedSymbol(s, isReferencesEnabled)).filter(notEmpty);
 
-		function withMirrors(fileName: string, position: number) {
+		function withLinkedCode(fileName: string, position: number) {
 			if (loopChecker.has(fileName + ':' + position))
 				return;
 			loopChecker.add(fileName + ':' + position);
-			const _symbols = _findReferences(fileName, position);
+			const _symbols = findReferences(fileName, position);
 			if (!_symbols) return;
 			symbols = symbols.concat(_symbols);
 			for (const symbol of _symbols) {
@@ -185,22 +169,233 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 					for (const mirrorOffset of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
 						if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
 							continue;
-						withMirrors(ref.fileName, mirrorOffset);
+						withLinkedCode(ref.fileName, mirrorOffset);
 					}
+				}
+			}
+		}
+	};
+	languageService.getSyntacticDiagnostics = (fileName) => {
+		const [virtualFile, sourceFile] = getVirtualFile(fileName);
+		if (virtualFile && sourceFile) {
+			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
+				if (map.codeMappings.some(mapping => isDiagnosticsEnabled(mapping.data))) {
+					let result = getSyntacticDiagnostics(fileName);
+					if (result) {
+						result = result
+							.map(diagnostic => {
+								if (!transformedDiagnosticWithLocations.has(diagnostic)) {
+									transformedDiagnosticWithLocations.set(diagnostic, undefined);
+									let offset = diagnostic.start;
+									if (isTsPlugin) {
+										offset -= sourceFile.snapshot.getLength();
+									}
+									for (const [sourceOffset, mapping] of map.getSourceOffsets(offset)) {
+										if (shouldReportDiagnostics(mapping.data)) {
+											transformedDiagnosticWithLocations.set(diagnostic, {
+												...diagnostic,
+												start: sourceOffset,
+											});
+										}
+									}
+								}
+								return transformedDiagnosticWithLocations.get(diagnostic);
+							})
+							.filter(notEmpty);
+					}
+					return result;
+				}
+			}
+			return [];
+		}
+		else {
+			return getSyntacticDiagnostics(fileName);
+		}
+	};
+	languageService.getSemanticDiagnostics = (fileName) => {
+		const [virtualFile, sourceFile] = getVirtualFile(fileName);
+		if (virtualFile && sourceFile) {
+			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
+				if (map.codeMappings.some(mapping => isDiagnosticsEnabled(mapping.data))) {
+					let result = getSemanticDiagnostics(fileName);
+					if (result) {
+						result = result
+							.map(diagnostic => {
+								if (!transformedDiagnostics.has(diagnostic)) {
+									transformedDiagnostics.set(diagnostic, undefined);
+									if (diagnostic.start === undefined) {
+										return diagnostic;
+									}
+									let offset = diagnostic.start;
+									if (isTsPlugin) {
+										offset -= sourceFile.snapshot.getLength();
+									}
+									for (const [sourceOffset, mapping] of map.getSourceOffsets(offset)) {
+										if (shouldReportDiagnostics(mapping.data)) {
+											transformedDiagnostics.set(diagnostic, {
+												...diagnostic,
+												start: sourceOffset,
+											});
+										}
+									}
+								}
+								return transformedDiagnostics.get(diagnostic);
+							})
+							.filter(notEmpty);
+					}
+					return result;
+				}
+			}
+			return [];
+		}
+		else {
+			return getSemanticDiagnostics(fileName);
+		}
+	};
+	// findLocationsWorker
+	languageService.getDefinitionAtPosition = (fileName, position) => {
+		return findLocationsWorker(
+			fileName,
+			position,
+			(fileName, position) => getDefinitionAtPosition(fileName, position),
+			true
+		);
+	};
+	languageService.getTypeDefinitionAtPosition = (fileName, position) => {
+		return findLocationsWorker(
+			fileName,
+			position,
+			(fileName, position) => getTypeDefinitionAtPosition(fileName, position),
+			false
+		);
+	};
+	languageService.getImplementationAtPosition = (fileName, position) => {
+		return findLocationsWorker(
+			fileName,
+			position,
+			(fileName, position) => getImplementationAtPosition(fileName, position),
+			false
+		);
+	};
+	languageService.getFileReferences = (fileName) => {
+		return findLocationsWorker(
+			fileName,
+			-1,
+			fileName => getFileReferences(fileName),
+			false
+		);
+	};
+	languageService.findRenameLocations = (fileName, position, findInStrings, findInComments, preferences) => {
+		return findLocationsWorker(
+			fileName,
+			position,
+			(fileName, position) => findRenameLocations(fileName, position, findInStrings, findInComments, preferences as ts.UserPreferences),
+			false
+		);
+	};
+	languageService.getReferencesAtPosition = (fileName, position) => {
+		return findLocationsWorker(
+			fileName,
+			position,
+			(fileName, position) => getReferencesAtPosition(fileName, position),
+			false
+		);
+	};
+	// not working
+	languageService.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
+		const [virtualFile, sourceFile] = getVirtualFile(fileName);
+		if (virtualFile && sourceFile) {
+			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
+				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+					if (isCompletionEnabled(mapping.data)) {
+						const result = getCompletionsAtPosition(fileName, sourceFile.snapshot.getLength() + generateOffset, options, formattingSettings);
+						if (result) {
+							for (const entry of result.entries) {
+								entry.replacementSpan = transformSpan(fileName, entry.replacementSpan, isCompletionEnabled)?.textSpan;
+							}
+							result.optionalReplacementSpan = transformSpan(fileName, result.optionalReplacementSpan, isCompletionEnabled)?.textSpan;
+						}
+					}
+				}
+			}
+		}
+		else {
+			return getCompletionsAtPosition(fileName, position, options, formattingSettings);
+		}
+	};
+	languageService.getCompletionEntryDetails = (fileName, position, entryName, formatOptions, source, preferences, data) => {
+		const details = getCompletionEntryDetails(fileName, position, entryName, formatOptions, source, preferences, data);
+		if (details?.codeActions) {
+			for (const codeAction of details.codeActions) {
+				codeAction.changes = codeAction.changes.map(edit => transformFileTextChanges(edit, isCodeLensEnabled)).filter(notEmpty);
+			}
+		}
+		return details;
+	};
+
+	// apis
+	function findLocationsWorker<T extends ts.DocumentSpan>(
+		fileName: string,
+		position: number,
+		worker: (fileName: string, position: number) => readonly T[] | undefined,
+		isDefinition: boolean
+	) {
+
+		const loopChecker = new Set<string>();
+		let symbols: T[] = [];
+
+		const [virtualFile, sourceFile] = getVirtualFile(fileName);
+		if (virtualFile && sourceFile) {
+			for (const [_1, [_2, map]] of virtualFiles.getMaps(virtualFile)) {
+				for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+					if (mapping.data.navigation) {
+						withLinkedCode(fileName, sourceFile.snapshot.getLength() + generateOffset);
+					}
+				}
+			}
+		}
+		else {
+			withLinkedCode(fileName, position);
+		}
+
+		return symbols.map(s => transformDocumentSpanLike(s, isDefinition, data => !!data.navigation)).filter(notEmpty);
+
+		function withLinkedCode(fileName: string, position: number) {
+			if (loopChecker.has(fileName + ':' + position))
+				return;
+			loopChecker.add(fileName + ':' + position);
+			const _symbols = worker(fileName, position);
+			if (!_symbols) return;
+			symbols = symbols.concat(_symbols);
+			for (const ref of _symbols) {
+				loopChecker.add(ref.fileName + ':' + ref.textSpan.start);
+
+				const [virtualFile] = getVirtualFile(ref.fileName);
+				if (!virtualFile)
+					continue;
+
+				const mirrorMap = virtualFiles.getMirrorMap(virtualFile);
+				if (!mirrorMap)
+					continue;
+
+				for (const mirrorOffset of mirrorMap.toLinkedOffsets(ref.textSpan.start)) {
+					if (loopChecker.has(ref.fileName + ':' + mirrorOffset))
+						continue;
+					withLinkedCode(ref.fileName, mirrorOffset);
 				}
 			}
 		}
 	}
 
 	// transforms
-	function transformFileTextChanges(changes: ts.FileTextChanges): ts.FileTextChanges | undefined {
+	function transformFileTextChanges(changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
 		const [_, source] = getVirtualFile(changes.fileName);
 		if (source) {
 			return {
 				...changes,
 				fileName: source.id,
 				textChanges: changes.textChanges.map(c => {
-					const span = transformSpan(changes.fileName, c.span);
+					const span = transformSpan(changes.fileName, c.span, filter);
 					if (span) {
 						return {
 							...c,
@@ -214,9 +409,9 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			return changes;
 		}
 	}
-	function transformReferencedSymbol(symbol: ts.ReferencedSymbol): ts.ReferencedSymbol | undefined {
-		const definition = transformDocumentSpanLike(symbol.definition, false);
-		const references = symbol.references.map(r => transformDocumentSpanLike(r, false)).filter(notEmpty);
+	function transformReferencedSymbol(symbol: ts.ReferencedSymbol, filter: (data: CodeInformation) => boolean): ts.ReferencedSymbol | undefined {
+		const definition = transformDocumentSpanLike(symbol.definition, false, filter);
+		const references = symbol.references.map(r => transformDocumentSpanLike(r, false, filter)).filter(notEmpty);
 		if (definition) {
 			return {
 				definition,
@@ -234,8 +429,8 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			};
 		}
 	}
-	function transformDocumentSpanLike<T extends ts.DocumentSpan>(documentSpan: T, isDefinition: boolean): T | undefined {
-		let textSpan = transformSpan(documentSpan.fileName, documentSpan.textSpan);
+	function transformDocumentSpanLike<T extends ts.DocumentSpan>(documentSpan: T, isDefinition: boolean, filter: (data: CodeInformation) => boolean): T | undefined {
+		let textSpan = transformSpan(documentSpan.fileName, documentSpan.textSpan, filter);
 		if (isDefinition && !textSpan) {
 			const [virtualFile, source] = getVirtualFile(documentSpan.fileName);
 			if (virtualFile && source) {
@@ -246,9 +441,9 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			}
 		}
 		if (!textSpan) return;
-		const contextSpan = transformSpan(documentSpan.fileName, documentSpan.contextSpan);
-		const originalTextSpan = transformSpan(documentSpan.originalFileName, documentSpan.originalTextSpan);
-		const originalContextSpan = transformSpan(documentSpan.originalFileName, documentSpan.originalContextSpan);
+		const contextSpan = transformSpan(documentSpan.fileName, documentSpan.contextSpan, filter);
+		const originalTextSpan = transformSpan(documentSpan.originalFileName, documentSpan.originalTextSpan, filter);
+		const originalContextSpan = transformSpan(documentSpan.originalFileName, documentSpan.originalContextSpan, filter);
 		return {
 			...documentSpan,
 			fileName: textSpan.fileName,
@@ -259,7 +454,10 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			originalContextSpan: originalContextSpan?.textSpan,
 		};
 	}
-	function transformSpan(fileName: string | undefined, textSpan: ts.TextSpan | undefined) {
+	function transformSpan(fileName: string | undefined, textSpan: ts.TextSpan | undefined, filter: (data: CodeInformation) => boolean): {
+		fileName: string;
+		textSpan: ts.TextSpan;
+	} | undefined {
 		if (!fileName) return;
 		if (!textSpan) return;
 		const [virtualFile, source] = getVirtualFile(fileName);
@@ -275,15 +473,16 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (source.snapshot !== sourceSnapshot)
 					continue;
 
-				const sourceLoc = map.getSourceOffset(textSpan.start);
-				if (sourceLoc) {
-					return {
-						fileName: source.id,
-						textSpan: {
-							start: sourceLoc[0],
-							length: textSpan.length,
-						},
-					};
+				for (const sourceLoc of map.getSourceOffsets(textSpan.start)) {
+					if (filter(sourceLoc[1].data)) {
+						return {
+							fileName: source.id,
+							textSpan: {
+								start: sourceLoc[0],
+								length: textSpan.length,
+							},
+						};
+					}
 				}
 			}
 		}
