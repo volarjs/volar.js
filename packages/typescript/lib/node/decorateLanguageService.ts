@@ -319,7 +319,17 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformReferencedSymbol(s, isReferencesEnabled))
+			.map(symbol => {
+				const definition = transformDocumentSpan(symbol.definition, isDefinitionEnabled);
+				if (definition) {
+					return {
+						definition,
+						references: symbol.references
+							.map(r => transformDocumentSpan(r, isReferencesEnabled))
+							.filter(notEmpty),
+					};
+				}
+			})
 			.filter(notEmpty);
 		return dedupeReferencedSymbols(resolved);
 	};
@@ -553,27 +563,6 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		}
 		else {
 			return changes;
-		}
-	}
-
-	function transformReferencedSymbol(symbol: ts.ReferencedSymbol, filter: (data: CodeInformation) => boolean): ts.ReferencedSymbol | undefined {
-		const definition = transformDocumentSpan(symbol.definition, filter);
-		const references = symbol.references.map(r => transformDocumentSpan(r, filter)).filter(notEmpty);
-		if (definition) {
-			return {
-				definition,
-				references,
-			};
-		}
-		else if (references.length) { // TODO: remove patching
-			return {
-				definition: {
-					...symbol.definition,
-					fileName: references[0].fileName,
-					textSpan: references[0].textSpan,
-				},
-				references,
-			};
 		}
 	}
 
