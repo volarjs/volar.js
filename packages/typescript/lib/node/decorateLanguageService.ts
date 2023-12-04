@@ -2,6 +2,7 @@ import {
 	CodeInformation,
 	FileProvider,
 	forEachEmbeddedFile,
+	isCallHierarchyEnabled,
 	isCodeActionsEnabled,
 	isCodeLensEnabled,
 	isCompletionEnabled,
@@ -43,9 +44,81 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		getEditsForRefactor,
 		getRenameInfo,
 		getCodeFixesAtPosition,
+		prepareCallHierarchy,
+		provideCallHierarchyIncomingCalls,
+		provideCallHierarchyOutgoingCalls,
 		organizeImports,
 	} = languageService;
 
+	languageService.prepareCallHierarchy = (fileName, position) => {
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (isCallHierarchyEnabled(mapping.data)) {
+					const item = prepareCallHierarchy(fileName, generateOffset + (isTsPlugin ? sourceFile.snapshot.getLength() : 0));
+					if (Array.isArray(item)) {
+						return item.map(item => transformCallHierarchyItem(item, isCallHierarchyEnabled));
+					}
+					else if (item) {
+						return transformCallHierarchyItem(item, isCallHierarchyEnabled);
+					}
+				}
+			}
+		}
+		else {
+			return prepareCallHierarchy(fileName, position);
+		}
+	};
+	languageService.provideCallHierarchyIncomingCalls = (fileName, position) => {
+		let calls: ts.CallHierarchyIncomingCall[] = [];
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (isCallHierarchyEnabled(mapping.data)) {
+					calls = provideCallHierarchyIncomingCalls(fileName, generateOffset + (isTsPlugin ? sourceFile.snapshot.getLength() : 0));
+				}
+			}
+		}
+		else {
+			calls = provideCallHierarchyIncomingCalls(fileName, position);
+		}
+		return calls
+			.map(call => {
+				const from = transformCallHierarchyItem(call.from, isCallHierarchyEnabled);
+				const fromSpans = call.fromSpans
+					.map(span => transformSpan(call.from.file, span, isCallHierarchyEnabled)?.textSpan)
+					.filter(notEmpty);
+				return {
+					from,
+					fromSpans,
+				};
+			});
+	};
+	languageService.provideCallHierarchyOutgoingCalls = (fileName, position) => {
+		let calls: ts.CallHierarchyOutgoingCall[] = [];
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (isCallHierarchyEnabled(mapping.data)) {
+					calls = provideCallHierarchyOutgoingCalls(fileName, generateOffset + (isTsPlugin ? sourceFile.snapshot.getLength() : 0));
+				}
+			}
+		}
+		else {
+			calls = provideCallHierarchyOutgoingCalls(fileName, position);
+		}
+		return calls
+			.map(call => {
+				const to = transformCallHierarchyItem(call.to, isCallHierarchyEnabled);
+				const fromSpans = call.fromSpans
+					.map(span => transformSpan(fileName, span, isCallHierarchyEnabled)?.textSpan)
+					.filter(notEmpty);
+				return {
+					to,
+					fromSpans,
+				};
+			});
+	};
 	languageService.organizeImports = (args, formatOptions, preferences) => {
 		const unresolved = organizeImports(args, formatOptions, preferences);
 		const resolved = unresolved
@@ -430,7 +503,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			.filter(notEmpty);
 		return dedupeDocumentSpans(resolved);
 	};
-	// not working
+	// need client patch
 	languageService.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
 		if (virtualFile) {
@@ -512,6 +585,17 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	}
 
 	// transforms
+
+	function transformCallHierarchyItem(item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
+		const span = transformSpan(item.file, item.span, filter);
+		const selectionSpan = transformSpan(item.file, item.selectionSpan, filter);
+		return {
+			...item,
+			span: span?.textSpan ?? { start: 0, length: 0 },
+			selectionSpan: selectionSpan?.textSpan ?? { start: 0, length: 0 },
+		};
+	}
+
 	function transformDiagnostic<T extends ts.Diagnostic>(diagnostic: T): T | undefined {
 		if (!transformedDiagnostics.has(diagnostic)) {
 			if (diagnostic.start !== undefined && diagnostic.file) {
