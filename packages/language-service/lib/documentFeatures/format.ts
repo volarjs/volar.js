@@ -1,7 +1,7 @@
 import { SourceMap, VirtualFile, forEachEmbeddedFile, isFormattingEnabled, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { ServiceContext, ServicePlugin } from '../types';
+import type { ServiceContext, Service } from '../types';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { SourceMapWithDocuments } from '../documents';
@@ -57,7 +57,7 @@ export function register(context: ServiceContext) {
 			const toPatchIndent: {
 				virtualFileUri: string;
 				isCodeBlock: boolean;
-				service: ServicePlugin;
+				service: Service;
 			}[] = [];
 
 			for (const file of embeddedFiles) {

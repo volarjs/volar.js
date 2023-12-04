@@ -1,13 +1,13 @@
 import type { CodeInformation, VirtualFile } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
-import type { ServiceContext, ServicePlugin, ServicePluginFactory } from '../types';
+import type { ServiceContext, Service, ServicePlugin } from '../types';
 
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
 	uri: string,
 	valid: (map: SourceMapWithDocuments<CodeInformation>) => boolean,
-	worker: (service: [ServicePluginFactory, ServicePlugin], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
+	worker: (service: [ServicePlugin, Service], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
@@ -31,7 +31,7 @@ export async function languageFeatureWorker<T, K>(
 	uri: string,
 	getReadDocParams: () => K,
 	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformation>) => Generator<K>,
-	worker: (service: [ServicePluginFactory, ServicePlugin], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
+	worker: (service: [ServicePlugin, Service], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {

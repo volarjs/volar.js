@@ -71,7 +71,7 @@ export interface ServiceContext<Provide = any> {
 		setSelection: Command<(position: vscode.Position) => vscode.Command | undefined>;
 	};
 	documents: DocumentProvider;
-	services: [ServicePluginFactory, ServicePlugin][];
+	services: [ServicePlugin, Service][];
 }
 
 export type Result<T> = T | Thenable<T>;
@@ -80,15 +80,15 @@ export type SemanticToken = [number, number, number, number, number];
 
 type ServiceProvide<P> = P extends undefined ? { provide?: undefined; } : { provide: P; };
 
-export interface ServicePluginFactory<P = any> {
+export interface ServicePlugin<P = any> {
 	triggerCharacters?: string[];
 	signatureHelpTriggerCharacters?: string[];
 	signatureHelpRetriggerCharacters?: string[];
 	autoFormatTriggerCharacters?: string[];
-	create(context: ServiceContext): ServicePlugin<P>;
+	create(context: ServiceContext): Service<P>;
 }
 
-export type ServicePlugin<P = any> = ServiceProvide<P> & {
+export type Service<P = any> = ServiceProvide<P> & {
 	isAdditionalCompletion?: boolean; // volar specific
 	provideHover?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableResult<vscode.Hover>,
 	provideDocumentSymbols?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.DocumentSymbol[]>;

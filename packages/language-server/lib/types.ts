@@ -1,10 +1,10 @@
-import type { Console, FileSystem, LanguagePlugin, LanguageService, ServicePluginFactory, ServiceEnvironment, SharedModules } from '@volar/language-service';
+import type { Console, FileSystem, LanguagePlugin, LanguageService, ServicePlugin, ServiceEnvironment, SharedModules } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
 
 export interface Config {
 	languages?: { [id: string]: LanguagePlugin; };
-	services?: { [id: string]: ServicePluginFactory; };
+	services?: { [id: string]: ServicePlugin; };
 }
 
 export interface Timer {

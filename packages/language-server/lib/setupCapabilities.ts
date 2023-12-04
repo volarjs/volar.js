@@ -1,4 +1,4 @@
-import type { ServicePluginFactory } from '@volar/language-service';
+import type { ServicePlugin } from '@volar/language-service';
 import { DiagnosticModel, SimpleServerPlugin, InitializationOptions, ServerMode } from './types';
 import * as vscode from 'vscode-languageserver';
 
@@ -7,7 +7,7 @@ export function setupCapabilities(
 	initOptions: InitializationOptions,
 	plugins: ReturnType<SimpleServerPlugin>[],
 	semanticTokensLegend: vscode.SemanticTokensLegend,
-	services: ServicePluginFactory[],
+	services: ServicePlugin[],
 ) {
 
 	const serverMode = initOptions.serverMode ?? ServerMode.Semantic;

@@ -25,7 +25,7 @@ import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
 import * as documentDrop from './languageFeatures/documentDrop';
-import type { ServicePluginFactory, ServiceContext, ServiceEnvironment } from './types';
+import type { ServicePlugin, ServiceContext, ServiceEnvironment } from './types';
 
 import type * as vscode from 'vscode-languageserver-protocol';
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -40,7 +40,7 @@ export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
 	language: Language,
-	servicePlugins: ServicePluginFactory[],
+	servicePlugins: ServicePlugin[],
 	env: ServiceEnvironment,
 ) {
 
