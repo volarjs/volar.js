@@ -6,10 +6,6 @@ import type { DocumentProvider } from './documents';
 
 export type * from 'vscode-languageserver-protocol';
 
-export interface SharedModules {
-	typescript?: typeof import('typescript/lib/tsserverlibrary');
-}
-
 export interface ServiceEnvironment extends RuntimeEnvironment {
 	workspaceFolder: {
 		name: string;
