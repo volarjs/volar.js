@@ -163,11 +163,12 @@ export function decorateLanguageServiceHost(
 			let snapshotSnapshot: ts.IScriptSnapshot | undefined;
 			let scriptKind = ts.ScriptKind.TS;
 
-			const text = languageServiceHost.readFile(fileName);
-			if (text !== undefined) {
+			const snapshot = getScriptSnapshot(fileName);
+			if (snapshot) {
 				extraProjectVersion++;
-				const sourceFile = virtualFiles.updateSourceFile(fileName, ts.ScriptSnapshot.fromString(text), resolveCommonLanguageId(fileName));
+				const sourceFile = virtualFiles.updateSourceFile(fileName, snapshot, resolveCommonLanguageId(fileName));
 				if (sourceFile.virtualFile) {
+					const text = snapshot.getText(0, snapshot.getLength());
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 					for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
 						const ext = file.id.substring(fileName.length);
