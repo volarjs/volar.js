@@ -1,4 +1,19 @@
-import { CodeInformation, FileProvider, forEachEmbeddedFile, isCodeActionsEnabled, isCodeLensEnabled, isCompletionEnabled, isDefinitionEnabled, isDiagnosticsEnabled, isHoverEnabled, isImplementationEnabled, isReferencesEnabled, isRenameEnabled, isSemanticTokensEnabled, isTypeDefinitionEnabled, shouldReportDiagnostics } from '@volar/language-core';
+import {
+	CodeInformation,
+	FileProvider,
+	forEachEmbeddedFile,
+	isCodeActionsEnabled,
+	isCodeLensEnabled,
+	isCompletionEnabled,
+	isDefinitionEnabled,
+	isHoverEnabled,
+	isImplementationEnabled,
+	isReferencesEnabled,
+	isRenameEnabled,
+	isSemanticTokensEnabled,
+	isTypeDefinitionEnabled,
+	shouldReportDiagnostics,
+} from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { dedupeDocumentSpans, dedupeReferencedSymbols } from './dedupe';
 
