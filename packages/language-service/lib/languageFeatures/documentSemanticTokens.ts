@@ -42,7 +42,7 @@ export function register(context: ServiceContext) {
 				const start = document.offsetAt(range!.start);
 				const end = document.offsetAt(range!.end);
 
-				for (const mapping of map.map.codeMappings) {
+				for (const mapping of map.map.mappings) {
 					if (isSemanticTokensEnabled(mapping.data)) {
 						for (let i = 0; i < mapping.sourceOffsets.length; i++) {
 							if (

@@ -54,11 +54,11 @@ export function register(
 						recursiveChecker.add({ uri: definition.targetUri, range: { start: definition.targetRange.start, end: definition.targetRange.start } });
 
 						const [virtualFile] = context.project.fileProvider.getVirtualFile(definition.targetUri);
-						const mirrorMap = virtualFile ? context.documents.getMirrorMap(virtualFile) : undefined;
+						const mirrorMap = virtualFile ? context.documents.getLinkedCodeMap(virtualFile) : undefined;
 
 						if (mirrorMap) {
 
-							for (const linkedPos of mirrorMap.findMirrorPositions(definition.targetSelectionRange.start)) {
+							for (const linkedPos of mirrorMap.getLinkedCodePositions(definition.targetSelectionRange.start)) {
 
 								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
 									continue;

@@ -69,7 +69,7 @@ export function createFileProvider(languages: Language[], caseSensitive: boolean
 				disposeVirtualFiles(value);
 			}
 		},
-		getMirrorMap(file: VirtualFile) {
+		getLinkedCodeMap(file: VirtualFile) {
 			if (!virtualFileToLinkedCodeMap.has(file.snapshot)) {
 				virtualFileToLinkedCodeMap.set(file.snapshot, file.linkedNavigationMappings ? new LinkedCodeMap(file.linkedNavigationMappings) : undefined);
 			}

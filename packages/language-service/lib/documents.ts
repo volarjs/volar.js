@@ -131,14 +131,14 @@ export class SourceMapWithDocuments<Data = any> {
 	}
 }
 
-export class MirrorMapWithDocument extends SourceMapWithDocuments {
+export class LinkedCodeMapWithDocument extends SourceMapWithDocuments {
 	constructor(
 		public document: TextDocument,
 		private linkedMap: LinkedCodeMap,
 	) {
 		super(document, document, linkedMap);
 	}
-	*findMirrorPositions(posotion: vscode.Position) {
+	*getLinkedCodePositions(posotion: vscode.Position) {
 		for (const linkedPosition of this.linkedMap.toLinkedOffsets(this.document.offsetAt(posotion))) {
 			yield this.document.positionAt(linkedPosition);
 		}
@@ -150,7 +150,7 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 	let version = 0;
 
 	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments<CodeInformation>>();
-	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, MirrorMapWithDocument>();
+	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, LinkedCodeMapWithDocument>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
 
 	return {
@@ -187,11 +187,11 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 				yield map2DocMap.get(map)!;
 			}
 		},
-		getMirrorMap(virtualFile: VirtualFile) {
-			const map = fileProvider.getMirrorMap(virtualFile);
+		getLinkedCodeMap(virtualFile: VirtualFile) {
+			const map = fileProvider.getLinkedCodeMap(virtualFile);
 			if (map) {
 				if (!mirrorMap2DocMirrorMap.has(map)) {
-					mirrorMap2DocMirrorMap.set(map, new MirrorMapWithDocument(
+					mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
 						get(virtualFile.id, virtualFile.languageId, virtualFile.snapshot),
 						map,
 					));

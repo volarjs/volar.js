@@ -36,14 +36,14 @@ export function register(context: ServiceContext) {
 				 * copy from ./codeActions.ts
 				 */
 
-				if (!map.map.codeMappings.some(mapping => isInlayHintsEnabled(mapping.data))) {
+				if (!map.map.mappings.some(mapping => isInlayHintsEnabled(mapping.data))) {
 					return;
 				}
 
 				let minStart: number | undefined;
 				let maxEnd: number | undefined;
 
-				for (const mapping of map.map.codeMappings) {
+				for (const mapping of map.map.mappings) {
 					const overlapRange = getOverlapRange(
 						offsetRange.start,
 						offsetRange.end,

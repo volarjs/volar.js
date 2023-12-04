@@ -13,7 +13,7 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.codeMappings.some(mapping => isFoldingRangesEnabled(mapping.data)),
+			map => map.map.mappings.some(mapping => isFoldingRangesEnabled(mapping.data)),
 			(service, document) => {
 				if (token.isCancellationRequested) {
 					return;

@@ -311,9 +311,9 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 		initialIndent = '';
 	}
 
-	for (let i = 0; i < map.codeMappings.length; i++) {
+	for (let i = 0; i < map.mappings.length; i++) {
 
-		const mapping = map.codeMappings[i];
+		const mapping = map.mappings[i];
 
 		for (let j = 0; j < mapping.sourceOffsets.length; j++) {
 

@@ -35,7 +35,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => ({ range, codeActionContext }),
 			function* (map) {
-				if (map.map.codeMappings.some(mapping => isCodeActionsEnabled(mapping.data))) {
+				if (map.map.mappings.some(mapping => isCodeActionsEnabled(mapping.data))) {
 
 					const _codeActionContext: vscode.CodeActionContext = {
 						diagnostics: transformLocations(
@@ -48,7 +48,7 @@ export function register(context: ServiceContext) {
 					let minStart: number | undefined;
 					let maxEnd: number | undefined;
 
-					for (const mapping of map.map.codeMappings) {
+					for (const mapping of map.map.mappings) {
 						const overlapRange = getOverlapRange(
 							offsetRange.start,
 							offsetRange.end,

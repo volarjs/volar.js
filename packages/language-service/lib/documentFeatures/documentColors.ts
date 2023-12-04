@@ -12,7 +12,7 @@ export function register(context: ServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.codeMappings.some(mapping => isColorEnabled(mapping.data)),
+			map => map.map.mappings.some(mapping => isColorEnabled(mapping.data)),
 			(service, document) => {
 				if (token.isCancellationRequested) {
 					return;

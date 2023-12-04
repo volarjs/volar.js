@@ -293,7 +293,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		if (virtualFile) {
 			let start: number | undefined;
 			let end: number | undefined;
-			for (const mapping of map.codeMappings) {
+			for (const mapping of map.mappings) {
 				if (isSemanticTokensEnabled(mapping.data) && mapping.sourceOffsets[0] >= span.start && mapping.sourceOffsets[0] <= span.start + span.length) {
 					start ??= mapping.generatedOffsets[0];
 					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1];
@@ -532,7 +532,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		if (virtualFile) {
 			let start: number | undefined;
 			let end: number | undefined;
-			for (const mapping of map.codeMappings) {
+			for (const mapping of map.mappings) {
 				if (isInlayHintsEnabled(mapping.data) && mapping.sourceOffsets[0] >= span.start && mapping.sourceOffsets[0] <= span.start + span.length) {
 					start ??= mapping.generatedOffsets[0];
 					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1];
@@ -615,7 +615,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (!virtualFile)
 					continue;
 
-				const linkedCodeMap = virtualFiles.getMirrorMap(virtualFile);
+				const linkedCodeMap = virtualFiles.getLinkedCodeMap(virtualFile);
 				if (!linkedCodeMap)
 					continue;
 

@@ -193,7 +193,7 @@ export async function activate(info: ExportsInfoForLabs) {
 				for (const [sourceUri, sourceVersion, map] of sources) {
 					const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
 					if (sourceEditor && sourceEditor.document.version === sourceVersion) {
-						const mappingDecorationRanges = map.codeMappings
+						const mappingDecorationRanges = map.mappings
 							.map(mapping => mapping.sourceOffsets.map((offset, i) => new vscode.Range(
 								sourceEditor.document.positionAt(offset),
 								sourceEditor.document.positionAt(offset + mapping.lengths[i]),
@@ -201,7 +201,7 @@ export async function activate(info: ExportsInfoForLabs) {
 							.flat();
 						sourceEditor.setDecorations(mappingDecorationType, mappingDecorationRanges);
 						virtualRanges1 = virtualRanges1.concat(
-							map.codeMappings
+							map.mappings
 								.map(mapping => mapping.generatedOffsets.map((offset, i) => new vscode.Range(
 									getGeneratedPosition(virtualUri, offset),
 									getGeneratedPosition(virtualUri, offset + mapping.lengths[i]),

@@ -71,11 +71,11 @@ export function register(context: ServiceContext) {
 								recursiveChecker.add({ uri: editUri, range: { start: textEdit.range.start, end: textEdit.range.start } });
 
 								const [virtualFile] = context.project.fileProvider.getVirtualFile(editUri);
-								const mirrorMap = virtualFile ? context.documents.getMirrorMap(virtualFile) : undefined;
+								const mirrorMap = virtualFile ? context.documents.getLinkedCodeMap(virtualFile) : undefined;
 
 								if (mirrorMap) {
 
-									for (const linkedPos of mirrorMap.findMirrorPositions(textEdit.range.start)) {
+									for (const linkedPos of mirrorMap.getLinkedCodePositions(textEdit.range.start)) {
 
 										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
 											continue;
