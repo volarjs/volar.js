@@ -10,6 +10,7 @@ import {
 	isHighlightEnabled,
 	isHoverEnabled,
 	isImplementationEnabled,
+	isInlayHintsEnabled,
 	isReferencesEnabled,
 	isRenameEnabled,
 	isSemanticTokensEnabled,
@@ -47,6 +48,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		prepareCallHierarchy,
 		provideCallHierarchyIncomingCalls,
 		provideCallHierarchyOutgoingCalls,
+		provideInlayHints,
 		organizeImports,
 	} = languageService;
 
@@ -531,6 +533,46 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			}
 		}
 		return details;
+	};
+	languageService.provideInlayHints = (fileName, span, preferences) => {
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			let start: number | undefined;
+			let end: number | undefined;
+			for (const mapping of map.codeMappings) {
+				if (isInlayHintsEnabled(mapping.data) && mapping.sourceOffsets[0] >= span.start && mapping.sourceOffsets[0] <= span.start + span.length) {
+					start ??= mapping.generatedOffsets[0];
+					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1];
+					start = Math.min(start, mapping.generatedOffsets[0]);
+					end = Math.max(end, mapping.generatedOffsets[mapping.generatedOffsets.length - 1]);
+				}
+			}
+			if (start === undefined || end === undefined) {
+				start = 0;
+				end = 0;
+			}
+			if (isTsPlugin) {
+				start += sourceFile.snapshot.getLength();
+				end += sourceFile.snapshot.getLength();
+			}
+			const result = provideInlayHints(fileName, { start, length: end - start }, preferences);
+			const hints: ts.InlayHint[] = [];
+			for (const hint of result) {
+				for (const [sourcePosition, mapping] of map.getSourceOffsets(hint.position - (isTsPlugin ? sourceFile.snapshot.getLength() : 0))) {
+					if (isInlayHintsEnabled(mapping.data)) {
+						hints.push({
+							...hint,
+							position: sourcePosition,
+						});
+						break;
+					}
+				}
+			}
+			return hints;
+		}
+		else {
+			return provideInlayHints(fileName, span, preferences);
+		}
 	};
 
 	function linkedCodeFeatureWorker<T>(
