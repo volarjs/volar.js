@@ -1,5 +1,5 @@
 import { LanguageService, ServiceEnvironment, createLanguageService, resolveCommonLanguageId } from '@volar/language-service';
-import { createLanguage, createSys, ProjectHost } from '@volar/typescript';
+import { createLanguage, createSys, LanguageHost } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
@@ -33,7 +33,7 @@ export async function createTypeScriptServerProject(
 	};
 	const { uriToFileName, fileNameToUri } = context.server.runtimeEnv;
 	const ts = context.workspaces.ts;
-	const projectHost: ProjectHost = {
+	const host: LanguageHost = {
 		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder.uri.toString()),
 		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => rootFiles,
@@ -52,7 +52,7 @@ export async function createTypeScriptServerProject(
 		getFileId: serviceEnv.fileNameToUri,
 		getLanguageId: uri => context.workspaces.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
 	};
-	const sys = createSys(ts, serviceEnv, projectHost.getCurrentDirectory());
+	const sys = createSys(ts, serviceEnv, host.getCurrentDirectory());
 
 	let parsedCommandLine: ts.ParsedCommandLine;
 	let rootFiles = await getRootFiles();
@@ -101,18 +101,18 @@ export async function createTypeScriptServerProject(
 	}
 	function getLanguageService() {
 		if (!languageService) {
-			const project = createLanguage(
+			const language = createLanguage(
 				ts,
 				sys,
 				Object.values(config.languages ?? {}),
 				typeof tsconfig === 'string' ? tsconfig : undefined,
-				projectHost,
+				host,
 			);
 			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
 				Object.values(config.services ?? {}),
 				serviceEnv,
-				project,
+				language,
 			);
 		}
 		return languageService;

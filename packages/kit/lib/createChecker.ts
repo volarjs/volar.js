@@ -4,7 +4,7 @@ import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
 import { asPosix, defaultCompilerOptions, fileNameToUri, uriToFileName } from './utils';
-import { createLanguage, ProjectHost } from '@volar/typescript';
+import { createLanguage, LanguageHost } from '@volar/typescript';
 
 export function createTypeScriptChecker(
 	languages: LanguagePlugin[],
@@ -54,7 +54,7 @@ function createTypeScriptCheckerWorker(
 	languages: LanguagePlugin[],
 	services: Service[],
 	configFileName: string | undefined,
-	getProjectHost: (env: ServiceEnvironment) => ProjectHost
+	getLanguageHost: (env: ServiceEnvironment) => LanguageHost
 ) {
 
 	let settings = {};
@@ -71,7 +71,7 @@ function createTypeScriptCheckerWorker(
 		};
 	};
 
-	const projectHost = getProjectHost(env);
+	const projectHost = getLanguageHost(env);
 	const project = createLanguage(
 		ts as any,
 		ts.sys,
@@ -209,7 +209,7 @@ function createTypeScriptProjectHost(
 	let projectVersion = 0;
 	let shouldCheckRootFiles = false;
 
-	const host: ProjectHost = {
+	const host: LanguageHost = {
 		getCurrentDirectory: () => {
 			return env.uriToFileName(env.workspaceFolder.uri.toString());
 		},

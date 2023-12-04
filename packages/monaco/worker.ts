@@ -12,7 +12,7 @@ import {
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { URI } from 'vscode-uri';
-import { createLanguage, createSys, ProjectHost } from '@volar/typescript';
+import { createLanguage, createSys, LanguageHost } from '@volar/typescript';
 
 export function createSimpleWorkerService<T = {}>(
 	modules: SharedModules,
@@ -74,7 +74,7 @@ export function createTypeScriptWorkerService<T = {}>(
 
 			const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
-			const projectHost: ProjectHost = {
+			const host: LanguageHost = {
 				getCurrentDirectory() {
 					return env.uriToFileName(env.workspaceFolder.uri.toString(true));
 				},
@@ -120,16 +120,16 @@ export function createTypeScriptWorkerService<T = {}>(
 				getFileId: env.fileNameToUri,
 				getLanguageId: id => resolveCommonLanguageId(id),
 			};
-			const sys = createSys(ts, env, projectHost.getCurrentDirectory());
-			const project = createLanguage(
+			const sys = createSys(ts, env, host.getCurrentDirectory());
+			const language = createLanguage(
 				ts,
 				sys,
 				languages,
 				undefined,
-				projectHost,
+				host,
 			);
 
-			return project;
+			return language;
 		},
 		extraApis
 	);
