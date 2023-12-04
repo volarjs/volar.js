@@ -1,4 +1,4 @@
-import { createFileProvider, FileMap, LanguagePlugin, Project } from '@volar/language-core';
+import { createFileProvider, FileMap, LanguagePlugin, Language } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { forEachEmbeddedFile } from '@volar/language-core';
 import * as path from 'path-browserify';
@@ -24,13 +24,13 @@ export interface ProjectHost extends Pick<
 	getLanguageId(id: string): string;
 }
 
-export function createProject(
+export function createLanguage(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	sys: ReturnType<typeof createSys> | ts.System,
 	languages: LanguagePlugin<any>[],
 	configFileName: string | undefined,
 	projectHost: ProjectHost,
-): Project {
+): Language {
 
 	const files = createFileProvider(languages, sys.useCaseSensitiveFileNames, (id) => {
 

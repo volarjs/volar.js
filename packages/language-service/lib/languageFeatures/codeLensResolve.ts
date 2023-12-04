@@ -31,8 +31,8 @@ export function register(context: ServiceContext) {
 			const service = context.services[data.serviceIndex];
 
 			if (service.resolveReferencesCodeLensLocations) {
-				const virtualFile = context.project.files.getVirtualFile(data.workerFileUri)[0];
-				const sourceFile = context.project.files.getSourceFile(data.workerFileUri);
+				const virtualFile = context.language.files.getVirtualFile(data.workerFileUri)[0];
+				const sourceFile = context.language.files.getSourceFile(data.workerFileUri);
 				if (virtualFile) {
 					const document = context.documents.get(virtualFile.id, virtualFile.languageId, virtualFile.snapshot);
 					references = await service.resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);

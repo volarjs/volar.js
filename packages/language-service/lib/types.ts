@@ -1,4 +1,4 @@
-import type { Project } from '@volar/language-core';
+import type { Language } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { URI } from 'vscode-uri';
@@ -63,7 +63,7 @@ interface Command<T> {
 
 export interface ServiceContext<Provide = any> {
 	env: ServiceEnvironment;
-	project: Project;
+	language: Language;
 	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
 	commands: {
 		showReferences: Command<(uri: string, position: vscode.Position, locations: vscode.Location[]) => vscode.Command | undefined>;

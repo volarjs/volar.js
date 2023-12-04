@@ -4,7 +4,7 @@ import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
 import { asPosix, defaultCompilerOptions, fileNameToUri, uriToFileName } from './utils';
-import { createProject, ProjectHost } from '@volar/typescript';
+import { createLanguage, ProjectHost } from '@volar/typescript';
 
 export function createTypeScriptChecker(
 	languages: LanguagePlugin[],
@@ -72,7 +72,7 @@ function createTypeScriptCheckerWorker(
 	};
 
 	const projectHost = getProjectHost(env);
-	const project = createProject(
+	const project = createLanguage(
 		ts as any,
 		ts.sys,
 		languages,
@@ -129,7 +129,7 @@ function createTypeScriptCheckerWorker(
 	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		const sourceFile = service.context.project.files.getSourceFile(uri);
+		const sourceFile = service.context.language.files.getSourceFile(uri);
 		if (sourceFile) {
 			const document = service.context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 			const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
@@ -145,7 +145,7 @@ function createTypeScriptCheckerWorker(
 					for (const uri in rootEdit.changes ?? {}) {
 						const edits = rootEdit.changes![uri];
 						if (edits.length) {
-							const editFile = service.context.project.files.getSourceFile(uri);
+							const editFile = service.context.language.files.getSourceFile(uri);
 							if (editFile) {
 								const editDocument = service.context.documents.get(uri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, edits);
@@ -155,7 +155,7 @@ function createTypeScriptCheckerWorker(
 					}
 					for (const change of rootEdit.documentChanges ?? []) {
 						if ('textDocument' in change) {
-							const editFile = service.context.project.files.getSourceFile(change.textDocument.uri);
+							const editFile = service.context.language.files.getSourceFile(change.textDocument.uri);
 							if (editFile) {
 								const editDocument = service.context.documents.get(change.textDocument.uri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, change.edits);
@@ -180,7 +180,7 @@ function createTypeScriptCheckerWorker(
 	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath: string) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		const sourceFile = service.context.project.files.getSourceFile(uri)!;
+		const sourceFile = service.context.language.files.getSourceFile(uri)!;
 		const document = service.context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
 			category: diagnostic.severity === 1 satisfies typeof DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,

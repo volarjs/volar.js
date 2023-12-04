@@ -1,5 +1,5 @@
 import { LanguageService, ServiceEnvironment, createLanguageService, resolveCommonLanguageId } from '@volar/language-service';
-import { createProject, createSys, ProjectHost } from '@volar/typescript';
+import { createLanguage, createSys, ProjectHost } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
@@ -101,7 +101,7 @@ export async function createTypeScriptServerProject(
 	}
 	function getLanguageService() {
 		if (!languageService) {
-			const project = createProject(
+			const project = createLanguage(
 				ts,
 				sys,
 				Object.values(config.languages ?? {}),

@@ -36,7 +36,7 @@ export async function languageFeatureWorker<T, K>(
 	combineResult?: (results: T[]) => T,
 ) {
 
-	const sourceFile = context.project.files.getSourceFile(uri);
+	const sourceFile = context.language.files.getSourceFile(uri);
 	if (!sourceFile)
 		return;
 
@@ -127,7 +127,7 @@ export async function visitEmbedded(
 	}
 
 	for (const map of context.documents.getMaps(current)) {
-		const sourceFile = context.project.files.getSourceFile(map.sourceFileDocument.uri);
+		const sourceFile = context.language.files.getSourceFile(map.sourceFileDocument.uri);
 		if (sourceFile?.virtualFile?.[0] === rootFile) {
 			if (!await cb(current, map)) {
 				return false;

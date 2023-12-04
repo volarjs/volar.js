@@ -1,4 +1,4 @@
-import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type Project } from '@volar/language-core';
+import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type Language } from '@volar/language-core';
 import { createDocumentProvider } from './documents';
 import * as autoInsert from './languageFeatures/autoInsert';
 import * as callHierarchy from './languageFeatures/callHierarchy';
@@ -42,7 +42,7 @@ export function createLanguageService(
 	modules: SharedModules,
 	services: Service[],
 	env: ServiceEnvironment,
-	project: Project,
+	language: Language,
 ) {
 
 	const context = createServiceContext();
@@ -95,10 +95,10 @@ export function createLanguageService(
 
 	function createServiceContext() {
 
-		const documents = createDocumentProvider(project.files);
+		const documents = createDocumentProvider(language.files);
 		const context: ServiceContext = {
 			env,
-			project,
+			language: language,
 			inject: (key, ...args) => {
 				for (const service of context.services) {
 					const provide = service.provide?.[key as any];

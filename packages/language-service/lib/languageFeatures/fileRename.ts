@@ -9,7 +9,7 @@ export function register(context: ServiceContext) {
 
 	return async (oldUri: string, newUri: string, token = NoneCancellationToken) => {
 
-		const sourceFile = context.project.files.getSourceFile(oldUri);
+		const sourceFile = context.language.files.getSourceFile(oldUri);
 
 		if (sourceFile?.virtualFile) {
 

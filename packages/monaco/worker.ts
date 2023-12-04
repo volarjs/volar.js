@@ -1,6 +1,6 @@
 import {
 	LanguagePlugin,
-	Project,
+	Language,
 	Service,
 	createLanguageService as _createLanguageService,
 	createFileProvider,
@@ -12,7 +12,7 @@ import {
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { URI } from 'vscode-uri';
-import { createProject, createSys, ProjectHost } from '@volar/typescript';
+import { createLanguage, createSys, ProjectHost } from '@volar/typescript';
 
 export function createSimpleWorkerService<T = {}>(
 	modules: SharedModules,
@@ -121,7 +121,7 @@ export function createTypeScriptWorkerService<T = {}>(
 				getLanguageId: id => resolveCommonLanguageId(id),
 			};
 			const sys = createSys(ts, env, projectHost.getCurrentDirectory());
-			const project = createProject(
+			const project = createLanguage(
 				ts,
 				sys,
 				languages,
@@ -138,7 +138,7 @@ export function createTypeScriptWorkerService<T = {}>(
 function createWorkerService<T = {}>(
 	modules: SharedModules,
 	services: Service[],
-	getProject: (env: ServiceEnvironment) => Project,
+	getLanguage: (env: ServiceEnvironment) => Language,
 	extraApis: T = {} as any,
 ): LanguageService & T {
 
@@ -151,17 +151,17 @@ function createWorkerService<T = {}>(
 		fileNameToUri: fileName => URI.file(fileName).toString(),
 		console,
 	};
-	const project = getProject(env);
+	const language = getLanguage(env);
 	const languageService = _createLanguageService(
 		modules,
 		services,
 		env,
-		project,
+		language,
 	);
 
 	class WorkerService {
 		env = env;
-		project = project;
+		project = language;
 	};
 
 	for (const api in languageService) {
