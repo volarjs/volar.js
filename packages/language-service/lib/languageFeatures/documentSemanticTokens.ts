@@ -16,7 +16,7 @@ export function register(context: ServiceContext) {
 		_reportProgress?: (tokens: vscode.SemanticTokens) => void, // TODO
 	): Promise<vscode.SemanticTokens | undefined> => {
 
-		const sourceFile = context.project.fileProvider.getSourceFile(uri);
+		const sourceFile = context.project.files.getSourceFile(uri);
 		if (!sourceFile)
 			return;
 

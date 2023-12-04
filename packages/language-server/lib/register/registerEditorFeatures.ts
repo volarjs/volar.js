@@ -60,7 +60,7 @@ export function registerEditorFeatures(
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const languageService = (await projectProvider.getProject(document.uri)).getLanguageService();
-		const virtualFile = languageService.context.project.fileProvider.getSourceFile(document.uri)?.virtualFile;
+		const virtualFile = languageService.context.project.files.getSourceFile(document.uri)?.virtualFile;
 		return virtualFile ? prune(virtualFile[0]) : undefined;
 
 		function prune(file: VirtualFile): VirtualFile {
@@ -85,7 +85,7 @@ export function registerEditorFeatures(
 		let content: string = '';
 		let codegenStacks: Stack[] = [];
 		const mappings: Record<string, Mapping<CodeInformation>[]> = {};
-		const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(env.fileNameToUri(params.virtualFileName));
+		const [virtualFile] = languageService.context.project.files.getVirtualFile(env.fileNameToUri(params.virtualFileName));
 		if (virtualFile) {
 			for (const map of languageService.context.documents.getMaps(virtualFile)) {
 				content = map.virtualFileDocument.getText();
@@ -123,7 +123,7 @@ export function registerEditorFeatures(
 				}
 				else {
 					const uri = languageService.context.env.fileNameToUri(fileName);
-					const [virtualFile] = languageService.context.project.fileProvider.getVirtualFile(uri);
+					const [virtualFile] = languageService.context.project.files.getVirtualFile(uri);
 					if (virtualFile?.typescript && virtualFile.id.startsWith(rootUri)) {
 						const { snapshot } = virtualFile;
 						fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });

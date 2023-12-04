@@ -21,7 +21,7 @@ export function register(context: ServiceContext) {
 
 			if (data.virtualDocumentUri) {
 
-				const [virtualFile] = context.project.fileProvider.getVirtualFile(data.virtualDocumentUri);
+				const [virtualFile] = context.project.files.getVirtualFile(data.virtualDocumentUri);
 
 				if (virtualFile) {
 

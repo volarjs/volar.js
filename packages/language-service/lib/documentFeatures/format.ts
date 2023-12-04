@@ -22,7 +22,7 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken
 	) => {
 
-		const sourceFile = context.project.fileProvider.getSourceFile(uri);
+		const sourceFile = context.project.files.getSourceFile(uri);
 		if (!sourceFile)
 			return;
 

@@ -70,7 +70,7 @@ export function register(context: ServiceContext) {
 
 								recursiveChecker.add({ uri: editUri, range: { start: textEdit.range.start, end: textEdit.range.start } });
 
-								const [virtualFile] = context.project.fileProvider.getVirtualFile(editUri);
+								const [virtualFile] = context.project.files.getVirtualFile(editUri);
 								const mirrorMap = virtualFile ? context.documents.getLinkedCodeMap(virtualFile) : undefined;
 
 								if (mirrorMap) {

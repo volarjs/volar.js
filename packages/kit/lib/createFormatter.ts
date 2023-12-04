@@ -12,12 +12,12 @@ export function createFormatter(
 	let settings = {};
 
 	const env = createServiceEnvironment(() => settings);
-	const fileProvider = createFileProvider(languages, false, () => { });
+	const files = createFileProvider(languages, false, () => { });
 	const service = createLanguageService(
 		{ typescript: ts as any },
 		services,
 		env,
-		{ fileProvider },
+		{ files },
 	);
 
 	return {
@@ -36,7 +36,7 @@ export function createFormatter(
 	async function format(content: string, languageId: string, options: FormattingOptions): Promise<string> {
 
 		const snapshot = ts.ScriptSnapshot.fromString(content);
-		fileProvider.updateSourceFile(fakeUri, snapshot, languageId);
+		files.updateSourceFile(fakeUri, snapshot, languageId);
 
 		const document = service.context.documents.get(fakeUri, languageId, snapshot)!;
 		const edits = await service.format(fakeUri, options, undefined, undefined);

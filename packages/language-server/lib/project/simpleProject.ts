@@ -24,20 +24,20 @@ export async function createSimpleServerProject(
 
 	function getLanguageService() {
 		if (!languageService) {
-			const fileProvider = createFileProvider(Object.values(config.languages ?? {}), false, (uri) => {
+			const files = createFileProvider(Object.values(config.languages ?? {}), false, (uri) => {
 				const script = context.workspaces.documents.get(uri);
 				if (script) {
-					fileProvider.updateSourceFile(uri, script.getSnapshot(), script.languageId);
+					files.updateSourceFile(uri, script.getSnapshot(), script.languageId);
 				}
 				else {
-					fileProvider.deleteSourceFile(uri);
+					files.deleteSourceFile(uri);
 				}
 			});
 			languageService = createLanguageService(
 				{ typescript: context.workspaces.ts },
 				Object.values(config.services ?? {}),
 				serviceEnv,
-				{ fileProvider },
+				{ files },
 			);
 		}
 		return languageService;

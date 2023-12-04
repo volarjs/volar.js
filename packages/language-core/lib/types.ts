@@ -65,7 +65,7 @@ export interface Language<T extends VirtualFile = VirtualFile> {
 }
 
 export interface Project {
-	fileProvider: FileProvider;
+	files: FileProvider;
 	typescript?: {
 		configFileName: string | undefined;
 		sys: ts.System;

@@ -145,7 +145,7 @@ export class LinkedCodeMapWithDocument extends SourceMapWithDocuments {
 	}
 }
 
-export function createDocumentProvider(fileProvider: FileProvider) {
+export function createDocumentProvider(files: FileProvider) {
 
 	let version = 0;
 
@@ -159,7 +159,7 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 			if (source.virtualFile) {
 				const result: [VirtualFile, SourceMapWithDocuments<CodeInformation>][] = [];
 				for (const virtualFile of forEachEmbeddedFile(source.virtualFile[0])) {
-					for (const [sourceUri, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
+					for (const [sourceUri, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
 						if (sourceSnapshot === source.snapshot) {
 							if (!map2DocMap.has(map)) {
 								map2DocMap.set(map, new SourceMapWithDocuments(
@@ -176,10 +176,10 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 			}
 		},
 		*getMaps(virtualFile: VirtualFile) {
-			for (const [sourceUri, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
+			for (const [sourceUri, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
 				if (!map2DocMap.has(map)) {
 					map2DocMap.set(map, new SourceMapWithDocuments(
-						get(sourceUri, fileProvider.getSourceFile(sourceUri)!.languageId, sourceSnapshot),
+						get(sourceUri, files.getSourceFile(sourceUri)!.languageId, sourceSnapshot),
 						get(virtualFile.id, virtualFile.languageId, virtualFile.snapshot),
 						map,
 					));
@@ -188,7 +188,7 @@ export function createDocumentProvider(fileProvider: FileProvider) {
 			}
 		},
 		getLinkedCodeMap(virtualFile: VirtualFile) {
-			const map = fileProvider.getLinkedCodeMap(virtualFile);
+			const map = files.getLinkedCodeMap(virtualFile);
 			if (map) {
 				if (!mirrorMap2DocMirrorMap.has(map)) {
 					mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(

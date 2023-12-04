@@ -3,7 +3,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 
 export function getProgram(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
-	fileProvider: FileProvider,
+	files: FileProvider,
 	{ getFileId, getFileName }: {
 		getFileId(fileName: string): string;
 		getFileName(id: string): string;
@@ -72,7 +72,7 @@ export function getProgram(
 		if (sourceFile) {
 
 			const uri = getFileId(sourceFile.fileName);
-			const [virtualFile, source] = fileProvider.getVirtualFile(uri);
+			const [virtualFile, source] = files.getVirtualFile(uri);
 
 			if (virtualFile && source) {
 
@@ -112,7 +112,7 @@ export function getProgram(
 			) {
 
 				const uri = getFileId(diagnostic.file.fileName);
-				const [virtualFile, source] = fileProvider.getVirtualFile(uri);
+				const [virtualFile, source] = files.getVirtualFile(uri);
 
 				if (virtualFile && source) {
 
@@ -121,7 +121,7 @@ export function getProgram(
 					if (sys.fileExists?.(sourceFileName) === false)
 						continue;
 
-					for (const [_, [sourceSnapshot, map]] of fileProvider.getMaps(virtualFile)) {
+					for (const [_, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
 
 						if (sourceSnapshot !== source.snapshot)
 							continue;
@@ -167,7 +167,7 @@ export function getProgram(
 
 				if (docText === undefined) {
 					const uri = getFileId(fileName);
-					const snapshot = fileProvider.getSourceFile(uri)?.snapshot;
+					const snapshot = files.getSourceFile(uri)?.snapshot;
 					if (snapshot) {
 						docText = snapshot.getText(0, snapshot.getLength());
 					}
