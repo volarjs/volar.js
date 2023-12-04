@@ -498,13 +498,6 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			.filter(notEmpty);
 		return dedupeDocumentSpans(resolved);
 	};
-	languageService.getFileReferences = (fileName) => {
-		const unresolved = getFileReferences(fileName);
-		const resolved = unresolved
-			.map(s => transformDocumentSpan(s, isReferencesEnabled))
-			.filter(notEmpty);
-		return dedupeDocumentSpans(resolved);
-	};
 	// need client patch
 	languageService.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
@@ -573,6 +566,13 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		else {
 			return provideInlayHints(fileName, span, preferences);
 		}
+	};
+	languageService.getFileReferences = (fileName) => {
+		const unresolved = getFileReferences(fileName);
+		const resolved = unresolved
+			.map(s => transformDocumentSpan(s, isReferencesEnabled))
+			.filter(notEmpty);
+		return dedupeDocumentSpans(resolved);
 	};
 
 	function linkedCodeFeatureWorker<T>(
