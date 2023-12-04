@@ -1,10 +1,10 @@
-import { FormattingOptions, Language, Service, createFileProvider, createLanguageService } from '@volar/language-service';
+import { FormattingOptions, LanguagePlugin, Service, createFileProvider, createLanguageService } from '@volar/language-service';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
 
 export function createFormatter(
-	languages: Language[],
+	languages: LanguagePlugin[],
 	services: Service[]
 ) {
 

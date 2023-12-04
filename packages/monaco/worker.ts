@@ -1,5 +1,5 @@
 import {
-	Language,
+	LanguagePlugin,
 	Project,
 	Service,
 	createLanguageService as _createLanguageService,
@@ -16,7 +16,7 @@ import { createProject, createSys, ProjectHost } from '@volar/typescript';
 
 export function createSimpleWorkerService<T = {}>(
 	modules: SharedModules,
-	languages: Language[],
+	languages: LanguagePlugin[],
 	services: Service[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
 	extraApis: T = {} as any,
@@ -59,7 +59,7 @@ export function createSimpleWorkerService<T = {}>(
 
 export function createTypeScriptWorkerService<T = {}>(
 	ts: typeof import('typescript/lib/tsserverlibrary.js'),
-	languages: Language[],
+	languages: LanguagePlugin[],
 	services: Service[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
 	compilerOptions: ts.CompilerOptions,

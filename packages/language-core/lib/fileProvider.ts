@@ -1,12 +1,12 @@
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import { LinkedCodeMap } from './linkedCodeMap';
-import type { CodeInformation, Language, SourceFile, VirtualFile } from './types';
+import type { CodeInformation, LanguagePlugin, SourceFile, VirtualFile } from './types';
 import { FileMap } from './utils';
 
 export type FileProvider = ReturnType<typeof createFileProvider>;
 
-export function createFileProvider(languages: Language[], caseSensitive: boolean, sync: (sourceFileId: string) => void) {
+export function createFileProvider(languages: LanguagePlugin[], caseSensitive: boolean, sync: (sourceFileId: string) => void) {
 
 	const sourceFileRegistry = new FileMap<SourceFile>(caseSensitive);
 	const virtualFileRegistry = new FileMap<[VirtualFile, SourceFile]>(caseSensitive);

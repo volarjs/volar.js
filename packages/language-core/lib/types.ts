@@ -3,7 +3,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { FileProvider } from './fileProvider';
 
 export interface SourceFile extends BaseFile {
-	virtualFile?: [VirtualFile, Language];
+	virtualFile?: [VirtualFile, LanguagePlugin];
 }
 
 export interface VirtualFile extends BaseFile {
@@ -53,7 +53,7 @@ export interface BaseFile {
 	snapshot: ts.IScriptSnapshot;
 }
 
-export interface Language<T extends VirtualFile = VirtualFile> {
+export interface LanguagePlugin<T extends VirtualFile = VirtualFile> {
 	createVirtualFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
 	disposeVirtualFile?(virtualFile: T): void;
