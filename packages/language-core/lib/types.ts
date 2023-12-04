@@ -27,7 +27,9 @@ export interface CodeInformation {
 		onlyImport?: boolean;
 	};
 	/** virtual code is expected correctly reflect semantic of the source code */
-	semantic: boolean;
+	semantic: boolean | {
+		shouldHighlight?(): boolean;
+	};
 	/** virtual code is expected correctly reflect reference relationships of the source code */
 	navigation: boolean | {
 		shouldRename?(): boolean;

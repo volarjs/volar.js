@@ -1,19 +1,21 @@
 import type { CodeInformation } from './types';
 
 export function isHoverEnabled(info: CodeInformation): boolean {
-	return info.semantic;
-}
-
-export function isSemanticTokensEnabled(info: CodeInformation): boolean {
-	return info.semantic;
+	return !!info.semantic;
 }
 
 export function isInlayHintsEnabled(info: CodeInformation): boolean {
-	return info.semantic;
+	return !!info.semantic;
 }
 
 export function isCodeLensEnabled(info: CodeInformation): boolean {
-	return info.semantic;
+	return !!info.semantic;
+}
+
+export function isSemanticTokensEnabled(info: CodeInformation): boolean {
+	return typeof info.semantic === 'object'
+		? info.semantic.shouldHighlight?.() ?? true
+		: info.semantic;
 }
 
 export function isCallHierarchyEnabled(info: CodeInformation): boolean {

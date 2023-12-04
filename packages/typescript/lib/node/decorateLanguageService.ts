@@ -6,6 +6,7 @@ import {
 	isCodeLensEnabled,
 	isCompletionEnabled,
 	isDefinitionEnabled,
+	isHighlightEnabled,
 	isHoverEnabled,
 	isImplementationEnabled,
 	isReferencesEnabled,
@@ -37,6 +38,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		getSuggestionDiagnostics,
 		getTypeDefinitionAtPosition,
 		getEncodedSemanticClassifications,
+		getDocumentHighlights,
 		organizeImports,
 	} = languageService;
 
@@ -81,6 +83,41 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		else {
 			return getQuickInfoAtPosition(fileName, position);
 		}
+	};
+	languageService.getDocumentHighlights = (fileName, position, filesToSearch) => {
+		const unresolved = linkedCodeFeatureWorker(
+			fileName,
+			position,
+			isHighlightEnabled,
+			position => getDocumentHighlights(fileName, position, filesToSearch),
+			function* (result) {
+				for (const ref of result) {
+					for (const reference of ref.highlightSpans) {
+						yield [reference.fileName ?? ref.fileName, reference.textSpan.start];
+					}
+				}
+			},
+		);
+		const resolved = unresolved
+			.flat()
+			.map(highlights => {
+				return {
+					...highlights,
+					highlightSpans: highlights.highlightSpans
+						.map(span => {
+							const textSpan = transformSpan(span.fileName ?? highlights.fileName, span.textSpan, isHighlightEnabled)?.textSpan;
+							if (textSpan) {
+								return {
+									...span,
+									contextSpan: transformSpan(span.fileName ?? highlights.fileName, span.contextSpan, isHighlightEnabled)?.textSpan,
+									textSpan,
+								};
+							}
+						})
+						.filter(notEmpty),
+				};
+			});
+		return resolved;
 	};
 	languageService.getEncodedSemanticClassifications = (fileName, span, format) => {
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
@@ -402,6 +439,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		}
 		return transformedDiagnostics.get(diagnostic) as T | undefined;
 	}
+
 	function transformFileTextChanges(changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
 		const [_, source] = getVirtualFileAndMap(changes.fileName);
 		if (source) {
@@ -423,6 +461,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			return changes;
 		}
 	}
+
 	function transformReferencedSymbol(symbol: ts.ReferencedSymbol, filter: (data: CodeInformation) => boolean): ts.ReferencedSymbol | undefined {
 		const definition = transformDocumentSpan(symbol.definition, filter);
 		const references = symbol.references.map(r => transformDocumentSpan(r, filter)).filter(notEmpty);
@@ -443,6 +482,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			};
 		}
 	}
+
 	function transformDocumentSpan<T extends ts.DocumentSpan>(documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
 		let textSpan = transformSpan(documentSpan.fileName, documentSpan.textSpan, filter);
 		if (!textSpan && shouldFallback) {
@@ -468,6 +508,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			originalContextSpan: originalContextSpan?.textSpan,
 		};
 	}
+
 	function transformSpan(fileName: string | undefined, textSpan: ts.TextSpan | undefined, filter: (data: CodeInformation) => boolean): {
 		fileName: string;
 		textSpan: ts.TextSpan;
