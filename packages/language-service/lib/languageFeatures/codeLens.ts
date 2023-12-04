@@ -32,7 +32,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				let codeLens = await service.provideCodeLenses?.(document, token);
+				let codeLens = await service[1].provideCodeLenses?.(document, token);
 
 				const serviceIndex = context.services.indexOf(service);
 
@@ -47,7 +47,7 @@ export function register(context: ServiceContext) {
 					} satisfies ServiceCodeLensData;
 				});
 
-				const ranges = await service.provideReferencesCodeLensRanges?.(document, token);
+				const ranges = await service[1].provideReferencesCodeLensRanges?.(document, token);
 				const referencesCodeLens = ranges?.map<vscode.CodeLens>(range => ({
 					range,
 					data: {

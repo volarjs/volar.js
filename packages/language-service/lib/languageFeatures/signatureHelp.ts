@@ -30,13 +30,13 @@ export function register(context: ServiceContext) {
 					&& signatureHelpContext.triggerCharacter
 					&& !(
 						signatureHelpContext.isRetrigger
-							? service.signatureHelpRetriggerCharacters
-							: service.signatureHelpTriggerCharacters
+							? service[0].signatureHelpRetriggerCharacters
+							: service[0].signatureHelpTriggerCharacters
 					)?.includes(signatureHelpContext.triggerCharacter)
 				) {
 					return;
 				}
-				return service.provideSignatureHelp?.(document, position, signatureHelpContext!, token);
+				return service[1].provideSignatureHelp?.(document, position, signatureHelpContext!, token);
 			},
 			(data) => data,
 		);

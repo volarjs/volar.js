@@ -1,4 +1,4 @@
-import type { Service } from '@volar/language-service';
+import type { ServicePlugin } from '@volar/language-service';
 import { DiagnosticModel, SimpleServerPlugin, InitializationOptions, ServerMode } from './types';
 import * as vscode from 'vscode-languageserver';
 
@@ -7,10 +7,9 @@ export function setupCapabilities(
 	initOptions: InitializationOptions,
 	plugins: ReturnType<SimpleServerPlugin>[],
 	semanticTokensLegend: vscode.SemanticTokensLegend,
-	services: Service[],
+	services: ServicePlugin[],
 ) {
 
-	const serviceInstances = services.map(service => service(undefined, undefined));
 	const serverMode = initOptions.serverMode ?? ServerMode.Semantic;
 
 	if (serverMode === ServerMode.Semantic || serverMode === ServerMode.Syntactic) {
@@ -21,7 +20,7 @@ export function setupCapabilities(
 		server.documentSymbolProvider = true;
 		server.documentFormattingProvider = true;
 		server.documentRangeFormattingProvider = true;
-		const characters = [...new Set(serviceInstances.map(service => service.autoFormatTriggerCharacters ?? []).flat())];
+		const characters = [...new Set(services.map(service => service.autoFormatTriggerCharacters ?? []).flat())];
 		if (characters.length) {
 			server.documentOnTypeFormattingProvider = {
 				firstTriggerCharacter: characters[0],
@@ -41,11 +40,11 @@ export function setupCapabilities(
 			prepareProvider: true,
 		};
 		server.signatureHelpProvider = {
-			triggerCharacters: [...new Set(serviceInstances.map(service => service.signatureHelpTriggerCharacters ?? []).flat())],
-			retriggerCharacters: [...new Set(serviceInstances.map(service => service.signatureHelpRetriggerCharacters ?? []).flat())],
+			triggerCharacters: [...new Set(services.map(service => service.signatureHelpTriggerCharacters ?? []).flat())],
+			retriggerCharacters: [...new Set(services.map(service => service.signatureHelpRetriggerCharacters ?? []).flat())],
 		};
 		server.completionProvider = {
-			triggerCharacters: [...new Set(serviceInstances.map(service => service.triggerCharacters ?? []).flat())],
+			triggerCharacters: [...new Set(services.map(service => service.triggerCharacters ?? []).flat())],
 			resolveProvider: true,
 		};
 		if (initOptions.ignoreTriggerCharacters) {

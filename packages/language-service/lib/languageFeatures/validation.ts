@@ -220,7 +220,7 @@ export function register(context: ServiceContext) {
 			errorMarkups[uri] = [];
 			for (const error of errors) {
 				for (const service of context.services) {
-					const markup = await service.provideDiagnosticMarkupContent?.(error, token);
+					const markup = await service[1].provideDiagnosticMarkupContent?.(error, token);
 					if (markup) {
 						errorMarkups[uri].push({ error, markup });
 					}
@@ -258,7 +258,7 @@ export function register(context: ServiceContext) {
 						return cache.errors;
 					}
 
-					const errors = await service[api]?.(document, token);
+					const errors = await service[1][api]?.(document, token);
 
 					errors?.forEach(error => {
 						error.data = {

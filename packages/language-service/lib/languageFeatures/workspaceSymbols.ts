@@ -14,10 +14,10 @@ export function register(context: ServiceContext) {
 			if (token.isCancellationRequested) {
 				break;
 			}
-			if (!service.provideWorkspaceSymbols) {
+			if (!service[1].provideWorkspaceSymbols) {
 				continue;
 			}
-			const embeddedSymbols = await service.provideWorkspaceSymbols(query, token);
+			const embeddedSymbols = await service[1].provideWorkspaceSymbols(query, token);
 			if (!embeddedSymbols) {
 				continue;
 			}

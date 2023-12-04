@@ -25,7 +25,7 @@ import * as signatureHelp from './languageFeatures/signatureHelp';
 import * as diagnostics from './languageFeatures/validation';
 import * as workspaceSymbol from './languageFeatures/workspaceSymbols';
 import * as documentDrop from './languageFeatures/documentDrop';
-import type { Service, ServiceContext, ServiceEnvironment, SharedModules } from './types';
+import type { ServicePlugin, ServiceContext, ServiceEnvironment } from './types';
 
 import type * as vscode from 'vscode-languageserver-protocol';
 import * as colorPresentations from './documentFeatures/colorPresentations';
@@ -39,20 +39,19 @@ import * as selectionRanges from './documentFeatures/selectionRanges';
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
-	modules: SharedModules,
-	services: Service[],
-	env: ServiceEnvironment,
 	language: Language,
+	servicePlugins: ServicePlugin[],
+	env: ServiceEnvironment,
 ) {
 
 	const context = createServiceContext();
 
 	return {
 
-		getTriggerCharacters: () => context.services.map(service => service.triggerCharacters ?? []).flat(),
-		getAutoFormatTriggerCharacters: () => context.services.map(service => service.autoFormatTriggerCharacters ?? []).flat(),
-		getSignatureHelpTriggerCharacters: () => context.services.map(service => service.signatureHelpTriggerCharacters ?? []).flat(),
-		getSignatureHelpRetriggerCharacters: () => context.services.map(service => service.signatureHelpRetriggerCharacters ?? []).flat(),
+		getTriggerCharacters: () => context.services.map(service => service[0].triggerCharacters ?? []).flat(),
+		getAutoFormatTriggerCharacters: () => context.services.map(service => service[0].autoFormatTriggerCharacters ?? []).flat(),
+		getSignatureHelpTriggerCharacters: () => context.services.map(service => service[0].signatureHelpTriggerCharacters ?? []).flat(),
+		getSignatureHelpRetriggerCharacters: () => context.services.map(service => service[0].signatureHelpRetriggerCharacters ?? []).flat(),
 
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),
@@ -89,7 +88,7 @@ export function createLanguageService(
 		getInlayHints: inlayHints.register(context),
 		doInlayHintResolve: inlayHintResolve.register(context),
 		callHierarchy: callHierarchy.register(context),
-		dispose: () => context.services.forEach(service => service.dispose?.()),
+		dispose: () => context.services.forEach(service => service[1].dispose?.()),
 		context,
 	};
 
@@ -101,7 +100,7 @@ export function createLanguageService(
 			language: language,
 			inject: (key, ...args) => {
 				for (const service of context.services) {
-					const provide = service.provide?.[key as any];
+					const provide = service[1].provide?.[key as any];
 					if (provide) {
 						return provide(...args as any);
 					}
@@ -164,8 +163,8 @@ export function createLanguageService(
 			},
 		};
 
-		for (const service of services) {
-			context.services.push(service(context, modules));
+		for (const servicePlugin of servicePlugins) {
+			context.services.push([servicePlugin, servicePlugin.create(context)]);
 		}
 
 		return context;

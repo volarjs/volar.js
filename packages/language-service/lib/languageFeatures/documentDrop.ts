@@ -21,7 +21,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service.provideDocumentDropEdits?.(document, arg, dataTransfer, token);
+				return service[1].provideDocumentDropEdits?.(document, arg, dataTransfer, token);
 			},
 			(edit) => {
 				if (edit.additionalEdit) {

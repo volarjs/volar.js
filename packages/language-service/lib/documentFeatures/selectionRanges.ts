@@ -27,7 +27,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested)
 					return;
 
-				return service.provideSelectionRanges?.(document, positions, token);
+				return service[1].provideSelectionRanges?.(document, positions, token);
 			},
 			(data, map) => {
 				if (!map) {

@@ -28,7 +28,7 @@ export function register(context: ServiceContext) {
 					if (token.isCancellationRequested) {
 						return;
 					}
-					const items = await service.provideCallHierarchyItems?.(document, position, token);
+					const items = await service[1].provideCallHierarchyItems?.(document, position, token);
 					items?.forEach(item => {
 						item.data = {
 							uri,
@@ -62,7 +62,7 @@ export function register(context: ServiceContext) {
 
 				const service = context.services[data.serviceIndex];
 
-				if (!service.provideCallHierarchyIncomingCalls)
+				if (!service[1].provideCallHierarchyIncomingCalls)
 					return incomingItems;
 
 				Object.assign(item, data.original);
@@ -73,7 +73,7 @@ export function register(context: ServiceContext) {
 
 					if (virtualFile) {
 
-						const _calls = await service.provideCallHierarchyIncomingCalls(item, token);
+						const _calls = await service[1].provideCallHierarchyIncomingCalls(item, token);
 
 						for (const _call of _calls) {
 
@@ -91,7 +91,7 @@ export function register(context: ServiceContext) {
 				}
 				else {
 
-					const _calls = await service.provideCallHierarchyIncomingCalls(item, token);
+					const _calls = await service[1].provideCallHierarchyIncomingCalls(item, token);
 
 					for (const _call of _calls) {
 
@@ -120,7 +120,7 @@ export function register(context: ServiceContext) {
 
 				const service = context.services[data.serviceIndex];
 
-				if (!service.provideCallHierarchyOutgoingCalls)
+				if (!service[1].provideCallHierarchyOutgoingCalls)
 					return items;
 
 				Object.assign(item, data.original);
@@ -131,7 +131,7 @@ export function register(context: ServiceContext) {
 
 					if (virtualFile) {
 
-						const _calls = await service.provideCallHierarchyOutgoingCalls(item, token);
+						const _calls = await service[1].provideCallHierarchyOutgoingCalls(item, token);
 
 						for (const call of _calls) {
 
@@ -149,7 +149,7 @@ export function register(context: ServiceContext) {
 				}
 				else {
 
-					const _calls = await service.provideCallHierarchyOutgoingCalls(item, token);
+					const _calls = await service[1].provideCallHierarchyOutgoingCalls(item, token);
 
 					for (const call of _calls) {
 

@@ -18,7 +18,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service.provideDocumentSymbols?.(document, token);
+				return service[1].provideDocumentSymbols?.(document, token);
 			},
 			(data, map) => {
 				if (!map) {

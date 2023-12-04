@@ -1,13 +1,12 @@
 import {
 	LanguagePlugin,
 	Language,
-	Service,
+	ServicePlugin,
 	createLanguageService as _createLanguageService,
 	createFileProvider,
 	resolveCommonLanguageId,
 	type LanguageService,
 	type ServiceEnvironment,
-	type SharedModules,
 } from '@volar/language-service';
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
@@ -15,14 +14,12 @@ import { URI } from 'vscode-uri';
 import { createLanguage, createSys, LanguageHost } from '@volar/typescript';
 
 export function createSimpleWorkerService<T = {}>(
-	modules: SharedModules,
 	languages: LanguagePlugin[],
-	services: Service[],
+	services: ServicePlugin[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
 	extraApis: T = {} as any,
 ) {
 	return createWorkerService(
-		modules,
 		services,
 		() => {
 			const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
@@ -60,13 +57,12 @@ export function createSimpleWorkerService<T = {}>(
 export function createTypeScriptWorkerService<T = {}>(
 	ts: typeof import('typescript/lib/tsserverlibrary.js'),
 	languages: LanguagePlugin[],
-	services: Service[],
+	services: ServicePlugin[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
 	compilerOptions: ts.CompilerOptions,
 	extraApis: T = {} as any,
 ) {
 	return createWorkerService(
-		{ typescript: ts as any },
 		services,
 		env => {
 
@@ -136,8 +132,7 @@ export function createTypeScriptWorkerService<T = {}>(
 }
 
 function createWorkerService<T = {}>(
-	modules: SharedModules,
-	services: Service[],
+	services: ServicePlugin[],
 	getLanguage: (env: ServiceEnvironment) => Language,
 	extraApis: T = {} as any,
 ): LanguageService & T {
@@ -153,10 +148,9 @@ function createWorkerService<T = {}>(
 	};
 	const language = getLanguage(env);
 	const languageService = _createLanguageService(
-		modules,
+		language,
 		services,
 		env,
-		language,
 	);
 
 	class WorkerService {

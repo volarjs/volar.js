@@ -57,7 +57,7 @@ export function register(context: ServiceContext) {
 			const toPatchIndent: {
 				virtualFileUri: string;
 				isCodeBlock: boolean;
-				service: ReturnType<Service>;
+				service: Service;
 			}[] = [];
 
 			for (const file of embeddedFiles) {
@@ -102,7 +102,7 @@ export function register(context: ServiceContext) {
 				toPatchIndent.push({
 					virtualFileUri: file.id,
 					isCodeBlock,
-					service: embeddedCodeResult.service,
+					service: embeddedCodeResult.service[1],
 				});
 
 				for (const textEdit of embeddedCodeResult.edits) {
@@ -152,7 +152,7 @@ export function register(context: ServiceContext) {
 
 					const indentSensitiveLines = new Set<number>();
 
-					for (const service of item.service.provideFormattingIndentSensitiveLines ? [item.service] : context.services) {
+					for (const service of item.service.provideFormattingIndentSensitiveLines ? [item.service] : context.services.map(service => service[1])) {
 
 						if (token.isCancellationRequested)
 							break;
@@ -252,12 +252,12 @@ export function register(context: ServiceContext) {
 
 				try {
 					if (ch !== undefined && 'line' in formatRange && 'character' in formatRange) {
-						if (service.autoFormatTriggerCharacters?.includes(ch)) {
-							edits = await service.provideOnTypeFormattingEdits?.(document, formatRange, ch, options, token);
+						if (service[0].autoFormatTriggerCharacters?.includes(ch)) {
+							edits = await service[1].provideOnTypeFormattingEdits?.(document, formatRange, ch, options, token);
 						}
 					}
 					else if (ch === undefined && 'start' in formatRange && 'end' in formatRange) {
-						edits = await service.provideDocumentFormattingEdits?.(document, formatRange, options, token);
+						edits = await service[1].provideDocumentFormattingEdits?.(document, formatRange, options, token);
 					}
 				}
 				catch (err) {

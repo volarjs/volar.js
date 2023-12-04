@@ -1,6 +1,6 @@
 import { isCompletionEnabled, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { Service, ServiceContext } from '../types';
+import type { ServiceContext, Service } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformCompletionList } from '../utils/transform';
 import { visitEmbedded } from '../utils/featureWorkers';
@@ -18,7 +18,8 @@ export function register(context: ServiceContext) {
 		uri: string,
 		data: {
 			virtualDocumentUri: string | undefined,
-			service: ReturnType<Service>,
+			service: Service,
+			serviceIndex: number,
 			list: vscode.CompletionList,
 		}[],
 		mainCompletion: {
@@ -76,7 +77,7 @@ export function register(context: ServiceContext) {
 										textEdit: oldItem.textEdit,
 										data: oldItem.data,
 									},
-									serviceIndex: context.services.indexOf(cacheData.service),
+									serviceIndex: cacheData.serviceIndex,
 									virtualDocumentUri: map.virtualFileDocument.uri,
 								} satisfies ServiceCompletionData,
 							);
@@ -104,7 +105,7 @@ export function register(context: ServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							serviceIndex: context.services.indexOf(cacheData.service),
+							serviceIndex: cacheData.serviceIndex,
 							virtualDocumentUri: undefined,
 						} satisfies ServiceCompletionData;
 					});
@@ -128,7 +129,7 @@ export function register(context: ServiceContext) {
 
 				await visitEmbedded(context, rootVirtualFile, async (_, map) => {
 
-					const services = [...context.services].sort(sortServices);
+					const services = [...context.services].sort((a, b) => sortServices(a[1], b[1]));
 
 					let _data: CodeInformation | undefined;
 
@@ -142,25 +143,25 @@ export function register(context: ServiceContext) {
 							if (token.isCancellationRequested)
 								break;
 
-							if (!service.provideCompletionItems)
+							if (!service[1].provideCompletionItems)
 								continue;
 
-							if (service.isAdditionalCompletion && !isFirstMapping)
+							if (service[1].isAdditionalCompletion && !isFirstMapping)
 								continue;
 
-							if (completionContext?.triggerCharacter && !service.triggerCharacters?.includes(completionContext.triggerCharacter))
+							if (completionContext?.triggerCharacter && !service[0].triggerCharacters?.includes(completionContext.triggerCharacter))
 								continue;
 
-							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.isAdditional || service.isAdditionalCompletion;
+							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.isAdditional || service[1].isAdditionalCompletion;
 
 							if (cache!.mainCompletion && (!isAdditional || cache?.mainCompletion.documentUri !== map.virtualFileDocument.uri))
 								continue;
 
 							// avoid duplicate items with .vue and .vue.html
-							if (service.isAdditionalCompletion && cache?.data.some(data => data.service === service))
+							if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service))
 								continue;
 
-							const embeddedCompletionList = await service.provideCompletionItems(map.virtualFileDocument, mapped, completionContext!, token);
+							const embeddedCompletionList = await service[1].provideCompletionItems(map.virtualFileDocument, mapped, completionContext!, token);
 
 							if (!embeddedCompletionList || !embeddedCompletionList.items.length)
 								continue;
@@ -191,7 +192,8 @@ export function register(context: ServiceContext) {
 
 							cache!.data.push({
 								virtualDocumentUri: map.virtualFileDocument.uri,
-								service: service,
+								service: service[1],
+								serviceIndex: context.services.indexOf(service),
 								list: completionList,
 							});
 						}
@@ -206,35 +208,35 @@ export function register(context: ServiceContext) {
 			if (sourceFile) {
 
 				const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-				const services = [...context.services].sort(sortServices);
+				const services = [...context.services].sort((a, b) => sortServices(a[1], b[1]));
 
 				for (const service of services) {
 
 					if (token.isCancellationRequested)
 						break;
 
-					if (!service.provideCompletionItems)
+					if (!service[1].provideCompletionItems)
 						continue;
 
-					if (service.isAdditionalCompletion && !isFirstMapping)
+					if (service[1].isAdditionalCompletion && !isFirstMapping)
 						continue;
 
-					if (completionContext?.triggerCharacter && !service.triggerCharacters?.includes(completionContext.triggerCharacter))
+					if (completionContext?.triggerCharacter && !service[0].triggerCharacters?.includes(completionContext.triggerCharacter))
 						continue;
 
-					if (cache.mainCompletion && (!service.isAdditionalCompletion || cache.mainCompletion.documentUri !== document.uri))
+					if (cache.mainCompletion && (!service[1].isAdditionalCompletion || cache.mainCompletion.documentUri !== document.uri))
 						continue;
 
 					// avoid duplicate items with .vue and .vue.html
-					if (service.isAdditionalCompletion && cache?.data.some(data => data.service === service))
+					if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service))
 						continue;
 
-					const completionList = await service.provideCompletionItems(document, position, completionContext, token);
+					const completionList = await service[1].provideCompletionItems(document, position, completionContext, token);
 
 					if (!completionList || !completionList.items.length)
 						continue;
 
-					if (!service.isAdditionalCompletion) {
+					if (!service[1].isAdditionalCompletion) {
 						cache.mainCompletion = { documentUri: document.uri };
 					}
 
@@ -253,7 +255,8 @@ export function register(context: ServiceContext) {
 
 					cache.data.push({
 						virtualDocumentUri: undefined,
-						service: service,
+						service: service[1],
+						serviceIndex: context.services.indexOf(service),
 						list: completionList,
 					});
 				}
@@ -262,7 +265,7 @@ export function register(context: ServiceContext) {
 
 		return combineCompletionList(cache.data.map(cacheData => cacheData.list));
 
-		function sortServices(a: ReturnType<Service>, b: ReturnType<Service>) {
+		function sortServices(a: Service, b: Service) {
 			return (b.isAdditionalCompletion ? -1 : 1) - (a.isAdditionalCompletion ? -1 : 1);
 		}
 

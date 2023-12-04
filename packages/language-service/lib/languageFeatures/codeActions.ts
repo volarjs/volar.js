@@ -96,7 +96,7 @@ export function register(context: ServiceContext) {
 					};
 				});
 
-				const codeActions = await service.provideCodeActions?.(document, range, {
+				const codeActions = await service[1].provideCodeActions?.(document, range, {
 					...codeActionContext,
 					diagnostics,
 				}, token);
@@ -113,9 +113,9 @@ export function register(context: ServiceContext) {
 					} satisfies ServiceCodeActionData;
 				});
 
-				if (codeActions && service.transformCodeAction) {
+				if (codeActions && service[1].transformCodeAction) {
 					for (let i = 0; i < codeActions.length; i++) {
-						const transformed = service.transformCodeAction(codeActions[i]);
+						const transformed = service[1].transformCodeAction(codeActions[i]);
 						if (transformed) {
 							codeActions[i] = transformed;
 							transformedCodeActions.add(transformed);

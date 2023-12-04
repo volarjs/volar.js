@@ -1,7 +1,7 @@
 import { LanguageService, ServiceEnvironment, createFileProvider, createLanguageService } from '@volar/language-service';
-import type { SimpleServerPlugin, ServerProject } from '../types';
-import type { WorkspacesContext } from './simpleProjectProvider';
 import { getConfig } from '../config';
+import type { ServerProject, SimpleServerPlugin } from '../types';
+import type { WorkspacesContext } from './simpleProjectProvider';
 
 export async function createSimpleServerProject(
 	context: WorkspacesContext,
@@ -34,10 +34,9 @@ export async function createSimpleServerProject(
 				}
 			});
 			languageService = createLanguageService(
-				{ typescript: context.workspaces.ts },
+				{ files },
 				Object.values(config.services ?? {}),
 				serviceEnv,
-				{ files },
 			);
 		}
 		return languageService;

@@ -12,11 +12,11 @@ export function register(context: ServiceContext) {
 		const data: DocumentLinkData | undefined = item.data;
 		if (data) {
 			const service = context.services[data.serviceIndex];
-			if (!service.resolveDocumentLink)
+			if (!service[1].resolveDocumentLink)
 				return item;
 
 			Object.assign(item, data.original);
-			item = await service.resolveDocumentLink(item, token);
+			item = await service[1].resolveDocumentLink(item, token);
 
 			if (item.target) {
 				item.target = transformDocumentLinkTarget(item.target, context);

@@ -76,7 +76,7 @@ export function register(context: ServiceContext) {
 				if (token?.isCancellationRequested)
 					return;
 
-				return service.provideDocumentSemanticTokens?.(
+				return service[1].provideDocumentSemanticTokens?.(
 					document,
 					range,
 					legend,

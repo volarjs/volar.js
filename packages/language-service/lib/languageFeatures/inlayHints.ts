@@ -72,7 +72,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				const hints = await service.provideInlayHints?.(document, arg, token);
+				const hints = await service[1].provideInlayHints?.(document, arg, token);
 				hints?.forEach(link => {
 					link.data = {
 						uri,

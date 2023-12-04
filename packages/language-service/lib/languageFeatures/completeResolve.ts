@@ -14,7 +14,7 @@ export function register(context: ServiceContext) {
 
 			const service = context.services[data.serviceIndex];
 
-			if (!service.resolveCompletionItem)
+			if (!service[1].resolveCompletionItem)
 				return item;
 
 			item = Object.assign(item, data.original);
@@ -27,8 +27,8 @@ export function register(context: ServiceContext) {
 
 					for (const map of context.documents.getMaps(virtualFile)) {
 
-						item = await service.resolveCompletionItem(item, token);
-						item = service.transformCompletionItem?.(item) ?? transformCompletionItem(
+						item = await service[1].resolveCompletionItem(item, token);
+						item = service[1].transformCompletionItem?.(item) ?? transformCompletionItem(
 							item,
 							embeddedRange => map.toSourceRange(embeddedRange),
 							map.virtualFileDocument,
@@ -37,7 +37,7 @@ export function register(context: ServiceContext) {
 				}
 			}
 			else {
-				item = await service.resolveCompletionItem(item, token);
+				item = await service[1].resolveCompletionItem(item, token);
 			}
 		}
 

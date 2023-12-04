@@ -10,11 +10,11 @@ export function register(context: ServiceContext) {
 		const data: InlayHintData | undefined = item.data;
 		if (data) {
 			const service = context.services[data.serviceIndex];
-			if (!service.resolveInlayHint)
+			if (!service[1].resolveInlayHint)
 				return item;
 
 			Object.assign(item, data.original);
-			item = await service.resolveInlayHint(item, token);
+			item = await service[1].resolveInlayHint(item, token);
 		}
 
 		return item;
