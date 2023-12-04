@@ -18,7 +18,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return await service.provideFileReferences?.(document, token) ?? [];
+				return await service[1].provideFileReferences?.(document, token) ?? [];
 			},
 			(data) => data
 				.map(reference => {

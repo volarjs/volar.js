@@ -18,7 +18,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service.provideFoldingRanges?.(document, token);
+				return service[1].provideFoldingRanges?.(document, token);
 			},
 			(data, map) => {
 				if (!map) {

@@ -42,7 +42,7 @@ export function register(context: ServiceContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position, newName: string) {
 
-					if (!service.provideRenameEdits)
+					if (!service[1].provideRenameEdits)
 						return;
 
 					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
@@ -50,7 +50,7 @@ export function register(context: ServiceContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const workspaceEdit = await service.provideRenameEdits(document, position, newName, token);
+					const workspaceEdit = await service[1].provideRenameEdits(document, position, newName, token);
 
 					if (!workspaceEdit)
 						return;

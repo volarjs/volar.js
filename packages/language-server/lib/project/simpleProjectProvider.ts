@@ -1,13 +1,13 @@
 import type { ServiceEnvironment } from '@volar/language-service';
+import type { SnapshotDocument } from '@volar/snapshot-document';
 import type * as ts from 'typescript/lib/tsserverlibrary';
+import type { TextDocuments } from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import type { ServerContext } from '../server';
+import type { InitializationOptions, ServerProject, ServerProjectProvider, SimpleServerPlugin } from '../types';
 import { isFileInDir } from '../utils/isFileInDir';
 import type { WorkspaceFolderManager } from '../workspaceFolderManager';
-import type { InitializationOptions, ServerProject, ServerProjectProvider, SimpleServerPlugin } from '../types';
 import { createSimpleServerProject } from './simpleProject';
-import type { TextDocuments } from 'vscode-languageserver';
-import type { SnapshotDocument } from '@volar/snapshot-document';
 
 export interface WorkspacesContext extends ServerContext {
 	workspaces: {

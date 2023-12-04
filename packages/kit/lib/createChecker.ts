@@ -1,4 +1,4 @@
-import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, LanguagePlugin, NotificationHandler, Service, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId } from '@volar/language-service';
+import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, LanguagePlugin, NotificationHandler, ServicePluginFactory, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -8,7 +8,7 @@ import { createLanguage, LanguageHost } from '@volar/typescript';
 
 export function createTypeScriptChecker(
 	languages: LanguagePlugin[],
-	services: Service[],
+	services: ServicePluginFactory[],
 	tsconfig: string,
 	extraFileExtensions: ts.FileExtensionInfo[] = []
 ) {
@@ -35,7 +35,7 @@ export function createTypeScriptChecker(
 
 export function createTypeScriptInferredChecker(
 	languages: LanguagePlugin[],
-	services: Service[],
+	services: ServicePluginFactory[],
 	getScriptFileNames: () => string[],
 	compilerOptions = defaultCompilerOptions
 ) {
@@ -52,7 +52,7 @@ export function createTypeScriptInferredChecker(
 
 function createTypeScriptCheckerWorker(
 	languages: LanguagePlugin[],
-	services: Service[],
+	services: ServicePluginFactory[],
 	configFileName: string | undefined,
 	getLanguageHost: (env: ServiceEnvironment) => LanguageHost
 ) {
@@ -72,7 +72,7 @@ function createTypeScriptCheckerWorker(
 	};
 
 	const projectHost = getLanguageHost(env);
-	const project = createLanguage(
+	const language = createLanguage(
 		ts as any,
 		ts.sys,
 		languages,
@@ -80,10 +80,9 @@ function createTypeScriptCheckerWorker(
 		projectHost,
 	);
 	const service = createLanguageService(
-		{ typescript: ts as any },
+		language,
 		services,
 		env,
-		project,
 	);
 
 	return {

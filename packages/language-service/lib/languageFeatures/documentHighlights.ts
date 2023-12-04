@@ -31,7 +31,7 @@ export function register(context: ServiceContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position) {
 
-					if (!service.provideDocumentHighlights)
+					if (!service[1].provideDocumentHighlights)
 						return;
 
 					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
@@ -39,7 +39,7 @@ export function register(context: ServiceContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const references = await service.provideDocumentHighlights(document, position, token) ?? [];
+					const references = await service[1].provideDocumentHighlights(document, position, token) ?? [];
 
 					for (const reference of references) {
 

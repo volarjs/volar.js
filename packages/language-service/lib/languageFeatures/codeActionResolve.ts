@@ -13,13 +13,13 @@ export function register(context: ServiceContext) {
 		if (data) {
 
 			const service = context.services[data.serviceIndex];
-			if (!service.resolveCodeAction)
+			if (!service[1].resolveCodeAction)
 				return item;
 
 			Object.assign(item, data.original);
 
-			item = await service.resolveCodeAction(item, token);
-			item = service.transformCodeAction?.(item)
+			item = await service[1].resolveCodeAction(item, token);
+			item = service[1].transformCodeAction?.(item)
 				?? (
 					item.edit
 						? {

@@ -36,7 +36,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service.provideAutoInsertionEdit?.(document, arg.position, arg.autoInsertContext, token);
+				return service[1].provideAutoInsertionEdit?.(document, arg.position, arg.autoInsertContext, token);
 			},
 			(item, map) => {
 				if (!map || typeof item === 'string') {

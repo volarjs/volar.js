@@ -22,7 +22,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service.provideColorPresentations?.(document, color, range, token);
+				return service[1].provideColorPresentations?.(document, color, range, token);
 			},
 			(data, map) => {
 				if (!map) {

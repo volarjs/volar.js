@@ -17,7 +17,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service.provideRenameRange?.(document, position, token);
+				return service[1].provideRenameRange?.(document, position, token);
 			},
 			(item, map) => {
 				if (!map) {

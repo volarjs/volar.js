@@ -15,11 +15,11 @@ export function register(context: ServiceContext) {
 		if (data?.kind === 'normal') {
 
 			const service = context.services[data.serviceIndex];
-			if (!service.resolveCodeLens)
+			if (!service[1].resolveCodeLens)
 				return item;
 
 			Object.assign(item, data.original);
-			item = await service.resolveCodeLens(item, token);
+			item = await service[1].resolveCodeLens(item, token);
 
 			// item.range already transformed in codeLens request
 		}
@@ -30,16 +30,16 @@ export function register(context: ServiceContext) {
 
 			const service = context.services[data.serviceIndex];
 
-			if (service.resolveReferencesCodeLensLocations) {
+			if (service[1].resolveReferencesCodeLensLocations) {
 				const virtualFile = context.language.files.getVirtualFile(data.workerFileUri)[0];
 				const sourceFile = context.language.files.getSourceFile(data.workerFileUri);
 				if (virtualFile) {
 					const document = context.documents.get(virtualFile.id, virtualFile.languageId, virtualFile.snapshot);
-					references = await service.resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
+					references = await service[1].resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
 				}
 				else if (sourceFile && !sourceFile?.virtualFile) {
 					const document = context.documents.get(sourceFile.id, sourceFile.languageId, sourceFile.snapshot);
-					references = await service.resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
+					references = await service[1].resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
 				}
 			}
 

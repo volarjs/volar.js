@@ -23,7 +23,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested)
 					return;
 
-				return service.provideLinkedEditingRanges?.(document, position, token);
+				return service[1].provideLinkedEditingRanges?.(document, position, token);
 			},
 			(ranges, map) => {
 				if (!map) {

@@ -26,7 +26,7 @@ export function register(context: ServiceContext) {
 					return;
 				}
 
-				const links = await service.provideDocumentLinks?.(document, token);
+				const links = await service[1].provideDocumentLinks?.(document, token);
 
 				for (const link of links ?? []) {
 					link.data = {

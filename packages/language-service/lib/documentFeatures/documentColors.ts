@@ -17,7 +17,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service.provideDocumentColors?.(document, token);
+				return service[1].provideDocumentColors?.(document, token);
 			},
 			(data, map) => {
 				if (!map) {

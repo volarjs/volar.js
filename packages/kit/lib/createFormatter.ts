@@ -1,11 +1,11 @@
-import { FormattingOptions, LanguagePlugin, Service, createFileProvider, createLanguageService } from '@volar/language-service';
+import { FormattingOptions, LanguagePlugin, ServicePluginFactory, createFileProvider, createLanguageService } from '@volar/language-service';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
 
 export function createFormatter(
 	languages: LanguagePlugin[],
-	services: Service[]
+	services: ServicePluginFactory[]
 ) {
 
 	let fakeUri = 'file:///dummy.txt';
@@ -14,10 +14,9 @@ export function createFormatter(
 	const env = createServiceEnvironment(() => settings);
 	const files = createFileProvider(languages, false, () => { });
 	const service = createLanguageService(
-		{ typescript: ts as any },
+		{ files },
 		services,
 		env,
-		{ files },
 	);
 
 	return {

@@ -19,7 +19,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service.provideHover?.(document, position, token);
+				return service[1].provideHover?.(document, position, token);
 			},
 			(item, map) => {
 				if (!map || !item.range) {

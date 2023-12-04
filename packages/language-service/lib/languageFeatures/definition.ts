@@ -36,7 +36,7 @@ export function register(
 
 				async function withMirrors(document: TextDocument, position: vscode.Position, originDefinition: vscode.LocationLink | undefined) {
 
-					const api = service[apiName];
+					const api = service[1][apiName];
 					if (!api)
 						return;
 
