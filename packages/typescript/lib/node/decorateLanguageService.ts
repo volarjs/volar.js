@@ -39,27 +39,18 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		getTypeDefinitionAtPosition,
 		getEncodedSemanticClassifications,
 		getDocumentHighlights,
+		getApplicableRefactors,
+		getEditsForRefactor,
+		getRenameInfo,
+		getCodeFixesAtPosition,
 		organizeImports,
 	} = languageService;
 
 	languageService.organizeImports = (args, formatOptions, preferences) => {
 		const unresolved = organizeImports(args, formatOptions, preferences);
-		const resolved = unresolved.map(change => {
-			return {
-				...change,
-				textChanges: change.textChanges = change.textChanges
-					.map(edit => {
-						const span = transformSpan(change.fileName, edit.span, isCodeActionsEnabled)?.textSpan;
-						if (span) {
-							return {
-								...edit,
-								span,
-							};
-						}
-					})
-					.filter(notEmpty),
-			};
-		});
+		const resolved = unresolved
+			.map(changes => transformFileTextChanges(changes, isCodeActionsEnabled))
+			.filter(notEmpty);
 		return resolved;
 	};
 	languageService.getQuickInfoAtPosition = (fileName, position) => {
@@ -118,6 +109,109 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				};
 			});
 		return resolved;
+	};
+	languageService.getApplicableRefactors = (fileName, positionOrRange, preferences, triggerReason, kind, includeInteractiveActions) => {
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos)) {
+				if (isCodeActionsEnabled(mapping.data)) {
+					const por = typeof positionOrRange === 'number'
+						? generateOffset + (isTsPlugin ? sourceFile.snapshot.getLength() : 0)
+						: {
+							pos: generateOffset + (isTsPlugin ? sourceFile.snapshot.getLength() : 0),
+							end: generateOffset + positionOrRange.end - positionOrRange.pos + (isTsPlugin ? sourceFile.snapshot.getLength() : 0),
+						};
+					return getApplicableRefactors(fileName, por, preferences, triggerReason, kind, includeInteractiveActions);
+				}
+			}
+			return [];
+		}
+		else {
+			return getApplicableRefactors(fileName, positionOrRange, preferences, triggerReason, kind, includeInteractiveActions);
+		}
+	};
+	languageService.getEditsForRefactor = (fileName, formatOptions, positionOrRange, refactorName, actionName, preferences) => {
+		let edits: ts.RefactorEditInfo | undefined;
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos)) {
+				if (isCodeActionsEnabled(mapping.data)) {
+					const por = typeof positionOrRange === 'number'
+						? generateOffset + (isTsPlugin ? sourceFile.snapshot.getLength() : 0)
+						: {
+							pos: generateOffset + (isTsPlugin ? sourceFile.snapshot.getLength() : 0),
+							end: generateOffset + positionOrRange.end - positionOrRange.pos + (isTsPlugin ? sourceFile.snapshot.getLength() : 0),
+						};
+					edits = getEditsForRefactor(fileName, formatOptions, por, refactorName, actionName, preferences);
+				}
+			}
+		}
+		else {
+			edits = getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences);
+		}
+		if (edits) {
+			edits.edits = edits.edits
+				.map(edit => transformFileTextChanges(edit, isCodeActionsEnabled))
+				.filter(notEmpty);
+			return edits;
+		}
+	};
+	languageService.getRenameInfo = (fileName, position, options) => {
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (isRenameEnabled(mapping.data)) {
+					const info = getRenameInfo(fileName, generateOffset + (isTsPlugin ? sourceFile.snapshot.getLength() : 0), options);
+					if (info.canRename) {
+						const span = transformSpan(fileName, info.triggerSpan, isRenameEnabled);
+						if (span) {
+							info.triggerSpan = span.textSpan;
+							return info;
+						}
+					}
+					else {
+						return info;
+					}
+				}
+			}
+			return {
+				canRename: false,
+				localizedErrorMessage: 'Failed to get rename locations',
+			};
+		}
+		else {
+			return getRenameInfo(fileName, position, options);
+		}
+	};
+	languageService.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
+		let fixes: readonly ts.CodeFixAction[] = [];
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			for (const [generateStart, mapping] of map.getGeneratedOffsets(start)) {
+				if (isCodeActionsEnabled(mapping.data)) {
+					for (const [generateEnd, mapping] of map.getGeneratedOffsets(end)) {
+						if (isCodeActionsEnabled(mapping.data)) {
+							fixes = getCodeFixesAtPosition(
+								fileName,
+								generateStart + (isTsPlugin ? sourceFile.snapshot.getLength() : 0),
+								generateEnd + (isTsPlugin ? sourceFile.snapshot.getLength() : 0),
+								errorCodes,
+								formatOptions,
+								preferences,
+							);
+						}
+					}
+				}
+			}
+		}
+		else {
+			fixes = getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences);
+		}
+		fixes = fixes.map(fix => {
+			fix.changes = fix.changes.map(edit => transformFileTextChanges(edit, isCodeActionsEnabled)).filter(notEmpty);
+			return fix;
+		});
+		return fixes;
 	};
 	languageService.getEncodedSemanticClassifications = (fileName, span, format) => {
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
