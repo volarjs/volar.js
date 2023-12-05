@@ -17,7 +17,7 @@ export function register(context: ServiceContext) {
 			() => ({ position, newName }),
 			function* (map) {
 				let _data!: CodeInformation;
-				for (const mappedPosition of map.toGeneratedPositions(position, data => {
+				for (const mappedPosition of map.getGeneratedPositions(position, data => {
 					_data = data;
 					return isRenameEnabled(data);
 				})) {

@@ -23,7 +23,7 @@ export function register(context: ServiceContext) {
 				context,
 				uri,
 				() => position,
-				map => map.toGeneratedPositions(position, data => isCallHierarchyEnabled(data)),
+				map => map.getGeneratedPositions(position, data => isCallHierarchyEnabled(data)),
 				async (service, document, position, map) => {
 					if (token.isCancellationRequested) {
 						return;
@@ -179,7 +179,7 @@ export function register(context: ServiceContext) {
 
 		for (const map of context.documents.getMaps(virtualFile)) {
 
-			let range = map.toSourceRange(tsItem.range);
+			let range = map.getSourceRange(tsItem.range);
 			if (!range) {
 				// TODO: <script> range
 				range = {
@@ -188,11 +188,11 @@ export function register(context: ServiceContext) {
 				};
 			}
 
-			const selectionRange = map.toSourceRange(tsItem.selectionRange);
+			const selectionRange = map.getSourceRange(tsItem.selectionRange);
 			if (!selectionRange)
 				continue;
 
-			const vueRanges = tsRanges.map(tsRange => map.toSourceRange(tsRange)).filter(notEmpty);
+			const vueRanges = tsRanges.map(tsRange => map.getSourceRange(tsRange)).filter(notEmpty);
 			const vueItem: vscode.CallHierarchyItem = {
 				...tsItem,
 				name: tsItem.name === map.virtualFileDocument.uri.substring(map.virtualFileDocument.uri.lastIndexOf('/') + 1)

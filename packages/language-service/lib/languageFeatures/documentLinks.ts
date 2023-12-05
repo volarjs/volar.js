@@ -46,7 +46,7 @@ export function register(context: ServiceContext) {
 				}
 				return links
 					.map(link => {
-						const range = map.toSourceRange(link.range, isDocumentLinkEnabled);
+						const range = map.getSourceRange(link.range, isDocumentLinkEnabled);
 						if (!range) {
 							return;
 						}

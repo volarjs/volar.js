@@ -27,7 +27,7 @@ export function register(context: ServiceContext) {
 				return data
 					.map(symbol => transformDocumentSymbol(
 						symbol,
-						range => map.toSourceRange(range, isSymbolsEnabled),
+						range => map.getSourceRange(range, isSymbolsEnabled),
 					))
 					.filter(notEmpty);
 			},

@@ -16,7 +16,7 @@ export function register(context: ServiceContext) {
 			() => positions,
 			function* (map) {
 				const result = positions
-					.map(position => map.toGeneratedPosition(position, isSelectionRangesEnabled))
+					.map(position => map.getGeneratedPosition(position, isSelectionRangesEnabled))
 					.filter(notEmpty);
 				if (result.length) {
 					yield result;
@@ -35,7 +35,7 @@ export function register(context: ServiceContext) {
 				}
 				return transformSelectionRanges(
 					data,
-					range => map.toSourceRange(range, isSelectionRangesEnabled)
+					range => map.getSourceRange(range, isSelectionRangesEnabled)
 				);
 			},
 			results => {

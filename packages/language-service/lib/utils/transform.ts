@@ -278,7 +278,7 @@ export function transformWorkspaceEdit(
 
 						let _data!: CodeInformation;
 
-						const range = map.toSourceRange(tsEdit.range, data => {
+						const range = map.getSourceRange(tsEdit.range, data => {
 							_data = data;
 							return isRenameEnabled(data);
 						});
@@ -293,7 +293,7 @@ export function transformWorkspaceEdit(
 						}
 					}
 					else {
-						const range = map.toSourceRange(tsEdit.range);
+						const range = map.getSourceRange(tsEdit.range);
 						if (range) {
 							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
 							sourceResult.changes[map.sourceFileDocument.uri].push({ newText: tsEdit.newText, range });
@@ -330,7 +330,7 @@ export function transformWorkspaceEdit(
 						for (const tsEdit of tsDocEdit.edits) {
 							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
 								let _data!: CodeInformation;
-								const range = map.toSourceRange(tsEdit.range, data => {
+								const range = map.getSourceRange(tsEdit.range, data => {
 									_data = data;
 									// fix https://github.com/johnsoncodehk/volar/issues/1091
 									return isRenameEnabled(data);
@@ -344,7 +344,7 @@ export function transformWorkspaceEdit(
 								}
 							}
 							else {
-								const range = map.toSourceRange(tsEdit.range);
+								const range = map.getSourceRange(tsEdit.range);
 								if (range) {
 									sourceEdit.edits.push({
 										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,

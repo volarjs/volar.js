@@ -25,7 +25,7 @@ export function register(context: ServiceContext) {
 				}
 				return data
 					.map<vscode.ColorInformation | undefined>(color => {
-						const range = map.toSourceRange(color.range, isColorEnabled);
+						const range = map.getSourceRange(color.range, isColorEnabled);
 						if (range) {
 							return {
 								range,

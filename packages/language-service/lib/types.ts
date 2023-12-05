@@ -133,7 +133,7 @@ export interface ServicePluginInstance<P = any> {
 	transformCompletionItem?(item: vscode.CompletionItem): vscode.CompletionItem | undefined; // volar specific
 	transformCodeAction?(item: vscode.CodeAction): vscode.CodeAction | undefined; // volar specific
 	dispose?(): void;
-};
+}
 
 export interface DocumentDropEdit {
 	insertText: string;

@@ -79,7 +79,7 @@ export function register(context: ServiceContext) {
 
 				if (onTypeParams) {
 
-					const embeddedPosition = docMap.toGeneratedPosition(onTypeParams.position);
+					const embeddedPosition = docMap.getGeneratedPosition(onTypeParams.position);
 
 					if (embeddedPosition) {
 						embeddedCodeResult = await tryFormat(
@@ -106,7 +106,7 @@ export function register(context: ServiceContext) {
 				});
 
 				for (const textEdit of embeddedCodeResult.edits) {
-					const range = docMap.toSourceRange(textEdit.range);
+					const range = docMap.getSourceRange(textEdit.range);
 					if (range) {
 						edits.push({
 							newText: textEdit.newText,
@@ -161,7 +161,7 @@ export function register(context: ServiceContext) {
 							const lines = await service.provideFormattingIndentSensitiveLines(docMap.virtualFileDocument, token);
 							if (lines) {
 								for (const line of lines) {
-									const sourceLine = docMap.toSourcePosition({ line: line, character: 0 })?.line;
+									const sourceLine = docMap.getSourcePosition({ line: line, character: 0 })?.line;
 									if (sourceLine !== undefined) {
 										indentSensitiveLines.add(sourceLine);
 									}

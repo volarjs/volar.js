@@ -27,7 +27,7 @@ export function register(context: ServiceContext) {
 
 				if (virtualFile) {
 					for (const map of context.documents.getMaps(virtualFile)) {
-						const range = map.toSourceRange(loc.range);
+						const range = map.getSourceRange(loc.range);
 						if (range) {
 							return { uri: map.sourceFileDocument.uri, range };
 						}

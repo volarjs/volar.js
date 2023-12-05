@@ -89,7 +89,7 @@ export function register(context: ServiceContext) {
 				}
 				return tokens
 					.map<SemanticToken | undefined>(_token => {
-						const range = map.toSourceRange({
+						const range = map.getSourceRange({
 							start: { line: _token[0], character: _token[1] },
 							end: { line: _token[0], character: _token[1] + _token[2] },
 						}, isSemanticTokensEnabled);

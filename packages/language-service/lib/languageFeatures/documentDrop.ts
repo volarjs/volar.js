@@ -13,7 +13,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => position,
 			function* (map) {
-				for (const mappedPosition of map.toGeneratedPositions(position)) {
+				for (const mappedPosition of map.getGeneratedPositions(position)) {
 					yield mappedPosition;
 				}
 			},

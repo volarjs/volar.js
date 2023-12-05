@@ -51,7 +51,7 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 				if (range[5] !== undefined) {
 					const endLine = Number(range[5]) - 1;
 					const endCharacter = Number(range[7] ?? 1) - 1;
-					const sourceRange = map.toSourceRange({
+					const sourceRange = map.getSourceRange({
 						start: { line: startLine, character: startCharacter },
 						end: { line: endLine, character: endCharacter },
 					});
@@ -62,7 +62,7 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 					}
 				}
 				else {
-					const sourcePos = map.toSourcePosition({ line: startLine, character: startCharacter });
+					const sourcePos = map.getSourcePosition({ line: startLine, character: startCharacter });
 					if (sourcePos) {
 						target += '#L' + (sourcePos.line + 1) + ',' + (sourcePos.character + 1);
 						break;

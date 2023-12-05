@@ -20,7 +20,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, isSignatureHelpEnabled),
+			map => map.getGeneratedPositions(position, isSignatureHelpEnabled),
 			(service, document, position) => {
 				if (token.isCancellationRequested) {
 					return;

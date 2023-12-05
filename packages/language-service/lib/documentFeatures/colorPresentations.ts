@@ -14,7 +14,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => range,
 			function* (map) {
-				for (const mappedRange of map.toGeneratedRanges(range, isColorEnabled)) {
+				for (const mappedRange of map.getGeneratedRanges(range, isColorEnabled)) {
 					yield mappedRange;
 				}
 			},
@@ -31,14 +31,14 @@ export function register(context: ServiceContext) {
 				return data
 					.map(colorPresentation => {
 						if (colorPresentation.textEdit) {
-							const range = map.toSourceRange(colorPresentation.textEdit.range);
+							const range = map.getSourceRange(colorPresentation.textEdit.range);
 							if (!range)
 								return undefined;
 							colorPresentation.textEdit.range = range;
 						}
 						if (colorPresentation.additionalTextEdits) {
 							for (const textEdit of colorPresentation.additionalTextEdits) {
-								const range = map.toSourceRange(textEdit.range);
+								const range = map.getSourceRange(textEdit.range);
 								if (!range)
 									return undefined;
 								textEdit.range = range;

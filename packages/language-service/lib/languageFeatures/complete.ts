@@ -54,7 +54,7 @@ export function register(context: ServiceContext) {
 
 					for (const map of context.documents.getMaps(virtualFile)) {
 
-						for (const mapped of map.toGeneratedPositions(position, data => isCompletionEnabled(data))) {
+						for (const mapped of map.getGeneratedPositions(position, data => isCompletionEnabled(data))) {
 
 							if (!cacheData.service.provideCompletionItems)
 								continue;
@@ -68,7 +68,7 @@ export function register(context: ServiceContext) {
 
 							cacheData.list = transformCompletionList(
 								embeddedCompletionList,
-								range => map.toSourceRange(range),
+								range => map.getSourceRange(range),
 								map.virtualFileDocument,
 								(newItem, oldItem) => newItem.data = {
 									uri,
@@ -133,7 +133,7 @@ export function register(context: ServiceContext) {
 
 					let _data: CodeInformation | undefined;
 
-					for (const mapped of map.toGeneratedPositions(position, data => {
+					for (const mapped of map.getGeneratedPositions(position, data => {
 						_data = data;
 						return isCompletionEnabled(data);
 					})) {
@@ -176,7 +176,7 @@ export function register(context: ServiceContext) {
 
 							const completionList = transformCompletionList(
 								embeddedCompletionList,
-								range => map.toSourceRange(range, isCompletionEnabled),
+								range => map.getSourceRange(range, isCompletionEnabled),
 								map.virtualFileDocument,
 								(newItem, oldItem) => newItem.data = {
 									uri,

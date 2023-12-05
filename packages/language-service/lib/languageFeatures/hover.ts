@@ -14,7 +14,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, isHoverEnabled),
+			map => map.getGeneratedPositions(position, isHoverEnabled),
 			(service, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -25,7 +25,7 @@ export function register(context: ServiceContext) {
 				if (!map || !item.range) {
 					return item;
 				}
-				item.range = map.toSourceRange(item.range, isHoverEnabled);
+				item.range = map.getSourceRange(item.range, isHoverEnabled);
 				return item;
 			},
 			(hovers): vscode.Hover => ({

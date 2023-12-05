@@ -20,7 +20,7 @@ export function register(
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, isValidPosition),
+			map => map.getGeneratedPositions(position, isValidPosition),
 			async (service, document, position) => {
 
 				if (token.isCancellationRequested) {
@@ -103,13 +103,13 @@ export function register(
 
 					for (const targetSourceMap of context.documents.getMaps(targetVirtualFile)) {
 
-						const targetSelectionRange = targetSourceMap.toSourceRange(link.targetSelectionRange);
+						const targetSelectionRange = targetSourceMap.getSourceRange(link.targetSelectionRange);
 						if (!targetSelectionRange)
 							continue;
 
 						foundTargetSelectionRange = true;
 
-						let targetRange = targetSourceMap.toSourceRange(link.targetRange);
+						let targetRange = targetSourceMap.getSourceRange(link.targetRange);
 
 						link.targetUri = targetSourceMap.sourceFileDocument.uri;
 						// loose range mapping to for template slots, slot properties
@@ -149,7 +149,7 @@ function toSourcePositionPreferSurroundedPosition(map: SourceMapWithDocuments, m
 
 	let result: vscode.Range | undefined;
 
-	for (const range of map.toSourceRanges(mappedRange)) {
+	for (const range of map.getSourceRanges(mappedRange)) {
 		if (!result) {
 			result = range;
 		}

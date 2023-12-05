@@ -14,7 +14,7 @@ export function register(context: ServiceContext) {
 			uri,
 			() => position,
 			function* (map) {
-				for (const pos of map.toGeneratedPositions(position, isLinkedEditingEnabled)) {
+				for (const pos of map.getGeneratedPositions(position, isLinkedEditingEnabled)) {
 					yield pos;
 				}
 			},
@@ -32,7 +32,7 @@ export function register(context: ServiceContext) {
 				return {
 					wordPattern: ranges.wordPattern,
 					ranges: ranges.ranges
-						.map(range => map.toSourceRange(range, isLinkedEditingEnabled))
+						.map(range => map.getSourceRange(range, isLinkedEditingEnabled))
 						.filter(notEmpty),
 				};
 			},

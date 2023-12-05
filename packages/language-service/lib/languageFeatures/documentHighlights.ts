@@ -15,7 +15,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, isHighlightEnabled),
+			map => map.getGeneratedPositions(position, isHighlightEnabled),
 			async (service, document, position) => {
 
 				if (token.isCancellationRequested) {
@@ -75,7 +75,7 @@ export function register(context: ServiceContext) {
 					if (!map)
 						return highlight;
 
-					const range = map.toSourceRange(highlight.range, isHighlightEnabled);
+					const range = map.getSourceRange(highlight.range, isHighlightEnabled);
 					if (range) {
 						return {
 							...highlight,

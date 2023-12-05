@@ -305,7 +305,7 @@ export function register(context: ServiceContext) {
 			let _error: vscode.Diagnostic = { ...error };
 
 			if (map) {
-				const range = map.toSourceRange(error.range, filter);
+				const range = map.getSourceRange(error.range, filter);
 				if (!range) {
 					continue;
 				}
@@ -322,7 +322,7 @@ export function register(context: ServiceContext) {
 
 					if (virtualFile) {
 						for (const map of context.documents.getMaps(virtualFile)) {
-							const range = map.toSourceRange(info.location.range, filter);
+							const range = map.getSourceRange(info.location.range, filter);
 							if (range) {
 								relatedInfos.push({
 									location: {

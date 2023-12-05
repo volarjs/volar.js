@@ -72,7 +72,7 @@ export function register(context: ServiceContext) {
 				}
 				return data
 					.map(codeLens => {
-						const range = map.toSourceRange(codeLens.range, isCodeLensEnabled);
+						const range = map.getSourceRange(codeLens.range, isCodeLensEnabled);
 						if (range) {
 							return {
 								...codeLens,

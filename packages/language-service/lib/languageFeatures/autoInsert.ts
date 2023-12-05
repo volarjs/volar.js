@@ -13,8 +13,8 @@ export function register(context: ServiceContext) {
 			uri,
 			() => ({ position, lastChange }),
 			function* (map) {
-				for (const mappedPosition of map.toGeneratedPositions(position, isAutoInsertEnabled)) {
-					const range = map.toGeneratedRange(lastChange.range);
+				for (const mappedPosition of map.getGeneratedPositions(position, isAutoInsertEnabled)) {
+					const range = map.getGeneratedRange(lastChange.range);
 					if (range) {
 						yield {
 							position: mappedPosition,
@@ -36,7 +36,7 @@ export function register(context: ServiceContext) {
 				if (!map || typeof item === 'string') {
 					return item;
 				}
-				const range = map.toSourceRange(item.range, isAutoInsertEnabled);
+				const range = map.getSourceRange(item.range, isAutoInsertEnabled);
 				if (range) {
 					item.range = range;
 					return item;

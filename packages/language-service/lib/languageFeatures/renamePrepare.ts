@@ -12,7 +12,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, isRenameEnabled),
+			map => map.getGeneratedPositions(position, isRenameEnabled),
 			(service, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -24,7 +24,7 @@ export function register(context: ServiceContext) {
 					return item;
 				}
 				if ('start' in item && 'end' in item) {
-					return map.toSourceRange(item);
+					return map.getSourceRange(item);
 				}
 				return item;
 			},

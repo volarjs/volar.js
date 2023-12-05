@@ -15,34 +15,34 @@ export class SourceMapWithDocuments<Data = any> {
 
 	// Range APIs
 
-	public toSourceRange(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
-		for (const result of this.toSourceRanges(range, filter)) {
+	public getSourceRange(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
+		for (const result of this.getSourceRanges(range, filter)) {
 			return result;
 		}
 	}
 
-	public toGeneratedRange(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
-		for (const result of this.toGeneratedRanges(range, filter)) {
+	public getGeneratedRange(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
+		for (const result of this.getGeneratedRanges(range, filter)) {
 			return result;
 		}
 	}
 
-	public * toSourceRanges(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
-		for (const result of this.toRanges(range, filter, 'toSourcePositionsBase', 'matchSourcePosition')) {
+	public * getSourceRanges(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
+		for (const result of this.findRanges(range, filter, 'getSourcePositionsBase', 'matchSourcePosition')) {
 			yield result;
 		}
 	}
 
-	public * toGeneratedRanges(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
-		for (const result of this.toRanges(range, filter, 'toGeneratedPositionsBase', 'matchGeneratedPosition')) {
+	public * getGeneratedRanges(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
+		for (const result of this.findRanges(range, filter, 'getGeneratedPositionsBase', 'matchGeneratedPosition')) {
 			yield result;
 		}
 	}
 
-	protected * toRanges(
+	protected * findRanges(
 		range: vscode.Range,
 		filter: (data: Data) => boolean,
-		api: 'toSourcePositionsBase' | 'toGeneratedPositionsBase',
+		api: 'getSourcePositionsBase' | 'getGeneratedPositionsBase',
 		api2: 'matchSourcePosition' | 'matchGeneratedPosition'
 	) {
 		const failedLookUps: (readonly [vscode.Position, Mapping<Data>])[] = [];
@@ -64,43 +64,43 @@ export class SourceMapWithDocuments<Data = any> {
 
 	// Position APIs
 
-	public toSourcePosition(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
-		for (const mapped of this.toSourcePositions(position, filter)) {
+	public getSourcePosition(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+		for (const mapped of this.getSourcePositions(position, filter)) {
 			return mapped;
 		}
 	}
 
-	public toGeneratedPosition(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
-		for (const mapped of this.toGeneratedPositions(position, filter)) {
+	public getGeneratedPosition(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+		for (const mapped of this.getGeneratedPositions(position, filter)) {
 			return mapped;
 		}
 	}
 
-	public * toSourcePositions(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
-		for (const mapped of this.toSourcePositionsBase(position, filter)) {
+	public * getSourcePositions(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+		for (const mapped of this.getSourcePositionsBase(position, filter)) {
 			yield mapped[0];
 		}
 	}
 
-	public * toGeneratedPositions(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
-		for (const mapped of this.toGeneratedPositionsBase(position, filter)) {
+	public * getGeneratedPositions(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+		for (const mapped of this.getGeneratedPositionsBase(position, filter)) {
 			yield mapped[0];
 		}
 	}
 
-	public * toSourcePositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
-		for (const mapped of this.toPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, 'generatedOffsets', 'sourceOffsets')) {
+	public * getSourcePositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+		for (const mapped of this.findPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, 'generatedOffsets', 'sourceOffsets')) {
 			yield mapped;
 		}
 	}
 
-	public * toGeneratedPositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
-		for (const mapped of this.toPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, 'sourceOffsets', 'generatedOffsets')) {
+	public * getGeneratedPositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+		for (const mapped of this.findPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, 'sourceOffsets', 'generatedOffsets')) {
 			yield mapped;
 		}
 	}
 
-	protected * toPositions(
+	protected * findPositions(
 		position: vscode.Position,
 		filter: (data: Data) => boolean,
 		fromDoc: TextDocument,

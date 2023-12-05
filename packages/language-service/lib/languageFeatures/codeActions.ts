@@ -40,7 +40,7 @@ export function register(context: ServiceContext) {
 					const _codeActionContext: vscode.CodeActionContext = {
 						diagnostics: transformLocations(
 							codeActionContext.diagnostics,
-							range => map.toGeneratedRange(range),
+							range => map.getGeneratedRange(range),
 						),
 						only: codeActionContext.only,
 					};

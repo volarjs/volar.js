@@ -26,7 +26,7 @@ export function register(context: ServiceContext) {
 				}
 				return transformFoldingRanges(
 					data,
-					range => map.toSourceRange(range, isFoldingRangesEnabled)
+					range => map.getSourceRange(range, isFoldingRangesEnabled)
 				);
 			},
 			arr => arr.flat(),

@@ -14,7 +14,7 @@ export function register(context: ServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.toGeneratedPositions(position, isReferencesEnabled),
+			map => map.getGeneratedPositions(position, isReferencesEnabled),
 			async (service, document, position) => {
 
 				if (token.isCancellationRequested)
@@ -77,7 +77,7 @@ export function register(context: ServiceContext) {
 
 					if (virtualFile) {
 						for (const map of context.documents.getMaps(virtualFile)) {
-							const range = map.toSourceRange(reference.range, isReferencesEnabled);
+							const range = map.getSourceRange(reference.range, isReferencesEnabled);
 							if (range) {
 								results.push({
 									uri: map.sourceFileDocument.uri,
