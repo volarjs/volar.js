@@ -619,7 +619,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 				if (!linkedCodeMap)
 					continue;
 
-				for (const linkedCodeOffset of linkedCodeMap.toLinkedOffsets(ref[1] - (isTsPlugin ? sourceFile.snapshot.getLength() : 0))) {
+				for (const linkedCodeOffset of linkedCodeMap.getLinkedOffsets(ref[1] - (isTsPlugin ? sourceFile.snapshot.getLength() : 0))) {
 					process(ref[0], linkedCodeOffset + (isTsPlugin ? sourceFile.snapshot.getLength() : 0));
 				}
 			}

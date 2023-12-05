@@ -1,7 +1,7 @@
 import { SourceMap } from '@volar/source-map';
 
 export class LinkedCodeMap extends SourceMap {
-	*toLinkedOffsets(start: number) {
+	*getLinkedOffsets(start: number) {
 		for (const mapped of this.getGeneratedOffsets(start)) {
 			yield mapped[0];
 		}

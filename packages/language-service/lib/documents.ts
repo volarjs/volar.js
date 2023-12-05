@@ -139,7 +139,7 @@ export class LinkedCodeMapWithDocument extends SourceMapWithDocuments {
 		super(document, document, linkedMap);
 	}
 	*getLinkedCodePositions(posotion: vscode.Position) {
-		for (const linkedPosition of this.linkedMap.toLinkedOffsets(this.document.offsetAt(posotion))) {
+		for (const linkedPosition of this.linkedMap.getLinkedOffsets(this.document.offsetAt(posotion))) {
 			yield this.document.positionAt(linkedPosition);
 		}
 	}
