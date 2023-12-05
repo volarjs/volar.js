@@ -154,6 +154,12 @@ importers:
       '@volar/typescript':
         specifier: 1.11.1
         version: link:../typescript
+      monaco-languageserver-types:
+        specifier: ^0.3.1
+        version: 0.3.1
+      monaco-types:
+        specifier: ^0.1.0
+        version: 0.1.0
       vscode-uri:
         specifier: ^3.0.8
         version: 3.0.8
@@ -3512,6 +3518,18 @@ packages:
   /monaco-editor-core@0.44.0:
     resolution: {integrity: sha512-gPhXfbi0RCnIRXMUzkvjRc8tUiD56lkuw7uRr2dUv00owYthFRlyot2R0ECFuA5F3YKei4OlFjALDahxIC/6Jg==}
     dev: true
+
+  /monaco-languageserver-types@0.3.1:
+    resolution: {integrity: sha512-piidSsgV+NTConaTgVCw1Cgi0TAoslRbCHcw4Aeyx/fg9umSsB2vvlqhJ2iFhqb68KdtnhmoQ5m7hGTtttmV6Q==}
+    dependencies:
+      monaco-types: 0.1.0
+      vscode-languageserver-protocol: 3.17.5
+      vscode-uri: 3.0.8
+    dev: false
+
+  /monaco-types@0.1.0:
+    resolution: {integrity: sha512-aWK7SN9hAqNYi0WosPoMjenMeXJjwCxDibOqWffyQ/qXdzB/86xshGQobRferfmNz7BSNQ8GB0MD0oby9/5fTQ==}
+    dev: false
 
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
