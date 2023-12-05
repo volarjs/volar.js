@@ -18,6 +18,10 @@
 	"engines": {
 		"vscode": "^1.82.0"
 	},
+	"activationEvents": [
+		"onView:volar-servers",
+		"onView:volar-virtual-files"
+	],
 	"main": "./dist/extension.js",
 	"contributes": {
 		"viewsContainers": {
@@ -51,6 +55,7 @@
 		"prepack": "npm run build -- --minify",
 		"pack": "npm run prepack && vsce package",
 		"release": "npm run prepack && vsce publish",
+		"release:next": "npm run prepack && vsce publish --pre-release",
 		"size": "npm run prepack -- --metafile && esbuild-visualizer --metadata ./meta.json && open ./stats.html"
 	},
 	"devDependencies": {
