@@ -1,7 +1,7 @@
 import type { LanguageService } from '@volar/language-service';
 import type { editor, IDisposable, MonacoEditor, Uri } from 'monaco-types';
 import * as transform from 'monaco-languageserver-types';
-import { markers } from './utils/markers.js';
+import { markers } from './markers.js';
 
 interface IInternalEditorModel extends editor.IModel {
 	onDidChangeAttached(listener: () => void): IDisposable;

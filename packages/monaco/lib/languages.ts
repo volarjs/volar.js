@@ -6,7 +6,7 @@ import type {
 	Uri,
 } from 'monaco-types';
 import type { LanguageService } from '@volar/language-service';
-import { createLanguageFeaturesProvider } from './utils/provider.js';
+import { createLanguageFeaturesProvider } from './provider.js';
 
 export async function registerProviders(
 	worker: editor.MonacoWebWorker<LanguageService>,
