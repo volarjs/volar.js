@@ -1,4 +1,4 @@
-import type * as vscode from 'vscode-languageserver-protocol';
+import type * as volar from '@volar/language-service';
 import type { editor } from 'monaco-types';
 
-export const markers = new WeakMap<editor.IMarkerData, vscode.Diagnostic>();
+export const markers = new WeakMap<editor.IMarkerData, volar.Diagnostic>();
