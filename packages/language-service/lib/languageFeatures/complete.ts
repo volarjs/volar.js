@@ -158,7 +158,7 @@ export function register(context: ServiceContext) {
 								continue;
 
 							// avoid duplicate items with .vue and .vue.html
-							if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service))
+							if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service[1]))
 								continue;
 
 							const embeddedCompletionList = await service[1].provideCompletionItems(map.virtualFileDocument, mapped, completionContext!, token);
@@ -228,7 +228,7 @@ export function register(context: ServiceContext) {
 						continue;
 
 					// avoid duplicate items with .vue and .vue.html
-					if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service))
+					if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service[1]))
 						continue;
 
 					const completionList = await service[1].provideCompletionItems(document, position, completionContext, token);

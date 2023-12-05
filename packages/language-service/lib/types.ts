@@ -57,10 +57,13 @@ interface Command<T> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface ServiceContext<Provide = any> {
+export interface ServiceContext {
 	env: ServiceEnvironment;
 	language: Language;
-	inject<K extends keyof Provide>(key: K, ...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
+	inject<Provide, K extends keyof Provide = keyof Provide>(
+		key: K,
+		...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never
+	): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
 	commands: {
 		showReferences: Command<(uri: string, position: vscode.Position, locations: vscode.Location[]) => vscode.Command | undefined>;
 		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;
@@ -74,17 +77,16 @@ export type Result<T> = T | Thenable<T>;
 export type NullableResult<T> = Result<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
-type ServiceProvide<P> = P extends undefined ? { provide?: undefined; } : { provide: P; };
-
-export interface ServicePlugin<P = any> {
+export interface ServicePlugin {
 	triggerCharacters?: string[];
 	signatureHelpTriggerCharacters?: string[];
 	signatureHelpRetriggerCharacters?: string[];
 	autoFormatTriggerCharacters?: string[];
-	create(context: ServiceContext): ServicePluginInstance<P>;
+	create(context: ServiceContext): ServicePluginInstance;
 }
 
-export type ServicePluginInstance<P = any> = ServiceProvide<P> & {
+export interface ServicePluginInstance<P = any> {
+	provide?: P;
 	isAdditionalCompletion?: boolean; // volar specific
 	provideHover?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableResult<vscode.Hover>,
 	provideDocumentSymbols?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.DocumentSymbol[]>;

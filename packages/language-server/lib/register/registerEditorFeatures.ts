@@ -141,7 +141,7 @@ export function registerEditorFeatures(
 
 		for (const project of await projectProvider.getProjects()) {
 			const languageService = project.getLanguageService();
-			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject('typescript/languageService');
+			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
 			if (program && languageService.context.language.typescript) {
 				const { configFileName, languageServiceHost } = languageService.context.language.typescript;
