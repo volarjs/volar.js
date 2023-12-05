@@ -14,7 +14,7 @@ export function createTypeScriptChecker(
 ) {
 	const tsconfigPath = asPosix(tsconfig);
 	return createTypeScriptCheckerWorker(languages, services, tsconfigPath, env => {
-		return createTypeScriptProjectHost(
+		return createTypeScriptLanguageHost(
 			env,
 			() => {
 				const parsed = ts.parseJsonSourceFileConfigFileContent(
@@ -40,7 +40,7 @@ export function createTypeScriptInferredChecker(
 	compilerOptions = defaultCompilerOptions
 ) {
 	return createTypeScriptCheckerWorker(languages, services, undefined, env => {
-		return createTypeScriptProjectHost(
+		return createTypeScriptLanguageHost(
 			env,
 			() => ({
 				options: compilerOptions,
@@ -71,13 +71,13 @@ function createTypeScriptCheckerWorker(
 		};
 	};
 
-	const projectHost = getLanguageHost(env);
+	const languageHost = getLanguageHost(env);
 	const language = createLanguage(
 		ts as any,
 		ts.sys,
 		languages,
 		configFileName,
-		projectHost,
+		languageHost,
 	);
 	const service = createLanguageService(
 		language,
@@ -90,7 +90,7 @@ function createTypeScriptCheckerWorker(
 		check,
 		fixErrors,
 		printErrors,
-		projectHost,
+		languageHost,
 
 		// settings
 		get settings() {
@@ -198,7 +198,7 @@ function createTypeScriptCheckerWorker(
 	}
 }
 
-function createTypeScriptProjectHost(
+function createTypeScriptLanguageHost(
 	env: ServiceEnvironment,
 	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>
 ) {

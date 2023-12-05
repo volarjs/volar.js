@@ -1,6 +1,6 @@
 import { isCompletionEnabled, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext, Service } from '../types';
+import type { ServiceContext, ServicePluginInstance } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformCompletionList } from '../utils/transform';
 import { visitEmbedded } from '../utils/featureWorkers';
@@ -18,7 +18,7 @@ export function register(context: ServiceContext) {
 		uri: string,
 		data: {
 			virtualDocumentUri: string | undefined,
-			service: Service,
+			service: ServicePluginInstance,
 			serviceIndex: number,
 			list: vscode.CompletionList,
 		}[],
@@ -265,7 +265,7 @@ export function register(context: ServiceContext) {
 
 		return combineCompletionList(cache.data.map(cacheData => cacheData.list));
 
-		function sortServices(a: Service, b: Service) {
+		function sortServices(a: ServicePluginInstance, b: ServicePluginInstance) {
 			return (b.isAdditionalCompletion ? -1 : 1) - (a.isAdditionalCompletion ? -1 : 1);
 		}
 
