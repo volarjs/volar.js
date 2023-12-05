@@ -96,7 +96,7 @@ export function parseServerCommand(command: vscode.Command) {
 	return command;
 }
 
-export const supportLabsVersion = '1.9.0' as const;
+export const supportLabsVersion = 2.0 as const;
 
 export interface ExportsInfoForLabs {
 	volarLabs: {
