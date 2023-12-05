@@ -1,6 +1,6 @@
 {
 	"name": "@volar/monaco",
-	"version": "1.11.1",
+	"version": "2.0.0-alpha.0",
 	"license": "MIT",
 	"type": "module",
 	"files": [
@@ -13,8 +13,8 @@
 		"directory": "packages/monaco"
 	},
 	"dependencies": {
-		"@volar/language-service": "1.11.1",
-		"@volar/typescript": "1.11.1",
+		"@volar/language-service": "2.0.0-alpha.0",
+		"@volar/typescript": "2.0.0-alpha.0",
 		"monaco-languageserver-types": "^0.3.1",
 		"monaco-types": "^0.1.0",
 		"vscode-uri": "^3.0.8"

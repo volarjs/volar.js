@@ -33,13 +33,13 @@ importers:
         specifier: ^1.82.0
         version: 1.84.2
       '@volar/language-server':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../../packages/vscode
       esbuild:
         specifier: latest
@@ -57,16 +57,16 @@ importers:
   packages/cdn:
     dependencies:
       '@volar/language-service':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../language-service
 
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../language-service
       '@volar/typescript':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -88,22 +88,22 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../language-core
       '@volar/language-service':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../language-service
       '@volar/snapshot-document':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../snapshot-document
       '@volar/typescript':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../typescript
       '@vscode/l10n':
         specifier: ^0.0.16
@@ -134,7 +134,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../language-core
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -149,10 +149,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../language-service
       '@volar/typescript':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.3.1
@@ -186,7 +186,7 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../language-core
       path-browserify:
         specifier: ^1.0.1
@@ -196,13 +196,13 @@ importers:
         specifier: latest
         version: 1.0.2
       '@volar/language-service':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 1.11.1
+        specifier: 2.0.0-alpha.0
         version: link:../language-server
       path-browserify:
         specifier: ^1.0.1

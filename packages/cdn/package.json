@@ -1,6 +1,6 @@
 {
 	"name": "@volar/cdn",
-	"version": "1.11.1",
+	"version": "2.0.0-alpha.0",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
@@ -12,6 +12,6 @@
 		"directory": "packages/cdn"
 	},
 	"dependencies": {
-		"@volar/language-service": "1.11.1"
+		"@volar/language-service": "2.0.0-alpha.0"
 	}
 }
