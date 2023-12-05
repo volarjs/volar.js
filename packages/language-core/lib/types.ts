@@ -69,7 +69,24 @@ export interface Language {
 	typescript?: {
 		configFileName: string | undefined;
 		sys: ts.System;
+		projectHost: TypeScriptProjectHost;
 		languageServiceHost: ts.LanguageServiceHost;
 		synchronizeFileSystem?(): Promise<number>;
 	};
+}
+
+export interface TypeScriptProjectHost extends Pick<
+	ts.LanguageServiceHost,
+	'getLocalizedDiagnosticMessages'
+	| 'getCompilationSettings'
+	| 'getProjectReferences'
+	| 'getCurrentDirectory'
+	| 'getScriptFileNames'
+	| 'getProjectVersion'
+	| 'getScriptSnapshot'
+	| 'getCancellationToken'
+> {
+	getFileId(fileName: string): string;
+	getFileName(fileId: string): string;
+	getLanguageId(id: string): string;
 }

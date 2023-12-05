@@ -1,10 +1,10 @@
-import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, LanguagePlugin, NotificationHandler, ServicePlugin, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId } from '@volar/language-service';
+import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, LanguagePlugin, NotificationHandler, ServicePlugin, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId, TypeScriptProjectHost } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
 import { asPosix, defaultCompilerOptions, fileNameToUri, uriToFileName } from './utils';
-import { createLanguage, LanguageHost } from '@volar/typescript';
+import { createLanguage } from '@volar/typescript';
 
 export function createTypeScriptChecker(
 	languages: LanguagePlugin[],
@@ -54,7 +54,7 @@ function createTypeScriptCheckerWorker(
 	languages: LanguagePlugin[],
 	services: ServicePlugin[],
 	configFileName: string | undefined,
-	getLanguageHost: (env: ServiceEnvironment) => LanguageHost
+	getProjectHost: (env: ServiceEnvironment) => TypeScriptProjectHost
 ) {
 
 	let settings = {};
@@ -71,9 +71,9 @@ function createTypeScriptCheckerWorker(
 		};
 	};
 
-	const languageHost = getLanguageHost(env);
+	const languageHost = getProjectHost(env);
 	const language = createLanguage(
-		ts as any,
+		ts,
 		ts.sys,
 		languages,
 		configFileName,
@@ -208,7 +208,7 @@ function createTypeScriptLanguageHost(
 	let projectVersion = 0;
 	let shouldCheckRootFiles = false;
 
-	const host: LanguageHost = {
+	const host: TypeScriptProjectHost = {
 		getCurrentDirectory: () => {
 			return env.uriToFileName(env.workspaceFolder.uri.toString());
 		},

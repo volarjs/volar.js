@@ -7,11 +7,12 @@ import {
 	resolveCommonLanguageId,
 	type LanguageService,
 	type ServiceEnvironment,
+	TypeScriptProjectHost,
 } from '@volar/language-service';
 import type * as monaco from 'monaco-editor-core';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { URI } from 'vscode-uri';
-import { createLanguage, createSys, LanguageHost } from '@volar/typescript';
+import { createLanguage, createSys } from '@volar/typescript';
 
 export function createSimpleWorkerService<T = {}>(
 	languages: LanguagePlugin[],
@@ -70,7 +71,7 @@ export function createTypeScriptWorkerService<T = {}>(
 
 			const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
-			const host: LanguageHost = {
+			const host: TypeScriptProjectHost = {
 				getCurrentDirectory() {
 					return env.uriToFileName(env.workspaceFolder.uri.toString(true));
 				},
