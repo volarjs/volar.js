@@ -1,6 +1,6 @@
 import type { LanguageService } from '@volar/language-service';
 import type { editor, IDisposable, MonacoEditor, Uri } from 'monaco-types';
-import * as transform from 'monaco-languageserver-types';
+import { fromPosition, fromRange, toMarkerData, toTextEdit } from 'monaco-languageserver-types';
 import { markers } from './markers.js';
 
 interface IInternalEditorModel extends editor.IModel {
@@ -100,7 +100,7 @@ export function activateMarkers(
 			return;
 		}
 		const result = diagnostics.map(error => {
-			const marker = transform.toMarkerData(error);
+			const marker = toMarkerData(error);
 			markers.set(marker, error);
 			return marker;
 		});
@@ -187,12 +187,12 @@ export function activateAutoInsertion(
 				const languageService = await worker.withSyncedResources(getSyncUris());
 				const edit = await languageService.doAutoInsert(
 					model.uri.toString(),
-					transform.fromPosition({
+					fromPosition({
 						lineNumber: lastChange.range.startLineNumber,
 						column: lastChange.range.startColumn + lastChange.text.length,
 					}),
 					{
-						range: transform.fromRange(lastChange.range),
+						range: fromRange(lastChange.range),
 						text: lastChange.text,
 					},
 				);
@@ -205,7 +205,7 @@ export function activateAutoInsertion(
 						(codeEditor?.getContribution('snippetController2') as any)?.insert(edit);
 					}
 					else {
-						model.pushEditOperations([], [transform.toTextEdit(edit)], () => []);
+						model.pushEditOperations([], [toTextEdit(edit)], () => []);
 					}
 				}
 			})();

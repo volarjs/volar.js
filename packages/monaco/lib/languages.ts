@@ -1,11 +1,11 @@
+import type { LanguageService } from '@volar/language-service';
 import type {
-	editor,
-	languages,
 	IDisposable,
 	MonacoEditor,
 	Uri,
+	editor,
+	languages,
 } from 'monaco-types';
-import type { LanguageService } from '@volar/language-service';
 import { createLanguageFeaturesProvider } from './provider.js';
 
 export async function registerProviders(
