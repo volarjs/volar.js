@@ -3,7 +3,7 @@ import * as vscode from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { startLanguageServerBase } from './lib/server';
-import { InitializationOptions, SimpleServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
+import type { InitializationOptions, SimpleServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
 import { FileSystem, FileType } from '@volar/language-service';
 import { createGetCancellationToken } from './lib/cancellationToken';
 import { WorkspacesContext, createSimpleProjectProvider } from './lib/project/simpleProjectProvider';

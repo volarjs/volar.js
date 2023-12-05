@@ -1,97 +1,78 @@
-import { Mapping, Stack } from '@volar/source-map';
+import type { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import type { createFileProvider } from '../lib/createFileProvider';
+import type { FileProvider } from './fileProvider';
 
-export interface FileCapabilities {
-	diagnostic?: boolean;
-	foldingRange?: boolean;
-	documentFormatting?: boolean;
-	documentSymbol?: boolean;
-	codeAction?: boolean;
-	inlayHint?: boolean;
+export interface SourceFile extends BaseFile {
+	virtualFile?: [VirtualFile, LanguagePlugin];
 }
 
-export interface FileRangeCapabilities {
-	hover?: boolean;
-	references?: boolean;
-	definition?: boolean;
-	rename?: boolean | {
-		normalize?(newName: string): string;
-		apply?(newName: string): string;
+export interface VirtualFile extends BaseFile {
+	mappings: Mapping<CodeInformation>[];
+	embeddedFiles: VirtualFile[];
+	typescript?: {
+		scriptKind: ts.ScriptKind;
 	};
-	completion?: boolean | {
-		additional?: boolean;
-		autoImportOnly?: boolean;
+	codegenStacks?: Stack[];
+	linkedNavigationMappings?: Mapping[];
+}
+
+export interface CodeInformation {
+	/** virtual code is expected to support verification */
+	verification: boolean | {
+		shouldReport?(): boolean;
 	};
-	diagnostic?: boolean | {
-		shouldReport(): boolean;
+	/** virtual code is expected to support assisted completion */
+	completion: boolean | {
+		isAdditional?: boolean;
+		onlyImport?: boolean;
 	};
-	semanticTokens?: boolean;
-
-	// TODO
-	referencesCodeLens?: boolean;
-	displayWithLink?: boolean;
-}
-
-export interface MirrorBehaviorCapabilities {
-	references?: boolean;
-	definition?: boolean;
-	rename?: boolean;
-}
-
-export namespace FileCapabilities {
-	export const full: FileCapabilities = {
-		diagnostic: true,
-		foldingRange: true,
-		documentFormatting: true,
-		documentSymbol: true,
-		codeAction: true,
-		inlayHint: true,
+	/** virtual code is expected correctly reflect semantic of the source code */
+	semantic: boolean | {
+		shouldHighlight?(): boolean;
 	};
-}
-
-export namespace FileRangeCapabilities {
-	export const full: FileRangeCapabilities = {
-		hover: true,
-		references: true,
-		definition: true,
-		rename: true,
-		completion: true,
-		diagnostic: true,
-		semanticTokens: true,
+	/** virtual code is expected correctly reflect reference relationships of the source code */
+	navigation: boolean | {
+		shouldRename?(): boolean;
+		resolveRenameNewName?(newName: string): string;
+		resolveRenameEditText?(newText: string): string;
 	};
+	/** virtual code is expected correctly reflect the structural information of the source code */
+	structure: boolean;
+	/** virtual code is expected correctly reflect the format information of the source code */
+	format: boolean;
 }
 
-export namespace MirrorBehaviorCapabilities {
-	export const full: MirrorBehaviorCapabilities = {
-		references: true,
-		definition: true,
-		rename: true,
-	};
+export interface BaseFile {
+	/**
+	 * for language-server, kit, monaco, this is uri
+	 * 
+	 * for typescript server plugin, tsc, this is fileName
+	 */
+	id: string;
+	languageId: string;
+	snapshot: ts.IScriptSnapshot;
 }
 
-export enum FileKind {
-	TextFile = 0,
-	TypeScriptHostFile = 1,
-}
-
-export interface VirtualFile {
-	fileName: string,
-	snapshot: ts.IScriptSnapshot,
-	languageId: string,
-	kind: FileKind,
-	capabilities: FileCapabilities,
-	mappings: Mapping<FileRangeCapabilities>[],
-	codegenStacks: Stack[],
-	mirrorBehaviorMappings?: Mapping<[MirrorBehaviorCapabilities, MirrorBehaviorCapabilities]>[],
-	embeddedFiles: VirtualFile[],
-}
-
-export interface Language<T extends VirtualFile = VirtualFile> {
-	createVirtualFile(fileName: string, snapshot: ts.IScriptSnapshot, languageId: string): T | undefined;
+export interface LanguagePlugin<T extends VirtualFile = VirtualFile> {
+	createVirtualFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
-	deleteVirtualFile?(virtualFile: T): void;
-	resolveTypeScriptProjectHost?<T extends TypeScriptProjectHost>(host: T): T;
+	disposeVirtualFile?(virtualFile: T): void;
+	typescript?: {
+		resolveSourceFileName(tsFileName: string): string | undefined;
+		resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string | undefined;
+		resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
+	};
+}
+
+export interface Language {
+	files: FileProvider;
+	typescript?: {
+		configFileName: string | undefined;
+		sys: ts.System;
+		projectHost: TypeScriptProjectHost;
+		languageServiceHost: ts.LanguageServiceHost;
+		synchronizeFileSystem?(): Promise<number>;
+	};
 }
 
 export interface TypeScriptProjectHost extends Pick<
@@ -105,15 +86,7 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getScriptSnapshot'
 	| 'getCancellationToken'
 > {
-	configFileName: string | undefined;
-	resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string;
-}
-
-export type FileProvider = ReturnType<typeof createFileProvider>;
-
-export interface Project {
-	fileProvider: FileProvider;
-	typescript?: {
-		projectHost: TypeScriptProjectHost;
-	};
+	getFileId(fileName: string): string;
+	getFileName(fileId: string): string;
+	getLanguageId(id: string): string;
 }

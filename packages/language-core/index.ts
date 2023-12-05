@@ -1,7 +1,9 @@
-export * from './lib/createFileProvider';
-export * from './lib/createTypeScriptProject';
-export * from './lib/mirrorMap';
+export * from './lib/editorFeatures';
+export * from './lib/fileProvider';
+export * from './lib/linkedCodeMap';
 export * from './lib/types';
+export * from './lib/utils';
+export * from '@volar/source-map';
 
 export function resolveCommonLanguageId(fileNameOrUri: string) {
 	const ext = fileNameOrUri.split('.').pop()!;

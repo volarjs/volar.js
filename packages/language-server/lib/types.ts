@@ -1,10 +1,10 @@
-import type { Console, FileSystem, Language, LanguageService, Service, ServiceEnvironment, SharedModules, TypeScriptProjectHost } from '@volar/language-service';
+import type { Console, FileSystem, LanguagePlugin, LanguageService, ServicePlugin, ServiceEnvironment } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
 
 export interface Config {
-	languages?: { [id: string]: Language; };
-	services?: { [id: string]: Service; };
+	languages?: { [id: string]: LanguagePlugin; };
+	services?: { [id: string]: ServicePlugin; };
 }
 
 export interface Timer {
@@ -27,12 +27,17 @@ export interface ServerRuntimeEnvironment {
 
 export type TypeScriptServerPlugin = SimpleServerPlugin<{
 	extraFileExtensions?: ts.FileExtensionInfo[];
-}, TypeScriptProjectHost>;
+}, {
+	configFileName: string | undefined;
+	parsedCommandLine: ts.ParsedCommandLine;
+}>;
 
 export interface SimpleServerPlugin<T = {}, K = undefined> {
 	(ctx: {
 		initializationOptions: InitializationOptions;
-		modules: SharedModules;
+		modules: {
+			typescript?: typeof import('typescript/lib/tsserverlibrary');
+		};
 		env: ServerRuntimeEnvironment;
 	}): {
 		watchFileExtensions?: string[];

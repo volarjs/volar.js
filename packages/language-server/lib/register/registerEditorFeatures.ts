@@ -1,9 +1,19 @@
-import { FileKind, FileRangeCapabilities, VirtualFile, forEachEmbeddedFile } from '@volar/language-core';
-import { Mapping, Stack } from '@volar/source-map';
+import type { CodeInformation, Mapping, Stack, VirtualFile } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
-import * as vscode from 'vscode-languageserver';
-import { GetMatchTsConfigRequest, GetVirtualFileRequest, GetVirtualFilesRequest, LoadedTSFilesMetaRequest, ReloadProjectNotification, WriteVirtualFilesNotification } from '../../protocol';
-import { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
+import type * as vscode from 'vscode-languageserver';
+import {
+	GetMatchTsConfigRequest,
+	GetVirtualFileRequest,
+	GetVirtualFilesRequest,
+	LoadedTSFilesMetaRequest,
+	ReloadProjectNotification,
+	WriteVirtualFilesNotification,
+	DocumentDropRequest,
+	DocumentDrop_DataTransferItemAsStringRequest,
+	DocumentDrop_DataTransferItemFileDataRequest
+} from '../../protocol';
+import type { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
+import type { DataTransferItem } from '@volar/language-service';
 
 export function registerEditorFeatures(
 	connection: vscode.Connection,
@@ -14,43 +24,74 @@ export function registerEditorFeatures(
 	const scriptVersions = new Map<string, number>();
 	const scriptVersionSnapshots = new WeakSet<ts.IScriptSnapshot>();
 
+	connection.onRequest(DocumentDropRequest.type, async ({ textDocument, position, dataTransfer }, token) => {
+
+		const dataTransferMap = new Map<string, DataTransferItem>();
+
+		for (const item of dataTransfer) {
+			dataTransferMap.set(item.mimeType, {
+				value: item.value,
+				asString() {
+					return connection.sendRequest(DocumentDrop_DataTransferItemAsStringRequest.type, { mimeType: item.mimeType });
+				},
+				asFile() {
+					if (item.file) {
+						return {
+							name: item.file.name,
+							uri: item.file.uri,
+							data() {
+								return connection.sendRequest(DocumentDrop_DataTransferItemFileDataRequest.type, { mimeType: item.mimeType });
+							},
+						};
+					}
+				},
+			});
+		}
+
+		const languageService = (await projectProvider.getProject(textDocument.uri)).getLanguageService();
+		return languageService.doDocumentDrop(textDocument.uri, position, dataTransferMap, token);
+	});
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
-		const projectHost = languageService.context.project.typescript?.projectHost;
-		if (projectHost?.configFileName) {
-			return { uri: env.fileNameToUri(projectHost.configFileName) };
+		const configFileName = languageService.context.language.typescript?.configFileName;
+		if (configFileName) {
+			return { uri: env.fileNameToUri(configFileName) };
 		}
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const languageService = (await projectProvider.getProject(document.uri)).getLanguageService();
-		const file = languageService.context.project.fileProvider.getSource(env.uriToFileName(document.uri))?.root;
-		return file ? prune(file) : undefined;
+		const virtualFile = languageService.context.language.files.getSourceFile(document.uri)?.virtualFile;
+		return virtualFile ? prune(virtualFile[0]) : undefined;
 
 		function prune(file: VirtualFile): VirtualFile {
-			let version = scriptVersions.get(file.fileName) ?? 0;
+			let version = scriptVersions.get(file.id) ?? 0;
 			if (!scriptVersionSnapshots.has(file.snapshot)) {
 				version++;
-				scriptVersions.set(file.fileName, version);
+				scriptVersions.set(file.id, version);
 				scriptVersionSnapshots.add(file.snapshot);
 			}
 			return {
-				fileName: file.fileName,
-				kind: file.kind,
-				capabilities: file.capabilities,
+				id: file.id,
+				languageId: file.languageId,
+				typescript: file.typescript,
 				embeddedFiles: file.embeddedFiles.map(prune),
+				// @ts-expect-error
 				version,
-			} as any;
+			};
 		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
 		const languageService = (await projectProvider.getProject(params.sourceFileUri)).getLanguageService();
 		let content: string = '';
 		let codegenStacks: Stack[] = [];
-		const mappings: Record<string, Mapping<FileRangeCapabilities>[]> = {};
-		for (const [file, map] of languageService.context.documents.getMapsByVirtualFileName(params.virtualFileName)) {
-			content = map.virtualFileDocument.getText();
-			codegenStacks = file.codegenStacks;
-			mappings[map.sourceFileDocument.uri] = map.map.mappings;
+		const mappings: Record<string, Mapping<CodeInformation>[]> = {};
+		const [virtualFile] = languageService.context.language.files.getVirtualFile(env.fileNameToUri(params.virtualFileName));
+		if (virtualFile) {
+			for (const map of languageService.context.documents.getMaps(virtualFile)) {
+				content = map.virtualFileDocument.getText();
+				codegenStacks = virtualFile.codegenStacks ?? [];
+				mappings[map.sourceFileDocument.uri] = map.map.mappings;
+			}
 		}
 		return {
 			content,
@@ -67,29 +108,25 @@ export function registerEditorFeatures(
 		const fs: typeof import('fs') = await import(fsModeName);
 		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
 
-		// global virtual files
-		if (languageService.context.project.typescript?.projectHost) {
+		if (languageService.context.language.typescript?.languageServiceHost) {
 
-			const rootPath = languageService.context.project.typescript?.projectHost.getCurrentDirectory();
+			const rootUri = languageService.context.env.workspaceFolder.uri.toString();
+			const { languageServiceHost } = languageService.context.language.typescript;
 
-			for (const [fileName] of languageService.context.project.fileProvider.getAllSources()) {
-				const source = languageService.context.project.fileProvider.getSource(fileName);
-				if (source?.root) {
-					forEachEmbeddedFile(source.root, virtualFile => {
-						if (virtualFile.kind === FileKind.TypeScriptHostFile) {
-							if (virtualFile.fileName.startsWith(rootPath)) {
-								const snapshot = virtualFile.snapshot;
-								fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
-							}
-						}
-					});
-				}
-			}
-			for (const fileName of languageService.context.project.typescript?.projectHost.getScriptFileNames()) {
+			for (const fileName of languageServiceHost.getScriptFileNames()) {
 				if (!fs.existsSync(fileName)) {
-					const snapshot = languageService.context.project.typescript?.projectHost.getScriptSnapshot(fileName);
+					// global virtual files
+					const snapshot = languageServiceHost.getScriptSnapshot(fileName);
 					if (snapshot) {
 						fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
+					}
+				}
+				else {
+					const uri = languageService.context.env.fileNameToUri(fileName);
+					const [virtualFile] = languageService.context.language.files.getVirtualFile(uri);
+					if (virtualFile?.typescript && virtualFile.id.startsWith(rootUri)) {
+						const { snapshot } = virtualFile;
+						fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
 					}
 				}
 			}
@@ -104,11 +141,12 @@ export function registerEditorFeatures(
 
 		for (const project of await projectProvider.getProjects()) {
 			const languageService = project.getLanguageService();
-			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject('typescript/languageService');
+			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
-			if (program && languageService.context.project.typescript?.projectHost) {
-				const projectName = languageService.context.project.typescript?.projectHost.configFileName ?? (languageService.context.project.typescript?.projectHost.getCurrentDirectory() + '(inferred)');
-				const sourceFiles = program?.getSourceFiles() ?? [];
+			if (program && languageService.context.language.typescript) {
+				const { configFileName, languageServiceHost } = languageService.context.language.typescript;
+				const projectName = configFileName ?? (languageServiceHost.getCurrentDirectory() + '(inferred)');
+				const sourceFiles = program.getSourceFiles() ?? [];
 				for (const sourceFile of sourceFiles) {
 					if (!sourceFilesData.has(sourceFile)) {
 						let nodes = 0;

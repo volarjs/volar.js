@@ -2,7 +2,7 @@ import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
 import { ServerRuntimeEnvironment, InitializationOptions, ServerMode, ServerProjectProvider } from '../types';
-import { createDocumentManager } from '../documentManager';
+import type { SnapshotDocument } from '@volar/snapshot-document';
 
 export function registerLanguageFeatures(
 	connection: vscode.Connection,
@@ -11,7 +11,7 @@ export function registerLanguageFeatures(
 	initOptions: InitializationOptions,
 	semanticTokensLegend: vscode.SemanticTokensLegend,
 	runtime: ServerRuntimeEnvironment,
-	documents: ReturnType<typeof createDocumentManager>,
+	documents: vscode.TextDocuments<SnapshotDocument>,
 ) {
 
 	let lastCompleteUri: string;
@@ -72,7 +72,7 @@ export function registerLanguageFeatures(
 		return worker(params.textDocument.uri, token, async service => {
 			lastCompleteUri = params.textDocument.uri;
 			lastCompleteLs = service;
-			const document = documents.data.uriGet(params.textDocument.uri)?.getDocument();
+			const document = documents.get(params.textDocument.uri);
 			const list = await service.doComplete(
 				params.textDocument.uri,
 				params.position,
@@ -317,7 +317,7 @@ export function registerLanguageFeatures(
 	});
 	connection.onRequest(AutoInsertRequest.type, async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
-			return service.doAutoInsert(params.textDocument.uri, params.position, params.options, token);
+			return service.doAutoInsert(params.textDocument.uri, params.position, params.lastChange, token);
 		});
 	});
 

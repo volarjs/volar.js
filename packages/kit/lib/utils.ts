@@ -1,4 +1,4 @@
-import * as path from 'typesafe-path/posix';
+import type * as path from 'typesafe-path/posix';
 import { URI } from 'vscode-uri';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as _fs from 'fs';

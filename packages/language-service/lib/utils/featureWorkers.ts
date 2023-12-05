@@ -1,29 +1,27 @@
-import { FileRangeCapabilities, VirtualFile } from '@volar/language-core';
+import type { CodeInformation, VirtualFile } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import { SourceMapWithDocuments } from '../documents';
-import { Service, ServiceContext } from '../types';
-import { visitEmbedded } from './definePlugin';
+import type { SourceMapWithDocuments } from '../documents';
+import type { ServiceContext, ServicePluginInstance, ServicePlugin } from '../types';
 
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
 	uri: string,
-	isValidSourceMap: (file: VirtualFile, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>) => boolean,
-	worker: (service: ReturnType<Service>, document: TextDocument) => T,
-	transform: (result: NonNullable<Awaited<T>>, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined) => Awaited<T> | undefined,
-	combineResult?: (results: NonNullable<Awaited<T>>[]) => NonNullable<Awaited<T>>,
+	valid: (map: SourceMapWithDocuments<CodeInformation>) => boolean,
+	worker: (service: [ServicePlugin, ServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
+	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
+	combineResult?: (results: T[]) => T,
 ) {
 	return languageFeatureWorker(
 		context,
 		uri,
-		undefined,
-		(_, map, file) => {
-			if (isValidSourceMap(file, map)) {
-				return [undefined];
+		() => void 0,
+		function* (map) {
+			if (valid(map)) {
+				yield;
 			}
-			return [];
 		},
 		worker,
-		transform,
+		transformResult,
 		combineResult,
 	);
 }
@@ -31,36 +29,35 @@ export async function documentFeatureWorker<T>(
 export async function languageFeatureWorker<T, K>(
 	context: ServiceContext,
 	uri: string,
-	arg: K,
-	transformArg: (arg: K, sourceMap: SourceMapWithDocuments<FileRangeCapabilities>, file: VirtualFile) => Generator<K> | K[],
-	worker: (service: ReturnType<Service>, document: TextDocument, arg: K, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined, file: VirtualFile | undefined) => T,
-	transform: (result: NonNullable<Awaited<T>>, sourceMap: SourceMapWithDocuments<FileRangeCapabilities> | undefined) => Awaited<T> | undefined,
-	combineResult?: (results: NonNullable<Awaited<T>>[]) => NonNullable<Awaited<T>>,
-	reportProgress?: (result: NonNullable<Awaited<T>>) => void,
+	getReadDocParams: () => K,
+	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformation>) => Generator<K>,
+	worker: (service: [ServicePlugin, ServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
+	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
+	combineResult?: (results: T[]) => T,
 ) {
 
-	const document = context.getTextDocument(uri);
-	const virtualFile = context.documents.getSourceByUri(uri)?.root;
+	const sourceFile = context.language.files.getSourceFile(uri);
+	if (!sourceFile)
+		return;
 
-	let results: NonNullable<Awaited<T>>[] = [];
+	let results: T[] = [];
 
-	if (virtualFile) {
+	if (sourceFile.virtualFile) {
 
-		await visitEmbedded(context.documents, virtualFile, async (file, map) => {
+		await visitEmbedded(context, sourceFile.virtualFile[0], async (_file, map) => {
 
-			for (const mappedArg of transformArg(arg, map, file)) {
+			for (const mappedArg of eachVirtualDocParams(map)) {
 
 				for (const [serviceId, service] of Object.entries(context.services)) {
 
 					const embeddedResult = await safeCall(
-						() => worker(service, map.virtualFileDocument, mappedArg, map, file),
+						() => worker(service, map.virtualFileDocument, mappedArg, map),
 						'service ' + serviceId + ' crashed on ' + map.virtualFileDocument.uri,
 					);
 					if (!embeddedResult)
 						continue;
 
-					const result = transform(embeddedResult!, map);
-
+					const result = transformResult(embeddedResult!, map);
 					if (!result)
 						continue;
 
@@ -68,30 +65,27 @@ export async function languageFeatureWorker<T, K>(
 
 					if (!combineResult)
 						return false;
-
-					const isEmptyArray = Array.isArray(result) && result.length === 0;
-
-					if (reportProgress && !isEmptyArray) {
-						reportProgress(combineResult(results));
-					}
 				}
 			}
 
 			return true;
 		});
 	}
-	else if (document) {
+	else {
+
+		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+		const params = getReadDocParams();
 
 		for (const [serviceId, service] of Object.entries(context.services)) {
 
 			const embeddedResult = await safeCall(
-				() => worker(service, document, arg, undefined, undefined),
+				() => worker(service, document, params, undefined),
 				'service ' + serviceId + ' crashed on ' + uri,
 			);
 			if (!embeddedResult)
 				continue;
 
-			const result = transform(embeddedResult, undefined);
+			const result = transformResult(embeddedResult, undefined);
 			if (!result)
 				continue;
 
@@ -99,12 +93,6 @@ export async function languageFeatureWorker<T, K>(
 
 			if (!combineResult)
 				break;
-
-			const isEmptyArray = Array.isArray(result) && result.length === 0;
-
-			if (reportProgress && !isEmptyArray) {
-				reportProgress(combineResult(results));
-			}
 		}
 	}
 
@@ -116,11 +104,36 @@ export async function languageFeatureWorker<T, K>(
 	}
 }
 
-export async function safeCall<T>(cb: () => Promise<T> | T, errorMsg?: string) {
+export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) {
 	try {
 		return await cb();
 	}
 	catch (err) {
 		console.warn(errorMsg, err);
 	}
+}
+
+export async function visitEmbedded(
+	context: ServiceContext,
+	current: VirtualFile,
+	cb: (file: VirtualFile, sourceMap: SourceMapWithDocuments<CodeInformation>) => Promise<boolean>,
+	rootFile = current,
+) {
+
+	for (const embedded of current.embeddedFiles) {
+		if (!await visitEmbedded(context, embedded, cb, rootFile)) {
+			return false;
+		}
+	}
+
+	for (const map of context.documents.getMaps(current)) {
+		const sourceFile = context.language.files.getSourceFile(map.sourceFileDocument.uri);
+		if (sourceFile?.virtualFile?.[0] === rootFile) {
+			if (!await cb(current, map)) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }

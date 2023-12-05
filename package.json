@@ -10,12 +10,10 @@
 		"test": "vitest run"
 	},
 	"devDependencies": {
+		"@lerna-lite/cli": "latest",
+		"@lerna-lite/publish": "latest",
 		"typescript": "latest",
 		"vite": "latest",
 		"vitest": "latest"
-	},
-	"optionalDependencies": {
-		"@lerna-lite/cli": "latest",
-		"@lerna-lite/publish": "latest"
 	}
 }

@@ -47,11 +47,9 @@ export function activate(
 
 				const params = {
 					...client.code2ProtocolConverter.asTextDocumentPositionParams(document, position),
-					options: {
-						lastChange: {
-							...lastChange,
-							range: client.code2ProtocolConverter.asRange(lastChange.range),
-						},
+					lastChange: {
+						text: lastChange.text,
+						range: client.code2ProtocolConverter.asRange(lastChange.range),
 					},
 				};
 

@@ -192,12 +192,8 @@ export function activateAutoInsertion(
 						column: lastChange.range.startColumn + lastChange.text.length,
 					}),
 					{
-						lastChange: {
-							range: fromRange(lastChange.range),
-							rangeLength: lastChange.rangeLength,
-							text: lastChange.text,
-							rangeOffset: lastChange.rangeOffset,
-						},
+						range: fromRange(lastChange.range),
+						text: lastChange.text,
 					},
 				);
 				if (model.getVersionId() !== version) {

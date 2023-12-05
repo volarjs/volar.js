@@ -1,46 +1,38 @@
 import {
+	LanguagePlugin,
 	Language,
-	Project,
-	Service,
+	ServicePlugin,
 	createLanguageService as _createLanguageService,
 	createFileProvider,
-	createTypeScriptProject,
 	resolveCommonLanguageId,
 	type LanguageService,
 	type ServiceEnvironment,
-	type SharedModules,
-	type TypeScriptProjectHost
+	TypeScriptProjectHost,
 } from '@volar/language-service';
 import type * as monaco from 'monaco-types';
 import type * as ts from 'typescript/lib/tsserverlibrary.js';
 import { URI } from 'vscode-uri';
+import { createLanguage, createSys } from '@volar/typescript';
 
 export function createSimpleWorkerService<T = {}>(
-	modules: SharedModules,
-	languages: Language[],
-	services: Service[],
+	languages: LanguagePlugin[],
+	services: ServicePlugin[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
 	extraApis: T = {} as any,
 ) {
 	return createWorkerService(
-		modules,
 		services,
-		env => {
-
-			const lastSnapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
-			const fileProvider = createFileProvider(
+		() => {
+			const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
+			const files = createFileProvider(
 				languages,
-				() => {
-					if (!shouldUpdate())
-						return;
-
-					const remain = new Set<monaco.worker.IMirrorModel>(lastSnapshots.keys());
-
-					for (const model of getMirrorModels()) {
-						remain.delete(model);
-						const cache = lastSnapshots.get(model);
+				false,
+				(uri) => {
+					const model = getMirrorModels().find(model => model.uri.toString(true) === uri);
+					if (model) {
+						const cache = snapshots.get(model);
 						if (cache && cache[0] === model.version) {
-							continue;
+							return;
 						}
 						const text = model.getValue();
 						const snapshot: ts.IScriptSnapshot = {
@@ -48,42 +40,30 @@ export function createSimpleWorkerService<T = {}>(
 							getLength: () => text.length,
 							getChangeRange: () => undefined,
 						};
-						const fileName = env.uriToFileName(model.uri.toString(true));
-						lastSnapshots.set(model, [model.version, snapshot]);
-						fileProvider.updateSource(fileName, snapshot, resolveCommonLanguageId(fileName));
+						snapshots.set(model, [model.version, snapshot]);
+						files.updateSourceFile(uri, snapshot, resolveCommonLanguageId(uri));
+					}
+					else {
+						files.deleteSourceFile(uri);
 					}
 				}
 			);
 
-			return { fileProvider };
-
-			function shouldUpdate() {
-
-				const models = getMirrorModels();
-
-				if (lastSnapshots.size === models.length) {
-					if (models.every(model => lastSnapshots.get(model)?.[0] === model.version)) {
-						return false;
-					}
-				}
-
-				return true;
-			}
+			return { files };
 		},
 		extraApis
 	);
 }
 
 export function createTypeScriptWorkerService<T = {}>(
-	modules: SharedModules,
-	languages: Language[],
-	services: Service[],
+	ts: typeof import('typescript/lib/tsserverlibrary.js'),
+	languages: LanguagePlugin[],
+	services: ServicePlugin[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
 	compilerOptions: ts.CompilerOptions,
 	extraApis: T = {} as any,
 ) {
 	return createWorkerService(
-		modules,
 		services,
 		env => {
 
@@ -91,8 +71,7 @@ export function createTypeScriptWorkerService<T = {}>(
 
 			const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
-			const projectHost: TypeScriptProjectHost = {
-				configFileName: undefined,
+			const host: TypeScriptProjectHost = {
 				getCurrentDirectory() {
 					return env.uriToFileName(env.workspaceFolder.uri.toString(true));
 				},
@@ -134,22 +113,28 @@ export function createTypeScriptWorkerService<T = {}>(
 				getCompilationSettings() {
 					return compilerOptions;
 				},
+				getFileName: env.uriToFileName,
+				getFileId: env.fileNameToUri,
+				getLanguageId: id => resolveCommonLanguageId(id),
 			};
-
-			return createTypeScriptProject(
-				projectHost,
+			const sys = createSys(ts, env, host.getCurrentDirectory());
+			const language = createLanguage(
+				ts,
+				sys,
 				languages,
-				resolveCommonLanguageId
+				undefined,
+				host,
 			);
+
+			return language;
 		},
 		extraApis
 	);
 }
 
 function createWorkerService<T = {}>(
-	modules: SharedModules,
-	services: Service[],
-	getProject: (env: ServiceEnvironment) => Project,
+	services: ServicePlugin[],
+	getLanguage: (env: ServiceEnvironment) => Language,
 	extraApis: T = {} as any,
 ): LanguageService & T {
 
@@ -162,17 +147,16 @@ function createWorkerService<T = {}>(
 		fileNameToUri: fileName => URI.file(fileName).toString(),
 		console,
 	};
-	const project = getProject(env);
+	const language = getLanguage(env);
 	const languageService = _createLanguageService(
-		modules,
+		language,
 		services,
 		env,
-		project,
 	);
 
 	class WorkerService {
 		env = env;
-		project = project;
+		project = language;
 	};
 
 	for (const api in languageService) {

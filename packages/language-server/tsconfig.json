@@ -1,9 +1,10 @@
 {
 	"extends": "../../tsconfig.base.json",
-	"include": [ "**/*" ],
+	"include": [ "*", "lib/**/*" ],
 	"exclude": [ "tests" ],
 	"references": [
 		{ "path": "../language-service/tsconfig.json" },
+		{ "path": "../snapshot-document/tsconfig.json" },
 		{ "path": "../typescript/tsconfig.json" },
 	],
 }

@@ -1,4 +1,4 @@
-import { ServiceEnvironment } from "@volar/language-service";
+import type { ServiceEnvironment } from "@volar/language-service";
 
 export type WorkspaceFolderManager = ReturnType<typeof createWorkspaceFolderManager>;
 

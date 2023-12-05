@@ -59,7 +59,7 @@ self.onmessage = () => {
 +				},
 			},
 +			typescript: {
-+				module: ts as any,
++				module: ts,
 +				compilerOptions: {
 +					// ...tsconfig options
 +				},

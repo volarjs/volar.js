@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 export { activate as activateAutoInsertion } from './lib/features/autoInsertion';
+export { activate as activateDocumentDropEdit } from './lib/features/documentDropEdits';
 export { activate as activateWriteVirtualFiles } from './lib/features/writeVirtualFiles';
 export { activate as activateFindFileReferences } from './lib/features/fileReferences';
 export { activate as activateReloadProjects } from './lib/features/reloadProject';
@@ -95,7 +96,7 @@ export function parseServerCommand(command: vscode.Command) {
 	return command;
 }
 
-export const supportLabsVersion = '1.9.0' as const;
+export const supportLabsVersion = 2.0 as const;
 
 export interface ExportsInfoForLabs {
 	volarLabs: {

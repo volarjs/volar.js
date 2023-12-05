@@ -1,10 +1,10 @@
+import type { GetVirtualFilesRequest } from '@volar/language-server';
+import type * as lsp from '@volar/vscode';
 import type { ExportsInfoForLabs } from '@volar/vscode';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as lsp from '@volar/vscode';
 import { getIconPath, useVolarExtensions } from '../common/shared';
-import type { GetVirtualFilesRequest } from '@volar/language-server';
-import { sourceUriToVirtualUris, virtualUriToSourceUri, activate as activateShowVirtualFiles } from '../common/showVirtualFile';
+import { activate as activateShowVirtualFiles, sourceUriToVirtualUris, virtualUriToSourceUri } from '../common/showVirtualFile';
 
 interface LanguageClientItem {
 	extension: vscode.Extension<ExportsInfoForLabs>;
@@ -53,25 +53,26 @@ export function activate(context: vscode.ExtensionContext) {
 		getTreeItem(element) {
 			if ('virtualFile' in element) {
 
-				const uri = vscode.Uri.file(element.virtualFile.fileName).with({ scheme: element.client.name.replace(/ /g, '_').toLowerCase() });
+				const uri = vscode.Uri.parse(element.virtualFile.id).with({ scheme: element.client.name.replace(/ /g, '_').toLowerCase() });
 				virtualUriToSourceUri.set(uri.toString(), element.sourceDocumentUri);
 
 				const virtualFileUris = sourceUriToVirtualUris.get(element.sourceDocumentUri) ?? new Set<string>();
 				virtualFileUris.add(uri.toString());
 				sourceUriToVirtualUris.set(element.sourceDocumentUri, virtualFileUris);
 
-				let label = path.basename(element.virtualFile.fileName);
-				const version = (element.virtualFile as any).version;
-				label += ` (kind: ${element.virtualFile.kind}, version: ${version})`;
+				let label = path.basename(element.virtualFile.id);
+				// @ts-expect-error
+				const version = element.virtualFile.version;
+				label += ` (ts: ${!!element.virtualFile.typescript}, version: ${version})`;
 				return {
 					iconPath: element.client.clientOptions.initializationOptions.codegenStack ? new vscode.ThemeIcon('debug-breakpoint') : new vscode.ThemeIcon('file'),
 					label,
 					collapsibleState: element.virtualFile.embeddedFiles.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
-					resourceUri: vscode.Uri.file(element.virtualFile.fileName),
+					resourceUri: vscode.Uri.parse(element.virtualFile.id),
 					command: {
 						command: '_volar.action.openVirtualFile',
 						title: '',
-						arguments: [vscode.Uri.file(element.virtualFile.fileName).with({ scheme: element.client.name.replace(/ /g, '_').toLowerCase() })],
+						arguments: [vscode.Uri.parse(element.virtualFile.id).with({ scheme: element.client.name.replace(/ /g, '_').toLowerCase() })],
 					},
 				};
 			}
