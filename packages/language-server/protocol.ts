@@ -40,14 +40,10 @@ export namespace GetMatchTsConfigRequest {
 
 export namespace AutoInsertRequest {
 	export type ParamsType = vscode.TextDocumentPositionParams & {
-		options: {
-			lastChange: {
-				range: vscode.Range;
-				rangeOffset: number;
-				rangeLength: number;
-				text: string;
-			},
-		},
+		lastChange: {
+			range: vscode.Range;
+			text: string;
+		};
 	};
 	export type ResponseType = string | vscode.TextEdit | null | undefined;
 	export type ErrorType = never;

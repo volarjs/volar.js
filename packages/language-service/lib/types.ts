@@ -120,7 +120,7 @@ export interface ServicePluginInstance<P = any> {
 	provideDiagnosticMarkupContent?(diagnostic: vscode.Diagnostic, token: vscode.CancellationToken): NullableResult<vscode.MarkupContent>;
 	provideFileReferences?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.Location[]>; // volar specific
 	provideReferencesCodeLensRanges?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.Range[]>; // volar specific
-	provideAutoInsertionEdit?(document: TextDocument, position: vscode.Position, context: AutoInsertionContext, token: vscode.CancellationToken): NullableResult<string | vscode.TextEdit>; // volar specific
+	provideAutoInsertionEdit?(document: TextDocument, position: vscode.Position, lastChange: { range: vscode.Range; text: string; }, token: vscode.CancellationToken): NullableResult<string | vscode.TextEdit>; // volar specific
 	provideFileRenameEdits?(oldUri: string, newUri: string, token: vscode.CancellationToken): NullableResult<vscode.WorkspaceEdit>; // volar specific
 	provideFormattingIndentSensitiveLines?(document: TextDocument, token: vscode.CancellationToken): NullableResult<number[]>; // volar specific
 	provideDocumentDropEdits?(document: TextDocument, position: vscode.Position, dataTransfer: Map<string, DataTransferItem>, token: vscode.CancellationToken): NullableResult<DocumentDropEdit>; // volar specific
@@ -151,13 +151,4 @@ export interface DataTransferFile {
 	name: string;
 	uri?: string;
 	data(): Thenable<Uint8Array>;
-}
-
-export interface AutoInsertionContext {
-	lastChange: {
-		range: vscode.Range;
-		rangeOffset: number;
-		rangeLength: number;
-		text: string;
-	};
 }

@@ -193,12 +193,8 @@ export function activateAutoInsertion(
 						column: lastChange.range.startColumn + lastChange.text.length,
 					}),
 					{
-						lastChange: {
-							range: monaco2protocol.asRange(lastChange.range),
-							rangeLength: lastChange.rangeLength,
-							text: lastChange.text,
-							rangeOffset: lastChange.rangeOffset,
-						},
+						range: monaco2protocol.asRange(lastChange.range),
+						text: lastChange.text,
 					},
 				);
 				if (model.getVersionId() !== version) {
