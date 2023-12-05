@@ -2,7 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { isInsideRange } from '../utils/common';
-import { errorMarkups } from './validation';
+import { errorMarkups } from './provideDiagnostics';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isHoverEnabled } from '@volar/language-core';
 

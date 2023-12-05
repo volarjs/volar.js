@@ -2,7 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import type { DocumentLinkData } from './documentLinks';
+import type { DocumentLinkData } from './provideDocumentLinks';
 import { isDocumentLinkEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {

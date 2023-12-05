@@ -1,6 +1,6 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
-import type { ServiceCodeActionData } from './codeActions';
+import type { ServiceCodeActionData } from './provideCodeActions';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformWorkspaceEdit } from '../utils/transform';
 

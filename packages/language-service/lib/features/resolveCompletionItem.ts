@@ -1,6 +1,6 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
-import type { ServiceCompletionData } from './complete';
+import type { ServiceCompletionData } from './provideCompletionItems';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformCompletionItem } from '../utils/transform';
 

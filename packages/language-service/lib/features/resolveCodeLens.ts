@@ -1,7 +1,7 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
-import type { ServiceCodeLensData, ServiceReferencesCodeLensData } from './codeLens';
-import * as references from './references';
+import type { ServiceCodeLensData, ServiceReferencesCodeLensData } from './provideCodeLenses';
+import * as references from './provideReferences';
 import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {

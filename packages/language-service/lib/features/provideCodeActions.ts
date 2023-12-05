@@ -5,7 +5,7 @@ import { getOverlapRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
-import type { ServiceDiagnosticData } from './validation';
+import type { ServiceDiagnosticData } from './provideDiagnostics';
 import { isCodeActionsEnabled } from '@volar/language-core';
 
 export interface ServiceCodeActionData {
