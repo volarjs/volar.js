@@ -154,6 +154,12 @@ importers:
       '@volar/typescript':
         specifier: 1.11.1
         version: link:../typescript
+      monaco-languageserver-types:
+        specifier: ^0.3.1
+        version: 0.3.1
+      monaco-types:
+        specifier: ^0.1.0
+        version: 0.1.0
       vscode-uri:
         specifier: ^3.0.8
         version: 3.0.8
@@ -161,9 +167,6 @@ importers:
       monaco-editor-core:
         specifier: latest
         version: 0.44.0
-      vscode-languageserver-protocol:
-        specifier: ^3.17.5
-        version: 3.17.5
 
   packages/snapshot-document:
     dependencies:
@@ -3513,6 +3516,18 @@ packages:
     resolution: {integrity: sha512-gPhXfbi0RCnIRXMUzkvjRc8tUiD56lkuw7uRr2dUv00owYthFRlyot2R0ECFuA5F3YKei4OlFjALDahxIC/6Jg==}
     dev: true
 
+  /monaco-languageserver-types@0.3.1:
+    resolution: {integrity: sha512-piidSsgV+NTConaTgVCw1Cgi0TAoslRbCHcw4Aeyx/fg9umSsB2vvlqhJ2iFhqb68KdtnhmoQ5m7hGTtttmV6Q==}
+    dependencies:
+      monaco-types: 0.1.0
+      vscode-languageserver-protocol: 3.17.5
+      vscode-uri: 3.0.8
+    dev: false
+
+  /monaco-types@0.1.0:
+    resolution: {integrity: sha512-aWK7SN9hAqNYi0WosPoMjenMeXJjwCxDibOqWffyQ/qXdzB/86xshGQobRferfmNz7BSNQ8GB0MD0oby9/5fTQ==}
+    dev: false
+
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
     dev: true
@@ -5308,6 +5323,7 @@ packages:
   /vscode-jsonrpc@8.2.0:
     resolution: {integrity: sha512-C+r0eKJUIfiDIfwJhria30+TYWPtuHJXHtI7J0YlOmKAo7ogxP20T0zxB7HZQIFhIyvoBPwWskjxrvAtfjyZfA==}
     engines: {node: '>=14.0.0'}
+    dev: false
 
   /vscode-languageclient@9.0.1:
     resolution: {integrity: sha512-JZiimVdvimEuHh5olxhxkht09m3JzUGwggb5eRUkzzJhZ2KjCN0nh55VfiED9oez9DyF8/fz1g1iBV3h+0Z2EA==}
@@ -5323,6 +5339,7 @@ packages:
     dependencies:
       vscode-jsonrpc: 8.2.0
       vscode-languageserver-types: 3.17.5
+    dev: false
 
   /vscode-languageserver-textdocument@1.0.11:
     resolution: {integrity: sha512-X+8T3GoiwTVlJbicx/sIAF+yuJAqz8VvwJyoMVhwEMoEKE/fkDmrqUgDMyBECcM2A2frVZIUj5HI/ErRXCfOeA==}
@@ -5330,6 +5347,7 @@ packages:
 
   /vscode-languageserver-types@3.17.5:
     resolution: {integrity: sha512-Ld1VelNuX9pdF39h2Hgaeb5hEZM2Z3jUrrMgWQAu82jMtZp7p3vJT3BzToKtZI7NgQssZje5o0zryOrhQvzQAg==}
+    dev: false
 
   /vscode-languageserver@9.0.1:
     resolution: {integrity: sha512-woByF3PDpkHFUreUa7Hos7+pUWdeWMXRd26+ZX2A8cFx6v/JPTtd4/uN0/jB6XQHYaOlHbio03NTHCqrgG5n7g==}
