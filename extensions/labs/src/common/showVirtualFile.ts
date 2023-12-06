@@ -98,6 +98,37 @@ export async function activate(info: ExportsInfoForLabs) {
 			}
 		}));
 
+		subscriptions.push(vscode.languages.registerInlayHintsProvider({ scheme: client.name.replace(/ /g, '_').toLowerCase() }, {
+			provideInlayHints(document, range) {
+				const stacks = virtualUriToStacks.get(document.uri.toString());
+				const result: vscode.InlayHint[] = [];
+				const range2 = [document.offsetAt(range.start), document.offsetAt(range.end)];
+				const text = document.getText();
+				for (const stack of stacks ?? []) {
+					let [start, end] = stack.range;
+					let startText = '[';
+					let endText = ']';
+					while (end > start && text[end - 1] === '\n') {
+						end--;
+						endText = '\n' + endText;
+					}
+					while (start < end && text[start] === '\n') {
+						start++;
+						startText = '\n' + startText;
+					}
+					if (start >= range2[0] && start <= range2[1]) {
+						result.push(new vscode.InlayHint(document.positionAt(start), startText));
+						result[result.length - 1].paddingLeft = true;
+					}
+					if (end >= range2[0] && end <= range2[1]) {
+						result.push(new vscode.InlayHint(document.positionAt(end), endText));
+						result[result.length - 1].paddingRight = true;
+					}
+				}
+				return result;
+			},
+		}));
+
 		subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
 			client.name.replace(/ /g, '_').toLowerCase(),
 			{
