@@ -498,7 +498,6 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			.filter(notEmpty);
 		return dedupeDocumentSpans(resolved);
 	};
-	// need client patch
 	languageService.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
 		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(fileName);
 		if (virtualFile) {
@@ -511,6 +510,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 						}
 						result.optionalReplacementSpan = transformSpan(fileName, result.optionalReplacementSpan, isCompletionEnabled)?.textSpan;
 					}
+					return result;
 				}
 			}
 		}
