@@ -101,7 +101,6 @@ export interface ServiceDiagnosticData {
 	original: Pick<vscode.Diagnostic, 'data'>,
 	isFormat: boolean,
 	serviceIndex: number,
-	ruleFixIndex: number,
 	documentUri: string,
 }
 
@@ -269,7 +268,6 @@ export function register(context: ServiceContext) {
 							original: {
 								data: error.data,
 							},
-							ruleFixIndex: 0,
 							documentUri: document.uri,
 						} satisfies ServiceDiagnosticData;
 					});
