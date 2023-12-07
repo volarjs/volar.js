@@ -9,15 +9,15 @@ export function register(context: ServiceContext) {
 
 	return async (oldUri: string, newUri: string, token = NoneCancellationToken) => {
 
-		const sourceFile = context.language.files.getSourceFile(oldUri);
+		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(oldUri));
 
 		if (sourceFile?.virtualFile) {
 
 			let tsExt: string | undefined;
 
 			for (const virtualFile of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-				if (virtualFile.typescript && virtualFile.id.replace(sourceFile.id, '').match(/^\.(js|ts)x?$/)) {
-					tsExt = virtualFile.id.substring(virtualFile.id.lastIndexOf('.'));
+				if (virtualFile.typescript && virtualFile.fileName.substring(sourceFile.fileName.length).match(/^\.(js|ts)x?$/)) {
+					tsExt = virtualFile.fileName.substring(virtualFile.fileName.lastIndexOf('.'));
 				}
 			}
 

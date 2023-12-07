@@ -45,7 +45,7 @@ export function register(context: ServiceContext) {
 
 						recursiveChecker.add({ uri: reference.uri, range: { start: reference.range.start, end: reference.range.start } });
 
-						const [virtualFile] = context.language.files.getVirtualFile(reference.uri);
+						const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(reference.uri));
 						const mirrorMap = virtualFile ? context.documents.getLinkedCodeMap(virtualFile) : undefined;
 
 						if (mirrorMap) {
@@ -73,7 +73,7 @@ export function register(context: ServiceContext) {
 
 				for (const reference of data) {
 
-					const [virtualFile] = context.language.files.getVirtualFile(reference.uri);
+					const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(reference.uri));
 
 					if (virtualFile) {
 						for (const map of context.documents.getMaps(virtualFile)) {

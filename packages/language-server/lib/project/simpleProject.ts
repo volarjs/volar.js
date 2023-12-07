@@ -24,13 +24,14 @@ export async function createSimpleServerProject(
 
 	function getLanguageService() {
 		if (!languageService) {
-			const files = createFileProvider(Object.values(config.languages ?? {}), false, (uri) => {
+			const files = createFileProvider(Object.values(config.languages ?? {}), false, fileName => {
+				const uri = context.server.runtimeEnv.fileNameToUri(fileName);
 				const script = context.workspaces.documents.get(uri);
 				if (script) {
-					files.updateSourceFile(uri, script.languageId, script.getSnapshot());
+					files.updateSourceFile(fileName, script.languageId, script.getSnapshot());
 				}
 				else {
-					files.deleteSourceFile(uri);
+					files.deleteSourceFile(fileName);
 				}
 			});
 			languageService = createLanguageService(

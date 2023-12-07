@@ -60,18 +60,18 @@ export function registerEditorFeatures(
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const languageService = (await projectProvider.getProject(document.uri)).getLanguageService();
-		const virtualFile = languageService.context.language.files.getSourceFile(document.uri)?.virtualFile;
+		const virtualFile = languageService.context.language.files.getSourceFile(env.uriToFileName(document.uri))?.virtualFile;
 		return virtualFile ? prune(virtualFile[0]) : undefined;
 
 		function prune(file: VirtualFile): VirtualFile {
-			let version = scriptVersions.get(file.id) ?? 0;
+			let version = scriptVersions.get(file.fileName) ?? 0;
 			if (!scriptVersionSnapshots.has(file.snapshot)) {
 				version++;
-				scriptVersions.set(file.id, version);
+				scriptVersions.set(file.fileName, version);
 				scriptVersionSnapshots.add(file.snapshot);
 			}
 			return {
-				id: file.id,
+				fileName: file.fileName,
 				languageId: file.languageId,
 				typescript: file.typescript,
 				embeddedFiles: file.embeddedFiles.map(prune),
@@ -85,7 +85,7 @@ export function registerEditorFeatures(
 		let content: string = '';
 		let codegenStacks: Stack[] = [];
 		const mappings: Record<string, Mapping<CodeInformation>[]> = {};
-		const [virtualFile] = languageService.context.language.files.getVirtualFile(env.fileNameToUri(params.virtualFileName));
+		const [virtualFile] = languageService.context.language.files.getVirtualFile(params.virtualFileName);
 		if (virtualFile) {
 			for (const map of languageService.context.documents.getMaps(virtualFile)) {
 				content = map.virtualFileDocument.getText();
@@ -111,6 +111,7 @@ export function registerEditorFeatures(
 		if (languageService.context.language.typescript?.languageServiceHost) {
 
 			const rootUri = languageService.context.env.workspaceFolder.uri.toString();
+			const rootPath = languageService.context.env.uriToFileName(rootUri);
 			const { languageServiceHost } = languageService.context.language.typescript;
 
 			for (const fileName of languageServiceHost.getScriptFileNames()) {
@@ -122,11 +123,10 @@ export function registerEditorFeatures(
 					}
 				}
 				else {
-					const uri = languageService.context.env.fileNameToUri(fileName);
-					const [virtualFile] = languageService.context.language.files.getVirtualFile(uri);
-					if (virtualFile?.typescript && virtualFile.id.startsWith(rootUri)) {
+					const [virtualFile] = languageService.context.language.files.getVirtualFile(fileName);
+					if (virtualFile?.typescript && virtualFile.fileName.startsWith(rootPath)) {
 						const { snapshot } = virtualFile;
-						fs.writeFile(languageService.context.env.uriToFileName(virtualFile.id), snapshot.getText(0, snapshot.getLength()), () => { });
+						fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
 					}
 				}
 			}

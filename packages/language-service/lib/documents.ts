@@ -1,7 +1,8 @@
-import { FileProvider, CodeInformation, LinkedCodeMap, SourceFile, VirtualFile, forEachEmbeddedFile, SourceMap, Mapping, CodeRangeKey, translateOffset } from '@volar/language-core';
+import { CodeInformation, CodeRangeKey, FileProvider, LinkedCodeMap, Mapping, SourceFile, SourceMap, VirtualFile, forEachEmbeddedFile, translateOffset } from '@volar/language-core';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import type { RuntimeEnvironment } from '../lib/types';
 
 export type DocumentProvider = ReturnType<typeof createDocumentProvider>;
 
@@ -145,7 +146,7 @@ export class LinkedCodeMapWithDocument extends SourceMapWithDocuments {
 	}
 }
 
-export function createDocumentProvider(files: FileProvider) {
+export function createDocumentProvider(env: RuntimeEnvironment, files: FileProvider) {
 
 	let version = 0;
 
@@ -164,7 +165,7 @@ export function createDocumentProvider(files: FileProvider) {
 							if (!map2DocMap.has(map)) {
 								map2DocMap.set(map, new SourceMapWithDocuments(
 									get(sourceUri, source.languageId, sourceSnapshot),
-									get(virtualFile.id, virtualFile.languageId, virtualFile.snapshot),
+									get(env.fileNameToUri(virtualFile.fileName), virtualFile.languageId, virtualFile.snapshot),
 									map,
 								));
 							}
@@ -176,11 +177,11 @@ export function createDocumentProvider(files: FileProvider) {
 			}
 		},
 		*getMaps(virtualFile: VirtualFile) {
-			for (const [sourceUri, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
+			for (const [sourceFileName, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
 				if (!map2DocMap.has(map)) {
 					map2DocMap.set(map, new SourceMapWithDocuments(
-						get(sourceUri, files.getSourceFile(sourceUri)!.languageId, sourceSnapshot),
-						get(virtualFile.id, virtualFile.languageId, virtualFile.snapshot),
+						get(env.fileNameToUri(sourceFileName), files.getSourceFile(sourceFileName)!.languageId, sourceSnapshot),
+						get(env.fileNameToUri(virtualFile.fileName), virtualFile.languageId, virtualFile.snapshot),
 						map,
 					));
 				}
@@ -192,7 +193,7 @@ export function createDocumentProvider(files: FileProvider) {
 			if (map) {
 				if (!mirrorMap2DocMirrorMap.has(map)) {
 					mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
-						get(virtualFile.id, virtualFile.languageId, virtualFile.snapshot),
+						get(env.fileNameToUri(virtualFile.fileName), virtualFile.languageId, virtualFile.snapshot),
 						map,
 					));
 				}

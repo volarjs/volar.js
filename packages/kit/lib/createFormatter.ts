@@ -2,6 +2,7 @@ import { FormattingOptions, LanguagePlugin, ServicePlugin, createFileProvider, c
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
+import { fileNameToUri } from './utils';
 
 export function createFormatter(
 	languages: LanguagePlugin[],
@@ -9,6 +10,7 @@ export function createFormatter(
 ) {
 
 	let fakeUri = 'file:///dummy.txt';
+	let fakeFileName = fileNameToUri(fakeUri);
 	let settings = {};
 
 	const env = createServiceEnvironment(() => settings);
@@ -35,7 +37,7 @@ export function createFormatter(
 	async function format(content: string, languageId: string, options: FormattingOptions): Promise<string> {
 
 		const snapshot = ts.ScriptSnapshot.fromString(content);
-		files.updateSourceFile(fakeUri, languageId, snapshot);
+		files.updateSourceFile(fakeFileName, languageId, snapshot);
 
 		const document = service.context.documents.get(fakeUri, languageId, snapshot)!;
 		const edits = await service.format(fakeUri, options, undefined, undefined);

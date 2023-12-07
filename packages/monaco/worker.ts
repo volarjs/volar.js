@@ -22,12 +22,13 @@ export function createSimpleWorkerService<T = {}>(
 ) {
 	return createWorkerService(
 		services,
-		() => {
+		env => {
 			const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const files = createFileProvider(
 				languages,
 				false,
-				(uri) => {
+				fileName => {
+					const uri = env.fileNameToUri(fileName);
 					const model = getMirrorModels().find(model => model.uri.toString(true) === uri);
 					if (model) {
 						const cache = snapshots.get(model);
@@ -41,10 +42,10 @@ export function createSimpleWorkerService<T = {}>(
 							getChangeRange: () => undefined,
 						};
 						snapshots.set(model, [model.version, snapshot]);
-						files.updateSourceFile(uri, resolveCommonLanguageId(uri), snapshot);
+						files.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
 					}
 					else {
-						files.deleteSourceFile(uri);
+						files.deleteSourceFile(fileName);
 					}
 				}
 			);
@@ -113,8 +114,6 @@ export function createTypeScriptWorkerService<T = {}>(
 				getCompilationSettings() {
 					return compilerOptions;
 				},
-				getFileName: env.uriToFileName,
-				getFileId: env.fileNameToUri,
 				getLanguageId: id => resolveCommonLanguageId(id),
 			};
 			const sys = createSys(ts, env, host.getCurrentDirectory());

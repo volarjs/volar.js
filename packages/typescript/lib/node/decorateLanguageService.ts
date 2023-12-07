@@ -677,7 +677,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 		if (source) {
 			return {
 				...changes,
-				fileName: source.id,
+				fileName: source.fileName,
 				textChanges: changes.textChanges.map(c => {
 					const span = transformSpan(changes.fileName, c.span, filter);
 					if (span) {
@@ -700,7 +700,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			const [virtualFile, source] = getVirtualFileAndMap(documentSpan.fileName);
 			if (virtualFile) {
 				textSpan = {
-					fileName: source.id,
+					fileName: source.fileName,
 					textSpan: { start: 0, length: 0 },
 				};
 			}
@@ -733,7 +733,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 					for (const sourceEnd of map.getSourceOffsets(textSpan.start + textSpan.length - (isTsPlugin ? sourceFile.snapshot.getLength() : 0))) {
 						if (filter(sourceEnd[1].data)) {
 							return {
-								fileName: sourceFile.id,
+								fileName: sourceFile.fileName,
 								textSpan: {
 									start: sourceStart[0],
 									length: sourceEnd[0] - sourceStart[0],
@@ -757,7 +757,7 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			const sourceFile = virtualFiles.getSourceFile(fileName);
 			if (sourceFile?.virtualFile) {
 				for (const virtualFile of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-					const ext = virtualFile.id.substring(fileName.length);
+					const ext = virtualFile.fileName.substring(fileName.length);
 					if (virtualFile.typescript && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
 						for (const map of virtualFiles.getMaps(virtualFile)) {
 							if (map[1][0] === sourceFile.snapshot) {
