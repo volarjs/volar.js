@@ -27,7 +27,7 @@ export async function createSimpleServerProject(
 			const files = createFileProvider(Object.values(config.languages ?? {}), false, (uri) => {
 				const script = context.workspaces.documents.get(uri);
 				if (script) {
-					files.updateSourceFile(uri, script.getSnapshot(), script.languageId);
+					files.updateSourceFile(uri, script.languageId, script.getSnapshot());
 				}
 				else {
 					files.deleteSourceFile(uri);

@@ -166,7 +166,7 @@ export function decorateLanguageServiceHost(
 			const snapshot = getScriptSnapshot(fileName);
 			if (snapshot) {
 				extraProjectVersion++;
-				const sourceFile = virtualFiles.updateSourceFile(fileName, snapshot, resolveCommonLanguageId(fileName));
+				const sourceFile = virtualFiles.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
 				if (sourceFile.virtualFile) {
 					const text = snapshot.getText(0, snapshot.getLength());
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');

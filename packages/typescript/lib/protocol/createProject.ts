@@ -41,7 +41,7 @@ export function createLanguage(
 		}
 
 		if (snapshot) {
-			files.updateSourceFile(id, snapshot, projectHost.getLanguageId(id));
+			files.updateSourceFile(id, projectHost.getLanguageId(id), snapshot);
 		}
 		else {
 			files.deleteSourceFile(id);

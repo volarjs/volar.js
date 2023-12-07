@@ -14,14 +14,14 @@ export function createFileProvider(languages: LanguagePlugin[], caseSensitive: b
 	const virtualFileToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, LinkedCodeMap | undefined>();
 
 	return {
-		updateSourceFile(id: string, snapshot: ts.IScriptSnapshot, languageId: string): SourceFile {
+		updateSourceFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot): SourceFile {
 
 			const value = sourceFileRegistry.get(id);
 			if (value) {
 				if (value.languageId !== languageId) {
 					// languageId changed
 					this.deleteSourceFile(id);
-					return this.updateSourceFile(id, snapshot, languageId);
+					return this.updateSourceFile(id, languageId, snapshot);
 				}
 				else if (value.snapshot !== snapshot) {
 					// updated

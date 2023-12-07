@@ -41,7 +41,7 @@ export function createSimpleWorkerService<T = {}>(
 							getChangeRange: () => undefined,
 						};
 						snapshots.set(model, [model.version, snapshot]);
-						files.updateSourceFile(uri, snapshot, resolveCommonLanguageId(uri));
+						files.updateSourceFile(uri, resolveCommonLanguageId(uri), snapshot);
 					}
 					else {
 						files.deleteSourceFile(uri);

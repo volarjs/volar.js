@@ -35,7 +35,7 @@ export function createFormatter(
 	async function format(content: string, languageId: string, options: FormattingOptions): Promise<string> {
 
 		const snapshot = ts.ScriptSnapshot.fromString(content);
-		files.updateSourceFile(fakeUri, snapshot, languageId);
+		files.updateSourceFile(fakeUri, languageId, snapshot);
 
 		const document = service.context.documents.get(fakeUri, languageId, snapshot)!;
 		const edits = await service.format(fakeUri, options, undefined, undefined);
