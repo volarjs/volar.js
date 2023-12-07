@@ -72,7 +72,7 @@ export function register(context: ServiceContext) {
 				if (onTypeParams && !isCodeBlock)
 					continue;
 
-				const docMap = createDocMap(file, context.env.fileNameToUri(sourceFile.fileName), sourceFile.languageId, tempSourceSnapshot);
+				const docMap = createDocMap(file, sourceFile.fileName, sourceFile.languageId, tempSourceSnapshot);
 				if (!docMap) continue;
 
 				let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
@@ -275,19 +275,19 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function createDocMap(file: VirtualFile, sourceFileUri: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
-		const maps = updateVirtualFileMaps(file, (sourceFileName) => {
-			if (!sourceFileName) {
-				return [sourceFileUri, _sourceSnapshot];
+	function createDocMap(file: VirtualFile, sourceFileName: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
+		const maps = updateVirtualFileMaps(file, (sourceFileName2) => {
+			if (!sourceFileName2) {
+				return [sourceFileName, _sourceSnapshot];
 			}
 		});
-		if (maps.has(sourceFileUri) && maps.get(sourceFileUri)![0] === _sourceSnapshot) {
-			const map = maps.get(sourceFileUri)!;
+		if (maps.has(sourceFileName) && maps.get(sourceFileName)![0] === _sourceSnapshot) {
+			const map = maps.get(sourceFileName)!;
 			const version = fakeVersion++;
 			return new SourceMapWithDocuments(
 				TextDocument.create(
-					sourceFileUri,
-					sourceLanguageId ?? resolveCommonLanguageId(sourceFileUri),
+					context.env.fileNameToUri(sourceFileName),
+					sourceLanguageId ?? resolveCommonLanguageId(sourceFileName),
 					version,
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),

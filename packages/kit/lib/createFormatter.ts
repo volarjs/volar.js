@@ -2,7 +2,7 @@ import { FormattingOptions, LanguagePlugin, ServicePlugin, createFileProvider, c
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
-import { fileNameToUri } from './utils';
+import { uriToFileName } from './utils';
 
 export function createFormatter(
 	languages: LanguagePlugin[],
@@ -10,7 +10,7 @@ export function createFormatter(
 ) {
 
 	let fakeUri = 'file:///dummy.txt';
-	let fakeFileName = fileNameToUri(fakeUri);
+	let fakeFileName = uriToFileName(fakeUri);
 	let settings = {};
 
 	const env = createServiceEnvironment(() => settings);
