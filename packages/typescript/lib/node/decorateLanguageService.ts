@@ -274,8 +274,10 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 								formatOptions,
 								preferences,
 							);
+							break;
 						}
 					}
+					break;
 				}
 			}
 		}
