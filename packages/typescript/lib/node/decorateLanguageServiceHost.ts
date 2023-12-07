@@ -171,7 +171,7 @@ export function decorateLanguageServiceHost(
 					const text = snapshot.getText(0, snapshot.getLength());
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 					for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-						const ext = file.id.substring(fileName.length);
+						const ext = file.fileName.substring(fileName.length);
 						if (file.typescript && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
 							extension = ext;
 							scriptKind = file.typescript.scriptKind;

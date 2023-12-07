@@ -31,14 +31,15 @@ export function register(context: ServiceContext) {
 			const service = context.services[data.serviceIndex];
 
 			if (service[1].resolveReferencesCodeLensLocations) {
-				const virtualFile = context.language.files.getVirtualFile(data.workerFileUri)[0];
-				const sourceFile = context.language.files.getSourceFile(data.workerFileUri);
+				const workerFileName = context.env.uriToFileName(data.workerFileUri);
+				const virtualFile = context.language.files.getVirtualFile(workerFileName)[0];
+				const sourceFile = context.language.files.getSourceFile(workerFileName);
 				if (virtualFile) {
-					const document = context.documents.get(virtualFile.id, virtualFile.languageId, virtualFile.snapshot);
+					const document = context.documents.get(context.env.fileNameToUri(virtualFile.fileName), virtualFile.languageId, virtualFile.snapshot);
 					references = await service[1].resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
 				}
 				else if (sourceFile && !sourceFile?.virtualFile) {
-					const document = context.documents.get(sourceFile.id, sourceFile.languageId, sourceFile.snapshot);
+					const document = context.documents.get(context.env.fileNameToUri(sourceFile.fileName), sourceFile.languageId, sourceFile.snapshot);
 					references = await service[1].resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
 				}
 			}

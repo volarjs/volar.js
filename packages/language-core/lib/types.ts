@@ -43,12 +43,7 @@ export interface CodeInformation {
 }
 
 export interface BaseFile {
-	/**
-	 * for language-server, kit, monaco, this is uri
-	 * 
-	 * for typescript server plugin, tsc, this is fileName
-	 */
-	id: string;
+	fileName: string;
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 }
@@ -86,7 +81,5 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getScriptSnapshot'
 	| 'getCancellationToken'
 > {
-	getFileId(fileName: string): string;
-	getFileName(fileId: string): string;
-	getLanguageId(id: string): string;
+	getLanguageId(fileName: string): string;
 }

@@ -22,7 +22,7 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken
 	) => {
 
-		const sourceFile = context.language.files.getSourceFile(uri);
+		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
 		if (!sourceFile)
 			return;
 
@@ -42,7 +42,7 @@ export function register(context: ServiceContext) {
 		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 
 		let tempSourceSnapshot = sourceFile.snapshot;
-		const tempVirtualFile = sourceFile.virtualFile[1].createVirtualFile(sourceFile.id, sourceFile.languageId, sourceFile.snapshot)!;
+		const tempVirtualFile = sourceFile.virtualFile[1].createVirtualFile(sourceFile.fileName, sourceFile.languageId, sourceFile.snapshot)!;
 		const originalDocument = document;
 
 		let level = 0;
@@ -55,7 +55,7 @@ export function register(context: ServiceContext) {
 
 			let edits: vscode.TextEdit[] = [];
 			const toPatchIndent: {
-				virtualFileUri: string;
+				virtualFileName: string;
 				isCodeBlock: boolean;
 				service: ServicePluginInstance;
 			}[] = [];
@@ -72,7 +72,7 @@ export function register(context: ServiceContext) {
 				if (onTypeParams && !isCodeBlock)
 					continue;
 
-				const docMap = createDocMap(file, sourceFile.id, sourceFile.languageId, tempSourceSnapshot);
+				const docMap = createDocMap(file, context.env.fileNameToUri(sourceFile.fileName), sourceFile.languageId, tempSourceSnapshot);
 				if (!docMap) continue;
 
 				let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
@@ -100,7 +100,7 @@ export function register(context: ServiceContext) {
 					continue;
 
 				toPatchIndent.push({
-					virtualFileUri: file.id,
+					virtualFileName: file.fileName,
 					isCodeBlock,
 					service: embeddedCodeResult.service[1],
 				});
@@ -142,12 +142,12 @@ export function register(context: ServiceContext) {
 
 					let virtualFile!: VirtualFile;
 					for (const file of forEachEmbeddedFile(tempVirtualFile)) {
-						if (file.id === item.virtualFileUri) {
+						if (file.fileName === item.virtualFileName) {
 							virtualFile = file;
 							break;
 						}
 					}
-					const docMap = createDocMap(virtualFile, sourceFile.id, sourceFile.languageId, tempSourceSnapshot);
+					const docMap = createDocMap(virtualFile, context.env.fileNameToUri(sourceFile.fileName), sourceFile.languageId, tempSourceSnapshot);
 					if (!docMap) continue;
 
 					const indentSensitiveLines = new Set<number>();
@@ -292,7 +292,7 @@ export function register(context: ServiceContext) {
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),
 				TextDocument.create(
-					file.id,
+					context.env.fileNameToUri(file.fileName),
 					file.languageId,
 					version,
 					file.snapshot.getText(0, file.snapshot.getLength())

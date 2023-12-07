@@ -93,7 +93,7 @@ export function createLanguageService(
 
 	function createServiceContext() {
 
-		const documents = createDocumentProvider(language.files);
+		const documents = createDocumentProvider(env, language.files);
 		const context: ServiceContext = {
 			env,
 			language: language,

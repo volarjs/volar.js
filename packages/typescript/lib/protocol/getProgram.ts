@@ -4,10 +4,6 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 export function getProgram(
 	ts: typeof import('typescript/lib/tsserverlibrary'),
 	files: FileProvider,
-	{ getFileId, getFileName }: {
-		getFileId(fileName: string): string;
-		getFileName(id: string): string;
-	},
 	ls: ts.LanguageService,
 	sys: ts.System,
 ): ts.Program {
@@ -71,8 +67,7 @@ export function getProgram(
 
 		if (sourceFile) {
 
-			const uri = getFileId(sourceFile.fileName);
-			const [virtualFile, source] = files.getVirtualFile(uri);
+			const [virtualFile, source] = files.getVirtualFile(sourceFile.fileName);
 
 			if (virtualFile && source) {
 
@@ -111,14 +106,11 @@ export function getProgram(
 				&& diagnostic.length !== undefined
 			) {
 
-				const uri = getFileId(diagnostic.file.fileName);
-				const [virtualFile, source] = files.getVirtualFile(uri);
+				const [virtualFile, source] = files.getVirtualFile(diagnostic.file.fileName);
 
 				if (virtualFile && source) {
 
-					const sourceFileName = getFileName(source.id);
-
-					if (sys.fileExists?.(sourceFileName) === false)
+					if (sys.fileExists?.(source.fileName) === false)
 						continue;
 
 					for (const [_, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
@@ -136,7 +128,7 @@ export function getProgram(
 								if (!shouldReportDiagnostics(end[1].data))
 									continue;
 
-								onMapping(diagnostic, sourceFileName, start[0], end[0], source.snapshot.getText(0, source.snapshot.getLength()));
+								onMapping(diagnostic, source.fileName, start[0], end[0], source.snapshot.getText(0, source.snapshot.getLength()));
 								break;
 							}
 							break;
@@ -166,8 +158,7 @@ export function getProgram(
 			if (!file) {
 
 				if (docText === undefined) {
-					const uri = getFileId(fileName);
-					const snapshot = files.getSourceFile(uri)?.snapshot;
+					const snapshot = files.getSourceFile(fileName)?.snapshot;
 					if (snapshot) {
 						docText = snapshot.getText(0, snapshot.getLength());
 					}

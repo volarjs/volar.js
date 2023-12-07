@@ -48,8 +48,6 @@ export async function createTypeScriptServerProject(
 		getCompilationSettings: () => parsedCommandLine.options,
 		getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
 		getProjectReferences: () => parsedCommandLine.projectReferences,
-		getFileName: serviceEnv.uriToFileName,
-		getFileId: serviceEnv.fileNameToUri,
 		getLanguageId: uri => context.workspaces.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
 	};
 	const sys = createSys(ts, serviceEnv, host.getCurrentDirectory());
