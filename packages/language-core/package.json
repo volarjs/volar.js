@@ -1,6 +1,6 @@
 {
 	"name": "@volar/language-core",
-	"version": "2.0.0-alpha.0",
+	"version": "2.0.0-alpha.2",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
@@ -12,6 +12,6 @@
 		"directory": "packages/language-core"
 	},
 	"dependencies": {
-		"@volar/source-map": "2.0.0-alpha.0"
+		"@volar/source-map": "2.0.0-alpha.2"
 	}
 }
