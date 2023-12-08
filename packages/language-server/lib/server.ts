@@ -3,7 +3,7 @@ import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, InitializationOptions, SimpleServerPlugin, ServerProjectProvider, ServerRuntimeEnvironment, Config } from './types.js';
+import { DiagnosticModel, InitializationOptions, ServerPlugin, ServerProjectProvider, ServerRuntimeEnvironment, Config } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
 import { setupCapabilities } from './setupCapabilities.js';
 import { loadConfig } from './config.js';
@@ -21,7 +21,7 @@ export interface ServerContext {
 	};
 }
 
-export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
+export function startLanguageServerBase<Plugin extends ServerPlugin>(
 	connection: vscode.Connection,
 	_plugins: Plugin[],
 	createProjectProvider: (context: WorkspacesContext, plugin: ReturnType<Plugin>[]) => ServerProjectProvider,
@@ -138,7 +138,7 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 
 		for (const plugin of plugins) {
 			if (plugin.resolveConfig) {
-				config = await plugin.resolveConfig(config, undefined);
+				config = await plugin.resolveConfig(config);
 			}
 		}
 

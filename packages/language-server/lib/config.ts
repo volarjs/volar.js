@@ -1,25 +1,25 @@
 import type { Console, ServiceEnvironment } from '@volar/language-service';
 import type { WorkspacesContext } from './project/simpleProjectProvider';
-import type { Config, SimpleServerPlugin } from '../lib/types';
+import type { Config, ProjectContext, ServerPlugin } from '../lib/types';
 
-export async function getConfig<T extends SimpleServerPlugin<any, any>>(
+export async function getConfig(
 	context: WorkspacesContext,
-	plugins: ReturnType<T>[],
-	serviceEnv: ServiceEnvironment,
-	extraData: T extends SimpleServerPlugin<infer _, infer K> ? K : never,
+	plugins: ReturnType<ServerPlugin>[],
+	env: ServiceEnvironment,
+	projectCtx: ProjectContext,
 ) {
 
 	let config = (
-		serviceEnv.workspaceFolder.uri.scheme === 'file' ? loadConfig(
+		env.workspaceFolder.uri.scheme === 'file' ? loadConfig(
 			context.server.runtimeEnv.console,
-			context.server.runtimeEnv.uriToFileName(serviceEnv.workspaceFolder.uri.toString()),
+			context.server.runtimeEnv.uriToFileName(env.workspaceFolder.uri.toString()),
 			context.workspaces.initOptions.configFilePath,
 		) : {}
 	) ?? {};
 
 	for (const plugin of plugins) {
 		if (plugin.resolveConfig) {
-			config = await plugin.resolveConfig(config, serviceEnv, extraData);
+			config = await plugin.resolveConfig(config, env, projectCtx);
 		}
 	}
 

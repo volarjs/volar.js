@@ -4,7 +4,7 @@ import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { getConfig } from '../config';
-import type { ServerProject, TypeScriptServerPlugin } from '../types';
+import type { ServerProject, ServerPlugin } from '../types';
 import { UriMap, createUriMap } from '../utils/uriMap';
 import type { WorkspacesContext } from './simpleProjectProvider';
 
@@ -17,7 +17,7 @@ export interface TypeScriptServerProject extends ServerProject {
 export async function createTypeScriptServerProject(
 	tsconfig: string | ts.CompilerOptions,
 	context: WorkspacesContext,
-	plugins: ReturnType<TypeScriptServerPlugin>[],
+	plugins: ReturnType<ServerPlugin>[],
 	serviceEnv: ServiceEnvironment,
 ): Promise<TypeScriptServerProject> {
 
@@ -50,9 +50,11 @@ export async function createTypeScriptServerProject(
 	let projectVersion = 0;
 	let languageService: LanguageService | undefined;
 
-	const config = await getConfig<TypeScriptServerPlugin>(context, plugins, serviceEnv, {
-		parsedCommandLine: parsedCommandLine!,
-		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
+	const config = await getConfig(context, plugins, serviceEnv, {
+		typescript: {
+			parsedCommandLine: parsedCommandLine!,
+			configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
+		},
 	});
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
@@ -127,9 +129,9 @@ async function createParsedCommandLine(
 	sys: ReturnType<typeof createSys>,
 	workspacePath: string,
 	tsconfig: string | ts.CompilerOptions,
-	plugins: ReturnType<TypeScriptServerPlugin>[],
+	plugins: ReturnType<ServerPlugin>[],
 ): Promise<ts.ParsedCommandLine> {
-	const extraFileExtensions = plugins.map(plugin => plugin.extraFileExtensions ?? []).flat();
+	const extraFileExtensions = plugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat();
 	let content: ts.ParsedCommandLine = {
 		errors: [],
 		fileNames: [],

@@ -4,7 +4,7 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { TextDocuments } from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import type { ServerContext } from '../server';
-import type { InitializationOptions, ServerProject, ServerProjectProvider, SimpleServerPlugin } from '../types';
+import type { InitializationOptions, ServerProject, ServerProjectProvider, ServerPlugin } from '../types';
 import { isFileInDir } from '../utils/isFileInDir';
 import type { WorkspaceFolderManager } from '../workspaceFolderManager';
 import { createSimpleServerProject } from './simpleProject';
@@ -21,7 +21,7 @@ export interface WorkspacesContext extends ServerContext {
 	};
 }
 
-export function createSimpleProjectProvider(context: WorkspacesContext, plugins: ReturnType<SimpleServerPlugin>[]): ServerProjectProvider {
+export function createSimpleProjectProvider(context: WorkspacesContext, plugins: ReturnType<ServerPlugin>[]): ServerProjectProvider {
 
 	const projects = new Map<ServiceEnvironment['workspaceFolder'], Promise<ServerProject>>();
 

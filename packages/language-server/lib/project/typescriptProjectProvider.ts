@@ -3,7 +3,7 @@ import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import type { ServerProjectProvider, TypeScriptServerPlugin } from '../types';
+import type { ServerProjectProvider, ServerPlugin } from '../types';
 import { isFileInDir } from '../utils/isFileInDir';
 import { createUriMap } from '../utils/uriMap';
 import { getInferredCompilerOptions } from './inferredCompilerOptions';
@@ -14,7 +14,7 @@ const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
 export function createTypeScriptProjectProvider(
 	context: WorkspacesContext,
-	plugins: ReturnType<TypeScriptServerPlugin>[]
+	plugins: ReturnType<ServerPlugin>[]
 ): ServerProjectProvider {
 
 	const { fileNameToUri, uriToFileName, fs } = context.server.runtimeEnv;

@@ -3,7 +3,7 @@ import * as vscode from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { startLanguageServerBase } from './lib/server';
-import type { InitializationOptions, SimpleServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
+import type { InitializationOptions, ServerPlugin, ServerProjectProvider } from './lib/types';
 import { FileSystem, FileType } from '@volar/language-service';
 import { WorkspacesContext, createSimpleProjectProvider } from './lib/project/simpleProjectProvider';
 import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
@@ -85,7 +85,7 @@ export function createConnection() {
 
 export function startSimpleServer(
 	connection: vscode.Connection,
-	...plugins: SimpleServerPlugin[]
+	...plugins: ServerPlugin[]
 ) {
 	return startServer(
 		connection,
@@ -96,7 +96,7 @@ export function startSimpleServer(
 
 export function startTypeScriptServer(
 	connection: vscode.Connection,
-	...plugins: TypeScriptServerPlugin[]
+	...plugins: ServerPlugin[]
 ) {
 	return startServer(
 		connection,
@@ -105,10 +105,10 @@ export function startTypeScriptServer(
 	);
 }
 
-function startServer<P extends SimpleServerPlugin<any, any>>(
+function startServer(
 	connection: vscode.Connection,
-	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<P>[]) => ServerProjectProvider,
-	...plugins: P[]
+	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<ServerPlugin>[]) => ServerProjectProvider,
+	...plugins: ServerPlugin[]
 ) {
 	startLanguageServerBase(connection, plugins, createProjectProvider, (_, options) => ({
 		uriToFileName,

@@ -24,14 +24,14 @@ export interface ServerRuntimeEnvironment {
 	console: Console;
 }
 
-export type TypeScriptServerPlugin = SimpleServerPlugin<{
-	extraFileExtensions?: ts.FileExtensionInfo[];
-}, {
-	configFileName: string | undefined;
-	parsedCommandLine: ts.ParsedCommandLine;
-}>;
+export interface ProjectContext {
+	typescript?: {
+		configFileName: string | undefined;
+		parsedCommandLine: ts.ParsedCommandLine;
+	};
+}
 
-export interface SimpleServerPlugin<T = {}, K = undefined> {
+export interface ServerPlugin {
 	(ctx: {
 		initializationOptions: InitializationOptions;
 		modules: {
@@ -40,13 +40,16 @@ export interface SimpleServerPlugin<T = {}, K = undefined> {
 		env: ServerRuntimeEnvironment;
 	}): {
 		watchFileExtensions?: string[];
+		typescript?: {
+			extraFileExtensions?: ts.FileExtensionInfo[];
+		};
 		resolveConfig?(
 			config: Config,
 			env?: ServiceEnvironment,
-			extraData?: K
+			project?: ProjectContext
 		): Config | Promise<Config>;
 		onInitialized?(projectManager: ServerProjectProvider): void;
-	} & T;
+	};
 }
 
 export enum DiagnosticModel {
