@@ -3,12 +3,12 @@ import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { getInferredCompilerOptions } from './inferredCompilerOptions';
+import type { ServerProjectProvider, TypeScriptServerPlugin } from '../types';
 import { isFileInDir } from '../utils/isFileInDir';
 import { createUriMap } from '../utils/uriMap';
-import { ServerMode, ServerProjectProvider, TypeScriptServerPlugin } from '../types';
-import { TypeScriptServerProject, createTypeScriptServerProject } from './typescriptProject';
+import { getInferredCompilerOptions } from './inferredCompilerOptions';
 import { WorkspacesContext, createServiceEnvironment, getWorkspaceFolder } from './simpleProjectProvider';
+import { TypeScriptServerProject, createTypeScriptServerProject } from './typescriptProject';
 
 const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
@@ -62,11 +62,9 @@ export function createTypeScriptProjectProvider(
 
 	return {
 		async getProject(uri) {
-			if (context.workspaces.initOptions.serverMode !== ServerMode.Syntactic) {
-				const tsconfig = await findMatchTSConfig(URI.parse(uri));
-				if (tsconfig) {
-					return await getOrCreateConfiguredProject(tsconfig);
-				}
+			const tsconfig = await findMatchTSConfig(URI.parse(uri));
+			if (tsconfig) {
+				return await getOrCreateConfiguredProject(tsconfig);
 			}
 			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolders, uriToFileName);
 			return await getOrCreateInferredProject(uri, workspaceFolder);

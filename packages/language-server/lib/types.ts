@@ -50,12 +50,6 @@ export interface SimpleServerPlugin<T = {}, K = undefined> {
 	} & T;
 }
 
-export enum ServerMode {
-	Semantic = 0,
-	PartialSemantic = 1,
-	Syntactic = 2,
-}
-
 export enum DiagnosticModel {
 	None = 0,
 	Push = 1,
@@ -80,7 +74,6 @@ export interface InitializationOptions {
 	l10n?: {
 		location: string; // uri
 	};
-	serverMode?: ServerMode;
 	diagnosticModel?: DiagnosticModel;
 	/**
 	 * For better JSON parsing performance language server will filter CompletionList.

@@ -1,8 +1,8 @@
 import * as embedded from '@volar/language-service';
+import type { SnapshotDocument } from '@volar/snapshot-document';
 import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
-import { ServerRuntimeEnvironment, InitializationOptions, ServerMode, ServerProjectProvider } from '../types';
-import type { SnapshotDocument } from '@volar/snapshot-document';
+import type { InitializationOptions, ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
 
 export function registerLanguageFeatures(
 	connection: vscode.Connection,
@@ -265,12 +265,8 @@ export function registerLanguageFeatures(
 	connection.languages.diagnostics.on(async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
 		const result = await worker(params.textDocument.uri, token, service => {
 			const tsToken = runtime.getCancellationToken(token);
-			const mode = initOptions.serverMode === ServerMode.PartialSemantic ? 'semantic' as const
-				: initOptions.serverMode === ServerMode.Syntactic ? 'syntactic' as const
-					: 'all' as const;
 			return service.doValidation(
 				params.textDocument.uri,
-				mode,
 				tsToken,
 				errors => {
 					// resultProgressReporter is undefined in vscode

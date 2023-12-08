@@ -3,7 +3,7 @@ import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, InitializationOptions, SimpleServerPlugin, ServerMode, ServerProjectProvider, ServerRuntimeEnvironment, Config } from './types.js';
+import { DiagnosticModel, InitializationOptions, SimpleServerPlugin, ServerProjectProvider, ServerRuntimeEnvironment, Config } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
 import { setupCapabilities } from './setupCapabilities.js';
 import { loadConfig } from './config.js';
@@ -219,10 +219,7 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 			});
 		}
 
-		if (
-			options.serverMode !== ServerMode.Syntactic
-			&& initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration
-		) {
+		if (initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
 			const exts = plugins.map(plugin => plugin.watchFileExtensions).flat();
 			if (exts.length) {
 				connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
@@ -379,13 +376,8 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 
 	async function sendDocumentDiagnostics(uri: string, version: number, cancel: vscode.CancellationToken) {
 
-		// fix https://github.com/vuejs/language-tools/issues/2627
-		if (options.serverMode === ServerMode.Syntactic) {
-			return;
-		}
-
 		const languageService = (await projectProvider!.getProject(uri)).getLanguageService();
-		const errors = await languageService.doValidation(uri, 'all', cancel, result => {
+		const errors = await languageService.doValidation(uri, cancel, result => {
 			context.server.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});
 
