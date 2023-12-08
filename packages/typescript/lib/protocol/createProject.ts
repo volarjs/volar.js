@@ -148,7 +148,6 @@ export function createLanguage(
 			...sys,
 			getCurrentDirectory: projectHost.getCurrentDirectory,
 			getCompilationSettings: projectHost.getCompilationSettings,
-			getCancellationToken: projectHost.getCancellationToken,
 			getLocalizedDiagnosticMessages: projectHost.getLocalizedDiagnosticMessages,
 			getProjectReferences: projectHost.getProjectReferences,
 			getDefaultLibFileName: (options) => {

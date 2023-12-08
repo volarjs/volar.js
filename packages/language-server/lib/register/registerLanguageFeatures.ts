@@ -264,10 +264,9 @@ export function registerLanguageFeatures(
 	});
 	connection.languages.diagnostics.on(async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
 		const result = await worker(params.textDocument.uri, token, service => {
-			const tsToken = runtime.getCancellationToken(token);
 			return service.doValidation(
 				params.textDocument.uri,
-				tsToken,
+				token,
 				errors => {
 					// resultProgressReporter is undefined in vscode
 					resultProgressReporter?.report({

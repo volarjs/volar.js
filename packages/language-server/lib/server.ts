@@ -348,29 +348,29 @@ export function startLanguageServerBase<Plugin extends SimpleServerPlugin>(
 
 		const req = ++documentUpdatedReq;
 		const delay = 250;
-		const cancel = context.server.runtimeEnv.getCancellationToken({
+		const token: vscode.CancellationToken = {
 			get isCancellationRequested() {
 				return req !== documentUpdatedReq;
 			},
 			onCancellationRequested: vscode.Event.None,
-		});
+		};
 		const changeDoc = docUri ? documents.get(docUri) : undefined;
 		const otherDocs = [...documents.all()].filter(doc => doc !== changeDoc);
 
 		if (changeDoc) {
 			await sleep(delay);
-			if (cancel.isCancellationRequested) {
+			if (token.isCancellationRequested) {
 				return;
 			}
-			await sendDocumentDiagnostics(changeDoc.uri, changeDoc.version, cancel);
+			await sendDocumentDiagnostics(changeDoc.uri, changeDoc.version, token);
 		}
 
 		for (const doc of otherDocs) {
 			await sleep(delay);
-			if (cancel.isCancellationRequested) {
+			if (token.isCancellationRequested) {
 				break;
 			}
-			await sendDocumentDiagnostics(doc.uri, doc.version, cancel);
+			await sendDocumentDiagnostics(doc.uri, doc.version, token);
 		}
 	}
 
