@@ -122,7 +122,7 @@ function createTypeScriptCheckerWorker(
 	function check(fileName: string) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		return service.doValidation(uri, 'all');
+		return service.doValidation(uri);
 	}
 
 	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {

@@ -148,7 +148,6 @@ export function register(context: ServiceContext) {
 
 	return async (
 		uri: string,
-		mode: 'all' | 'semantic' | 'syntactic',
 		token = NoneCancellationToken,
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
@@ -196,14 +195,9 @@ export function register(context: ServiceContext) {
 			}
 		}
 
-		if (mode === 'all' || mode === 'syntactic') {
-			await worker('provideDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
-		}
-
-		if (mode === 'all' || mode === 'semantic') {
-			await doResponse();
-			await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
-		}
+		await worker('provideDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
+		await doResponse();
+		await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
 
 		return await collectErrors();
 

@@ -5,7 +5,6 @@ import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { startLanguageServerBase } from './lib/server';
 import type { InitializationOptions, SimpleServerPlugin, ServerProjectProvider, TypeScriptServerPlugin } from './lib/types';
 import { FileSystem, FileType } from '@volar/language-service';
-import { createGetCancellationToken } from './lib/cancellationToken';
 import { WorkspacesContext, createSimpleProjectProvider } from './lib/project/simpleProjectProvider';
 import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
 
@@ -156,6 +155,5 @@ function startServer<P extends SimpleServerPlugin<any, any>>(
 			} catch { }
 		},
 		fs: createFs(options),
-		getCancellationToken: createGetCancellationToken(fs, options.cancellationPipeName),
 	}));
 }

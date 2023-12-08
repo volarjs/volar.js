@@ -92,10 +92,7 @@ export function activateMarkers(
 
 		const version = model.getVersionId();
 		const languageService = await worker.withSyncedResources(getSyncUris());
-		const diagnostics = await languageService.doValidation(
-			model.uri.toString(),
-			'all',
-		);
+		const diagnostics = await languageService.doValidation(model.uri.toString());
 		if (model.getVersionId() !== version) {
 			return;
 		}

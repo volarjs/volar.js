@@ -79,7 +79,6 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getScriptFileNames'
 	| 'getProjectVersion'
 	| 'getScriptSnapshot'
-	| 'getCancellationToken'
 > {
 	getLanguageId(fileName: string): string;
 }

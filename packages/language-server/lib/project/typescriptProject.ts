@@ -25,12 +25,6 @@ export async function createTypeScriptServerProject(
 		throw '!context.workspaces.ts';
 	}
 
-	const tsToken: ts.CancellationToken = {
-		isCancellationRequested() {
-			return token.isCancellationRequested;
-		},
-		throwIfCancellationRequested() { },
-	};
 	const { uriToFileName, fileNameToUri } = context.server.runtimeEnv;
 	const ts = context.workspaces.ts;
 	const host: TypeScriptProjectHost = {
@@ -44,7 +38,6 @@ export async function createTypeScriptServerProject(
 				return doc.getSnapshot();
 			}
 		},
-		getCancellationToken: () => tsToken,
 		getCompilationSettings: () => parsedCommandLine.options,
 		getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
 		getProjectReferences: () => parsedCommandLine.projectReferences,
@@ -55,7 +48,6 @@ export async function createTypeScriptServerProject(
 	let parsedCommandLine: ts.ParsedCommandLine;
 	let rootFiles = await getRootFiles();
 	let projectVersion = 0;
-	let token = context.server.runtimeEnv.getCancellationToken();
 	let languageService: LanguageService | undefined;
 
 	const config = await getConfig<TypeScriptServerPlugin>(context, plugins, serviceEnv, {
@@ -65,7 +57,6 @@ export async function createTypeScriptServerProject(
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
 		projectVersion++;
-		token = context.server.runtimeEnv.getCancellationToken();
 	});
 	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => {
 		onWorkspaceFilesChanged(params.changes);
@@ -80,7 +71,6 @@ export async function createTypeScriptServerProject(
 			if (!rootFiles.includes(fileName)) {
 				rootFiles.push(fileName);
 				projectVersion++;
-				token = context.server.runtimeEnv.getCancellationToken();
 			}
 		},
 		dispose,
@@ -123,7 +113,6 @@ export async function createTypeScriptServerProject(
 		}
 
 		projectVersion++;
-		token = context.server.runtimeEnv.getCancellationToken();
 	}
 	function dispose() {
 		sys.dispose();

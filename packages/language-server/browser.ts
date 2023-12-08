@@ -124,9 +124,6 @@ function startServer<P extends SimpleServerPlugin<any, any>>(
 				return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
 			},
 		},
-		getCancellationToken(original) {
-			return original ?? vscode.CancellationToken.None;
-		},
 	}));
 }
 
