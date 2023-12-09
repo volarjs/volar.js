@@ -183,6 +183,22 @@ importers:
         specifier: ^0.4.0
         version: 0.4.0
 
+  packages/test-utils:
+    dependencies:
+      '@volar/language-server':
+        specifier: 2.0.0-alpha.2
+        version: link:../language-server
+      vscode-languageserver-textdocument:
+        specifier: ^1.0.11
+        version: 1.0.11
+      vscode-uri:
+        specifier: ^3.0.8
+        version: 3.0.8
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 20.10.0
+
   packages/typescript:
     dependencies:
       '@volar/language-core':
