@@ -47,7 +47,10 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					initializationOptions,
 				} satisfies _.InitializeParams
 			);
-			await connection.sendNotification(_.InitializedNotification.type);
+			await connection.sendNotification(
+				_.InitializedNotification.type,
+				{} satisfies _.InitializedParams
+			);
 			return result;
 		},
 		async openTextDocument(fileName: string, languageId: string) {
@@ -104,7 +107,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					position,
 				} satisfies _.CompletionParams
 			);
-			 // @volar/language-server only returns CompletionList
+			// @volar/language-server only returns CompletionList
 			assert(!Array.isArray(result));
 			return result;
 		},
