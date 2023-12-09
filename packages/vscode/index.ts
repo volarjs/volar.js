@@ -11,13 +11,6 @@ export { activate as activateTsVersionStatusItem, getTsdk } from './lib/features
 
 export * from 'vscode-languageclient';
 
-export function takeOverModeActive(context: vscode.ExtensionContext) {
-	if (vscode.workspace.getConfiguration('volar').get<string>('takeOverMode.extension') === context.extension.id) {
-		return !vscode.extensions.getExtension('vscode.typescript-language-features');
-	}
-	return false;
-}
-
 import type { BaseLanguageClient, Middleware } from 'vscode-languageclient';
 
 export const middleware: Middleware = {

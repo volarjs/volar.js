@@ -12,7 +12,6 @@ export function activate(
 	client: BaseLanguageClient,
 	shouldStatusBarShow: (document: vscode.TextDocument) => boolean,
 	resolveStatusText: (text: string) => string,
-	disableTakeOverMode: boolean,
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];
@@ -52,19 +51,10 @@ export function activate(
 					detail: defaultTsdkPath,
 				} : undefined,
 			},
-			...(disableTakeOverMode ? [] : [{
-				takeover: {
-					label: 'What is Takeover Mode?',
-				},
-			}])
 		]);
 
 		if (select === undefined) {
 			return; // cancel
-		}
-		if (select === 'takeover') {
-			vscode.env.openExternal(vscode.Uri.parse('https://vuejs.org/guide/typescript/overview.html#volar-takeover-mode'));
-			return;
 		}
 		if (select === 'useDefaultWorkspaceTsdk') {
 			await vscode.workspace.getConfiguration('typescript').update('tsdk', defaultTsdkPath);
