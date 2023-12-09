@@ -24,6 +24,36 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 
 	const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
 
+	// ignored methods
+
+	const {
+		getNavigationTree,
+		getOutliningSpans,
+	} = languageService;
+
+	languageService.getNavigationTree = (fileName) => {
+		const [virtualFile] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			const tree = getNavigationTree(fileName);
+			tree.childItems = undefined;
+			return tree;
+		}
+		else {
+			return getNavigationTree(fileName);
+		}
+	};
+	languageService.getOutliningSpans = (fileName) => {
+		const [virtualFile] = getVirtualFileAndMap(fileName);
+		if (virtualFile) {
+			return [];
+		}
+		else {
+			return getOutliningSpans(fileName);
+		}
+	};
+
+	// methods
+
 	const {
 		findReferences,
 		findRenameLocations,
