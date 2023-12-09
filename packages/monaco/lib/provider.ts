@@ -27,10 +27,11 @@ import {
 	toHover,
 	toInlayHint,
 	toLink,
+	toLinkedEditingRanges,
 	toLocation,
 	toLocationLink,
-	toRange,
 	toSelectionRange,
+	toSemanticTokens,
 	toSignatureHelp,
 	toTextEdit,
 	toWorkspaceEdit,
@@ -94,20 +95,14 @@ export async function createLanguageFeaturesProvider(
 				standardSemanticTokensLegend,
 			);
 			if (codeResult) {
-				return {
-					resultId: codeResult.resultId,
-					data: Uint32Array.from(codeResult.data),
-				};
+				return toSemanticTokens(codeResult);
 			}
 		},
 		async provideDocumentRangeSemanticTokens(model, range) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getSemanticTokens(model.uri.toString(), fromRange(range), standardSemanticTokensLegend);
 			if (codeResult) {
-				return {
-					resultId: codeResult.resultId,
-					data: Uint32Array.from(codeResult.data),
-				};
+				return toSemanticTokens(codeResult);
 			}
 		},
 		releaseDocumentSemanticTokens() { },
@@ -135,12 +130,7 @@ export async function createLanguageFeaturesProvider(
 				fromPosition(position),
 			);
 			if (codeResult) {
-				return {
-					ranges: codeResult.ranges.map(toRange),
-					wordPattern: codeResult.wordPattern
-						? new RegExp(codeResult.wordPattern)
-						: undefined,
-				};
+				return toLinkedEditingRanges(codeResult);
 			}
 		},
 		async provideDefinition(model, position) {
