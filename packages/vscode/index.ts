@@ -14,16 +14,6 @@ export * from 'vscode-languageclient';
 import type { BaseLanguageClient, Middleware } from 'vscode-languageclient';
 
 export const middleware: Middleware = {
-	async provideHover(document, position, token, next) {
-		const hover = await next(document, position, token);
-		for (const content of hover?.contents ?? []) {
-			if (content instanceof vscode.MarkdownString) {
-				content.isTrusted = true;
-				content.supportHtml = true;
-			}
-		}
-		return hover;
-	},
 	async provideCodeActions(document, range, context, token, next) {
 		let actions = await next(document, range, context, token);
 		actions = actions?.map(action => {
