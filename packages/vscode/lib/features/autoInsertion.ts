@@ -2,10 +2,7 @@ import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import { AutoInsertRequest } from '@volar/language-server/protocol';
 
-export function activate(
-	clients: BaseLanguageClient[],
-	active: (document: vscode.TextDocument) => boolean,
-) {
+export function activate(selector: vscode.DocumentSelector, clients: BaseLanguageClient[]) {
 
 	let isEnabled = false;
 	let timeout: NodeJS.Timeout | undefined;
@@ -24,7 +21,7 @@ export function activate(
 			return;
 		}
 		let document = editor.document;
-		if (!active(document)) {
+		if (!vscode.languages.match(selector, document)) {
 			return;
 		}
 		isEnabled = true;

@@ -7,10 +7,10 @@ import type { InitializationOptions } from '@volar/language-server';
 const defaultTsdkPath = 'node_modules/typescript/lib';
 
 export function activate(
+	selector: vscode.DocumentSelector,
 	cmd: string,
 	context: vscode.ExtensionContext,
 	client: BaseLanguageClient,
-	shouldStatusBarShow: (document: vscode.TextDocument) => boolean,
 	resolveStatusText: (text: string) => string,
 ) {
 
@@ -76,7 +76,7 @@ export function activate(
 	async function updateStatusBar() {
 		if (
 			!vscode.window.activeTextEditor
-			|| !shouldStatusBarShow(vscode.window.activeTextEditor.document)
+			|| !vscode.languages.match(selector, vscode.window.activeTextEditor.document)
 		) {
 			statusBar.hide();
 		}

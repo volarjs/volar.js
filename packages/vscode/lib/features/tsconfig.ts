@@ -4,9 +4,9 @@ import { GetMatchTsConfigRequest } from '@volar/language-server/protocol';
 import * as path from 'path-browserify';
 
 export function activate(
+	selector: vscode.DocumentSelector,
 	cmd: string,
 	client: BaseLanguageClient,
-	shouldStatusBarShow: (document: vscode.TextDocument) => boolean,
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];
@@ -29,7 +29,7 @@ export function activate(
 	async function updateStatusBar() {
 		if (
 			!vscode.window.activeTextEditor
-			|| !shouldStatusBarShow(vscode.window.activeTextEditor.document)
+			|| !vscode.languages.match(selector, vscode.window.activeTextEditor.document)
 		) {
 			statusBar.hide();
 		}
