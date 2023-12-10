@@ -26,7 +26,13 @@ export function activate(context: vscode.ExtensionContext) {
 		async getChildren(element) {
 
 			if (!element) {
-				return extensions.map(extension => extension.exports.volarLabs.languageClients.map(client => ({ extension, iconPath: vscode.Uri.joinPath(extension.extensionUri, extension.packageJSON.icon), client }))).flat();
+				return extensions.map<LanguageClientItem>(extension => {
+					return {
+						extension,
+						iconPath: vscode.Uri.joinPath(extension.extensionUri, extension.packageJSON.icon),
+						client: extension.exports.volarLabs.languageClient,
+					};
+				});
 			}
 
 			const doc = vscode.window.activeTextEditor?.document;
@@ -53,14 +59,16 @@ export function activate(context: vscode.ExtensionContext) {
 		getTreeItem(element) {
 			if ('virtualFile' in element) {
 
-				const uri = vscode.Uri.parse(element.virtualFile.id).with({ scheme: element.client.name.replace(/ /g, '_').toLowerCase() });
+				const uri = vscode.Uri
+					.file(element.virtualFile.fileName)
+					.with({ scheme: element.client.name.replace(/ /g, '_').toLowerCase() });
 				virtualUriToSourceUri.set(uri.toString(), element.sourceDocumentUri);
 
 				const virtualFileUris = sourceUriToVirtualUris.get(element.sourceDocumentUri) ?? new Set<string>();
 				virtualFileUris.add(uri.toString());
 				sourceUriToVirtualUris.set(element.sourceDocumentUri, virtualFileUris);
 
-				let label = path.basename(element.virtualFile.id);
+				let label = path.basename(element.virtualFile.fileName);
 				// @ts-expect-error
 				const version = element.virtualFile.version;
 				label += ` (ts: ${!!element.virtualFile.typescript}, version: ${version})`;
@@ -68,11 +76,15 @@ export function activate(context: vscode.ExtensionContext) {
 					iconPath: element.client.clientOptions.initializationOptions.codegenStack ? new vscode.ThemeIcon('debug-breakpoint') : new vscode.ThemeIcon('file'),
 					label,
 					collapsibleState: element.virtualFile.embeddedFiles.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
-					resourceUri: vscode.Uri.parse(element.virtualFile.id),
+					resourceUri: vscode.Uri.file(element.virtualFile.fileName),
 					command: {
 						command: '_volar.action.openVirtualFile',
 						title: '',
-						arguments: [vscode.Uri.parse(element.virtualFile.id).with({ scheme: element.client.name.replace(/ /g, '_').toLowerCase() })],
+						arguments: [
+							vscode.Uri
+								.file(element.virtualFile.fileName)
+								.with({ scheme: element.client.name.replace(/ /g, '_').toLowerCase() })
+						],
 					},
 				};
 			}
@@ -96,8 +108,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 			const document = e.document;
 			const isVirtualFile = extensions
-				.some(extension => extension.exports.volarLabs.languageClients
-					.some(client => client.name.replace(/ /g, '_').toLowerCase() === document.uri.scheme)
+				.some(extension => extension.exports.volarLabs.languageClient.name
+					.replace(/ /g, '_')
+					.toLowerCase() === document.uri.scheme
 				);
 			if (isVirtualFile) return;
 
@@ -115,11 +128,10 @@ export function activate(context: vscode.ExtensionContext) {
 	useVolarExtensions(
 		context,
 		extension => {
-			for (const client of extension.exports.volarLabs.languageClients) {
-				context.subscriptions.push(
-					client.onDidChangeState(() => onDidChangeTreeData.fire())
-				);
-			}
+			const { languageClient } = extension.exports.volarLabs;
+			context.subscriptions.push(
+				languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+			);
 			extensions.push(extension);
 			onDidChangeTreeData.fire();
 			activateShowVirtualFiles(extension.exports);

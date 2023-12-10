@@ -89,12 +89,12 @@ export function parseServerCommand(command: vscode.Command) {
 	return command;
 }
 
-export const supportLabsVersion = 2.0 as const;
+export const supportLabsVersion = '2.0.0-alpha.3';
 
 export interface ExportsInfoForLabs {
 	volarLabs: {
 		version: typeof supportLabsVersion;
-		languageClients: BaseLanguageClient[];
+		languageClient: BaseLanguageClient;
 		languageServerProtocol: typeof import('@volar/language-server/protocol');
 		codegenStackSupport?: boolean;
 	};

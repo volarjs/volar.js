@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import { AutoInsertRequest } from '@volar/language-server/protocol';
 
-export function activate(selector: vscode.DocumentSelector, clients: BaseLanguageClient[]) {
+export function activate(selector: vscode.DocumentSelector, client: BaseLanguageClient) {
 
 	let isEnabled = false;
 	let timeout: NodeJS.Timeout | undefined;
@@ -40,27 +40,24 @@ export function activate(selector: vscode.DocumentSelector, clients: BaseLanguag
 
 		doAutoInsert(document, lastChange, async (document, position, lastChange, isCancel) => {
 
-			for (const client of clients) {
+			const params = {
+				...client.code2ProtocolConverter.asTextDocumentPositionParams(document, position),
+				lastChange: {
+					text: lastChange.text,
+					range: client.code2ProtocolConverter.asRange(lastChange.range),
+				},
+			};
 
-				const params = {
-					...client.code2ProtocolConverter.asTextDocumentPositionParams(document, position),
-					lastChange: {
-						text: lastChange.text,
-						range: client.code2ProtocolConverter.asRange(lastChange.range),
-					},
-				};
+			if (isCancel()) return;
 
-				if (isCancel()) return;
+			const result = await client.sendRequest(AutoInsertRequest.type, params);
 
-				const result = await client.sendRequest(AutoInsertRequest.type, params);
-
-				if (result !== undefined && result !== null) {
-					if (typeof result === 'string') {
-						return result;
-					}
-					else {
-						return client.protocol2CodeConverter.asTextEdit(result);
-					}
+			if (result !== undefined && result !== null) {
+				if (typeof result === 'string') {
+					return result;
+				}
+				else {
+					return client.protocol2CodeConverter.asTextEdit(result);
 				}
 			}
 		});

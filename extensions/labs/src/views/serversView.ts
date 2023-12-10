@@ -26,7 +26,12 @@ export function activate(context: vscode.ExtensionContext) {
 		async getChildren(element) {
 			// root
 			if (!element) {
-				return extensions.map(extension => extension.exports.volarLabs.languageClients.map(client => ({ extension, client }))).flat();
+				return extensions.map<LanguageClientItem>(extension => {
+					return {
+						extension,
+						client: extension.exports.volarLabs.languageClient,
+					};
+				});
 			}
 			// child
 			if ('file' in element) {
@@ -272,11 +277,10 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	useVolarExtensions(context, extension => {
-		for (const client of extension.exports.volarLabs.languageClients) {
-			context.subscriptions.push(
-				client.onDidChangeState(() => onDidChangeTreeData.fire())
-			);
-		}
+		const { languageClient } = extension.exports.volarLabs;
+		context.subscriptions.push(
+			languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+		);
 		extensions.push(extension);
 		onDidChangeTreeData.fire();
 	});
