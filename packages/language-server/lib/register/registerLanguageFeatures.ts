@@ -175,7 +175,7 @@ export function registerLanguageFeatures(
 	});
 	connection.onReferences(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
-			return service.findReferences(params.textDocument.uri, params.position, token);
+			return service.findReferences(params.textDocument.uri, params.position, { includeDeclaration: true }, token);
 		});
 	});
 	connection.onRequest(FindFileReferenceRequest.type, async (params, token) => {

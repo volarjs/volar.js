@@ -8,7 +8,7 @@ import { isReferencesEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
+	return (uri: string, position: vscode.Position, referenceContext: vscode.ReferenceContext, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -37,7 +37,7 @@ export function register(context: ServiceContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const references = await service[1].provideReferences(document, position, token) ?? [];
+					const references = await service[1].provideReferences(document, position, referenceContext, token) ?? [];
 
 					for (const reference of references) {
 

@@ -414,6 +414,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.findReferences(
 				model.uri.toString(),
 				fromPosition(position),
+				{ includeDeclaration: true },
 			);
 			if (codeResult) {
 				return codeResult.map(toLocation);
