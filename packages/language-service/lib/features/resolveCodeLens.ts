@@ -26,23 +26,7 @@ export function register(context: ServiceContext) {
 
 		if (data?.kind === 'references') {
 
-			let references = await findReferences(data.sourceFileUri, item.range.start, token) ?? [];
-
-			const service = context.services[data.serviceIndex];
-
-			if (service[1].resolveReferencesCodeLensLocations) {
-				const workerFileName = context.env.uriToFileName(data.workerFileUri);
-				const virtualFile = context.language.files.getVirtualFile(workerFileName)[0];
-				const sourceFile = context.language.files.getSourceFile(workerFileName);
-				if (virtualFile) {
-					const document = context.documents.get(context.env.fileNameToUri(virtualFile.fileName), virtualFile.languageId, virtualFile.snapshot);
-					references = await service[1].resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
-				}
-				else if (sourceFile && !sourceFile?.virtualFile) {
-					const document = context.documents.get(context.env.fileNameToUri(sourceFile.fileName), sourceFile.languageId, sourceFile.snapshot);
-					references = await service[1].resolveReferencesCodeLensLocations(document, data.workerFileRange, references, token);
-				}
-			}
+			const references = await findReferences(data.sourceFileUri, item.range.start, { includeDeclaration: false }, token) ?? [];
 
 			item.command = context.commands.showReferences.create(data.sourceFileUri, item.range.start, references);
 		}
