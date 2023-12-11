@@ -72,7 +72,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			}
 			return openedDocuments.get(uri)!;
 		},
-		async openUntitledTextDocument(content: string, languageId: string) {
+		async openUntitledDocument(content: string, languageId: string) {
 			const uri = URI.from({ scheme: 'untitled', path: `Untitled-${untitledCounter++}` }).toString();
 			const document = TextDocument.create(uri, languageId, 0, content);
 			openedDocuments.set(uri, document);
