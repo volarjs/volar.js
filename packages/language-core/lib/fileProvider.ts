@@ -71,7 +71,7 @@ export function createFileProvider(languages: LanguagePlugin[], caseSensitive: b
 		},
 		getLinkedCodeMap(file: VirtualFile) {
 			if (!virtualFileToLinkedCodeMap.has(file.snapshot)) {
-				virtualFileToLinkedCodeMap.set(file.snapshot, file.linkedNavigationMappings ? new LinkedCodeMap(file.linkedNavigationMappings) : undefined);
+				virtualFileToLinkedCodeMap.set(file.snapshot, file.linkedCodeMappings ? new LinkedCodeMap(file.linkedCodeMappings) : undefined);
 			}
 			return virtualFileToLinkedCodeMap.get(file.snapshot);
 		},

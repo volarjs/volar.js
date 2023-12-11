@@ -13,7 +13,7 @@ export interface VirtualFile extends BaseFile {
 		scriptKind: ts.ScriptKind;
 	};
 	codegenStacks?: Stack[];
-	linkedNavigationMappings?: Mapping[];
+	linkedCodeMappings?: Mapping[];
 }
 
 export interface CodeInformation {
