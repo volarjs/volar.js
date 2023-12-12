@@ -6,7 +6,7 @@ export function proxyCreateProgram(
 	ts: typeof import('typescript'),
 	original: typeof ts['createProgram'],
 	extensions: string[],
-	getLanguagePlugins: (options: ts.CreateProgramOptions) => LanguagePlugin[],
+	getLanguagePlugins: (ts: typeof import('typescript/lib/tsserverlibrary'), options: ts.CreateProgramOptions) => LanguagePlugin[],
 ) {
 	return new Proxy(original, {
 		apply: (target, thisArg, args) => {
@@ -21,7 +21,7 @@ export function proxyCreateProgram(
 
 			const sourceFileToSnapshotMap = new WeakMap<ts.SourceFile, ts.IScriptSnapshot>();
 			const files = createFileProvider(
-				getLanguagePlugins(options),
+				getLanguagePlugins(ts, options),
 				ts.sys.useCaseSensitiveFileNames,
 				fileName => {
 					let snapshot: ts.IScriptSnapshot | undefined;

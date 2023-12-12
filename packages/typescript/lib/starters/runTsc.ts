@@ -2,18 +2,18 @@ import * as fs from 'fs';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type { LanguagePlugin } from '@volar/language-core';
 
-export let getLanguagePlugins: (options: ts.CreateProgramOptions) => LanguagePlugin[] = () => [];
+export let getLanguagePlugins: (ts: typeof import('typescript/lib/tsserverlibrary'), options: ts.CreateProgramOptions) => LanguagePlugin[] = () => [];
 
 export function runTsc(
+	tscPath: string,
 	extensions: string[],
-	_getLanguagePlugins: (options: ts.CreateProgramOptions) => LanguagePlugin[],
+	_getLanguagePlugins: typeof getLanguagePlugins,
 ) {
 
 	getLanguagePlugins = _getLanguagePlugins;
 
 	const proxyApiPath = require.resolve('../node/proxyCreateProgram');
 	const currentFilePath = require.resolve('./runTsc');
-	const tscPath = require.resolve('typescript/lib/tsc');
 	const readFileSync = fs.readFileSync;
 
 	(fs as any).readFileSync = (...args: any[]) => {
@@ -32,7 +32,7 @@ export function runTsc(
 				+ `new Proxy({}, { get(_target, p, _receiver) {return eval(p); } } ), `
 				+ `_createProgram, `
 				+ `[${extsText}], `
-				+ `require(${currentFilePath}).getLanguagePlugins`
+				+ `require(${JSON.stringify(currentFilePath)}).getLanguagePlugins`
 				+ `);\n`
 				+ s.replace('createProgram', '_createProgram')
 			);
