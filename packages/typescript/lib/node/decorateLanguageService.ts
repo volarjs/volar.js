@@ -369,17 +369,17 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 	};
 	languageService.getSyntacticDiagnostics = (fileName) => {
 		return getSyntacticDiagnostics(fileName)
-			.map(diagnostic => transformDiagnostic(diagnostic))
+			.map(transformDiagnostic)
 			.filter(notEmpty);
 	};
 	languageService.getSemanticDiagnostics = (fileName) => {
 		return getSemanticDiagnostics(fileName)
-			.map(diagnostic => transformDiagnostic(diagnostic))
+			.map(transformDiagnostic)
 			.filter(notEmpty);
 	};
 	languageService.getSuggestionDiagnostics = (fileName) => {
 		return getSuggestionDiagnostics(fileName)
-			.map(diagnostic => transformDiagnostic(diagnostic))
+			.map(transformDiagnostic)
 			.filter(notEmpty);
 	};
 	languageService.getDefinitionAndBoundSpan = (fileName, position) => {
@@ -672,16 +672,35 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 
 	function transformDiagnostic<T extends ts.Diagnostic>(diagnostic: T): T | undefined {
 		if (!transformedDiagnostics.has(diagnostic)) {
-			if (diagnostic.start !== undefined && diagnostic.file) {
-				transformedDiagnostics.set(diagnostic, undefined);
-				const [virtualFile, sourceFile, map] = getVirtualFileAndMap(diagnostic.file?.fileName);
+			transformedDiagnostics.set(diagnostic, undefined);
+
+			const { relatedInformation } = diagnostic;
+
+			if (relatedInformation) {
+				diagnostic.relatedInformation = relatedInformation
+					.map(transformDiagnostic)
+					.filter(notEmpty);
+			}
+
+			if (
+				diagnostic.file !== undefined
+				&& diagnostic.start !== undefined
+				&& diagnostic.length !== undefined
+			) {
+				const [virtualFile, sourceFile, map] = getVirtualFileAndMap(diagnostic.file.fileName);
 				if (virtualFile) {
-					for (const [sourceOffset, mapping] of map.getSourceOffsets(diagnostic.start - (isTsPlugin ? sourceFile.snapshot.getLength() : 0))) {
-						if (shouldReportDiagnostics(mapping.data)) {
-							transformedDiagnostics.set(diagnostic, {
-								...diagnostic,
-								start: sourceOffset,
-							});
+					for (const sourceStart of map.getSourceOffsets(diagnostic.start - (isTsPlugin ? sourceFile.snapshot.getLength() : 0))) {
+						if (shouldReportDiagnostics(sourceStart[1].data)) {
+							for (const sourceEnd of map.getSourceOffsets(diagnostic.start + diagnostic.length - (isTsPlugin ? sourceFile.snapshot.getLength() : 0))) {
+								if (shouldReportDiagnostics(sourceEnd[1].data)) {
+									transformedDiagnostics.set(diagnostic, {
+										...diagnostic,
+										start: sourceStart[0],
+										length: sourceEnd[0] - sourceStart[0],
+									});
+									break;
+								}
+							}
 							break;
 						}
 					}
@@ -692,11 +711,6 @@ export function decorateLanguageService(virtualFiles: FileProvider, languageServ
 			}
 			else {
 				transformedDiagnostics.set(diagnostic, diagnostic);
-			}
-			if (diagnostic.relatedInformation) {
-				diagnostic.relatedInformation = diagnostic.relatedInformation
-					.map(transformDiagnostic)
-					.filter(notEmpty);
 			}
 		}
 		return transformedDiagnostics.get(diagnostic) as T | undefined;
