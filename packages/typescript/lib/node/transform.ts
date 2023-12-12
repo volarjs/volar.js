@@ -139,7 +139,7 @@ function transformRange(
 		if (filter(sourceStart[1].data)) {
 			for (const sourceEnd of map.getSourceOffsets(end - sourceFile.snapshot.getLength())) {
 				if (sourceEnd > sourceStart && filter(sourceEnd[1].data)) {
-					return [start, end];
+					return [sourceStart[0], sourceEnd[0]];
 				}
 			}
 		}
