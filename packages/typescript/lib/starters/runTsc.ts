@@ -13,7 +13,6 @@ export function runTsc(
 	getLanguagePlugins = _getLanguagePlugins;
 
 	const proxyApiPath = require.resolve('../node/proxyCreateProgram');
-	const currentFilePath = require.resolve('./runTsc');
 	const readFileSync = fs.readFileSync;
 
 	(fs as any).readFileSync = (...args: any[]) => {
@@ -32,7 +31,7 @@ export function runTsc(
 				+ `new Proxy({}, { get(_target, p, _receiver) {return eval(p); } } ), `
 				+ `_createProgram, `
 				+ `[${extsText}], `
-				+ `require(${JSON.stringify(currentFilePath)}).getLanguagePlugins`
+				+ `require(${JSON.stringify(__filename)}).getLanguagePlugins`
 				+ `);\n`
 				+ s.replace('createProgram', '_createProgram')
 			);
@@ -42,7 +41,12 @@ export function runTsc(
 		return (readFileSync as any)(...args);
 	};
 
-	require(tscPath);
+	try {
+		require(tscPath);
+	} finally {
+		(fs as any).readFileSync = readFileSync;
+		delete require.cache[tscPath];
+	}
 }
 
 function replace(text: string, ...[search, replace]: Parameters<String['replace']>) {
