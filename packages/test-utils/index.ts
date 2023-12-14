@@ -72,8 +72,8 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			}
 			return openedDocuments.get(uri)!;
 		},
-		async openUntitledDocument(content: string, languageId: string) {
-			const uri = URI.from({ scheme: 'untitled', path: `Untitled-${untitledCounter++}` }).toString();
+		async openUntitledDocument(content: string, languageId: string, extension?: string) {
+			const uri = URI.file(`Untitled-${untitledCounter++}${extension ? `.${extension}` : `.${languageId}`}`).toString();
 			const document = TextDocument.create(uri, languageId, 0, content);
 			openedDocuments.set(uri, document);
 			await connection.sendNotification(
