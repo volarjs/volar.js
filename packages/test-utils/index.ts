@@ -72,8 +72,24 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			}
 			return openedDocuments.get(uri)!;
 		},
-		async openUntitledDocument(content: string, languageId: string, extension?: string) {
-			const uri = URI.file(`Untitled-${untitledCounter++}${extension ? `.${extension}` : `.${languageId}`}`).toString();
+		async openUntitledDocument(content: string, languageId: string) {
+			const uri = URI.from({ scheme: 'untitled', path: `Untitled-${untitledCounter++}` }).toString();
+			const document = TextDocument.create(uri, languageId, 0, content);
+			openedDocuments.set(uri, document);
+			await connection.sendNotification(
+				_.DidOpenTextDocumentNotification.type,
+				{
+					textDocument: {
+						uri,
+						languageId,
+						version: document.version,
+						text: document.getText(),
+					},
+				} satisfies _.DidOpenTextDocumentParams
+			);
+			return document;
+		},
+		async openInMemoryDocument(uri: string, languageId: string, content: string) {
 			const document = TextDocument.create(uri, languageId, 0, content);
 			openedDocuments.set(uri, document);
 			await connection.sendNotification(
