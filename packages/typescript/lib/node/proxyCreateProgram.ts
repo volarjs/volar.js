@@ -14,11 +14,6 @@ export function proxyCreateProgram(
 			const options = args[0] as ts.CreateProgramOptions;
 			assert(!!options.host, '!!options.host');
 
-			const originalHost = options.host;
-
-			options.host = { ...originalHost };
-			options.options.allowArbitraryExtensions = true;
-
 			const sourceFileToSnapshotMap = new WeakMap<ts.SourceFile, ts.IScriptSnapshot>();
 			const files = createFileProvider(
 				getLanguagePlugins(ts, options),
@@ -55,6 +50,7 @@ export function proxyCreateProgram(
 			const originalSourceFiles = new Map<string, ts.SourceFile | undefined>();
 			const parsedSourceFiles = new WeakMap<ts.SourceFile, ts.SourceFile>();
 			const arbitraryExtensions = extensions.map(ext => `.d${ext}.ts`);
+			const originalHost = options.host;
 			const moduleResolutionHost: ts.ModuleResolutionHost = {
 				...originalHost,
 				fileExists(fileName) {
@@ -67,6 +63,8 @@ export function proxyCreateProgram(
 				},
 			};
 
+			options.host = { ...originalHost };
+			options.options.allowArbitraryExtensions = true;
 			options.host.getSourceFile = (
 				fileName,
 				languageVersionOrOptions,
