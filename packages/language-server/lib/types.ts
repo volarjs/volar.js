@@ -3,8 +3,8 @@ import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
 
 export interface Config {
-	languages?: { [id: string]: LanguagePlugin; };
-	services?: { [id: string]: ServicePlugin; };
+	languages: { [id: string]: LanguagePlugin; };
+	services: { [id: string]: ServicePlugin; };
 }
 
 export interface Timer {

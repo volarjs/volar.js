@@ -124,7 +124,7 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 			},
 		};
 
-		let config: Config = {};
+		let config: Config = { languages: Object.create(null), services: Object.create(null) };
 
 		for (const folder of workspaceFolderManager.getAll()) {
 			if (folder.uri.scheme === 'file') {
@@ -147,7 +147,7 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 			options,
 			plugins,
 			getSemanticTokensLegend(),
-			Object.values(config.services ?? {}),
+			Object.values(config.services),
 		);
 
 		projectProvider = createProjectProvider({

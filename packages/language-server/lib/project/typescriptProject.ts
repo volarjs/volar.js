@@ -94,13 +94,13 @@ export async function createTypeScriptServerProject(
 			const language = createLanguage(
 				ts,
 				sys,
-				Object.values(config.languages ?? {}),
+				Object.values(config.languages),
 				typeof tsconfig === 'string' ? tsconfig : undefined,
 				host,
 			);
 			languageService = createLanguageService(
 				language,
-				Object.values(config.services ?? {}),
+				Object.values(config.services),
 				serviceEnv,
 			);
 		}

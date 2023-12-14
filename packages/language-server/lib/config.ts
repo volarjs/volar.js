@@ -9,13 +9,13 @@ export async function getConfig(
 	projectCtx: ProjectContext,
 ) {
 
-	let config = (
-		env.workspaceFolder.uri.scheme === 'file' ? loadConfig(
+	let config: Config = (
+		env.workspaceFolder.uri.scheme === 'file' && loadConfig(
 			context.server.runtimeEnv.console,
 			context.server.runtimeEnv.uriToFileName(env.workspaceFolder.uri.toString()),
 			context.workspaces.initOptions.configFilePath,
-		) : {}
-	) ?? {};
+		) || { languages: Object.create(null), services: Object.create(null) }
+	);
 
 	for (const plugin of plugins) {
 		if (plugin.resolveConfig) {

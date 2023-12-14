@@ -24,7 +24,7 @@ export async function createSimpleServerProject(
 
 	function getLanguageService() {
 		if (!languageService) {
-			const files = createFileProvider(Object.values(config.languages ?? {}), false, fileName => {
+			const files = createFileProvider(Object.values(config.languages), false, fileName => {
 				const uri = context.server.runtimeEnv.fileNameToUri(fileName);
 				const script = context.workspaces.documents.get(uri);
 				if (script) {
@@ -36,7 +36,7 @@ export async function createSimpleServerProject(
 			});
 			languageService = createLanguageService(
 				{ files },
-				Object.values(config.services ?? {}),
+				Object.values(config.services),
 				serviceEnv,
 			);
 		}
