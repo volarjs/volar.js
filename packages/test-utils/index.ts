@@ -89,6 +89,22 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			);
 			return document;
 		},
+		async openInMemoryDocument(uri: string, languageId: string, content: string) {
+			const document = TextDocument.create(uri, languageId, 0, content);
+			openedDocuments.set(uri, document);
+			await connection.sendNotification(
+				_.DidOpenTextDocumentNotification.type,
+				{
+					textDocument: {
+						uri,
+						languageId,
+						version: document.version,
+						text: document.getText(),
+					},
+				} satisfies _.DidOpenTextDocumentParams
+			);
+			return document;
+		},
 		closeTextDocument(uri: string) {
 			assert(openedDocuments.has(uri));
 			openedDocuments.delete(uri);
