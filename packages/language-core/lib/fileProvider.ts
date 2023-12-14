@@ -28,7 +28,7 @@ export function createFileProvider(languages: LanguagePlugin[], caseSensitive: b
 					value.snapshot = snapshot;
 					if (value.virtualFile) {
 						disposeVirtualFiles(value);
-						value.virtualFile[1].updateVirtualFile(value.virtualFile[0], snapshot);
+						value.virtualFile[1].updateVirtualFile(value.virtualFile[0], snapshot, this);
 						updateVirtualFiles(value);
 					}
 					return value;
@@ -40,7 +40,7 @@ export function createFileProvider(languages: LanguagePlugin[], caseSensitive: b
 			}
 
 			for (const language of languages) {
-				const virtualFile = language.createVirtualFile(fileName, languageId, snapshot);
+				const virtualFile = language.createVirtualFile(fileName, languageId, snapshot, this);
 				if (virtualFile) {
 					// created
 					const source: SourceFile = {
@@ -63,7 +63,7 @@ export function createFileProvider(languages: LanguagePlugin[], caseSensitive: b
 			const value = sourceFileRegistry.get(fileName);
 			if (value) {
 				if (value.virtualFile) {
-					value.virtualFile[1].disposeVirtualFile?.(value.virtualFile[0]);
+					value.virtualFile[1].disposeVirtualFile?.(value.virtualFile[0], this);
 				}
 				sourceFileRegistry.delete(fileName); // deleted
 				disposeVirtualFiles(value);

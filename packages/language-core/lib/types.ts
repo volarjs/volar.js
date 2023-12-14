@@ -49,9 +49,9 @@ export interface BaseFile {
 }
 
 export interface LanguagePlugin<T extends VirtualFile = VirtualFile> {
-	createVirtualFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
-	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot): void;
-	disposeVirtualFile?(virtualFile: T): void;
+	createVirtualFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot, files: FileProvider): T | undefined;
+	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot, files: FileProvider): void;
+	disposeVirtualFile?(virtualFile: T, files: FileProvider): void;
 	typescript?: {
 		resolveSourceFileName(tsFileName: string): string | undefined;
 		resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string | undefined;
