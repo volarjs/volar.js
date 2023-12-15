@@ -3,7 +3,6 @@ import {
 	FileProvider,
 	isCallHierarchyEnabled,
 	isCodeActionsEnabled,
-	isCodeLensEnabled,
 	isCompletionEnabled,
 	isDefinitionEnabled,
 	isHighlightEnabled,
@@ -547,12 +546,28 @@ export function decorateLanguageService(files: FileProvider, languageService: ts
 		}
 	};
 	languageService.getCompletionEntryDetails = (fileName, position, entryName, formatOptions, source, preferences, data) => {
-		const details = getCompletionEntryDetails(fileName, position, entryName, formatOptions, source, preferences, data);
-		if (details?.codeActions) {
-			for (const codeAction of details.codeActions) {
-				codeAction.changes = codeAction.changes.map(edit => transformFileTextChanges(files, edit, isCodeLensEnabled)).filter(notEmpty);
+
+		let details: ts.CompletionEntryDetails | undefined;
+
+		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualFile) {
+			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+				if (isCompletionEnabled(mapping.data)) {
+					details = getCompletionEntryDetails(fileName, generateOffset + sourceFile.snapshot.getLength(), entryName, formatOptions, source, preferences, data);
+					break;
+				}
 			}
 		}
+		else {
+			return getCompletionEntryDetails(fileName, position, entryName, formatOptions, source, preferences, data);
+		}
+
+		if (details?.codeActions) {
+			for (const codeAction of details.codeActions) {
+				codeAction.changes = codeAction.changes.map(edit => transformFileTextChanges(files, edit, isCompletionEnabled)).filter(notEmpty);
+			}
+		}
+
 		return details;
 	};
 	languageService.provideInlayHints = (fileName, span, preferences) => {
