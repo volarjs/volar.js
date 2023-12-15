@@ -1,6 +1,6 @@
 {
 	"name": "@volar/test-utils",
-	"version": "2.0.0-alpha.6",
+	"version": "2.0.0-alpha.7",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
@@ -15,7 +15,7 @@
 		"@types/node": "latest"
 	},
 	"dependencies": {
-		"@volar/language-server": "2.0.0-alpha.6",
+		"@volar/language-server": "2.0.0-alpha.7",
 		"vscode-languageserver-textdocument": "^1.0.11",
 		"vscode-uri": "^3.0.8"
 	}
