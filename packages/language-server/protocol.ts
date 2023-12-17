@@ -1,4 +1,4 @@
-import type { CodeInformation, Mapping, Stack, VirtualFile } from '@volar/language-core';
+import type { Stack, VirtualFile, VirtualFileMapping } from '@volar/language-core';
 import type { FileStat, FileType, DocumentDropEdit } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver-protocol';
 
@@ -76,7 +76,7 @@ export namespace GetVirtualFileRequest {
 	};
 	export type ResponseType = {
 		content: string;
-		mappings: Record<string, Mapping<CodeInformation>[]>;
+		mappings: Record<string, VirtualFileMapping[]>;
 		codegenStacks: Stack[];
 	};
 	export type ErrorType = never;

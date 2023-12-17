@@ -6,8 +6,10 @@ export interface SourceFile extends BaseFile {
 	virtualFile?: [VirtualFile, LanguagePlugin];
 }
 
+export type VirtualFileMapping = Mapping<CodeInformation>;
+
 export interface VirtualFile extends BaseFile {
-	mappings: Mapping<CodeInformation>[];
+	mappings: VirtualFileMapping[];
 	embeddedFiles: VirtualFile[];
 	typescript?: {
 		scriptKind: ts.ScriptKind;
