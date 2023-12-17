@@ -133,17 +133,11 @@ export function register(context: ServiceContext) {
 		{
 			semantic: Cache,
 			syntactic: Cache,
-			semantic_rules: Cache,
-			syntax_rules: Cache,
-			format_rules: Cache,
 		}
 	>();
 	const cacheMaps = {
 		semantic: new Map() as CacheMap,
 		syntactic: new Map() as CacheMap,
-		semantic_rules: new Map() as CacheMap,
-		syntax_rules: new Map() as CacheMap,
-		format_rules: new Map() as CacheMap,
 	};
 
 	return async (
@@ -151,6 +145,12 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken,
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
+
+		context.env.onDidChangeConfiguration?.(() => {
+			lastResponses.clear();
+			cacheMaps.semantic.clear();
+			cacheMaps.syntactic.clear();
+		});
 
 		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
 		if (!sourceFile)
@@ -160,9 +160,6 @@ export function register(context: ServiceContext) {
 		const lastResponse = lastResponses.get(uri) ?? lastResponses.set(uri, {
 			semantic: { errors: [] },
 			syntactic: { errors: [] },
-			semantic_rules: { errors: [] },
-			syntax_rules: { errors: [] },
-			format_rules: { errors: [] },
 		}).get(uri)!;
 
 		let updateCacheRangeFailed = false;
