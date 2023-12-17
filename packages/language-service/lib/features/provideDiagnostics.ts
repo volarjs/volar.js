@@ -140,17 +140,17 @@ export function register(context: ServiceContext) {
 		syntactic: new Map() as CacheMap,
 	};
 
+	context.env.onDidChangeConfiguration?.(() => {
+		lastResponses.clear();
+		cacheMaps.semantic.clear();
+		cacheMaps.syntactic.clear();
+	});
+
 	return async (
 		uri: string,
 		token = NoneCancellationToken,
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
-
-		context.env.onDidChangeConfiguration?.(() => {
-			lastResponses.clear();
-			cacheMaps.semantic.clear();
-			cacheMaps.syntactic.clear();
-		});
 
 		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
 		if (!sourceFile)
