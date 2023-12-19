@@ -3,19 +3,17 @@ import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import type { ServerProjectProvider, ServerPlugin } from '../types';
+import type { ServerProjectProvider } from '../types';
 import { isFileInDir } from '../utils/isFileInDir';
 import { createUriMap } from '../utils/uriMap';
 import { getInferredCompilerOptions } from './inferredCompilerOptions';
 import { WorkspacesContext, createServiceEnvironment, getWorkspaceFolder } from './simpleProjectProvider';
 import { TypeScriptServerProject, createTypeScriptServerProject } from './typescriptProject';
+import type { ServerOptions } from '../server';
 
 const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
-export function createTypeScriptProjectProvider(
-	context: WorkspacesContext,
-	plugins: ReturnType<ServerPlugin>[]
-): ServerProjectProvider {
+export function createTypeScriptProjectProvider(context: WorkspacesContext, serverOptions: ServerOptions): ServerProjectProvider {
 
 	const { fileNameToUri, uriToFileName, fs } = context.server.runtimeEnv;
 	const configProjects = createUriMap<Promise<TypeScriptServerProject>>(fileNameToUri);
@@ -227,7 +225,7 @@ export function createTypeScriptProjectProvider(
 		if (!projectPromise) {
 			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaces.workspaceFolders, uriToFileName);
 			const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-			projectPromise = createTypeScriptServerProject(tsconfig, context, plugins, serviceEnv);
+			projectPromise = createTypeScriptServerProject(tsconfig, context, serviceEnv, serverOptions);
 			configProjects.pathSet(tsconfig, projectPromise);
 		}
 		return projectPromise;
@@ -239,7 +237,7 @@ export function createTypeScriptProjectProvider(
 			inferredProjects.uriSet(workspaceFolder.uri.toString(), (async () => {
 				const inferOptions = await getInferredCompilerOptions(context.server.configurationHost);
 				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-				return createTypeScriptServerProject(inferOptions, context, plugins, serviceEnv);
+				return createTypeScriptServerProject(inferOptions, context, serviceEnv, serverOptions);
 			})());
 		}
 

@@ -1,17 +1,17 @@
 import { LanguageService, ServiceEnvironment, createFileProvider, createLanguageService } from '@volar/language-service';
-import { getConfig } from '../config';
-import type { ServerProject, ServerPlugin } from '../types';
+import type { ServerOptions } from '../server';
+import type { ServerProject } from '../types';
 import type { WorkspacesContext } from './simpleProjectProvider';
 
 export async function createSimpleServerProject(
 	context: WorkspacesContext,
-	plugins: ReturnType<ServerPlugin>[],
 	serviceEnv: ServiceEnvironment,
+	serverOptions: ServerOptions,
 ): Promise<ServerProject> {
 
 	let languageService: LanguageService | undefined;
 
-	const config = await getConfig(context, plugins, serviceEnv, {});
+	const { languagePlugins, servicePlugins } = await serverOptions.getProjectSetup(serviceEnv, {});
 
 	return {
 		serviceEnv,
@@ -24,7 +24,7 @@ export async function createSimpleServerProject(
 
 	function getLanguageService() {
 		if (!languageService) {
-			const files = createFileProvider(Object.values(config.languages ?? {}), false, fileName => {
+			const files = createFileProvider(languagePlugins, false, fileName => {
 				const uri = context.server.runtimeEnv.fileNameToUri(fileName);
 				const script = context.workspaces.documents.get(uri);
 				if (script) {
@@ -36,7 +36,7 @@ export async function createSimpleServerProject(
 			});
 			languageService = createLanguageService(
 				{ files },
-				Object.values(config.services ?? {}),
+				servicePlugins,
 				serviceEnv,
 			);
 		}

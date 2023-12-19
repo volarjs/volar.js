@@ -1,13 +1,13 @@
 import type { ServicePlugin } from '@volar/language-service';
-import { DiagnosticModel, ServerPlugin, InitializationOptions } from './types';
+import { DiagnosticModel, InitializationOptions } from './types';
 import * as vscode from 'vscode-languageserver';
 
 export function setupCapabilities(
 	server: vscode.ServerCapabilities,
 	initOptions: InitializationOptions,
-	plugins: ReturnType<ServerPlugin>[],
-	semanticTokensLegend: vscode.SemanticTokensLegend,
+	watchExts: string[],
 	services: ServicePlugin[],
+	semanticTokensLegend: vscode.SemanticTokensLegend,
 ) {
 
 	server.selectionRangeProvider = true;
@@ -75,15 +75,14 @@ export function setupCapabilities(
 	server.inlayHintProvider = {
 		resolveProvider: true,
 	};
-	const exts = plugins.map(plugin => plugin.watchFileExtensions).flat();
-	if (exts.length) {
+	if (watchExts.length) {
 		server.workspace = {
 			fileOperations: {
 				willRename: {
 					filters: [
 						{
 							pattern: {
-								glob: `**/*.{${exts.join(',')}}`
+								glob: `**/*.{${watchExts.join(',')}}`
 							}
 						},
 					]
