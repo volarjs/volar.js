@@ -9,7 +9,6 @@ import { setupCapabilities } from './setupCapabilities.js';
 import { createWorkspaceFolderManager } from './workspaceFolderManager.js';
 import type { WorkspacesContext } from './project/simpleProjectProvider.js';
 import { SnapshotDocument } from '@volar/snapshot-document';
-import type * as ts from 'typescript/lib/tsserverlibrary.js';
 
 export interface ServerContext {
 	server: {
@@ -31,9 +30,6 @@ export interface ProjectSetup {
 }
 
 export interface ServerOptions {
-	typescript?: {
-		extraFileExtensions?: ts.FileExtensionInfo[];
-	};
 	watchFileExtensions?: string[];
 	getServerCapabilitiesSetup(): ServerSetup | Promise<ServerSetup>;
 	getProjectSetup(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): ProjectSetup | Promise<ProjectSetup>;
