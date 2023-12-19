@@ -35,7 +35,7 @@ export interface ServerOptions {
 		extraFileExtensions?: ts.FileExtensionInfo[];
 	};
 	watchFileExtensions?: string[];
-	getServerSetup(): ServerSetup | Promise<ServerSetup>;
+	getServerCapabilitiesSetup(): ServerSetup | Promise<ServerSetup>;
 	getProjectSetup(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): ProjectSetup | Promise<ProjectSetup>;
 }
 
@@ -162,7 +162,7 @@ export function createServer(
 			result.capabilities,
 			options,
 			serverOptions.watchFileExtensions ?? [],
-			(await serverOptions.getServerSetup()).servicePlugins,
+			(await serverOptions.getServerCapabilitiesSetup()).servicePlugins,
 			getSemanticTokensLegend(),
 		);
 
