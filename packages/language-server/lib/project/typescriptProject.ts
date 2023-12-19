@@ -3,10 +3,10 @@ import { createLanguage, createSys } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
-import { getConfig } from '../config';
-import type { ServerProject, ServerPlugin } from '../types';
+import type { ProjectContext, ServerProject } from '../types';
 import { UriMap, createUriMap } from '../utils/uriMap';
 import type { WorkspacesContext } from './simpleProjectProvider';
+import type { ServerOptions } from '../server';
 
 export interface TypeScriptServerProject extends ServerProject {
 	askedFiles: UriMap<boolean>;
@@ -17,8 +17,8 @@ export interface TypeScriptServerProject extends ServerProject {
 export async function createTypeScriptServerProject(
 	tsconfig: string | ts.CompilerOptions,
 	context: WorkspacesContext,
-	plugins: ReturnType<ServerPlugin>[],
 	serviceEnv: ServiceEnvironment,
+	serverOptions: ServerOptions,
 ): Promise<TypeScriptServerProject> {
 
 	if (!context.workspaces.ts) {
@@ -50,12 +50,13 @@ export async function createTypeScriptServerProject(
 	let projectVersion = 0;
 	let languageService: LanguageService | undefined;
 
-	const config = await getConfig(context, plugins, serviceEnv, {
+	const projectContext: ProjectContext = {
 		typescript: {
 			parsedCommandLine: parsedCommandLine!,
 			configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
 		},
-	});
+	};
+	const { languagePlugins, servicePlugins } = await serverOptions.getProjectSetup(serviceEnv, projectContext);
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
 		projectVersion++;
@@ -85,7 +86,7 @@ export async function createTypeScriptServerProject(
 			sys,
 			uriToFileName(serviceEnv.workspaceFolder.uri.toString()),
 			tsconfig,
-			plugins,
+			serverOptions.typescript?.extraFileExtensions ?? [],
 		);
 		return parsedCommandLine.fileNames;
 	}
@@ -94,13 +95,13 @@ export async function createTypeScriptServerProject(
 			const language = createLanguage(
 				ts,
 				sys,
-				Object.values(config.languages ?? {}),
+				languagePlugins,
 				typeof tsconfig === 'string' ? tsconfig : undefined,
 				host,
 			);
 			languageService = createLanguageService(
 				language,
-				Object.values(config.services ?? {}),
+				servicePlugins,
 				serviceEnv,
 			);
 		}
@@ -129,9 +130,8 @@ async function createParsedCommandLine(
 	sys: ReturnType<typeof createSys>,
 	workspacePath: string,
 	tsconfig: string | ts.CompilerOptions,
-	plugins: ReturnType<ServerPlugin>[],
+	extraFileExtensions: ts.FileExtensionInfo[],
 ): Promise<ts.ParsedCommandLine> {
-	const extraFileExtensions = plugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat();
 	let content: ts.ParsedCommandLine = {
 		errors: [],
 		fileNames: [],

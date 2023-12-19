@@ -1,15 +1,15 @@
-import { FileSystem, standardSemanticTokensLegend } from '@volar/language-service';
+import { FileSystem, LanguagePlugin, ServiceEnvironment, ServicePlugin, standardSemanticTokensLegend } from '@volar/language-service';
 import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, InitializationOptions, ServerPlugin, ServerProjectProvider, ServerRuntimeEnvironment, Config } from './types.js';
+import { DiagnosticModel, InitializationOptions, ProjectContext, ServerProjectProvider, ServerRuntimeEnvironment } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
 import { setupCapabilities } from './setupCapabilities.js';
-import { loadConfig } from './config.js';
 import { createWorkspaceFolderManager } from './workspaceFolderManager.js';
 import type { WorkspacesContext } from './project/simpleProjectProvider.js';
 import { SnapshotDocument } from '@volar/snapshot-document';
+import type * as ts from 'typescript/lib/tsserverlibrary.js';
 
 export interface ServerContext {
 	server: {
@@ -21,20 +21,37 @@ export interface ServerContext {
 	};
 }
 
-export function startLanguageServerBase<Plugin extends ServerPlugin>(
+export interface ServerSetup {
+	servicePlugins: ServicePlugin[];
+}
+
+export interface ProjectSetup {
+	servicePlugins: ServicePlugin[];
+	languagePlugins: LanguagePlugin[];
+}
+
+export interface ServerOptions {
+	typescript?: {
+		extraFileExtensions: ts.FileExtensionInfo[];
+	};
+	watchFileExtensions: string[];
+	getServerSetup(): ServerSetup | Promise<ServerSetup>;
+	getProjectSetup(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): ProjectSetup | Promise<ProjectSetup>;
+}
+
+export function createServer(
 	connection: vscode.Connection,
-	_plugins: Plugin[],
-	createProjectProvider: (context: WorkspacesContext, plugin: ReturnType<Plugin>[]) => ServerProjectProvider,
 	getRuntimeEnv: (params: vscode.InitializeParams, options: InitializationOptions) => ServerRuntimeEnvironment,
 ) {
 
 	let initParams: vscode.InitializeParams;
 	let options: InitializationOptions;
-	let projectProvider: ServerProjectProvider;
-	let plugins: ReturnType<Plugin>[];
+	let projects: ServerProjectProvider;
 	let context: ServerContext;
 	let ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
 	let tsLocalized: {} | undefined;
+	let env: ServerRuntimeEnvironment;
+	let serverOptions: ServerOptions;
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
 
@@ -52,11 +69,33 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 	const workspaceFolderManager = createWorkspaceFolderManager();
 
-	connection.onInitialize(async _params => {
+	return {
+		initialize,
+		initialized,
+		shutdown,
+		get projects() {
+			return projects;
+		},
+		get env() {
+			return env;
+		},
+		get modules() {
+			return {
+				typescript: ts,
+			};
+		}
+	};
+
+	async function initialize(
+		_params: vscode.InitializeParams,
+		projectProviderFactory: (context: WorkspacesContext, serverOptions: ServerOptions) => ServerProjectProvider,
+		_serverOptions: ServerOptions,
+	) {
 
 		initParams = _params;
+		serverOptions = _serverOptions;
 		options = initParams.initializationOptions;
-		const env = getRuntimeEnv(initParams, options);
+		env = getRuntimeEnv(initParams, options);
 		context = {
 			server: {
 				initializeParams: initParams,
@@ -80,11 +119,6 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 		tsLocalized = initParams.locale
 			? await context.server.runtimeEnv.loadTypeScriptLocalized(options, initParams.locale)
 			: undefined;
-		plugins = _plugins.map(plugin => plugin({
-			initializationOptions: options,
-			modules: { typescript: ts },
-			env: context.server.runtimeEnv,
-		}) as ReturnType<Plugin>);
 
 		if (options.l10n) {
 			await l10n.config({ uri: options.l10n.location });
@@ -124,33 +158,15 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 			},
 		};
 
-		let config: Config = {};
-
-		for (const folder of workspaceFolderManager.getAll()) {
-			if (folder.uri.scheme === 'file') {
-				const workspaceConfig = loadConfig(env.console, folder.uri.path, options.configFilePath);
-				if (workspaceConfig) {
-					config = workspaceConfig;
-					break;
-				}
-			}
-		}
-
-		for (const plugin of plugins) {
-			if (plugin.resolveConfig) {
-				config = await plugin.resolveConfig(config);
-			}
-		}
-
 		setupCapabilities(
 			result.capabilities,
 			options,
-			plugins,
+			serverOptions.watchFileExtensions,
 			getSemanticTokensLegend(),
-			Object.values(config.services ?? {}),
+			(await serverOptions.getServerSetup()).servicePlugins,
 		);
 
-		projectProvider = createProjectProvider({
+		projects = projectProviderFactory({
 			...context,
 			workspaces: {
 				ts,
@@ -161,7 +177,7 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 				reloadDiagnostics,
 				updateDiagnosticsAndSemanticTokens,
 			},
-		}, plugins);
+		}, serverOptions);
 
 		documents.onDidChangeContent(({ document }) => {
 			updateDiagnostics(document.uri);
@@ -171,10 +187,10 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 		});
 		context.server.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
 
-		(await import('./register/registerEditorFeatures.js')).registerEditorFeatures(connection, projectProvider, context.server.runtimeEnv);
+		(await import('./register/registerEditorFeatures.js')).registerEditorFeatures(connection, projects, context.server.runtimeEnv);
 		(await import('./register/registerLanguageFeatures.js')).registerLanguageFeatures(
 			connection,
-			projectProvider,
+			projects,
 			initParams,
 			options,
 			getSemanticTokensLegend(),
@@ -192,8 +208,9 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 		} catch { }
 
 		return result;
-	});
-	connection.onInitialized(() => {
+	}
+
+	function initialized() {
 
 		context.server.configurationHost?.ready();
 		context.server.configurationHost?.onDidChangeConfiguration?.(updateHttpSettings);
@@ -220,12 +237,11 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 		}
 
 		if (initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
-			const exts = plugins.map(plugin => plugin.watchFileExtensions).flat();
-			if (exts.length) {
+			if (serverOptions.watchFileExtensions.length) {
 				connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
 					watchers: [
 						{
-							globPattern: `**/*.{${exts.join(',')}}`
+							globPattern: `**/*.{${serverOptions.watchFileExtensions.join(',')}}`
 						},
 					]
 				});
@@ -237,19 +253,15 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 			}
 		}
 
-		for (const plugin of plugins) {
-			plugin.onInitialized?.(projectProvider!);
-		}
-
 		async function updateHttpSettings() {
 			const httpSettings = await context.server.configurationHost?.getConfiguration?.<{ proxyStrictSSL: boolean; proxy: string; }>('http');
 			configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
 		}
-	});
-	connection.onShutdown(async () => {
-		projectProvider?.reloadProjects();
-	});
-	connection.listen();
+	}
+
+	function shutdown() {
+		projects?.reloadProjects();
+	}
 
 	function createFsWithCache(fs: FileSystem): FileSystem {
 
@@ -376,7 +388,7 @@ export function startLanguageServerBase<Plugin extends ServerPlugin>(
 
 	async function sendDocumentDiagnostics(uri: string, version: number, cancel: vscode.CancellationToken) {
 
-		const languageService = (await projectProvider!.getProject(uri)).getLanguageService();
+		const languageService = (await projects!.getProject(uri)).getLanguageService();
 		const errors = await languageService.doValidation(uri, cancel, result => {
 			context.server.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});

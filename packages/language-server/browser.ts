@@ -1,15 +1,14 @@
-import * as vscode from 'vscode-languageserver/browser';
-import { startLanguageServerBase } from './lib/server';
-import type { ServerPlugin, ServerProjectProvider } from './lib/types';
-import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
-import { URI } from 'vscode-uri';
-import { FsReadFileRequest, FsReadDirectoryRequest, FsStatRequest } from './protocol';
 import { FileType } from '@volar/language-service';
-import { createSimpleProjectProvider, type WorkspacesContext } from './lib/project/simpleProjectProvider';
-import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
+import * as vscode from 'vscode-languageserver/browser';
+import { URI } from 'vscode-uri';
+import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
+import { createServer } from './lib/server';
+import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from './protocol';
 
 export * from 'vscode-languageserver/browser';
 export * from './index';
+export * from './lib/project/simpleProjectProvider';
+export * from './lib/project/typescriptProjectProvider';
 
 export function createConnection() {
 
@@ -20,34 +19,8 @@ export function createConnection() {
 	return connection;
 }
 
-export function startSimpleServer(
-	connection: vscode.Connection,
-	...plugins: ServerPlugin[]
-) {
-	return startServer(
-		connection,
-		createSimpleProjectProvider,
-		...plugins,
-	);
-}
-
-export function startTypeScriptServer(
-	connection: vscode.Connection,
-	...plugins: ServerPlugin[]
-) {
-	return startServer(
-		connection,
-		createTypeScriptProjectProvider,
-		...plugins,
-	);
-}
-
-function startServer(
-	connection: vscode.Connection,
-	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<ServerPlugin>[]) => ServerProjectProvider,
-	...plugins: ServerPlugin[]
-) {
-	startLanguageServerBase(connection, plugins, createProjectProvider, () => ({
+export function createBrowserServer(connection: vscode.Connection) {
+	return createServer(connection, () => ({
 		uriToFileName,
 		fileNameToUri,
 		console: connection.console,

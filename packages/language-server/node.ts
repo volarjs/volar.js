@@ -1,15 +1,15 @@
+import { FileSystem, FileType } from '@volar/language-service';
 import * as fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
-import { startLanguageServerBase } from './lib/server';
-import type { InitializationOptions, ServerPlugin, ServerProjectProvider } from './lib/types';
-import { FileSystem, FileType } from '@volar/language-service';
-import { WorkspacesContext, createSimpleProjectProvider } from './lib/project/simpleProjectProvider';
-import { createTypeScriptProjectProvider } from './lib/project/typescriptProjectProvider';
+import { createServer } from './lib/server';
+import type { InitializationOptions } from './lib/types';
 
 export * from 'vscode-languageserver/node';
 export * from './index';
+export * from './lib/project/simpleProjectProvider';
+export * from './lib/project/typescriptProjectProvider';
 
 export const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
 
@@ -83,34 +83,8 @@ export function createConnection() {
 	return vscode.createConnection(vscode.ProposedFeatures.all);
 }
 
-export function startSimpleServer(
-	connection: vscode.Connection,
-	...plugins: ServerPlugin[]
-) {
-	return startServer(
-		connection,
-		createSimpleProjectProvider,
-		...plugins,
-	);
-}
-
-export function startTypeScriptServer(
-	connection: vscode.Connection,
-	...plugins: ServerPlugin[]
-) {
-	return startServer(
-		connection,
-		createTypeScriptProjectProvider,
-		...plugins,
-	);
-}
-
-function startServer(
-	connection: vscode.Connection,
-	createProjectProvider: (context: WorkspacesContext, plugins: ReturnType<ServerPlugin>[]) => ServerProjectProvider,
-	...plugins: ServerPlugin[]
-) {
-	startLanguageServerBase(connection, plugins, createProjectProvider, (_, options) => ({
+export function createNodeServer(connection: vscode.Connection) {
+	return createServer(connection, (_, options) => ({
 		uriToFileName,
 		fileNameToUri,
 		console: connection.console,

@@ -1,11 +1,6 @@
-import type { Console, FileSystem, LanguagePlugin, LanguageService, ServicePlugin, ServiceEnvironment } from '@volar/language-service';
+import type { Console, FileSystem, LanguageService, ServiceEnvironment } from '@volar/language-service';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
-
-export interface Config {
-	languages?: { [id: string]: LanguagePlugin; };
-	services?: { [id: string]: ServicePlugin; };
-}
 
 export interface Timer {
 	setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
@@ -28,27 +23,6 @@ export interface ProjectContext {
 	typescript?: {
 		configFileName: string | undefined;
 		parsedCommandLine: ts.ParsedCommandLine;
-	};
-}
-
-export interface ServerPlugin {
-	(ctx: {
-		initializationOptions: InitializationOptions;
-		modules: {
-			typescript?: typeof import('typescript/lib/tsserverlibrary');
-		};
-		env: ServerRuntimeEnvironment;
-	}): {
-		watchFileExtensions?: string[];
-		typescript?: {
-			extraFileExtensions?: ts.FileExtensionInfo[];
-		};
-		resolveConfig?(
-			config: Config,
-			env?: ServiceEnvironment,
-			project?: ProjectContext
-		): Config | Promise<Config>;
-		onInitialized?(projectManager: ServerProjectProvider): void;
 	};
 }
 
@@ -87,7 +61,6 @@ export interface InitializationOptions {
 	ignoreTriggerCharacters?: string[];
 	reverseConfigFilePriority?: boolean;
 	maxFileSize?: number;
-	configFilePath?: string;
 	/**
 	 * Extra semantic token types and modifiers that are supported by the client.
 	 */
