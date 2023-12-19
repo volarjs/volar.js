@@ -43,6 +43,22 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 						if (result.additionalEdit) {
 							edit.additionalEdit = await client.protocol2CodeConverter.asWorkspaceEdit(result.additionalEdit);
 						}
+						if (result.createDataTransferFile) {
+							edit.additionalEdit ??= new vscode.WorkspaceEdit();
+							for (const create of result.createDataTransferFile) {
+								const file = dataTransfer.get(create.contentsMimeType)?.asFile();
+								if (file) {
+									edit.additionalEdit.createFile(
+										client.protocol2CodeConverter.asUri(create.uri),
+										{
+											ignoreIfExists: create.options?.ignoreIfExists,
+											overwrite: create.options?.overwrite,
+											contents: await file.data(),
+										},
+									);
+								}
+							}
+						}
 						return edit;
 					}
 				},
