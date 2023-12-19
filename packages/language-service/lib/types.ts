@@ -138,6 +138,7 @@ export interface DocumentDropEdit {
 	insertText: string;
 	insertTextFormat: vscode.InsertTextFormat;
 	additionalEdit?: vscode.WorkspaceEdit;
+	createDataTransferFile?: (vscode.CreateFile & { contentsMimeType: string; })[];
 }
 
 export interface DataTransferItem {
