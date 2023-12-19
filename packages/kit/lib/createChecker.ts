@@ -10,7 +10,6 @@ export function createTypeScriptChecker(
 	languages: LanguagePlugin[],
 	services: ServicePlugin[],
 	tsconfig: string,
-	extraFileExtensions: ts.FileExtensionInfo[] = []
 ) {
 	const tsconfigPath = asPosix(tsconfig);
 	return createTypeScriptCheckerWorker(languages, services, tsconfigPath, env => {
@@ -24,7 +23,7 @@ export function createTypeScriptChecker(
 					undefined,
 					tsconfigPath,
 					undefined,
-					extraFileExtensions,
+					languages.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
 				);
 				parsed.fileNames = parsed.fileNames.map(asPosix);
 				return parsed;

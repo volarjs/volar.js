@@ -86,7 +86,7 @@ export async function createTypeScriptServerProject(
 			sys,
 			uriToFileName(serviceEnv.workspaceFolder.uri.toString()),
 			tsconfig,
-			serverOptions.typescript?.extraFileExtensions ?? [],
+			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
 		);
 		return parsedCommandLine.fileNames;
 	}
