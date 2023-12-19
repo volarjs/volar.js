@@ -32,9 +32,9 @@ export interface ProjectSetup {
 
 export interface ServerOptions {
 	typescript?: {
-		extraFileExtensions: ts.FileExtensionInfo[];
+		extraFileExtensions?: ts.FileExtensionInfo[];
 	};
-	watchFileExtensions: string[];
+	watchFileExtensions?: string[];
 	getServerSetup(): ServerSetup | Promise<ServerSetup>;
 	getProjectSetup(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): ProjectSetup | Promise<ProjectSetup>;
 }
@@ -161,9 +161,9 @@ export function createServer(
 		setupCapabilities(
 			result.capabilities,
 			options,
-			serverOptions.watchFileExtensions,
-			getSemanticTokensLegend(),
+			serverOptions.watchFileExtensions ?? [],
 			(await serverOptions.getServerSetup()).servicePlugins,
+			getSemanticTokensLegend(),
 		);
 
 		projects = projectProviderFactory({
@@ -237,7 +237,7 @@ export function createServer(
 		}
 
 		if (initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
-			if (serverOptions.watchFileExtensions.length) {
+			if (serverOptions.watchFileExtensions?.length) {
 				connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
 					watchers: [
 						{

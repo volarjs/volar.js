@@ -6,8 +6,8 @@ export function setupCapabilities(
 	server: vscode.ServerCapabilities,
 	initOptions: InitializationOptions,
 	watchExts: string[],
-	semanticTokensLegend: vscode.SemanticTokensLegend,
 	services: ServicePlugin[],
+	semanticTokensLegend: vscode.SemanticTokensLegend,
 ) {
 
 	server.selectionRangeProvider = true;
