@@ -120,3 +120,11 @@ export namespace DocumentDrop_DataTransferItemFileDataRequest {
 	export type ErrorType = never;
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/documentDrop/fileData');
 }
+
+export namespace LabsChangeVirtualFileStateNotification {
+	export type ParamsType = {
+		fileName: string;
+		ignore: boolean;
+	};
+	export const type = new vscode.NotificationType<ParamsType>('volar/client/labs/changeVirtualFileState');
+}

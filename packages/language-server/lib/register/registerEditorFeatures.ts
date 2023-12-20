@@ -10,14 +10,15 @@ import {
 	WriteVirtualFilesNotification,
 	DocumentDropRequest,
 	DocumentDrop_DataTransferItemAsStringRequest,
-	DocumentDrop_DataTransferItemFileDataRequest
+	DocumentDrop_DataTransferItemFileDataRequest,
+	LabsChangeVirtualFileStateNotification
 } from '../../protocol';
 import type { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
-import type { DataTransferItem } from '@volar/language-service';
+import { skipVirtualFiles, type DataTransferItem } from '@volar/language-service';
 
 export function registerEditorFeatures(
 	connection: vscode.Connection,
-	projectProvider: ServerProjectProvider,
+	projects: ServerProjectProvider,
 	env: ServerRuntimeEnvironment,
 ) {
 
@@ -48,18 +49,18 @@ export function registerEditorFeatures(
 			});
 		}
 
-		const languageService = (await projectProvider.getProject(textDocument.uri)).getLanguageService();
+		const languageService = (await projects.getProject(textDocument.uri)).getLanguageService();
 		return languageService.doDocumentDrop(textDocument.uri, position, dataTransferMap, token);
 	});
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
-		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
+		const languageService = (await projects.getProject(params.uri)).getLanguageService();
 		const configFileName = languageService.context.language.typescript?.configFileName;
 		if (configFileName) {
 			return { uri: env.fileNameToUri(configFileName) };
 		}
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
-		const languageService = (await projectProvider.getProject(document.uri)).getLanguageService();
+		const languageService = (await projects.getProject(document.uri)).getLanguageService();
 		const virtualFile = languageService.context.language.files.getSourceFile(env.uriToFileName(document.uri))?.virtualFile;
 		return virtualFile ? prune(virtualFile[0]) : undefined;
 
@@ -77,11 +78,12 @@ export function registerEditorFeatures(
 				embeddedFiles: file.embeddedFiles.map(prune),
 				// @ts-expect-error
 				version,
+				isIgnored: skipVirtualFiles.has(file.fileName),
 			};
 		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async params => {
-		const languageService = (await projectProvider.getProject(params.sourceFileUri)).getLanguageService();
+		const languageService = (await projects.getProject(params.sourceFileUri)).getLanguageService();
 		let content: string = '';
 		let codegenStacks: Stack[] = [];
 		const mappings: Record<string, CodeMapping[]> = {};
@@ -100,13 +102,13 @@ export function registerEditorFeatures(
 		};
 	});
 	connection.onNotification(ReloadProjectNotification.type, () => {
-		projectProvider.reloadProjects();
+		projects.reloadProjects();
 	});
 	connection.onNotification(WriteVirtualFilesNotification.type, async params => {
 
 		const fsModeName = 'fs'; // avoid bundle
 		const fs: typeof import('fs') = await import(fsModeName);
-		const languageService = (await projectProvider.getProject(params.uri)).getLanguageService();
+		const languageService = (await projects.getProject(params.uri)).getLanguageService();
 
 		if (languageService.context.language.typescript?.languageServiceHost) {
 
@@ -139,7 +141,7 @@ export function registerEditorFeatures(
 			size: number;
 		}>();
 
-		for (const project of await projectProvider.getProjects()) {
+		for (const project of await projects.getProjects()) {
 			const languageService = project.getLanguageService();
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
@@ -194,5 +196,13 @@ export function registerEditorFeatures(
 		}
 
 		return result;
+	});
+	connection.onNotification(LabsChangeVirtualFileStateNotification.type, async params => {
+		if (params.ignore) {
+			skipVirtualFiles.add(params.fileName);
+		}
+		else {
+			skipVirtualFiles.delete(params.fileName);
+		}
 	});
 }

@@ -3,6 +3,8 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext, ServicePluginInstance, ServicePlugin } from '../types';
 
+export const skipVirtualFiles = new Set<string>();
+
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
 	uri: string,
@@ -128,12 +130,33 @@ export async function visitEmbedded(
 
 	for (const map of context.documents.getMaps(current)) {
 		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(map.sourceFileDocument.uri));
-		if (sourceFile?.virtualFile?.[0] === rootFile) {
-			if (!await cb(current, map)) {
-				return false;
-			}
+		if (
+			sourceFile?.virtualFile?.[0] === rootFile
+			&& !skipVirtualFiles.has(current.fileName)
+			&& !await cb(current, map)
+		) {
+			return false;
 		}
 	}
 
 	return true;
+}
+
+export function getEmbeddedFilesByLevel(rootFile: VirtualFile, level: number) {
+
+	const embeddedFilesByLevel: VirtualFile[][] = [[rootFile]];
+
+	while (true) {
+
+		if (embeddedFilesByLevel.length > level)
+			return embeddedFilesByLevel[level];
+
+		let nextLevel: VirtualFile[] = [];
+
+		for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
+			nextLevel = nextLevel.concat(file.embeddedFiles.filter(file => !skipVirtualFiles.has(file.fileName)));
+		}
+
+		embeddedFilesByLevel.push(nextLevel);
+	}
 }

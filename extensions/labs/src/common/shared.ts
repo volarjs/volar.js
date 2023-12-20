@@ -1,12 +1,14 @@
-import { ExportsInfoForLabs, supportLabsVersion } from '@volar/vscode';
+import type { LabsInfo } from '@volar/vscode';
 import * as vscode from 'vscode';
 
-export function useVolarExtensions(
+export async function useVolarExtensions(
 	context: vscode.ExtensionContext,
-	addExtension: (extension: vscode.Extension<ExportsInfoForLabs>) => void
+	addExtension: (extension: vscode.Extension<LabsInfo>) => void
 ) {
 
 	const checked = new Set<string>();
+
+	let updateTimeout: NodeJS.Timeout | undefined;
 
 	context.subscriptions.push(
 		vscode.extensions.onDidChange(update),
@@ -15,24 +17,21 @@ export function useVolarExtensions(
 
 	update();
 
-	function update() {
-		vscode.extensions.all.forEach(extension => {
-			if (!checked.has(extension.id) && extension.isActive) {
-
-				checked.add(extension.id);
-
-				if (extension.exports && 'volarLabs' in extension.exports) {
-
-					const info: ExportsInfoForLabs = extension.exports;
-					if (info.volarLabs.version !== supportLabsVersion) {
-						vscode.window.showWarningMessage(`Extension '${extension.id}' is not compatible with this Labs version. Expected version ${supportLabsVersion}, but got ${info.volarLabs.version}. Please downgrade Labs or update '${extension.id}' if available.`);
-						return;
+	async function update() {
+		if (updateTimeout) {
+			clearTimeout(updateTimeout);
+		};
+		updateTimeout = setTimeout(() => {
+			updateTimeout = undefined;
+			vscode.extensions.all.forEach(extension => {
+				if (!checked.has(extension.id) && extension.isActive) {
+					checked.add(extension.id);
+					if (extension.exports && 'volarLabs' in extension.exports) {
+						addExtension(extension);
 					}
-
-					addExtension(extension);
 				}
-			}
-		});
+			});
+		}, 1000);
 	}
 }
 

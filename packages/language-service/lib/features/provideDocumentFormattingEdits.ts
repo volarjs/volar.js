@@ -1,11 +1,12 @@
 import { SourceMap, VirtualFile, forEachEmbeddedFile, isFormattingEnabled, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
+import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { ServiceContext, ServicePluginInstance } from '../types';
-import { isInsideRange, stringToSnapshot } from '../utils/common';
-import { NoneCancellationToken } from '../utils/cancellation';
 import { SourceMapWithDocuments } from '../documents';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type { ServiceContext, ServicePluginInstance } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
+import { isInsideRange, stringToSnapshot } from '../utils/common';
+import { getEmbeddedFilesByLevel } from '../utils/featureWorkers';
 
 export function register(context: ServiceContext) {
 
@@ -215,25 +216,6 @@ export function register(context: ServiceContext) {
 		};
 
 		return [textEdit];
-
-		function getEmbeddedFilesByLevel(rootFile: VirtualFile, level: number) {
-
-			const embeddedFilesByLevel: VirtualFile[][] = [[rootFile]];
-
-			while (true) {
-
-				if (embeddedFilesByLevel.length > level)
-					return embeddedFilesByLevel[level];
-
-				let nextLevel: VirtualFile[] = [];
-
-				for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
-					nextLevel = nextLevel.concat(file.embeddedFiles);
-				}
-
-				embeddedFilesByLevel.push(nextLevel);
-			}
-		}
 
 		async function tryFormat(
 			document: TextDocument,

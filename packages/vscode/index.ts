@@ -79,12 +79,32 @@ export function parseServerCommand(command: vscode.Command) {
 	return command;
 }
 
-export const supportLabsVersion = '2.0.0-alpha.3';
+export const currentLabsVersion = 2.0;
 
-export interface ExportsInfoForLabs {
+export function createLabsInfo(languageServerProtocol: typeof import('@volar/language-server/protocol')) {
+	const onDidAddLanguageClientEmitter = new vscode.EventEmitter<BaseLanguageClient>();
+	const extensionExports: LabsInfo = {
+		volarLabs: {
+			version: currentLabsVersion,
+			languageClients: [] as BaseLanguageClient[],
+			languageServerProtocol,
+			onDidAddLanguageClient: onDidAddLanguageClientEmitter.event,
+		},
+	};
+	return {
+		extensionExports,
+		addLanguageClient(languageClient: BaseLanguageClient) {
+			extensionExports.volarLabs.languageClients.push(languageClient);
+			onDidAddLanguageClientEmitter.fire(languageClient);
+		},
+	};
+}
+
+export interface LabsInfo {
 	volarLabs: {
-		version: typeof supportLabsVersion;
-		languageClient: BaseLanguageClient;
+		version: typeof currentLabsVersion;
+		languageClients: BaseLanguageClient[];
+		onDidAddLanguageClient: vscode.Event<BaseLanguageClient>;
 		languageServerProtocol: typeof import('@volar/language-server/protocol');
 		codegenStackSupport?: boolean;
 	};

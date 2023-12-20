@@ -1,5 +1,5 @@
 import { LoadedTSFilesMetaRequest } from '@volar/language-server/protocol';
-import type { ExportsInfoForLabs } from '@volar/vscode';
+import type { LabsInfo } from '@volar/vscode';
 import * as lsp from '@volar/vscode';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -9,8 +9,12 @@ import { quickPick } from '../common/quickPick';
 import { getIconPath, useVolarExtensions } from '../common/shared';
 
 interface LanguageClientItem {
-	extension: vscode.Extension<ExportsInfoForLabs>;
+	extension: vscode.Extension<LabsInfo>;
 	client: lsp.BaseLanguageClient;
+}
+
+interface InvalidLanguageClientItem {
+	extension: vscode.Extension<LabsInfo>;
 }
 
 interface LanguageClientFieldItem extends LanguageClientItem {
@@ -19,28 +23,34 @@ interface LanguageClientFieldItem extends LanguageClientItem {
 
 export function activate(context: vscode.ExtensionContext) {
 
-	const extensions: vscode.Extension<ExportsInfoForLabs>[] = [];
+	const extensions: vscode.Extension<LabsInfo>[] = [];
+	const invalidExtensions: vscode.Extension<LabsInfo>[] = [];
 	const onDidChangeTreeData = new vscode.EventEmitter<void>();
-	const tree: vscode.TreeDataProvider<LanguageClientItem | LanguageClientFieldItem> = {
+	const tree: vscode.TreeDataProvider<LanguageClientItem | InvalidLanguageClientItem | LanguageClientFieldItem> = {
 		onDidChangeTreeData: onDidChangeTreeData.event,
 		async getChildren(element) {
 			// root
 			if (!element) {
-				return extensions.map<LanguageClientItem>(extension => {
-					return {
-						extension,
-						client: extension.exports.volarLabs.languageClient,
-					};
-				});
+				return [
+					...extensions
+						.map(extension => {
+							return extension.exports.volarLabs.languageClients
+								.map(client => {
+									return {
+										extension,
+										client,
+									};
+								});
+						}).flat(),
+					...invalidExtensions.map<InvalidLanguageClientItem>(extension => {
+						return {
+							extension,
+						};
+					}),
+				];
 			}
 			// child
-			if ('file' in element) {
-				return [];
-			}
-			else if ('field' in element) {
-				return [];
-			}
-			else {
+			if ('client' in element) {
 				const stats: LanguageClientFieldItem[] = [];
 				if (element.client.state === lsp.State.Running) {
 					stats.push({ ...element, field: 'stop' });
@@ -66,6 +76,7 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				return stats;
 			}
+			return [];
 		},
 		getTreeItem(element) {
 			if ('field' in element) {
@@ -173,10 +184,18 @@ export function activate(context: vscode.ExtensionContext) {
 					};
 				}
 			}
+			else if ('client' in element) {
+				return {
+					iconPath: getIconPath(element.extension),
+					label: element.client.name,
+					collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+				};
+			}
 			return {
-				iconPath: getIconPath(element.extension),
-				label: element.client.name,
-				collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+				iconPath: new vscode.ThemeIcon('error'),
+				label: element.extension.packageJSON.displayName,
+				collapsibleState: vscode.TreeItemCollapsibleState.None,
+				description: `This extension is not compatible with the current version of Volar Labs (volarLabs.version != ${JSON.stringify(lsp.currentLabsVersion)}).`,
 			};
 		},
 	};
@@ -276,12 +295,26 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 	);
 
-	useVolarExtensions(context, extension => {
-		const { languageClient } = extension.exports.volarLabs;
-		context.subscriptions.push(
-			languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
-		);
-		extensions.push(extension);
-		onDidChangeTreeData.fire();
+	useVolarExtensions(context, async extension => {
+		const { version } = extension.exports.volarLabs;
+		if (version === lsp.currentLabsVersion) {
+			for (const languageClient of extension.exports.volarLabs.languageClients) {
+				context.subscriptions.push(
+					languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+				);
+			}
+			extension.exports.volarLabs.onDidAddLanguageClient(languageClient => {
+				context.subscriptions.push(
+					languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+				);
+				onDidChangeTreeData.fire();
+			});
+			extensions.push(extension);
+			onDidChangeTreeData.fire();
+		}
+		else {
+			invalidExtensions.push(extension);
+			onDidChangeTreeData.fire();
+		}
 	});
 }
