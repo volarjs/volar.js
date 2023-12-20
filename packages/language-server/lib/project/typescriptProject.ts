@@ -1,9 +1,9 @@
-import { LanguageService, ServiceEnvironment, TypeScriptProjectHost, createLanguageService, resolveCommonLanguageId } from '@volar/language-service';
+import { LanguagePlugin, LanguageService, ServiceEnvironment, TypeScriptProjectHost, createLanguageService, resolveCommonLanguageId } from '@volar/language-service';
 import { createLanguage, createSys } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript/lib/tsserverlibrary';
 import * as vscode from 'vscode-languageserver';
-import type { ProjectContext, ServerProject } from '../types';
+import type { ServerProject } from '../types';
 import { UriMap, createUriMap } from '../utils/uriMap';
 import type { WorkspacesContext } from './simpleProjectProvider';
 import type { ServerOptions } from '../server';
@@ -25,6 +25,10 @@ export async function createTypeScriptServerProject(
 		throw '!context.workspaces.ts';
 	}
 
+	let parsedCommandLine: ts.ParsedCommandLine;
+	let projectVersion = 0;
+	let languageService: LanguageService | undefined;
+
 	const { uriToFileName, fileNameToUri } = context.server.runtimeEnv;
 	const ts = context.workspaces.ts;
 	const host: TypeScriptProjectHost = {
@@ -44,19 +48,11 @@ export async function createTypeScriptServerProject(
 		getLanguageId: uri => context.workspaces.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
 	};
 	const sys = createSys(ts, serviceEnv, host.getCurrentDirectory());
-
-	let parsedCommandLine: ts.ParsedCommandLine;
-	let rootFiles = await getRootFiles();
-	let projectVersion = 0;
-	let languageService: LanguageService | undefined;
-
-	const projectContext: ProjectContext = {
+	const { languagePlugins, servicePlugins } = await serverOptions.getProjectSetup(serviceEnv, {
 		typescript: {
-			parsedCommandLine: parsedCommandLine!,
 			configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
 		},
-	};
-	const { languagePlugins, servicePlugins } = await serverOptions.getProjectSetup(serviceEnv, projectContext);
+	});
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
 		projectVersion++;
@@ -64,6 +60,8 @@ export async function createTypeScriptServerProject(
 	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => {
 		onWorkspaceFilesChanged(params.changes);
 	});
+
+	let rootFiles = await getRootFiles(languagePlugins);
 
 	return {
 		askedFiles,
@@ -80,7 +78,7 @@ export async function createTypeScriptServerProject(
 		getParsedCommandLine: () => parsedCommandLine,
 	};
 
-	async function getRootFiles() {
+	async function getRootFiles(languagePlugins: LanguagePlugin[]) {
 		parsedCommandLine = await createParsedCommandLine(
 			ts,
 			sys,
@@ -112,7 +110,7 @@ export async function createTypeScriptServerProject(
 		const creates = changes.filter(change => change.type === vscode.FileChangeType.Created);
 
 		if (creates.length) {
-			rootFiles = await getRootFiles();
+			rootFiles = await getRootFiles(languagePlugins);
 		}
 
 		projectVersion++;

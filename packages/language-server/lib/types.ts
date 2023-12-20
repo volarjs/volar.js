@@ -1,5 +1,4 @@
 import type { Console, FileSystem, LanguageService, ServiceEnvironment } from '@volar/language-service';
-import type * as ts from 'typescript/lib/tsserverlibrary';
 import type * as vscode from 'vscode-languageserver';
 
 export interface Timer {
@@ -22,7 +21,6 @@ export interface ServerRuntimeEnvironment {
 export interface ProjectContext {
 	typescript?: {
 		configFileName: string | undefined;
-		parsedCommandLine: ts.ParsedCommandLine;
 	};
 }
 
