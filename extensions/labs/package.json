@@ -20,7 +20,8 @@
 	},
 	"activationEvents": [
 		"onView:volar-servers",
-		"onView:volar-virtual-files"
+		"onView:volar-virtual-files",
+		"onView:volar-service-plugins"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
