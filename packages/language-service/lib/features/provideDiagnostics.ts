@@ -210,6 +210,9 @@ export function register(context: ServiceContext) {
 			errorMarkups[uri] = [];
 			for (const error of errors) {
 				for (const service of context.services) {
+					if (context.disabledServicePlugins.has(service[1])) {
+						continue;
+					}
 					const markup = await service[1].provideDiagnosticMarkupContent?.(error, token);
 					if (markup) {
 						errorMarkups[uri].push({ error, markup });

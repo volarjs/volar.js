@@ -11,6 +11,9 @@ export function register(context: ServiceContext) {
 		const symbolsList: vscode.WorkspaceSymbol[][] = [];
 
 		for (const service of context.services) {
+			if (context.disabledServicePlugins.has(service[1])) {
+				continue;
+			}
 			if (token.isCancellationRequested) {
 				break;
 			}

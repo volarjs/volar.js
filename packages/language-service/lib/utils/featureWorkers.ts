@@ -3,8 +3,6 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext, ServicePluginInstance, ServicePlugin } from '../types';
 
-export const skipVirtualFiles = new Set<string>();
-
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
 	uri: string,
@@ -51,6 +49,9 @@ export async function languageFeatureWorker<T, K>(
 			for (const mappedArg of eachVirtualDocParams(map)) {
 
 				for (const [serviceId, service] of Object.entries(context.services)) {
+					if (context.disabledServicePlugins.has(service[1])) {
+						continue;
+					}
 
 					const embeddedResult = await safeCall(
 						() => worker(service, map.virtualFileDocument, mappedArg, map),
@@ -79,6 +80,9 @@ export async function languageFeatureWorker<T, K>(
 		const params = getReadDocParams();
 
 		for (const [serviceId, service] of Object.entries(context.services)) {
+			if (context.disabledServicePlugins.has(service[1])) {
+				continue;
+			}
 
 			const embeddedResult = await safeCall(
 				() => worker(service, document, params, undefined),
@@ -132,7 +136,7 @@ export async function visitEmbedded(
 		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(map.sourceFileDocument.uri));
 		if (
 			sourceFile?.virtualFile?.[0] === rootFile
-			&& !skipVirtualFiles.has(current.fileName)
+			&& !context.disabledVirtualFiles.has(current.fileName)
 			&& !await cb(current, map)
 		) {
 			return false;
@@ -142,7 +146,7 @@ export async function visitEmbedded(
 	return true;
 }
 
-export function getEmbeddedFilesByLevel(rootFile: VirtualFile, level: number) {
+export function getEmbeddedFilesByLevel(context: ServiceContext, rootFile: VirtualFile, level: number) {
 
 	const embeddedFilesByLevel: VirtualFile[][] = [[rootFile]];
 
@@ -154,7 +158,7 @@ export function getEmbeddedFilesByLevel(rootFile: VirtualFile, level: number) {
 		let nextLevel: VirtualFile[] = [];
 
 		for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
-			nextLevel = nextLevel.concat(file.embeddedFiles.filter(file => !skipVirtualFiles.has(file.fileName)));
+			nextLevel = nextLevel.concat(file.embeddedFiles.filter(file => !context.disabledVirtualFiles.has(file.fileName)));
 		}
 
 		embeddedFilesByLevel.push(nextLevel);

@@ -50,7 +50,7 @@ export function register(context: ServiceContext) {
 
 		while (true) {
 
-			const embeddedFiles = getEmbeddedFilesByLevel(tempVirtualFile, level++);
+			const embeddedFiles = getEmbeddedFilesByLevel(context, tempVirtualFile, level++);
 			if (embeddedFiles.length === 0)
 				break;
 
@@ -226,6 +226,9 @@ export function register(context: ServiceContext) {
 			let formatRange = range;
 
 			for (const service of context.services) {
+				if (context.disabledServicePlugins.has(service[1])) {
+					continue;
+				}
 
 				if (token.isCancellationRequested)
 					break;

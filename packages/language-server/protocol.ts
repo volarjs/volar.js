@@ -1,4 +1,4 @@
-import type { CodeMapping, Stack, VirtualFile } from '@volar/language-core';
+import type { CodeMapping, Stack } from '@volar/language-core';
 import type { FileStat, FileType, DocumentDropEdit } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver-protocol';
 
@@ -50,37 +50,12 @@ export namespace AutoInsertRequest {
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/autoInsert');
 }
 
-export namespace LoadedTSFilesMetaRequest {
-	export const type = new vscode.RequestType0('volar/client/loadedTsFiles');
-}
-
 export namespace WriteVirtualFilesNotification {
 	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar/client/writeVirtualFiles');
 }
 
 export namespace ReloadProjectNotification {
 	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar/client/reloadProject');
-}
-
-export namespace GetVirtualFilesRequest {
-	export type ParamsType = vscode.TextDocumentIdentifier;
-	export type ResponseType = VirtualFile | null | undefined;
-	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFiles');
-}
-
-export namespace GetVirtualFileRequest {
-	export type ParamsType = {
-		sourceFileUri: string;
-		virtualFileName: string;
-	};
-	export type ResponseType = {
-		content: string;
-		mappings: Record<string, CodeMapping[]>;
-		codegenStacks: Stack[];
-	};
-	export type ErrorType = never;
-	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFile');
 }
 
 /**
@@ -121,10 +96,69 @@ export namespace DocumentDrop_DataTransferItemFileDataRequest {
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/documentDrop/fileData');
 }
 
-export namespace LabsChangeVirtualFileStateNotification {
+/**
+ * Labs
+ */
+
+export namespace UpdateVirtualFileStateNotification {
 	export type ParamsType = {
-		fileName: string;
-		ignore: boolean;
+		uri: string;
+		virtualFileName: string;
+		disabled: boolean;
 	};
-	export const type = new vscode.NotificationType<ParamsType>('volar/client/labs/changeVirtualFileState');
+	export const type = new vscode.NotificationType<ParamsType>('volar/client/labs/updateVirtualFileState');
+}
+
+export namespace UpdateServicePluginStateNotification {
+	export type ParamsType = {
+		uri: string;
+		serviceId: string;
+		disabled: boolean;
+	};
+	export const type = new vscode.NotificationType<ParamsType>('volar/client/labs/updateServicePluginState');
+}
+
+export namespace GetServicePluginsRequest {
+	export type ParamsType = vscode.TextDocumentIdentifier;
+	export type ResponseType = {
+		id: string;
+		name?: string;
+		features: string[];
+		disabled: boolean;
+	}[] | null | undefined;
+	export type ErrorType = never;
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/servicePlugins');
+}
+
+export namespace GetVirtualFilesRequest {
+	export type VirtualFileWithState = {
+		fileName: string;
+		languageId: string;
+		tsScriptKind?: number;
+		version: number;
+		disabled: boolean;
+		embeddedFiles: VirtualFileWithState[];
+	};
+	export type ParamsType = vscode.TextDocumentIdentifier;
+	export type ResponseType = VirtualFileWithState | null | undefined;
+	export type ErrorType = never;
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFiles');
+}
+
+export namespace GetVirtualFileRequest {
+	export type ParamsType = {
+		sourceFileUri: string;
+		virtualFileName: string;
+	};
+	export type ResponseType = {
+		content: string;
+		mappings: Record<string, CodeMapping[]>;
+		codegenStacks: Stack[];
+	};
+	export type ErrorType = never;
+	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFile');
+}
+
+export namespace LoadedTSFilesMetaRequest {
+	export const type = new vscode.RequestType0('volar/client/loadedTsFiles');
 }

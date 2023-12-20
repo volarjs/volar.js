@@ -295,26 +295,29 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 	);
 
-	useVolarExtensions(context, async extension => {
-		const { version } = extension.exports.volarLabs;
-		if (version === lsp.currentLabsVersion) {
-			for (const languageClient of extension.exports.volarLabs.languageClients) {
-				context.subscriptions.push(
-					languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
-				);
-			}
-			extension.exports.volarLabs.onDidAddLanguageClient(languageClient => {
-				context.subscriptions.push(
-					languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
-				);
+	useVolarExtensions(
+		context,
+		extension => {
+			const { version } = extension.exports.volarLabs;
+			if (version === lsp.currentLabsVersion) {
+				for (const languageClient of extension.exports.volarLabs.languageClients) {
+					context.subscriptions.push(
+						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+					);
+				}
+				extension.exports.volarLabs.onDidAddLanguageClient(languageClient => {
+					context.subscriptions.push(
+						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+					);
+					onDidChangeTreeData.fire();
+				});
+				extensions.push(extension);
 				onDidChangeTreeData.fire();
-			});
-			extensions.push(extension);
-			onDidChangeTreeData.fire();
-		}
-		else {
-			invalidExtensions.push(extension);
-			onDidChangeTreeData.fire();
-		}
-	});
+			}
+			else {
+				invalidExtensions.push(extension);
+				onDidChangeTreeData.fire();
+			}
+		},
+	);
 }

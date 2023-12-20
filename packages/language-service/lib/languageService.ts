@@ -99,6 +99,9 @@ export function createLanguageService(
 			language: language,
 			inject: (key, ...args) => {
 				for (const service of context.services) {
+					if (context.disabledServicePlugins.has(service[1])) {
+						continue;
+					}
 					const provide = service[1].provide?.[key as any];
 					if (provide) {
 						return provide(...args as any);
@@ -160,6 +163,8 @@ export function createLanguageService(
 					}
 				},
 			},
+			disabledVirtualFiles: new Set(),
+			disabledServicePlugins: new WeakSet(),
 		};
 
 		for (const servicePlugin of servicePlugins) {

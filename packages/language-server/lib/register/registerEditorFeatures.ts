@@ -11,10 +11,12 @@ import {
 	DocumentDropRequest,
 	DocumentDrop_DataTransferItemAsStringRequest,
 	DocumentDrop_DataTransferItemFileDataRequest,
-	LabsChangeVirtualFileStateNotification
+	UpdateVirtualFileStateNotification,
+	UpdateServicePluginStateNotification,
+	GetServicePluginsRequest,
 } from '../../protocol';
 import type { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
-import { skipVirtualFiles, type DataTransferItem } from '@volar/language-service';
+import type { DataTransferItem } from '@volar/language-service';
 
 export function registerEditorFeatures(
 	connection: vscode.Connection,
@@ -64,7 +66,7 @@ export function registerEditorFeatures(
 		const virtualFile = languageService.context.language.files.getSourceFile(env.uriToFileName(document.uri))?.virtualFile;
 		return virtualFile ? prune(virtualFile[0]) : undefined;
 
-		function prune(file: VirtualFile): VirtualFile {
+		function prune(file: VirtualFile): GetVirtualFilesRequest.VirtualFileWithState {
 			let version = scriptVersions.get(file.fileName) ?? 0;
 			if (!scriptVersionSnapshots.has(file.snapshot)) {
 				version++;
@@ -74,11 +76,10 @@ export function registerEditorFeatures(
 			return {
 				fileName: file.fileName,
 				languageId: file.languageId,
-				typescript: file.typescript,
+				tsScriptKind: file.typescript?.scriptKind,
 				embeddedFiles: file.embeddedFiles.map(prune),
-				// @ts-expect-error
 				version,
-				isIgnored: skipVirtualFiles.has(file.fileName),
+				disabled: languageService.context.disabledVirtualFiles.has(file.fileName),
 			};
 		}
 	});
@@ -197,12 +198,46 @@ export function registerEditorFeatures(
 
 		return result;
 	});
-	connection.onNotification(LabsChangeVirtualFileStateNotification.type, async params => {
-		if (params.ignore) {
-			skipVirtualFiles.add(params.fileName);
+	connection.onNotification(UpdateVirtualFileStateNotification.type, async params => {
+		const project = await projects.getProject(params.uri);
+		const context = project.getLanguageServiceDontCreate()?.context;
+		if (context) {
+			if (params.disabled) {
+				context.disabledVirtualFiles.add(params.virtualFileName);
+			}
+			else {
+				context.disabledVirtualFiles.delete(params.virtualFileName);
+			}
 		}
-		else {
-			skipVirtualFiles.delete(params.fileName);
+	});
+	connection.onNotification(UpdateServicePluginStateNotification.type, async params => {
+		const project = await projects.getProject(params.uri);
+		const context = project.getLanguageServiceDontCreate()?.context;
+		if (context) {
+			const service = context.services[params.serviceId as any][1];
+			if (params.disabled) {
+				context.disabledServicePlugins.add(service);
+			}
+			else {
+				context.disabledServicePlugins.delete(service);
+			}
+		}
+	});
+	connection.onRequest(GetServicePluginsRequest.type, async params => {
+		const project = await projects.getProject(params.uri);
+		const context = project.getLanguageServiceDontCreate()?.context;
+		if (context) {
+			const result: GetServicePluginsRequest.ResponseType = [];
+			for (let id in context.services) {
+				const service = context.services[id];
+				result.push({
+					id,
+					name: service[0].name,
+					disabled: context.disabledServicePlugins.has(service[1]),
+					features: Object.keys(service[1]),
+				});
+			}
+			return result;
 		}
 	});
 }

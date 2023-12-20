@@ -71,6 +71,8 @@ export interface ServiceContext {
 	};
 	documents: DocumentProvider;
 	services: [ServicePlugin, ServicePluginInstance][];
+	disabledVirtualFiles: Set<string>;
+	disabledServicePlugins: WeakSet<ServicePluginInstance>;
 }
 
 export type Result<T> = T | Thenable<T>;
@@ -78,6 +80,7 @@ export type NullableResult<T> = Result<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
 export interface ServicePlugin {
+	name?: string;
 	triggerCharacters?: string[];
 	signatureHelpTriggerCharacters?: string[];
 	signatureHelpRetriggerCharacters?: string[];

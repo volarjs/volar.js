@@ -1,4 +1,4 @@
-import type { GetVirtualFilesRequest, LabsChangeVirtualFileStateNotification } from '@volar/language-server';
+import type { GetVirtualFilesRequest, UpdateVirtualFileStateNotification } from '@volar/language-server';
 import { currentLabsVersion, type BaseLanguageClient, type LabsInfo } from '@volar/vscode';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -61,18 +61,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 			let label = path.basename(element.virtualFile.fileName);
 			let description = '';
-			if (element.virtualFile.typescript) {
-				description += `tsScriptKind: ${element.virtualFile.typescript.scriptKind}, `;
+			if (element.virtualFile.tsScriptKind !== undefined) {
+				description += `tsScriptKind: ${element.virtualFile.tsScriptKind}, `;
 			}
-			// @ts-expect-error
 			description += `version: ${element.virtualFile.version}`;
 			if (element.isRoot) {
 				description += ` (${element.client.name})`;
 			}
-			// @ts-expect-error
-			const isIgnored = element.virtualFile.isIgnored;
 			return {
-				checkboxState: isIgnored ? vscode.TreeItemCheckboxState.Unchecked : vscode.TreeItemCheckboxState.Checked,
+				checkboxState: element.virtualFile.disabled ? vscode.TreeItemCheckboxState.Unchecked : vscode.TreeItemCheckboxState.Checked,
 				iconPath: element.client.clientOptions.initializationOptions.codegenStack ? new vscode.ThemeIcon('debug-breakpoint') : new vscode.ThemeIcon('file'),
 				label,
 				description,
@@ -118,14 +115,14 @@ export function activate(context: vscode.ExtensionContext) {
 		treeView.onDidChangeCheckboxState(e => {
 			for (const [item, state] of e.items) {
 				if ('virtualFile' in item) {
-					// @ts-expect-error
-					item.virtualFile.isIgnored = state === vscode.TreeItemCheckboxState.Unchecked;
+					item.virtualFile.disabled = state === vscode.TreeItemCheckboxState.Unchecked;
 					item.client.sendNotification(
-						item.extension.exports.volarLabs.languageServerProtocol.LabsChangeVirtualFileStateNotification.type,
+						item.extension.exports.volarLabs.languageServerProtocol.UpdateVirtualFileStateNotification.type,
 						{
-							fileName: item.virtualFile.fileName,
-							ignore: state === vscode.TreeItemCheckboxState.Unchecked,
-						} satisfies LabsChangeVirtualFileStateNotification.ParamsType
+							uri: item.sourceDocumentUri,
+							virtualFileName: item.virtualFile.fileName,
+							disabled: state === vscode.TreeItemCheckboxState.Unchecked,
+						} satisfies UpdateVirtualFileStateNotification.ParamsType
 					);
 				}
 			}

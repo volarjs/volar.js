@@ -129,7 +129,9 @@ export function register(context: ServiceContext) {
 
 				await visitEmbedded(context, rootVirtualFile, async (_, map) => {
 
-					const services = [...context.services].sort((a, b) => sortServices(a[1], b[1]));
+					const services = [...context.services]
+						.filter(service => !context.disabledServicePlugins.has(service[1]))
+						.sort((a, b) => sortServices(a[1], b[1]));
 
 					let _data: CodeInformation | undefined;
 
@@ -208,7 +210,9 @@ export function register(context: ServiceContext) {
 			if (sourceFile) {
 
 				const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-				const services = [...context.services].sort((a, b) => sortServices(a[1], b[1]));
+				const services = [...context.services]
+					.filter(service => !context.disabledServicePlugins.has(service[1]))
+					.sort((a, b) => sortServices(a[1], b[1]));
 
 				for (const service of services) {
 

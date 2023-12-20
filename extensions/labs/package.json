@@ -44,6 +44,11 @@
 					"id": "volar-virtual-files",
 					"name": "Virtual Files",
 					"contextualTitle": "Volar.js"
+				},
+				{
+					"id": "volar-service-plugins",
+					"name": "Service Plugins",
+					"contextualTitle": "Volar.js"
 				}
 			]
 		}
