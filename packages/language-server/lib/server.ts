@@ -3,11 +3,10 @@ import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, InitializationOptions, ProjectContext, ServerProjectProvider, ServerRuntimeEnvironment } from './types.js';
+import { DiagnosticModel, InitializationOptions, ProjectContext, ServerProjectProvider, ServerProjectProviderFactory, ServerRuntimeEnvironment } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
 import { setupCapabilities } from './setupCapabilities.js';
 import { createWorkspaceFolderManager } from './workspaceFolderManager.js';
-import type { WorkspacesContext } from './project/simpleProjectProvider.js';
 import { SnapshotDocument } from '@volar/snapshot-document';
 
 export interface ServerContext {
@@ -20,19 +19,10 @@ export interface ServerContext {
 	};
 }
 
-export interface ServerSetup {
-	servicePlugins: ServicePlugin[];
-}
-
-export interface ProjectSetup {
-	servicePlugins: ServicePlugin[];
-	languagePlugins: LanguagePlugin[];
-}
-
 export interface ServerOptions {
 	watchFileExtensions?: string[];
-	getServerCapabilitiesSetup(): ServerSetup | Promise<ServerSetup>;
-	getProjectSetup(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): ProjectSetup | Promise<ProjectSetup>;
+	getServicePlugins(): ServicePlugin[] | Promise<ServicePlugin[]>;
+	getLanguagePlugins(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): LanguagePlugin[] | Promise<LanguagePlugin[]>;
 }
 
 export function createServer(
@@ -84,7 +74,7 @@ export function createServer(
 
 	async function initialize(
 		_params: vscode.InitializeParams,
-		projectProviderFactory: (context: WorkspacesContext, serverOptions: ServerOptions) => ServerProjectProvider,
+		projectProviderFactory: ServerProjectProviderFactory,
 		_serverOptions: ServerOptions,
 	) {
 
@@ -154,26 +144,32 @@ export function createServer(
 			},
 		};
 
+		const servicePlugins = await serverOptions.getServicePlugins();
+
 		setupCapabilities(
 			result.capabilities,
 			options,
 			serverOptions.watchFileExtensions ?? [],
-			(await serverOptions.getServerCapabilitiesSetup()).servicePlugins,
+			servicePlugins,
 			getSemanticTokensLegend(),
 		);
 
-		projects = projectProviderFactory({
-			...context,
-			workspaces: {
-				ts,
-				tsLocalized,
-				initOptions: options,
-				documents,
-				workspaceFolders: workspaceFolderManager,
-				reloadDiagnostics,
-				updateDiagnosticsAndSemanticTokens,
+		projects = projectProviderFactory(
+			{
+				...context,
+				workspaces: {
+					ts,
+					tsLocalized,
+					initOptions: options,
+					documents,
+					workspaceFolders: workspaceFolderManager,
+					reloadDiagnostics,
+					updateDiagnosticsAndSemanticTokens,
+				},
 			},
-		}, serverOptions);
+			serverOptions,
+			servicePlugins,
+		);
 
 		documents.onDidChangeContent(({ document }) => {
 			updateDiagnostics(document.uri);

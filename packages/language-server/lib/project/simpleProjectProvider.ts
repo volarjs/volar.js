@@ -3,8 +3,8 @@ import type { SnapshotDocument } from '@volar/snapshot-document';
 import type * as ts from 'typescript';
 import type { TextDocuments } from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import type { ServerContext, ServerOptions } from '../server';
-import type { InitializationOptions, ServerProject, ServerProjectProvider } from '../types';
+import type { ServerContext } from '../server';
+import type { InitializationOptions, ServerProject, ServerProjectProvider, ServerProjectProviderFactory } from '../types';
 import { isFileInDir } from '../utils/isFileInDir';
 import type { WorkspaceFolderManager } from '../workspaceFolderManager';
 import { createSimpleServerProject } from './simpleProject';
@@ -21,7 +21,7 @@ export interface WorkspacesContext extends ServerContext {
 	};
 }
 
-export function createSimpleProjectProvider(context: WorkspacesContext, serverOptions: ServerOptions): ServerProjectProvider {
+export const createSimpleProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
 
 	const projects = new Map<ServiceEnvironment['workspaceFolder'], Promise<ServerProject>>();
 
@@ -33,7 +33,7 @@ export function createSimpleProjectProvider(context: WorkspacesContext, serverOp
 			let projectPromise = projects.get(workspaceFolder);
 			if (!projectPromise) {
 				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-				projectPromise = createSimpleServerProject(context, serviceEnv, serverOptions);
+				projectPromise = createSimpleServerProject(context, serviceEnv, serverOptions, servicePlugins);
 				projects.set(workspaceFolder, projectPromise);
 			}
 
@@ -53,7 +53,7 @@ export function createSimpleProjectProvider(context: WorkspacesContext, serverOp
 			context.workspaces.reloadDiagnostics();
 		},
 	};
-}
+};
 
 export function createServiceEnvironment(context: WorkspacesContext, workspaceFolder: ServiceEnvironment['workspaceFolder']) {
 	const env: ServiceEnvironment = {
