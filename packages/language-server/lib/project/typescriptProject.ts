@@ -33,7 +33,7 @@ export async function createTypeScriptServerProject(
 	const { uriToFileName, fileNameToUri } = context.server.runtimeEnv;
 	const ts = context.workspaces.ts;
 	const host: TypeScriptProjectHost = {
-		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder.uri.toString()),
+		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder.toString()),
 		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => rootFiles,
 		getScriptSnapshot: (fileName) => {
@@ -83,7 +83,7 @@ export async function createTypeScriptServerProject(
 		parsedCommandLine = await createParsedCommandLine(
 			ts,
 			sys,
-			uriToFileName(serviceEnv.workspaceFolder.uri.toString()),
+			uriToFileName(serviceEnv.workspaceFolder.toString()),
 			tsconfig,
 			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
 		);

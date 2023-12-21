@@ -113,7 +113,7 @@ export function registerEditorFeatures(
 
 		if (languageService.context.language.typescript?.languageServiceHost) {
 
-			const rootUri = languageService.context.env.workspaceFolder.uri.toString();
+			const rootUri = languageService.context.env.workspaceFolder.toString();
 			const rootPath = languageService.context.env.uriToFileName(rootUri);
 			const { languageServiceHost } = languageService.context.language.typescript;
 

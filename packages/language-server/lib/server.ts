@@ -112,23 +112,14 @@ export function createServer(
 
 		if (initParams.capabilities.workspace?.workspaceFolders && initParams.workspaceFolders) {
 			for (const folder of initParams.workspaceFolders) {
-				workspaceFolderManager.add({
-					uri: URI.parse(folder.uri),
-					name: folder.name,
-				});
+				workspaceFolderManager.add(URI.parse(folder.uri));
 			}
 		}
 		else if (initParams.rootUri) {
-			workspaceFolderManager.add({
-				uri: URI.parse(initParams.rootUri),
-				name: '',
-			});
+			workspaceFolderManager.add(URI.parse(initParams.rootUri));
 		}
 		else if (initParams.rootPath) {
-			workspaceFolderManager.add({
-				uri: URI.file(initParams.rootPath),
-				name: '',
-			});
+			workspaceFolderManager.add(URI.file(initParams.rootPath));
 		}
 
 		const result: vscode.InitializeResult = {
@@ -213,17 +204,11 @@ export function createServer(
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 
 				for (const folder of e.added) {
-					workspaceFolderManager.add({
-						name: folder.name,
-						uri: URI.parse(folder.uri),
-					});
+					workspaceFolderManager.add(URI.parse(folder.uri));
 				}
 
 				for (const folder of e.removed) {
-					workspaceFolderManager.remove({
-						name: folder.name,
-						uri: URI.parse(folder.uri),
-					});
+					workspaceFolderManager.remove(URI.parse(folder.uri));
 				}
 			});
 		}

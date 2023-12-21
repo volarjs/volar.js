@@ -23,7 +23,7 @@ export interface WorkspacesContext extends ServerContext {
 
 export const createSimpleProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
 
-	const projects = new Map<ServiceEnvironment['workspaceFolder'], Promise<ServerProject>>();
+	const projects = new Map<URI, Promise<ServerProject>>();
 
 	return {
 		getProject(uri) {
@@ -55,7 +55,7 @@ export const createSimpleProjectProvider: ServerProjectProviderFactory = (contex
 	};
 };
 
-export function createServiceEnvironment(context: WorkspacesContext, workspaceFolder: ServiceEnvironment['workspaceFolder']) {
+export function createServiceEnvironment(context: WorkspacesContext, workspaceFolder: URI) {
 	const env: ServiceEnvironment = {
 		workspaceFolder,
 		uriToFileName: context.server.runtimeEnv.uriToFileName,
@@ -81,18 +81,15 @@ export function getWorkspaceFolder(
 
 	let folders = workspaceFolderManager
 		.getAll()
-		.filter(({ uri }) => isFileInDir(fileName, uriToFileName(uri.toString())))
-		.sort((a, b) => b.uri.toString().length - a.uri.toString().length);
+		.filter(uri => isFileInDir(fileName, uriToFileName(uri.toString())))
+		.sort((a, b) => b.toString().length - a.toString().length);
 
 	if (!folders.length) {
 		folders = workspaceFolderManager.getAll();
 	}
 
 	if (!folders.length) {
-		folders = [{
-			name: '',
-			uri: URI.parse(uri).with({ path: '/' }),
-		}];
+		folders = [URI.parse(uri).with({ path: '/' })];
 	}
 
 	return folders[0];

@@ -1,27 +1,27 @@
-import type { ServiceEnvironment } from "@volar/language-service";
+import type { URI } from 'vscode-uri';
 
 export type WorkspaceFolderManager = ReturnType<typeof createWorkspaceFolderManager>;
 
 export function createWorkspaceFolderManager() {
 
-	let folders: ServiceEnvironment['workspaceFolder'][] = [];
+	let folders: URI[] = [];
 
-	const onDidAddCallbacks = new Set<(folder: ServiceEnvironment['workspaceFolder']) => void>();
-	const onDidRemoveCallbacks = new Set<(folder: ServiceEnvironment['workspaceFolder']) => void>();
+	const onDidAddCallbacks = new Set<(folder: URI) => void>();
+	const onDidRemoveCallbacks = new Set<(folder: URI) => void>();
 
 	return {
-		add(folder: ServiceEnvironment['workspaceFolder']) {
-			if (!folders.some(({ uri }) => uri.toString() === folder.uri.toString())) {
+		add(folder: URI) {
+			if (!folders.some((uri) => uri.toString() === folder.toString())) {
 				folders.push(folder);
 			}
 		},
-		remove(folder: ServiceEnvironment['workspaceFolder']) {
-			folders = folders.filter(({ uri }) => uri.toString() !== folder.uri.toString());
+		remove(folder: URI) {
+			folders = folders.filter((uri) => uri.toString() !== folder.toString());
 		},
 		getAll() {
 			return folders;
 		},
-		onDidAdd(cb: (folder: ServiceEnvironment['workspaceFolder']) => void) {
+		onDidAdd(cb: (folder: URI) => void) {
 			onDidAddCallbacks.add(cb);
 			return {
 				dispose() {
@@ -29,7 +29,7 @@ export function createWorkspaceFolderManager() {
 				},
 			};
 		},
-		onDidRemove(cb: (folder: ServiceEnvironment['workspaceFolder']) => void) {
+		onDidRemove(cb: (folder: URI) => void) {
 			onDidRemoveCallbacks.add(cb);
 			return {
 				dispose() {

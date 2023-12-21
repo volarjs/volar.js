@@ -209,7 +209,7 @@ function createTypeScriptLanguageHost(
 
 	const host: TypeScriptProjectHost = {
 		getCurrentDirectory: () => {
-			return env.uriToFileName(env.workspaceFolder.uri.toString());
+			return env.uriToFileName(env.workspaceFolder.toString());
 		},
 		getCompilationSettings: () => {
 			return parsedCommandLine.options;

@@ -7,10 +7,7 @@ import type { DocumentProvider } from './documents';
 export type * from 'vscode-languageserver-protocol';
 
 export interface ServiceEnvironment extends RuntimeEnvironment {
-	workspaceFolder: {
-		name: string;
-		uri: URI;
-	};
+	workspaceFolder: URI;
 	locale?: string;
 	clientCapabilities?: vscode.ClientCapabilities;
 	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>;

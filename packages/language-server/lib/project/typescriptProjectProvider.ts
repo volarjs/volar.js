@@ -1,4 +1,4 @@
-import { FileType, ServiceEnvironment } from '@volar/language-service';
+import { FileType } from '@volar/language-service';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
@@ -49,7 +49,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 		for (const uri of configProjects.uriKeys()) {
 			const project = configProjects.uriGet(uri)!;
 			project.then(project => {
-				if (project.serviceEnv.workspaceFolder.uri.toString() === folder.uri.toString()) {
+				if (project.serviceEnv.workspaceFolder.toString() === folder.toString()) {
 					configProjects.uriDelete(uri);
 					project.dispose();
 				}
@@ -230,17 +230,17 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 		return projectPromise;
 	}
 
-	async function getOrCreateInferredProject(uri: string, workspaceFolder: ServiceEnvironment['workspaceFolder']) {
+	async function getOrCreateInferredProject(uri: string, workspaceFolder: URI) {
 
-		if (!inferredProjects.uriHas(workspaceFolder.uri.toString())) {
-			inferredProjects.uriSet(workspaceFolder.uri.toString(), (async () => {
+		if (!inferredProjects.uriHas(workspaceFolder.toString())) {
+			inferredProjects.uriSet(workspaceFolder.toString(), (async () => {
 				const inferOptions = await getInferredCompilerOptions(context.server.configurationHost);
 				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
 				return createTypeScriptServerProject(inferOptions, context, serviceEnv, serverOptions, servicePlugins);
 			})());
 		}
 
-		const project = await inferredProjects.uriGet(workspaceFolder.uri.toString())!;
+		const project = await inferredProjects.uriGet(workspaceFolder.toString())!;
 
 		project.tryAddFile(uriToFileName(uri));
 

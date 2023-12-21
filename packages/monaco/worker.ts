@@ -74,7 +74,7 @@ export function createTypeScriptWorkerService<T = {}>(
 			const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
 			const host: TypeScriptProjectHost = {
 				getCurrentDirectory() {
-					return env.uriToFileName(env.workspaceFolder.uri.toString(true));
+					return env.uriToFileName(env.workspaceFolder.toString(true));
 				},
 				getProjectVersion() {
 					const models = getMirrorModels();
@@ -138,10 +138,7 @@ function createWorkerService<T = {}>(
 ): LanguageService & T {
 
 	const env: ServiceEnvironment = {
-		workspaceFolder: {
-			uri: URI.file('/'),
-			name: '',
-		},
+		workspaceFolder: URI.file('/'),
 		uriToFileName: uri => URI.parse(uri).fsPath.replace(/\\/g, '/'),
 		fileNameToUri: fileName => URI.file(fileName).toString(),
 		console,
