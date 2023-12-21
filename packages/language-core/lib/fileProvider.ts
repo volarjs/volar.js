@@ -1,5 +1,5 @@
 import { SourceMap } from '@volar/source-map';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import { LinkedCodeMap } from './linkedCodeMap';
 import type { CodeInformation, LanguagePlugin, SourceFile, VirtualFile } from './types';
 import { FileMap } from './utils';

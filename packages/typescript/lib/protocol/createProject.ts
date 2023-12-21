@@ -1,5 +1,5 @@
 import { createFileProvider, FileMap, LanguagePlugin, Language, TypeScriptProjectHost } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import { forEachEmbeddedFile } from '@volar/language-core';
 import * as path from 'path-browserify';
 import { matchFiles } from '../typescript/utilities';
@@ -9,7 +9,7 @@ const scriptVersions = new Map<string, { lastVersion: number; map: WeakMap<ts.IS
 const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
 
 export function createLanguage(
-	ts: typeof import('typescript/lib/tsserverlibrary'),
+	ts: typeof import('typescript'),
 	sys: ReturnType<typeof createSys> | ts.System,
 	languages: LanguagePlugin<any>[],
 	configFileName: string | undefined,

@@ -1,5 +1,5 @@
 import { CodeInformation, CodeRangeKey, FileProvider, LinkedCodeMap, Mapping, SourceFile, SourceMap, VirtualFile, forEachEmbeddedFile, translateOffset } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { RuntimeEnvironment } from '../lib/types';

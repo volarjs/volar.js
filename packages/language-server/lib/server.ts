@@ -44,7 +44,7 @@ export function createServer(
 	let options: InitializationOptions;
 	let projects: ServerProjectProvider;
 	let context: ServerContext;
-	let ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
+	let ts: typeof import('typescript') | undefined;
 	let tsLocalized: {} | undefined;
 	let env: ServerRuntimeEnvironment;
 	let serverOptions: ServerOptions;

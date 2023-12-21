@@ -1,4 +1,4 @@
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 
 export function dedupeReferencedSymbols<T extends ts.ReferencedSymbol>(items: T[]): T[] {
 	return dedupe(items, item => [

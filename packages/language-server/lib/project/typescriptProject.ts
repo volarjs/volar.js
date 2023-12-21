@@ -1,7 +1,7 @@
 import { LanguagePlugin, LanguageService, ServiceEnvironment, TypeScriptProjectHost, createLanguageService, resolveCommonLanguageId } from '@volar/language-service';
 import { createLanguage, createSys } from '@volar/typescript';
 import * as path from 'path-browserify';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
 import type { ServerProject } from '../types';
 import { UriMap, createUriMap } from '../utils/uriMap';
@@ -124,7 +124,7 @@ export async function createTypeScriptServerProject(
 }
 
 async function createParsedCommandLine(
-	ts: typeof import('typescript/lib/tsserverlibrary'),
+	ts: typeof import('typescript'),
 	sys: ReturnType<typeof createSys>,
 	workspacePath: string,
 	tsconfig: string | ts.CompilerOptions,

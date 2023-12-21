@@ -1,5 +1,5 @@
 import type { CodeMapping, Stack, VirtualFile } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver';
 import {
 	GetMatchTsConfigRequest,

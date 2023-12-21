@@ -1,5 +1,5 @@
 import { FileProvider, CodeInformation, shouldReportDiagnostics, SourceMap, SourceFile } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import { getVirtualFileAndMap, notEmpty } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();

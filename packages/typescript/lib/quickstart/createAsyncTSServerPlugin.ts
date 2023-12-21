@@ -1,4 +1,4 @@
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 import { createFileProvider, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
@@ -10,7 +10,7 @@ export function createAsyncTSServerPlugin(
 	extensions: string[],
 	scriptKind: ts.ScriptKind,
 	loadLanguagePlugins: (
-		ts: typeof import('typescript/lib/tsserverlibrary'),
+		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
 	) => Promise<LanguagePlugin[]>,
 ): ts.server.PluginModuleFactory {

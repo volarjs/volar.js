@@ -1,4 +1,4 @@
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 
 export function combineChangeRanges(...changeRanges: ts.TextChangeRange[]) {
 	let changeRange: ts.TextChangeRange = changeRanges[0];

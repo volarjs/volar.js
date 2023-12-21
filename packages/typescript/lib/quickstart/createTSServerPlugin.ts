@@ -1,4 +1,4 @@
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 import { createFileProvider, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
@@ -8,7 +8,7 @@ const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>()
 
 export function createTSServerPlugin(
 	init: (
-		ts: typeof import('typescript/lib/tsserverlibrary'),
+		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
 	) => {
 		languagePlugins: LanguagePlugin[];

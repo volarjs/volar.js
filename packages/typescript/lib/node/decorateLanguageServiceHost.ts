@@ -1,11 +1,11 @@
 import { FileProvider, forEachEmbeddedFile } from '@volar/language-core';
 import { resolveCommonLanguageId } from '@volar/language-service';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 
 export function decorateLanguageServiceHost(
 	virtualFiles: FileProvider,
 	languageServiceHost: ts.LanguageServiceHost,
-	ts: typeof import('typescript/lib/tsserverlibrary'),
+	ts: typeof import('typescript'),
 	exts: string[]
 ) {
 
@@ -198,7 +198,7 @@ export function decorateLanguageServiceHost(
 	}
 }
 
-export function searchExternalFiles(ts: typeof import('typescript/lib/tsserverlibrary'), project: ts.server.Project, exts: string[]) {
+export function searchExternalFiles(ts: typeof import('typescript'), project: ts.server.Project, exts: string[]) {
 	if (project.projectKind !== ts.server.ProjectKind.Configured) {
 		return [];
 	}

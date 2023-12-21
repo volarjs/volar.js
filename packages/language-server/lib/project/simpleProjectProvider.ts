@@ -1,6 +1,6 @@
 import type { ServiceEnvironment } from '@volar/language-service';
 import type { SnapshotDocument } from '@volar/snapshot-document';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import type { TextDocuments } from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import type { ServerContext, ServerOptions } from '../server';
@@ -12,7 +12,7 @@ import { createSimpleServerProject } from './simpleProject';
 export interface WorkspacesContext extends ServerContext {
 	workspaces: {
 		initOptions: InitializationOptions;
-		ts: typeof import('typescript/lib/tsserverlibrary') | undefined;
+		ts: typeof import('typescript') | undefined;
 		tsLocalized: ts.MapLike<string> | undefined;
 		workspaceFolders: WorkspaceFolderManager;
 		documents: TextDocuments<SnapshotDocument>;

@@ -1,5 +1,5 @@
 import type { Mapping, Stack } from '@volar/source-map';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import type { FileProvider } from './fileProvider';
 
 export interface SourceFile extends BaseFile {

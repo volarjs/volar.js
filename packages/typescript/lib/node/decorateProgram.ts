@@ -1,5 +1,5 @@
 import type { FileProvider } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import { notEmpty } from './utils';
 import { transformDiagnostic } from './transform';
 

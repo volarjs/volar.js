@@ -42,7 +42,7 @@ export function createBrowserServer(connection: vscode.Connection) {
 			await import(`${tsdkUrl}/typescript.js`);
 			const ts = globalThis.module.exports;
 			globalThis.module = _module;
-			return ts as typeof import('typescript/lib/tsserverlibrary');
+			return ts as typeof import('typescript');
 		},
 		async loadTypeScriptLocalized(options, locale) {
 			const tsdkUrl = options.typescript && 'tsdkUrl' in options.typescript

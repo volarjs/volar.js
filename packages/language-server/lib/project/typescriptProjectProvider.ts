@@ -1,6 +1,6 @@
 import { FileType, ServiceEnvironment } from '@volar/language-service';
 import * as path from 'path-browserify';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import type { ServerProjectProvider } from '../types';

@@ -1,6 +1,6 @@
 import type * as path from 'typesafe-path/posix';
 import { URI } from 'vscode-uri';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import * as _fs from 'fs';
 
 export const defaultCompilerOptions: ts.CompilerOptions = {

@@ -10,7 +10,7 @@ import {
 	TypeScriptProjectHost,
 } from '@volar/language-service';
 import type * as monaco from 'monaco-types';
-import type * as ts from 'typescript/lib/tsserverlibrary.js';
+import type * as ts from 'typescript';
 import { URI } from 'vscode-uri';
 import { createLanguage, createSys } from '@volar/typescript';
 
@@ -57,7 +57,7 @@ export function createSimpleWorkerService<T = {}>(
 }
 
 export function createTypeScriptWorkerService<T = {}>(
-	ts: typeof import('typescript/lib/tsserverlibrary.js'),
+	ts: typeof import('typescript'),
 	languages: LanguagePlugin[],
 	services: ServicePlugin[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],

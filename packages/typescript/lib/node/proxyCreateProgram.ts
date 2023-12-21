@@ -1,4 +1,4 @@
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import { decorateProgram } from './decorateProgram';
 import { LanguagePlugin, createFileProvider, forEachEmbeddedFile, resolveCommonLanguageId } from '@volar/language-core';
 
@@ -6,7 +6,7 @@ export function proxyCreateProgram(
 	ts: typeof import('typescript'),
 	original: typeof ts['createProgram'],
 	extensions: string[],
-	getLanguagePlugins: (ts: typeof import('typescript/lib/tsserverlibrary'), options: ts.CreateProgramOptions) => LanguagePlugin[],
+	getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin[],
 ) {
 	return new Proxy(original, {
 		apply: (target, thisArg, args) => {

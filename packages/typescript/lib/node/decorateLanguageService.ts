@@ -14,7 +14,7 @@ import {
 	isSemanticTokensEnabled,
 	isTypeDefinitionEnabled,
 } from '@volar/language-core';
-import type * as ts from 'typescript/lib/tsserverlibrary';
+import type * as ts from 'typescript';
 import { dedupeDocumentSpans, dedupeReferencedSymbols } from './dedupe';
 import { getVirtualFileAndMap, notEmpty } from './utils';
 import { transformCallHierarchyItem, transformDiagnostic, transformDocumentSpan, transformFileTextChanges, transformSpan } from './transform';
