@@ -3,17 +3,16 @@ import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import type { ServerProjectProvider } from '../types';
+import type { ServerProjectProvider, ServerProjectProviderFactory } from '../types';
 import { isFileInDir } from '../utils/isFileInDir';
 import { createUriMap } from '../utils/uriMap';
 import { getInferredCompilerOptions } from './inferredCompilerOptions';
-import { WorkspacesContext, createServiceEnvironment, getWorkspaceFolder } from './simpleProjectProvider';
-import { TypeScriptServerProject, createTypeScriptServerProject } from './typescriptProject';
-import type { ServerOptions } from '../server';
+import { createServiceEnvironment, getWorkspaceFolder } from './simpleProjectProvider';
+import { createTypeScriptServerProject, type TypeScriptServerProject } from './typescriptProject';
 
 const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
-export function createTypeScriptProjectProvider(context: WorkspacesContext, serverOptions: ServerOptions): ServerProjectProvider {
+export const createTypeScriptServerProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
 
 	const { fileNameToUri, uriToFileName, fs } = context.server.runtimeEnv;
 	const configProjects = createUriMap<Promise<TypeScriptServerProject>>(fileNameToUri);
@@ -225,7 +224,7 @@ export function createTypeScriptProjectProvider(context: WorkspacesContext, serv
 		if (!projectPromise) {
 			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaces.workspaceFolders, uriToFileName);
 			const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-			projectPromise = createTypeScriptServerProject(tsconfig, context, serviceEnv, serverOptions);
+			projectPromise = createTypeScriptServerProject(tsconfig, context, serviceEnv, serverOptions, servicePlugins);
 			configProjects.pathSet(tsconfig, projectPromise);
 		}
 		return projectPromise;
@@ -237,7 +236,7 @@ export function createTypeScriptProjectProvider(context: WorkspacesContext, serv
 			inferredProjects.uriSet(workspaceFolder.uri.toString(), (async () => {
 				const inferOptions = await getInferredCompilerOptions(context.server.configurationHost);
 				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-				return createTypeScriptServerProject(inferOptions, context, serviceEnv, serverOptions);
+				return createTypeScriptServerProject(inferOptions, context, serviceEnv, serverOptions, servicePlugins);
 			})());
 		}
 
@@ -247,7 +246,7 @@ export function createTypeScriptProjectProvider(context: WorkspacesContext, serv
 
 		return project;
 	}
-}
+};
 
 export function sortTSConfigs(file: string, a: string, b: string) {
 
