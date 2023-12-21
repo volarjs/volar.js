@@ -12,7 +12,7 @@ import { createTypeScriptServerProject, type TypeScriptServerProject } from './t
 
 const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
-export const createTypeScriptServerProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
+export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
 
 	const { fileNameToUri, uriToFileName, fs } = context.server.runtimeEnv;
 	const configProjects = createUriMap<Promise<TypeScriptServerProject>>(fileNameToUri);
