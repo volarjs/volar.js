@@ -185,6 +185,9 @@ importers:
 
   packages/test-utils:
     dependencies:
+      '@volar/language-core':
+        specifier: 2.0.0-alpha.12
+        version: link:../language-core
       '@volar/language-server':
         specifier: 2.0.0-alpha.12
         version: link:../language-server

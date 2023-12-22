@@ -2,8 +2,10 @@ import * as _ from '@volar/language-server/node';
 import * as assert from 'assert';
 import * as cp from 'child_process';
 import * as fs from 'fs';
+import * as path from 'path';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
+import { SourceMap, forEachEmbeddedFile } from '@volar/language-core';
 
 export type LanguageServerHandle = ReturnType<typeof startLanguageServer>;
 
@@ -315,4 +317,121 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			);
 		},
 	};
+}
+
+export function* printSnapshots(sourceFile: _.SourceFile, root = process.cwd()) {
+	if (sourceFile.virtualFile) {
+		for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
+			yield path.relative(root, file.fileName);
+			for (const line of printSnapshot(sourceFile, file, root)) {
+				yield '  ' + line;
+			}
+		}
+	}
+}
+
+export function* printSnapshot(
+	sourceFile: {
+		fileName: string;
+		snapshot: _.SourceFile['snapshot'];
+	},
+	file: _.VirtualFile,
+	root = process.cwd(),
+) {
+
+	const sourceCode = sourceFile.snapshot.getText(0, sourceFile.snapshot.getLength());
+	const sourceFileDocument = TextDocument.create('', '', 0, sourceCode);
+	const virtualCode = file.snapshot.getText(0, file.snapshot.getLength());
+	const virtualCodeLines = virtualCode.split('\n');
+
+	for (let i = 0; i < virtualCodeLines.length - 2; i++) {
+		virtualCodeLines[i] += '\n';
+	}
+
+	let lineOffset = 0;
+
+	const map = new SourceMap(file.mappings);
+
+	for (let i = 0; i < virtualCodeLines.length; i++) {
+		const line = virtualCodeLines[i];
+		const lineHead = `[${i + 1}]`;
+		yield [lineHead, normalizeLogText(line)].join(' ');
+		const logs: {
+			mapping: _.CodeMapping;
+			line: string;
+			lineOffset: number;
+			sourceOffset: number;
+			generatedOffset: number;
+			length: number;
+		}[] = [];
+		for (let offset = 0; offset < line.length; offset++) {
+			for (const [sourceOffset, mapping] of map.getSourceOffsets(lineOffset + offset)) {
+				let log = logs.find(log => log.mapping === mapping && log.lineOffset + log.length + 1 === offset);
+				if (log) {
+					log.length++;
+				}
+				else {
+					log = {
+						mapping,
+						line,
+						lineOffset: offset,
+						sourceOffset: sourceOffset,
+						generatedOffset: offset,
+						length: 0,
+					};
+					logs.push(log);
+				}
+			}
+		}
+		for (const log of logs.reverse()) {
+			const sourcePosition = sourceFileDocument.positionAt(log.sourceOffset);
+			const spanText = log.length === 0 ? '^' : '~'.repeat(log.length);
+			const sourceFilePath = path.relative(root, log.mapping.source ?? sourceFile.fileName);
+			const prefix = ' '.repeat(lineHead.length);
+			const sourceLineEnd = sourceFileDocument.offsetAt({ line: sourcePosition.line + 1, character: 0 }) - 1;
+			const sourceLine = sourceFileDocument.getText().substring(sourceFileDocument.offsetAt({ line: sourcePosition.line, character: 0 }), sourceLineEnd + 1);
+			const sourceLineHead = `[${sourcePosition.line + 1}]`;
+			yield [
+				prefix,
+				' '.repeat(log.lineOffset),
+				spanText,
+			].join(' ');
+			if (log.line === sourceLine) {
+				yield [
+					prefix,
+					' '.repeat(log.lineOffset),
+					sourceLineHead,
+					'(exact match)',
+					`(${sourceFilePath
+					+ ':' + (sourcePosition.line + 1)
+					+ ':' + (sourcePosition.character + 1)})`,
+				].join(' ');
+			}
+			else {
+				yield [
+					prefix,
+					' '.repeat(log.lineOffset),
+					sourceLineHead,
+					normalizeLogText(sourceLine),
+					`(${sourceFilePath
+					+ ':' + (sourcePosition.line + 1)
+					+ ':' + (sourcePosition.character + 1)})`,
+				].join(' ');
+				yield [
+					prefix,
+					' '.repeat(log.lineOffset),
+					' '.repeat(sourceLineHead.length),
+					' '.repeat(sourcePosition.character) + spanText,
+				].join(' ');
+			}
+		}
+		lineOffset += line.length;
+	}
+}
+
+function normalizeLogText(text: string) {
+	return text
+		.replace(/\t/g, '→')
+		.replace(/\n/g, '↵')
+		.replace(/ /g, '·');
 }
