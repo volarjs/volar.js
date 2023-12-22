@@ -84,7 +84,7 @@ export function createConnection() {
 }
 
 export function createNodeServer(connection: vscode.Connection) {
-	return createServer(connection, (_, options) => ({
+	return createServer(connection, params => ({
 		uriToFileName,
 		fileNameToUri,
 		console: connection.console,
@@ -128,6 +128,6 @@ export function createNodeServer(connection: vscode.Connection) {
 				return require(path);
 			} catch { }
 		},
-		fs: createFs(options),
+		fs: createFs(params.initializationOptions ?? {}),
 	}));
 }

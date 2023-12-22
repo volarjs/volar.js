@@ -1,7 +1,6 @@
 import type { Console, FileSystem, LanguageService, ServiceEnvironment, ServicePlugin } from '@volar/language-service';
 import type * as vscode from 'vscode-languageserver';
-import type { WorkspacesContext } from './project/simpleProjectProvider.js';
-import type { ServerOptions } from './server';
+import type { ServerContext, ServerOptions } from './server';
 
 export interface Timer {
 	setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
@@ -83,7 +82,7 @@ export interface ServerProjectProvider {
 
 export interface ServerProjectProviderFactory {
 	(
-		context: WorkspacesContext,
+		context: ServerContext,
 		serverOptions: ServerOptions,
 		servicePlugins: ServicePlugin[],
 	): ServerProjectProvider;

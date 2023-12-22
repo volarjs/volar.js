@@ -1,25 +1,10 @@
 import type { ServiceEnvironment } from '@volar/language-service';
-import type { SnapshotDocument } from '@volar/snapshot-document';
-import type * as ts from 'typescript';
-import type { TextDocuments } from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import type { ServerContext } from '../server';
-import type { InitializationOptions, ServerProject, ServerProjectProvider, ServerProjectProviderFactory } from '../types';
+import type { ServerProject, ServerProjectProvider, ServerProjectProviderFactory } from '../types';
 import { isFileInDir } from '../utils/isFileInDir';
 import type { WorkspaceFolderManager } from '../workspaceFolderManager';
 import { createSimpleServerProject } from './simpleProject';
-
-export interface WorkspacesContext extends ServerContext {
-	workspaces: {
-		initOptions: InitializationOptions;
-		ts: typeof import('typescript') | undefined;
-		tsLocalized: ts.MapLike<string> | undefined;
-		workspaceFolders: WorkspaceFolderManager;
-		documents: TextDocuments<SnapshotDocument>;
-		reloadDiagnostics(): void;
-		updateDiagnosticsAndSemanticTokens(): void;
-	};
-}
+import type { ServerContext } from '../server';
 
 export const createSimpleProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
 
@@ -28,7 +13,7 @@ export const createSimpleProjectProvider: ServerProjectProviderFactory = (contex
 	return {
 		getProject(uri) {
 
-			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolders, context.server.runtimeEnv.uriToFileName);
+			const workspaceFolder = getWorkspaceFolder(uri, context.workspaceFolders, context.runtimeEnv.uriToFileName);
 
 			let projectPromise = projects.get(workspaceFolder);
 			if (!projectPromise) {
@@ -50,23 +35,23 @@ export const createSimpleProjectProvider: ServerProjectProviderFactory = (contex
 
 			projects.clear();
 
-			context.workspaces.reloadDiagnostics();
+			context.reloadDiagnostics();
 		},
 	};
 };
 
-export function createServiceEnvironment(context: WorkspacesContext, workspaceFolder: URI) {
+export function createServiceEnvironment(context: ServerContext, workspaceFolder: URI) {
 	const env: ServiceEnvironment = {
 		workspaceFolder,
-		uriToFileName: context.server.runtimeEnv.uriToFileName,
-		fileNameToUri: context.server.runtimeEnv.fileNameToUri,
-		fs: context.server.runtimeEnv.fs,
-		console: context.server.runtimeEnv.console,
-		locale: context.server.initializeParams.locale,
-		clientCapabilities: context.server.initializeParams.capabilities,
-		getConfiguration: context.server.configurationHost?.getConfiguration,
-		onDidChangeConfiguration: context.server.configurationHost?.onDidChangeConfiguration,
-		onDidChangeWatchedFiles: context.server.onDidChangeWatchedFiles,
+		uriToFileName: context.runtimeEnv.uriToFileName,
+		fileNameToUri: context.runtimeEnv.fileNameToUri,
+		fs: context.runtimeEnv.fs,
+		console: context.runtimeEnv.console,
+		locale: context.initializeParams.locale,
+		clientCapabilities: context.initializeParams.capabilities,
+		getConfiguration: context.configurationHost?.getConfiguration,
+		onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
+		onDidChangeWatchedFiles: context.onDidChangeWatchedFiles,
 	};
 	return env;
 }

@@ -6,17 +6,23 @@ import { URI } from 'vscode-uri';
 import { DiagnosticModel, InitializationOptions, ProjectContext, ServerProjectProvider, ServerProjectProviderFactory, ServerRuntimeEnvironment } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
 import { setupCapabilities } from './setupCapabilities.js';
-import { createWorkspaceFolderManager } from './workspaceFolderManager.js';
+import { WorkspaceFolderManager, createWorkspaceFolderManager } from './workspaceFolderManager.js';
 import { SnapshotDocument } from '@volar/snapshot-document';
+import type * as ts from 'typescript';
+import type { TextDocuments } from 'vscode-languageserver';
 
 export interface ServerContext {
-	server: {
-		initializeParams: vscode.InitializeParams;
-		connection: vscode.Connection;
-		runtimeEnv: ServerRuntimeEnvironment;
-		onDidChangeWatchedFiles: vscode.Connection['onDidChangeWatchedFiles'];
-		configurationHost: ReturnType<typeof createConfigurationHost> | undefined;
-	};
+	connection: vscode.Connection;
+	initializeParams: Omit<vscode.InitializeParams, 'initializationOptions'> & { initializationOptions?: InitializationOptions; };
+	runtimeEnv: ServerRuntimeEnvironment;
+	onDidChangeWatchedFiles: vscode.Connection['onDidChangeWatchedFiles'];
+	configurationHost: ReturnType<typeof createConfigurationHost> | undefined;
+	ts: typeof import('typescript') | undefined;
+	tsLocalized: ts.MapLike<string> | undefined;
+	workspaceFolders: WorkspaceFolderManager;
+	documents: TextDocuments<SnapshotDocument>;
+	reloadDiagnostics(): void;
+	updateDiagnosticsAndSemanticTokens(): void;
 }
 
 export interface ServerOptions {
@@ -27,16 +33,11 @@ export interface ServerOptions {
 
 export function createServer(
 	connection: vscode.Connection,
-	getRuntimeEnv: (params: vscode.InitializeParams, options: InitializationOptions) => ServerRuntimeEnvironment,
+	getRuntimeEnv: (params: ServerContext['initializeParams']) => ServerRuntimeEnvironment,
 ) {
 
-	let initParams: vscode.InitializeParams;
-	let options: InitializationOptions;
-	let projects: ServerProjectProvider;
 	let context: ServerContext;
-	let ts: typeof import('typescript') | undefined;
-	let tsLocalized: {} | undefined;
-	let env: ServerRuntimeEnvironment;
+	let projects: ServerProjectProvider;
 	let serverOptions: ServerOptions;
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
@@ -50,10 +51,10 @@ export function createServer(
 			return snapshot;
 		},
 	});
-	documents.listen(connection);
-
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 	const workspaceFolderManager = createWorkspaceFolderManager();
+
+	documents.listen(connection);
 
 	return {
 		initialize,
@@ -63,63 +64,68 @@ export function createServer(
 			return projects;
 		},
 		get env() {
-			return env;
+			return context.runtimeEnv;
 		},
 		get modules() {
 			return {
-				typescript: ts,
+				typescript: context.ts,
 			};
 		}
 	};
 
 	async function initialize(
-		_params: vscode.InitializeParams,
+		params: ServerContext['initializeParams'],
 		projectProviderFactory: ServerProjectProviderFactory,
 		_serverOptions: ServerOptions,
 	) {
 
-		initParams = _params;
 		serverOptions = _serverOptions;
-		options = initParams.initializationOptions;
-		env = getRuntimeEnv(initParams, options);
+		const env = getRuntimeEnv(params);
 		context = {
-			server: {
-				initializeParams: initParams,
-				connection,
-				runtimeEnv: {
-					...env,
-					fs: createFsWithCache(env.fs),
-				},
-				configurationHost: initParams.capabilities.workspace?.configuration ? createConfigurationHost(initParams, connection) : undefined,
-				onDidChangeWatchedFiles: cb => {
-					didChangeWatchedFilesCallbacks.add(cb);
-					return {
-						dispose: () => {
-							didChangeWatchedFilesCallbacks.delete(cb);
-						},
-					};
-				},
+			initializeParams: params,
+			connection,
+			runtimeEnv: {
+				...env,
+				fs: createFsWithCache(env.fs),
 			},
+			configurationHost: params.capabilities.workspace?.configuration
+				? createConfigurationHost(params, connection)
+				: undefined,
+			onDidChangeWatchedFiles: cb => {
+				didChangeWatchedFilesCallbacks.add(cb);
+				return {
+					dispose: () => {
+						didChangeWatchedFilesCallbacks.delete(cb);
+					},
+				};
+			},
+			ts: undefined,
+			tsLocalized: undefined,
+			documents,
+			workspaceFolders: workspaceFolderManager,
+			reloadDiagnostics,
+			updateDiagnosticsAndSemanticTokens,
 		};
-		ts = await context.server.runtimeEnv.loadTypeScript(options);
-		tsLocalized = initParams.locale
-			? await context.server.runtimeEnv.loadTypeScriptLocalized(options, initParams.locale)
-			: undefined;
 
-		if (options.l10n) {
-			await l10n.config({ uri: options.l10n.location });
+		context.ts = await env.loadTypeScript(context.initializeParams.initializationOptions ?? {});
+		if (context.initializeParams.locale) {
+			context.tsLocalized = await env.loadTypeScriptLocalized(context.initializeParams.initializationOptions ?? {}, context.initializeParams.locale);
 		}
 
-		if (initParams.capabilities.workspace?.workspaceFolders && initParams.workspaceFolders) {
-			for (const folder of initParams.workspaceFolders) {
+		if (context.initializeParams.initializationOptions?.l10n) {
+			await l10n.config({ uri: context.initializeParams.initializationOptions.l10n.location });
+		}
+
+		if (params.capabilities.workspace?.workspaceFolders && params.workspaceFolders) {
+			for (const folder of params.workspaceFolders) {
 				workspaceFolderManager.add(URI.parse(folder.uri));
 			}
 		}
-		else if (initParams.rootUri) {
-			workspaceFolderManager.add(URI.parse(initParams.rootUri));
+		else if (params.rootUri) {
+			workspaceFolderManager.add(URI.parse(params.rootUri));
 		}
-		else if (initParams.rootPath) {
-			workspaceFolderManager.add(URI.file(initParams.rootPath));
+		else if (params.rootPath) {
+			workspaceFolderManager.add(URI.file(params.rootPath));
 		}
 
 		const result: vscode.InitializeResult = {
@@ -139,7 +145,7 @@ export function createServer(
 
 		setupCapabilities(
 			result.capabilities,
-			options,
+			context.initializeParams.initializationOptions ?? {},
 			serverOptions.watchFileExtensions ?? [],
 			servicePlugins,
 			getSemanticTokensLegend(),
@@ -148,15 +154,6 @@ export function createServer(
 		projects = projectProviderFactory(
 			{
 				...context,
-				workspaces: {
-					ts,
-					tsLocalized,
-					initOptions: options,
-					documents,
-					workspaceFolders: workspaceFolderManager,
-					reloadDiagnostics,
-					updateDiagnosticsAndSemanticTokens,
-				},
 			},
 			serverOptions,
 			servicePlugins,
@@ -166,18 +163,18 @@ export function createServer(
 			updateDiagnostics(document.uri);
 		});
 		documents.onDidClose(({ document }) => {
-			context.server.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+			context.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		});
-		context.server.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
+		context.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
 
-		(await import('./register/registerEditorFeatures.js')).registerEditorFeatures(connection, projects, context.server.runtimeEnv);
+		(await import('./register/registerEditorFeatures.js')).registerEditorFeatures(connection, projects, context.runtimeEnv);
 		(await import('./register/registerLanguageFeatures.js')).registerLanguageFeatures(
 			connection,
 			projects,
-			initParams,
-			options,
+			params,
+			context.initializeParams.initializationOptions ?? {},
 			getSemanticTokensLegend(),
-			context.server.runtimeEnv,
+			context.runtimeEnv,
 			documents,
 		);
 
@@ -195,12 +192,12 @@ export function createServer(
 
 	function initialized() {
 
-		context.server.configurationHost?.ready();
-		context.server.configurationHost?.onDidChangeConfiguration?.(updateHttpSettings);
+		context.configurationHost?.ready();
+		context.configurationHost?.onDidChangeConfiguration?.(updateHttpSettings);
 
 		updateHttpSettings();
 
-		if (initParams.capabilities.workspace?.workspaceFolders) {
+		if (context.initializeParams.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 
 				for (const folder of e.added) {
@@ -213,7 +210,7 @@ export function createServer(
 			});
 		}
 
-		if (initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
+		if (context.initializeParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
 			if (serverOptions.watchFileExtensions?.length) {
 				connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
 					watchers: [
@@ -231,7 +228,7 @@ export function createServer(
 		}
 
 		async function updateHttpSettings() {
-			const httpSettings = await context.server.configurationHost?.getConfiguration?.<{ proxyStrictSSL: boolean; proxy: string; }>('http');
+			const httpSettings = await context.configurationHost?.getConfiguration?.<{ proxyStrictSSL: boolean; proxy: string; }>('http');
 			configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
 		}
 	}
@@ -290,18 +287,18 @@ export function createServer(
 	}
 
 	function getSemanticTokensLegend() {
-		if (!options.semanticTokensLegend) {
+		if (!context.initializeParams.initializationOptions?.semanticTokensLegend) {
 			return standardSemanticTokensLegend;
 		}
 		return {
-			tokenTypes: [...standardSemanticTokensLegend.tokenTypes, ...options.semanticTokensLegend.tokenTypes],
-			tokenModifiers: [...standardSemanticTokensLegend.tokenModifiers, ...options.semanticTokensLegend.tokenModifiers],
+			tokenTypes: [...standardSemanticTokensLegend.tokenTypes, ...context.initializeParams.initializationOptions.semanticTokensLegend.tokenTypes],
+			tokenModifiers: [...standardSemanticTokensLegend.tokenModifiers, ...context.initializeParams.initializationOptions.semanticTokensLegend.tokenModifiers],
 		};
 	}
 
 	function reloadDiagnostics() {
 		for (const document of documents.all()) {
-			context.server.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+			context.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		}
 		updateDiagnosticsAndSemanticTokens();
 	}
@@ -316,15 +313,15 @@ export function createServer(
 		await sleep(delay);
 
 		if (req === semanticTokensReq) {
-			if (context.server.initializeParams.capabilities.workspace?.semanticTokens?.refreshSupport) {
-				context.server.connection.languages.semanticTokens.refresh();
+			if (context.initializeParams.capabilities.workspace?.semanticTokens?.refreshSupport) {
+				context.connection.languages.semanticTokens.refresh();
 			}
-			if (context.server.initializeParams.capabilities.workspace?.inlayHint?.refreshSupport) {
-				context.server.connection.languages.inlayHint.refresh();
+			if (context.initializeParams.capabilities.workspace?.inlayHint?.refreshSupport) {
+				context.connection.languages.inlayHint.refresh();
 			}
-			if ((options.diagnosticModel ?? DiagnosticModel.Push) === DiagnosticModel.Pull) {
-				if (context.server.initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
-					context.server.connection.languages.diagnostics.refresh();
+			if ((context.initializeParams.initializationOptions?.diagnosticModel ?? DiagnosticModel.Push) === DiagnosticModel.Pull) {
+				if (context.initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
+					context.connection.languages.diagnostics.refresh();
 				}
 			}
 		}
@@ -332,7 +329,7 @@ export function createServer(
 
 	async function updateDiagnostics(docUri?: string) {
 
-		if ((options.diagnosticModel ?? DiagnosticModel.Push) !== DiagnosticModel.Push)
+		if ((context.initializeParams.initializationOptions?.diagnosticModel ?? DiagnosticModel.Push) !== DiagnosticModel.Push)
 			return;
 
 		const req = ++documentUpdatedReq;
@@ -367,10 +364,10 @@ export function createServer(
 
 		const languageService = (await projects!.getProject(uri)).getLanguageService();
 		const errors = await languageService.doValidation(uri, cancel, result => {
-			context.server.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
+			context.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});
 
-		context.server.connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
+		context.connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
 	}
 }
 

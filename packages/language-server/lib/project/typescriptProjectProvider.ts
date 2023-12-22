@@ -14,13 +14,13 @@ const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
 export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
 
-	const { fileNameToUri, uriToFileName, fs } = context.server.runtimeEnv;
+	const { fileNameToUri, uriToFileName, fs } = context.runtimeEnv;
 	const configProjects = createUriMap<Promise<TypeScriptServerProject>>(fileNameToUri);
 	const inferredProjects = createUriMap<Promise<TypeScriptServerProject>>(fileNameToUri);
 	const rootTsConfigs = new Set<string>();
 	const searchedDirs = new Set<string>();
 
-	context.server.onDidChangeWatchedFiles(({ changes }) => {
+	context.onDidChangeWatchedFiles(({ changes }) => {
 		const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
 
 		for (const change of tsConfigChanges) {
@@ -38,14 +38,14 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 		}
 
 		if (tsConfigChanges.length) {
-			context.workspaces.reloadDiagnostics();
+			context.reloadDiagnostics();
 		}
 		else {
-			context.workspaces.updateDiagnosticsAndSemanticTokens();
+			context.updateDiagnosticsAndSemanticTokens();
 		}
 	});
 
-	context.workspaces.workspaceFolders.onDidRemove(folder => {
+	context.workspaceFolders.onDidRemove(folder => {
 		for (const uri of configProjects.uriKeys()) {
 			const project = configProjects.uriGet(uri)!;
 			project.then(project => {
@@ -63,7 +63,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 			if (tsconfig) {
 				return await getOrCreateConfiguredProject(tsconfig);
 			}
-			const workspaceFolder = getWorkspaceFolder(uri, context.workspaces.workspaceFolders, uriToFileName);
+			const workspaceFolder = getWorkspaceFolder(uri, context.workspaceFolders, uriToFileName);
 			return await getOrCreateInferredProject(uri, workspaceFolder);
 		},
 		async getProjects() {
@@ -81,7 +81,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 			configProjects.clear();
 			inferredProjects.clear();
 
-			context.workspaces.reloadDiagnostics();
+			context.reloadDiagnostics();
 		},
 	};
 
@@ -150,7 +150,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 
 					let chains = await getReferencesChains(project.getParsedCommandLine(), rootTsConfig, []);
 
-					if (context.workspaces.initOptions.reverseConfigFilePriority) {
+					if (context.initializeParams.initializationOptions?.reverseConfigFilePriority) {
 						chains = chains.reverse();
 					}
 
@@ -222,7 +222,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 		tsconfig = tsconfig.replace(/\\/g, '/');
 		let projectPromise = configProjects.pathGet(tsconfig);
 		if (!projectPromise) {
-			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaces.workspaceFolders, uriToFileName);
+			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaceFolders, uriToFileName);
 			const serviceEnv = createServiceEnvironment(context, workspaceFolder);
 			projectPromise = createTypeScriptServerProject(tsconfig, context, serviceEnv, serverOptions, servicePlugins);
 			configProjects.pathSet(tsconfig, projectPromise);
@@ -234,7 +234,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 
 		if (!inferredProjects.uriHas(workspaceFolder.toString())) {
 			inferredProjects.uriSet(workspaceFolder.toString(), (async () => {
-				const inferOptions = await getInferredCompilerOptions(context.server.configurationHost);
+				const inferOptions = await getInferredCompilerOptions(context.configurationHost);
 				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
 				return createTypeScriptServerProject(inferOptions, context, serviceEnv, serverOptions, servicePlugins);
 			})());

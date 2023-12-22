@@ -5,8 +5,7 @@ import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
 import type { ServerProject } from '../types';
 import { UriMap, createUriMap } from '../utils/uriMap';
-import type { WorkspacesContext } from './simpleProjectProvider';
-import type { ServerOptions } from '../server';
+import type { ServerContext, ServerOptions } from '../server';
 
 export interface TypeScriptServerProject extends ServerProject {
 	askedFiles: UriMap<boolean>;
@@ -16,37 +15,37 @@ export interface TypeScriptServerProject extends ServerProject {
 
 export async function createTypeScriptServerProject(
 	tsconfig: string | ts.CompilerOptions,
-	context: WorkspacesContext,
+	context: ServerContext,
 	serviceEnv: ServiceEnvironment,
 	serverOptions: ServerOptions,
 	servicePlugins: ServicePlugin[],
 ): Promise<TypeScriptServerProject> {
 
-	if (!context.workspaces.ts) {
-		throw '!context.workspaces.ts';
+	if (!context.ts) {
+		throw '!context.ts';
 	}
 
 	let parsedCommandLine: ts.ParsedCommandLine;
 	let projectVersion = 0;
 	let languageService: LanguageService | undefined;
 
-	const { uriToFileName, fileNameToUri } = context.server.runtimeEnv;
-	const ts = context.workspaces.ts;
+	const { uriToFileName, fileNameToUri } = context.runtimeEnv;
+	const ts = context.ts;
 	const host: TypeScriptProjectHost = {
 		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder.toString()),
 		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => rootFiles,
 		getScriptSnapshot: (fileName) => {
 			askedFiles.pathSet(fileName, true);
-			const doc = context.workspaces.documents.get(fileNameToUri(fileName));
+			const doc = context.documents.get(fileNameToUri(fileName));
 			if (doc) {
 				return doc.getSnapshot();
 			}
 		},
 		getCompilationSettings: () => parsedCommandLine.options,
-		getLocalizedDiagnosticMessages: context.workspaces.tsLocalized ? () => context.workspaces.tsLocalized : undefined,
+		getLocalizedDiagnosticMessages: context.tsLocalized ? () => context.tsLocalized : undefined,
 		getProjectReferences: () => parsedCommandLine.projectReferences,
-		getLanguageId: uri => context.workspaces.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
+		getLanguageId: uri => context.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
 	};
 	const sys = createSys(ts, serviceEnv, host.getCurrentDirectory());
 	const languagePlugins = await serverOptions.getLanguagePlugins(serviceEnv, {
@@ -55,7 +54,7 @@ export async function createTypeScriptServerProject(
 		},
 	});
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
-	const docChangeWatcher = context.workspaces.documents.onDidChangeContent(() => {
+	const docChangeWatcher = context.documents.onDidChangeContent(() => {
 		projectVersion++;
 	});
 	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => {
