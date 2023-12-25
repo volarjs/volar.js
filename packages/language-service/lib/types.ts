@@ -49,8 +49,8 @@ export enum FileType {
 	SymbolicLink = 64,
 }
 
-interface Command<T> {
-	create: T;
+export interface ServiceCommand<T extends any[]> {
+	create(...args: T): vscode.Command | undefined;
 	is(value: vscode.Command): boolean;
 }
 
@@ -62,9 +62,9 @@ export interface ServiceContext {
 		...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never
 	): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
 	commands: {
-		showReferences: Command<(uri: string, position: vscode.Position, locations: vscode.Location[]) => vscode.Command | undefined>;
-		rename: Command<(uri: string, position: vscode.Position) => vscode.Command | undefined>;
-		setSelection: Command<(position: vscode.Position) => vscode.Command | undefined>;
+		showReferences: ServiceCommand<[uri: string, position: vscode.Position, locations: vscode.Location[]]>;
+		rename: ServiceCommand<[uri: string, position: vscode.Position]>;
+		setSelection: ServiceCommand<[position: vscode.Position]>;
 	};
 	documents: DocumentProvider;
 	services: [ServicePlugin, ServicePluginInstance][];
