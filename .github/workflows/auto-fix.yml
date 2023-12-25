@@ -1,7 +1,9 @@
-name: lint-fix
+name: auto-fix
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - 'master'
 
 jobs:
   update-html-data:
