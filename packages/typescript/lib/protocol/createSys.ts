@@ -238,7 +238,7 @@ export function createSys(
 			sys?.useCaseSensitiveFileNames ?? false,
 			rootPath,
 			depth,
-			(dirPath) => {
+			dirPath => {
 
 				dirPath = resolvePath(dirPath);
 				readDirectoryWorker(dirPath);
@@ -303,7 +303,7 @@ export function createSys(
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
 			promises.add(promise);
-			result.then((result) => {
+			result.then(result => {
 				promises.delete(promise);
 				if (onReadDirectoryResult(dirName, dir, result)) {
 					version++;
@@ -328,7 +328,7 @@ export function createSys(
 				if (typeof stat === 'object' && 'then' in stat) {
 					const promise = stat;
 					promises.add(promise);
-					stat.then((stat) => {
+					stat.then(stat => {
 						promises.delete(promise);
 						if (stat?.type === 1 satisfies FileType.File) {
 							let file = dir.files.get(name);

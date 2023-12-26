@@ -238,7 +238,7 @@ export function activate(context: vscode.ExtensionContext) {
 				location: vscode.ProgressLocation.Window,
 				cancellable: false,
 				title: 'Loading Memory Data'
-			}, async (progress) => {
+			}, async progress => {
 
 				progress.report({ increment: 0 });
 

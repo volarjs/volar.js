@@ -61,7 +61,7 @@ function createTypeScriptCheckerWorker(
 	const env = createServiceEnvironment(() => settings);
 	const didChangeWatchedFilesCallbacks = new Set<NotificationHandler<DidChangeWatchedFilesParams>>();
 
-	env.onDidChangeWatchedFiles = (cb) => {
+	env.onDidChangeWatchedFiles = cb => {
 		didChangeWatchedFilesCallbacks.add(cb);
 		return {
 			dispose: () => {
@@ -190,7 +190,7 @@ function createTypeScriptCheckerWorker(
 		}));
 		const text = ts.formatDiagnosticsWithColorAndContext(errors, {
 			getCurrentDirectory: () => rootPath,
-			getCanonicalFileName: (fileName) => ts.sys.useCaseSensitiveFileNames ? fileName : fileName.toLowerCase(),
+			getCanonicalFileName: fileName => ts.sys.useCaseSensitiveFileNames ? fileName : fileName.toLowerCase(),
 			getNewLine: () => ts.sys.newLine,
 		});
 		return text;
@@ -222,7 +222,7 @@ function createTypeScriptLanguageHost(
 			checkRootFilesUpdate();
 			return parsedCommandLine.fileNames;
 		},
-		getScriptSnapshot: (fileName) => {
+		getScriptSnapshot: fileName => {
 			if (!scriptSnapshotsCache.has(fileName)) {
 				const fileText = ts.sys.readFile(fileName, 'utf8');
 				if (fileText !== undefined) {

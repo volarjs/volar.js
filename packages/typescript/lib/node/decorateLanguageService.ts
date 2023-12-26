@@ -28,7 +28,7 @@ export function decorateLanguageService(files: FileProvider, languageService: ts
 		getOutliningSpans,
 	} = languageService;
 
-	languageService.getNavigationTree = (fileName) => {
+	languageService.getNavigationTree = fileName => {
 		const [virtualFile] = getVirtualFileAndMap(files, fileName);
 		if (virtualFile) {
 			const tree = getNavigationTree(fileName);
@@ -39,7 +39,7 @@ export function decorateLanguageService(files: FileProvider, languageService: ts
 			return getNavigationTree(fileName);
 		}
 	};
-	languageService.getOutliningSpans = (fileName) => {
+	languageService.getOutliningSpans = fileName => {
 		const [virtualFile] = getVirtualFileAndMap(files, fileName);
 		if (virtualFile) {
 			return [];
@@ -362,17 +362,17 @@ export function decorateLanguageService(files: FileProvider, languageService: ts
 			return getEncodedSemanticClassifications(fileName, span);
 		}
 	};
-	languageService.getSyntacticDiagnostics = (fileName) => {
+	languageService.getSyntacticDiagnostics = fileName => {
 		return getSyntacticDiagnostics(fileName)
 			.map(d => transformDiagnostic(files, d))
 			.filter(notEmpty);
 	};
-	languageService.getSemanticDiagnostics = (fileName) => {
+	languageService.getSemanticDiagnostics = fileName => {
 		return getSemanticDiagnostics(fileName)
 			.map(d => transformDiagnostic(files, d))
 			.filter(notEmpty);
 	};
-	languageService.getSuggestionDiagnostics = (fileName) => {
+	languageService.getSuggestionDiagnostics = fileName => {
 		return getSuggestionDiagnostics(fileName)
 			.map(d => transformDiagnostic(files, d))
 			.filter(notEmpty);
@@ -610,7 +610,7 @@ export function decorateLanguageService(files: FileProvider, languageService: ts
 			return provideInlayHints(fileName, span, preferences);
 		}
 	};
-	languageService.getFileReferences = (fileName) => {
+	languageService.getFileReferences = fileName => {
 		const unresolved = getFileReferences(fileName);
 		const resolved = unresolved
 			.map(s => transformDocumentSpan(files, s, isReferencesEnabled))

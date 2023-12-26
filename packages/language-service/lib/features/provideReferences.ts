@@ -71,7 +71,7 @@ export function register(context: ServiceContext) {
 					}
 				}
 			},
-			(data) => {
+			data => {
 
 				const results: vscode.Location[] = [];
 

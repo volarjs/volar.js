@@ -12,7 +12,7 @@ export function activate(cmd: string, client: BaseLanguageClient) {
 		await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,
 			title: localize('progress.title', "Finding file references")
-		}, async (_progress) => {
+		}, async _progress => {
 
 			if (!uri) {
 				const editor = vscode.window.activeTextEditor;

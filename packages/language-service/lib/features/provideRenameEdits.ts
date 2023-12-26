@@ -129,14 +129,14 @@ export function register(context: ServiceContext) {
 					}
 				}
 			},
-			(data) => {
+			data => {
 				return transformWorkspaceEdit(
 					data,
 					context,
 					'rename',
 				);
 			},
-			(workspaceEdits) => {
+			workspaceEdits => {
 
 				const mainEdit = workspaceEdits[0];
 				const otherEdits = workspaceEdits.slice(1);

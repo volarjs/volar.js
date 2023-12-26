@@ -105,7 +105,7 @@ export async function activate(info: LabsInfo) {
 					return;
 				}
 
-				return new vscode.Hover(data.map((data) => [
+				return new vscode.Hover(data.map(data => [
 					data.uri,
 					'',
 					'',

@@ -100,7 +100,7 @@ export function decorateLanguageServiceHost(
 		};
 	}
 
-	languageServiceHost.getScriptSnapshot = (fileName) => {
+	languageServiceHost.getScriptSnapshot = fileName => {
 		if (exts.some(ext => fileName.endsWith(ext))) {
 			updateScript(fileName);
 			return scripts.get(fileName)?.snapshot;
@@ -109,7 +109,7 @@ export function decorateLanguageServiceHost(
 	};
 
 	if (getScriptKind) {
-		languageServiceHost.getScriptKind = (fileName) => {
+		languageServiceHost.getScriptKind = fileName => {
 			if (exts.some(ext => fileName.endsWith(ext))) {
 				updateScript(fileName);
 				const script = scripts.get(fileName);

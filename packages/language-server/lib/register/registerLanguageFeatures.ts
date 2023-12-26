@@ -297,7 +297,7 @@ export function registerLanguageFeatures(
 	});
 	connection.workspace.onWillRenameFiles(async (params, token) => {
 
-		const _edits = await Promise.all(params.files.map(async (file) => {
+		const _edits = await Promise.all(params.files.map(async file => {
 			return await worker(file.oldUri, token, service => {
 				return service.getEditsForFileRename(file.oldUri, file.newUri, token) ?? null;
 			}) ?? null;

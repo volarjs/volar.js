@@ -274,7 +274,7 @@ export function register(context: ServiceContext) {
 	};
 
 	function createDocMap(file: VirtualFile, sourceFileName: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
-		const maps = updateVirtualFileMaps(file, (sourceFileName2) => {
+		const maps = updateVirtualFileMaps(file, sourceFileName2 => {
 			if (!sourceFileName2) {
 				return [sourceFileName, _sourceSnapshot];
 			}

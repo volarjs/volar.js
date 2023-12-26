@@ -35,7 +35,7 @@ export async function createTypeScriptServerProject(
 		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder.toString()),
 		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => rootFiles,
-		getScriptSnapshot: (fileName) => {
+		getScriptSnapshot: fileName => {
 			askedFiles.pathSet(fileName, true);
 			const doc = context.documents.get(fileNameToUri(fileName));
 			if (doc) {

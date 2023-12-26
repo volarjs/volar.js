@@ -36,7 +36,7 @@ export function decorateProgram(files: FileProvider, program: ts.Program) {
 			.map(d => transformDiagnostic(files, d))
 			.filter(notEmpty);
 	};
-	program.getGlobalDiagnostics = (cancellationToken) => {
+	program.getGlobalDiagnostics = cancellationToken => {
 		return getGlobalDiagnostics(cancellationToken)
 			.map(d => transformDiagnostic(files, d))
 			.filter(notEmpty);

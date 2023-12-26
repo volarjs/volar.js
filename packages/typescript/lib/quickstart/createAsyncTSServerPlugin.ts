@@ -16,7 +16,7 @@ export function createAsyncTSServerPlugin(
 		info: ts.server.PluginCreateInfo
 	) => Promise<LanguagePlugin[]>,
 ): ts.server.PluginModuleFactory {
-	return (modules) => {
+	return modules => {
 		const { typescript: ts } = modules;
 		const pluginModule: ts.server.PluginModule = {
 			create(info) {
@@ -35,20 +35,20 @@ export function createAsyncTSServerPlugin(
 
 					let initialized = false;
 
-					info.languageServiceHost.getScriptSnapshot = (fileName) => {
+					info.languageServiceHost.getScriptSnapshot = fileName => {
 						if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
 							return emptySnapshot;
 						}
 						return getScriptSnapshot(fileName);
 					};
-					info.languageServiceHost.getScriptVersion = (fileName) => {
+					info.languageServiceHost.getScriptVersion = fileName => {
 						if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
 							return 'initializing...';
 						}
 						return getScriptVersion(fileName);
 					};
 					if (getScriptKind) {
-						info.languageServiceHost.getScriptKind = (fileName) => {
+						info.languageServiceHost.getScriptKind = fileName => {
 							if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
 								return scriptKind; // TODO: bypass upstream bug
 							}
@@ -68,7 +68,7 @@ export function createAsyncTSServerPlugin(
 						const files = createFileProvider(
 							languagePlugins,
 							ts.sys.useCaseSensitiveFileNames,
-							(fileName) => {
+							fileName => {
 								const snapshot = getScriptSnapshot(fileName);
 								if (snapshot) {
 									files.updateSourceFile(

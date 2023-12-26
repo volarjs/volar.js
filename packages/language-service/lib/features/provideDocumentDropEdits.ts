@@ -23,7 +23,7 @@ export function register(context: ServiceContext) {
 				}
 				return service[1].provideDocumentDropEdits?.(document, arg, dataTransfer, token);
 			},
-			(edit) => {
+			edit => {
 				if (edit.additionalEdit) {
 					edit.additionalEdit = transformWorkspaceEdit(
 						edit.additionalEdit,

@@ -88,7 +88,7 @@ export class SnapshotDocument implements TextDocument {
 			const snapshot: ts.IScriptSnapshot = {
 				getText: (start, end) => text.substring(start, end),
 				getLength: () => text.length,
-				getChangeRange: (oldSnapshot) => {
+				getChangeRange: oldSnapshot => {
 					if (!changeRangeCache.has(oldSnapshot)) {
 						const oldIndex = this.snapshots.findIndex(change => change.ref?.deref() === oldSnapshot);
 						if (oldIndex >= 0) {

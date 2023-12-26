@@ -11,12 +11,12 @@ export function createWorkspaceFolderManager() {
 
 	return {
 		add(folder: URI) {
-			if (!folders.some((uri) => uri.toString() === folder.toString())) {
+			if (!folders.some(uri => uri.toString() === folder.toString())) {
 				folders.push(folder);
 			}
 		},
 		remove(folder: URI) {
-			folders = folders.filter((uri) => uri.toString() !== folder.toString());
+			folders = folders.filter(uri => uri.toString() !== folder.toString());
 		},
 		getAll() {
 			return folders;

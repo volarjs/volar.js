@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(
-		vscode.window.onDidChangeActiveTextEditor((e) => {
+		vscode.window.onDidChangeActiveTextEditor(e => {
 
 			if (!e) {
 				return;

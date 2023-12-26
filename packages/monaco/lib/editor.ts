@@ -20,9 +20,9 @@ export function activateMarkers(
 	const listener = new Map<string, IDisposable>();
 
 	disposables.push(
-		editor.onDidCreateModel((model) => hostingMarkers(model)),
+		editor.onDidCreateModel(model => hostingMarkers(model)),
 		editor.onWillDisposeModel(stopHostingMarkers),
-		editor.onDidChangeModelLanguage((event) => {
+		editor.onDidChangeModelLanguage(event => {
 			stopHostingMarkers(event.model);
 			hostingMarkers(event.model);
 		}),
@@ -39,7 +39,7 @@ export function activateMarkers(
 		hostingMarkers(model);
 	}
 
-	return { dispose: () => disposables.forEach((d) => d.dispose()) };
+	return { dispose: () => disposables.forEach(d => d.dispose()) };
 
 	function stopHostingMarkers(model: editor.IModel): void {
 		editor.setModelMarkers(model, markersOwn, []);
@@ -119,9 +119,9 @@ export function activateAutoInsertion(
 	let timeout: number | undefined;
 
 	disposables.push(
-		editor.onDidCreateModel((model) => hostingAutoInsertion(model)),
+		editor.onDidCreateModel(model => hostingAutoInsertion(model)),
 		editor.onWillDisposeModel(stopHostingAutoInsertion),
-		editor.onDidChangeModelLanguage((event) => {
+		editor.onDidChangeModelLanguage(event => {
 			stopHostingAutoInsertion(event.model);
 			hostingAutoInsertion(event.model);
 		}),
@@ -139,7 +139,7 @@ export function activateAutoInsertion(
 		hostingAutoInsertion(model);
 	}
 
-	return { dispose: () => disposables.forEach((d) => d.dispose()) };
+	return { dispose: () => disposables.forEach(d => d.dispose()) };
 
 	function stopHostingAutoInsertion(model: editor.IModel): void {
 		if (listener.has(model)) {
@@ -152,7 +152,7 @@ export function activateAutoInsertion(
 		if (!languages.includes(model.getLanguageId?.() ?? (model as any).getModeId?.())) {
 			return;
 		}
-		listener.set(model, model.onDidChangeContent((e) => {
+		listener.set(model, model.onDidChangeContent(e => {
 			if (model.isDisposed()) {
 				return;
 			}
@@ -196,7 +196,7 @@ export function activateAutoInsertion(
 				if (model.getVersionId() !== version) {
 					return;
 				}
-				const codeEditor = editor.getEditors().find((e) => e.getModel() === model);
+				const codeEditor = editor.getEditors().find(e => e.getModel() === model);
 				if (codeEditor && edit && model.getVersionId() === version) {
 					if (typeof edit === 'string') {
 						(codeEditor?.getContribution('snippetController2') as any)?.insert(edit);

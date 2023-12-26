@@ -95,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('_volar.action.openVirtualFile', async (uri: vscode.Uri) => {
 			vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
 		}),
-		vscode.window.onDidChangeActiveTextEditor((e) => {
+		vscode.window.onDidChangeActiveTextEditor(e => {
 
 			if (!e) {
 				return;

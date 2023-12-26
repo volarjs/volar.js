@@ -43,5 +43,5 @@ export async function registerProviders(
 		languages.registerDocumentRangeSemanticTokensProvider(language, provider),
 	];
 
-	return { dispose: () => disposables.forEach((d) => d.dispose()) };
+	return { dispose: () => disposables.forEach(d => d.dispose()) };
 }

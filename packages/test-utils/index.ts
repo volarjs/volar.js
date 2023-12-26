@@ -29,9 +29,9 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	let untitledCounter = 0;
 
 	connection.listen();
-	connection.onClose((e) => console.log(e));
-	connection.onUnhandledNotification((e) => console.log(e));
-	connection.onError((e) => console.log(e));
+	connection.onClose(e => console.log(e));
+	connection.onUnhandledNotification(e => console.log(e));
+	connection.onError(e => console.log(e));
 	connection.onDispose(() => {
 		childProcess.kill();
 	});

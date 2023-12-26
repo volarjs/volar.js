@@ -373,7 +373,7 @@ export async function createLanguageFeaturesProvider(
 		async provideSelectionRanges(model, positions) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResults = await Promise.all(
-				positions.map((position) =>
+				positions.map(position =>
 					languageService.getSelectionRanges(
 						model.uri.toString(),
 						[fromPosition(position)],
@@ -381,7 +381,7 @@ export async function createLanguageFeaturesProvider(
 				)
 			);
 			return codeResults.map(
-				(codeResult) => codeResult?.map(toSelectionRange) ?? []
+				codeResult => codeResult?.map(toSelectionRange) ?? []
 			);
 		},
 		async provideSignatureHelp(model, position, _token, context) {

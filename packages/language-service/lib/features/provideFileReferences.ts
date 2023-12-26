@@ -20,7 +20,7 @@ export function register(context: ServiceContext) {
 				}
 				return await service[1].provideFileReferences?.(document, token) ?? [];
 			},
-			(data) => data
+			data => data
 				.map(reference => {
 
 					const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(reference.uri));

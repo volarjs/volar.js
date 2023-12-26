@@ -76,7 +76,7 @@ export function createLanguage(
 				lastSysVersion = sys.version;
 				moduleCache.clear();
 			}
-			return moduleLiterals.map((moduleLiteral) => {
+			return moduleLiterals.map(moduleLiteral => {
 				let moduleName = moduleLiteral.text;
 				for (const language of languages) {
 					if (language.typescript?.resolveModuleName) {
@@ -106,7 +106,7 @@ export function createLanguage(
 				lastSysVersion = sys.version;
 				moduleCache.clear();
 			}
-			return moduleNames.map((moduleName) => {
+			return moduleNames.map(moduleName => {
 				for (const language of languages) {
 					if (language.typescript?.resolveModuleName) {
 						moduleName = language.typescript.resolveModuleName!(moduleName, sourceFile?.impliedNodeFormat) ?? moduleName;
@@ -150,7 +150,7 @@ export function createLanguage(
 			getCompilationSettings: projectHost.getCompilationSettings,
 			getLocalizedDiagnosticMessages: projectHost.getLocalizedDiagnosticMessages,
 			getProjectReferences: projectHost.getProjectReferences,
-			getDefaultLibFileName: (options) => {
+			getDefaultLibFileName: options => {
 				try {
 					return ts.getDefaultLibFilePath(options);
 				} catch {
@@ -196,7 +196,7 @@ export function createLanguage(
 					sys?.useCaseSensitiveFileNames ?? false,
 					projectHost.getCurrentDirectory(),
 					depth,
-					(dirPath) => {
+					dirPath => {
 
 						const files: string[] = [];
 

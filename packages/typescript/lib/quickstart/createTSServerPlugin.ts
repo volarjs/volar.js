@@ -17,7 +17,7 @@ export function createTSServerPlugin(
 		extensions: string[];
 	}
 ): ts.server.PluginModuleFactory {
-	return (modules) => {
+	return modules => {
 		const { typescript: ts } = modules;
 		const pluginModule: ts.server.PluginModule = {
 			create(info) {
