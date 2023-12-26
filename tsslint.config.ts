@@ -115,6 +115,52 @@ export default defineConfig({
 				ts.forEachChild(node, walk);
 			});
 		},
+		'arrow-parens'({ typescript: ts, sourceFile, reportWarning }) {
+			ts.forEachChild(sourceFile, function walk(node) {
+				if (
+					ts.isArrowFunction(node)
+					&& node.parameters.length === 1
+					&& !node.type
+				) {
+					const parameter = node.parameters[0];
+					if (
+						ts.isIdentifier(parameter.name)
+						&& !parameter.type
+						&& !parameter.dotDotDotToken
+						&& sourceFile.text[parameter.getStart(sourceFile) - 1] === '('
+						&& sourceFile.text[parameter.getEnd()] === ')'
+					) {
+						reportWarning(
+							`Parentheses should be omitted.`,
+							parameter.getStart(sourceFile),
+							parameter.getEnd()
+						).withFix(
+							'Remove parentheses around the parameter',
+							() => [{
+								fileName: sourceFile.fileName,
+								textChanges: [
+									{
+										newText: '',
+										span: {
+											start: parameter.getStart(sourceFile) - 1,
+											length: 1,
+										},
+									},
+									{
+										newText: '',
+										span: {
+											start: parameter.getEnd(),
+											length: 1,
+										},
+									}
+								],
+							}]
+						);
+					}
+				}
+				ts.forEachChild(node, walk);
+			});
+		},
 		'need-format'({ typescript: ts, sourceFile, languageService, reportWarning }) {
 			const textChanges = languageService.getFormattingEditsForDocument(sourceFile.fileName, {
 				...ts.getDefaultFormatCodeSettings(),
