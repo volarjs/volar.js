@@ -73,7 +73,12 @@ export default defineConfig({
 							{
 								newText: '\n}',
 								span: {
-									start: statement.getEnd(),
+									start:
+										ts.getTrailingCommentRanges(
+											sourceFile.text,
+											statement.getEnd(),
+										)?.reverse()?.[0]?.end
+										?? statement.getEnd(),
 									length: 0,
 								},
 							}
