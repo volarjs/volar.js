@@ -5,6 +5,8 @@ import { createFileProvider, LanguagePlugin, resolveCommonLanguageId } from '@vo
 import { arrayItemsEqual } from './createTSServerPlugin';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
+const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
+const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
 
 export function createAsyncTSServerPlugin(
 	extensions: string[],
@@ -18,68 +20,75 @@ export function createAsyncTSServerPlugin(
 		const { typescript: ts } = modules;
 		const pluginModule: ts.server.PluginModule = {
 			create(info) {
+				if (
+					!decoratedLanguageServices.has(info.languageService)
+					&& !decoratedLanguageServiceHosts.has(info.languageServiceHost)
+				) {
+					decoratedLanguageServices.add(info.languageService);
+					decoratedLanguageServiceHosts.add(info.languageServiceHost);
 
-				const emptySnapshot = ts.ScriptSnapshot.fromString('');
-				const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
-				const getScriptVersion = info.languageServiceHost.getScriptVersion.bind(info.languageServiceHost);
-				const getScriptKind = info.languageServiceHost.getScriptKind?.bind(info.languageServiceHost);
-				const getProjectVersion = info.languageServiceHost.getProjectVersion?.bind(info.languageServiceHost);
+					const emptySnapshot = ts.ScriptSnapshot.fromString('');
+					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
+					const getScriptVersion = info.languageServiceHost.getScriptVersion.bind(info.languageServiceHost);
+					const getScriptKind = info.languageServiceHost.getScriptKind?.bind(info.languageServiceHost);
+					const getProjectVersion = info.languageServiceHost.getProjectVersion?.bind(info.languageServiceHost);
 
-				let initialized = false;
+					let initialized = false;
 
-				info.languageServiceHost.getScriptSnapshot = (fileName) => {
-					if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-						return emptySnapshot;
-					}
-					return getScriptSnapshot(fileName);
-				};
-				info.languageServiceHost.getScriptVersion = (fileName) => {
-					if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-						return 'initializing...';
-					}
-					return getScriptVersion(fileName);
-				};
-				if (getScriptKind) {
-					info.languageServiceHost.getScriptKind = (fileName) => {
+					info.languageServiceHost.getScriptSnapshot = (fileName) => {
 						if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-							return scriptKind; // TODO: bypass upstream bug
+							return emptySnapshot;
 						}
-						return getScriptKind(fileName);
+						return getScriptSnapshot(fileName);
 					};
-				}
-				if (getProjectVersion) {
-					info.languageServiceHost.getProjectVersion = () => {
-						if (!initialized) {
-							return getProjectVersion() + ',initializing...';
+					info.languageServiceHost.getScriptVersion = (fileName) => {
+						if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
+							return 'initializing...';
 						}
-						return getProjectVersion();
+						return getScriptVersion(fileName);
 					};
-				}
-
-				loadLanguagePlugins(ts, info).then(languagePlugins => {
-					const files = createFileProvider(
-						languagePlugins,
-						ts.sys.useCaseSensitiveFileNames,
-						(fileName) => {
-							const snapshot = getScriptSnapshot(fileName);
-							if (snapshot) {
-								files.updateSourceFile(
-									fileName,
-									resolveCommonLanguageId(fileName),
-									snapshot
-								);
-							} else {
-								files.deleteSourceFile(fileName);
+					if (getScriptKind) {
+						info.languageServiceHost.getScriptKind = (fileName) => {
+							if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
+								return scriptKind; // TODO: bypass upstream bug
 							}
-						}
-					);
+							return getScriptKind(fileName);
+						};
+					}
+					if (getProjectVersion) {
+						info.languageServiceHost.getProjectVersion = () => {
+							if (!initialized) {
+								return getProjectVersion() + ',initializing...';
+							}
+							return getProjectVersion();
+						};
+					}
 
-					decorateLanguageService(files, info.languageService);
-					decorateLanguageServiceHost(files, info.languageServiceHost, ts, extensions);
+					loadLanguagePlugins(ts, info).then(languagePlugins => {
+						const files = createFileProvider(
+							languagePlugins,
+							ts.sys.useCaseSensitiveFileNames,
+							(fileName) => {
+								const snapshot = getScriptSnapshot(fileName);
+								if (snapshot) {
+									files.updateSourceFile(
+										fileName,
+										resolveCommonLanguageId(fileName),
+										snapshot
+									);
+								} else {
+									files.deleteSourceFile(fileName);
+								}
+							}
+						);
 
-					info.project.markAsDirty();
-					initialized = true;
-				});
+						decorateLanguageService(files, info.languageService);
+						decorateLanguageServiceHost(files, info.languageServiceHost, ts, extensions);
+
+						info.project.markAsDirty();
+						initialized = true;
+					});
+				}
 
 				return info.languageService;
 			},

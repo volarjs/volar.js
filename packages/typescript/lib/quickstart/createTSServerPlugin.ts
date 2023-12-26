@@ -5,6 +5,8 @@ import { createFileProvider, LanguagePlugin, resolveCommonLanguageId } from '@vo
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
 const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
+const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
+const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
 
 export function createTSServerPlugin(
 	init: (
@@ -19,25 +21,33 @@ export function createTSServerPlugin(
 		const { typescript: ts } = modules;
 		const pluginModule: ts.server.PluginModule = {
 			create(info) {
-				const { languagePlugins, extensions } = init(ts, info);
-				projectExternalFileExtensions.set(info.project, extensions);
-				const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
-				const files = createFileProvider(
-					languagePlugins,
-					ts.sys.useCaseSensitiveFileNames,
-					fileName => {
-						const snapshot = getScriptSnapshot(fileName);
-						if (snapshot) {
-							files.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
-						}
-						else {
-							files.deleteSourceFile(fileName);
-						}
-					}
-				);
+				if (
+					!decoratedLanguageServices.has(info.languageService)
+					&& !decoratedLanguageServiceHosts.has(info.languageServiceHost)
+				) {
+					decoratedLanguageServices.add(info.languageService);
+					decoratedLanguageServiceHosts.add(info.languageServiceHost);
 
-				decorateLanguageService(files, info.languageService);
-				decorateLanguageServiceHost(files, info.languageServiceHost, ts, extensions);
+					const { languagePlugins, extensions } = init(ts, info);
+					projectExternalFileExtensions.set(info.project, extensions);
+					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
+					const files = createFileProvider(
+						languagePlugins,
+						ts.sys.useCaseSensitiveFileNames,
+						fileName => {
+							const snapshot = getScriptSnapshot(fileName);
+							if (snapshot) {
+								files.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
+							}
+							else {
+								files.deleteSourceFile(fileName);
+							}
+						}
+					);
+
+					decorateLanguageService(files, info.languageService);
+					decorateLanguageServiceHost(files, info.languageServiceHost, ts, extensions);
+				}
 
 				return info.languageService;
 			},
