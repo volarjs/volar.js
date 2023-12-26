@@ -17,8 +17,9 @@ export function register(context: ServiceContext) {
 			map => map.getGeneratedPositions(position, isReferencesEnabled),
 			async (service, document, position) => {
 
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
+				}
 
 				const recursiveChecker = dedupe.createLocationSet();
 				const result: vscode.Location[] = [];
@@ -29,11 +30,13 @@ export function register(context: ServiceContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position) {
 
-					if (!service[1].provideReferences)
+					if (!service[1].provideReferences) {
 						return;
+					}
 
-					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
+					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } })) {
 						return;
+					}
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
@@ -52,8 +55,9 @@ export function register(context: ServiceContext) {
 
 							for (const linkedPos of mirrorMap.getLinkedCodePositions(reference.range.start)) {
 
-								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
+								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
 									continue;
+								}
 
 								foundMirrorPosition = true;
 

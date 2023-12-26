@@ -329,8 +329,9 @@ export function createServer(
 
 	async function updateDiagnostics(docUri?: string) {
 
-		if ((context.initializeParams.initializationOptions?.diagnosticModel ?? DiagnosticModel.Push) !== DiagnosticModel.Push)
+		if ((context.initializeParams.initializationOptions?.diagnosticModel ?? DiagnosticModel.Push) !== DiagnosticModel.Push) {
 			return;
+		}
 
 		const req = ++documentUpdatedReq;
 		const delay = 250;

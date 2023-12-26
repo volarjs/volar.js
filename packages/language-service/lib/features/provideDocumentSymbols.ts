@@ -34,7 +34,9 @@ export function register(context: ServiceContext) {
 			results => {
 				for (let i = 0; i < results.length; i++) {
 					for (let j = 0; j < results.length; j++) {
-						if (i === j) continue;
+						if (i === j) {
+							continue;
+						}
 						results[i] = results[i].filter(child => {
 							for (const parent of results[j]) {
 								if (isInsideRange(parent.range, child.range)) {

@@ -7,9 +7,9 @@ import { transformTextEdit } from '../utils/transform';
 import { isInlayHintsEnabled } from '@volar/language-core';
 
 export interface InlayHintData {
-	uri: string,
-	original: Pick<vscode.CodeAction, 'data' | 'edit'>,
-	serviceIndex: number,
+	uri: string;
+	original: Pick<vscode.CodeAction, 'data' | 'edit'>;
+	serviceIndex: number;
 }
 
 export function register(context: ServiceContext) {
@@ -17,8 +17,9 @@ export function register(context: ServiceContext) {
 	return async (uri: string, range: vscode.Range, token = NoneCancellationToken) => {
 
 		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
-		if (!sourceFile)
+		if (!sourceFile) {
 			return;
+		}
 
 		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const offsetRange = {

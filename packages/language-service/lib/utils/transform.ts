@@ -77,10 +77,12 @@ export function transformFoldingRanges(ranges: vscode.FoldingRange[], getOtherRa
 		if (otherRange) {
 			range.startLine = otherRange.start.line;
 			range.endLine = otherRange.end.line;
-			if (range.startCharacter !== undefined)
+			if (range.startCharacter !== undefined) {
 				range.startCharacter = otherRange.start.character;
-			if (range.endCharacter !== undefined)
+			}
+			if (range.endCharacter !== undefined) {
 				range.endCharacter = otherRange.end.character;
+			}
 			result.push(range);
 		}
 	}
@@ -95,7 +97,9 @@ export function transformHover<T extends vscode.Hover>(hover: T, getOtherRange: 
 	}
 
 	const range = getOtherRange(hover.range);
-	if (!range) return;
+	if (!range) {
+		return;
+	}
 
 	return {
 		...hover,
@@ -106,7 +110,9 @@ export function transformHover<T extends vscode.Hover>(hover: T, getOtherRange: 
 export function transformLocation<T extends { range: vscode.Range; }>(location: T, getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T | undefined {
 
 	const range = getOtherRange(location.range);
-	if (!range) return;
+	if (!range) {
+		return;
+	}
 
 	return {
 		...location,
@@ -123,7 +129,9 @@ export function transformLocations<T extends { range: vscode.Range; }>(locations
 export function transformSelectionRange<T extends vscode.SelectionRange>(location: T, getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T | undefined {
 
 	const range = getOtherRange(location.range);
-	if (!range) return;
+	if (!range) {
+		return;
+	}
 
 	const parent = location.parent ? transformSelectionRange(location.parent as T, getOtherRange) : undefined;
 

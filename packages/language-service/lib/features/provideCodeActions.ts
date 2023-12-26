@@ -9,10 +9,10 @@ import type { ServiceDiagnosticData } from './provideDiagnostics';
 import { isCodeActionsEnabled } from '@volar/language-core';
 
 export interface ServiceCodeActionData {
-	uri: string,
-	version: number,
-	original: Pick<vscode.CodeAction, 'data' | 'edit'>,
-	serviceIndex: number,
+	uri: string;
+	version: number;
+	original: Pick<vscode.CodeAction, 'data' | 'edit'>;
+	serviceIndex: number;
 }
 
 export function register(context: ServiceContext) {
@@ -20,8 +20,9 @@ export function register(context: ServiceContext) {
 	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = NoneCancellationToken) => {
 
 		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
-		if (!sourceFile)
+		if (!sourceFile) {
 			return;
+		}
 
 		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const offsetRange = {
@@ -128,8 +129,9 @@ export function register(context: ServiceContext) {
 			actions => actions
 				.map(action => {
 
-					if (transformedCodeActions.has(action))
+					if (transformedCodeActions.has(action)) {
 						return action;
+					}
 
 					if (action.edit) {
 						const edit = transformWorkspaceEdit(

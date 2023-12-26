@@ -7,9 +7,9 @@ import { transformDocumentLinkTarget } from './resolveDocumentLink';
 import { isDocumentLinkEnabled } from '@volar/language-core';
 
 export interface DocumentLinkData {
-	uri: string,
-	original: Pick<vscode.DocumentLink, 'data'>,
-	serviceIndex: number,
+	uri: string;
+	original: Pick<vscode.DocumentLink, 'data'>;
+	serviceIndex: number;
 }
 
 export function register(context: ServiceContext) {

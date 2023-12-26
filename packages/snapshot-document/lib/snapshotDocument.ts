@@ -137,7 +137,9 @@ export class SnapshotDocument implements TextDocument {
 		const starts: number[] = [];
 		const ends: number[] = [];
 		for (const contentChange of contentChanges) {
-			if (!('range' in contentChange)) continue;
+			if (!('range' in contentChange)) {
+				continue;
+			}
 			const start = this.offsetAt(contentChange.range.start);
 			const length = contentChange.rangeLength ?? this.offsetAt(contentChange.range.end) - start;
 			const end = start + length;

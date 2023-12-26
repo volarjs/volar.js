@@ -45,18 +45,24 @@ export class SourceMap<Data = any> {
 
 	* findMatching(offset: number, fromRange: CodeRangeKey, toRange: CodeRangeKey) {
 		const memo = this.getMemoBasedOnRange(fromRange);
-		if (memo.offsets.length === 0) return;
+		if (memo.offsets.length === 0) {
+			return;
+		}
 
 		const { low: start, high: end } = binarySearch(memo.offsets, offset);
 		const skip = new Set<Mapping<Data>>();
 
 		for (let i = start; i <= end; i++) {
 			for (const mapping of memo.mappings[i]) {
-				if (skip.has(mapping)) continue;
+				if (skip.has(mapping)) {
+					continue;
+				}
 				skip.add(mapping);
 
 				const mapped = translateOffset(offset, mapping[fromRange], mapping[toRange], mapping.lengths);
-				if (mapped !== undefined) yield [mapped, mapping] as const;
+				if (mapped !== undefined) {
+					yield [mapped, mapping] as const;
+				}
 			}
 		}
 	}

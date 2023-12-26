@@ -24,8 +24,9 @@ export function register(context: ServiceContext) {
 	) => {
 
 		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
-		if (!sourceFile)
+		if (!sourceFile) {
 			return;
+		}
 
 		let document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 
@@ -51,8 +52,9 @@ export function register(context: ServiceContext) {
 		while (true) {
 
 			const embeddedFiles = getEmbeddedFilesByLevel(context, tempVirtualFile, level++);
-			if (embeddedFiles.length === 0)
+			if (embeddedFiles.length === 0) {
 				break;
+			}
 
 			let edits: vscode.TextEdit[] = [];
 			const toPatchIndent: {
@@ -63,18 +65,22 @@ export function register(context: ServiceContext) {
 
 			for (const file of embeddedFiles) {
 
-				if (!file.mappings.some(mapping => isFormattingEnabled(mapping.data)))
+				if (!file.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
 					continue;
+				}
 
 				const isCodeBlock = file.mappings.length === 1
 					&& file.mappings[0].sourceOffsets.length === 1
 					&& file.mappings[0].generatedOffsets[0] === 0
 					&& file.mappings[0].lengths[0] === file.snapshot.getLength();
-				if (onTypeParams && !isCodeBlock)
+				if (onTypeParams && !isCodeBlock) {
 					continue;
+				}
 
 				const docMap = createDocMap(file, sourceFile.fileName, sourceFile.languageId, tempSourceSnapshot);
-				if (!docMap) continue;
+				if (!docMap) {
+					continue;
+				}
 
 				let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
 
@@ -97,8 +103,9 @@ export function register(context: ServiceContext) {
 					});
 				}
 
-				if (!embeddedCodeResult)
+				if (!embeddedCodeResult) {
 					continue;
+				}
 
 				toPatchIndent.push({
 					virtualFileName: file.fileName,
@@ -149,14 +156,17 @@ export function register(context: ServiceContext) {
 						}
 					}
 					const docMap = createDocMap(virtualFile, context.env.fileNameToUri(sourceFile.fileName), sourceFile.languageId, tempSourceSnapshot);
-					if (!docMap) continue;
+					if (!docMap) {
+						continue;
+					}
 
 					const indentSensitiveLines = new Set<number>();
 
 					for (const service of item.service.provideFormattingIndentSensitiveLines ? [item.service] : context.services.map(service => service[1])) {
 
-						if (token.isCancellationRequested)
+						if (token.isCancellationRequested) {
 							break;
+						}
 
 						if (service.provideFormattingIndentSensitiveLines) {
 							const lines = await service.provideFormattingIndentSensitiveLines(docMap.virtualFileDocument, token);
@@ -203,8 +213,9 @@ export function register(context: ServiceContext) {
 			}
 		}
 
-		if (document.getText() === originalDocument.getText())
+		if (document.getText() === originalDocument.getText()) {
 			return;
+		}
 
 		const editRange: vscode.Range = {
 			start: originalDocument.positionAt(0),
@@ -230,8 +241,9 @@ export function register(context: ServiceContext) {
 					continue;
 				}
 
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					break;
+				}
 
 				let edits: vscode.TextEdit[] | null | undefined;
 
@@ -249,8 +261,9 @@ export function register(context: ServiceContext) {
 					console.warn(err);
 				}
 
-				if (!edits)
+				if (!edits) {
 					continue;
+				}
 
 				return {
 					service,
@@ -309,8 +322,9 @@ function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceM
 			let lineOffset = lines[0].length + 1;
 			let insertedFinalNewLine = false;
 
-			if (!text.trim())
+			if (!text.trim()) {
 				continue;
+			}
 
 			if (isCodeBlock && text.trimStart().length === text.length) {
 				indentTextEdits.push({

@@ -21,7 +21,9 @@ export function every<T>(array: readonly T[] | undefined, callback: (element: T,
 
 /** Works like Array.prototype.findIndex, returning `-1` if no element satisfying the predicate is found. */
 export function findIndex<T>(array: readonly T[] | undefined, predicate: (element: T, index: number) => boolean, startIndex?: number): number {
-	if (array === undefined) return -1;
+	if (array === undefined) {
+		return -1;
+	}
 	for (let i = startIndex ?? 0; i < array.length; i++) {
 		if (predicate(array[i], i)) {
 			return i;
@@ -143,8 +145,12 @@ function append<T>(to: T[], value: T | undefined): T[];
 // function append<T>(to: T[] | undefined, value: T | undefined): T[] | undefined;
 // function append<T>(to: Push<T>, value: T | undefined): void;
 function append<T>(to: T[], value: T | undefined): T[] | undefined {
-	if (value === undefined) return to;
-	if (to === undefined) return [value];
+	if (value === undefined) {
+		return to;
+	}
+	if (to === undefined) {
+		return [value];
+	}
 	to.push(value);
 	return to;
 }
@@ -170,8 +176,12 @@ function toOffset(array: readonly any[], offset: number) {
 function addRange<T>(to: T[], from: readonly T[] | undefined, start?: number, end?: number): T[];
 function addRange<T>(to: T[] | undefined, from: readonly T[] | undefined, start?: number, end?: number): T[] | undefined;
 function addRange<T>(to: T[] | undefined, from: readonly T[] | undefined, start?: number, end?: number): T[] | undefined {
-	if (from === undefined || from.length === 0) return to;
-	if (to === undefined) return from.slice(start, end);
+	if (from === undefined || from.length === 0) {
+		return to;
+	}
+	if (to === undefined) {
+		return from.slice(start, end);
+	}
 	start = start === undefined ? 0 : toOffset(from, start);
 	end = end === undefined ? from.length : toOffset(from, end);
 	for (let i = start; i < end && i < from.length; i++) {
@@ -311,9 +321,15 @@ function compareComparableValues(a: string | number | undefined, b: string | num
  * lowercase (such as `ẞ` (German sharp capital s)).
  */
 function compareStringsCaseInsensitive(a: string, b: string) {
-	if (a === b) return Comparison.EqualTo;
-	if (a === undefined) return Comparison.LessThan;
-	if (b === undefined) return Comparison.GreaterThan;
+	if (a === b) {
+		return Comparison.EqualTo;
+	}
+	if (a === undefined) {
+		return Comparison.LessThan;
+	}
+	if (b === undefined) {
+		return Comparison.GreaterThan;
+	}
 	a = a.toUpperCase();
 	b = b.toUpperCase();
 	return a < b ? Comparison.LessThan : a > b ? Comparison.GreaterThan : Comparison.EqualTo;

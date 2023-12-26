@@ -34,11 +34,13 @@ export function register(context: ServiceContext) {
 				continue;
 			}
 
-			if (token.isCancellationRequested)
+			if (token.isCancellationRequested) {
 				break;
+			}
 
-			if (!service[1].provideFileRenameEdits)
+			if (!service[1].provideFileRenameEdits) {
 				continue;
+			}
 
 			const workspaceEdit = await service[1].provideFileRenameEdits(oldUri, newUri, token);
 

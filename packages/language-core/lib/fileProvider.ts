@@ -138,14 +138,16 @@ export function updateVirtualFileMaps(
 
 	for (const mapping of virtualFile.mappings) {
 
-		if (sources.has(mapping.source))
+		if (sources.has(mapping.source)) {
 			continue;
+		}
 
 		sources.add(mapping.source);
 
 		const source = getSourceSnapshot(mapping.source);
-		if (!source)
+		if (!source) {
 			continue;
+		}
 
 		if (!map.has(source[0]) || map.get(source[0])![0] !== source[1]) {
 			map.set(source[0], [source[1], new SourceMap(virtualFile.mappings.filter(mapping2 => mapping2.source === mapping.source))]);

@@ -11,8 +11,9 @@ export function getOverlapRange(
 	const start = Math.max(range1Start, range2Start);
 	const end = Math.min(range1End, range2End);
 
-	if (start > end)
+	if (start > end) {
 		return undefined;
+	}
 
 	return {
 		start,
@@ -21,10 +22,18 @@ export function getOverlapRange(
 }
 
 export function isInsideRange(parent: vscode.Range, child: vscode.Range) {
-	if (child.start.line < parent.start.line) return false;
-	if (child.end.line > parent.end.line) return false;
-	if (child.start.line === parent.start.line && child.start.character < parent.start.character) return false;
-	if (child.end.line === parent.end.line && child.end.character > parent.end.character) return false;
+	if (child.start.line < parent.start.line) {
+		return false;
+	}
+	if (child.end.line > parent.end.line) {
+		return false;
+	}
+	if (child.start.line === parent.start.line && child.start.character < parent.start.character) {
+		return false;
+	}
+	if (child.end.line === parent.end.line && child.end.character > parent.end.character) {
+		return false;
+	}
 	return true;
 }
 

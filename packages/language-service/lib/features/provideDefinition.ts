@@ -37,11 +37,13 @@ export function register(
 				async function withMirrors(document: TextDocument, position: vscode.Position, originDefinition: vscode.LocationLink | undefined) {
 
 					const api = service[1][apiName];
-					if (!api)
+					if (!api) {
 						return;
+					}
 
-					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
+					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } })) {
 						return;
+					}
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
@@ -60,8 +62,9 @@ export function register(
 
 							for (const linkedPos of mirrorMap.getLinkedCodePositions(definition.targetSelectionRange.start)) {
 
-								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
+								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
 									continue;
+								}
 
 								foundMirrorPosition = true;
 
@@ -89,8 +92,9 @@ export function register(
 
 					const originSelectionRange = toSourcePositionPreferSurroundedPosition(map, link.originSelectionRange, position);
 
-					if (!originSelectionRange)
+					if (!originSelectionRange) {
 						return;
+					}
 
 					link.originSelectionRange = originSelectionRange;
 				}
@@ -104,8 +108,9 @@ export function register(
 					for (const targetSourceMap of context.documents.getMaps(targetVirtualFile)) {
 
 						const targetSelectionRange = targetSourceMap.getSourceRange(link.targetSelectionRange);
-						if (!targetSelectionRange)
+						if (!targetSelectionRange) {
 							continue;
+						}
 
 						foundTargetSelectionRange = true;
 

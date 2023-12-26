@@ -96,12 +96,12 @@ function updatePosition(
 }
 
 export interface ServiceDiagnosticData {
-	uri: string,
-	version: number,
-	original: Pick<vscode.Diagnostic, 'data'>,
-	isFormat: boolean,
-	serviceIndex: number,
-	documentUri: string,
+	uri: string;
+	version: number;
+	original: Pick<vscode.Diagnostic, 'data'>;
+	isFormat: boolean;
+	serviceIndex: number;
+	documentUri: string;
 }
 
 interface Cache {
@@ -153,8 +153,9 @@ export function register(context: ServiceContext) {
 	) => {
 
 		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
-		if (!sourceFile)
+		if (!sourceFile) {
 			return [];
+		}
 
 		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const lastResponse = lastResponses.get(uri) ?? lastResponses.set(uri, {

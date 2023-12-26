@@ -263,7 +263,9 @@ function createTypeScriptLanguageHost(
 
 	function checkRootFilesUpdate() {
 
-		if (!shouldCheckRootFiles) return;
+		if (!shouldCheckRootFiles) {
+			return;
+		}
 		shouldCheckRootFiles = false;
 
 		const newParsedCommandLine = createParsedCommandLine();

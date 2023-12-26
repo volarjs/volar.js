@@ -19,7 +19,9 @@ export function activate(context: vscode.ExtensionContext) {
 		async getChildren(element) {
 
 			const doc = vscode.window.activeTextEditor?.document;
-			if (!doc) return [];
+			if (!doc) {
+				return [];
+			}
 
 			if (!element) {
 				const items: ServicePluginItem[] = [];
@@ -60,7 +62,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor((e) => {
 
-			if (!e) return;
+			if (!e) {
+				return;
+			}
 
 			const document = e.document;
 			const isVirtualFile = extensions
@@ -69,7 +73,9 @@ export function activate(context: vscode.ExtensionContext) {
 						.replace(/ /g, '_')
 						.toLowerCase() === document.uri.scheme
 				));
-			if (isVirtualFile) return;
+			if (isVirtualFile) {
+				return;
+			}
 
 			onDidChangeTreeData.fire();
 		}),

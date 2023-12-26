@@ -218,8 +218,9 @@ export function registerLanguageFeatures(
 
 		for (const project of await projectProvider.getProjects()) {
 
-			if (token.isCancellationRequested)
+			if (token.isCancellationRequested) {
 				return;
+			}
 
 			results = results.concat(await project.getLanguageService().findWorkspaceSymbols(params.query, token));
 		}

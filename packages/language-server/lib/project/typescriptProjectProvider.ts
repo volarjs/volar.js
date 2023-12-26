@@ -158,8 +158,9 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 						for (let i = chain.length - 1; i >= 0; i--) {
 							const tsconfig = chain[i];
 
-							if (checked.has(tsconfig))
+							if (checked.has(tsconfig)) {
 								continue;
+							}
 							checked.add(tsconfig);
 
 							if (await match(tsconfig)) {

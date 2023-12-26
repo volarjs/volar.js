@@ -7,10 +7,10 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { isCallHierarchyEnabled } from '@volar/language-core';
 
 export interface PluginCallHierarchyData {
-	uri: string,
-	original: Pick<vscode.CallHierarchyItem, 'data'>,
-	serviceIndex: number,
-	virtualDocumentUri: string | undefined,
+	uri: string;
+	original: Pick<vscode.CallHierarchyItem, 'data'>;
+	serviceIndex: number;
+	virtualDocumentUri: string | undefined;
 }
 
 export function register(context: ServiceContext) {
@@ -62,8 +62,9 @@ export function register(context: ServiceContext) {
 
 				const service = context.services[data.serviceIndex];
 
-				if (!service[1].provideCallHierarchyIncomingCalls)
+				if (!service[1].provideCallHierarchyIncomingCalls) {
 					return incomingItems;
+				}
 
 				Object.assign(item, data.original);
 
@@ -79,8 +80,9 @@ export function register(context: ServiceContext) {
 
 							const calls = transformCallHierarchyItem(_call.from, _call.fromRanges);
 
-							if (!calls)
+							if (!calls) {
 								continue;
+							}
 
 							incomingItems.push({
 								from: calls[0],
@@ -97,8 +99,9 @@ export function register(context: ServiceContext) {
 
 						const calls = transformCallHierarchyItem(_call.from, _call.fromRanges);
 
-						if (!calls)
+						if (!calls) {
 							continue;
+						}
 
 						incomingItems.push({
 							from: calls[0],
@@ -120,8 +123,9 @@ export function register(context: ServiceContext) {
 
 				const service = context.services[data.serviceIndex];
 
-				if (!service[1].provideCallHierarchyOutgoingCalls)
+				if (!service[1].provideCallHierarchyOutgoingCalls) {
 					return items;
+				}
 
 				Object.assign(item, data.original);
 
@@ -137,8 +141,9 @@ export function register(context: ServiceContext) {
 
 							const calls = transformCallHierarchyItem(call.to, call.fromRanges);
 
-							if (!calls)
+							if (!calls) {
 								continue;
+							}
 
 							items.push({
 								to: calls[0],
@@ -155,8 +160,9 @@ export function register(context: ServiceContext) {
 
 						const calls = transformCallHierarchyItem(call.to, call.fromRanges);
 
-						if (!calls)
+						if (!calls) {
 							continue;
+						}
 
 						items.push({
 							to: calls[0],
@@ -174,8 +180,9 @@ export function register(context: ServiceContext) {
 
 		const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(tsItem.uri));
 
-		if (!virtualFile)
+		if (!virtualFile) {
 			return [tsItem, tsRanges];
+		}
 
 		for (const map of context.documents.getMaps(virtualFile)) {
 
@@ -189,8 +196,9 @@ export function register(context: ServiceContext) {
 			}
 
 			const selectionRange = map.getSourceRange(tsItem.selectionRange);
-			if (!selectionRange)
+			if (!selectionRange) {
 				continue;
+			}
 
 			const vueRanges = tsRanges.map(tsRange => map.getSourceRange(tsRange)).filter(notEmpty);
 			const vueItem: vscode.CallHierarchyItem = {

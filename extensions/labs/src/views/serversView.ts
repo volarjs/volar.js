@@ -257,12 +257,16 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				else if (select === 'saveFile') {
 					const workspaces = vscode.workspace.workspaceFolders;
-					if (!workspaces?.length) return;
+					if (!workspaces?.length) {
+						return;
+					}
 
 					const defaultUri = vscode.Uri.joinPath(workspaces[0].uri, 'stats.html');
 					const pickedUri = await vscode.window.showSaveDialog({ defaultUri });
 
-					if (!pickedUri) return;
+					if (!pickedUri) {
+						return;
+					}
 
 					await vscode.workspace.fs.writeFile(pickedUri, Buffer.from(fileContent));
 					await vscode.window.showTextDocument(pickedUri);

@@ -63,10 +63,14 @@ function isVolumeCharacter(charCode: number) {
 
 function getFileUrlVolumeSeparatorEnd(url: string, start: number) {
 	const ch0 = url.charCodeAt(start);
-	if (ch0 === CharacterCodes.colon) return start + 1;
+	if (ch0 === CharacterCodes.colon) {
+		return start + 1;
+	}
 	if (ch0 === CharacterCodes.percent && url.charCodeAt(start + 1) === CharacterCodes._3) {
 		const ch2 = url.charCodeAt(start + 2);
-		if (ch2 === CharacterCodes.a || ch2 === CharacterCodes.A) return start + 3;
+		if (ch2 === CharacterCodes.a || ch2 === CharacterCodes.A) {
+			return start + 3;
+		}
 	}
 	return -1;
 }
@@ -76,15 +80,21 @@ function getFileUrlVolumeSeparatorEnd(url: string, start: number) {
  * If the root is part of a URL, the twos-complement of the root length is returned.
  */
 function getEncodedRootLength(path: string): number {
-	if (!path) return 0;
+	if (!path) {
+		return 0;
+	}
 	const ch0 = path.charCodeAt(0);
 
 	// POSIX or UNC
 	if (ch0 === CharacterCodes.slash || ch0 === CharacterCodes.backslash) {
-		if (path.charCodeAt(1) !== ch0) return 1; // POSIX: "/" (or non-normalized "\")
+		if (path.charCodeAt(1) !== ch0) {
+			return 1; // POSIX: "/" (or non-normalized "\")
+		}
 
 		const p1 = path.indexOf(ch0 === CharacterCodes.slash ? directorySeparator : altDirectorySeparator, 2);
-		if (p1 < 0) return path.length; // UNC: "//server" or "\\server"
+		if (p1 < 0) {
+			return path.length; // UNC: "//server" or "\\server"
+		}
 
 		return p1 + 1; // UNC: "//server/" or "\\server\"
 	}
@@ -92,8 +102,12 @@ function getEncodedRootLength(path: string): number {
 	// DOS
 	if (isVolumeCharacter(ch0) && path.charCodeAt(1) === CharacterCodes.colon) {
 		const ch2 = path.charCodeAt(2);
-		if (ch2 === CharacterCodes.slash || ch2 === CharacterCodes.backslash) return 3; // DOS: "c:/" or "c:\"
-		if (path.length === 2) return 2; // DOS: "c:" (but not "c:d")
+		if (ch2 === CharacterCodes.slash || ch2 === CharacterCodes.backslash) {
+			return 3; // DOS: "c:/" or "c:\"
+		}
+		if (path.length === 2) {
+			return 2; // DOS: "c:" (but not "c:d")
+		}
 	}
 
 	// URL
@@ -218,7 +232,9 @@ export function getDirectoryPath(path: string): string {
 
 	// If the path provided is itself the root, then return it.
 	const rootLength = getRootLength(path);
-	if (rootLength === path.length) return path;
+	if (rootLength === path.length) {
+		return path;
+	}
 
 	// return the leading portion of the path up to the last (non-terminal) directory separator
 	// but not including any trailing directory separator.
@@ -274,7 +290,9 @@ function getBaseFileName(path: string, extensions?: string | readonly string[], 
 
 	// if the path provided is itself the root, then it has not file name.
 	const rootLength = getRootLength(path);
-	if (rootLength === path.length) return "";
+	if (rootLength === path.length) {
+		return "";
+	}
 
 	// return the trailing portion of the path starting after the last (non-terminal) directory
 	// separator but not including any trailing directory separator.
@@ -285,7 +303,9 @@ function getBaseFileName(path: string, extensions?: string | readonly string[], 
 }
 
 function tryGetExtensionFromPath(path: string, extension: string, stringEqualityComparer: (a: string, b: string) => boolean) {
-	if (!startsWith(extension, ".")) extension = "." + extension;
+	if (!startsWith(extension, ".")) {
+		extension = "." + extension;
+	}
 	if (path.length >= extension.length && path.charCodeAt(path.length - extension.length) === CharacterCodes.dot) {
 		const pathExtension = path.slice(path.length - extension.length);
 		if (stringEqualityComparer(pathExtension, extension)) {
@@ -300,7 +320,9 @@ function getAnyExtensionFromPathWorker(path: string, extensions: string | readon
 	}
 	for (const extension of extensions) {
 		const result = tryGetExtensionFromPath(path, extension, stringEqualityComparer);
-		if (result) return result;
+		if (result) {
+			return result;
+		}
 	}
 	return "";
 }
@@ -343,7 +365,9 @@ function getAnyExtensionFromPath(path: string, extensions?: string | readonly st
 function pathComponents(path: string, rootLength: number) {
 	const root = path.substring(0, rootLength);
 	const rest = path.substring(rootLength).split(directorySeparator);
-	if (rest.length && !lastOrUndefined(rest)) rest.pop();
+	if (rest.length && !lastOrUndefined(rest)) {
+		rest.pop();
+	}
 	return [root, ...rest];
 }
 
@@ -393,7 +417,9 @@ function getPathComponents(path: string, currentDirectory = "") {
  * ```
  */
 function getPathFromPathComponents(pathComponents: readonly string[]) {
-	if (pathComponents.length === 0) return "";
+	if (pathComponents.length === 0) {
+		return "";
+	}
 
 	const root = pathComponents[0] && ensureTrailingDirectorySeparator(pathComponents[0]);
 	return root + pathComponents.slice(1).join(directorySeparator);
@@ -415,12 +441,18 @@ function normalizeSlashes(path: string): string {
  * `"."` or `".."` entries in the path.
  */
 function reducePathComponents(components: readonly string[]) {
-	if (!some(components)) return [];
+	if (!some(components)) {
+		return [];
+	}
 	const reduced = [components[0]];
 	for (let i = 1; i < components.length; i++) {
 		const component = components[i];
-		if (!component) continue;
-		if (component === ".") continue;
+		if (!component) {
+			continue;
+		}
+		if (component === ".") {
+			continue;
+		}
 		if (component === "..") {
 			if (reduced.length > 1) {
 				if (reduced[reduced.length - 1] !== "..") {
@@ -428,7 +460,9 @@ function reducePathComponents(components: readonly string[]) {
 					continue;
 				}
 			}
-			else if (reduced[0]) continue;
+			else if (reduced[0]) {
+				continue;
+			}
 		}
 		reduced.push(component);
 	}
@@ -454,9 +488,13 @@ function reducePathComponents(components: readonly string[]) {
  * ```
  */
 export function combinePaths(path: string, ...paths: (string | undefined)[]): string {
-	if (path) path = normalizeSlashes(path);
+	if (path) {
+		path = normalizeSlashes(path);
+	}
 	for (let relativePath of paths) {
-		if (!relativePath) continue;
+		if (!relativePath) {
+			continue;
+		}
 		relativePath = normalizeSlashes(relativePath);
 		if (!path || getRootLength(relativePath) !== 0) {
 			path = relativePath;
@@ -558,8 +596,12 @@ export function containsPath(parent: string, child: string, currentDirectory?: s
 	else if (typeof currentDirectory === "boolean") {
 		ignoreCase = currentDirectory;
 	}
-	if (parent === undefined || child === undefined) return false;
-	if (parent === child) return true;
+	if (parent === undefined || child === undefined) {
+		return false;
+	}
+	if (parent === child) {
+		return true;
+	}
 	const parentComponents = reducePathComponents(getPathComponents(parent));
 	const childComponents = reducePathComponents(getPathComponents(child));
 	if (childComponents.length < parentComponents.length) {

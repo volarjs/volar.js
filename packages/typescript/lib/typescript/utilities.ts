@@ -227,15 +227,21 @@ export function matchFiles(path: string, extensions: readonly string[] | undefin
 
 	function visitDirectory(path: string, absolutePath: string, depth: number | undefined) {
 		const canonicalPath = toCanonical(realpath(absolutePath));
-		if (visited.has(canonicalPath)) return;
+		if (visited.has(canonicalPath)) {
+			return;
+		}
 		visited.set(canonicalPath, true);
 		const { files, directories } = getFileSystemEntries(path);
 
 		for (const current of sort<string>(files, compareStringsCaseSensitive)) {
 			const name = combinePaths(path, current);
 			const absoluteName = combinePaths(absolutePath, current);
-			if (extensions && !fileExtensionIsOneOf(name, extensions)) continue;
-			if (excludeRegex && excludeRegex.test(absoluteName)) continue;
+			if (extensions && !fileExtensionIsOneOf(name, extensions)) {
+				continue;
+			}
+			if (excludeRegex && excludeRegex.test(absoluteName)) {
+				continue;
+			}
 			if (!includeFileRegexes) {
 				results[0].push(name);
 			}

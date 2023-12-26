@@ -82,7 +82,9 @@ export async function activate(info: LabsInfo) {
 			async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
 				const maps = virtualUriToSourceMap.get(document.uri.toString());
-				if (!maps) return;
+				if (!maps) {
+					return;
+				}
 
 				const data: {
 					uri: string,
@@ -99,7 +101,9 @@ export async function activate(info: LabsInfo) {
 					}
 				}
 
-				if (data.length === 0) return;
+				if (data.length === 0) {
+					return;
+				}
 
 				return new vscode.Hover(data.map((data) => [
 					data.uri,
@@ -116,11 +120,15 @@ export async function activate(info: LabsInfo) {
 			async provideDefinition(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
 				const stacks = virtualUriToStacks.get(document.uri.toString());
-				if (!stacks) return;
+				if (!stacks) {
+					return;
+				}
 
 				const offset = document.offsetAt(position);
 				const stack = stacks.find(stack => stack.range[0] <= offset && offset <= stack.range[1]);
-				if (!stack) return;
+				if (!stack) {
+					return;
+				}
 
 				const line = Number(stack.source.split(':').at(-2));
 				const character = Number(stack.source.split(':').at(-1));

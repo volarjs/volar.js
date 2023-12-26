@@ -392,7 +392,9 @@ export function decorateLanguageService(files: FileProvider, languageService: ts
 		const textSpan = unresolved
 			.map(s => transformSpan(files, fileName, s.textSpan, isDefinitionEnabled)?.textSpan)
 			.filter(notEmpty)[0];
-		if (!textSpan) return;
+		if (!textSpan) {
+			return;
+		}
 		const definitions = unresolved
 			.map(s => s.definitions
 				?.map(s => transformDocumentSpan(files, s, isDefinitionEnabled, s.fileName !== fileName))
@@ -642,23 +644,28 @@ export function decorateLanguageService(files: FileProvider, languageService: ts
 		return results;
 
 		function process(fileName: string, position: number) {
-			if (processedFilePositions.has(fileName + ':' + position))
+			if (processedFilePositions.has(fileName + ':' + position)) {
 				return;
+			}
 			processedFilePositions.add(fileName + ':' + position);
 			const result = worker(position);
-			if (!result) return;
+			if (!result) {
+				return;
+			}
 			results = results.concat(result);
 			for (const ref of getLinkedCodes(result)) {
 
 				processedFilePositions.add(ref[0] + ':' + ref[1]);
 
 				const [virtualFile, sourceFile] = getVirtualFileAndMap(files, ref[0]);
-				if (!virtualFile)
+				if (!virtualFile) {
 					continue;
+				}
 
 				const linkedCodeMap = files.getLinkedCodeMap(virtualFile);
-				if (!linkedCodeMap)
+				if (!linkedCodeMap) {
 					continue;
+				}
 
 				for (const linkedCodeOffset of linkedCodeMap.getLinkedOffsets(ref[1] - sourceFile.snapshot.getLength())) {
 					process(ref[0], linkedCodeOffset + sourceFile.snapshot.getLength());

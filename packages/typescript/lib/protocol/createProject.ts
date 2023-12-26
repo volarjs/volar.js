@@ -284,8 +284,9 @@ export function createLanguage(
 
 			const newProjectVersion = projectHost.getProjectVersion?.();
 			const shouldUpdate = newProjectVersion === undefined || newProjectVersion !== lastProjectVersion;
-			if (!shouldUpdate)
+			if (!shouldUpdate) {
 				return;
+			}
 
 			lastProjectVersion = newProjectVersion;
 
@@ -395,9 +396,13 @@ export function createLanguage(
 }
 
 function setEquals<T>(a: Set<T>, b: Set<T>) {
-	if (a.size !== b.size) return false;
+	if (a.size !== b.size) {
+		return false;
+	}
 	for (const item of a) {
-		if (!b.has(item)) return false;
+		if (!b.has(item)) {
+			return false;
+		}
 	}
 	return true;
 }

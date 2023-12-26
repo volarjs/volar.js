@@ -43,21 +43,24 @@ export function register(context: ServiceContext) {
 
 			for (const cacheData of cache.data) {
 
-				if (!cacheData.list.isIncomplete)
+				if (!cacheData.list.isIncomplete) {
 					continue;
+				}
 
 				if (cacheData.virtualDocumentUri) {
 
 					const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(cacheData.virtualDocumentUri));
-					if (!virtualFile)
+					if (!virtualFile) {
 						continue;
+					}
 
 					for (const map of context.documents.getMaps(virtualFile)) {
 
 						for (const mapped of map.getGeneratedPositions(position, data => isCompletionEnabled(data))) {
 
-							if (!cacheData.service.provideCompletionItems)
+							if (!cacheData.service.provideCompletionItems) {
 								continue;
+							}
 
 							const embeddedCompletionList = await cacheData.service.provideCompletionItems(map.virtualFileDocument, mapped, completionContext, token);
 
@@ -86,8 +89,9 @@ export function register(context: ServiceContext) {
 				}
 				else if (sourceFile) {
 
-					if (!cacheData.service.provideCompletionItems)
+					if (!cacheData.service.provideCompletionItems) {
 						continue;
+					}
 
 					const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 					const completionList = await cacheData.service.provideCompletionItems(document, position, completionContext, token);
@@ -142,31 +146,38 @@ export function register(context: ServiceContext) {
 
 						for (const service of services) {
 
-							if (token.isCancellationRequested)
+							if (token.isCancellationRequested) {
 								break;
+							}
 
-							if (!service[1].provideCompletionItems)
+							if (!service[1].provideCompletionItems) {
 								continue;
+							}
 
-							if (service[1].isAdditionalCompletion && !isFirstMapping)
+							if (service[1].isAdditionalCompletion && !isFirstMapping) {
 								continue;
+							}
 
-							if (completionContext?.triggerCharacter && !service[0].triggerCharacters?.includes(completionContext.triggerCharacter))
+							if (completionContext?.triggerCharacter && !service[0].triggerCharacters?.includes(completionContext.triggerCharacter)) {
 								continue;
+							}
 
 							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.isAdditional || service[1].isAdditionalCompletion;
 
-							if (cache!.mainCompletion && (!isAdditional || cache?.mainCompletion.documentUri !== map.virtualFileDocument.uri))
+							if (cache!.mainCompletion && (!isAdditional || cache?.mainCompletion.documentUri !== map.virtualFileDocument.uri)) {
 								continue;
+							}
 
 							// avoid duplicate items with .vue and .vue.html
-							if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service[1]))
+							if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service[1])) {
 								continue;
+							}
 
 							const embeddedCompletionList = await service[1].provideCompletionItems(map.virtualFileDocument, mapped, completionContext!, token);
 
-							if (!embeddedCompletionList || !embeddedCompletionList.items.length)
+							if (!embeddedCompletionList || !embeddedCompletionList.items.length) {
 								continue;
+							}
 
 							if (typeof _data?.completion === 'object' && _data.completion.onlyImport) {
 								embeddedCompletionList.items = embeddedCompletionList.items.filter(item => !!item.labelDetails);
@@ -216,29 +227,36 @@ export function register(context: ServiceContext) {
 
 				for (const service of services) {
 
-					if (token.isCancellationRequested)
+					if (token.isCancellationRequested) {
 						break;
+					}
 
-					if (!service[1].provideCompletionItems)
+					if (!service[1].provideCompletionItems) {
 						continue;
+					}
 
-					if (service[1].isAdditionalCompletion && !isFirstMapping)
+					if (service[1].isAdditionalCompletion && !isFirstMapping) {
 						continue;
+					}
 
-					if (completionContext?.triggerCharacter && !service[0].triggerCharacters?.includes(completionContext.triggerCharacter))
+					if (completionContext?.triggerCharacter && !service[0].triggerCharacters?.includes(completionContext.triggerCharacter)) {
 						continue;
+					}
 
-					if (cache.mainCompletion && (!service[1].isAdditionalCompletion || cache.mainCompletion.documentUri !== document.uri))
+					if (cache.mainCompletion && (!service[1].isAdditionalCompletion || cache.mainCompletion.documentUri !== document.uri)) {
 						continue;
+					}
 
 					// avoid duplicate items with .vue and .vue.html
-					if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service[1]))
+					if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service[1])) {
 						continue;
+					}
 
 					const completionList = await service[1].provideCompletionItems(document, position, completionContext, token);
 
-					if (!completionList || !completionList.items.length)
+					if (!completionList || !completionList.items.length) {
 						continue;
+					}
 
 					if (!service[1].isAdditionalCompletion) {
 						cache.mainCompletion = { documentUri: document.uri };

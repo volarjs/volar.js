@@ -32,15 +32,17 @@ export function register(context: ServiceContext) {
 					.map(colorPresentation => {
 						if (colorPresentation.textEdit) {
 							const range = map.getSourceRange(colorPresentation.textEdit.range);
-							if (!range)
+							if (!range) {
 								return undefined;
+							}
 							colorPresentation.textEdit.range = range;
 						}
 						if (colorPresentation.additionalTextEdits) {
 							for (const textEdit of colorPresentation.additionalTextEdits) {
 								const range = map.getSourceRange(textEdit.range);
-								if (!range)
+								if (!range) {
 									return undefined;
+								}
 								textEdit.range = range;
 							}
 						}

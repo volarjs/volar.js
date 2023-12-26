@@ -20,8 +20,9 @@ export function register(context: ServiceContext) {
 			},
 			(service, document, position) => {
 
-				if (token.isCancellationRequested)
+				if (token.isCancellationRequested) {
 					return;
+				}
 
 				return service[1].provideLinkedEditingRanges?.(document, position, token);
 			},

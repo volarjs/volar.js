@@ -17,8 +17,9 @@ export function register(context: ServiceContext) {
 	): Promise<vscode.SemanticTokens | undefined> => {
 
 		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
-		if (!sourceFile)
+		if (!sourceFile) {
 			return;
+		}
 
 		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		if (!range) {
@@ -73,8 +74,9 @@ export function register(context: ServiceContext) {
 			},
 			(service, document, range) => {
 
-				if (token?.isCancellationRequested)
+				if (token?.isCancellationRequested) {
 					return;
+				}
 
 				return service[1].provideDocumentSemanticTokens?.(
 					document,

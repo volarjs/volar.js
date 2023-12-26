@@ -16,7 +16,9 @@ export function activate(cmd: string, client: BaseLanguageClient) {
 
 			if (!uri) {
 				const editor = vscode.window.activeTextEditor;
-				if (!editor) return;
+				if (!editor) {
+					return;
+				}
 
 				uri = editor.document.uri;
 			}

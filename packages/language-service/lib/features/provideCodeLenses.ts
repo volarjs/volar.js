@@ -6,18 +6,18 @@ import { documentFeatureWorker } from '../utils/featureWorkers';
 import { isCodeLensEnabled } from '@volar/language-core';
 
 export interface ServiceCodeLensData {
-	kind: 'normal',
-	uri: string,
-	original: Pick<vscode.CodeLens, 'data'>,
-	serviceIndex: number,
+	kind: 'normal';
+	uri: string;
+	original: Pick<vscode.CodeLens, 'data'>;
+	serviceIndex: number;
 }
 
 export interface ServiceReferencesCodeLensData {
-	kind: 'references',
-	sourceFileUri: string,
-	workerFileUri: string,
-	workerFileRange: vscode.Range,
-	serviceIndex: number,
+	kind: 'references';
+	sourceFileUri: string;
+	workerFileUri: string;
+	workerFileRange: vscode.Range;
+	serviceIndex: number;
 }
 
 export function register(context: ServiceContext) {

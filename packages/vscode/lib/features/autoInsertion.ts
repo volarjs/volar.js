@@ -48,7 +48,9 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 				},
 			};
 
-			if (isCancel()) return;
+			if (isCancel()) {
+				return;
+			}
 
 			const result = await client.sendRequest(AutoInsertRequest.type, params);
 

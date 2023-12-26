@@ -42,21 +42,25 @@ export function register(context: ServiceContext) {
 
 				async function withMirrors(document: TextDocument, position: vscode.Position, newName: string) {
 
-					if (!service[1].provideRenameEdits)
+					if (!service[1].provideRenameEdits) {
 						return;
+					}
 
-					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } }))
+					if (recursiveChecker.has({ uri: document.uri, range: { start: position, end: position } })) {
 						return;
+					}
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
 					const workspaceEdit = await service[1].provideRenameEdits(document, position, newName, token);
 
-					if (!workspaceEdit)
+					if (!workspaceEdit) {
 						return;
+					}
 
-					if (!result)
+					if (!result) {
 						result = {};
+					}
 
 					if (workspaceEdit.changes) {
 
@@ -77,8 +81,9 @@ export function register(context: ServiceContext) {
 
 									for (const linkedPos of mirrorMap.getLinkedCodePositions(textEdit.range.start)) {
 
-										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } }))
+										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
 											continue;
+										}
 
 										foundMirrorPosition = true;
 
@@ -88,11 +93,13 @@ export function register(context: ServiceContext) {
 
 								if (!foundMirrorPosition) {
 
-									if (!result.changes)
+									if (!result.changes) {
 										result.changes = {};
+									}
 
-									if (!result.changes[editUri])
+									if (!result.changes[editUri]) {
 										result.changes[editUri] = [];
+									}
 
 									result.changes[editUri].push(textEdit);
 								}
@@ -104,8 +111,9 @@ export function register(context: ServiceContext) {
 
 						for (const uri in workspaceEdit.changeAnnotations) {
 
-							if (!result.changeAnnotations)
+							if (!result.changeAnnotations) {
 								result.changeAnnotations = {};
+							}
 
 							result.changeAnnotations[uri] = workspaceEdit.changeAnnotations[uri];
 						}
@@ -113,8 +121,9 @@ export function register(context: ServiceContext) {
 
 					if (workspaceEdit.documentChanges) {
 
-						if (!result.documentChanges)
+						if (!result.documentChanges) {
 							result.documentChanges = [];
+						}
 
 						result.documentChanges = result.documentChanges.concat(workspaceEdit.documentChanges);
 					}

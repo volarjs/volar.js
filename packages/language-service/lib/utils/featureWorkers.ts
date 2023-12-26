@@ -37,8 +37,9 @@ export async function languageFeatureWorker<T, K>(
 ) {
 
 	const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
-	if (!sourceFile)
+	if (!sourceFile) {
 		return;
+	}
 
 	let results: T[] = [];
 
@@ -57,17 +58,20 @@ export async function languageFeatureWorker<T, K>(
 						() => worker(service, map.virtualFileDocument, mappedArg, map),
 						'service ' + serviceId + ' crashed on ' + map.virtualFileDocument.uri,
 					);
-					if (!embeddedResult)
+					if (!embeddedResult) {
 						continue;
+					}
 
 					const result = transformResult(embeddedResult!, map);
-					if (!result)
+					if (!result) {
 						continue;
+					}
 
 					results.push(result!);
 
-					if (!combineResult)
+					if (!combineResult) {
 						return false;
+					}
 				}
 			}
 
@@ -88,17 +92,20 @@ export async function languageFeatureWorker<T, K>(
 				() => worker(service, document, params, undefined),
 				'service ' + serviceId + ' crashed on ' + uri,
 			);
-			if (!embeddedResult)
+			if (!embeddedResult) {
 				continue;
+			}
 
 			const result = transformResult(embeddedResult, undefined);
-			if (!result)
+			if (!result) {
 				continue;
+			}
 
 			results.push(result);
 
-			if (!combineResult)
+			if (!combineResult) {
 				break;
+			}
 		}
 	}
 
@@ -152,8 +159,9 @@ export function getEmbeddedFilesByLevel(context: ServiceContext, rootFile: Virtu
 
 	while (true) {
 
-		if (embeddedFilesByLevel.length > level)
+		if (embeddedFilesByLevel.length > level) {
 			return embeddedFilesByLevel[level];
+		}
 
 		let nextLevel: VirtualFile[] = [];
 

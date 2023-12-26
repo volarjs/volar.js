@@ -36,8 +36,9 @@ export function createUriMap<T>(
 	};
 
 	function getUriByUri(uri: string) {
-		if (!uriToUri.has(uri))
+		if (!uriToUri.has(uri)) {
 			uriToUri.set(uri, normalizeUri(uri).toLowerCase());
+		}
 		return uriToUri.get(uri)!;
 	}
 	function getUriByPath(path: string) {

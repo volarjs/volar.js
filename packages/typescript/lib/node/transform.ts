@@ -86,7 +86,9 @@ export function transformDocumentSpan<T extends ts.DocumentSpan>(files: FileProv
 			};
 		}
 	}
-	if (!textSpan) return;
+	if (!textSpan) {
+		return;
+	}
 	const contextSpan = transformSpan(files, documentSpan.fileName, documentSpan.contextSpan, filter);
 	const originalTextSpan = transformSpan(files, documentSpan.originalFileName, documentSpan.originalTextSpan, filter);
 	const originalContextSpan = transformSpan(files, documentSpan.originalFileName, documentSpan.originalContextSpan, filter);
@@ -105,8 +107,12 @@ export function transformSpan(files: FileProvider, fileName: string | undefined,
 	fileName: string;
 	textSpan: ts.TextSpan;
 } | undefined {
-	if (!fileName) return;
-	if (!textSpan) return;
+	if (!fileName) {
+		return;
+	}
+	if (!textSpan) {
+		return;
+	}
 	const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
 	if (virtualFile) {
 		const sourceRange = transformRange(sourceFile, map, textSpan.start, textSpan.start + textSpan.length, filter);

@@ -13,8 +13,9 @@ export function register(context: ServiceContext) {
 		if (data) {
 
 			const service = context.services[data.serviceIndex];
-			if (!service[1].resolveCodeAction)
+			if (!service[1].resolveCodeAction) {
 				return item;
+			}
 
 			Object.assign(item, data.original);
 
