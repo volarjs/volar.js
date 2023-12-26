@@ -3,6 +3,20 @@ import type * as ts from 'typescript';
 
 export default defineConfig({
 	rules: {
+		/**
+		 * @example
+		 * ```ts
+		 * interface MyInterface {
+		 *   prop: string,
+		 * }
+		 * ```
+		 * should be
+		 * ```ts
+		 * interface MyInterface {
+		 *   prop: string;
+		 * }
+		 * ```
+		 */
 		'interface-property-semicolon'({ typescript: ts, sourceFile, reportWarning }) {
 			const { text } = sourceFile;
 			ts.forEachChild(sourceFile, function walk(node) {
@@ -32,6 +46,18 @@ export default defineConfig({
 				ts.forEachChild(node, walk);
 			});
 		},
+		/**
+		 * @example
+		 * ```ts
+		 * if (foo) bar();
+		 * ```
+		 * should be
+		 * ```ts
+		 * if (foo) {
+		 * 	bar();
+		 * }
+		 * ```
+		 */
 		'braces-around-statements'({ typescript: ts, sourceFile, reportWarning }) {
 			ts.forEachChild(sourceFile, function walk(node) {
 				if (ts.isIfStatement(node)) {
@@ -91,6 +117,16 @@ export default defineConfig({
 					=== ts.getLineAndCharacterOfPosition(sourceFile, node.parent.getEnd()).line;
 			}
 		},
+		/**
+		 * @example
+		 * ```ts
+		 * import * as ts from 'typescript';
+		 * ```
+		 * should be
+		 * ```ts
+		 * import type * as ts from 'typescript';
+		 * ```
+		 */
 		'typescript-import-type'({ typescript: ts, sourceFile, reportError }) {
 			ts.forEachChild(sourceFile, function walk(node) {
 				if (ts.isImportDeclaration(node) && node.moduleSpecifier.getText(sourceFile).slice(1, -1) === 'typescript' && !node.importClause?.isTypeOnly) {
@@ -115,6 +151,16 @@ export default defineConfig({
 				ts.forEachChild(node, walk);
 			});
 		},
+		/**
+		 * @example
+		 * ```ts
+		 * const foo = (bar) => {};
+		 * ```
+		 * should be
+		 * ```ts
+		 * const foo = bar => {};
+		 * ```
+		 */
 		'arrow-parens'({ typescript: ts, sourceFile, reportWarning }) {
 			ts.forEachChild(sourceFile, function walk(node) {
 				if (
