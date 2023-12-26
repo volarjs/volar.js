@@ -16,10 +16,10 @@ importers:
         version: 3.1.0(typescript@5.3.3)
       '@tsslint/cli':
         specifier: latest
-        version: 0.0.5(typescript@5.3.3)
+        version: 0.0.7(typescript@5.3.3)
       '@tsslint/config':
         specifier: latest
-        version: 0.0.5
+        version: 0.0.7
       typescript:
         specifier: latest
         version: 5.3.3
@@ -886,7 +886,7 @@ packages:
     resolution: {integrity: sha512-0jE8iHBogf/+bFDj+ju6/UMLbJ39c8h6nSe6qile+dB7PJ0iV3gNqcb2vtt6WWCBrxv9uAjzUT/8vroluulidA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      postcss-selector-parser: 6.0.13
+      postcss-selector-parser: 6.0.14
     dev: true
 
   /@npmcli/run-script@7.0.2:
@@ -1162,34 +1162,27 @@ packages:
     engines: {node: '>=18'}
     dev: true
 
-  /@tsslint/cli@0.0.5(typescript@5.3.3):
-    resolution: {integrity: sha512-xihjlIfv1UWhxCDYln/y7Eer2MC1q0lcuIfnFi6HLMP3z5oowWZ9/ynGBI0o4aGCWi08frSBj4cC2dxES+j2Rg==}
+  /@tsslint/cli@0.0.7(typescript@5.3.3):
+    resolution: {integrity: sha512-mL+6cagnQsTRUxZzv4w0cllIRJ3wUOY5iUwV4rCjBg80wbcNnHGkHTZoatUrZCBoAQIIErKgYAiZmdoMS5lMLQ==}
     hasBin: true
     peerDependencies:
       typescript: '*'
     dependencies:
       '@clack/prompts': 0.7.0
-      '@tsslint/config': 0.0.5
-      '@tsslint/core': 0.0.5
+      '@tsslint/config': 0.0.7
+      '@tsslint/core': 0.0.7
       glob: 10.3.10
       typescript: 5.3.3
-    transitivePeerDependencies:
-      - tslint
     dev: true
 
-  /@tsslint/config@0.0.5:
-    resolution: {integrity: sha512-n1lv8caV2A74gWAkSX07uX3fi1crjTo0eu1Vgxum9x3zsOH5RipTeE9+4v4ZwAfU9x4gJ1IVOv/BhbaHRf1WpA==}
-    peerDependencies:
-      tslint: '*'
-    peerDependenciesMeta:
-      tslint:
-        optional: true
+  /@tsslint/config@0.0.7:
+    resolution: {integrity: sha512-sFh4f7+0wCDC25HI9HaWlHz7ZudG5sASPZ6SXzQvWau9df/SEu3edCDFUOVdmMdoKe1UNfQPlmj0FRpz5FZtmQ==}
     dependencies:
       esbuild: 0.19.10
     dev: true
 
-  /@tsslint/core@0.0.5:
-    resolution: {integrity: sha512-PxL23VdDZdRYsrjx26L8iz9onG+xWMkuthcFVarNvm3rfikwk60wcavHovghEkyVIl2RevL8IgUtt+/XGc45SA==}
+  /@tsslint/core@0.0.7:
+    resolution: {integrity: sha512-eKiTiXwRlvHffqASnDoh4ZNTazMj9zjAFG1mEprQWoq5zBKMu1JglQWmmKFkoUdxXj4RmMuLhSloKgU0SveoYg==}
     dependencies:
       error-stack-parser: 2.1.4
       source-map-support: 0.5.21
@@ -3699,8 +3692,8 @@ packages:
       pathe: 1.1.1
     dev: true
 
-  /postcss-selector-parser@6.0.13:
-    resolution: {integrity: sha512-EaV1Gl4mUEV4ddhDnv/xtj7sxwrwxdetHdWUGnT4VJQf+4d05v6lHYZr8N573k5Z0BViss7BDhfWtKS3+sfAqQ==}
+  /postcss-selector-parser@6.0.14:
+    resolution: {integrity: sha512-65xXYsT40i9GyWzlHQ5ShZoK7JZdySeOozi/tz2EezDo6c04q6+ckYMeoY7idaie1qp2dT5KoYQ2yky6JuoHnA==}
     engines: {node: '>=4'}
     dependencies:
       cssesc: 3.0.0

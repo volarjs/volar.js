@@ -250,14 +250,42 @@ export default defineConfig({
 				}
 			}
 		},
+		'no-unnecessary-non-null-assertion'({ typescript: ts, sourceFile, languageService, reportWarning }) {
+			ts.forEachChild(sourceFile, function walk(node) {
+				if (ts.isNonNullExpression(node)) {
+					const typeChecker = languageService.getProgram()!.getTypeChecker();
+					const type = typeChecker.getTypeAtLocation(node.expression);
+					if (typeChecker.typeToString(type) === typeChecker.typeToString(type.getNonNullableType())) {
+						reportWarning(
+							`Unnecessary non-null assertion.`,
+							node.getStart(sourceFile),
+							node.getEnd()
+						).withFix(
+							'Remove unnecessary non-null assertion',
+							() => [{
+								fileName: sourceFile.fileName,
+								textChanges: [
+									{
+										newText: '',
+										span: {
+											start: node.expression.getEnd(),
+											length: node.getEnd() - node.expression.getEnd(),
+										},
+									}
+								],
+							}]
+						);
+					}
+				}
+				ts.forEachChild(node, walk);
+			});
+		},
 	},
 	plugins: [
 		ctx => ({
 			resolveRules(rules) {
 				if (ctx.tsconfig.endsWith('/kit/tsconfig.json')) {
-					const newRules = { ...rules };
-					delete newRules['typescript-import-type'];
-					return newRules;
+					delete rules['typescript-import-type'];
 				}
 				return rules;
 			},
