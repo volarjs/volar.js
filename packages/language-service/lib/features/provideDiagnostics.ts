@@ -257,7 +257,7 @@ export function register(context: ServiceContext) {
 					errors?.forEach(error => {
 						error.data = {
 							uri,
-							version: document!.version,
+							version: document.version,
 							serviceIndex,
 							isFormat: false,
 							original: {

@@ -94,7 +94,7 @@ export function register(context: ServiceContext) {
 					.map((_inlayHint): vscode.InlayHint | undefined => {
 						const position = map.getSourcePosition(_inlayHint.position, isInlayHintsEnabled);
 						const edits = _inlayHint.textEdits
-							?.map(textEdit => transformTextEdit(textEdit, range => map!.getSourceRange(range), map.virtualFileDocument))
+							?.map(textEdit => transformTextEdit(textEdit, range => map.getSourceRange(range), map.virtualFileDocument))
 							.filter(notEmpty);
 
 						if (position) {

@@ -39,7 +39,7 @@ export function createFormatter(
 		const snapshot = ts.ScriptSnapshot.fromString(content);
 		files.updateSourceFile(fakeFileName, languageId, snapshot);
 
-		const document = service.context.documents.get(fakeUri, languageId, snapshot)!;
+		const document = service.context.documents.get(fakeUri, languageId, snapshot);
 		const edits = await service.format(fakeUri, options, undefined, undefined);
 		if (edits?.length) {
 			const newString = TextDocument.applyEdits(document, edits);

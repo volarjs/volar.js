@@ -109,7 +109,7 @@ export function createLanguage(
 			return moduleNames.map(moduleName => {
 				for (const language of languages) {
 					if (language.typescript?.resolveModuleName) {
-						moduleName = language.typescript.resolveModuleName!(moduleName, sourceFile?.impliedNodeFormat) ?? moduleName;
+						moduleName = language.typescript.resolveModuleName(moduleName, sourceFile?.impliedNodeFormat) ?? moduleName;
 					}
 				}
 				return ts.resolveModuleName(
@@ -132,7 +132,7 @@ export function createLanguage(
 			sys,
 			projectHost,
 			languageServiceHost,
-			synchronizeFileSystem: 'sync' in sys ? () => sys.sync!() : undefined,
+			synchronizeFileSystem: 'sync' in sys ? () => sys.sync() : undefined,
 		},
 	};
 

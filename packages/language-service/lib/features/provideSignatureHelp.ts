@@ -36,7 +36,7 @@ export function register(context: ServiceContext) {
 				) {
 					return;
 				}
-				return service[1].provideSignatureHelp?.(document, position, signatureHelpContext!, token);
+				return service[1].provideSignatureHelp?.(document, position, signatureHelpContext, token);
 			},
 			data => data,
 		);

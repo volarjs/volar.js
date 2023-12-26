@@ -363,7 +363,7 @@ export function createServer(
 
 	async function sendDocumentDiagnostics(uri: string, version: number, cancel: vscode.CancellationToken) {
 
-		const languageService = (await projects!.getProject(uri)).getLanguageService();
+		const languageService = (await projects.getProject(uri)).getLanguageService();
 		const errors = await languageService.doValidation(uri, cancel, result => {
 			context.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});

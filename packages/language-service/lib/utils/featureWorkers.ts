@@ -62,12 +62,12 @@ export async function languageFeatureWorker<T, K>(
 						continue;
 					}
 
-					const result = transformResult(embeddedResult!, map);
+					const result = transformResult(embeddedResult, map);
 					if (!result) {
 						continue;
 					}
 
-					results.push(result!);
+					results.push(result);
 
 					if (!combineResult) {
 						return false;

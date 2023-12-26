@@ -173,7 +173,7 @@ export function register(context: ServiceContext) {
 								continue;
 							}
 
-							const embeddedCompletionList = await service[1].provideCompletionItems(map.virtualFileDocument, mapped, completionContext!, token);
+							const embeddedCompletionList = await service[1].provideCompletionItems(map.virtualFileDocument, mapped, completionContext, token);
 
 							if (!embeddedCompletionList || !embeddedCompletionList.items.length) {
 								continue;
