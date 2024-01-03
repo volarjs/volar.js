@@ -280,6 +280,77 @@ export default defineConfig({
 				ts.forEachChild(node, walk);
 			});
 		},
+		/**
+		 * @example
+		 * ```ts
+		 * const obj = { prop: 'value' };
+		 * obj.prop;
+		 * ```
+		 * should be
+		 * ```ts
+		 * const obj = { prop: 'value' };
+		 * // Use the property
+		 * console.log(obj.prop);
+		 * ```
+		 */
+		'no-unused-property-access'({ typescript: ts, sourceFile, reportWarning }) {
+			ts.forEachChild(sourceFile, function walk(node) {
+				if (ts.isPropertyAccessExpression(node)) {
+					const parent = node.parent;
+					if (ts.isExpressionStatement(parent)) {
+						reportWarning(
+							`Property '${node.name.text}' is accessed but not used.`,
+							node.getStart(sourceFile),
+							node.getEnd()
+						).withFix(
+							'Remove unused property access',
+							() => [{
+								fileName: sourceFile.fileName,
+								textChanges: [
+									{
+										newText: '',
+										span: {
+											start: parent.getStart(sourceFile),
+											length: parent.getEnd() - parent.getStart(sourceFile),
+										},
+									}
+								],
+							}]
+						);
+					}
+				}
+				ts.forEachChild(node, walk);
+			});
+		},
+		'no-unused-variable-access'({ typescript: ts, sourceFile, reportWarning }) {
+			ts.forEachChild(sourceFile, function walk(node) {
+				if (ts.isIdentifier(node)) {
+					const parent = node.parent;
+					if (ts.isExpressionStatement(parent)) {
+						reportWarning(
+							`Variable '${node.text}' is accessed but not used.`,
+							node.getStart(sourceFile),
+							node.getEnd()
+						).withFix(
+							'Remove unused variable access',
+							() => [{
+								fileName: sourceFile.fileName,
+								textChanges: [
+									{
+										newText: '',
+										span: {
+											start: parent.getStart(sourceFile),
+											length: parent.getEnd() - parent.getStart(sourceFile),
+										},
+									}
+								],
+							}]
+						);
+					}
+				}
+				ts.forEachChild(node, walk);
+			});
+		},
 	},
 	plugins: [
 		ctx => ({

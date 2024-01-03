@@ -218,8 +218,6 @@ export function register(context: ServiceContext) {
 				},
 			};
 
-			selectionRange.end;
-
 			return [vueItem, vueRanges];
 		}
 	}
