@@ -2,7 +2,7 @@ import { FileType } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver/browser';
 import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
-import { createServer } from './lib/server';
+import { createServerBase } from './lib/server';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from './protocol';
 
 export * from 'vscode-languageserver/browser';
@@ -19,8 +19,8 @@ export function createConnection() {
 	return connection;
 }
 
-export function createBrowserServer(connection: vscode.Connection) {
-	return createServer(connection, () => ({
+export function createServer(connection: vscode.Connection) {
+	return createServerBase(connection, () => ({
 		uriToFileName,
 		fileNameToUri,
 		console: connection.console,

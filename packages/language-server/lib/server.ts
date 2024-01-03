@@ -31,7 +31,7 @@ export interface ServerOptions {
 	getLanguagePlugins(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): LanguagePlugin[] | Promise<LanguagePlugin[]>;
 }
 
-export function createServer(
+export function createServerBase(
 	connection: vscode.Connection,
 	getRuntimeEnv: (params: ServerContext['initializeParams']) => ServerRuntimeEnvironment,
 ) {

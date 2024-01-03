@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
-import { createServer } from './lib/server';
+import { createServerBase } from './lib/server';
 import type { InitializationOptions } from './lib/types';
 
 export * from 'vscode-languageserver/node';
@@ -83,8 +83,8 @@ export function createConnection() {
 	return vscode.createConnection(vscode.ProposedFeatures.all);
 }
 
-export function createNodeServer(connection: vscode.Connection) {
-	return createServer(connection, params => ({
+export function createServer(connection: vscode.Connection) {
+	return createServerBase(connection, params => ({
 		uriToFileName,
 		fileNameToUri,
 		console: connection.console,
