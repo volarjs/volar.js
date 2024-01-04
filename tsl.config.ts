@@ -1,4 +1,4 @@
-import { defineConfig } from '@tsslint/config';
+import { defineConfig } from 'tsl';
 import type * as ts from 'typescript';
 
 export default defineConfig({
