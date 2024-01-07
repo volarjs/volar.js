@@ -45,13 +45,13 @@ export interface CodeInformation {
 }
 
 export interface BaseFile {
-	fileName: string;
+	uri: string;
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 }
 
 export interface LanguagePlugin<T extends VirtualFile = VirtualFile> {
-	createVirtualFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileProvider): T | undefined;
+	createVirtualFile(uri: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileProvider): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot, files?: FileProvider): void;
 	disposeVirtualFile?(virtualFile: T, files?: FileProvider): void;
 	typescript?: {
@@ -66,10 +66,9 @@ export interface Language {
 	files: FileProvider;
 	typescript?: {
 		configFileName: string | undefined;
-		sys: ts.System;
+		sys: ts.System & { sync?(): Promise<number>; };
 		projectHost: TypeScriptProjectHost;
 		languageServiceHost: ts.LanguageServiceHost;
-		synchronizeFileSystem?(): Promise<number>;
 	};
 }
 
@@ -84,4 +83,6 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getScriptSnapshot'
 > {
 	getLanguageId(fileName: string): string;
+	uriToFileName(uri: string): string;
+	fileNameToUri(fileName: string): string;
 }

@@ -319,10 +319,12 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	};
 }
 
+const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
+
 export function* printSnapshots(sourceFile: _.SourceFile, root = process.cwd()) {
 	if (sourceFile.virtualFile) {
 		for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-			yield path.relative(root, file.fileName);
+			yield path.relative(root, uriToFileName(file.uri));
 			for (const line of printSnapshot(sourceFile, file, root)) {
 				yield '  ' + line;
 			}
@@ -332,7 +334,7 @@ export function* printSnapshots(sourceFile: _.SourceFile, root = process.cwd()) 
 
 export function* printSnapshot(
 	sourceFile: {
-		fileName: string;
+		uri: string;
 		snapshot: _.SourceFile['snapshot'];
 	},
 	file: _.VirtualFile,
@@ -386,7 +388,7 @@ export function* printSnapshot(
 		for (const log of logs.reverse()) {
 			const sourcePosition = sourceFileDocument.positionAt(log.sourceOffset);
 			const spanText = log.length === 0 ? '^' : '~'.repeat(log.length);
-			const sourceFilePath = path.relative(root, log.mapping.source ?? sourceFile.fileName);
+			const sourceFilePath = path.relative(root, uriToFileName(log.mapping.source ?? sourceFile.uri));
 			const prefix = ' '.repeat(lineHead.length);
 			const sourceLineEnd = sourceFileDocument.offsetAt({ line: sourcePosition.line + 1, character: 0 }) - 1;
 			const sourceLine = sourceFileDocument.getText().substring(sourceFileDocument.offsetAt({ line: sourcePosition.line, character: 0 }), sourceLineEnd + 1);

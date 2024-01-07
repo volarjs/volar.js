@@ -36,7 +36,7 @@ export async function languageFeatureWorker<T, K>(
 	combineResult?: (results: T[]) => T,
 ) {
 
-	const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
+	const sourceFile = context.language.files.getSourceFile(uri);
 	if (!sourceFile) {
 		return;
 	}
@@ -140,10 +140,10 @@ export async function visitEmbedded(
 	}
 
 	for (const map of context.documents.getMaps(current)) {
-		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(map.sourceFileDocument.uri));
+		const sourceFile = context.language.files.getSourceFile(map.sourceFileDocument.uri);
 		if (
 			sourceFile?.virtualFile?.[0] === rootFile
-			&& !context.disabledVirtualFiles.has(current.fileName)
+			&& !context.disabledVirtualFileUris.has(current.uri)
 			&& !await cb(current, map)
 		) {
 			return false;
@@ -166,7 +166,7 @@ export function getEmbeddedFilesByLevel(context: ServiceContext, rootFile: Virtu
 		let nextLevel: VirtualFile[] = [];
 
 		for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
-			nextLevel = nextLevel.concat(file.embeddedFiles.filter(file => !context.disabledVirtualFiles.has(file.fileName)));
+			nextLevel = nextLevel.concat(file.embeddedFiles.filter(file => !context.disabledVirtualFileUris.has(file.uri)));
 		}
 
 		embeddedFilesByLevel.push(nextLevel);

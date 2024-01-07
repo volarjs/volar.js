@@ -70,7 +70,7 @@ export function register(context: ServiceContext) {
 
 				if (data.virtualDocumentUri) {
 
-					const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(data.virtualDocumentUri));
+					const [virtualFile] = context.language.files.getVirtualFile(data.virtualDocumentUri);
 
 					if (virtualFile) {
 
@@ -131,7 +131,7 @@ export function register(context: ServiceContext) {
 
 				if (data.virtualDocumentUri) {
 
-					const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(data.virtualDocumentUri));
+					const [virtualFile] = context.language.files.getVirtualFile(data.virtualDocumentUri);
 
 					if (virtualFile) {
 
@@ -178,7 +178,7 @@ export function register(context: ServiceContext) {
 
 	function transformCallHierarchyItem(tsItem: vscode.CallHierarchyItem, tsRanges: vscode.Range[]): [vscode.CallHierarchyItem, vscode.Range[]] | undefined {
 
-		const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(tsItem.uri));
+		const [virtualFile] = context.language.files.getVirtualFile(tsItem.uri);
 
 		if (!virtualFile) {
 			return [tsItem, tsRanges];

@@ -26,7 +26,7 @@ export function register(context: ServiceContext) {
 			}
 			const symbols = embeddedSymbols.map(symbol => transformWorkspaceSymbol(symbol, loc => {
 
-				const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(loc.uri));
+				const [virtualFile] = context.language.files.getVirtualFile(loc.uri);
 
 				if (virtualFile) {
 					for (const map of context.documents.getMaps(virtualFile)) {

@@ -103,7 +103,7 @@ export namespace DocumentDrop_DataTransferItemFileDataRequest {
 export namespace UpdateVirtualFileStateNotification {
 	export type ParamsType = {
 		uri: string;
-		virtualFileName: string;
+		virtualFileUri: string;
 		disabled: boolean;
 	};
 	export const type = new vscode.NotificationType<ParamsType>('volar/client/labs/updateVirtualFileState');
@@ -132,7 +132,7 @@ export namespace GetServicePluginsRequest {
 
 export namespace GetVirtualFilesRequest {
 	export type VirtualFileWithState = {
-		fileName: string;
+		uri: string;
 		languageId: string;
 		tsScriptKind?: number;
 		version: number;
@@ -148,7 +148,7 @@ export namespace GetVirtualFilesRequest {
 export namespace GetVirtualFileRequest {
 	export type ParamsType = {
 		sourceFileUri: string;
-		virtualFileName: string;
+		virtualFileUri: string;
 	};
 	export type ResponseType = {
 		content: string;

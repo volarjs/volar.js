@@ -63,23 +63,23 @@ export function registerEditorFeatures(
 	});
 	connection.onRequest(GetVirtualFilesRequest.type, async document => {
 		const languageService = (await projects.getProject(document.uri)).getLanguageService();
-		const virtualFile = languageService.context.language.files.getSourceFile(env.uriToFileName(document.uri))?.virtualFile;
+		const virtualFile = languageService.context.language.files.getSourceFile(document.uri)?.virtualFile;
 		return virtualFile ? prune(virtualFile[0]) : undefined;
 
 		function prune(file: VirtualFile): GetVirtualFilesRequest.VirtualFileWithState {
-			let version = scriptVersions.get(file.fileName) ?? 0;
+			let version = scriptVersions.get(file.uri) ?? 0;
 			if (!scriptVersionSnapshots.has(file.snapshot)) {
 				version++;
-				scriptVersions.set(file.fileName, version);
+				scriptVersions.set(file.uri, version);
 				scriptVersionSnapshots.add(file.snapshot);
 			}
 			return {
-				fileName: file.fileName,
+				uri: file.uri,
 				languageId: file.languageId,
 				tsScriptKind: file.typescript?.scriptKind,
 				embeddedFiles: file.embeddedFiles.map(prune),
 				version,
-				disabled: languageService.context.disabledVirtualFiles.has(file.fileName),
+				disabled: languageService.context.disabledVirtualFileUris.has(file.uri),
 			};
 		}
 	});
@@ -88,7 +88,7 @@ export function registerEditorFeatures(
 		let content: string = '';
 		let codegenStacks: Stack[] = [];
 		const mappings: Record<string, CodeMapping[]> = {};
-		const [virtualFile] = languageService.context.language.files.getVirtualFile(params.virtualFileName);
+		const [virtualFile] = languageService.context.language.files.getVirtualFile(params.virtualFileUri);
 		if (virtualFile) {
 			for (const map of languageService.context.documents.getMaps(virtualFile)) {
 				content = map.virtualFileDocument.getText();
@@ -114,8 +114,7 @@ export function registerEditorFeatures(
 		if (languageService.context.language.typescript?.languageServiceHost) {
 
 			const rootUri = languageService.context.env.workspaceFolder.toString();
-			const rootPath = languageService.context.env.uriToFileName(rootUri);
-			const { languageServiceHost } = languageService.context.language.typescript;
+			const { languageServiceHost, projectHost } = languageService.context.language.typescript;
 
 			for (const fileName of languageServiceHost.getScriptFileNames()) {
 				if (!fs.existsSync(fileName)) {
@@ -126,10 +125,11 @@ export function registerEditorFeatures(
 					}
 				}
 				else {
-					const [virtualFile] = languageService.context.language.files.getVirtualFile(fileName);
-					if (virtualFile?.typescript && virtualFile.fileName.startsWith(rootPath)) {
+					const uri = projectHost.fileNameToUri(fileName);
+					const [virtualFile] = languageService.context.language.files.getVirtualFile(uri);
+					if (virtualFile?.typescript && virtualFile.uri.startsWith(rootUri)) {
 						const { snapshot } = virtualFile;
-						fs.writeFile(virtualFile.fileName, snapshot.getText(0, snapshot.getLength()), () => { });
+						fs.writeFile(virtualFile.uri, snapshot.getText(0, snapshot.getLength()), () => { });
 					}
 				}
 			}
@@ -203,10 +203,10 @@ export function registerEditorFeatures(
 		const context = project.getLanguageServiceDontCreate()?.context;
 		if (context) {
 			if (params.disabled) {
-				context.disabledVirtualFiles.add(params.virtualFileName);
+				context.disabledVirtualFileUris.add(params.virtualFileUri);
 			}
 			else {
-				context.disabledVirtualFiles.delete(params.virtualFileName);
+				context.disabledVirtualFileUris.delete(params.virtualFileUri);
 			}
 		}
 	});

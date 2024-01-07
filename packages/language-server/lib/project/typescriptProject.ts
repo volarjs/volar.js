@@ -32,6 +32,8 @@ export async function createTypeScriptServerProject(
 	const { uriToFileName, fileNameToUri } = context.runtimeEnv;
 	const ts = context.ts;
 	const host: TypeScriptProjectHost = {
+		fileNameToUri: context.runtimeEnv.fileNameToUri,
+		uriToFileName: context.runtimeEnv.uriToFileName,
 		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder.toString()),
 		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => rootFiles,
@@ -47,10 +49,12 @@ export async function createTypeScriptServerProject(
 		getProjectReferences: () => parsedCommandLine.projectReferences,
 		getLanguageId: uri => context.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
 	};
-	const sys = createSys(ts, serviceEnv, host.getCurrentDirectory());
+	const sys = createSys(ts, serviceEnv, host);
 	const languagePlugins = await serverOptions.getLanguagePlugins(serviceEnv, {
 		typescript: {
 			configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
+			host,
+			sys,
 		},
 	});
 	const askedFiles = createUriMap<boolean>(fileNameToUri);

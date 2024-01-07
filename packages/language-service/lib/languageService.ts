@@ -93,7 +93,7 @@ export function createLanguageService(
 
 	function createServiceContext() {
 
-		const documents = createDocumentProvider(env, language.files);
+		const documents = createDocumentProvider(language.files);
 		const context: ServiceContext = {
 			env,
 			language: language,
@@ -163,7 +163,7 @@ export function createLanguageService(
 					}
 				},
 			},
-			disabledVirtualFiles: new Set(),
+			disabledVirtualFileUris: new Set(),
 			disabledServicePlugins: new WeakSet(),
 		};
 

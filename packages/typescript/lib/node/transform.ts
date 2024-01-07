@@ -1,6 +1,6 @@
 import { FileProvider, CodeInformation, shouldReportDiagnostics, SourceMap, SourceFile } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { getVirtualFileAndMap, notEmpty } from './utils';
+import { getVirtualFileAndMap, notEmpty, uriToFileName } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
 
@@ -58,7 +58,7 @@ export function transformFileTextChanges(files: FileProvider, changes: ts.FileTe
 	if (source) {
 		return {
 			...changes,
-			fileName: source.fileName,
+			fileName: uriToFileName(source.uri),
 			textChanges: changes.textChanges.map(c => {
 				const span = transformSpan(files, changes.fileName, c.span, filter);
 				if (span) {
@@ -81,7 +81,7 @@ export function transformDocumentSpan<T extends ts.DocumentSpan>(files: FileProv
 		const [virtualFile, source] = getVirtualFileAndMap(files, documentSpan.fileName);
 		if (virtualFile) {
 			textSpan = {
-				fileName: source.fileName,
+				fileName: uriToFileName(source.uri),
 				textSpan: { start: 0, length: 0 },
 			};
 		}
@@ -118,7 +118,7 @@ export function transformSpan(files: FileProvider, fileName: string | undefined,
 		const sourceRange = transformRange(sourceFile, map, textSpan.start, textSpan.start + textSpan.length, filter);
 		if (sourceRange) {
 			return {
-				fileName: sourceFile.fileName,
+				fileName: uriToFileName(sourceFile.uri),
 				textSpan: {
 					start: sourceRange[0],
 					length: sourceRange[1] - sourceRange[0],

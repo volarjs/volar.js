@@ -1,6 +1,7 @@
 import type * as ts from 'typescript';
 import { decorateProgram } from './decorateProgram';
 import { LanguagePlugin, createFileProvider, forEachEmbeddedFile, resolveCommonLanguageId } from '@volar/language-core';
+import { fileNameToUri, uriToFileName } from './utils';
 
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
@@ -18,10 +19,10 @@ export function proxyCreateProgram(
 			const files = createFileProvider(
 				getLanguagePlugins(ts, options),
 				ts.sys.useCaseSensitiveFileNames,
-				fileName => {
+				uri => {
 					let snapshot: ts.IScriptSnapshot | undefined;
-					assert(originalSourceFiles.has(fileName), `originalSourceFiles.has(${fileName})`);
-					const sourceFile = originalSourceFiles.get(fileName);
+					assert(originalSourceFiles.has(uri), `originalSourceFiles.has(${uri})`);
+					const sourceFile = originalSourceFiles.get(uri);
 					if (sourceFile) {
 						snapshot = sourceFileToSnapshotMap.get(sourceFile);
 						if (!snapshot) {
@@ -40,10 +41,10 @@ export function proxyCreateProgram(
 						}
 					}
 					if (snapshot) {
-						files.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
+						files.updateSourceFile(uri, resolveCommonLanguageId(uri), snapshot);
 					}
 					else {
-						files.deleteSourceFile(fileName);
+						files.deleteSourceFile(uri);
 					}
 				}
 			);
@@ -73,13 +74,14 @@ export function proxyCreateProgram(
 			) => {
 
 				const originalSourceFile = originalHost.getSourceFile(fileName, languageVersionOrOptions, onError, shouldCreateNewSourceFile);
+				const uri = fileNameToUri(fileName);
 
-				originalSourceFiles.set(fileName, originalSourceFile);
+				originalSourceFiles.set(uri, originalSourceFile);
 
 				if (originalSourceFile && extensions.some(ext => fileName.endsWith(ext))) {
 					let sourceFile2 = parsedSourceFiles.get(originalSourceFile);
 					if (!sourceFile2) {
-						const sourceFile = files.getSourceFile(fileName);
+						const sourceFile = files.getSourceFile(uri);
 						assert(!!sourceFile, '!!sourceFile');
 						let patchedText = originalSourceFile.text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 						let scriptKind = ts.ScriptKind.TS;
@@ -94,7 +96,7 @@ export function proxyCreateProgram(
 							}
 						}
 						sourceFile2 = ts.createSourceFile(
-							sourceFile.fileName,
+							uriToFileName(sourceFile.uri),
 							patchedText,
 							99 satisfies ts.ScriptTarget.ESNext,
 							true,

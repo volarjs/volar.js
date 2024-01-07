@@ -6,20 +6,15 @@ import type { DocumentProvider } from './documents';
 
 export type * from 'vscode-languageserver-protocol';
 
-export interface ServiceEnvironment extends RuntimeEnvironment {
+export interface ServiceEnvironment {
 	workspaceFolder: URI;
 	locale?: string;
 	clientCapabilities?: vscode.ClientCapabilities;
+	fs?: FileSystem;
+	console?: Console;
 	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>;
 	onDidChangeConfiguration?(cb: () => void): vscode.Disposable;
 	onDidChangeWatchedFiles?(cb: (params: vscode.DidChangeWatchedFilesParams) => void): vscode.Disposable;
-}
-
-export interface RuntimeEnvironment {
-	uriToFileName(uri: string): string;
-	fileNameToUri(fileName: string): string;
-	fs?: FileSystem;
-	console?: Console;
 }
 
 export interface Console {
@@ -68,7 +63,7 @@ export interface ServiceContext {
 	};
 	documents: DocumentProvider;
 	services: [ServicePlugin, ServicePluginInstance][];
-	disabledVirtualFiles: Set<string>;
+	disabledVirtualFileUris: Set<string>;
 	disabledServicePlugins: WeakSet<ServicePluginInstance>;
 }
 

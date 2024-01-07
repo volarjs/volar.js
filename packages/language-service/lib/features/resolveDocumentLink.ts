@@ -32,7 +32,7 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 
 	const targetUri = URI.parse(target);
 	const clearUri = targetUri.with({ fragment: '' }).toString();
-	const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(clearUri));
+	const [virtualFile] = context.language.files.getVirtualFile(clearUri);
 
 	if (virtualFile) {
 		for (const map of context.documents.getMaps(virtualFile)) {

@@ -2,7 +2,6 @@ import { CodeInformation, CodeRangeKey, FileProvider, LinkedCodeMap, Mapping, So
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { RuntimeEnvironment } from '../lib/types';
 
 export type DocumentProvider = ReturnType<typeof createDocumentProvider>;
 
@@ -146,7 +145,7 @@ export class LinkedCodeMapWithDocument extends SourceMapWithDocuments {
 	}
 }
 
-export function createDocumentProvider(env: RuntimeEnvironment, files: FileProvider) {
+export function createDocumentProvider(files: FileProvider) {
 
 	let version = 0;
 
@@ -165,7 +164,7 @@ export function createDocumentProvider(env: RuntimeEnvironment, files: FileProvi
 							if (!map2DocMap.has(map)) {
 								map2DocMap.set(map, new SourceMapWithDocuments(
 									get(sourceUri, source.languageId, sourceSnapshot),
-									get(env.fileNameToUri(virtualFile.fileName), virtualFile.languageId, virtualFile.snapshot),
+									get(virtualFile.uri, virtualFile.languageId, virtualFile.snapshot),
 									map,
 								));
 							}
@@ -177,11 +176,11 @@ export function createDocumentProvider(env: RuntimeEnvironment, files: FileProvi
 			}
 		},
 		*getMaps(virtualFile: VirtualFile) {
-			for (const [sourceFileName, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
+			for (const [sourceFileUri, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
 				if (!map2DocMap.has(map)) {
 					map2DocMap.set(map, new SourceMapWithDocuments(
-						get(env.fileNameToUri(sourceFileName), files.getSourceFile(sourceFileName)!.languageId, sourceSnapshot),
-						get(env.fileNameToUri(virtualFile.fileName), virtualFile.languageId, virtualFile.snapshot),
+						get(sourceFileUri, files.getSourceFile(sourceFileUri)!.languageId, sourceSnapshot),
+						get(virtualFile.uri, virtualFile.languageId, virtualFile.snapshot),
 						map,
 					));
 				}
@@ -193,7 +192,7 @@ export function createDocumentProvider(env: RuntimeEnvironment, files: FileProvi
 			if (map) {
 				if (!mirrorMap2DocMirrorMap.has(map)) {
 					mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
-						get(env.fileNameToUri(virtualFile.fileName), virtualFile.languageId, virtualFile.snapshot),
+						get(virtualFile.uri, virtualFile.languageId, virtualFile.snapshot),
 						map,
 					));
 				}

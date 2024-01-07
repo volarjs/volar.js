@@ -1,14 +1,12 @@
 import { FileSystem, FileType, ServiceEnvironment } from '@volar/language-service';
 import * as fs from 'fs';
 import { URI } from 'vscode-uri';
-import { fileNameToUri, uriToFileName } from './utils';
+import { uriToFileName } from './utils';
 
 export function createServiceEnvironment(getSettings: () => any): ServiceEnvironment {
 
 	return {
 		workspaceFolder: URI.file(process.cwd()),
-		uriToFileName,
-		fileNameToUri,
 		getConfiguration(section: string) {
 			const settings = getSettings();
 			if (section in settings) {
