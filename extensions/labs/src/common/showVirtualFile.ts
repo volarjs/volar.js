@@ -182,8 +182,14 @@ export async function activate(info: LabsInfo) {
 					const requestUri = virtualUriToSourceUri.get(uri.toString());
 					if (requestUri) {
 
-						const fileName = uri.with({ scheme: 'file' }).fsPath;
-						const virtualFile = await client.sendRequest(info.volarLabs.languageServerProtocol.GetVirtualFileRequest.type, { sourceFileUri: requestUri, virtualFileName: fileName });
+						const virtualFileUri = uri.with({ scheme: 'file' }).toString(true);
+						const virtualFile = await client.sendRequest(
+							info.volarLabs.languageServerProtocol.GetVirtualFileRequest.type,
+							{
+								sourceFileUri: requestUri,
+								virtualFileUri,
+							},
+						);
 						virtualUriToSourceMap.set(uri.toString(), []);
 
 						Object.entries(virtualFile.mappings).forEach(([sourceUri, mappings]) => {

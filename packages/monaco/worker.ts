@@ -22,14 +22,13 @@ export function createSimpleWorkerService<T = {}>(
 ) {
 	return createWorkerService(
 		services,
-		env => {
+		() => {
 			const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const files = createFileProvider(
 				languages,
 				false,
-				fileName => {
-					const uri = env.fileNameToUri(fileName);
-					const model = getMirrorModels().find(model => model.uri.toString(true) === uri);
+				uri => {
+					const model = getMirrorModels().find(model => model.uri.toString() === uri);
 					if (model) {
 						const cache = snapshots.get(model);
 						if (cache && cache[0] === model.version) {
@@ -42,10 +41,10 @@ export function createSimpleWorkerService<T = {}>(
 							getChangeRange: () => undefined,
 						};
 						snapshots.set(model, [model.version, snapshot]);
-						files.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
+						files.updateSourceFile(uri, resolveCommonLanguageId(uri), snapshot);
 					}
 					else {
-						files.deleteSourceFile(fileName);
+						files.deleteSourceFile(uri);
 					}
 				}
 			);
@@ -57,11 +56,26 @@ export function createSimpleWorkerService<T = {}>(
 }
 
 export function createTypeScriptWorkerService<T = {}>(
-	ts: typeof import('typescript'),
 	languages: LanguagePlugin[],
 	services: ServicePlugin[],
 	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
-	compilerOptions: ts.CompilerOptions,
+	{
+		typescript: ts,
+		compilerOptions,
+		getCurrentDirectory,
+		getScriptFileNames,
+		getMirrorModel,
+		fileNameToUri,
+		uriToFileName,
+	}: {
+		typescript: typeof import('typescript');
+		compilerOptions: ts.CompilerOptions;
+		getCurrentDirectory(): string;
+		getScriptFileNames(): string[];
+		getMirrorModel(fileName: string): monaco.worker.IMirrorModel | undefined;
+		fileNameToUri(fileName: string): string;
+		uriToFileName(uri: string): string;
+	},
 	extraApis: T = {} as any,
 ) {
 	return createWorkerService(
@@ -73,9 +87,10 @@ export function createTypeScriptWorkerService<T = {}>(
 			const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
 			const host: TypeScriptProjectHost = {
-				getCurrentDirectory() {
-					return env.uriToFileName(env.workspaceFolder.toString(true));
-				},
+				fileNameToUri,
+				uriToFileName,
+				getCurrentDirectory,
+				getScriptFileNames,
 				getProjectVersion() {
 					const models = getMirrorModels();
 					if (modelVersions.size === getMirrorModels().length) {
@@ -90,13 +105,8 @@ export function createTypeScriptWorkerService<T = {}>(
 					projectVersion++;
 					return projectVersion.toString();
 				},
-				getScriptFileNames() {
-					const models = getMirrorModels();
-					return models.map(model => env.uriToFileName(model.uri.toString(true)));
-				},
 				getScriptSnapshot(fileName) {
-					const uri = env.fileNameToUri(fileName);
-					const model = getMirrorModels().find(model => model.uri.toString(true) === uri);
+					const model = getMirrorModel(fileName);
 					if (model) {
 						const cache = modelSnapshot.get(model);
 						if (cache && cache[0] === model.version) {
@@ -116,7 +126,7 @@ export function createTypeScriptWorkerService<T = {}>(
 				},
 				getLanguageId: id => resolveCommonLanguageId(id),
 			};
-			const sys = createSys(ts, env, host.getCurrentDirectory());
+			const sys = createSys(ts, env, host);
 			const language = createLanguage(
 				ts,
 				sys,
@@ -139,8 +149,6 @@ function createWorkerService<T = {}>(
 
 	const env: ServiceEnvironment = {
 		workspaceFolder: URI.file('/'),
-		uriToFileName: uri => URI.parse(uri).fsPath.replace(/\\/g, '/'),
-		fileNameToUri: fileName => URI.file(fileName).toString(),
 		console,
 	};
 	const language = getLanguage(env);

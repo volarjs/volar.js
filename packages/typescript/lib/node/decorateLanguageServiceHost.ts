@@ -1,6 +1,7 @@
 import { FileProvider, forEachEmbeddedFile } from '@volar/language-core';
 import { resolveCommonLanguageId } from '@volar/language-service';
 import type * as ts from 'typescript';
+import { fileNameToUri } from './utils';
 
 export function decorateLanguageServiceHost(
 	virtualFiles: FileProvider,
@@ -164,16 +165,17 @@ export function decorateLanguageServiceHost(
 			let scriptKind = ts.ScriptKind.TS;
 
 			const snapshot = getScriptSnapshot(fileName);
+			const uri = fileNameToUri(fileName);
+
 			if (snapshot) {
 				extraProjectVersion++;
-				const sourceFile = virtualFiles.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
-				if (sourceFile.virtualFile) {
+				const sourceFile = virtualFiles.updateSourceFile(uri, resolveCommonLanguageId(uri), snapshot);
+				if (sourceFile.generated) {
 					const text = snapshot.getText(0, snapshot.getLength());
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-						const ext = file.fileName.substring(fileName.length);
-						if (file.typescript && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
-							extension = ext;
+					for (const file of forEachEmbeddedFile(sourceFile.generated.virtualFile)) {
+						if (file.typescript) {
+							extension = file.typescript.extension;
 							scriptKind = file.typescript.scriptKind;
 							patchedText += file.snapshot.getText(0, file.snapshot.getLength());
 						}
@@ -181,9 +183,9 @@ export function decorateLanguageServiceHost(
 					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
 				}
 			}
-			else if (virtualFiles.getSourceFile(fileName)) {
+			else if (virtualFiles.getSourceFile(uri)) {
 				extraProjectVersion++;
-				virtualFiles.deleteSourceFile(fileName);
+				virtualFiles.deleteSourceFile(uri);
 			}
 
 			scripts.set(fileName, {

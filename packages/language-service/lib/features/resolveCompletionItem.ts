@@ -22,7 +22,7 @@ export function register(context: ServiceContext) {
 
 			if (data.virtualDocumentUri) {
 
-				const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(data.virtualDocumentUri));
+				const [virtualFile] = context.documents.getVirtualFileByUri(data.virtualDocumentUri);
 
 				if (virtualFile) {
 

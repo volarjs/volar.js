@@ -23,7 +23,7 @@ export function register(context: ServiceContext) {
 			data => data
 				.map(reference => {
 
-					const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(reference.uri));
+					const [virtualFile] = context.documents.getVirtualFileByUri(reference.uri);
 					if (!virtualFile) {
 						return reference;
 					}

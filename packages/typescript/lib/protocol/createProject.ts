@@ -2,7 +2,6 @@ import { createFileProvider, FileMap, LanguagePlugin, Language, TypeScriptProjec
 import type * as ts from 'typescript';
 import { forEachEmbeddedFile } from '@volar/language-core';
 import * as path from 'path-browserify';
-import { matchFiles } from '../typescript/utilities';
 import type { createSys } from './createSys';
 
 const scriptVersions = new Map<string, { lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>();
@@ -16,7 +15,9 @@ export function createLanguage(
 	projectHost: TypeScriptProjectHost,
 ): Language {
 
-	const files = createFileProvider(languages, sys.useCaseSensitiveFileNames, fileName => {
+	const files = createFileProvider(languages, sys.useCaseSensitiveFileNames, uri => {
+
+		const fileName = projectHost.uriToFileName(uri);
 
 		// opened files
 		let snapshot = projectHost.getScriptSnapshot(fileName);
@@ -39,10 +40,10 @@ export function createLanguage(
 		}
 
 		if (snapshot) {
-			files.updateSourceFile(fileName, projectHost.getLanguageId(fileName), snapshot);
+			files.updateSourceFile(uri, projectHost.getLanguageId(uri), snapshot);
 		}
 		else {
-			files.deleteSourceFile(fileName);
+			files.deleteSourceFile(uri);
 		}
 	});
 
@@ -132,7 +133,6 @@ export function createLanguage(
 			sys,
 			projectHost,
 			languageServiceHost,
-			synchronizeFileSystem: 'sync' in sys ? () => sys.sync() : undefined,
 		},
 	};
 
@@ -167,14 +167,13 @@ export function createLanguage(
 			getTypeRootsVersion: () => {
 				return 'version' in sys ? sys.version : -1; // TODO: only update for /node_modules changes?
 			},
-			// need sync
 			getDirectories(dirName) {
-				syncProject();
-				return [...new Set([
-					...getVirtualFileDirectories(dirName),
-					...sys.getDirectories(dirName),
-				])];
+				return sys.getDirectories(dirName);
 			},
+			readDirectory(dirName, extensions, excludes, includes, depth) {
+				return sys.readDirectory(dirName, extensions, excludes, includes, depth);
+			},
+			// need sync
 			readFile(fileName) {
 				syncSourceFile(fileName);
 				const snapshot = getScriptSnapshot(fileName);
@@ -186,48 +185,6 @@ export function createLanguage(
 				syncSourceFile(fileName);
 				return getScriptVersion(fileName) !== '';
 			},
-			readDirectory(dirName, extensions, excludes, includes, depth) {
-				syncProject();
-				let matches = matchFiles(
-					dirName,
-					extensions,
-					excludes,
-					includes,
-					sys?.useCaseSensitiveFileNames ?? false,
-					projectHost.getCurrentDirectory(),
-					depth,
-					dirPath => {
-
-						const files: string[] = [];
-
-						for (const fileName of tsFileRegistry.keys()) {
-							if (fileName.toLowerCase().startsWith(dirPath.toLowerCase())) {
-								const baseName = fileName.substring(dirPath.length);
-								if (baseName.indexOf('/') === -1) {
-									files.push(baseName);
-								}
-							}
-						}
-
-						return {
-							files,
-							directories: getVirtualFileDirectories(dirPath),
-						};
-					},
-					sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
-				);
-				matches = matches.map(match => {
-					const [_, source] = files.getVirtualFile(match);
-					if (source) {
-						return source.fileName;
-					}
-					return match;
-				});
-				return [...new Set([
-					...matches,
-					...sys.readDirectory(dirName, extensions, excludes, includes, depth),
-				])];
-			},
 			getProjectVersion() {
 				syncProject();
 				return tsProjectVersion + ('version' in sys ? `:${sys.version}` : '');
@@ -238,13 +195,14 @@ export function createLanguage(
 			},
 			getScriptKind(fileName) {
 				syncSourceFile(fileName);
-				const virtualFile = files.getVirtualFile(fileName)[0];
-				if (virtualFile?.typescript) {
-					return virtualFile.typescript.scriptKind;
-				}
-				const sourceFile = files.getSourceFile(fileName);
-				if (sourceFile?.virtualFile) {
-					return ts.ScriptKind.Deferred;
+				const uri = projectHost.fileNameToUri(fileName);
+				const sourceFile = files.getSourceFile(uri);
+				if (sourceFile?.generated) {
+					for (const virtualFile of forEachEmbeddedFile(sourceFile.generated.virtualFile)) {
+						if (virtualFile.typescript) {
+							return virtualFile.typescript.scriptKind;
+						}
+					}
 				}
 				switch (path.extname(fileName)) {
 					case '.js':
@@ -275,7 +233,7 @@ export function createLanguage(
 			for (const language of languages) {
 				const sourceFileName = language.typescript?.resolveSourceFileName(tsFileName);
 				if (sourceFileName) {
-					files.getSourceFile(sourceFileName); // trigger sync
+					files.getSourceFile(projectHost.fileNameToUri(sourceFileName)); // trigger sync
 				}
 			}
 		}
@@ -295,12 +253,12 @@ export function createLanguage(
 			const tsFileNamesSet = new Set<string>();
 
 			for (const fileName of projectHost.getScriptFileNames()) {
-				const sourceFile = files.getSourceFile(fileName);
-				if (sourceFile?.virtualFile) {
-					for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
+				const sourceFile = files.getSourceFile(projectHost.fileNameToUri(fileName));
+				if (sourceFile?.generated) {
+					for (const file of forEachEmbeddedFile(sourceFile.generated.virtualFile)) {
 						if (file.typescript) {
 							newTsVirtualFileSnapshots.add(file.snapshot);
-							tsFileNamesSet.add(file.fileName); // virtual .ts
+							tsFileNamesSet.add(fileName); // virtual .ts
 						}
 						else {
 							newOtherVirtualFileSnapshots.add(file.snapshot);
@@ -332,13 +290,17 @@ export function createLanguage(
 		function getScriptSnapshot(fileName: string) {
 			syncSourceFile(fileName);
 
-			const virtualFile = files.getVirtualFile(fileName)[0];
-			if (virtualFile) {
-				return virtualFile.snapshot;
-			}
+			const uri = projectHost.fileNameToUri(fileName);
+			const sourceFile = files.getSourceFile(uri);
 
-			const sourceFile = files.getSourceFile(fileName);
-			if (sourceFile && !sourceFile.virtualFile) {
+			if (sourceFile?.generated) {
+				for (const virtualFile of forEachEmbeddedFile(sourceFile.generated.virtualFile)) {
+					if (virtualFile.typescript) {
+						return virtualFile.snapshot;
+					}
+				}
+			}
+			else if (sourceFile) {
 				return sourceFile.snapshot;
 			}
 		}
@@ -351,18 +313,23 @@ export function createLanguage(
 			}
 
 			const version = scriptVersions.get(fileName)!;
-			const virtualFile = files.getVirtualFile(fileName)[0];
-			if (virtualFile) {
-				if (!version.map.has(virtualFile.snapshot)) {
-					version.map.set(virtualFile.snapshot, version.lastVersion++);
+			const uri = projectHost.fileNameToUri(fileName);
+			const sourceFile = files.getSourceFile(uri);
+			if (sourceFile?.generated) {
+				for (const virtualFile of forEachEmbeddedFile(sourceFile.generated.virtualFile)) {
+					if (virtualFile.typescript) {
+						if (!version.map.has(virtualFile.snapshot)) {
+							version.map.set(virtualFile.snapshot, version.lastVersion++);
+						}
+						return version.map.get(virtualFile.snapshot)!.toString();
+					}
 				}
-				return version.map.get(virtualFile.snapshot)!.toString();
 			}
 
 			const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
 			if (isOpenedFile) {
-				const sourceFile = files.getSourceFile(fileName);
-				if (sourceFile && !sourceFile.virtualFile) {
+				const sourceFile = files.getSourceFile(uri);
+				if (sourceFile && !sourceFile.generated) {
 					if (!version.map.has(sourceFile.snapshot)) {
 						version.map.set(sourceFile.snapshot, version.lastVersion++);
 					}
@@ -375,22 +342,6 @@ export function createLanguage(
 			}
 
 			return '';
-		}
-
-		function getVirtualFileDirectories(dirName: string): string[] {
-
-			const names = new Set<string>();
-
-			for (const fileName of tsFileRegistry.keys()) {
-				if (fileName.toLowerCase().startsWith(dirName.toLowerCase())) {
-					const path = fileName.substring(dirName.length);
-					if (path.indexOf('/') >= 0) {
-						names.add(path.split('/')[0]);
-					}
-				}
-			}
-
-			return [...names];
 		}
 	}
 }

@@ -1,6 +1,5 @@
 import type { GetVirtualFilesRequest, UpdateVirtualFileStateNotification } from '@volar/language-server';
 import { currentLabsVersion, type BaseLanguageClient, type LabsInfo } from '@volar/vscode';
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { useVolarExtensions } from '../common/shared';
 import { activate as activateShowVirtualFiles, sourceUriToVirtualUris, virtualUriToSourceUri } from '../common/showVirtualFile';
@@ -44,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				return items;
 			}
-			else if ('virtualFile' in element) {
+			else {
 				return element.virtualFile.embeddedFiles.map((file => ({
 					...element,
 					virtualFile: file,
@@ -54,14 +53,13 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		},
 		getTreeItem(element) {
-			const uri = getVirtualFileUri(element.virtualFile.fileName, element.client.name);
+			const uri = getVirtualFileUri(element.virtualFile.uri, element.client.name);
 			virtualUriToSourceUri.set(uri.toString(), element.sourceDocumentUri);
 
 			const virtualFileUris = sourceUriToVirtualUris.get(element.sourceDocumentUri) ?? new Set<string>();
 			virtualFileUris.add(uri.toString());
 			sourceUriToVirtualUris.set(element.sourceDocumentUri, virtualFileUris);
 
-			let label = path.basename(element.virtualFile.fileName);
 			let description = '';
 			if (element.virtualFile.tsScriptKind !== undefined) {
 				description += `tsScriptKind: ${element.virtualFile.tsScriptKind}, `;
@@ -73,10 +71,18 @@ export function activate(context: vscode.ExtensionContext) {
 			return {
 				checkboxState: element.virtualFile.disabled ? vscode.TreeItemCheckboxState.Unchecked : vscode.TreeItemCheckboxState.Checked,
 				iconPath: element.client.clientOptions.initializationOptions.codegenStack ? new vscode.ThemeIcon('debug-breakpoint') : new vscode.ThemeIcon('file'),
-				label,
+				label: element.virtualFile.uri.substring(element.sourceDocumentUri.length),
 				description,
 				collapsibleState: element.virtualFile.embeddedFiles.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
-				resourceUri: uri,
+				resourceUri: vscode.Uri.parse(
+					'file:///a.' + (element.virtualFile.languageId === 'typescript' ? 'ts'
+						: element.virtualFile.languageId === 'javascript' ? 'js'
+							: element.virtualFile.languageId === 'typescriptreact' ? 'tsx'
+								: element.virtualFile.languageId === 'javascriptreact' ? 'jsx'
+									: element.virtualFile.languageId === 'jade' ? 'pug'
+										: element.virtualFile.languageId === 'markdown' ? 'md'
+											: element.virtualFile.languageId)
+				),
 				command: {
 					command: '_volar.action.openVirtualFile',
 					title: '',
@@ -120,17 +126,15 @@ export function activate(context: vscode.ExtensionContext) {
 		treeView,
 		treeView.onDidChangeCheckboxState(e => {
 			for (const [item, state] of e.items) {
-				if ('virtualFile' in item) {
-					item.virtualFile.disabled = state === vscode.TreeItemCheckboxState.Unchecked;
-					item.client.sendNotification(
-						item.extension.exports.volarLabs.languageServerProtocol.UpdateVirtualFileStateNotification.type,
-						{
-							uri: item.sourceDocumentUri,
-							virtualFileName: item.virtualFile.fileName,
-							disabled: state === vscode.TreeItemCheckboxState.Unchecked,
-						} satisfies UpdateVirtualFileStateNotification.ParamsType
-					);
-				}
+				item.virtualFile.disabled = state === vscode.TreeItemCheckboxState.Unchecked;
+				item.client.sendNotification(
+					item.extension.exports.volarLabs.languageServerProtocol.UpdateVirtualFileStateNotification.type,
+					{
+						uri: item.sourceDocumentUri,
+						virtualFileUri: item.virtualFile.uri,
+						disabled: state === vscode.TreeItemCheckboxState.Unchecked,
+					} satisfies UpdateVirtualFileStateNotification.ParamsType
+				);
 			}
 		}),
 	);
@@ -159,8 +163,8 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 }
 
-function getVirtualFileUri(fileName: string, clientName: string) {
+function getVirtualFileUri(uri: string, clientName: string) {
 	return vscode.Uri
-		.file(fileName)
+		.parse(uri)
 		.with({ scheme: clientName.replace(/ /g, '_').toLowerCase() });
 }

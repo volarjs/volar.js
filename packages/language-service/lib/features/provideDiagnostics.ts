@@ -152,7 +152,7 @@ export function register(context: ServiceContext) {
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
 
-		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
+		const sourceFile = context.language.files.getSourceFile(uri);
 		if (!sourceFile) {
 			return [];
 		}
@@ -311,7 +311,7 @@ export function register(context: ServiceContext) {
 
 				for (const info of _error.relatedInformation) {
 
-					const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(info.location.uri));
+					const [virtualFile] = context.documents.getVirtualFileByUri(info.location.uri);
 
 					if (virtualFile) {
 						for (const map of context.documents.getMaps(virtualFile)) {

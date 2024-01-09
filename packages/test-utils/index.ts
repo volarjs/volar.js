@@ -2,7 +2,6 @@ import * as _ from '@volar/language-server/node';
 import * as assert from 'assert';
 import * as cp from 'child_process';
 import * as fs from 'fs';
-import * as path from 'path';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { SourceMap, forEachEmbeddedFile } from '@volar/language-core';
@@ -319,11 +318,13 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	};
 }
 
-export function* printSnapshots(sourceFile: _.SourceFile, root = process.cwd()) {
-	if (sourceFile.virtualFile) {
-		for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-			yield path.relative(root, file.fileName);
-			for (const line of printSnapshot(sourceFile, file, root)) {
+export function* printSnapshots(sourceFile: _.SourceFile) {
+	if (sourceFile.generated) {
+		let lastId = 0;
+		for (const file of forEachEmbeddedFile(sourceFile.generated.virtualFile)) {
+			const id = lastId++;
+			yield `#${id}`;
+			for (const line of printSnapshot(sourceFile, file)) {
 				yield '  ' + line;
 			}
 		}
@@ -332,11 +333,9 @@ export function* printSnapshots(sourceFile: _.SourceFile, root = process.cwd()) 
 
 export function* printSnapshot(
 	sourceFile: {
-		fileName: string;
 		snapshot: _.SourceFile['snapshot'];
 	},
 	file: _.VirtualFile,
-	root = process.cwd(),
 ) {
 
 	const sourceCode = sourceFile.snapshot.getText(0, sourceFile.snapshot.getLength());
@@ -386,7 +385,6 @@ export function* printSnapshot(
 		for (const log of logs.reverse()) {
 			const sourcePosition = sourceFileDocument.positionAt(log.sourceOffset);
 			const spanText = log.length === 0 ? '^' : '~'.repeat(log.length);
-			const sourceFilePath = path.relative(root, log.mapping.source ?? sourceFile.fileName);
 			const prefix = ' '.repeat(lineHead.length);
 			const sourceLineEnd = sourceFileDocument.offsetAt({ line: sourcePosition.line + 1, character: 0 }) - 1;
 			const sourceLine = sourceFileDocument.getText().substring(sourceFileDocument.offsetAt({ line: sourcePosition.line, character: 0 }), sourceLineEnd + 1);
@@ -402,9 +400,10 @@ export function* printSnapshot(
 					' '.repeat(log.lineOffset),
 					sourceLineHead,
 					'(exact match)',
-					`(${sourceFilePath
+					`(${log.mapping.source
 					+ ':' + (sourcePosition.line + 1)
-					+ ':' + (sourcePosition.character + 1)})`,
+					+ ':' + (sourcePosition.character + 1)
+					})`,
 				].join(' ');
 			}
 			else {
@@ -413,7 +412,7 @@ export function* printSnapshot(
 					' '.repeat(log.lineOffset),
 					sourceLineHead,
 					normalizeLogText(sourceLine),
-					`(${sourceFilePath
+					`(${log.mapping.source
 					+ ':' + (sourcePosition.line + 1)
 					+ ':' + (sourcePosition.character + 1)})`,
 				].join(' ');

@@ -58,7 +58,6 @@ export function transformFileTextChanges(files: FileProvider, changes: ts.FileTe
 	if (source) {
 		return {
 			...changes,
-			fileName: source.fileName,
 			textChanges: changes.textChanges.map(c => {
 				const span = transformSpan(files, changes.fileName, c.span, filter);
 				if (span) {
@@ -78,10 +77,10 @@ export function transformFileTextChanges(files: FileProvider, changes: ts.FileTe
 export function transformDocumentSpan<T extends ts.DocumentSpan>(files: FileProvider, documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
 	let textSpan = transformSpan(files, documentSpan.fileName, documentSpan.textSpan, filter);
 	if (!textSpan && shouldFallback) {
-		const [virtualFile, source] = getVirtualFileAndMap(files, documentSpan.fileName);
+		const [virtualFile] = getVirtualFileAndMap(files, documentSpan.fileName);
 		if (virtualFile) {
 			textSpan = {
-				fileName: source.fileName,
+				fileName: documentSpan.fileName,
 				textSpan: { start: 0, length: 0 },
 			};
 		}
@@ -118,7 +117,7 @@ export function transformSpan(files: FileProvider, fileName: string | undefined,
 		const sourceRange = transformRange(sourceFile, map, textSpan.start, textSpan.start + textSpan.length, filter);
 		if (sourceRange) {
 			return {
-				fileName: sourceFile.fileName,
+				fileName,
 				textSpan: {
 					start: sourceRange[0],
 					length: sourceRange[1] - sourceRange[0],
