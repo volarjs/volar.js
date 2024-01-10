@@ -3,6 +3,7 @@ import type * as ts from 'typescript';
 import type { FileProvider } from './fileProvider';
 
 export interface SourceFile extends BaseFile {
+	id: string;
 	generated?: {
 		virtualFile: VirtualFile;
 		languagePlugin: LanguagePlugin;
@@ -56,7 +57,7 @@ export interface BaseFile {
 }
 
 export interface LanguagePlugin<T extends VirtualFile = VirtualFile> {
-	createVirtualFile(uri: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileProvider): T | undefined;
+	createVirtualFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileProvider): T | undefined;
 	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot, files?: FileProvider): void;
 	disposeVirtualFile?(virtualFile: T, files?: FileProvider): void;
 	typescript?: {

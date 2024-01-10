@@ -1,13 +1,11 @@
 import { forEachEmbeddedFile, FileProvider } from '@volar/language-core';
-import { URI } from 'vscode-uri';
 
 export function notEmpty<T>(value: T | null | undefined): value is T {
 	return value !== null && value !== undefined;
 }
 
 export function getVirtualFileAndMap(files: FileProvider, fileName: string) {
-	const uri = fileNameToUri(fileName);
-	const sourceFile = files.getSourceFile(uri);
+	const sourceFile = files.getSourceFile(fileName);
 	if (sourceFile?.generated) {
 		for (const virtualFile of forEachEmbeddedFile(sourceFile.generated.virtualFile)) {
 			if (virtualFile.typescript) {
@@ -21,7 +19,3 @@ export function getVirtualFileAndMap(files: FileProvider, fileName: string) {
 	}
 	return [undefined, undefined, undefined] as const;
 }
-
-export const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
-
-export const fileNameToUri = (fileName: string) => URI.file(fileName).toString();

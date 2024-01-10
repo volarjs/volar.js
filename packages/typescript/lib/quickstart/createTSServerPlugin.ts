@@ -2,7 +2,6 @@ import type * as ts from 'typescript';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 import { createFileProvider, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
-import { uriToFileName } from '../node/utils';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
 const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
@@ -35,14 +34,13 @@ export function createTSServerPlugin(
 					const files = createFileProvider(
 						languagePlugins,
 						ts.sys.useCaseSensitiveFileNames,
-						uri => {
-							const fileName = uriToFileName(uri);
+						fileName => {
 							const snapshot = getScriptSnapshot(fileName);
 							if (snapshot) {
-								files.updateSourceFile(uri, resolveCommonLanguageId(uri), snapshot);
+								files.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
 							}
 							else {
-								files.deleteSourceFile(uri);
+								files.deleteSourceFile(fileName);
 							}
 						}
 					);

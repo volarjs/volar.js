@@ -3,7 +3,6 @@ import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 import { createFileProvider, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
 import { arrayItemsEqual } from './createTSServerPlugin';
-import { uriToFileName } from '../node/utils';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
 const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
@@ -69,17 +68,16 @@ export function createAsyncTSServerPlugin(
 						const files = createFileProvider(
 							languagePlugins,
 							ts.sys.useCaseSensitiveFileNames,
-							uri => {
-								const fileName = uriToFileName(uri);
+							fileName => {
 								const snapshot = getScriptSnapshot(fileName);
 								if (snapshot) {
 									files.updateSourceFile(
-										uri,
-										resolveCommonLanguageId(uri),
+										fileName,
+										resolveCommonLanguageId(fileName),
 										snapshot
 									);
 								} else {
-									files.deleteSourceFile(uri);
+									files.deleteSourceFile(fileName);
 								}
 							}
 						);

@@ -208,8 +208,8 @@ export function createDocumentProvider(files: FileProvider) {
 			return [undefined, undefined] as const;
 		},
 		getVirtualFileUri(virtualFile: VirtualFile) {
-			const [uri] = files.getSourceFileOfVirtualFile(virtualFile);
-			return uri + `?virtualFileId=${virtualFile.id}`;
+			const sourceFile = files.getSourceFileOfVirtualFile(virtualFile);
+			return sourceFile.id + `?virtualFileId=${virtualFile.id}`;
 		},
 	};
 
