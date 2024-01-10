@@ -31,6 +31,7 @@ export function createFileProvider(languagePlugins: LanguagePlugin[], caseSensit
 						value.generated.idToFileMap.clear();
 						for (const file of forEachEmbeddedFile(value.generated.virtualFile)) {
 							value.generated.idToFileMap.set(file.id, file);
+							virtualFileToSourceFileMap.set(file, [uri, value]);
 						}
 					}
 					return value;
@@ -55,6 +56,7 @@ export function createFileProvider(languagePlugins: LanguagePlugin[], caseSensit
 					};
 					for (const file of forEachEmbeddedFile(virtualFile)) {
 						sourceFile.generated.idToFileMap.set(file.id, file);
+						virtualFileToSourceFileMap.set(file, [uri, sourceFile]);
 					}
 					break;
 				}
@@ -114,7 +116,7 @@ export function createFileProvider(languagePlugins: LanguagePlugin[], caseSensit
 			return [undefined, undefined] as const;
 		},
 		getSourceFileOfVirtualFile(virtualFile: VirtualFile) {
-			return virtualFileToSourceFileMap.get(virtualFile);
+			return virtualFileToSourceFileMap.get(virtualFile)!;
 		},
 	};
 }
