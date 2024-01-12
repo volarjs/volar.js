@@ -1,4 +1,4 @@
-import type { Language } from '@volar/language-core';
+import type { LanguageContext } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { URI } from 'vscode-uri';
@@ -7,6 +7,10 @@ import type { DocumentProvider } from './documents';
 export type * from 'vscode-languageserver-protocol';
 
 export interface ServiceEnvironment {
+	typescript: {
+		uriToFileName(uri: string): string;
+		fileNameToUri(fileName: string): string;
+	};
 	workspaceFolder: URI;
 	locale?: string;
 	clientCapabilities?: vscode.ClientCapabilities;
@@ -49,9 +53,8 @@ export interface ServiceCommand<T extends any[]> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface ServiceContext {
+export interface ServiceContext extends LanguageContext {
 	env: ServiceEnvironment;
-	language: Language;
 	inject<Provide, K extends keyof Provide = keyof Provide>(
 		key: K,
 		...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never

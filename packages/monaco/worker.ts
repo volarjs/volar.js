@@ -1,9 +1,9 @@
 import {
 	LanguagePlugin,
-	Language,
+	LanguageContext,
 	ServicePlugin,
 	createLanguageService as _createLanguageService,
-	createFileProvider,
+	createFileRegistry,
 	resolveCommonLanguageId,
 	type LanguageService,
 	type ServiceEnvironment,
@@ -24,7 +24,7 @@ export function createSimpleWorkerService<T = {}>(
 		services,
 		() => {
 			const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
-			const files = createFileProvider(
+			const files = createFileRegistry(
 				languages,
 				false,
 				uri => {
@@ -41,10 +41,10 @@ export function createSimpleWorkerService<T = {}>(
 							getChangeRange: () => undefined,
 						};
 						snapshots.set(model, [model.version, snapshot]);
-						files.updateSourceFile(uri, resolveCommonLanguageId(uri), snapshot);
+						files.set(uri, resolveCommonLanguageId(uri), snapshot);
 					}
 					else {
-						files.deleteSourceFile(uri);
+						files.delete(uri);
 					}
 				}
 			);
@@ -65,16 +65,12 @@ export function createTypeScriptWorkerService<T = {}>(
 		getCurrentDirectory,
 		getScriptFileNames,
 		getMirrorModel,
-		fileNameToUri,
-		uriToFileName,
 	}: {
 		typescript: typeof import('typescript');
 		compilerOptions: ts.CompilerOptions;
 		getCurrentDirectory(): string;
 		getScriptFileNames(): string[];
 		getMirrorModel(fileName: string): monaco.worker.IMirrorModel | undefined;
-		fileNameToUri(fileName: string): string;
-		uriToFileName(uri: string): string;
 	},
 	extraApis: T = {} as any,
 ) {
@@ -87,8 +83,6 @@ export function createTypeScriptWorkerService<T = {}>(
 			const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 			const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
 			const host: TypeScriptProjectHost = {
-				fileNameToUri,
-				uriToFileName,
 				getCurrentDirectory,
 				getScriptFileNames,
 				getProjectVersion() {
@@ -133,6 +127,10 @@ export function createTypeScriptWorkerService<T = {}>(
 				languages,
 				undefined,
 				host,
+				{
+					fileNameToFileId: env.typescript.fileNameToUri,
+					fileIdToFileName: env.typescript.uriToFileName,
+				},
 			);
 
 			return language;
@@ -143,11 +141,15 @@ export function createTypeScriptWorkerService<T = {}>(
 
 function createWorkerService<T = {}>(
 	services: ServicePlugin[],
-	getLanguage: (env: ServiceEnvironment) => Language,
+	getLanguage: (env: ServiceEnvironment) => LanguageContext,
 	extraApis: T = {} as any,
 ): LanguageService & T {
 
 	const env: ServiceEnvironment = {
+		typescript: {
+			fileNameToUri: fileName => URI.file(fileName).toString(),
+			uriToFileName: uri => URI.parse(uri).fsPath.replace(/\\/g, '/')
+		},
 		workspaceFolder: URI.file('/'),
 		console,
 	};

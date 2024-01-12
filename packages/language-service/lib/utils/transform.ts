@@ -259,7 +259,7 @@ export function transformWorkspaceEdit(
 		sourceResult.changeAnnotations ??= {};
 
 		const tsAnno = edit.changeAnnotations[tsUri];
-		const [virtualFile] = documents.getVirtualFileByUri(tsUri);
+		const [virtualFile] = documents.getVirtualCode(tsUri);
 
 		if (virtualFile) {
 			for (const map of documents.getMaps(virtualFile)) {
@@ -276,7 +276,7 @@ export function transformWorkspaceEdit(
 
 		sourceResult.changes ??= {};
 
-		const [virtualFile] = documents.getVirtualFileByUri(tsUri);
+		const [virtualFile] = documents.getVirtualCode(tsUri);
 
 		if (virtualFile) {
 			for (const map of documents.getMaps(virtualFile)) {
@@ -324,7 +324,7 @@ export function transformWorkspaceEdit(
 			let sourceEdit: typeof tsDocEdit | undefined;
 			if ('textDocument' in tsDocEdit) {
 
-				const [virtualFile] = documents.getVirtualFileByUri(tsDocEdit.textDocument.uri);
+				const [virtualFile] = documents.getVirtualCode(tsDocEdit.textDocument.uri);
 
 				if (virtualFile) {
 					for (const map of documents.getMaps(virtualFile)) {
@@ -376,7 +376,7 @@ export function transformWorkspaceEdit(
 			}
 			else if (tsDocEdit.kind === 'rename') {
 
-				const [virtualFile] = documents.getVirtualFileByUri(tsDocEdit.oldUri);
+				const [virtualFile] = documents.getVirtualCode(tsDocEdit.oldUri);
 
 				if (virtualFile) {
 					for (const map of documents.getMaps(virtualFile)) {
@@ -396,7 +396,7 @@ export function transformWorkspaceEdit(
 			}
 			else if (tsDocEdit.kind === 'delete') {
 
-				const [virtualFile] = documents.getVirtualFileByUri(tsDocEdit.uri);
+				const [virtualFile] = documents.getVirtualCode(tsDocEdit.uri);
 
 				if (virtualFile) {
 					for (const map of documents.getMaps(virtualFile)) {

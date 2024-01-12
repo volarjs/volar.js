@@ -1,7 +1,7 @@
 import type * as ts from 'typescript';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { createFileProvider, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
+import { createFileRegistry, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
 import { arrayItemsEqual } from './createTSServerPlugin';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
@@ -65,19 +65,19 @@ export function createAsyncTSServerPlugin(
 					}
 
 					loadLanguagePlugins(ts, info).then(languagePlugins => {
-						const files = createFileProvider(
+						const files = createFileRegistry(
 							languagePlugins,
 							ts.sys.useCaseSensitiveFileNames,
 							fileName => {
 								const snapshot = getScriptSnapshot(fileName);
 								if (snapshot) {
-									files.updateSourceFile(
+									files.set(
 										fileName,
 										resolveCommonLanguageId(fileName),
 										snapshot
 									);
 								} else {
-									files.deleteSourceFile(fileName);
+									files.delete(fileName);
 								}
 							}
 						);

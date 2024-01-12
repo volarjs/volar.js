@@ -1,6 +1,6 @@
 import {
 	CodeInformation,
-	FileProvider,
+	FileRegistry,
 	isCallHierarchyEnabled,
 	isCodeActionsEnabled,
 	isCompletionEnabled,
@@ -19,7 +19,7 @@ import { dedupeDocumentSpans, dedupeReferencedSymbols } from './dedupe';
 import { getVirtualFileAndMap, notEmpty } from './utils';
 import { transformCallHierarchyItem, transformDiagnostic, transformDocumentSpan, transformFileTextChanges, transformSpan } from './transform';
 
-export function decorateLanguageService(files: FileProvider, languageService: ts.LanguageService) {
+export function decorateLanguageService(files: FileRegistry, languageService: ts.LanguageService) {
 
 	// ignored methods
 

@@ -55,7 +55,7 @@ export function register(
 
 						recursiveChecker.add({ uri: definition.targetUri, range: { start: definition.targetRange.start, end: definition.targetRange.start } });
 
-						const [virtualFile] = context.documents.getVirtualFileByUri(definition.targetUri);
+						const [virtualFile] = context.documents.getVirtualCode(definition.targetUri);
 						const mirrorMap = virtualFile ? context.documents.getLinkedCodeMap(virtualFile) : undefined;
 
 						if (mirrorMap) {
@@ -101,7 +101,7 @@ export function register(
 
 				let foundTargetSelectionRange = false;
 
-				const [targetVirtualFile] = context.documents.getVirtualFileByUri(link.targetUri);
+				const [targetVirtualFile] = context.documents.getVirtualCode(link.targetUri);
 
 				if (targetVirtualFile) {
 

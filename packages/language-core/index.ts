@@ -1,5 +1,5 @@
 export * from './lib/editorFeatures';
-export * from './lib/fileProvider';
+export * from './lib/fileRegistry';
 export * from './lib/linkedCodeMap';
 export * from './lib/types';
 export * from './lib/utils';

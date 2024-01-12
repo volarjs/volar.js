@@ -50,6 +50,10 @@ export function createServiceEnvironment(context: ServerContext, workspaceFolder
 		getConfiguration: context.configurationHost?.getConfiguration,
 		onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
 		onDidChangeWatchedFiles: context.onDidChangeWatchedFiles,
+		typescript: {
+			fileNameToUri: context.runtimeEnv.fileNameToUri,
+			uriToFileName: context.runtimeEnv.uriToFileName,
+		},
 	};
 	return env;
 }

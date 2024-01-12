@@ -1,9 +1,9 @@
-import type { FileProvider } from '@volar/language-core';
+import type { FileRegistry } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { notEmpty } from './utils';
 import { transformDiagnostic } from './transform';
 
-export function decorateProgram(files: FileProvider, program: ts.Program) {
+export function decorateProgram(files: FileRegistry, program: ts.Program) {
 
 	const emit = program.emit;
 

@@ -1,4 +1,4 @@
-import type { CodeInformation, VirtualFile } from '@volar/language-core';
+import type { CodeInformation, VirtualCode } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext, ServicePluginInstance, ServicePlugin } from '../types';
@@ -36,7 +36,7 @@ export async function languageFeatureWorker<T, K>(
 	combineResult?: (results: T[]) => T,
 ) {
 
-	const sourceFile = context.language.files.getSourceFile(uri);
+	const sourceFile = context.files.get(uri);
 	if (!sourceFile) {
 		return;
 	}
@@ -45,7 +45,7 @@ export async function languageFeatureWorker<T, K>(
 
 	if (sourceFile.generated) {
 
-		await visitEmbedded(context, sourceFile.generated.virtualFile, async (_file, map) => {
+		await visitEmbedded(context, sourceFile.generated.code, async (_file, map) => {
 
 			for (const mappedArg of eachVirtualDocParams(map)) {
 
@@ -128,22 +128,22 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 
 export async function visitEmbedded(
 	context: ServiceContext,
-	current: VirtualFile,
-	cb: (file: VirtualFile, sourceMap: SourceMapWithDocuments<CodeInformation>) => Promise<boolean>,
+	current: VirtualCode,
+	cb: (file: VirtualCode, sourceMap: SourceMapWithDocuments<CodeInformation>) => Promise<boolean>,
 	rootFile = current,
 ) {
 
-	for (const embedded of current.embeddedFiles) {
+	for (const embedded of current.embeddedCodes) {
 		if (!await visitEmbedded(context, embedded, cb, rootFile)) {
 			return false;
 		}
 	}
 
 	for (const map of context.documents.getMaps(current)) {
-		const sourceFile = context.language.files.getSourceFile(map.sourceFileDocument.uri);
+		const sourceFile = context.files.get(map.sourceFileDocument.uri);
 		if (
-			sourceFile?.generated?.virtualFile === rootFile
-			&& !context.disabledVirtualFileUris.has(context.documents.getVirtualFileUri(current))
+			sourceFile?.generated?.code === rootFile
+			&& !context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(context.files.getByVirtualCode(current).id, current.id))
 			&& !await cb(current, map)
 		) {
 			return false;
@@ -153,9 +153,9 @@ export async function visitEmbedded(
 	return true;
 }
 
-export function getEmbeddedFilesByLevel(context: ServiceContext, rootFile: VirtualFile, level: number) {
+export function getEmbeddedFilesByLevel(context: ServiceContext, sourceFileUri: string, rootFile: VirtualCode, level: number) {
 
-	const embeddedFilesByLevel: VirtualFile[][] = [[rootFile]];
+	const embeddedFilesByLevel: VirtualCode[][] = [[rootFile]];
 
 	while (true) {
 
@@ -163,10 +163,10 @@ export function getEmbeddedFilesByLevel(context: ServiceContext, rootFile: Virtu
 			return embeddedFilesByLevel[level];
 		}
 
-		let nextLevel: VirtualFile[] = [];
+		let nextLevel: VirtualCode[] = [];
 
 		for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
-			nextLevel = nextLevel.concat(file.embeddedFiles.filter(file => !context.disabledVirtualFileUris.has(context.documents.getVirtualFileUri(file))));
+			nextLevel = nextLevel.concat(file.embeddedCodes.filter(file => !context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(sourceFileUri, file.id))));
 		}
 
 		embeddedFilesByLevel.push(nextLevel);

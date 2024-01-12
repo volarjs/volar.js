@@ -1,7 +1,7 @@
 import { FileSystem, FileType, ServiceEnvironment } from '@volar/language-service';
 import * as fs from 'fs';
 import { URI } from 'vscode-uri';
-import { uriToFileName } from './utils';
+import { fileNameToUri, uriToFileName } from './utils';
 
 export function createServiceEnvironment(getSettings: () => any): ServiceEnvironment {
 
@@ -33,6 +33,10 @@ export function createServiceEnvironment(getSettings: () => any): ServiceEnviron
 		},
 		fs: nodeFs,
 		console,
+		typescript: {
+			fileNameToUri: fileNameToUri,
+			uriToFileName: uriToFileName,
+		},
 	};
 }
 

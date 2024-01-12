@@ -1,4 +1,4 @@
-import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type Language } from '@volar/language-core';
+import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type LanguageContext } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { createDocumentProvider } from './documents';
 import * as autoInsert from './features/provideAutoInsertionEdit';
@@ -38,7 +38,7 @@ import type { ServiceContext, ServiceEnvironment, ServicePlugin } from './types'
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
-	language: Language,
+	languageContext: LanguageContext,
 	servicePlugins: ServicePlugin[],
 	env: ServiceEnvironment,
 ) {
@@ -93,10 +93,10 @@ export function createLanguageService(
 
 	function createServiceContext() {
 
-		const documents = createDocumentProvider(language.files);
 		const context: ServiceContext = {
+			...languageContext,
+			documents: createDocumentProvider(languageContext.files),
 			env,
-			language: language,
 			inject: (key, ...args) => {
 				for (const service of context.services) {
 					if (context.disabledServicePlugins.has(service[1])) {
@@ -110,7 +110,6 @@ export function createLanguageService(
 				throw `No service provide ${key as any}`;
 			},
 			services: [],
-			documents: documents,
 			commands: {
 				rename: {
 					create(uri, position) {
@@ -160,7 +159,7 @@ export function createLanguageService(
 					},
 					is(command) {
 						return command.command === 'setSelection';
-					}
+					},
 				},
 			},
 			disabledVirtualFileUris: new Set(),

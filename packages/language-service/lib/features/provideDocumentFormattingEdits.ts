@@ -1,4 +1,4 @@
-import { SourceMap, VirtualFile, forEachEmbeddedFile, isFormattingEnabled, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
+import { SourceMap, VirtualCode, forEachEmbeddedCode, isFormattingEnabled, resolveCommonLanguageId, updateVirtualCodeMaps } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -6,7 +6,7 @@ import { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext, ServicePluginInstance } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
-import { getEmbeddedFilesByLevel } from '../utils/featureWorkers';
+import { getEmbeddedFilesByLevel as getEmbeddedCodesByLevel } from '../utils/featureWorkers';
 
 export function register(context: ServiceContext) {
 
@@ -23,7 +23,7 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken
 	) => {
 
-		const sourceFile = context.language.files.getSourceFile(uri);
+		const sourceFile = context.files.get(uri);
 		if (!sourceFile) {
 			return;
 		}
@@ -44,40 +44,40 @@ export function register(context: ServiceContext) {
 		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 
 		let tempSourceSnapshot = sourceFile.snapshot;
-		const tempVirtualFile = sourceFile.generated.languagePlugin.createVirtualFile(uri, sourceFile.languageId, sourceFile.snapshot, context.language.files)!;
+		let tempVirtualFile = sourceFile.generated.languagePlugin.generateVirtualCode(uri, sourceFile.languageId, sourceFile.snapshot, context.files)!;
 		const originalDocument = document;
 
 		let level = 0;
 
 		while (true) {
 
-			const embeddedFiles = getEmbeddedFilesByLevel(context, tempVirtualFile, level++);
-			if (embeddedFiles.length === 0) {
+			const embeddedCodes = getEmbeddedCodesByLevel(context, sourceFile.id, tempVirtualFile, level++);
+			if (embeddedCodes.length === 0) {
 				break;
 			}
 
 			let edits: vscode.TextEdit[] = [];
 			const toPatchIndent: {
-				virtualFile: VirtualFile;
+				virtualCodeId: string;
 				isCodeBlock: boolean;
 				service: ServicePluginInstance;
 			}[] = [];
 
-			for (const file of embeddedFiles) {
+			for (const code of embeddedCodes) {
 
-				if (!file.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
+				if (!code.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
 					continue;
 				}
 
-				const isCodeBlock = file.mappings.length === 1
-					&& file.mappings[0].sourceOffsets.length === 1
-					&& file.mappings[0].generatedOffsets[0] === 0
-					&& file.mappings[0].lengths[0] === file.snapshot.getLength();
+				const isCodeBlock = code.mappings.length === 1
+					&& code.mappings[0].sourceOffsets.length === 1
+					&& code.mappings[0].generatedOffsets[0] === 0
+					&& code.mappings[0].lengths[0] === code.snapshot.getLength();
 				if (onTypeParams && !isCodeBlock) {
 					continue;
 				}
 
-				const docMap = createDocMap(file, uri, sourceFile.languageId, tempSourceSnapshot);
+				const docMap = createDocMap(code, uri, sourceFile.languageId, tempSourceSnapshot);
 				if (!docMap) {
 					continue;
 				}
@@ -108,7 +108,7 @@ export function register(context: ServiceContext) {
 				}
 
 				toPatchIndent.push({
-					virtualFile: file,
+					virtualCodeId: code.id,
 					isCodeBlock,
 					service: embeddedCodeResult.service[1],
 				});
@@ -130,7 +130,7 @@ export function register(context: ServiceContext) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 				tempSourceSnapshot = stringToSnapshot(newText);
-				sourceFile.generated.languagePlugin.updateVirtualFile(tempVirtualFile, tempSourceSnapshot, context.language.files);
+				tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.files);
 			}
 
 			if (level > 1) {
@@ -148,14 +148,14 @@ export function register(context: ServiceContext) {
 
 				for (const item of toPatchIndent) {
 
-					let virtualFile!: VirtualFile;
-					for (const file of forEachEmbeddedFile(tempVirtualFile)) {
-						if (file === item.virtualFile) {
-							virtualFile = file;
+					let virtualCode!: VirtualCode;
+					for (const file of forEachEmbeddedCode(tempVirtualFile)) {
+						if (file.id === item.virtualCodeId) {
+							virtualCode = file;
 							break;
 						}
 					}
-					const docMap = createDocMap(virtualFile, uri, sourceFile.languageId, tempSourceSnapshot);
+					const docMap = createDocMap(virtualCode, uri, sourceFile.languageId, tempSourceSnapshot);
 					if (!docMap) {
 						continue;
 					}
@@ -207,7 +207,7 @@ export function register(context: ServiceContext) {
 						const newText = TextDocument.applyEdits(document, indentEdits);
 						document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 						tempSourceSnapshot = stringToSnapshot(newText);
-						sourceFile.generated.languagePlugin.updateVirtualFile(tempVirtualFile, tempSourceSnapshot, context.language.files);
+						tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.files);
 					}
 				}
 			}
@@ -273,8 +273,8 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function createDocMap(file: VirtualFile, sourceFileUri: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
-		const maps = updateVirtualFileMaps(file, sourceFileUri2 => {
+	function createDocMap(file: VirtualCode, sourceFileUri: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
+		const maps = updateVirtualCodeMaps(file, sourceFileUri2 => {
 			if (!sourceFileUri2) {
 				return [sourceFileUri, _sourceSnapshot];
 			}
@@ -290,7 +290,7 @@ export function register(context: ServiceContext) {
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),
 				TextDocument.create(
-					context.documents.getVirtualFileUri(file),
+					context.documents.getVirtualCodeUri(sourceFileUri, file.id),
 					file.languageId,
 					version,
 					file.snapshot.getText(0, file.snapshot.getLength())

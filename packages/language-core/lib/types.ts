@@ -1,26 +1,20 @@
 import type { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript';
-import type { FileProvider } from './fileProvider';
+import type { FileRegistry } from './fileRegistry';
 
-export interface SourceFile extends BaseFile {
-	id: string;
+export interface SourceFile extends BaseCodeInfo {
 	generated?: {
-		virtualFile: VirtualFile;
+		code: VirtualCode;
 		languagePlugin: LanguagePlugin;
-		idToFileMap: Map<string, VirtualFile>;
+		idToFileMap: Map<string, VirtualCode>;
 	};
 }
 
 export type CodeMapping = Mapping<CodeInformation>;
 
-export interface VirtualFile extends BaseFile {
-	id: string;
+export interface VirtualCode extends BaseCodeInfo {
 	mappings: CodeMapping[];
-	embeddedFiles: VirtualFile[];
-	typescript?: {
-		extension: '.ts' | '.js' | '.mts' | '.mjs' | '.cjs' | '.cts' | '.d.ts' | string;
-		scriptKind: ts.ScriptKind;
-	};
+	embeddedCodes: VirtualCode[];
 	codegenStacks?: Stack[];
 	linkedCodeMappings?: Mapping[];
 }
@@ -51,25 +45,28 @@ export interface CodeInformation {
 	format: boolean;
 }
 
-export interface BaseFile {
+export interface BaseCodeInfo {
+	id: string;
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 }
 
-export interface LanguagePlugin<T extends VirtualFile = VirtualFile> {
-	createVirtualFile(id: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileProvider): T | undefined;
-	updateVirtualFile(virtualFile: T, snapshot: ts.IScriptSnapshot, files?: FileProvider): void;
-	disposeVirtualFile?(virtualFile: T, files?: FileProvider): void;
+export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
+	generateVirtualCode(fileId: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileRegistry): T | undefined;
+	updateVirtualCode(fileId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot, files?: FileRegistry): T;
+	disposeVirtualCode?(fileId: string, virtualCode: T, files?: FileRegistry): void;
 	typescript?: {
 		extraFileExtensions: ts.FileExtensionInfo[];
-		resolveSourceFileName(tsFileName: string): string | undefined;
-		resolveModuleName?(path: string, impliedNodeFormat?: ts.ResolutionMode): string | undefined;
 		resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
+		getLanguageServiceCode(rootVirtualCode: T): VirtualCode & {
+			extension: '.ts' | '.js' | '.mts' | '.mjs' | '.cjs' | '.cts' | '.d.ts' | string;
+			scriptKind: ts.ScriptKind;
+		} | undefined;
 	};
 }
 
-export interface Language {
-	files: FileProvider;
+export interface LanguageContext {
+	files: FileRegistry;
 	typescript?: {
 		configFileName: string | undefined;
 		sys: ts.System & { sync?(): Promise<number>; };
@@ -89,6 +86,4 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getScriptSnapshot'
 > {
 	getLanguageId(fileName: string): string;
-	uriToFileName(uri: string): string;
-	fileNameToUri(fileName: string): string;
 }

@@ -1,4 +1,4 @@
-import type { GetVirtualFilesRequest, UpdateVirtualFileStateNotification } from '@volar/language-server';
+import type { GetVirtualFileRequest, UpdateVirtualCodeStateNotification } from '@volar/language-server';
 import { currentLabsVersion, type BaseLanguageClient, type LabsInfo } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { useVolarExtensions } from '../common/shared';
@@ -8,7 +8,7 @@ interface VirtualFileItem {
 	extension: vscode.Extension<LabsInfo>;
 	client: BaseLanguageClient;
 	sourceDocumentUri: string;
-	virtualFile: NonNullable<GetVirtualFilesRequest.ResponseType>;
+	generated: NonNullable<GetVirtualFileRequest.ResponseType>;
 	isRoot: boolean;
 }
 
@@ -29,12 +29,17 @@ export function activate(context: vscode.ExtensionContext) {
 				const items: VirtualFileItem[] = [];
 				for (const extension of extensions) {
 					for (const client of extension.exports.volarLabs.languageClients) {
-						const virtualFile = await client.sendRequest(extension.exports.volarLabs.languageServerProtocol.GetVirtualFilesRequest.type, { uri: doc.uri.toString() });
+						const virtualFile = await client.sendRequest(
+							extension.exports.volarLabs.languageServerProtocol.GetVirtualFileRequest.type,
+							{
+								uri: doc.uri.toString(),
+							} satisfies GetVirtualFileRequest.ParamsType,
+						);
 						if (virtualFile) {
 							items.push({
 								extension,
 								client,
-								virtualFile,
+								generated: virtualFile,
 								sourceDocumentUri: doc.uri.toString(),
 								isRoot: true,
 							});
@@ -44,44 +49,44 @@ export function activate(context: vscode.ExtensionContext) {
 				return items;
 			}
 			else {
-				return element.virtualFile.embeddedFiles.map((file => ({
+				return element.generated.embeddedCodes.map((code => ({
 					...element,
-					virtualFile: file,
+					generated: code,
 					sourceDocumentUri: doc.uri.toString(),
 					isRoot: false,
 				})));
 			}
 		},
 		getTreeItem(element) {
-			const uri = getVirtualFileUri(element.virtualFile.uri, element.client.name);
-			virtualUriToSourceUri.set(uri.toString(), element.sourceDocumentUri);
+			const uri = getVirtualCodeUri(element.generated.fileUri + '?virtualCodeId=' + element.generated.virtualCodeId, element.client.name);
+			virtualUriToSourceUri.set(uri.toString(), {
+				fileUri: element.sourceDocumentUri,
+				virtualCodeId: element.generated.virtualCodeId,
+			});
 
 			const virtualFileUris = sourceUriToVirtualUris.get(element.sourceDocumentUri) ?? new Set<string>();
 			virtualFileUris.add(uri.toString());
 			sourceUriToVirtualUris.set(element.sourceDocumentUri, virtualFileUris);
 
 			let description = '';
-			if (element.virtualFile.tsScriptKind !== undefined) {
-				description += `tsScriptKind: ${element.virtualFile.tsScriptKind}, `;
-			}
-			description += `version: ${element.virtualFile.version}`;
+			description += `version: ${element.generated.version}`;
 			if (element.isRoot) {
 				description += ` (${element.client.name})`;
 			}
 			return {
-				checkboxState: element.virtualFile.disabled ? vscode.TreeItemCheckboxState.Unchecked : vscode.TreeItemCheckboxState.Checked,
+				checkboxState: element.generated.disabled ? vscode.TreeItemCheckboxState.Unchecked : vscode.TreeItemCheckboxState.Checked,
 				iconPath: element.client.clientOptions.initializationOptions.codegenStack ? new vscode.ThemeIcon('debug-breakpoint') : new vscode.ThemeIcon('file'),
-				label: element.virtualFile.uri.substring(element.sourceDocumentUri.length),
+				label: element.generated.virtualCodeId,
 				description,
-				collapsibleState: element.virtualFile.embeddedFiles.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
+				collapsibleState: element.generated.embeddedCodes.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
 				resourceUri: vscode.Uri.parse(
-					'file:///a.' + (element.virtualFile.languageId === 'typescript' ? 'ts'
-						: element.virtualFile.languageId === 'javascript' ? 'js'
-							: element.virtualFile.languageId === 'typescriptreact' ? 'tsx'
-								: element.virtualFile.languageId === 'javascriptreact' ? 'jsx'
-									: element.virtualFile.languageId === 'jade' ? 'pug'
-										: element.virtualFile.languageId === 'markdown' ? 'md'
-											: element.virtualFile.languageId)
+					'file:///a.' + (element.generated.languageId === 'typescript' ? 'ts'
+						: element.generated.languageId === 'javascript' ? 'js'
+							: element.generated.languageId === 'typescriptreact' ? 'tsx'
+								: element.generated.languageId === 'javascriptreact' ? 'jsx'
+									: element.generated.languageId === 'jade' ? 'pug'
+										: element.generated.languageId === 'markdown' ? 'md'
+											: element.generated.languageId)
 				),
 				command: {
 					command: '_volar.action.openVirtualFile',
@@ -126,14 +131,14 @@ export function activate(context: vscode.ExtensionContext) {
 		treeView,
 		treeView.onDidChangeCheckboxState(e => {
 			for (const [item, state] of e.items) {
-				item.virtualFile.disabled = state === vscode.TreeItemCheckboxState.Unchecked;
+				item.generated.disabled = state === vscode.TreeItemCheckboxState.Unchecked;
 				item.client.sendNotification(
-					item.extension.exports.volarLabs.languageServerProtocol.UpdateVirtualFileStateNotification.type,
+					item.extension.exports.volarLabs.languageServerProtocol.UpdateVirtualCodeStateNotification.type,
 					{
-						uri: item.sourceDocumentUri,
-						virtualFileUri: item.virtualFile.uri,
+						fileUri: item.sourceDocumentUri,
+						virtualCodeId: item.generated.virtualCodeId,
 						disabled: state === vscode.TreeItemCheckboxState.Unchecked,
-					} satisfies UpdateVirtualFileStateNotification.ParamsType
+					} satisfies UpdateVirtualCodeStateNotification.ParamsType
 				);
 			}
 		}),
@@ -163,7 +168,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 }
 
-function getVirtualFileUri(uri: string, clientName: string) {
+function getVirtualCodeUri(uri: string, clientName: string) {
 	return vscode.Uri
 		.parse(uri)
 		.with({ scheme: clientName.replace(/ /g, '_').toLowerCase() });

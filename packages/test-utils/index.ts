@@ -4,7 +4,7 @@ import * as cp from 'child_process';
 import * as fs from 'fs';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { SourceMap, forEachEmbeddedFile } from '@volar/language-core';
+import { SourceMap, forEachEmbeddedCode } from '@volar/language-core';
 
 export type LanguageServerHandle = ReturnType<typeof startLanguageServer>;
 
@@ -321,7 +321,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 export function* printSnapshots(sourceFile: _.SourceFile) {
 	if (sourceFile.generated) {
 		let lastId = 0;
-		for (const file of forEachEmbeddedFile(sourceFile.generated.virtualFile)) {
+		for (const file of forEachEmbeddedCode(sourceFile.generated.code)) {
 			const id = lastId++;
 			yield `#${id}`;
 			for (const line of printSnapshot(sourceFile, file)) {
@@ -335,7 +335,7 @@ export function* printSnapshot(
 	sourceFile: {
 		snapshot: _.SourceFile['snapshot'];
 	},
-	file: _.VirtualFile,
+	file: _.VirtualCode,
 ) {
 
 	const sourceCode = sourceFile.snapshot.getText(0, sourceFile.snapshot.getLength());

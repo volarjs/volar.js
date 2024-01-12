@@ -1,4 +1,4 @@
-import { CodeInformation, CodeRangeKey, FileProvider, LinkedCodeMap, Mapping, SourceFile, SourceMap, VirtualFile, forEachEmbeddedFile, translateOffset } from '@volar/language-core';
+import { CodeInformation, CodeRangeKey, FileRegistry, LinkedCodeMap, Mapping, SourceMap, VirtualCode, translateOffset } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -145,7 +145,7 @@ export class LinkedCodeMapWithDocument extends SourceMapWithDocuments {
 	}
 }
 
-export function createDocumentProvider(files: FileProvider) {
+export function createDocumentProvider(files: FileRegistry) {
 
 	let version = 0;
 
@@ -155,61 +155,40 @@ export function createDocumentProvider(files: FileProvider) {
 
 	return {
 		get,
-		getSourceFileMaps(source: SourceFile) {
-			if (source.generated) {
-				const result: [VirtualFile, SourceMapWithDocuments<CodeInformation>][] = [];
-				for (const virtualFile of forEachEmbeddedFile(source.generated.virtualFile)) {
-					for (const [sourceUri, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
-						if (sourceSnapshot === source.snapshot) {
-							if (!map2DocMap.has(map)) {
-								map2DocMap.set(map, new SourceMapWithDocuments(
-									get(sourceUri, source.languageId, sourceSnapshot),
-									get(this.getVirtualFileUri(virtualFile), virtualFile.languageId, virtualFile.snapshot),
-									map,
-								));
-							}
-							result.push([virtualFile, map2DocMap.get(map)!]);
-						}
-					}
-				}
-				return result;
-			}
-		},
-		*getMaps(virtualFile: VirtualFile) {
-			for (const [sourceFileUri, [sourceSnapshot, map]] of files.getMaps(virtualFile)) {
+		*getMaps(virtualCode: VirtualCode) {
+			for (const [sourceFileUri, [sourceSnapshot, map]] of files.getMaps(virtualCode)) {
 				if (!map2DocMap.has(map)) {
 					map2DocMap.set(map, new SourceMapWithDocuments(
-						get(sourceFileUri, files.getSourceFile(sourceFileUri)!.languageId, sourceSnapshot),
-						get(this.getVirtualFileUri(virtualFile), virtualFile.languageId, virtualFile.snapshot),
+						get(sourceFileUri, files.get(sourceFileUri)!.languageId, sourceSnapshot),
+						get(this.getVirtualCodeUri(sourceFileUri, virtualCode.id), virtualCode.languageId, virtualCode.snapshot),
 						map,
 					));
 				}
 				yield map2DocMap.get(map)!;
 			}
 		},
-		getLinkedCodeMap(virtualFile: VirtualFile) {
-			const map = files.getLinkedCodeMap(virtualFile);
+		getLinkedCodeMap(virtualCode: VirtualCode) {
+			const map = files.getLinkedCodeMap(virtualCode);
 			if (map) {
 				if (!mirrorMap2DocMirrorMap.has(map)) {
 					mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
-						get(this.getVirtualFileUri(virtualFile), virtualFile.languageId, virtualFile.snapshot),
+						get(this.getVirtualCodeUri(files.getByVirtualCode(virtualCode).id, virtualCode.id), virtualCode.languageId, virtualCode.snapshot),
 						map,
 					));
 				}
 				return mirrorMap2DocMirrorMap.get(map)!;
 			}
 		},
-		getVirtualFileByUri(uri: string) {
-			if (uri.includes('?virtualFileId=')) {
-				const sourceFileUri = uri.split('?virtualFileId=')[0];
-				const virtualFileId = uri.split('?virtualFileId=')[1];
-				return files.getVirtualFile(sourceFileUri, virtualFileId);
+		getVirtualCode(uri: string) {
+			if (uri.includes('?virtualCodeId=')) {
+				const sourceFileUri = uri.split('?virtualCodeId=')[0];
+				const virtualCodeId = uri.split('?virtualCodeId=')[1];
+				return files.getVirtualCode(sourceFileUri, virtualCodeId);
 			}
 			return [undefined, undefined] as const;
 		},
-		getVirtualFileUri(virtualFile: VirtualFile) {
-			const sourceFile = files.getSourceFileOfVirtualFile(virtualFile);
-			return sourceFile.id + `?virtualFileId=${virtualFile.id}`;
+		getVirtualCodeUri(sourceFileUri: string, virtualCodeId: string) {
+			return sourceFileUri + `?virtualCodeId=${virtualCodeId}`;
 		},
 	};
 

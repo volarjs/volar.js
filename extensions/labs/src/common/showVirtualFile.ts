@@ -33,7 +33,7 @@ const mappingCursorDecorationType = vscode.window.createTextEditorDecorationType
 
 export const sourceUriToVirtualUris = new Map<string, Set<string>>();
 
-export const virtualUriToSourceUri = new Map<string, string>();
+export const virtualUriToSourceUri = new Map<string, { fileUri: string, virtualCodeId: string; }>();
 
 export async function activate(info: LabsInfo) {
 
@@ -179,16 +179,12 @@ export async function activate(info: LabsInfo) {
 				onDidChange: docChangeEvent.event,
 				async provideTextDocumentContent(uri: vscode.Uri): Promise<string | undefined> {
 
-					const requestUri = virtualUriToSourceUri.get(uri.toString());
-					if (requestUri) {
+					const source = virtualUriToSourceUri.get(uri.toString());
+					if (source) {
 
-						const virtualFileUri = uri.with({ scheme: 'file' }).toString(true);
 						const virtualFile = await client.sendRequest(
-							info.volarLabs.languageServerProtocol.GetVirtualFileRequest.type,
-							{
-								sourceFileUri: requestUri,
-								virtualFileUri,
-							},
+							info.volarLabs.languageServerProtocol.GetVirtualCodeRequest.type,
+							source
 						);
 						virtualUriToSourceMap.set(uri.toString(), []);
 

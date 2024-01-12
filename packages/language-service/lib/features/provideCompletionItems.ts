@@ -34,7 +34,7 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken,
 	) => {
 
-		const sourceFile = context.language.files.getSourceFile(uri);
+		const sourceFile = context.files.get(uri);
 
 		if (
 			completionContext?.triggerKind === 3 satisfies typeof vscode.CompletionTriggerKind.TriggerForIncompleteCompletions
@@ -49,7 +49,7 @@ export function register(context: ServiceContext) {
 
 				if (cacheData.virtualDocumentUri) {
 
-					const [virtualFile] = context.documents.getVirtualFileByUri(cacheData.virtualDocumentUri);
+					const [virtualFile] = context.documents.getVirtualCode(cacheData.virtualDocumentUri);
 					if (!virtualFile) {
 						continue;
 					}
@@ -118,7 +118,7 @@ export function register(context: ServiceContext) {
 		}
 		else {
 
-			const rootVirtualFile = context.language.files.getSourceFile(uri)?.generated?.virtualFile;
+			const rootVirtualFile = context.files.get(uri)?.generated?.code;
 
 			cache = {
 				uri,
