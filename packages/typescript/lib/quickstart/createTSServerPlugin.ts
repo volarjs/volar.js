@@ -12,10 +12,7 @@ export function createTSServerPlugin(
 	init: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
-	) => {
-		languagePlugins: LanguagePlugin[];
-		extensions: string[];
-	}
+	) => LanguagePlugin[]
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
@@ -28,7 +25,10 @@ export function createTSServerPlugin(
 					decoratedLanguageServices.add(info.languageService);
 					decoratedLanguageServiceHosts.add(info.languageServiceHost);
 
-					const { languagePlugins, extensions } = init(ts, info);
+					const languagePlugins = init(ts, info);
+					const extensions = languagePlugins
+						.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
+						.flat();
 					projectExternalFileExtensions.set(info.project, extensions);
 					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
 					const files = createFileRegistry(
@@ -46,7 +46,7 @@ export function createTSServerPlugin(
 					);
 
 					decorateLanguageService(files, info.languageService);
-					decorateLanguageServiceHost(files, info.languageServiceHost, ts, extensions);
+					decorateLanguageServiceHost(files, info.languageServiceHost, ts);
 				}
 
 				return info.languageService;

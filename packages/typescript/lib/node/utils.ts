@@ -9,7 +9,7 @@ export function getVirtualFileAndMap(files: FileRegistry, fileName: string) {
 	if (sourceFile?.generated) {
 		const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
 		if (tsCode) {
-			for (const map of files.getMaps(tsCode)) {
+			for (const map of files.getMaps(tsCode.code)) {
 				if (map[1][0] === sourceFile.snapshot) {
 					return [tsCode, sourceFile, map[1][1]] as const;
 				}

@@ -14,6 +14,7 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 	const virtualCodeToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, LinkedCodeMap | undefined>();
 
 	return {
+		languagePlugins,
 		set(id: string, languageId: string, snapshot: ts.IScriptSnapshot): SourceFile {
 
 			const value = sourceFiles.get(id);

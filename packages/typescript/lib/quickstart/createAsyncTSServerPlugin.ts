@@ -83,7 +83,7 @@ export function createAsyncTSServerPlugin(
 						);
 
 						decorateLanguageService(files, info.languageService);
-						decorateLanguageServiceHost(files, info.languageServiceHost, ts, extensions);
+						decorateLanguageServiceHost(files, info.languageServiceHost, ts);
 
 						info.project.markAsDirty();
 						initialized = true;

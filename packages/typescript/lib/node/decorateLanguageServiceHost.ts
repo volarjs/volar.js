@@ -6,11 +6,13 @@ export function decorateLanguageServiceHost(
 	virtualFiles: FileRegistry,
 	languageServiceHost: ts.LanguageServiceHost,
 	ts: typeof import('typescript'),
-	exts: string[]
 ) {
 
 	let extraProjectVersion = 0;
 
+	const exts = virtualFiles.languagePlugins
+		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
+		.flat();
 	const scripts = new Map<string, {
 		version: string;
 		snapshot: ts.IScriptSnapshot | undefined;
@@ -175,7 +177,7 @@ export function decorateLanguageServiceHost(
 					if (tsCode) {
 						extension = tsCode.extension;
 						scriptKind = tsCode.scriptKind;
-						patchedText += tsCode.snapshot.getText(0, tsCode.snapshot.getLength());
+						patchedText += tsCode.code.snapshot.getText(0, tsCode.code.snapshot.getLength());
 					}
 					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
 				}

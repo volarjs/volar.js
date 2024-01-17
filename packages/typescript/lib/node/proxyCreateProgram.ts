@@ -87,7 +87,7 @@ export function proxyCreateProgram(
 							const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
 							if (tsCode) {
 								scriptKind = tsCode.scriptKind;
-								patchedText += tsCode.snapshot.getText(0, tsCode.snapshot.getLength());
+								patchedText += tsCode.code.snapshot.getText(0, tsCode.code.snapshot.getLength());
 							}
 						}
 						sourceFile2 = ts.createSourceFile(

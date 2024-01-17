@@ -662,7 +662,7 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 					continue;
 				}
 
-				const linkedCodeMap = files.getLinkedCodeMap(virtualFile);
+				const linkedCodeMap = files.getLinkedCodeMap(virtualFile.code);
 				if (!linkedCodeMap) {
 					continue;
 				}

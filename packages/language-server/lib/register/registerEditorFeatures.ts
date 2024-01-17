@@ -134,7 +134,7 @@ export function registerEditorFeatures(
 						if (sourceFile?.generated) {
 							const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
 							if (tsCode) {
-								const { snapshot } = tsCode;
+								const { snapshot } = tsCode.code;
 								fs.writeFile(uri + tsCode.extension, snapshot.getText(0, snapshot.getLength()), () => { });
 							}
 						}

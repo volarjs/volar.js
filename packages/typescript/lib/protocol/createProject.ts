@@ -260,7 +260,7 @@ export function createLanguage(
 				if (sourceFile?.generated) {
 					const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
 					if (tsCode) {
-						newTsVirtualFileSnapshots.add(tsCode.snapshot);
+						newTsVirtualFileSnapshots.add(tsCode.code.snapshot);
 						tsFileNamesSet.add(fileName); // virtual .ts
 					}
 					for (const file of forEachEmbeddedCode(sourceFile.generated.code)) {
@@ -296,7 +296,7 @@ export function createLanguage(
 			if (sourceFile?.generated) {
 				const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
 				if (tsCode) {
-					return tsCode.snapshot;
+					return tsCode.code.snapshot;
 				}
 			}
 			else if (sourceFile) {
@@ -315,10 +315,10 @@ export function createLanguage(
 			if (sourceFile?.generated) {
 				const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
 				if (tsCode) {
-					if (!version.map.has(tsCode.snapshot)) {
-						version.map.set(tsCode.snapshot, version.lastVersion++);
+					if (!version.map.has(tsCode.code.snapshot)) {
+						version.map.set(tsCode.code.snapshot, version.lastVersion++);
 					}
-					return version.map.get(tsCode.snapshot)!.toString();
+					return version.map.get(tsCode.code.snapshot)!.toString();
 				}
 			}
 
