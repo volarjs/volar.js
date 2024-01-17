@@ -83,55 +83,46 @@ export function createLanguage(
 			}
 			return moduleLiterals.map(moduleLiteral => {
 				let moduleName = moduleLiteral.text;
+				let extraFileExtension: string | undefined;
+				let isPatchResult = false;
 				for (const language of languagePlugins) {
-					if (
-						sourceFile.impliedNodeFormat === 99 satisfies ts.ModuleKind.ESNext
-						&& language.typescript?.extraFileExtensions.some(ext => moduleName.endsWith('.' + ext.extension))
-					) {
-						moduleName = `${moduleName}.js`;
+					extraFileExtension = language.typescript?.extraFileExtensions.find(ext => moduleName.endsWith('.' + ext.extension))?.extension;
+					if (extraFileExtension) {
+						break;
 					}
 				}
-				return ts.resolveModuleName(
+				const result = ts.resolveModuleName(
 					moduleName,
 					containingFile,
 					options,
-					languageServiceHost,
+					{
+						...languageServiceHost,
+						fileExists(fileName) {
+							if (extraFileExtension && fileName.endsWith('.d.ts')) {
+								const patchResult = languageServiceHost.fileExists(fileName.slice(0, -5));
+								if (patchResult) {
+									isPatchResult = true;
+									return true;
+								}
+							}
+							return sys.fileExists(fileName);
+						},
+					},
 					moduleCache,
 					redirectedReference,
 					sourceFile.impliedNodeFormat
 				);
-			});
-		};
-		languageServiceHost.resolveModuleNames = (
-			moduleNames,
-			containingFile,
-			_reusedNames,
-			redirectedReference,
-			options,
-			sourceFile
-		) => {
-			if ('version' in sys && lastSysVersion !== sys.version) {
-				lastSysVersion = sys.version;
-				moduleCache.clear();
-			}
-			return moduleNames.map(moduleName => {
-				for (const language of languagePlugins) {
-					if (
-						sourceFile?.impliedNodeFormat === 99 satisfies ts.ModuleKind.ESNext
-						&& language.typescript?.extraFileExtensions.some(ext => moduleName.endsWith('.' + ext.extension))
-					) {
-						moduleName = `${moduleName}.js`;
+				if (isPatchResult && result.resolvedModule) {
+					result.resolvedModule.resolvedFileName = result.resolvedModule.resolvedFileName.slice(0, -5);
+					const sourceFile = files.get(fileNameToFileId(result.resolvedModule.resolvedFileName));
+					if (sourceFile?.generated) {
+						const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
+						if (tsCode) {
+							result.resolvedModule.extension = tsCode.extension;
+						}
 					}
 				}
-				return ts.resolveModuleName(
-					moduleName,
-					containingFile,
-					options,
-					languageServiceHost,
-					moduleCache,
-					redirectedReference,
-					sourceFile?.impliedNodeFormat
-				).resolvedModule;
+				return result;
 			});
 		};
 	}
