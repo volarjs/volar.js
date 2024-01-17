@@ -62,7 +62,7 @@ export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
 	typescript?: {
 		extraFileExtensions: ts.FileExtensionInfo[];
 		resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
-		getLanguageServiceCode(rootVirtualCode: T): {
+		getLanguageServiceFile(rootVirtualCode: T): {
 			code: VirtualCode;
 			extension: '.ts' | '.js' | '.mts' | '.mjs' | '.cjs' | '.cts' | '.d.ts' | string;
 			scriptKind: ts.ScriptKind;

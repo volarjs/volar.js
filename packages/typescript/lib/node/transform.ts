@@ -31,8 +31,8 @@ export function transformDiagnostic<T extends ts.Diagnostic>(files: FileRegistry
 			&& diagnostic.start !== undefined
 			&& diagnostic.length !== undefined
 		) {
-			const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, diagnostic.file.fileName);
-			if (virtualFile) {
+			const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, diagnostic.file.fileName);
+			if (virtualCode) {
 				const sourceRange = transformRange(sourceFile, map, diagnostic.start, diagnostic.start + diagnostic.length, shouldReportDiagnostics);
 				if (sourceRange) {
 					transformedDiagnostics.set(diagnostic, {
@@ -77,8 +77,8 @@ export function transformFileTextChanges(files: FileRegistry, changes: ts.FileTe
 export function transformDocumentSpan<T extends ts.DocumentSpan>(files: FileRegistry, documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
 	let textSpan = transformSpan(files, documentSpan.fileName, documentSpan.textSpan, filter);
 	if (!textSpan && shouldFallback) {
-		const [virtualFile] = getVirtualFileAndMap(files, documentSpan.fileName);
-		if (virtualFile) {
+		const [virtualCode] = getVirtualFileAndMap(files, documentSpan.fileName);
+		if (virtualCode) {
 			textSpan = {
 				fileName: documentSpan.fileName,
 				textSpan: { start: 0, length: 0 },

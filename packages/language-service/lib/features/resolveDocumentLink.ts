@@ -32,10 +32,10 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 
 	const targetUri = URI.parse(target);
 	const clearUri = targetUri.with({ fragment: '' }).toString();
-	const [virtualFile] = context.documents.getVirtualCodeByUri(clearUri);
+	const [virtualCode] = context.documents.getVirtualCodeByUri(clearUri);
 
-	if (virtualFile) {
-		for (const map of context.documents.getMaps(virtualFile)) {
+	if (virtualCode) {
+		for (const map of context.documents.getMaps(virtualCode)) {
 
 			if (!map.map.mappings.some(mapping => isDocumentLinkEnabled(mapping.data))) {
 				continue;

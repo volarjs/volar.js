@@ -55,8 +55,8 @@ export function register(
 
 						recursiveChecker.add({ uri: definition.targetUri, range: { start: definition.targetRange.start, end: definition.targetRange.start } });
 
-						const [virtualFile] = context.documents.getVirtualCodeByUri(definition.targetUri);
-						const mirrorMap = virtualFile ? context.documents.getLinkedCodeMap(virtualFile) : undefined;
+						const [virtualCode] = context.documents.getVirtualCodeByUri(definition.targetUri);
+						const mirrorMap = virtualCode ? context.documents.getLinkedCodeMap(virtualCode) : undefined;
 
 						if (mirrorMap) {
 

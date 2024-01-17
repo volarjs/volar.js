@@ -182,13 +182,13 @@ export async function activate(info: LabsInfo) {
 					const source = virtualUriToSourceUri.get(uri.toString());
 					if (source) {
 
-						const virtualFile = await client.sendRequest(
+						const virtualCode = await client.sendRequest(
 							info.volarLabs.languageServerProtocol.GetVirtualCodeRequest.type,
 							source
 						);
 						virtualUriToSourceMap.set(uri.toString(), []);
 
-						Object.entries(virtualFile.mappings).forEach(([sourceUri, mappings]) => {
+						Object.entries(virtualCode.mappings).forEach(([sourceUri, mappings]) => {
 							const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
 							if (sourceEditor) {
 								virtualUriToSourceMap.get(uri.toString())?.push([
@@ -202,13 +202,13 @@ export async function activate(info: LabsInfo) {
 								sourceUriToVirtualUris.get(sourceUri)?.add(uri.toString());
 							}
 						});
-						virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualFile.content));
-						virtualUriToStacks.set(uri.toString(), virtualFile.codegenStacks);
+						virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualCode.content));
+						virtualUriToStacks.set(uri.toString(), virtualCode.codegenStacks);
 
 						clearTimeout(updateDecorationsTimeout);
 						updateDecorationsTimeout = setTimeout(updateDecorations, 100);
 
-						return virtualFile.content;
+						return virtualCode.content;
 					}
 				}
 			},

@@ -23,12 +23,12 @@ export function register(context: ServiceContext) {
 			data => data
 				.map(reference => {
 
-					const [virtualFile] = context.documents.getVirtualCodeByUri(reference.uri);
-					if (!virtualFile) {
+					const [virtualCode] = context.documents.getVirtualCodeByUri(reference.uri);
+					if (!virtualCode) {
 						return reference;
 					}
 
-					for (const map of context.documents.getMaps(virtualFile)) {
+					for (const map of context.documents.getMaps(virtualCode)) {
 						const range = map.getSourceRange(reference.range, isReferencesEnabled);
 						if (range) {
 							reference.uri = map.sourceFileDocument.uri;

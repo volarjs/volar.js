@@ -48,14 +48,14 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 			sourceFiles.set(id, sourceFile);
 
 			for (const languagePlugin of languagePlugins) {
-				const virtualFile = languagePlugin.generateVirtualCode(id, languageId, snapshot, this);
-				if (virtualFile) {
+				const virtualCode = languagePlugin.generateVirtualCode(id, languageId, snapshot, this);
+				if (virtualCode) {
 					sourceFile.generated = {
-						code: virtualFile,
+						code: virtualCode,
 						languagePlugin,
 						idToFileMap: new Map(),
 					};
-					for (const file of forEachEmbeddedCode(virtualFile)) {
+					for (const file of forEachEmbeddedCode(virtualCode)) {
 						sourceFile.generated.idToFileMap.set(file.id, file);
 						virtualCodeToSourceFileMap.set(file, sourceFile);
 					}
@@ -111,7 +111,7 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 
 			return virtualCodeToMaps.get(virtualCode.snapshot)!;
 		},
-		getVirtualCodeByUri(sourceFileId: string, virtualCodeId: string) {
+		getVirtualCode(sourceFileId: string, virtualCodeId: string) {
 			const sourceFile = this.get(sourceFileId);
 			if (sourceFile) {
 				const virtualCode = sourceFile.generated?.idToFileMap.get(virtualCodeId);

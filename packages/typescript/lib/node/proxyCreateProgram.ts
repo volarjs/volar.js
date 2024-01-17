@@ -84,10 +84,10 @@ export function proxyCreateProgram(
 						let patchedText = originalSourceFile.text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 						let scriptKind = ts.ScriptKind.TS;
 						if (sourceFile.generated) {
-							const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
-							if (tsCode) {
-								scriptKind = tsCode.scriptKind;
-								patchedText += tsCode.code.snapshot.getText(0, tsCode.code.snapshot.getLength());
+							const tsFile = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceFile(sourceFile.generated.code);
+							if (tsFile) {
+								scriptKind = tsFile.scriptKind;
+								patchedText += tsFile.code.snapshot.getText(0, tsFile.code.snapshot.getLength());
 							}
 						}
 						sourceFile2 = ts.createSourceFile(

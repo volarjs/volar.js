@@ -183,7 +183,7 @@ export function createDocumentProvider(files: FileRegistry) {
 			if (uri.includes('?virtualCodeId=')) {
 				const sourceFileUri = uri.split('?virtualCodeId=')[0];
 				const virtualCodeId = uri.split('?virtualCodeId=')[1];
-				return files.getVirtualCodeByUri(sourceFileUri, virtualCodeId);
+				return files.getVirtualCode(sourceFileUri, virtualCodeId);
 			}
 			return [undefined, undefined] as const;
 		},

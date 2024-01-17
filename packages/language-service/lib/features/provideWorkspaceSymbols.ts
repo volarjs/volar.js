@@ -26,10 +26,10 @@ export function register(context: ServiceContext) {
 			}
 			const symbols = embeddedSymbols.map(symbol => transformWorkspaceSymbol(symbol, loc => {
 
-				const [virtualFile] = context.documents.getVirtualCodeByUri(loc.uri);
+				const [virtualCode] = context.documents.getVirtualCodeByUri(loc.uri);
 
-				if (virtualFile) {
-					for (const map of context.documents.getMaps(virtualFile)) {
+				if (virtualCode) {
+					for (const map of context.documents.getMaps(virtualCode)) {
 						const range = map.getSourceRange(loc.range);
 						if (range) {
 							return { uri: map.sourceFileDocument.uri, range };

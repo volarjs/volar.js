@@ -49,12 +49,12 @@ export function register(context: ServiceContext) {
 
 				if (cacheData.virtualDocumentUri) {
 
-					const [virtualFile] = context.documents.getVirtualCodeByUri(cacheData.virtualDocumentUri);
-					if (!virtualFile) {
+					const [virtualCode] = context.documents.getVirtualCodeByUri(cacheData.virtualDocumentUri);
+					if (!virtualCode) {
 						continue;
 					}
 
-					for (const map of context.documents.getMaps(virtualFile)) {
+					for (const map of context.documents.getMaps(virtualCode)) {
 
 						for (const mapped of map.getGeneratedPositions(position, data => isCompletionEnabled(data))) {
 

@@ -173,11 +173,11 @@ export function decorateLanguageServiceHost(
 				if (sourceFile.generated) {
 					const text = snapshot.getText(0, snapshot.getLength());
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
-					if (tsCode) {
-						extension = tsCode.extension;
-						scriptKind = tsCode.scriptKind;
-						patchedText += tsCode.code.snapshot.getText(0, tsCode.code.snapshot.getLength());
+					const tsFile = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceFile(sourceFile.generated.code);
+					if (tsFile) {
+						extension = tsFile.extension;
+						scriptKind = tsFile.scriptKind;
+						patchedText += tsFile.code.snapshot.getText(0, tsFile.code.snapshot.getLength());
 					}
 					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
 				}

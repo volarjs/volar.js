@@ -29,8 +29,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 	} = languageService;
 
 	languageService.getNavigationTree = fileName => {
-		const [virtualFile] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			const tree = getNavigationTree(fileName);
 			tree.childItems = undefined;
 			return tree;
@@ -40,8 +40,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 		}
 	};
 	languageService.getOutliningSpans = fileName => {
-		const [virtualFile] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			return [];
 		}
 		else {
@@ -80,8 +80,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 	} = languageService;
 
 	languageService.prepareCallHierarchy = (fileName, position) => {
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isCallHierarchyEnabled(mapping.data)) {
 					const item = prepareCallHierarchy(fileName, generateOffset + sourceFile.snapshot.getLength());
@@ -100,8 +100,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 	};
 	languageService.provideCallHierarchyIncomingCalls = (fileName, position) => {
 		let calls: ts.CallHierarchyIncomingCall[] = [];
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isCallHierarchyEnabled(mapping.data)) {
 					calls = provideCallHierarchyIncomingCalls(fileName, generateOffset + sourceFile.snapshot.getLength());
@@ -125,8 +125,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 	};
 	languageService.provideCallHierarchyOutgoingCalls = (fileName, position) => {
 		let calls: ts.CallHierarchyOutgoingCall[] = [];
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isCallHierarchyEnabled(mapping.data)) {
 					calls = provideCallHierarchyOutgoingCalls(fileName, generateOffset + sourceFile.snapshot.getLength());
@@ -156,8 +156,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 		return resolved;
 	};
 	languageService.getQuickInfoAtPosition = (fileName, position) => {
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isHoverEnabled(mapping.data)) {
 					const result = getQuickInfoAtPosition(fileName, generateOffset + sourceFile.snapshot.getLength());
@@ -213,8 +213,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 		return resolved;
 	};
 	languageService.getApplicableRefactors = (fileName, positionOrRange, preferences, triggerReason, kind, includeInteractiveActions) => {
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos)) {
 				if (isCodeActionsEnabled(mapping.data)) {
 					const por = typeof positionOrRange === 'number'
@@ -234,8 +234,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 	};
 	languageService.getEditsForRefactor = (fileName, formatOptions, positionOrRange, refactorName, actionName, preferences) => {
 		let edits: ts.RefactorEditInfo | undefined;
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos)) {
 				if (isCodeActionsEnabled(mapping.data)) {
 					const por = typeof positionOrRange === 'number'
@@ -259,8 +259,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 		}
 	};
 	languageService.getRenameInfo = (fileName, position, options) => {
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isRenameEnabled(mapping.data)) {
 					const info = getRenameInfo(fileName, generateOffset + sourceFile.snapshot.getLength(), options);
@@ -287,8 +287,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 	};
 	languageService.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
 		let fixes: readonly ts.CodeFixAction[] = [];
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateStart, mapping] of map.getGeneratedOffsets(start)) {
 				if (isCodeActionsEnabled(mapping.data)) {
 					for (const [generateEnd, mapping] of map.getGeneratedOffsets(end)) {
@@ -318,8 +318,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 		return fixes;
 	};
 	languageService.getEncodedSemanticClassifications = (fileName, span, format) => {
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			let start: number | undefined;
 			let end: number | undefined;
 			for (const mapping of map.mappings) {
@@ -528,8 +528,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 		return dedupeDocumentSpans(resolved);
 	};
 	languageService.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isCompletionEnabled(mapping.data)) {
 					const result = getCompletionsAtPosition(fileName, generateOffset + sourceFile.snapshot.getLength(), options, formattingSettings);
@@ -551,8 +551,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 
 		let details: ts.CompletionEntryDetails | undefined;
 
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isCompletionEnabled(mapping.data)) {
 					details = getCompletionEntryDetails(fileName, generateOffset + sourceFile.snapshot.getLength(), entryName, formatOptions, source, preferences, data);
@@ -573,8 +573,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 		return details;
 	};
 	languageService.provideInlayHints = (fileName, span, preferences) => {
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			let start: number | undefined;
 			let end: number | undefined;
 			for (const mapping of map.mappings) {
@@ -629,8 +629,8 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 		let results: T[] = [];
 
 		const processedFilePositions = new Set<string>();
-		const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
-		if (virtualFile) {
+		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+		if (virtualCode) {
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (filter(mapping.data)) {
 					process(fileName, generateOffset + sourceFile.snapshot.getLength());

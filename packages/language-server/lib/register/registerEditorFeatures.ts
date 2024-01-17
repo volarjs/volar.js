@@ -91,11 +91,11 @@ export function registerEditorFeatures(
 		let codegenStacks: Stack[] = [];
 		const languageService = (await projects.getProject(params.fileUri)).getLanguageService();
 		const mappings: Record<string, CodeMapping[]> = {};
-		const [virtualFile] = languageService.context.files.getVirtualCodeByUri(params.fileUri, params.virtualCodeId);
-		if (virtualFile) {
-			for (const map of languageService.context.documents.getMaps(virtualFile)) {
+		const [virtualCode] = languageService.context.files.getVirtualCode(params.fileUri, params.virtualCodeId);
+		if (virtualCode) {
+			for (const map of languageService.context.documents.getMaps(virtualCode)) {
 				content = map.virtualFileDocument.getText();
-				codegenStacks = virtualFile.codegenStacks ?? [];
+				codegenStacks = virtualCode.codegenStacks ?? [];
 				mappings[map.sourceFileDocument.uri] = map.map.mappings;
 			}
 		}
@@ -132,10 +132,10 @@ export function registerEditorFeatures(
 					if (uri.startsWith(rootUri)) {
 						const sourceFile = languageService.context.files.get(uri);
 						if (sourceFile?.generated) {
-							const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceCode(sourceFile.generated.code);
-							if (tsCode) {
-								const { snapshot } = tsCode.code;
-								fs.writeFile(uri + tsCode.extension, snapshot.getText(0, snapshot.getLength()), () => { });
+							const virtualFile = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceFile(sourceFile.generated.code);
+							if (virtualFile) {
+								const { snapshot } = virtualFile.code;
+								fs.writeFile(uri + virtualFile.extension, snapshot.getText(0, snapshot.getLength()), () => { });
 							}
 						}
 					}

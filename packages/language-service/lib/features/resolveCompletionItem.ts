@@ -22,11 +22,11 @@ export function register(context: ServiceContext) {
 
 			if (data.virtualDocumentUri) {
 
-				const [virtualFile] = context.documents.getVirtualCodeByUri(data.virtualDocumentUri);
+				const [virtualCode] = context.documents.getVirtualCodeByUri(data.virtualDocumentUri);
 
-				if (virtualFile) {
+				if (virtualCode) {
 
-					for (const map of context.documents.getMaps(virtualFile)) {
+					for (const map of context.documents.getMaps(virtualCode)) {
 
 						item = await service[1].resolveCompletionItem(item, token);
 						item = service[1].transformCompletionItem?.(item) ?? transformCompletionItem(

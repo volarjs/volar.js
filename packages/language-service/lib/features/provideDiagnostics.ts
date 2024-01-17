@@ -311,10 +311,10 @@ export function register(context: ServiceContext) {
 
 				for (const info of _error.relatedInformation) {
 
-					const [virtualFile] = context.documents.getVirtualCodeByUri(info.location.uri);
+					const [virtualCode] = context.documents.getVirtualCodeByUri(info.location.uri);
 
-					if (virtualFile) {
-						for (const map of context.documents.getMaps(virtualFile)) {
+					if (virtualCode) {
+						for (const map of context.documents.getMaps(virtualCode)) {
 							const range = map.getSourceRange(info.location.range, filter);
 							if (range) {
 								relatedInfos.push({
