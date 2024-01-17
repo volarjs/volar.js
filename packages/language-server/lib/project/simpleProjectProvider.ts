@@ -43,8 +43,6 @@ export const createSimpleProjectProvider: ServerProjectProviderFactory = (contex
 export function createServiceEnvironment(context: ServerContext, workspaceFolder: URI) {
 	const env: ServiceEnvironment = {
 		workspaceFolder,
-		uriToFileName: context.runtimeEnv.uriToFileName,
-		fileNameToUri: context.runtimeEnv.fileNameToUri,
 		fs: context.runtimeEnv.fs,
 		console: context.runtimeEnv.console,
 		locale: context.initializeParams.locale,
@@ -52,6 +50,10 @@ export function createServiceEnvironment(context: ServerContext, workspaceFolder
 		getConfiguration: context.configurationHost?.getConfiguration,
 		onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
 		onDidChangeWatchedFiles: context.onDidChangeWatchedFiles,
+		typescript: {
+			fileNameToUri: context.runtimeEnv.fileNameToUri,
+			uriToFileName: context.runtimeEnv.uriToFileName,
+		},
 	};
 	return env;
 }

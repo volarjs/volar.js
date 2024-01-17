@@ -70,9 +70,9 @@ export function register(context: ServiceContext) {
 
 				if (data.virtualDocumentUri) {
 
-					const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(data.virtualDocumentUri));
+					const [virtualCode] = context.documents.getVirtualCodeByUri(data.virtualDocumentUri);
 
-					if (virtualFile) {
+					if (virtualCode) {
 
 						const _calls = await service[1].provideCallHierarchyIncomingCalls(item, token);
 
@@ -131,9 +131,9 @@ export function register(context: ServiceContext) {
 
 				if (data.virtualDocumentUri) {
 
-					const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(data.virtualDocumentUri));
+					const [virtualCode] = context.documents.getVirtualCodeByUri(data.virtualDocumentUri);
 
-					if (virtualFile) {
+					if (virtualCode) {
 
 						const _calls = await service[1].provideCallHierarchyOutgoingCalls(item, token);
 
@@ -178,13 +178,13 @@ export function register(context: ServiceContext) {
 
 	function transformCallHierarchyItem(tsItem: vscode.CallHierarchyItem, tsRanges: vscode.Range[]): [vscode.CallHierarchyItem, vscode.Range[]] | undefined {
 
-		const [virtualFile] = context.language.files.getVirtualFile(context.env.uriToFileName(tsItem.uri));
+		const [virtualCode] = context.documents.getVirtualCodeByUri(tsItem.uri);
 
-		if (!virtualFile) {
+		if (!virtualCode) {
 			return [tsItem, tsRanges];
 		}
 
-		for (const map of context.documents.getMaps(virtualFile)) {
+		for (const map of context.documents.getMaps(virtualCode)) {
 
 			let range = map.getSourceRange(tsItem.range);
 			if (!range) {

@@ -1,4 +1,4 @@
-import type { Language } from '@volar/language-core';
+import type { LanguageContext } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { URI } from 'vscode-uri';
@@ -6,20 +6,19 @@ import type { DocumentProvider } from './documents';
 
 export type * from 'vscode-languageserver-protocol';
 
-export interface ServiceEnvironment extends RuntimeEnvironment {
+export interface ServiceEnvironment {
+	typescript: {
+		uriToFileName(uri: string): string;
+		fileNameToUri(fileName: string): string;
+	};
 	workspaceFolder: URI;
 	locale?: string;
 	clientCapabilities?: vscode.ClientCapabilities;
+	fs?: FileSystem;
+	console?: Console;
 	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>;
 	onDidChangeConfiguration?(cb: () => void): vscode.Disposable;
 	onDidChangeWatchedFiles?(cb: (params: vscode.DidChangeWatchedFilesParams) => void): vscode.Disposable;
-}
-
-export interface RuntimeEnvironment {
-	uriToFileName(uri: string): string;
-	fileNameToUri(fileName: string): string;
-	fs?: FileSystem;
-	console?: Console;
 }
 
 export interface Console {
@@ -54,9 +53,8 @@ export interface ServiceCommand<T extends any[]> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface ServiceContext {
+export interface ServiceContext extends LanguageContext {
 	env: ServiceEnvironment;
-	language: Language;
 	inject<Provide, K extends keyof Provide = keyof Provide>(
 		key: K,
 		...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never
@@ -68,7 +66,7 @@ export interface ServiceContext {
 	};
 	documents: DocumentProvider;
 	services: [ServicePlugin, ServicePluginInstance][];
-	disabledVirtualFiles: Set<string>;
+	disabledVirtualFileUris: Set<string>;
 	disabledServicePlugins: WeakSet<ServicePluginInstance>;
 }
 

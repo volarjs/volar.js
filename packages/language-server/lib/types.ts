@@ -1,6 +1,7 @@
-import type { Console, FileSystem, LanguageService, ServiceEnvironment, ServicePlugin } from '@volar/language-service';
+import type { Console, FileSystem, LanguageService, ServiceEnvironment, ServicePlugin, TypeScriptProjectHost } from '@volar/language-service';
 import type * as vscode from 'vscode-languageserver';
 import type { ServerContext, ServerOptions } from './server';
+import type { createSys } from '@volar/typescript';
 
 export interface Timer {
 	setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
@@ -22,6 +23,8 @@ export interface ServerRuntimeEnvironment {
 export interface ProjectContext {
 	typescript?: {
 		configFileName: string | undefined;
+		host: TypeScriptProjectHost;
+		sys: ReturnType<typeof createSys>;
 	};
 }
 

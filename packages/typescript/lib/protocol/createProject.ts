@@ -1,8 +1,7 @@
-import { createFileProvider, FileMap, LanguagePlugin, Language, TypeScriptProjectHost } from '@volar/language-core';
+import { createFileRegistry, FileMap, LanguagePlugin, LanguageContext, TypeScriptProjectHost } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { forEachEmbeddedFile } from '@volar/language-core';
+import { forEachEmbeddedCode } from '@volar/language-core';
 import * as path from 'path-browserify';
-import { matchFiles } from '../typescript/utilities';
 import type { createSys } from './createSys';
 
 const scriptVersions = new Map<string, { lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>();
@@ -11,12 +10,18 @@ const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot 
 export function createLanguage(
 	ts: typeof import('typescript'),
 	sys: ReturnType<typeof createSys> | ts.System,
-	languages: LanguagePlugin<any>[],
+	languagePlugins: LanguagePlugin<any>[],
 	configFileName: string | undefined,
 	projectHost: TypeScriptProjectHost,
-): Language {
+	{ fileIdToFileName, fileNameToFileId }: {
+		fileIdToFileName: (uri: string) => string,
+		fileNameToFileId: (fileName: string) => string,
+	},
+): LanguageContext {
 
-	const files = createFileProvider(languages, sys.useCaseSensitiveFileNames, fileName => {
+	const files = createFileRegistry(languagePlugins, sys.useCaseSensitiveFileNames, fileId => {
+
+		const fileName = fileIdToFileName(fileId);
 
 		// opened files
 		let snapshot = projectHost.getScriptSnapshot(fileName);
@@ -39,22 +44,22 @@ export function createLanguage(
 		}
 
 		if (snapshot) {
-			files.updateSourceFile(fileName, projectHost.getLanguageId(fileName), snapshot);
+			files.set(fileId, projectHost.getLanguageId(fileId), snapshot);
 		}
 		else {
-			files.deleteSourceFile(fileName);
+			files.delete(fileId);
 		}
 	});
 
 	let languageServiceHost = createLanguageServiceHost();
 
-	for (const language of languages) {
+	for (const language of languagePlugins) {
 		if (language.typescript?.resolveLanguageServiceHost) {
 			languageServiceHost = language.typescript.resolveLanguageServiceHost(languageServiceHost);
 		}
 	}
 
-	if (languages.some(language => language.typescript?.resolveModuleName)) {
+	if (languagePlugins.some(language => language.typescript?.extraFileExtensions.length)) {
 
 		// TODO: can this share between monorepo packages?
 		const moduleCache = ts.createModuleResolutionCache(
@@ -78,49 +83,46 @@ export function createLanguage(
 			}
 			return moduleLiterals.map(moduleLiteral => {
 				let moduleName = moduleLiteral.text;
-				for (const language of languages) {
-					if (language.typescript?.resolveModuleName) {
-						moduleName = language.typescript.resolveModuleName(moduleName, sourceFile.impliedNodeFormat) ?? moduleName;
+				let extraFileExtension: string | undefined;
+				let isPatchResult = false;
+				for (const language of languagePlugins) {
+					extraFileExtension = language.typescript?.extraFileExtensions.find(ext => moduleName.endsWith('.' + ext.extension))?.extension;
+					if (extraFileExtension) {
+						break;
 					}
 				}
-				return ts.resolveModuleName(
+				const result = ts.resolveModuleName(
 					moduleName,
 					containingFile,
 					options,
-					languageServiceHost,
+					{
+						...languageServiceHost,
+						fileExists(fileName) {
+							if (extraFileExtension && fileName.endsWith('.d.ts')) {
+								const patchResult = languageServiceHost.fileExists(fileName.slice(0, -5));
+								if (patchResult) {
+									isPatchResult = true;
+									return true;
+								}
+							}
+							return sys.fileExists(fileName);
+						},
+					},
 					moduleCache,
 					redirectedReference,
 					sourceFile.impliedNodeFormat
 				);
-			});
-		};
-		languageServiceHost.resolveModuleNames = (
-			moduleNames,
-			containingFile,
-			_reusedNames,
-			redirectedReference,
-			options,
-			sourceFile
-		) => {
-			if ('version' in sys && lastSysVersion !== sys.version) {
-				lastSysVersion = sys.version;
-				moduleCache.clear();
-			}
-			return moduleNames.map(moduleName => {
-				for (const language of languages) {
-					if (language.typescript?.resolveModuleName) {
-						moduleName = language.typescript.resolveModuleName(moduleName, sourceFile?.impliedNodeFormat) ?? moduleName;
+				if (isPatchResult && result.resolvedModule) {
+					result.resolvedModule.resolvedFileName = result.resolvedModule.resolvedFileName.slice(0, -5);
+					const sourceFile = files.get(fileNameToFileId(result.resolvedModule.resolvedFileName));
+					if (sourceFile?.generated) {
+						const tsCode = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+						if (tsCode) {
+							result.resolvedModule.extension = tsCode.extension;
+						}
 					}
 				}
-				return ts.resolveModuleName(
-					moduleName,
-					containingFile,
-					options,
-					languageServiceHost,
-					moduleCache,
-					redirectedReference,
-					sourceFile?.impliedNodeFormat
-				).resolvedModule;
+				return result;
 			});
 		};
 	}
@@ -132,7 +134,6 @@ export function createLanguage(
 			sys,
 			projectHost,
 			languageServiceHost,
-			synchronizeFileSystem: 'sync' in sys ? () => sys.sync() : undefined,
 		},
 	};
 
@@ -147,7 +148,17 @@ export function createLanguage(
 		const languageServiceHost: ts.LanguageServiceHost = {
 			...sys,
 			getCurrentDirectory: projectHost.getCurrentDirectory,
-			getCompilationSettings: projectHost.getCompilationSettings,
+			getCompilationSettings() {
+				const options = projectHost.getCompilationSettings();
+				if (
+					languagePlugins.some(language => language.typescript?.extraFileExtensions.length)
+					&& !options.allowNonTsExtensions
+				) {
+					console.warn('`allowNonTsExtensions` must be `true`.');
+					options.allowNonTsExtensions ??= true;
+				}
+				return options;
+			},
 			getLocalizedDiagnosticMessages: projectHost.getLocalizedDiagnosticMessages,
 			getProjectReferences: projectHost.getProjectReferences,
 			getDefaultLibFileName: options => {
@@ -167,66 +178,27 @@ export function createLanguage(
 			getTypeRootsVersion: () => {
 				return 'version' in sys ? sys.version : -1; // TODO: only update for /node_modules changes?
 			},
-			// need sync
 			getDirectories(dirName) {
-				syncProject();
-				return [...new Set([
-					...getVirtualFileDirectories(dirName),
-					...sys.getDirectories(dirName),
-				])];
+				return sys.getDirectories(dirName);
+			},
+			readDirectory(dirName, extensions, excludes, includes, depth) {
+				const exts = new Set(extensions);
+				for (const languagePlugin of languagePlugins) {
+					for (const ext of languagePlugin.typescript?.extraFileExtensions ?? []) {
+						exts.add('.' + ext.extension);
+					}
+				}
+				extensions = [...exts];
+				return sys.readDirectory(dirName, extensions, excludes, includes, depth);
 			},
 			readFile(fileName) {
-				syncSourceFile(fileName);
 				const snapshot = getScriptSnapshot(fileName);
 				if (snapshot) {
 					return snapshot.getText(0, snapshot.getLength());
 				}
 			},
 			fileExists(fileName) {
-				syncSourceFile(fileName);
 				return getScriptVersion(fileName) !== '';
-			},
-			readDirectory(dirName, extensions, excludes, includes, depth) {
-				syncProject();
-				let matches = matchFiles(
-					dirName,
-					extensions,
-					excludes,
-					includes,
-					sys?.useCaseSensitiveFileNames ?? false,
-					projectHost.getCurrentDirectory(),
-					depth,
-					dirPath => {
-
-						const files: string[] = [];
-
-						for (const fileName of tsFileRegistry.keys()) {
-							if (fileName.toLowerCase().startsWith(dirPath.toLowerCase())) {
-								const baseName = fileName.substring(dirPath.length);
-								if (baseName.indexOf('/') === -1) {
-									files.push(baseName);
-								}
-							}
-						}
-
-						return {
-							files,
-							directories: getVirtualFileDirectories(dirPath),
-						};
-					},
-					sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
-				);
-				matches = matches.map(match => {
-					const [_, source] = files.getVirtualFile(match);
-					if (source) {
-						return source.fileName;
-					}
-					return match;
-				});
-				return [...new Set([
-					...matches,
-					...sys.readDirectory(dirName, extensions, excludes, includes, depth),
-				])];
 			},
 			getProjectVersion() {
 				syncProject();
@@ -237,14 +209,12 @@ export function createLanguage(
 				return [...tsFileRegistry.keys()];
 			},
 			getScriptKind(fileName) {
-				syncSourceFile(fileName);
-				const virtualFile = files.getVirtualFile(fileName)[0];
-				if (virtualFile?.typescript) {
-					return virtualFile.typescript.scriptKind;
-				}
-				const sourceFile = files.getSourceFile(fileName);
-				if (sourceFile?.virtualFile) {
-					return ts.ScriptKind.Deferred;
+				const sourceFile = files.get(fileNameToFileId(fileName));
+				if (sourceFile?.generated) {
+					const tsCode = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+					if (tsCode) {
+						return tsCode.scriptKind;
+					}
 				}
 				switch (path.extname(fileName)) {
 					case '.js':
@@ -271,15 +241,6 @@ export function createLanguage(
 
 		return languageServiceHost;
 
-		function syncSourceFile(tsFileName: string) {
-			for (const language of languages) {
-				const sourceFileName = language.typescript?.resolveSourceFileName(tsFileName);
-				if (sourceFileName) {
-					files.getSourceFile(sourceFileName); // trigger sync
-				}
-			}
-		}
-
 		function syncProject() {
 
 			const newProjectVersion = projectHost.getProjectVersion?.();
@@ -295,16 +256,15 @@ export function createLanguage(
 			const tsFileNamesSet = new Set<string>();
 
 			for (const fileName of projectHost.getScriptFileNames()) {
-				const sourceFile = files.getSourceFile(fileName);
-				if (sourceFile?.virtualFile) {
-					for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-						if (file.typescript) {
-							newTsVirtualFileSnapshots.add(file.snapshot);
-							tsFileNamesSet.add(file.fileName); // virtual .ts
-						}
-						else {
-							newOtherVirtualFileSnapshots.add(file.snapshot);
-						}
+				const sourceFile = files.get(fileNameToFileId(fileName));
+				if (sourceFile?.generated) {
+					const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+					if (script) {
+						newTsVirtualFileSnapshots.add(script.code.snapshot);
+						tsFileNamesSet.add(fileName); // virtual .ts
+					}
+					for (const file of forEachEmbeddedCode(sourceFile.generated.code)) {
+						newOtherVirtualFileSnapshots.add(file.snapshot);
 					}
 				}
 				else {
@@ -330,39 +290,42 @@ export function createLanguage(
 		}
 
 		function getScriptSnapshot(fileName: string) {
-			syncSourceFile(fileName);
 
-			const virtualFile = files.getVirtualFile(fileName)[0];
-			if (virtualFile) {
-				return virtualFile.snapshot;
+			const sourceFile = files.get(fileNameToFileId(fileName));
+
+			if (sourceFile?.generated) {
+				const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+				if (script) {
+					return script.code.snapshot;
+				}
 			}
-
-			const sourceFile = files.getSourceFile(fileName);
-			if (sourceFile && !sourceFile.virtualFile) {
+			else if (sourceFile) {
 				return sourceFile.snapshot;
 			}
 		}
 
 		function getScriptVersion(fileName: string): string {
-			syncSourceFile(fileName);
 
 			if (!scriptVersions.has(fileName)) {
 				scriptVersions.set(fileName, { lastVersion: 0, map: new WeakMap() });
 			}
 
 			const version = scriptVersions.get(fileName)!;
-			const virtualFile = files.getVirtualFile(fileName)[0];
-			if (virtualFile) {
-				if (!version.map.has(virtualFile.snapshot)) {
-					version.map.set(virtualFile.snapshot, version.lastVersion++);
+			const sourceFile = files.get(fileNameToFileId(fileName));
+			if (sourceFile?.generated) {
+				const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+				if (script) {
+					if (!version.map.has(script.code.snapshot)) {
+						version.map.set(script.code.snapshot, version.lastVersion++);
+					}
+					return version.map.get(script.code.snapshot)!.toString();
 				}
-				return version.map.get(virtualFile.snapshot)!.toString();
 			}
 
 			const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
 			if (isOpenedFile) {
-				const sourceFile = files.getSourceFile(fileName);
-				if (sourceFile && !sourceFile.virtualFile) {
+				const sourceFile = files.get(fileNameToFileId(fileName));
+				if (sourceFile && !sourceFile.generated) {
 					if (!version.map.has(sourceFile.snapshot)) {
 						version.map.set(sourceFile.snapshot, version.lastVersion++);
 					}
@@ -375,22 +338,6 @@ export function createLanguage(
 			}
 
 			return '';
-		}
-
-		function getVirtualFileDirectories(dirName: string): string[] {
-
-			const names = new Set<string>();
-
-			for (const fileName of tsFileRegistry.keys()) {
-				if (fileName.toLowerCase().startsWith(dirName.toLowerCase())) {
-					const path = fileName.substring(dirName.length);
-					if (path.indexOf('/') >= 0) {
-						names.add(path.split('/')[0]);
-					}
-				}
-			}
-
-			return [...names];
 		}
 	}
 }

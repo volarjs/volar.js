@@ -33,7 +33,7 @@ const mappingCursorDecorationType = vscode.window.createTextEditorDecorationType
 
 export const sourceUriToVirtualUris = new Map<string, Set<string>>();
 
-export const virtualUriToSourceUri = new Map<string, string>();
+export const virtualUriToSourceUri = new Map<string, { fileUri: string, virtualCodeId: string; }>();
 
 export async function activate(info: LabsInfo) {
 
@@ -179,14 +179,16 @@ export async function activate(info: LabsInfo) {
 				onDidChange: docChangeEvent.event,
 				async provideTextDocumentContent(uri: vscode.Uri): Promise<string | undefined> {
 
-					const requestUri = virtualUriToSourceUri.get(uri.toString());
-					if (requestUri) {
+					const source = virtualUriToSourceUri.get(uri.toString());
+					if (source) {
 
-						const fileName = uri.with({ scheme: 'file' }).fsPath;
-						const virtualFile = await client.sendRequest(info.volarLabs.languageServerProtocol.GetVirtualFileRequest.type, { sourceFileUri: requestUri, virtualFileName: fileName });
+						const virtualCode = await client.sendRequest(
+							info.volarLabs.languageServerProtocol.GetVirtualCodeRequest.type,
+							source
+						);
 						virtualUriToSourceMap.set(uri.toString(), []);
 
-						Object.entries(virtualFile.mappings).forEach(([sourceUri, mappings]) => {
+						Object.entries(virtualCode.mappings).forEach(([sourceUri, mappings]) => {
 							const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
 							if (sourceEditor) {
 								virtualUriToSourceMap.get(uri.toString())?.push([
@@ -200,13 +202,13 @@ export async function activate(info: LabsInfo) {
 								sourceUriToVirtualUris.get(sourceUri)?.add(uri.toString());
 							}
 						});
-						virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualFile.content));
-						virtualUriToStacks.set(uri.toString(), virtualFile.codegenStacks);
+						virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualCode.content));
+						virtualUriToStacks.set(uri.toString(), virtualCode.codegenStacks);
 
 						clearTimeout(updateDecorationsTimeout);
 						updateDecorationsTimeout = setTimeout(updateDecorations, 100);
 
-						return virtualFile.content;
+						return virtualCode.content;
 					}
 				}
 			},

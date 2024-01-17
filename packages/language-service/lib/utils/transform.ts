@@ -246,7 +246,7 @@ export function transformWorkspaceSymbol(symbol: vscode.WorkspaceSymbol, getOthe
 
 export function transformWorkspaceEdit(
 	edit: vscode.WorkspaceEdit,
-	{ documents, language, env }: ServiceContext,
+	{ documents }: ServiceContext,
 	mode: 'fileName' | 'rename' | 'codeAction' | undefined,
 	versions: Record<string, number> = {},
 ) {
@@ -259,10 +259,10 @@ export function transformWorkspaceEdit(
 		sourceResult.changeAnnotations ??= {};
 
 		const tsAnno = edit.changeAnnotations[tsUri];
-		const [virtualFile] = language.files.getVirtualFile(env.uriToFileName(tsUri));
+		const [virtualCode] = documents.getVirtualCodeByUri(tsUri);
 
-		if (virtualFile) {
-			for (const map of documents.getMaps(virtualFile)) {
+		if (virtualCode) {
+			for (const map of documents.getMaps(virtualCode)) {
 				// TODO: check capability?
 				const uri = map.sourceFileDocument.uri;
 				sourceResult.changeAnnotations[uri] = tsAnno;
@@ -276,10 +276,10 @@ export function transformWorkspaceEdit(
 
 		sourceResult.changes ??= {};
 
-		const [virtualFile] = language.files.getVirtualFile(env.uriToFileName(tsUri));
+		const [virtualCode] = documents.getVirtualCodeByUri(tsUri);
 
-		if (virtualFile) {
-			for (const map of documents.getMaps(virtualFile)) {
+		if (virtualCode) {
+			for (const map of documents.getMaps(virtualCode)) {
 				const tsEdits = edit.changes[tsUri];
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
@@ -324,10 +324,10 @@ export function transformWorkspaceEdit(
 			let sourceEdit: typeof tsDocEdit | undefined;
 			if ('textDocument' in tsDocEdit) {
 
-				const [virtualFile] = language.files.getVirtualFile(env.fileNameToUri(tsDocEdit.textDocument.uri));
+				const [virtualCode] = documents.getVirtualCodeByUri(tsDocEdit.textDocument.uri);
 
-				if (virtualFile) {
-					for (const map of documents.getMaps(virtualFile)) {
+				if (virtualCode) {
+					for (const map of documents.getMaps(virtualCode)) {
 						sourceEdit = {
 							textDocument: {
 								uri: map.sourceFileDocument.uri,
@@ -376,10 +376,10 @@ export function transformWorkspaceEdit(
 			}
 			else if (tsDocEdit.kind === 'rename') {
 
-				const [virtualFile] = language.files.getVirtualFile(env.uriToFileName(tsDocEdit.oldUri));
+				const [virtualCode] = documents.getVirtualCodeByUri(tsDocEdit.oldUri);
 
-				if (virtualFile) {
-					for (const map of documents.getMaps(virtualFile)) {
+				if (virtualCode) {
+					for (const map of documents.getMaps(virtualCode)) {
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'rename',
@@ -396,10 +396,10 @@ export function transformWorkspaceEdit(
 			}
 			else if (tsDocEdit.kind === 'delete') {
 
-				const [virtualFile] = language.files.getVirtualFile(env.uriToFileName(tsDocEdit.uri));
+				const [virtualCode] = documents.getVirtualCodeByUri(tsDocEdit.uri);
 
-				if (virtualFile) {
-					for (const map of documents.getMaps(virtualFile)) {
+				if (virtualCode) {
+					for (const map of documents.getMaps(virtualCode)) {
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'delete',

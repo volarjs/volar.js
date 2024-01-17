@@ -1,19 +1,17 @@
-import { forEachEmbeddedFile, FileProvider } from '@volar/language-core';
+import type { FileRegistry } from '@volar/language-core';
 
 export function notEmpty<T>(value: T | null | undefined): value is T {
 	return value !== null && value !== undefined;
 }
 
-export function getVirtualFileAndMap(files: FileProvider, fileName: string) {
-	const sourceFile = files.getSourceFile(fileName);
-	if (sourceFile?.virtualFile) {
-		for (const virtualFile of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-			const ext = virtualFile.fileName.substring(fileName.length);
-			if (virtualFile.typescript && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
-				for (const map of files.getMaps(virtualFile)) {
-					if (map[1][0] === sourceFile.snapshot) {
-						return [virtualFile, sourceFile, map[1][1]] as const;
-					}
+export function getVirtualFileAndMap(files: FileRegistry, fileName: string) {
+	const sourceFile = files.get(fileName);
+	if (sourceFile?.generated) {
+		const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+		if (script) {
+			for (const map of files.getMaps(script.code)) {
+				if (map[1][0] === sourceFile.snapshot) {
+					return [script, sourceFile, map[1][1]] as const;
 				}
 			}
 		}

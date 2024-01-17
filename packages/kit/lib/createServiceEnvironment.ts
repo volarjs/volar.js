@@ -7,8 +7,6 @@ export function createServiceEnvironment(getSettings: () => any): ServiceEnviron
 
 	return {
 		workspaceFolder: URI.file(process.cwd()),
-		uriToFileName,
-		fileNameToUri,
 		getConfiguration(section: string) {
 			const settings = getSettings();
 			if (section in settings) {
@@ -35,6 +33,10 @@ export function createServiceEnvironment(getSettings: () => any): ServiceEnviron
 		},
 		fs: nodeFs,
 		console,
+		typescript: {
+			fileNameToUri: fileNameToUri,
+			uriToFileName: uriToFileName,
+		},
 	};
 }
 

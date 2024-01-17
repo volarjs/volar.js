@@ -100,10 +100,10 @@ export namespace DocumentDrop_DataTransferItemFileDataRequest {
  * Labs
  */
 
-export namespace UpdateVirtualFileStateNotification {
+export namespace UpdateVirtualCodeStateNotification {
 	export type ParamsType = {
-		uri: string;
-		virtualFileName: string;
+		fileUri: string;
+		virtualCodeId: string;
 		disabled: boolean;
 	};
 	export const type = new vscode.NotificationType<ParamsType>('volar/client/labs/updateVirtualFileState');
@@ -130,25 +130,25 @@ export namespace GetServicePluginsRequest {
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/servicePlugins');
 }
 
-export namespace GetVirtualFilesRequest {
-	export type VirtualFileWithState = {
-		fileName: string;
+export namespace GetVirtualFileRequest {
+	export type VirtualCodeInfo = {
+		fileUri: string;
+		virtualCodeId: string;
 		languageId: string;
-		tsScriptKind?: number;
 		version: number;
 		disabled: boolean;
-		embeddedFiles: VirtualFileWithState[];
+		embeddedCodes: VirtualCodeInfo[];
 	};
 	export type ParamsType = vscode.TextDocumentIdentifier;
-	export type ResponseType = VirtualFileWithState | null | undefined;
+	export type ResponseType = VirtualCodeInfo | null | undefined;
 	export type ErrorType = never;
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFiles');
 }
 
-export namespace GetVirtualFileRequest {
+export namespace GetVirtualCodeRequest {
 	export type ParamsType = {
-		sourceFileUri: string;
-		virtualFileName: string;
+		fileUri: string;
+		virtualCodeId: string;
 	};
 	export type ResponseType = {
 		content: string;

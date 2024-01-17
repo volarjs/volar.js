@@ -77,6 +77,10 @@ function createTypeScriptCheckerWorker(
 		languages,
 		configFileName,
 		languageHost,
+		{
+			fileNameToFileId: env.typescript.fileNameToUri,
+			fileIdToFileName: env.typescript.uriToFileName,
+		},
 	);
 	const service = createLanguageService(
 		language,
@@ -127,7 +131,7 @@ function createTypeScriptCheckerWorker(
 	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		const sourceFile = service.context.language.files.getSourceFile(env.uriToFileName(uri));
+		const sourceFile = service.context.files.get(uri);
 		if (sourceFile) {
 			const document = service.context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 			const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
@@ -143,7 +147,7 @@ function createTypeScriptCheckerWorker(
 					for (const uri in rootEdit.changes ?? {}) {
 						const edits = rootEdit.changes![uri];
 						if (edits.length) {
-							const editFile = service.context.language.files.getSourceFile(env.uriToFileName(uri));
+							const editFile = service.context.files.get(uri);
 							if (editFile) {
 								const editDocument = service.context.documents.get(uri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, edits);
@@ -153,7 +157,7 @@ function createTypeScriptCheckerWorker(
 					}
 					for (const change of rootEdit.documentChanges ?? []) {
 						if ('textDocument' in change) {
-							const editFile = service.context.language.files.getSourceFile(env.uriToFileName(change.textDocument.uri));
+							const editFile = service.context.files.get(change.textDocument.uri);
 							if (editFile) {
 								const editDocument = service.context.documents.get(change.textDocument.uri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, change.edits);
@@ -178,7 +182,7 @@ function createTypeScriptCheckerWorker(
 	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath: string) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		const sourceFile = service.context.language.files.getSourceFile(env.uriToFileName(uri))!;
+		const sourceFile = service.context.files.get(uri)!;
 		const document = service.context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
 			category: diagnostic.severity === 1 satisfies typeof DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
@@ -209,7 +213,7 @@ function createTypeScriptLanguageHost(
 
 	const host: TypeScriptProjectHost = {
 		getCurrentDirectory: () => {
-			return env.uriToFileName(env.workspaceFolder.toString());
+			return uriToFileName(env.workspaceFolder.toString());
 		},
 		getCompilationSettings: () => {
 			return parsedCommandLine.options;
@@ -239,7 +243,7 @@ function createTypeScriptLanguageHost(
 
 	env.onDidChangeWatchedFiles?.(({ changes }) => {
 		for (const change of changes) {
-			const fileName = env.uriToFileName(change.uri);
+			const fileName = uriToFileName(change.uri);
 			if (change.type === 2 satisfies typeof FileChangeType.Changed) {
 				if (scriptSnapshotsCache.has(fileName)) {
 					projectVersion++;

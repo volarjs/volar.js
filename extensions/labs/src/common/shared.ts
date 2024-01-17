@@ -36,5 +36,7 @@ export async function useVolarExtensions(
 }
 
 export function getIconPath(extension: vscode.Extension<any>) {
-	return vscode.Uri.joinPath(extension.extensionUri, extension.packageJSON.icon);
+	if (extension.packageJSON?.icon) {
+		return vscode.Uri.joinPath(extension.extensionUri, extension.packageJSON.icon);
+	}
 }

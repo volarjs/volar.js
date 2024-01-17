@@ -1,6 +1,6 @@
 import type * as ts from 'typescript';
 import { decorateProgram } from './decorateProgram';
-import { LanguagePlugin, createFileProvider, forEachEmbeddedFile, resolveCommonLanguageId } from '@volar/language-core';
+import { LanguagePlugin, createFileRegistry, resolveCommonLanguageId } from '@volar/language-core';
 
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
@@ -15,7 +15,7 @@ export function proxyCreateProgram(
 			assert(!!options.host, '!!options.host');
 
 			const sourceFileToSnapshotMap = new WeakMap<ts.SourceFile, ts.IScriptSnapshot>();
-			const files = createFileProvider(
+			const files = createFileRegistry(
 				getLanguagePlugins(ts, options),
 				ts.sys.useCaseSensitiveFileNames,
 				fileName => {
@@ -40,10 +40,10 @@ export function proxyCreateProgram(
 						}
 					}
 					if (snapshot) {
-						files.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
+						files.set(fileName, resolveCommonLanguageId(fileName), snapshot);
 					}
 					else {
-						files.deleteSourceFile(fileName);
+						files.delete(fileName);
 					}
 				}
 			);
@@ -79,22 +79,19 @@ export function proxyCreateProgram(
 				if (originalSourceFile && extensions.some(ext => fileName.endsWith(ext))) {
 					let sourceFile2 = parsedSourceFiles.get(originalSourceFile);
 					if (!sourceFile2) {
-						const sourceFile = files.getSourceFile(fileName);
+						const sourceFile = files.get(fileName);
 						assert(!!sourceFile, '!!sourceFile');
 						let patchedText = originalSourceFile.text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 						let scriptKind = ts.ScriptKind.TS;
-						const virtualFile = sourceFile.virtualFile?.[0];
-						if (virtualFile) {
-							for (const file of forEachEmbeddedFile(virtualFile)) {
-								if (file.typescript) {
-									scriptKind = file.typescript.scriptKind;
-									patchedText += file.snapshot.getText(0, file.snapshot.getLength());
-									break;
-								}
+						if (sourceFile.generated) {
+							const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+							if (script) {
+								scriptKind = script.scriptKind;
+								patchedText += script.code.snapshot.getText(0, script.code.snapshot.getLength());
 							}
 						}
 						sourceFile2 = ts.createSourceFile(
-							sourceFile.fileName,
+							fileName,
 							patchedText,
 							99 satisfies ts.ScriptTarget.ESNext,
 							true,

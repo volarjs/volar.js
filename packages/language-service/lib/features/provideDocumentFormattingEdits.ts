@@ -1,4 +1,4 @@
-import { SourceMap, VirtualFile, forEachEmbeddedFile, isFormattingEnabled, resolveCommonLanguageId, updateVirtualFileMaps } from '@volar/language-core';
+import { SourceMap, VirtualCode, forEachEmbeddedCode, isFormattingEnabled, resolveCommonLanguageId, updateVirtualCodeMaps } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -6,7 +6,7 @@ import { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext, ServicePluginInstance } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isInsideRange, stringToSnapshot } from '../utils/common';
-import { getEmbeddedFilesByLevel } from '../utils/featureWorkers';
+import { getEmbeddedFilesByLevel as getEmbeddedCodesByLevel } from '../utils/featureWorkers';
 
 export function register(context: ServiceContext) {
 
@@ -23,7 +23,7 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken
 	) => {
 
-		const sourceFile = context.language.files.getSourceFile(context.env.uriToFileName(uri));
+		const sourceFile = context.files.get(uri);
 		if (!sourceFile) {
 			return;
 		}
@@ -35,7 +35,7 @@ export function register(context: ServiceContext) {
 			end: document.positionAt(document.getText().length),
 		};
 
-		if (!sourceFile.virtualFile) {
+		if (!sourceFile.generated) {
 			return onTypeParams
 				? (await tryFormat(document, onTypeParams.position, onTypeParams.ch))?.edits
 				: (await tryFormat(document, range, undefined))?.edits;
@@ -44,40 +44,40 @@ export function register(context: ServiceContext) {
 		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 
 		let tempSourceSnapshot = sourceFile.snapshot;
-		const tempVirtualFile = sourceFile.virtualFile[1].createVirtualFile(sourceFile.fileName, sourceFile.languageId, sourceFile.snapshot, context.language.files)!;
+		let tempVirtualFile = sourceFile.generated.languagePlugin.createVirtualCode(uri, sourceFile.languageId, sourceFile.snapshot, context.files)!;
 		const originalDocument = document;
 
 		let level = 0;
 
 		while (true) {
 
-			const embeddedFiles = getEmbeddedFilesByLevel(context, tempVirtualFile, level++);
-			if (embeddedFiles.length === 0) {
+			const embeddedCodes = getEmbeddedCodesByLevel(context, sourceFile.id, tempVirtualFile, level++);
+			if (embeddedCodes.length === 0) {
 				break;
 			}
 
 			let edits: vscode.TextEdit[] = [];
 			const toPatchIndent: {
-				virtualFileName: string;
+				virtualCodeId: string;
 				isCodeBlock: boolean;
 				service: ServicePluginInstance;
 			}[] = [];
 
-			for (const file of embeddedFiles) {
+			for (const code of embeddedCodes) {
 
-				if (!file.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
+				if (!code.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
 					continue;
 				}
 
-				const isCodeBlock = file.mappings.length === 1
-					&& file.mappings[0].sourceOffsets.length === 1
-					&& file.mappings[0].generatedOffsets[0] === 0
-					&& file.mappings[0].lengths[0] === file.snapshot.getLength();
+				const isCodeBlock = code.mappings.length === 1
+					&& code.mappings[0].sourceOffsets.length === 1
+					&& code.mappings[0].generatedOffsets[0] === 0
+					&& code.mappings[0].lengths[0] === code.snapshot.getLength();
 				if (onTypeParams && !isCodeBlock) {
 					continue;
 				}
 
-				const docMap = createDocMap(file, sourceFile.fileName, sourceFile.languageId, tempSourceSnapshot);
+				const docMap = createDocMap(code, uri, sourceFile.languageId, tempSourceSnapshot);
 				if (!docMap) {
 					continue;
 				}
@@ -108,7 +108,7 @@ export function register(context: ServiceContext) {
 				}
 
 				toPatchIndent.push({
-					virtualFileName: file.fileName,
+					virtualCodeId: code.id,
 					isCodeBlock,
 					service: embeddedCodeResult.service[1],
 				});
@@ -130,7 +130,7 @@ export function register(context: ServiceContext) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 				tempSourceSnapshot = stringToSnapshot(newText);
-				sourceFile.virtualFile[1].updateVirtualFile(tempVirtualFile, tempSourceSnapshot, context.language.files);
+				tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.files);
 			}
 
 			if (level > 1) {
@@ -148,14 +148,14 @@ export function register(context: ServiceContext) {
 
 				for (const item of toPatchIndent) {
 
-					let virtualFile!: VirtualFile;
-					for (const file of forEachEmbeddedFile(tempVirtualFile)) {
-						if (file.fileName === item.virtualFileName) {
-							virtualFile = file;
+					let virtualCode!: VirtualCode;
+					for (const file of forEachEmbeddedCode(tempVirtualFile)) {
+						if (file.id === item.virtualCodeId) {
+							virtualCode = file;
 							break;
 						}
 					}
-					const docMap = createDocMap(virtualFile, context.env.fileNameToUri(sourceFile.fileName), sourceFile.languageId, tempSourceSnapshot);
+					const docMap = createDocMap(virtualCode, uri, sourceFile.languageId, tempSourceSnapshot);
 					if (!docMap) {
 						continue;
 					}
@@ -207,7 +207,7 @@ export function register(context: ServiceContext) {
 						const newText = TextDocument.applyEdits(document, indentEdits);
 						document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 						tempSourceSnapshot = stringToSnapshot(newText);
-						sourceFile.virtualFile[1].updateVirtualFile(tempVirtualFile, tempSourceSnapshot, context.language.files);
+						tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.files);
 					}
 				}
 			}
@@ -273,24 +273,24 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function createDocMap(file: VirtualFile, sourceFileName: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
-		const maps = updateVirtualFileMaps(file, sourceFileName2 => {
-			if (!sourceFileName2) {
-				return [sourceFileName, _sourceSnapshot];
+	function createDocMap(file: VirtualCode, sourceFileUri: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
+		const maps = updateVirtualCodeMaps(file, sourceFileUri2 => {
+			if (!sourceFileUri2) {
+				return [sourceFileUri, _sourceSnapshot];
 			}
 		});
-		if (maps.has(sourceFileName) && maps.get(sourceFileName)![0] === _sourceSnapshot) {
-			const map = maps.get(sourceFileName)!;
+		if (maps.has(sourceFileUri) && maps.get(sourceFileUri)![0] === _sourceSnapshot) {
+			const map = maps.get(sourceFileUri)!;
 			const version = fakeVersion++;
 			return new SourceMapWithDocuments(
 				TextDocument.create(
-					context.env.fileNameToUri(sourceFileName),
-					sourceLanguageId ?? resolveCommonLanguageId(sourceFileName),
+					sourceFileUri,
+					sourceLanguageId ?? resolveCommonLanguageId(sourceFileUri),
 					version,
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),
 				TextDocument.create(
-					context.env.fileNameToUri(file.fileName),
+					context.documents.getVirtualCodeUri(sourceFileUri, file.id),
 					file.languageId,
 					version,
 					file.snapshot.getText(0, file.snapshot.getLength())

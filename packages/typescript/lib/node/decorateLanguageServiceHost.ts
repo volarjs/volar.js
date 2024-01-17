@@ -1,16 +1,18 @@
-import { FileProvider, forEachEmbeddedFile } from '@volar/language-core';
+import type { FileRegistry } from '@volar/language-core';
 import { resolveCommonLanguageId } from '@volar/language-service';
 import type * as ts from 'typescript';
 
 export function decorateLanguageServiceHost(
-	virtualFiles: FileProvider,
+	virtualFiles: FileRegistry,
 	languageServiceHost: ts.LanguageServiceHost,
 	ts: typeof import('typescript'),
-	exts: string[]
 ) {
 
 	let extraProjectVersion = 0;
 
+	const exts = virtualFiles.languagePlugins
+		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
+		.flat();
 	const scripts = new Map<string, {
 		version: string;
 		snapshot: ts.IScriptSnapshot | undefined;
@@ -164,26 +166,25 @@ export function decorateLanguageServiceHost(
 			let scriptKind = ts.ScriptKind.TS;
 
 			const snapshot = getScriptSnapshot(fileName);
+
 			if (snapshot) {
 				extraProjectVersion++;
-				const sourceFile = virtualFiles.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
-				if (sourceFile.virtualFile) {
+				const sourceFile = virtualFiles.set(fileName, resolveCommonLanguageId(fileName), snapshot);
+				if (sourceFile.generated) {
 					const text = snapshot.getText(0, snapshot.getLength());
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					for (const file of forEachEmbeddedFile(sourceFile.virtualFile[0])) {
-						const ext = file.fileName.substring(fileName.length);
-						if (file.typescript && (ext === '.d.ts' || ext.match(/^\.(js|ts)x?$/))) {
-							extension = ext;
-							scriptKind = file.typescript.scriptKind;
-							patchedText += file.snapshot.getText(0, file.snapshot.getLength());
-						}
+					const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+					if (script) {
+						extension = script.extension;
+						scriptKind = script.scriptKind;
+						patchedText += script.code.snapshot.getText(0, script.code.snapshot.getLength());
 					}
 					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
 				}
 			}
-			else if (virtualFiles.getSourceFile(fileName)) {
+			else if (virtualFiles.get(fileName)) {
 				extraProjectVersion++;
-				virtualFiles.deleteSourceFile(fileName);
+				virtualFiles.delete(fileName);
 			}
 
 			scripts.set(fileName, {

@@ -1,4 +1,4 @@
-import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
+import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat, TypeScriptProjectHost } from '@volar/language-service';
 import type * as ts from 'typescript';
 import * as path from 'path-browserify';
 import { matchFiles } from '../typescript/utilities';
@@ -22,7 +22,7 @@ let currentCwd = '';
 export function createSys(
 	ts: typeof import('typescript'),
 	env: ServiceEnvironment,
-	currentDirectory: string,
+	projectHost: TypeScriptProjectHost,
 ): ts.System & {
 	version: number;
 	sync(): Promise<number>;
@@ -30,7 +30,7 @@ export function createSys(
 
 	let version = 0;
 
-	const rootPath = currentDirectory;
+	const rootPath = projectHost.getCurrentDirectory();
 	const sys = ts.sys as ts.System | undefined;
 	const root: Dir = {
 		dirs: new Map(),
@@ -40,7 +40,7 @@ export function createSys(
 	const promises = new Set<Thenable<any>>();
 	const fileWatcher = env.onDidChangeWatchedFiles?.(({ changes }) => {
 		for (const change of changes) {
-			const fileName = env.uriToFileName(change.uri);
+			const fileName = env.typescript.uriToFileName(change.uri);
 			const dirName = path.dirname(fileName);
 			const baseName = path.basename(fileName);
 			const dir = getDir(dirName);
@@ -138,7 +138,7 @@ export function createSys(
 		const dir = getDir(dirName);
 		if (dir.exists === undefined) {
 			dir.exists = false;
-			const result = env.fs?.stat(env.fileNameToUri(dirName));
+			const result = env.fs?.stat(env.typescript.fileNameToUri(dirName));
 			if (typeof result === 'object' && 'then' in result) {
 				const promise = result;
 				promises.add(promise);
@@ -182,7 +182,7 @@ export function createSys(
 	}
 
 	function handleStat(fileName: string, file: File) {
-		const result = env.fs?.stat(env.fileNameToUri(fileName));
+		const result = env.fs?.stat(env.typescript.fileNameToUri(fileName));
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
 			promises.add(promise);
@@ -268,7 +268,7 @@ export function createSys(
 		}
 		file.requestedText = true;
 
-		const uri = env.fileNameToUri(fileName);
+		const uri = env.typescript.fileNameToUri(fileName);
 		const result = env.fs?.readFile(uri, encoding);
 
 		if (typeof result === 'object' && 'then' in result) {
@@ -298,7 +298,7 @@ export function createSys(
 		}
 		dir.requestedRead = true;
 
-		const result = env.fs?.readDirectory(env.fileNameToUri(dirName || '.'));
+		const result = env.fs?.readDirectory(env.typescript.fileNameToUri(dirName || '.'));
 
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
@@ -324,7 +324,7 @@ export function createSys(
 		for (const [name, _fileType] of result) {
 			let fileType = _fileType;
 			if (fileType === 64 satisfies FileType.SymbolicLink) {
-				const stat = env.fs?.stat(env.fileNameToUri(dirName + '/' + name));
+				const stat = env.fs?.stat(env.typescript.fileNameToUri(dirName + '/' + name));
 				if (typeof stat === 'object' && 'then' in stat) {
 					const promise = stat;
 					promises.add(promise);

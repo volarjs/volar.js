@@ -1,7 +1,7 @@
 import type * as ts from 'typescript';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { createFileProvider, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
+import { createFileRegistry, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
 const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
@@ -12,10 +12,7 @@ export function createTSServerPlugin(
 	init: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
-	) => {
-		languagePlugins: LanguagePlugin[];
-		extensions: string[];
-	}
+	) => LanguagePlugin[]
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
@@ -28,25 +25,28 @@ export function createTSServerPlugin(
 					decoratedLanguageServices.add(info.languageService);
 					decoratedLanguageServiceHosts.add(info.languageServiceHost);
 
-					const { languagePlugins, extensions } = init(ts, info);
+					const languagePlugins = init(ts, info);
+					const extensions = languagePlugins
+						.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
+						.flat();
 					projectExternalFileExtensions.set(info.project, extensions);
 					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
-					const files = createFileProvider(
+					const files = createFileRegistry(
 						languagePlugins,
 						ts.sys.useCaseSensitiveFileNames,
 						fileName => {
 							const snapshot = getScriptSnapshot(fileName);
 							if (snapshot) {
-								files.updateSourceFile(fileName, resolveCommonLanguageId(fileName), snapshot);
+								files.set(fileName, resolveCommonLanguageId(fileName), snapshot);
 							}
 							else {
-								files.deleteSourceFile(fileName);
+								files.delete(fileName);
 							}
 						}
 					);
 
 					decorateLanguageService(files, info.languageService);
-					decorateLanguageServiceHost(files, info.languageServiceHost, ts, extensions);
+					decorateLanguageServiceHost(files, info.languageServiceHost, ts);
 				}
 
 				return info.languageService;

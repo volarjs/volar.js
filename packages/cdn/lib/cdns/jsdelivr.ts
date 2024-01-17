@@ -1,5 +1,4 @@
 import type { FileType, FileSystem, FileStat } from '@volar/language-service';
-import type { UriResolver } from '../types';
 import { fetchJson, fetchText } from '../utils';
 
 export const jsDelivrUriBase = 'https://cdn.jsdelivr.net/npm';
@@ -7,7 +6,7 @@ export const jsDelivrUriBase = 'https://cdn.jsdelivr.net/npm';
 export function createJsDelivrUriResolver(
 	fileNameBase: string,
 	versions: Record<string, string> = {},
-): UriResolver {
+) {
 
 	return {
 		uriToFileName,
