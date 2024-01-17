@@ -10,7 +10,7 @@ const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot 
 export function createLanguage(
 	ts: typeof import('typescript'),
 	sys: ReturnType<typeof createSys> | ts.System,
-	languages: LanguagePlugin<any>[],
+	languagePlugins: LanguagePlugin<any>[],
 	configFileName: string | undefined,
 	projectHost: TypeScriptProjectHost,
 	{ fileIdToFileName, fileNameToFileId }: {
@@ -19,7 +19,7 @@ export function createLanguage(
 	},
 ): LanguageContext {
 
-	const files = createFileRegistry(languages, sys.useCaseSensitiveFileNames, fileId => {
+	const files = createFileRegistry(languagePlugins, sys.useCaseSensitiveFileNames, fileId => {
 
 		const fileName = fileIdToFileName(fileId);
 
@@ -53,13 +53,13 @@ export function createLanguage(
 
 	let languageServiceHost = createLanguageServiceHost();
 
-	for (const language of languages) {
+	for (const language of languagePlugins) {
 		if (language.typescript?.resolveLanguageServiceHost) {
 			languageServiceHost = language.typescript.resolveLanguageServiceHost(languageServiceHost);
 		}
 	}
 
-	if (languages.some(language => language.typescript?.extraFileExtensions.length)) {
+	if (languagePlugins.some(language => language.typescript?.extraFileExtensions.length)) {
 
 		// TODO: can this share between monorepo packages?
 		const moduleCache = ts.createModuleResolutionCache(
@@ -83,7 +83,7 @@ export function createLanguage(
 			}
 			return moduleLiterals.map(moduleLiteral => {
 				let moduleName = moduleLiteral.text;
-				for (const language of languages) {
+				for (const language of languagePlugins) {
 					if (
 						sourceFile.impliedNodeFormat === 99 satisfies ts.ModuleKind.ESNext
 						&& language.typescript?.extraFileExtensions.some(ext => moduleName.endsWith('.' + ext.extension))
@@ -115,7 +115,7 @@ export function createLanguage(
 				moduleCache.clear();
 			}
 			return moduleNames.map(moduleName => {
-				for (const language of languages) {
+				for (const language of languagePlugins) {
 					if (
 						sourceFile?.impliedNodeFormat === 99 satisfies ts.ModuleKind.ESNext
 						&& language.typescript?.extraFileExtensions.some(ext => moduleName.endsWith('.' + ext.extension))
@@ -157,7 +157,17 @@ export function createLanguage(
 		const languageServiceHost: ts.LanguageServiceHost = {
 			...sys,
 			getCurrentDirectory: projectHost.getCurrentDirectory,
-			getCompilationSettings: projectHost.getCompilationSettings,
+			getCompilationSettings() {
+				const options = projectHost.getCompilationSettings();
+				if (
+					languagePlugins.some(language => language.typescript?.extraFileExtensions.length)
+					&& !options.allowNonTsExtensions
+				) {
+					console.warn('`allowNonTsExtensions` must be `true`.');
+					options.allowNonTsExtensions ??= true;
+				}
+				return options;
+			},
 			getLocalizedDiagnosticMessages: projectHost.getLocalizedDiagnosticMessages,
 			getProjectReferences: projectHost.getProjectReferences,
 			getDefaultLibFileName: options => {
@@ -181,6 +191,13 @@ export function createLanguage(
 				return sys.getDirectories(dirName);
 			},
 			readDirectory(dirName, extensions, excludes, includes, depth) {
+				const exts = new Set(extensions);
+				for (const languagePlugin of languagePlugins) {
+					for (const ext of languagePlugin.typescript?.extraFileExtensions ?? []) {
+						exts.add('.' + ext.extension);
+					}
+				}
+				extensions = [...exts];
 				return sys.readDirectory(dirName, extensions, excludes, includes, depth);
 			},
 			readFile(fileName) {

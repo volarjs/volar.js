@@ -49,7 +49,7 @@ export function register(context: ServiceContext) {
 
 				if (cacheData.virtualDocumentUri) {
 
-					const [virtualFile] = context.documents.getVirtualCode(cacheData.virtualDocumentUri);
+					const [virtualFile] = context.documents.getVirtualCodeByUri(cacheData.virtualDocumentUri);
 					if (!virtualFile) {
 						continue;
 					}

@@ -311,7 +311,7 @@ export function register(context: ServiceContext) {
 
 				for (const info of _error.relatedInformation) {
 
-					const [virtualFile] = context.documents.getVirtualCode(info.location.uri);
+					const [virtualFile] = context.documents.getVirtualCodeByUri(info.location.uri);
 
 					if (virtualFile) {
 						for (const map of context.documents.getMaps(virtualFile)) {

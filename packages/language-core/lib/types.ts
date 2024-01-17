@@ -3,6 +3,10 @@ import type * as ts from 'typescript';
 import type { FileRegistry } from './fileRegistry';
 
 export interface SourceFile extends BaseCodeInfo {
+	/**
+	 * uri or fileName
+	 */
+	id: string;
 	generated?: {
 		code: VirtualCode;
 		languagePlugin: LanguagePlugin;
@@ -13,6 +17,7 @@ export interface SourceFile extends BaseCodeInfo {
 export type CodeMapping = Mapping<CodeInformation>;
 
 export interface VirtualCode extends BaseCodeInfo {
+	id: string;
 	mappings: CodeMapping[];
 	embeddedCodes: VirtualCode[];
 	codegenStacks?: Stack[];
@@ -46,7 +51,6 @@ export interface CodeInformation {
 }
 
 export interface BaseCodeInfo {
-	id: string;
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 }

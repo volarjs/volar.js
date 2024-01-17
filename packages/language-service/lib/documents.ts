@@ -179,11 +179,11 @@ export function createDocumentProvider(files: FileRegistry) {
 				return mirrorMap2DocMirrorMap.get(map)!;
 			}
 		},
-		getVirtualCode(uri: string) {
+		getVirtualCodeByUri(uri: string) {
 			if (uri.includes('?virtualCodeId=')) {
 				const sourceFileUri = uri.split('?virtualCodeId=')[0];
 				const virtualCodeId = uri.split('?virtualCodeId=')[1];
-				return files.getVirtualCode(sourceFileUri, virtualCodeId);
+				return files.getVirtualCodeByUri(sourceFileUri, virtualCodeId);
 			}
 			return [undefined, undefined] as const;
 		},

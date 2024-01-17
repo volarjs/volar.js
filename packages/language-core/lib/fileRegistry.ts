@@ -110,7 +110,7 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 
 			return virtualCodeToMaps.get(virtualCode.snapshot)!;
 		},
-		getVirtualCode(sourceFileId: string, virtualCodeId: string) {
+		getVirtualCodeByUri(sourceFileId: string, virtualCodeId: string) {
 			const sourceFile = this.get(sourceFileId);
 			if (sourceFile) {
 				const virtualCode = sourceFile.generated?.idToFileMap.get(virtualCodeId);

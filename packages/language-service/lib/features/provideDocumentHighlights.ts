@@ -49,7 +49,7 @@ export function register(context: ServiceContext) {
 
 						recursiveChecker.add({ uri: document.uri, range: { start: reference.range.start, end: reference.range.start } });
 
-						const [virtualFile] = context.documents.getVirtualCode(document.uri);
+						const [virtualFile] = context.documents.getVirtualCodeByUri(document.uri);
 						const mirrorMap = virtualFile ? context.documents.getLinkedCodeMap(virtualFile) : undefined;
 
 						if (mirrorMap) {
