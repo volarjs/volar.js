@@ -132,7 +132,7 @@ export function registerEditorFeatures(
 					if (uri.startsWith(rootUri)) {
 						const sourceFile = languageService.context.files.get(uri);
 						if (sourceFile?.generated) {
-							const virtualFile = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceFile(sourceFile.generated.code);
+							const virtualFile = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
 							if (virtualFile) {
 								const { snapshot } = virtualFile.code;
 								fs.writeFile(uri + virtualFile.extension, snapshot.getText(0, snapshot.getLength()), () => { });

@@ -116,7 +116,7 @@ export function createLanguage(
 					result.resolvedModule.resolvedFileName = result.resolvedModule.resolvedFileName.slice(0, -5);
 					const sourceFile = files.get(fileNameToFileId(result.resolvedModule.resolvedFileName));
 					if (sourceFile?.generated) {
-						const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceFile(sourceFile.generated.code);
+						const tsCode = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
 						if (tsCode) {
 							result.resolvedModule.extension = tsCode.extension;
 						}
@@ -211,7 +211,7 @@ export function createLanguage(
 			getScriptKind(fileName) {
 				const sourceFile = files.get(fileNameToFileId(fileName));
 				if (sourceFile?.generated) {
-					const tsCode = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceFile(sourceFile.generated.code);
+					const tsCode = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
 					if (tsCode) {
 						return tsCode.scriptKind;
 					}
@@ -258,7 +258,7 @@ export function createLanguage(
 			for (const fileName of projectHost.getScriptFileNames()) {
 				const sourceFile = files.get(fileNameToFileId(fileName));
 				if (sourceFile?.generated) {
-					const tsFile = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceFile(sourceFile.generated.code);
+					const tsFile = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
 					if (tsFile) {
 						newTsVirtualFileSnapshots.add(tsFile.code.snapshot);
 						tsFileNamesSet.add(fileName); // virtual .ts
@@ -294,7 +294,7 @@ export function createLanguage(
 			const sourceFile = files.get(fileNameToFileId(fileName));
 
 			if (sourceFile?.generated) {
-				const tsFile = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceFile(sourceFile.generated.code);
+				const tsFile = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
 				if (tsFile) {
 					return tsFile.code.snapshot;
 				}
@@ -313,7 +313,7 @@ export function createLanguage(
 			const version = scriptVersions.get(fileName)!;
 			const sourceFile = files.get(fileNameToFileId(fileName));
 			if (sourceFile?.generated) {
-				const tsFile = sourceFile.generated.languagePlugin.typescript?.getLanguageServiceFile(sourceFile.generated.code);
+				const tsFile = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
 				if (tsFile) {
 					if (!version.map.has(tsFile.code.snapshot)) {
 						version.map.set(tsFile.code.snapshot, version.lastVersion++);

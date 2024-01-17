@@ -16,8 +16,8 @@ export interface SourceFile extends BaseCodeInfo {
 
 export type CodeMapping = Mapping<CodeInformation>;
 
-export interface VirtualCode extends BaseCodeInfo {
-	id: string;
+export interface VirtualCode<T extends string = string> extends BaseCodeInfo {
+	id: T;
 	mappings: CodeMapping[];
 	embeddedCodes: VirtualCode[];
 	codegenStacks?: Stack[];
@@ -62,7 +62,7 @@ export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
 	typescript?: {
 		extraFileExtensions: ts.FileExtensionInfo[];
 		resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
-		getLanguageServiceFile(rootVirtualCode: T): {
+		getScript(rootVirtualCode: T): {
 			code: VirtualCode;
 			extension: '.ts' | '.js' | '.mts' | '.mjs' | '.cjs' | '.cts' | '.d.ts' | string;
 			scriptKind: ts.ScriptKind;
