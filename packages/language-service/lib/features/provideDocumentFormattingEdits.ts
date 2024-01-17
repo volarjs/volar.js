@@ -44,7 +44,7 @@ export function register(context: ServiceContext) {
 		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 
 		let tempSourceSnapshot = sourceFile.snapshot;
-		let tempVirtualFile = sourceFile.generated.languagePlugin.generateVirtualCode(uri, sourceFile.languageId, sourceFile.snapshot, context.files)!;
+		let tempVirtualFile = sourceFile.generated.languagePlugin.createVirtualCode(uri, sourceFile.languageId, sourceFile.snapshot, context.files)!;
 		const originalDocument = document;
 
 		let level = 0;

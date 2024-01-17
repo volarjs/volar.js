@@ -48,7 +48,7 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 			sourceFiles.set(id, sourceFile);
 
 			for (const languagePlugin of languagePlugins) {
-				const virtualCode = languagePlugin.generateVirtualCode(id, languageId, snapshot, this);
+				const virtualCode = languagePlugin.createVirtualCode(id, languageId, snapshot, this);
 				if (virtualCode) {
 					sourceFile.generated = {
 						code: virtualCode,

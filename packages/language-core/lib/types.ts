@@ -56,7 +56,7 @@ export interface BaseCodeInfo {
 }
 
 export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
-	generateVirtualCode(fileId: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileRegistry): T | undefined;
+	createVirtualCode(fileId: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileRegistry): T | undefined;
 	updateVirtualCode(fileId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot, files?: FileRegistry): T;
 	disposeVirtualCode?(fileId: string, virtualCode: T, files?: FileRegistry): void;
 	typescript?: {
