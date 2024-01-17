@@ -258,9 +258,9 @@ export function createLanguage(
 			for (const fileName of projectHost.getScriptFileNames()) {
 				const sourceFile = files.get(fileNameToFileId(fileName));
 				if (sourceFile?.generated) {
-					const tsFile = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
-					if (tsFile) {
-						newTsVirtualFileSnapshots.add(tsFile.code.snapshot);
+					const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+					if (script) {
+						newTsVirtualFileSnapshots.add(script.code.snapshot);
 						tsFileNamesSet.add(fileName); // virtual .ts
 					}
 					for (const file of forEachEmbeddedCode(sourceFile.generated.code)) {
@@ -294,9 +294,9 @@ export function createLanguage(
 			const sourceFile = files.get(fileNameToFileId(fileName));
 
 			if (sourceFile?.generated) {
-				const tsFile = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
-				if (tsFile) {
-					return tsFile.code.snapshot;
+				const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+				if (script) {
+					return script.code.snapshot;
 				}
 			}
 			else if (sourceFile) {
@@ -313,12 +313,12 @@ export function createLanguage(
 			const version = scriptVersions.get(fileName)!;
 			const sourceFile = files.get(fileNameToFileId(fileName));
 			if (sourceFile?.generated) {
-				const tsFile = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
-				if (tsFile) {
-					if (!version.map.has(tsFile.code.snapshot)) {
-						version.map.set(tsFile.code.snapshot, version.lastVersion++);
+				const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+				if (script) {
+					if (!version.map.has(script.code.snapshot)) {
+						version.map.set(script.code.snapshot, version.lastVersion++);
 					}
-					return version.map.get(tsFile.code.snapshot)!.toString();
+					return version.map.get(script.code.snapshot)!.toString();
 				}
 			}
 
