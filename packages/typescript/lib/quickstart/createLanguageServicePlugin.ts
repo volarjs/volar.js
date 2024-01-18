@@ -8,8 +8,8 @@ const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>()
 const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
 const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
 
-export function createTSServerPlugin(
-	init: (
+export function createLanguageServicePlugin(
+	loadLanguagePlugins: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
 	) => LanguagePlugin[]
@@ -25,7 +25,7 @@ export function createTSServerPlugin(
 					decoratedLanguageServices.add(info.languageService);
 					decoratedLanguageServiceHosts.add(info.languageServiceHost);
 
-					const languagePlugins = init(ts, info);
+					const languagePlugins = loadLanguagePlugins(ts, info);
 					const extensions = languagePlugins
 						.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 						.flat();

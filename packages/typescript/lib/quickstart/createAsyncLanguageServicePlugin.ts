@@ -2,13 +2,13 @@ import type * as ts from 'typescript';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 import { createFileRegistry, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
-import { arrayItemsEqual } from './createTSServerPlugin';
+import { arrayItemsEqual } from './createLanguageServicePlugin';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
 const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
 const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
 
-export function createAsyncTSServerPlugin(
+export function createAsyncLanguageServicePlugin(
 	extensions: string[],
 	scriptKind: ts.ScriptKind,
 	loadLanguagePlugins: (
