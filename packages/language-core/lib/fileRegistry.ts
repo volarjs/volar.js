@@ -29,11 +29,6 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 					value.snapshot = snapshot;
 					if (value.generated) {
 						value.generated.code = value.generated.languagePlugin.updateVirtualCode(id, value.generated.code, snapshot, this);
-						value.generated.idToFileMap.clear();
-						for (const file of forEachEmbeddedCode(value.generated.code)) {
-							value.generated.idToFileMap.set(file.id, file);
-							virtualCodeToSourceFileMap.set(file, value);
-						}
 					}
 					return value;
 				}
@@ -53,12 +48,7 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 					sourceFile.generated = {
 						code: virtualCode,
 						languagePlugin,
-						idToFileMap: new Map(),
 					};
-					for (const file of forEachEmbeddedCode(virtualCode)) {
-						sourceFile.generated.idToFileMap.set(file.id, file);
-						virtualCodeToSourceFileMap.set(file, sourceFile);
-					}
 					break;
 				}
 			}
@@ -113,10 +103,11 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 		},
 		getVirtualCode(sourceFileId: string, virtualCodeId: string) {
 			const sourceFile = this.get(sourceFileId);
-			if (sourceFile) {
-				const virtualCode = sourceFile.generated?.idToFileMap.get(virtualCodeId);
-				if (virtualCode) {
-					return [virtualCode, sourceFile] as const;
+			if (sourceFile?.generated) {
+				for (const code of forEachEmbeddedCode(sourceFile.generated.code)) {
+					if (code.id === virtualCodeId) {
+						return [code, sourceFile] as const;
+					}
 				}
 			}
 			return [undefined, undefined] as const;

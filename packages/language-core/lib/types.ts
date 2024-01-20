@@ -10,7 +10,6 @@ export interface SourceFile extends BaseCodeInfo {
 	generated?: {
 		code: VirtualCode;
 		languagePlugin: LanguagePlugin;
-		idToFileMap: Map<string, VirtualCode>;
 	};
 }
 
