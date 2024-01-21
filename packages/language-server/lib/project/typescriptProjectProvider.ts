@@ -49,7 +49,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 		for (const uri of configProjects.uriKeys()) {
 			const project = configProjects.uriGet(uri)!;
 			project.then(project => {
-				if (project.serviceEnv.workspaceFolder.toString() === folder.toString()) {
+				if (project.serviceEnv.workspaceFolder === folder.toString()) {
 					configProjects.uriDelete(uri);
 					project.dispose();
 				}

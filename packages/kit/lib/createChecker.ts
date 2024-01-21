@@ -78,8 +78,8 @@ function createTypeScriptCheckerWorker(
 		configFileName,
 		languageHost,
 		{
-			fileNameToFileId: env.typescript.fileNameToUri,
-			fileIdToFileName: env.typescript.uriToFileName,
+			fileNameToFileId: env.typescript!.fileNameToUri,
+			fileIdToFileName: env.typescript!.uriToFileName,
 		},
 	);
 	const service = createLanguageService(
@@ -213,7 +213,7 @@ function createTypeScriptLanguageHost(
 
 	const host: TypeScriptProjectHost = {
 		getCurrentDirectory: () => {
-			return uriToFileName(env.workspaceFolder.toString());
+			return uriToFileName(env.workspaceFolder);
 		},
 		getCompilationSettings: () => {
 			return parsedCommandLine.options;
