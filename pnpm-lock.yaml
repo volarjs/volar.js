@@ -57,12 +57,6 @@ importers:
         specifier: latest
         version: 2.15.0
 
-  packages/cdn:
-    dependencies:
-      '@volar/language-service':
-        specifier: 2.0.0-alpha.14
-        version: link:../language-service
-
   packages/kit:
     dependencies:
       '@volar/language-service':
