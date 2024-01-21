@@ -32,7 +32,7 @@ export async function createTypeScriptServerProject(
 	const { uriToFileName, fileNameToUri } = context.runtimeEnv;
 	const ts = context.ts;
 	const host: TypeScriptProjectHost = {
-		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder.toString()),
+		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder),
 		getProjectVersion: () => projectVersion.toString(),
 		getScriptFileNames: () => rootFiles,
 		getScriptSnapshot: fileName => {
@@ -84,7 +84,7 @@ export async function createTypeScriptServerProject(
 		parsedCommandLine = await createParsedCommandLine(
 			ts,
 			sys,
-			uriToFileName(serviceEnv.workspaceFolder.toString()),
+			uriToFileName(serviceEnv.workspaceFolder),
 			tsconfig,
 			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
 		);
@@ -99,8 +99,8 @@ export async function createTypeScriptServerProject(
 				typeof tsconfig === 'string' ? tsconfig : undefined,
 				host,
 				{
-					fileNameToFileId: serviceEnv.typescript.fileNameToUri,
-					fileIdToFileName: serviceEnv.typescript.uriToFileName,
+					fileNameToFileId: serviceEnv.typescript!.fileNameToUri,
+					fileIdToFileName: serviceEnv.typescript!.uriToFileName,
 				},
 			);
 			languageService = createLanguageService(

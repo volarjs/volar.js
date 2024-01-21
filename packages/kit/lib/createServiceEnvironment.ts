@@ -6,7 +6,7 @@ import { fileNameToUri, uriToFileName } from './utils';
 export function createServiceEnvironment(getSettings: () => any): ServiceEnvironment {
 
 	return {
-		workspaceFolder: URI.file(process.cwd()),
+		workspaceFolder: URI.file(process.cwd()).toString(),
 		getConfiguration(section: string) {
 			const settings = getSettings();
 			if (section in settings) {

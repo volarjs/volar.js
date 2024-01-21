@@ -116,7 +116,7 @@ export function registerEditorFeatures(
 
 		if (languageService.context.typescript?.languageServiceHost) {
 
-			const rootUri = languageService.context.env.workspaceFolder.toString();
+			const rootUri = languageService.context.env.workspaceFolder;
 			const { languageServiceHost } = languageService.context.typescript;
 
 			for (const fileName of languageServiceHost.getScriptFileNames()) {
@@ -128,7 +128,7 @@ export function registerEditorFeatures(
 					}
 				}
 				else {
-					const uri = languageService.context.env.typescript.fileNameToUri(fileName);
+					const uri = languageService.context.env.typescript!.fileNameToUri(fileName);
 					if (uri.startsWith(rootUri)) {
 						const sourceFile = languageService.context.files.get(uri);
 						if (sourceFile?.generated) {

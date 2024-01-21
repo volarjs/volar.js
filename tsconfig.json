@@ -6,7 +6,6 @@
 	},
 	"include": [ "packages/*/tests" ],
 	"references": [
-		{ "path": "./packages/cdn/tsconfig.json" },
 		{ "path": "./packages/kit/tsconfig.json" },
 		{ "path": "./packages/typescript/tsconfig.json" },
 		{ "path": "./packages/vscode/tsconfig.json" },

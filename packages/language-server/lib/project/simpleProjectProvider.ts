@@ -42,7 +42,7 @@ export const createSimpleProjectProvider: ServerProjectProviderFactory = (contex
 
 export function createServiceEnvironment(context: ServerContext, workspaceFolder: URI) {
 	const env: ServiceEnvironment = {
-		workspaceFolder,
+		workspaceFolder: workspaceFolder.toString(),
 		fs: context.runtimeEnv.fs,
 		console: context.runtimeEnv.console,
 		locale: context.initializeParams.locale,
