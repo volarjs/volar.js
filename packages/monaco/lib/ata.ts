@@ -193,10 +193,12 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 		}
 
 		async function isValidPackageName(pkgName: string) {
+			// @aaa/bbb@latest -> @aaa/bbb
 			if (pkgName.substring(1).includes('@')) {
 				pkgName = pkgName.substring(0, pkgName.lastIndexOf('@'));
 			}
-			if (pkgName.indexOf('.') >= 0 || pkgName.endsWith('/node_modules')) {
+			// ignore @aaa/node_modules
+			if (pkgName.endsWith('/node_modules')) {
 				return false;
 			}
 			// hard code for known invalid package
