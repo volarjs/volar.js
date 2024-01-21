@@ -148,7 +148,7 @@ import myWorker from './my-lang.worker?worker';
 ```ts
 import type { LanguageService } from '@volar/language-service';
 import { editor, languages, Uri } from 'monaco-editor-core';
-import * as VolarMonaco from '@volar/monaco';
+import { activateMarkers, activateAutoInsertion, registerProviders } from '@volar/monaco';
 
 languages.register({ id: 'my-lang', extensions: ['.my-lang'] });
 
@@ -157,7 +157,7 @@ languages.onLanguage('my-lang', () => {
 		moduleId: 'vs/language/my-lang/myLangWorker',
 		label: 'my-lang',
 	});
-	VolarMonaco.editor.activateMarkers(
+	activateMarkers(
 		worker,
 		['my-lang'],
 		'my-lang-markers-owner',
@@ -166,14 +166,14 @@ languages.onLanguage('my-lang', () => {
 		editor
 	);
 	// auto close tags
-	VolarMonaco.editor.activateAutoInsertion(
+	activateAutoInsertion(
 		worker,
 		['my-lang'],
 		// sync files
 		() => [Uri.file('/Foo.my-lang'), Uri.file('/Bar.my-lang')],
 		editor
 	);
-	VolarMonaco.languages.registerProviders(worker, ['my-lang'], languages)
+	registerProviders(worker, ['my-lang'], languages)
 });
 ```
 
