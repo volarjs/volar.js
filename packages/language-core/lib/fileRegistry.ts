@@ -29,6 +29,9 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 					value.snapshot = snapshot;
 					if (value.generated) {
 						value.generated.code = value.generated.languagePlugin.updateVirtualCode(id, value.generated.code, snapshot, this);
+						for (const code of forEachEmbeddedCode(value.generated.code)) {
+							virtualCodeToSourceFileMap.set(code, value);
+						}
 					}
 					return value;
 				}
@@ -49,6 +52,9 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 						code: virtualCode,
 						languagePlugin,
 					};
+					for (const code of forEachEmbeddedCode(virtualCode)) {
+						virtualCodeToSourceFileMap.set(code, sourceFile);
+					}
 					break;
 				}
 			}
