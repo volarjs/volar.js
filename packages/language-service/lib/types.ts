@@ -52,7 +52,8 @@ export interface ServiceCommand<T extends any[]> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface ServiceContext extends LanguageContext {
+export interface ServiceContext {
+	language: LanguageContext;
 	env: ServiceEnvironment;
 	inject<Provide, K extends keyof Provide = keyof Provide>(
 		key: K,

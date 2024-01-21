@@ -23,7 +23,7 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken
 	) => {
 
-		const sourceFile = context.files.get(uri);
+		const sourceFile = context.language.files.get(uri);
 		if (!sourceFile) {
 			return;
 		}
@@ -44,7 +44,7 @@ export function register(context: ServiceContext) {
 		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
 
 		let tempSourceSnapshot = sourceFile.snapshot;
-		let tempVirtualFile = sourceFile.generated.languagePlugin.createVirtualCode(uri, sourceFile.languageId, sourceFile.snapshot, context.files)!;
+		let tempVirtualFile = sourceFile.generated.languagePlugin.createVirtualCode(uri, sourceFile.languageId, sourceFile.snapshot, context.language.files)!;
 		const originalDocument = document;
 
 		let level = 0;
@@ -130,7 +130,7 @@ export function register(context: ServiceContext) {
 				const newText = TextDocument.applyEdits(document, edits);
 				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 				tempSourceSnapshot = stringToSnapshot(newText);
-				tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.files);
+				tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.language.files);
 			}
 
 			if (level > 1) {
@@ -207,7 +207,7 @@ export function register(context: ServiceContext) {
 						const newText = TextDocument.applyEdits(document, indentEdits);
 						document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 						tempSourceSnapshot = stringToSnapshot(newText);
-						tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.files);
+						tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.language.files);
 					}
 				}
 			}

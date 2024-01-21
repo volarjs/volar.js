@@ -152,7 +152,7 @@ export function register(context: ServiceContext) {
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
 
-		const sourceFile = context.files.get(uri);
+		const sourceFile = context.language.files.get(uri);
 		if (!sourceFile) {
 			return [];
 		}

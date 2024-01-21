@@ -36,7 +36,7 @@ export async function languageFeatureWorker<T, K>(
 	combineResult?: (results: T[]) => T,
 ) {
 
-	const sourceFile = context.files.get(uri);
+	const sourceFile = context.language.files.get(uri);
 	if (!sourceFile) {
 		return;
 	}
@@ -140,10 +140,10 @@ export async function visitEmbedded(
 	}
 
 	for (const map of context.documents.getMaps(current)) {
-		const sourceFile = context.files.get(map.sourceFileDocument.uri);
+		const sourceFile = context.language.files.get(map.sourceFileDocument.uri);
 		if (
 			sourceFile?.generated?.code === rootFile
-			&& !context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(context.files.getByVirtualCode(current).id, current.id))
+			&& !context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(context.language.files.getByVirtualCode(current).id, current.id))
 			&& !await cb(current, map)
 		) {
 			return false;

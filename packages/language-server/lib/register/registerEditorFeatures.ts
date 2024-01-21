@@ -56,14 +56,14 @@ export function registerEditorFeatures(
 	});
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const languageService = (await projects.getProject(params.uri)).getLanguageService();
-		const configFileName = languageService.context.typescript?.configFileName;
+		const configFileName = languageService.context.language.typescript?.configFileName;
 		if (configFileName) {
 			return { uri: env.fileNameToUri(configFileName) };
 		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async document => {
 		const languageService = (await projects.getProject(document.uri)).getLanguageService();
-		const sourceFile = languageService.context.files.get(document.uri);
+		const sourceFile = languageService.context.language.files.get(document.uri);
 		if (sourceFile?.generated) {
 			return prune(sourceFile.generated.code);
 		}
@@ -91,7 +91,7 @@ export function registerEditorFeatures(
 		let codegenStacks: Stack[] = [];
 		const languageService = (await projects.getProject(params.fileUri)).getLanguageService();
 		const mappings: Record<string, CodeMapping[]> = {};
-		const [virtualCode] = languageService.context.files.getVirtualCode(params.fileUri, params.virtualCodeId);
+		const [virtualCode] = languageService.context.language.files.getVirtualCode(params.fileUri, params.virtualCodeId);
 		if (virtualCode) {
 			for (const map of languageService.context.documents.getMaps(virtualCode)) {
 				content = map.virtualFileDocument.getText();
@@ -114,10 +114,10 @@ export function registerEditorFeatures(
 		const fs: typeof import('fs') = await import(fsModeName);
 		const languageService = (await projects.getProject(params.uri)).getLanguageService();
 
-		if (languageService.context.typescript?.languageServiceHost) {
+		if (languageService.context.language.typescript) {
 
 			const rootUri = languageService.context.env.workspaceFolder;
-			const { languageServiceHost } = languageService.context.typescript;
+			const { languageServiceHost } = languageService.context.language.typescript;
 
 			for (const fileName of languageServiceHost.getScriptFileNames()) {
 				if (!fs.existsSync(fileName)) {
@@ -130,7 +130,7 @@ export function registerEditorFeatures(
 				else {
 					const uri = languageService.context.env.typescript!.fileNameToUri(fileName);
 					if (uri.startsWith(rootUri)) {
-						const sourceFile = languageService.context.files.get(uri);
+						const sourceFile = languageService.context.language.files.get(uri);
 						if (sourceFile?.generated) {
 							const virtualFile = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
 							if (virtualFile) {
@@ -154,8 +154,8 @@ export function registerEditorFeatures(
 			const languageService = project.getLanguageService();
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
-			if (program && languageService.context.typescript) {
-				const { configFileName, languageServiceHost } = languageService.context.typescript;
+			if (program && languageService.context.language.typescript) {
+				const { configFileName, languageServiceHost } = languageService.context.language.typescript;
 				const projectName = configFileName ?? (languageServiceHost.getCurrentDirectory() + '(inferred)');
 				const sourceFiles = program.getSourceFiles() ?? [];
 				for (const sourceFile of sourceFiles) {
