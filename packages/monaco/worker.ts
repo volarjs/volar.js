@@ -13,21 +13,28 @@ import type * as monaco from 'monaco-types';
 import type * as ts from 'typescript';
 import { createLanguage, createSys } from '@volar/typescript';
 
+export * from '@volar/language-service';
 export * from './lib/ata.js';
 
-export function createSimpleWorkerService<T = {}>(
-	languages: LanguagePlugin[],
-	services: ServicePlugin[],
-	env: ServiceEnvironment,
-	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
-	extraApis: T = {} as any,
-) {
+export function createSimpleWorkerService<T = {}>({
+	env,
+	workerContext,
+	languagePlugins = [],
+	servicePlugins = [],
+	extraApis = {} as T
+}: {
+	env: ServiceEnvironment;
+	workerContext: monaco.worker.IWorkerContext<any>;
+	languagePlugins?: LanguagePlugin[];
+	servicePlugins?: ServicePlugin[];
+	extraApis?: T;
+}) {
 	const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 	const files = createFileRegistry(
-		languages,
+		languagePlugins,
 		false,
 		uri => {
-			const model = getMirrorModels().find(model => model.uri.toString() === uri);
+			const model = workerContext.getMirrorModels().find(model => model.uri.toString() === uri);
 			if (model) {
 				const cache = snapshots.get(model);
 				if (cache && cache[0] === model.version) {
@@ -48,23 +55,26 @@ export function createSimpleWorkerService<T = {}>(
 		}
 	);
 
-	return createWorkerService(
-		{ files },
-		services,
-		env,
-		extraApis
-	);
+	return createWorkerService({ files }, servicePlugins, env, extraApis);
 }
 
-export function createTypeScriptWorkerService<T = {}>(
-	ts: typeof import('typescript'),
+export function createTypeScriptWorkerService<T = {}>({
+	typecript: ts,
+	compilerOptions,
+	env,
+	workerContext,
+	languagePlugins = [],
+	servicePlugins = [],
+	extraApis = {} as T
+}: {
+	typecript: typeof import('typescript'),
 	compilerOptions: ts.CompilerOptions,
-	languages: LanguagePlugin[],
-	services: ServicePlugin[],
-	env: ServiceEnvironment,
-	getMirrorModels: monaco.worker.IWorkerContext<any>['getMirrorModels'],
-	extraApis: T = {} as any,
-) {
+	env: ServiceEnvironment;
+	workerContext: monaco.worker.IWorkerContext<any>;
+	languagePlugins?: LanguagePlugin[];
+	servicePlugins?: ServicePlugin[];
+	extraApis?: T;
+}) {
 
 	let projectVersion = 0;
 
@@ -75,17 +85,17 @@ export function createTypeScriptWorkerService<T = {}>(
 			return env.typescript!.uriToFileName(env.workspaceFolder);
 		},
 		getScriptFileNames() {
-			return getMirrorModels().map(model => env.typescript!.uriToFileName(model.uri.toString()));
+			return workerContext.getMirrorModels().map(model => env.typescript!.uriToFileName(model.uri.toString()));
 		},
 		getProjectVersion() {
-			const models = getMirrorModels();
-			if (modelVersions.size === getMirrorModels().length) {
+			const models = workerContext.getMirrorModels();
+			if (modelVersions.size === workerContext.getMirrorModels().length) {
 				if (models.every(model => modelVersions.get(model) === model.version)) {
 					return projectVersion.toString();
 				}
 			}
 			modelVersions.clear();
-			for (const model of getMirrorModels()) {
+			for (const model of workerContext.getMirrorModels()) {
 				modelVersions.set(model, model.version);
 			}
 			projectVersion++;
@@ -93,7 +103,7 @@ export function createTypeScriptWorkerService<T = {}>(
 		},
 		getScriptSnapshot(fileName) {
 			const uri = env.typescript!.fileNameToUri(fileName);
-			const model = getMirrorModels().find(model => model.uri.toString() === uri);
+			const model = workerContext.getMirrorModels().find(model => model.uri.toString() === uri);
 			if (model) {
 				const cache = modelSnapshot.get(model);
 				if (cache && cache[0] === model.version) {
@@ -114,10 +124,10 @@ export function createTypeScriptWorkerService<T = {}>(
 		getLanguageId: id => resolveCommonLanguageId(id),
 	};
 	const sys = createSys(ts, env, host);
-	const language = createLanguage(
+	const languageContext = createLanguage(
 		ts,
 		sys,
-		languages,
+		languagePlugins,
 		undefined,
 		host,
 		{
@@ -126,7 +136,7 @@ export function createTypeScriptWorkerService<T = {}>(
 		},
 	);
 
-	return createWorkerService(language, services, env, extraApis);
+	return createWorkerService(languageContext, servicePlugins, env, extraApis);
 }
 
 function createWorkerService<T = {}>(

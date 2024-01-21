@@ -22,15 +22,22 @@ We assume you already know:
 // my-lang.worker.ts
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
-import { createLanguageService } from '@volar/monaco/worker';
+import { createSimpleWorkerService, ServiceEnvironment } from '@volar/monaco/worker';
 
 self.onmessage = () => {
 	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
-		return createLanguageService({
+		const env: ServiceEnvironment = {
+			workspaceFolder: 'file:///',
+		};
+		return createSimpleWorkerService({
 			workerContext: ctx,
-			config: {
-				// ...Language Service Config of my-lang language support
-			},
+			env,
+			languagePlugins: [
+				// ...
+			],
+			servicePlugins: [
+				// ...
+			],
 		});
 	});
 };
@@ -41,29 +48,80 @@ self.onmessage = () => {
 ```diff
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
-import { createLanguageService } from '@volar/monaco/worker';
+-import { createSimpleWorkerService, ServiceEnvironment } from '@volar/monaco/worker';
++import {
++	createTypeScriptWorkerService,
++	ServiceEnvironment,
++} from '@volar/monaco/worker';
 +import * as ts from 'typescript';
-+import createTypeScriptService, { createJsDelivrDtsHost } from 'volar-service-typescript';
++import { create as createTypeScriptService } from 'volar-service-typescript';
 
 self.onmessage = () => {
 	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
-		return createLanguageService({
-			workerContext: ctx,
-			config: {
-				// ...Language Service Config of my-lang language support
-+				services: {
-+					typescript: createTypeScriptService({
-+						// Enable auto fetch node_modules types
-+						dtsHost: createJsDelivrDtsHost({ typescript: '4.9.5' }),
-+					})
-+				},
-			},
+		const env: ServiceEnvironment = {
+			workspaceFolder: 'file:///',
 +			typescript: {
-+				module: ts,
-+				compilerOptions: {
-+					// ...tsconfig options
-+				},
++				uriToFileName: uri => uri.substring('file://'.length),
++				fileNameToUri: fileName => 'file://' + fileName,
 +			},
+		};
+-		return createSimpleWorkerService({
++		return createTypeScriptWorkerService({
++			typescript: ts,
++			compilerOptions: {
++				// ...
++			},
+			workerContext: ctx,
+			env,
+			languagePlugins: [
+				// ...
+			],
+			servicePlugins: [
+				// ...
++				createTypeScriptService(ts),
+			],
+		});
+	});
+};
+```
+
+#### Add ATA Support for TypeScript
+
+```diff
+import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
+import type * as monaco from 'monaco-editor-core';
+import {
+	createTypeScriptWorkerService,
+	ServiceEnvironment,
++	activateAutomaticTypeAcquisition,
+} from '@volar/monaco/worker';
+import * as ts from 'typescript';
+import { create as createTypeScriptService } from 'volar-service-typescript';
+
+self.onmessage = () => {
+	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
+		const env: ServiceEnvironment = {
+			workspaceFolder: 'file:///',
+			typescript: {
+				uriToFileName: uri => uri.substring('file://'.length),
+				fileNameToUri: fileName => 'file://' + fileName,
+			},
+		};
++		activateAutomaticTypeAcquisition(env);
+		return createTypeScriptWorkerService({
+			typescript: ts,
+			compilerOptions: {
+				// ...
+			},
+			workerContext: ctx,
+			env,
+			languagePlugins: [
+				// ...
+			],
+			servicePlugins: [
+				// ...
+				createTypeScriptService(ts),
+			],
 		});
 	});
 };
