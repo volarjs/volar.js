@@ -2,11 +2,13 @@ import type { Mapping, Stack } from '@volar/source-map';
 import type * as ts from 'typescript';
 import type { FileRegistry } from './fileRegistry';
 
-export interface SourceFile extends BaseCodeInfo {
+export interface SourceFile {
 	/**
 	 * uri or fileName
 	 */
 	id: string;
+	languageId: string;
+	snapshot: ts.IScriptSnapshot;
 	generated?: {
 		code: VirtualCode;
 		languagePlugin: LanguagePlugin;
@@ -15,8 +17,10 @@ export interface SourceFile extends BaseCodeInfo {
 
 export type CodeMapping = Mapping<CodeInformation>;
 
-export interface VirtualCode<T extends string = string> extends BaseCodeInfo {
+export interface VirtualCode<T extends string = string> {
 	id: T;
+	languageId: string;
+	snapshot: ts.IScriptSnapshot;
 	mappings: CodeMapping[];
 	embeddedCodes: VirtualCode[];
 	codegenStacks?: Stack[];
@@ -47,11 +51,6 @@ export interface CodeInformation {
 	structure: boolean;
 	/** virtual code is expected correctly reflect the format information of the source code */
 	format: boolean;
-}
-
-export interface BaseCodeInfo {
-	languageId: string;
-	snapshot: ts.IScriptSnapshot;
 }
 
 export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
