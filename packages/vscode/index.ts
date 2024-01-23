@@ -79,7 +79,7 @@ export function parseServerCommand(command: vscode.Command) {
 	return command;
 }
 
-export const currentLabsVersion = '2.0.0-alpha.14';
+export const currentLabsVersion = 2.0;
 
 export function createLabsInfo(languageServerProtocol: typeof import('@volar/language-server/protocol')) {
 	const onDidAddLanguageClientEmitter = new vscode.EventEmitter<BaseLanguageClient>();
