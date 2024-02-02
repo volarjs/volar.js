@@ -59,7 +59,7 @@ export function createSimpleWorkerService<T = {}>({
 }
 
 export function createTypeScriptWorkerService<T = {}>({
-	typecript: ts,
+	typescript: ts,
 	compilerOptions,
 	env,
 	workerContext,
@@ -67,7 +67,7 @@ export function createTypeScriptWorkerService<T = {}>({
 	servicePlugins = [],
 	extraApis = {} as T
 }: {
-	typecript: typeof import('typescript'),
+	typescript: typeof import('typescript'),
 	compilerOptions: ts.CompilerOptions,
 	env: ServiceEnvironment;
 	workerContext: monaco.worker.IWorkerContext<any>;
