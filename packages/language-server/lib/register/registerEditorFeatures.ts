@@ -132,10 +132,16 @@ export function registerEditorFeatures(
 					if (uri.startsWith(rootUri)) {
 						const sourceFile = languageService.context.language.files.get(uri);
 						if (sourceFile?.generated) {
-							const virtualFile = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
-							if (virtualFile) {
-								const { snapshot } = virtualFile.code;
-								fs.writeFile(uri + virtualFile.extension, snapshot.getText(0, snapshot.getLength()), () => { });
+							const mainScript = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+							if (mainScript) {
+								const { snapshot } = mainScript.code;
+								fs.writeFile(fileName + mainScript.extension, snapshot.getText(0, snapshot.getLength()), () => { });
+							}
+							if (sourceFile.generated.languagePlugin.typescript?.getExtraScripts) {
+								for (const extraScript of sourceFile.generated.languagePlugin.typescript.getExtraScripts(uri, sourceFile.generated.code)) {
+									const { snapshot } = extraScript.code;
+									fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
+								}
 							}
 						}
 					}

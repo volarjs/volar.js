@@ -180,6 +180,9 @@ export function decorateLanguageServiceHost(
 						patchedText += script.code.snapshot.getText(0, script.code.snapshot.getLength());
 					}
 					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
+					if (sourceFile.generated.languagePlugin.typescript?.getExtraScripts) {
+						console.warn('getExtraScripts() is not available in this use case.');
+					}
 				}
 			}
 			else if (virtualFiles.get(fileName)) {

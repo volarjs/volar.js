@@ -1,4 +1,4 @@
-import { createFileRegistry, FileMap, LanguagePlugin, LanguageContext, TypeScriptProjectHost } from '@volar/language-core';
+import { createFileRegistry, FileMap, LanguagePlugin, LanguageContext, TypeScriptProjectHost, ExtraServiceScript } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { forEachEmbeddedCode } from '@volar/language-core';
 import * as path from 'path-browserify';
@@ -51,7 +51,7 @@ export function createLanguage(
 		}
 	});
 
-	let languageServiceHost = createLanguageServiceHost();
+	let { languageServiceHost, getExtraScript } = createLanguageServiceHost();
 
 	for (const language of languagePlugins) {
 		if (language.typescript?.resolveLanguageServiceHost) {
@@ -134,6 +134,7 @@ export function createLanguage(
 			sys,
 			projectHost,
 			languageServiceHost,
+			getExtraScript,
 		},
 	};
 
@@ -142,6 +143,7 @@ export function createLanguage(
 		let lastProjectVersion: number | string | undefined;
 		let tsProjectVersion = 0;
 		let tsFileRegistry = new FileMap<boolean>(sys.useCaseSensitiveFileNames);
+		let extraScriptRegistry = new FileMap<ExtraServiceScript>(sys.useCaseSensitiveFileNames);
 		let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 		let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 
@@ -201,14 +203,21 @@ export function createLanguage(
 				return getScriptVersion(fileName) !== '';
 			},
 			getProjectVersion() {
-				syncProject();
+				sync();
 				return tsProjectVersion + ('version' in sys ? `:${sys.version}` : '');
 			},
 			getScriptFileNames() {
-				syncProject();
+				sync();
 				return [...tsFileRegistry.keys()];
 			},
 			getScriptKind(fileName) {
+
+				sync();
+
+				if (extraScriptRegistry.has(fileName)) {
+					return extraScriptRegistry.get(fileName)!.scriptKind;
+				}
+
 				const sourceFile = files.get(fileNameToFileId(fileName));
 				if (sourceFile?.generated) {
 					const tsCode = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
@@ -239,9 +248,17 @@ export function createLanguage(
 			getScriptSnapshot,
 		};
 
-		return languageServiceHost;
+		return {
+			languageServiceHost,
+			getExtraScript,
+		};
 
-		function syncProject() {
+		function getExtraScript(fileName: string) {
+			sync();
+			return extraScriptRegistry.get(fileName);
+		}
+
+		function sync() {
 
 			const newProjectVersion = projectHost.getProjectVersion?.();
 			const shouldUpdate = newProjectVersion === undefined || newProjectVersion !== lastProjectVersion;
@@ -250,6 +267,7 @@ export function createLanguage(
 			}
 
 			lastProjectVersion = newProjectVersion;
+			extraScriptRegistry.clear();
 
 			const newTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 			const newOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
@@ -261,10 +279,15 @@ export function createLanguage(
 					const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
 					if (script) {
 						newTsVirtualFileSnapshots.add(script.code.snapshot);
-						tsFileNamesSet.add(fileName); // virtual .ts
+						tsFileNamesSet.add(fileName);
 					}
-					for (const file of forEachEmbeddedCode(sourceFile.generated.code)) {
-						newOtherVirtualFileSnapshots.add(file.snapshot);
+					for (const extraScript of sourceFile.generated.languagePlugin.typescript?.getExtraScripts?.(fileName, sourceFile.generated.code) ?? []) {
+						newTsVirtualFileSnapshots.add(extraScript.code.snapshot);
+						tsFileNamesSet.add(extraScript.fileName);
+						extraScriptRegistry.set(extraScript.fileName, extraScript);
+					}
+					for (const code of forEachEmbeddedCode(sourceFile.generated.code)) {
+						newOtherVirtualFileSnapshots.add(code.snapshot);
 					}
 				}
 				else {
@@ -291,6 +314,12 @@ export function createLanguage(
 
 		function getScriptSnapshot(fileName: string) {
 
+			sync();
+
+			if (extraScriptRegistry.has(fileName)) {
+				return extraScriptRegistry.get(fileName)!.code.snapshot;
+			}
+
 			const sourceFile = files.get(fileNameToFileId(fileName));
 
 			if (sourceFile?.generated) {
@@ -306,12 +335,24 @@ export function createLanguage(
 
 		function getScriptVersion(fileName: string): string {
 
+			sync();
+
 			if (!scriptVersions.has(fileName)) {
 				scriptVersions.set(fileName, { lastVersion: 0, map: new WeakMap() });
 			}
 
 			const version = scriptVersions.get(fileName)!;
+
+			if (extraScriptRegistry.has(fileName)) {
+				const snapshot = extraScriptRegistry.get(fileName)!.code.snapshot;
+				if (!version.map.has(snapshot)) {
+					version.map.set(snapshot, version.lastVersion++);
+				}
+				return version.map.get(snapshot)!.toString();
+			}
+
 			const sourceFile = files.get(fileNameToFileId(fileName));
+
 			if (sourceFile?.generated) {
 				const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
 				if (script) {
@@ -323,6 +364,7 @@ export function createLanguage(
 			}
 
 			const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
+
 			if (isOpenedFile) {
 				const sourceFile = files.get(fileNameToFileId(fileName));
 				if (sourceFile && !sourceFile.generated) {
