@@ -1,6 +1,6 @@
 import type * as ts from 'typescript';
 import { decorateProgram } from './decorateProgram';
-import { FileRegistry, LanguagePlugin, createFileRegistry, resolveCommonLanguageId } from '@volar/language-core';
+import { LanguagePlugin, createFileRegistry, resolveCommonLanguageId } from '@volar/language-core';
 
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
@@ -128,11 +128,11 @@ export function proxyCreateProgram(
 				});
 			};
 
-			const program = Reflect.apply(target, thisArg, [options]) as ts.Program & {files: FileRegistry};
+			const program = Reflect.apply(target, thisArg, [options]) as ts.Program;
 
 			decorateProgram(files, program);
 
-			program.files = files;
+			(program as any).__volar__ = { files };
 
 			return program;
 
