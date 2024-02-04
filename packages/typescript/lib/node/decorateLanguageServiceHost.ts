@@ -1,5 +1,4 @@
-import type { FileRegistry } from '@volar/language-core';
-import { resolveCommonLanguageId } from '@volar/language-service';
+import { resolveCommonLanguageId, type FileRegistry } from '@volar/language-core';
 import type * as ts from 'typescript';
 
 export function decorateLanguageServiceHost(
