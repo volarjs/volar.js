@@ -53,18 +53,37 @@ export interface CodeInformation {
 	format: boolean;
 }
 
+export interface ServiceScript {
+	code: VirtualCode;
+	extension: '.ts' | '.js' | '.mts' | '.mjs' | '.cjs' | '.cts' | '.d.ts' | string;
+	scriptKind: ts.ScriptKind;
+}
+
+export interface ExtraServiceScript extends ServiceScript {
+	fileName: string;
+}
+
 export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
 	createVirtualCode(fileId: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileRegistry): T | undefined;
 	updateVirtualCode(fileId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot, files?: FileRegistry): T;
 	disposeVirtualCode?(fileId: string, virtualCode: T, files?: FileRegistry): void;
 	typescript?: {
+		/**
+		 * LSP + TS Plugin
+		 */
 		extraFileExtensions: ts.FileExtensionInfo[];
+		/**
+		 * LSP + TS Plugin
+		 */
+		getScript(rootVirtualCode: T): ServiceScript | undefined;
+		/**
+		 * LSP only
+		 */
+		getExtraScripts?(fileName: string, rootVirtualCode: T): ExtraServiceScript[];
+		/**
+		 * LSP only
+		 */
 		resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
-		getScript(rootVirtualCode: T): {
-			code: VirtualCode;
-			extension: '.ts' | '.js' | '.mts' | '.mjs' | '.cjs' | '.cts' | '.d.ts' | string;
-			scriptKind: ts.ScriptKind;
-		} | undefined;
 	};
 }
 
@@ -75,6 +94,7 @@ export interface LanguageContext {
 		sys: ts.System & { sync?(): Promise<number>; };
 		projectHost: TypeScriptProjectHost;
 		languageServiceHost: ts.LanguageServiceHost;
+		getExtraScript(fileName: string): ExtraServiceScript | undefined;
 	};
 }
 

@@ -83,11 +83,15 @@ export function proxyCreateProgram(
 						assert(!!sourceFile, '!!sourceFile');
 						let patchedText = originalSourceFile.text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 						let scriptKind = ts.ScriptKind.TS;
-						if (sourceFile.generated) {
-							const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+						if (sourceFile.generated?.languagePlugin.typescript) {
+							const { getScript, getExtraScripts } = sourceFile.generated.languagePlugin.typescript;
+							const script = getScript(sourceFile.generated.code);
 							if (script) {
 								scriptKind = script.scriptKind;
 								patchedText += script.code.snapshot.getText(0, script.code.snapshot.getLength());
+							}
+							if (getExtraScripts) {
+								console.warn('getExtraScripts() is not available in this use case.');
 							}
 						}
 						sourceFile2 = ts.createSourceFile(
