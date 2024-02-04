@@ -132,9 +132,11 @@ export function proxyCreateProgram(
 				});
 			};
 
-			const program = Reflect.apply(target, thisArg, [options]);
+			const program = Reflect.apply(target, thisArg, [options]) as ts.Program;
 
 			decorateProgram(files, program);
+
+			(program as any).__volar__ = { files };
 
 			return program;
 
