@@ -28,7 +28,7 @@ export function runTsc(
 			// proxy createProgram
 			tsc = replace(tsc, /function createProgram\(.+\) {/, s =>
 				`var createProgram = require(${JSON.stringify(proxyApiPath)}).proxyCreateProgram(`
-				+ `new Proxy({}, { get(_target, p, _receiver) {return eval(p); } } ), `
+				+ `new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } ), `
 				+ `_createProgram, `
 				+ `[${extsText}], `
 				+ `require(${JSON.stringify(__filename)}).getLanguagePlugins`
