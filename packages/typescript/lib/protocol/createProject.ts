@@ -152,12 +152,11 @@ export function createLanguage(
 			getCurrentDirectory: projectHost.getCurrentDirectory,
 			getCompilationSettings() {
 				const options = projectHost.getCompilationSettings();
-				if (
-					languagePlugins.some(language => language.typescript?.extraFileExtensions.length)
-					&& !options.allowNonTsExtensions
-				) {
-					console.warn('`allowNonTsExtensions` must be `true`.');
+				if (languagePlugins.some(language => language.typescript?.extraFileExtensions.length)) {
 					options.allowNonTsExtensions ??= true;
+					if (!options.allowNonTsExtensions) {
+						console.warn('`allowNonTsExtensions` must be `true`.');
+					}
 				}
 				return options;
 			},
