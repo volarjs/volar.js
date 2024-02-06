@@ -530,17 +530,40 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 	languageService.getCompletionsAtPosition = (fileName, position, options, formattingSettings) => {
 		const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, fileName);
 		if (virtualCode) {
+			let mainResult: ts.CompletionInfo | undefined;
+			let additionalResults: ts.CompletionInfo[] = [];
 			for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 				if (isCompletionEnabled(mapping.data)) {
+					const isAdditional = typeof mapping.data.completion === 'object' && mapping.data.completion.isAdditional;
+					if (!isAdditional && mainResult) {
+						continue;
+					}
 					const result = getCompletionsAtPosition(fileName, generateOffset + sourceFile.snapshot.getLength(), options, formattingSettings);
 					if (result) {
 						for (const entry of result.entries) {
 							entry.replacementSpan = transformSpan(files, fileName, entry.replacementSpan, isCompletionEnabled)?.textSpan;
 						}
 						result.optionalReplacementSpan = transformSpan(files, fileName, result.optionalReplacementSpan, isCompletionEnabled)?.textSpan;
+						if (isAdditional) {
+							additionalResults.push(result);
+						}
+						else {
+							mainResult = result;
+						}
 					}
-					return result;
 				}
+			}
+			if (!mainResult && additionalResults.length) {
+				mainResult = additionalResults.shift();
+			}
+			if (mainResult) {
+				return {
+					...mainResult,
+					entries: [
+						...mainResult.entries,
+						...additionalResults.map(additionalResult => additionalResult.entries).flat(),
+					],
+				};
 			}
 		}
 		else {
