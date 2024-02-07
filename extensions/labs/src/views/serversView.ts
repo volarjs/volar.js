@@ -303,10 +303,7 @@ export function activate(context: vscode.ExtensionContext) {
 		context,
 		extension => {
 			const { version } = extension.exports.volarLabs;
-			if (
-				version === lsp.currentLabsVersion
-				|| (version === 2 && lsp.currentLabsVersion === '2.0.0-alpha.14') // TODO: remove this line after v2.1
-			) {
+			if (isValidVersion(version)) {
 				for (const languageClient of extension.exports.volarLabs.languageClients) {
 					context.subscriptions.push(
 						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
@@ -327,4 +324,9 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		},
 	);
+}
+
+export function isValidVersion(version: string | number) {
+	return version === lsp.currentLabsVersion
+		|| (lsp.currentLabsVersion === 2 && version === '2.0.0-alpha.14'); // TODO: remove this line after v2.1
 }

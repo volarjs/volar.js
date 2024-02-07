@@ -1,8 +1,9 @@
 import type { GetVirtualFileRequest, UpdateVirtualCodeStateNotification } from '@volar/language-server';
-import { currentLabsVersion, type BaseLanguageClient, type LabsInfo } from '@volar/vscode';
+import type { BaseLanguageClient, LabsInfo } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { useVolarExtensions } from '../common/shared';
 import { activate as activateShowVirtualFiles, sourceUriToVirtualUris, virtualUriToSourceUri } from '../common/showVirtualFile';
+import { isValidVersion } from './serversView';
 
 interface VirtualFileItem {
 	extension: vscode.Extension<LabsInfo>;
@@ -148,7 +149,7 @@ export function activate(context: vscode.ExtensionContext) {
 		context,
 		extension => {
 			const { version } = extension.exports.volarLabs;
-			if (version === currentLabsVersion) {
+			if (isValidVersion(version)) {
 				for (const languageClient of extension.exports.volarLabs.languageClients) {
 					context.subscriptions.push(
 						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())

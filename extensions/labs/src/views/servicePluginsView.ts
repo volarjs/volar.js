@@ -1,7 +1,8 @@
 import type { GetServicePluginsRequest, UpdateServicePluginStateNotification } from '@volar/language-server';
-import { currentLabsVersion, type BaseLanguageClient, type LabsInfo } from '@volar/vscode';
+import type { BaseLanguageClient, LabsInfo } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { getIconPath, useVolarExtensions } from '../common/shared';
+import { isValidVersion } from './serversView';
 
 interface ServicePluginItem {
 	extension: vscode.Extension<LabsInfo>;
@@ -102,7 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
 		context,
 		extension => {
 			const { version } = extension.exports.volarLabs;
-			if (version === currentLabsVersion) {
+			if (isValidVersion(version)) {
 				for (const languageClient of extension.exports.volarLabs.languageClients) {
 					context.subscriptions.push(
 						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
