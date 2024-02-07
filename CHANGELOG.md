@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.2](https://github.com/volarjs/volar.js/compare/v2.0.1...v2.0.2) (2024-02-08)
+
+### Bug Fixes
+
+- **labs:** extension not working with framework version 2.0.0
+- **typescript:** remove runtime dependency on `@volar/language-service`
+- **typescript:** additional completion not working in ts plugin
+- **typescript:** remove warning when `allowNonTsExtensions` is not set
+
 ## [2.0.1](https://github.com/volarjs/volar.js/compare/v2.0.0...v2.0.1) (2024-02-05)
 
 ### Features
