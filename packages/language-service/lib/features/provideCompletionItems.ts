@@ -3,7 +3,9 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext, ServicePluginInstance } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformCompletionList } from '../utils/transform';
-import { visitEmbedded } from '../utils/featureWorkers';
+import { eachEmbeddedDocument } from '../utils/featureWorkers';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
+import type { SourceMapWithDocuments } from '../documents';
 
 export interface ServiceCompletionData {
 	uri: string;
@@ -14,17 +16,13 @@ export interface ServiceCompletionData {
 
 export function register(context: ServiceContext) {
 
-	let cache: {
-		uri: string,
-		data: {
-			virtualDocumentUri: string | undefined,
-			service: ServicePluginInstance,
-			serviceIndex: number,
-			list: vscode.CompletionList,
-		}[],
-		mainCompletion: {
-			documentUri: string,
-		} | undefined,
+	let lastResult: {
+		uri: string;
+		results: {
+			virtualDocumentUri: string | undefined;
+			service: ServicePluginInstance;
+			list: vscode.CompletionList | undefined | null;
+		}[];
 	} | undefined;
 
 	return async (
@@ -35,17 +33,25 @@ export function register(context: ServiceContext) {
 	) => {
 
 		const sourceFile = context.language.files.get(uri);
+		if (!sourceFile) {
+			return {
+				isIncomplete: false,
+				items: [],
+			};
+		}
 
 		if (
 			completionContext?.triggerKind === 3 satisfies typeof vscode.CompletionTriggerKind.TriggerForIncompleteCompletions
-			&& cache?.uri === uri
+			&& lastResult?.uri === uri
 		) {
 
-			for (const cacheData of cache.data) {
+			for (const cacheData of lastResult.results) {
 
-				if (!cacheData.list.isIncomplete) {
+				if (!cacheData.list?.isIncomplete) {
 					continue;
 				}
+
+				const serviceIndex = context.services.findIndex(service => service[1] === cacheData.service);
 
 				if (cacheData.virtualDocumentUri) {
 
@@ -62,46 +68,47 @@ export function register(context: ServiceContext) {
 								continue;
 							}
 
-							const embeddedCompletionList = await cacheData.service.provideCompletionItems(map.virtualFileDocument, mapped, completionContext, token);
+							cacheData.list = await cacheData.service.provideCompletionItems(map.virtualFileDocument, mapped, completionContext, token);
 
-							if (!embeddedCompletionList) {
-								cacheData.list.isIncomplete = false;
+							if (!cacheData.list) {
 								continue;
 							}
 
-							cacheData.list = transformCompletionList(
-								embeddedCompletionList,
-								range => map.getSourceRange(range),
-								map.virtualFileDocument,
-								(newItem, oldItem) => newItem.data = {
+							for (const item of cacheData.list.items) {
+								item.data = {
 									uri,
 									original: {
-										additionalTextEdits: oldItem.additionalTextEdits,
-										textEdit: oldItem.textEdit,
-										data: oldItem.data,
+										additionalTextEdits: item.additionalTextEdits,
+										textEdit: item.textEdit,
+										data: item.data,
 									},
-									serviceIndex: cacheData.serviceIndex,
+									serviceIndex,
 									virtualDocumentUri: map.virtualFileDocument.uri,
-								} satisfies ServiceCompletionData,
+								} satisfies ServiceCompletionData;
+							}
+
+							cacheData.list = transformCompletionList(
+								cacheData.list,
+								range => map.getSourceRange(range),
+								map.virtualFileDocument,
 							);
 						}
 					}
 				}
-				else if (sourceFile) {
+				else {
 
 					if (!cacheData.service.provideCompletionItems) {
 						continue;
 					}
 
 					const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-					const completionList = await cacheData.service.provideCompletionItems(document, position, completionContext, token);
+					cacheData.list = await cacheData.service.provideCompletionItems(document, position, completionContext, token);
 
-					if (!completionList) {
-						cacheData.list.isIncomplete = false;
+					if (!cacheData.list) {
 						continue;
 					}
 
-					completionList.items.forEach(item => {
+					for (const item of cacheData.list.items) {
 						item.data = {
 							uri,
 							original: {
@@ -109,121 +116,34 @@ export function register(context: ServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							serviceIndex: cacheData.serviceIndex,
+							serviceIndex,
 							virtualDocumentUri: undefined,
 						} satisfies ServiceCompletionData;
-					});
+					}
 				}
 			}
 		}
 		else {
 
-			const rootVirtualFile = context.language.files.get(uri)?.generated?.code;
-
-			cache = {
+			lastResult = {
 				uri,
-				data: [],
-				mainCompletion: undefined,
+				results: [],
 			};
 
 			// monky fix https://github.com/johnsoncodehk/volar/issues/1358
 			let isFirstMapping = true;
+			let mainCompletionUri: string | undefined;
 
-			if (rootVirtualFile) {
+			const services = [...context.services]
+				.filter(service => !context.disabledServicePlugins.has(service[1]))
+				.sort((a, b) => sortServices(a[1], b[1]));
 
-				await visitEmbedded(context, rootVirtualFile, async (_, map) => {
-
-					const services = [...context.services]
-						.filter(service => !context.disabledServicePlugins.has(service[1]))
-						.sort((a, b) => sortServices(a[1], b[1]));
-
-					let _data: CodeInformation | undefined;
-
-					for (const mapped of map.getGeneratedPositions(position, data => {
-						_data = data;
-						return isCompletionEnabled(data);
-					})) {
-
-						for (const service of services) {
-
-							if (token.isCancellationRequested) {
-								break;
-							}
-
-							if (!service[1].provideCompletionItems) {
-								continue;
-							}
-
-							if (service[1].isAdditionalCompletion && !isFirstMapping) {
-								continue;
-							}
-
-							if (completionContext?.triggerCharacter && !service[0].triggerCharacters?.includes(completionContext.triggerCharacter)) {
-								continue;
-							}
-
-							const isAdditional = _data && typeof _data.completion === 'object' && _data.completion.isAdditional || service[1].isAdditionalCompletion;
-
-							if (cache!.mainCompletion && (!isAdditional || cache?.mainCompletion.documentUri !== map.virtualFileDocument.uri)) {
-								continue;
-							}
-
-							// avoid duplicate items with .vue and .vue.html
-							if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service[1])) {
-								continue;
-							}
-
-							const embeddedCompletionList = await service[1].provideCompletionItems(map.virtualFileDocument, mapped, completionContext, token);
-
-							if (!embeddedCompletionList || !embeddedCompletionList.items.length) {
-								continue;
-							}
-
-							if (typeof _data?.completion === 'object' && _data.completion.onlyImport) {
-								embeddedCompletionList.items = embeddedCompletionList.items.filter(item => !!item.labelDetails);
-							}
-
-							if (!isAdditional) {
-								cache!.mainCompletion = { documentUri: map.virtualFileDocument.uri };
-							}
-
-							const completionList = transformCompletionList(
-								embeddedCompletionList,
-								range => map.getSourceRange(range, isCompletionEnabled),
-								map.virtualFileDocument,
-								(newItem, oldItem) => newItem.data = {
-									uri,
-									original: {
-										additionalTextEdits: oldItem.additionalTextEdits,
-										textEdit: oldItem.textEdit,
-										data: oldItem.data,
-									},
-									serviceIndex: context.services.indexOf(service),
-									virtualDocumentUri: map.virtualFileDocument.uri,
-								} satisfies ServiceCompletionData,
-							);
-
-							cache!.data.push({
-								virtualDocumentUri: map.virtualFileDocument.uri,
-								service: service[1],
-								serviceIndex: context.services.indexOf(service),
-								list: completionList,
-							});
-						}
-
-						isFirstMapping = false;
-					}
-
-					return true;
-				});
-			}
-
-			if (sourceFile) {
-
-				const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-				const services = [...context.services]
-					.filter(service => !context.disabledServicePlugins.has(service[1]))
-					.sort((a, b) => sortServices(a[1], b[1]));
+			const worker = async (
+				document: TextDocument,
+				position: vscode.Position,
+				map?: SourceMapWithDocuments<CodeInformation>,
+				codeInfo?: CodeInformation | undefined,
+			) => {
 
 				for (const service of services) {
 
@@ -243,26 +163,34 @@ export function register(context: ServiceContext) {
 						continue;
 					}
 
-					if (cache.mainCompletion && (!service[1].isAdditionalCompletion || cache.mainCompletion.documentUri !== document.uri)) {
+					const isAdditional = (codeInfo && typeof codeInfo.completion === 'object' && codeInfo.completion.isAdditional) || service[1].isAdditionalCompletion;
+
+					if (mainCompletionUri && (!isAdditional || mainCompletionUri !== document.uri)) {
 						continue;
 					}
 
 					// avoid duplicate items with .vue and .vue.html
-					if (service[1].isAdditionalCompletion && cache?.data.some(data => data.service === service[1])) {
+					if (service[1].isAdditionalCompletion && lastResult?.results.some(data => data.service === service[1])) {
 						continue;
 					}
 
-					const completionList = await service[1].provideCompletionItems(document, position, completionContext, token);
+					let completionList = await service[1].provideCompletionItems(document, position, completionContext, token);
 
 					if (!completionList || !completionList.items.length) {
 						continue;
 					}
 
-					if (!service[1].isAdditionalCompletion) {
-						cache.mainCompletion = { documentUri: document.uri };
+					if (typeof codeInfo?.completion === 'object' && codeInfo.completion.onlyImport) {
+						completionList.items = completionList.items.filter(item => !!item.labelDetails);
 					}
 
-					completionList.items.forEach(item => {
+					if (!isAdditional) {
+						mainCompletionUri = document.uri;
+					}
+
+					const serviceIndex = context.services.indexOf(service);
+
+					for (const item of completionList.items) {
 						item.data = {
 							uri,
 							original: {
@@ -270,32 +198,62 @@ export function register(context: ServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							serviceIndex: context.services.indexOf(service),
-							virtualDocumentUri: undefined,
+							serviceIndex,
+							virtualDocumentUri: map ? document.uri : undefined,
 						} satisfies ServiceCompletionData;
-					});
+					}
 
-					cache.data.push({
-						virtualDocumentUri: undefined,
+					if (map) {
+						completionList = transformCompletionList(
+							completionList,
+							range => map.getSourceRange(range, isCompletionEnabled),
+							document,
+						);
+					}
+
+					lastResult?.results.push({
+						virtualDocumentUri: map ? document.uri : undefined,
 						service: service[1],
-						serviceIndex: context.services.indexOf(service),
 						list: completionList,
 					});
 				}
+
+				isFirstMapping = false;
+			};
+
+			if (sourceFile.generated) {
+
+				for (const map of eachEmbeddedDocument(context, sourceFile.generated.code)) {
+
+					let _data: CodeInformation | undefined;
+
+					for (const mappedPosition of map.getGeneratedPositions(position, data => {
+						_data = data;
+						return isCompletionEnabled(data);
+					})) {
+						await worker(map.virtualFileDocument, mappedPosition, map, _data);
+					}
+				}
+			}
+			else {
+
+				const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+
+				await worker(document, position);
 			}
 		}
 
-		return combineCompletionList(cache.data.map(cacheData => cacheData.list));
+		return combineCompletionList(lastResult.results.map(cacheData => cacheData.list));
 
 		function sortServices(a: ServicePluginInstance, b: ServicePluginInstance) {
 			return (b.isAdditionalCompletion ? -1 : 1) - (a.isAdditionalCompletion ? -1 : 1);
 		}
 
-		function combineCompletionList(lists: vscode.CompletionList[]): vscode.CompletionList {
+		function combineCompletionList(lists: (vscode.CompletionList | undefined | null)[]): vscode.CompletionList {
 			return {
-				isIncomplete: lists.some(list => list.isIncomplete),
-				itemDefaults: lists.find(list => list.itemDefaults)?.itemDefaults,
-				items: lists.map(list => list.items).flat(),
+				isIncomplete: lists.some(list => list?.isIncomplete),
+				itemDefaults: lists.find(list => list?.itemDefaults)?.itemDefaults,
+				items: lists.map(list => list?.items ?? []).flat(),
 			};
 		}
 	};

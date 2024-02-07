@@ -1,7 +1,8 @@
+import { isRenameEnabled, resolveRenameEditText, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { notEmpty } from './common';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext } from '../types';
-import { type CodeInformation, resolveRenameEditText, isRenameEnabled } from '@volar/language-core';
+import { notEmpty } from './common';
 
 export function transformCompletionItem<T extends vscode.CompletionItem>(
 	item: T,
@@ -22,8 +23,7 @@ export function transformCompletionItem<T extends vscode.CompletionItem>(
 export function transformCompletionList<T extends vscode.CompletionList>(
 	completionList: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
-	document: vscode.TextDocument,
-	onItem?: (newItem: vscode.CompletionItem, oldItem: vscode.CompletionItem) => void,
+	document: TextDocument,
 ): T {
 	return {
 		isIncomplete: completionList.isIncomplete,
@@ -38,11 +38,7 @@ export function transformCompletionList<T extends vscode.CompletionList>(
 					: getOtherRange(completionList.itemDefaults.editRange)
 				: undefined,
 		} : undefined,
-		items: completionList.items.map(item => {
-			const newItem = transformCompletionItem(item, getOtherRange, document);
-			onItem?.(newItem, item);
-			return newItem;
-		}),
+		items: completionList.items.map(item => transformCompletionItem(item, getOtherRange, document)),
 	} as T;
 }
 

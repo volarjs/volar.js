@@ -45,7 +45,7 @@ export async function languageFeatureWorker<T, K>(
 
 	if (sourceFile.generated) {
 
-		await visitEmbedded(context, sourceFile.generated.code, async (_file, map) => {
+		for (const map of eachEmbeddedDocument(context, sourceFile.generated.code)) {
 
 			for (const mappedArg of eachVirtualDocParams(map)) {
 
@@ -70,13 +70,11 @@ export async function languageFeatureWorker<T, K>(
 					results.push(result);
 
 					if (!combineResult) {
-						return false;
+						break;
 					}
 				}
 			}
-
-			return true;
-		});
+		}
 	}
 	else {
 
@@ -126,31 +124,25 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 	}
 }
 
-export async function visitEmbedded(
+export function* eachEmbeddedDocument(
 	context: ServiceContext,
 	current: VirtualCode,
-	cb: (file: VirtualCode, sourceMap: SourceMapWithDocuments<CodeInformation>) => Promise<boolean>,
-	rootFile = current,
-) {
+	rootCode = current,
+): Generator<SourceMapWithDocuments<CodeInformation>> {
 
-	for (const embedded of current.embeddedCodes) {
-		if (!await visitEmbedded(context, embedded, cb, rootFile)) {
-			return false;
-		}
+	for (const embeddedCode of current.embeddedCodes) {
+		yield* eachEmbeddedDocument(context, embeddedCode, rootCode);
 	}
 
 	for (const map of context.documents.getMaps(current)) {
 		const sourceFile = context.language.files.get(map.sourceFileDocument.uri);
 		if (
-			sourceFile?.generated?.code === rootFile
+			sourceFile?.generated?.code === rootCode
 			&& !context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(context.language.files.getByVirtualCode(current).id, current.id))
-			&& !await cb(current, map)
 		) {
-			return false;
+			yield map;
 		}
 	}
-
-	return true;
 }
 
 export function getEmbeddedFilesByLevel(context: ServiceContext, sourceFileUri: string, rootFile: VirtualCode, level: number) {

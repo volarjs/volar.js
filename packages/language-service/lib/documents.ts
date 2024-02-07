@@ -179,6 +179,7 @@ export function createDocumentProvider(files: FileRegistry) {
 				return mirrorMap2DocMirrorMap.get(map)!;
 			}
 		},
+		// TODO: rename to getVirtualCodeByDocumentUri
 		getVirtualCodeByUri(uri: string) {
 			if (uri.includes('?virtualCodeId=')) {
 				const sourceFileUri = uri.split('?virtualCodeId=')[0];
@@ -187,6 +188,7 @@ export function createDocumentProvider(files: FileRegistry) {
 			}
 			return [undefined, undefined] as const;
 		},
+		// TODO: rename to getDocumentUriByVirtualCode
 		getVirtualCodeUri(sourceFileUri: string, virtualCodeId: string) {
 			return sourceFileUri + `?virtualCodeId=${virtualCodeId}`;
 		},
