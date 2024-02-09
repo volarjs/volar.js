@@ -92,7 +92,9 @@ export function activate(context: vscode.ExtensionContext) {
 								: element.generated.languageId === 'javascriptreact' ? 'jsx'
 									: element.generated.languageId === 'jade' ? 'pug'
 										: element.generated.languageId === 'markdown' ? 'md'
-											: element.generated.languageId)
+											: element.generated.languageId === 'glimmer-ts' ? 'gts'
+												: element.generated.languageId === 'glimmer-js' ? 'gjs'
+													: element.generated.languageId)
 				),
 				command: {
 					command: '_volar.action.openVirtualFile',
