@@ -2,8 +2,10 @@ import type { GetVirtualFileRequest, UpdateVirtualCodeStateNotification } from '
 import type { BaseLanguageClient, LabsInfo } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { useVolarExtensions } from '../common/shared';
-import { activate as activateShowVirtualFiles, sourceUriToVirtualUris, virtualUriToSourceUri } from '../common/showVirtualFile';
+import { activate as activateShowVirtualFiles, sourceDocUriToVirtualDocUris, virtualDocUriToSourceDocUri } from '../common/showVirtualFile';
 import { isValidVersion } from './serversView';
+
+export const VOLAR_VIRTUAL_CODE_SCHEME = 'volar_virtual_code';
 
 interface VirtualFileItem {
 	extension: vscode.Extension<LabsInfo>;
@@ -12,6 +14,8 @@ interface VirtualFileItem {
 	generated: NonNullable<GetVirtualFileRequest.ResponseType>;
 	isRoot: boolean;
 }
+
+export const uriToVirtualCode = new Map<string, { fileUri: string; virtualCodeId: string; }>();
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -64,15 +68,31 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		},
 		getTreeItem(element) {
-			const uri = getVirtualCodeUri(element.generated.fileUri + '?virtualCodeId=' + element.generated.virtualCodeId, element.client.name);
-			virtualUriToSourceUri.set(uri.toString(), {
+			const ext = element.generated.languageId === 'typescript' ? '.ts'
+				: element.generated.languageId === 'javascript' ? '.js'
+					: element.generated.languageId === 'typescriptreact' ? '.tsx'
+						: element.generated.languageId === 'javascriptreact' ? '.jsx'
+							: element.generated.languageId === 'jade' ? '.pug'
+								: element.generated.languageId === 'markdown' ? '.md'
+									: element.generated.languageId === 'glimmer-ts' ? '.gts'
+										: element.generated.languageId === 'glimmer-js' ? '.gjs'
+											: '.' + element.generated.languageId;
+			const uri = vscode.Uri.from({
+				scheme: VOLAR_VIRTUAL_CODE_SCHEME,
+				// @ts-expect-error
+				authority: element.client._id,
+				path: '/' + element.generated.virtualCodeId + ext,
+				fragment: encodeURIComponent(element.sourceDocumentUri),
+			});
+			console.log(uri.toString());
+			virtualDocUriToSourceDocUri.set(uri.toString(), {
 				fileUri: element.sourceDocumentUri,
 				virtualCodeId: element.generated.virtualCodeId,
 			});
 
-			const virtualFileUris = sourceUriToVirtualUris.get(element.sourceDocumentUri) ?? new Set<string>();
+			const virtualFileUris = sourceDocUriToVirtualDocUris.get(element.sourceDocumentUri) ?? new Set<string>();
 			virtualFileUris.add(uri.toString());
-			sourceUriToVirtualUris.set(element.sourceDocumentUri, virtualFileUris);
+			sourceDocUriToVirtualDocUris.set(element.sourceDocumentUri, virtualFileUris);
 
 			let description = '';
 			description += `version: ${element.generated.version}`;
@@ -85,19 +105,7 @@ export function activate(context: vscode.ExtensionContext) {
 				label: element.generated.virtualCodeId,
 				description,
 				collapsibleState: element.generated.embeddedCodes.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
-				resourceUri: vscode.Uri.parse(
-					'file:///a.' + (
-						element.generated.languageId === 'typescript' ? 'ts'
-							: element.generated.languageId === 'javascript' ? 'js'
-								: element.generated.languageId === 'typescriptreact' ? 'tsx'
-									: element.generated.languageId === 'javascriptreact' ? 'jsx'
-										: element.generated.languageId === 'jade' ? 'pug'
-											: element.generated.languageId === 'markdown' ? 'md'
-												: element.generated.languageId === 'glimmer-ts' ? 'gts'
-													: element.generated.languageId === 'glimmer-js' ? 'gjs'
-														: element.generated.languageId
-					)
-				),
+				resourceUri: uri,
 				command: {
 					command: '_volar.action.openVirtualFile',
 					title: '',
@@ -113,22 +121,16 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('_volar.action.openVirtualFile', async (uri: vscode.Uri) => {
+		vscode.commands.registerCommand('_volar.action.openVirtualFile', (uri: vscode.Uri) => {
 			vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
 		}),
-		vscode.window.onDidChangeActiveTextEditor(e => {
+		vscode.window.onDidChangeActiveTextEditor(editor => {
 
-			if (!e) {
+			if (!editor) {
 				return;
 			}
 
-			const document = e.document;
-			const isVirtualFile = extensions
-				.some(extension => extension.exports.volarLabs.languageClients.some(
-					client => client.name
-						.replace(/ /g, '_')
-						.toLowerCase() === document.uri.scheme
-				));
+			const isVirtualFile = editor.document.uri.scheme === VOLAR_VIRTUAL_CODE_SCHEME;
 			if (isVirtualFile) {
 				return;
 			}
@@ -178,10 +180,4 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 	);
-}
-
-function getVirtualCodeUri(uri: string, clientName: string) {
-	return vscode.Uri
-		.parse(uri)
-		.with({ scheme: clientName.replace(/ /g, '_').toLowerCase() });
 }

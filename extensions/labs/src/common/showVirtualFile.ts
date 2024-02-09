@@ -2,38 +2,27 @@ import type { CodeInformation } from '@volar/language-server';
 import { SourceMap, Stack } from '@volar/source-map';
 import { BaseLanguageClient, LabsInfo, TextDocument } from '@volar/vscode';
 import * as vscode from 'vscode';
+import { VOLAR_VIRTUAL_CODE_SCHEME } from '../views/virtualFilesView';
 
 const mappingDecorationType = vscode.window.createTextEditorDecorationType({
-	borderWidth: '1px',
+	borderWidth: '0.5px',
 	borderStyle: 'solid',
-	overviewRulerColor: 'blue',
-	overviewRulerLane: vscode.OverviewRulerLane.Right,
-	light: {
-		// this color will be used in light color themes
-		borderColor: 'darkblue'
-	},
-	dark: {
-		// this color will be used in dark color themes
-		borderColor: 'lightblue'
-	}
 });
 const mappingSelectionDecorationType = vscode.window.createTextEditorDecorationType({
-	light: {
-		backgroundColor: 'lightblue'
-	},
-	dark: {
-		backgroundColor: 'darkblue'
-	}
+	borderWidth: '1px',
+	borderStyle: 'solid',
+	borderColor: 'darkorange',
 });
 const mappingCursorDecorationType = vscode.window.createTextEditorDecorationType({
 	borderWidth: '1px',
 	borderStyle: 'solid',
-	backgroundColor: 'darkorange'
+	borderColor: 'darkorange',
+	backgroundColor: 'darkorange',
 });
 
-export const sourceUriToVirtualUris = new Map<string, Set<string>>();
+export const sourceDocUriToVirtualDocUris = new Map<string, Set<string>>();
 
-export const virtualUriToSourceUri = new Map<string, { fileUri: string, virtualCodeId: string; }>();
+export const virtualDocUriToSourceDocUri = new Map<string, { fileUri: string, virtualCodeId: string; }>();
 
 export async function activate(info: LabsInfo) {
 
@@ -55,8 +44,8 @@ export async function activate(info: LabsInfo) {
 	subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateDecorations));
 	subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(updateDecorations));
 	subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => {
-		if (sourceUriToVirtualUris.has(e.document.uri.toString())) {
-			const virtualUris = sourceUriToVirtualUris.get(e.document.uri.toString());
+		if (sourceDocUriToVirtualDocUris.has(e.document.uri.toString())) {
+			const virtualUris = sourceDocUriToVirtualDocUris.get(e.document.uri.toString());
 			clearTimeout(updateVirtualDocument);
 			updateVirtualDocument = setTimeout(() => {
 				virtualUris?.forEach(uri => {
@@ -71,14 +60,14 @@ export async function activate(info: LabsInfo) {
 	function registerProviders(client: BaseLanguageClient) {
 
 		subscriptions.push(client.onDidChangeState(() => {
-			for (const virtualUris of sourceUriToVirtualUris.values()) {
+			for (const virtualUris of sourceDocUriToVirtualDocUris.values()) {
 				virtualUris.forEach(uri => {
 					docChangeEvent.fire(vscode.Uri.parse(uri));
 				});
 			}
 		}));
 
-		subscriptions.push(vscode.languages.registerHoverProvider({ scheme: client.name.replace(/ /g, '_').toLowerCase() }, {
+		subscriptions.push(vscode.languages.registerHoverProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME }, {
 			async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
 				const maps = virtualUriToSourceMap.get(document.uri.toString());
@@ -116,7 +105,7 @@ export async function activate(info: LabsInfo) {
 			}
 		}));
 
-		subscriptions.push(vscode.languages.registerDefinitionProvider({ scheme: client.name.replace(/ /g, '_').toLowerCase() }, {
+		subscriptions.push(vscode.languages.registerDefinitionProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME.toLowerCase() }, {
 			async provideDefinition(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
 				const stacks = virtualUriToStacks.get(document.uri.toString());
@@ -142,7 +131,7 @@ export async function activate(info: LabsInfo) {
 			}
 		}));
 
-		subscriptions.push(vscode.languages.registerInlayHintsProvider({ scheme: client.name.replace(/ /g, '_').toLowerCase() }, {
+		subscriptions.push(vscode.languages.registerInlayHintsProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME.toLowerCase() }, {
 			provideInlayHints(document, range) {
 				const stacks = virtualUriToStacks.get(document.uri.toString());
 				const result: vscode.InlayHint[] = [];
@@ -174,12 +163,12 @@ export async function activate(info: LabsInfo) {
 		}));
 
 		subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
-			client.name.replace(/ /g, '_').toLowerCase(),
+			VOLAR_VIRTUAL_CODE_SCHEME,
 			{
 				onDidChange: docChangeEvent.event,
 				async provideTextDocumentContent(uri: vscode.Uri): Promise<string | undefined> {
 
-					const source = virtualUriToSourceUri.get(uri.toString());
+					const source = virtualDocUriToSourceDocUri.get(uri.toString());
 					if (source) {
 
 						const virtualCode = await client.sendRequest(
@@ -196,10 +185,10 @@ export async function activate(info: LabsInfo) {
 									sourceEditor.document.version,
 									new SourceMap(mappings),
 								]);
-								if (!sourceUriToVirtualUris.has(sourceUri)) {
-									sourceUriToVirtualUris.set(sourceUri, new Set());
+								if (!sourceDocUriToVirtualDocUris.has(sourceUri)) {
+									sourceDocUriToVirtualDocUris.set(sourceUri, new Set());
 								}
-								sourceUriToVirtualUris.get(sourceUri)?.add(uri.toString());
+								sourceDocUriToVirtualDocUris.get(sourceUri)?.add(uri.toString());
 							}
 						});
 						virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualCode.content));
@@ -267,16 +256,6 @@ export async function activate(info: LabsInfo) {
 								const mappedStarts = [...map.getGeneratedOffsets(startOffset)];
 								const mappedEnds = [...map.getGeneratedOffsets(endOffset)];
 
-								if (mappedStarts.length || mappedEnds.length) {
-									sourceEditor.setDecorations(
-										mappingCursorDecorationType,
-										[new vscode.Range(
-											mappedStarts.length ? selection.start : selection.end,
-											mappedEnds.length ? selection.end : selection.start
-										)]
-									);
-								}
-
 								sourceEditor.setDecorations(
 									mappingSelectionDecorationType,
 									mappedStarts
@@ -302,12 +281,8 @@ export async function activate(info: LabsInfo) {
 									))
 								);
 
-								const mapping = mappedStarts.sort((a, b) => a[1].generatedOffsets[0] - b[1].generatedOffsets[0])[0]?.[1];
-								if (mapping) {
-									virtualEditor.revealRange(new vscode.Range(
-										getGeneratedPosition(virtualUri, mapping.generatedOffsets[0]),
-										getGeneratedPosition(virtualUri, mapping.generatedOffsets[0] + mapping.lengths[0]),
-									));
+								if (virtualRanges3.length) {
+									virtualEditor.revealRange(virtualRanges3[0]);
 								}
 							}
 							else if (vscode.window.activeTextEditor === virtualEditor) {
@@ -315,31 +290,19 @@ export async function activate(info: LabsInfo) {
 								const mappedStarts = [...map.getSourceOffsets(startOffset)];
 								const mappedEnds = [...map.getSourceOffsets(endOffset)];
 
-								if (mappedStarts.length || mappedEnds.length) {
-									virtualRanges3.push(
-										new vscode.Range(
-											mappedStarts.length ? selection.start : selection.end,
-											mappedEnds.length ? selection.end : selection.start
-										)
-									);
-								}
+								const sourceRanges2 = mappedStarts
+									.map(([_, mapping]) => mapping.sourceOffsets.map((offset, i) => new vscode.Range(
+										sourceEditor.document.positionAt(offset),
+										sourceEditor.document.positionAt(offset + mapping.lengths[i]),
+									)))
+									.flat();
+								const sourceRanges3 = mappedStarts.map(mapped => new vscode.Range(
+									sourceEditor.document.positionAt(mapped[0]),
+									sourceEditor.document.positionAt(mappedEnds.find(mapped2 => mapped[1] === mapped2[1])?.[0] ?? mapped[0]),
+								));
 
-								sourceEditor.setDecorations(
-									mappingSelectionDecorationType,
-									mappedStarts
-										.map(([_, mapping]) => mapping.sourceOffsets.map((offset, i) => new vscode.Range(
-											sourceEditor.document.positionAt(offset),
-											sourceEditor.document.positionAt(offset + mapping.lengths[i]),
-										)))
-										.flat()
-								);
-								sourceEditor.setDecorations(
-									mappingCursorDecorationType,
-									mappedStarts.map(mapped => new vscode.Range(
-										sourceEditor.document.positionAt(mapped[0]),
-										sourceEditor.document.positionAt(mappedEnds.find(mapped2 => mapped[1] === mapped2[1])?.[0] ?? mapped[0]),
-									))
-								);
+								sourceEditor.setDecorations(mappingSelectionDecorationType, sourceRanges2);
+								sourceEditor.setDecorations(mappingCursorDecorationType, sourceRanges3);
 
 								virtualRanges2 = virtualRanges2.concat(
 									mappedStarts
@@ -350,12 +313,8 @@ export async function activate(info: LabsInfo) {
 										.flat()
 								);
 
-								const mapping = mappedStarts.sort((a, b) => a[1].sourceOffsets[0] - b[1].sourceOffsets[0])[0]?.[1];
-								if (mapping) {
-									sourceEditor.revealRange(new vscode.Range(
-										getGeneratedPosition(virtualUri, mapping.sourceOffsets[0]),
-										getGeneratedPosition(virtualUri, mapping.sourceOffsets[0] + mapping.lengths[0]),
-									));
+								if (sourceRanges3.length) {
+									sourceEditor.revealRange(sourceRanges3[0]);
 								}
 							}
 						}

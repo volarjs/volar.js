@@ -3,6 +3,7 @@ import type { BaseLanguageClient, LabsInfo } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { getIconPath, useVolarExtensions } from '../common/shared';
 import { isValidVersion } from './serversView';
+import { VOLAR_VIRTUAL_CODE_SCHEME } from './virtualFilesView';
 
 interface ServicePluginItem {
 	extension: vscode.Extension<LabsInfo>;
@@ -61,19 +62,13 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(
-		vscode.window.onDidChangeActiveTextEditor(e => {
+		vscode.window.onDidChangeActiveTextEditor(editor => {
 
-			if (!e) {
+			if (!editor) {
 				return;
 			}
 
-			const document = e.document;
-			const isVirtualFile = extensions
-				.some(extension => extension.exports.volarLabs.languageClients.some(
-					client => client.name
-						.replace(/ /g, '_')
-						.toLowerCase() === document.uri.scheme
-				));
+			const isVirtualFile = editor.document.uri.scheme === VOLAR_VIRTUAL_CODE_SCHEME;
 			if (isVirtualFile) {
 				return;
 			}
