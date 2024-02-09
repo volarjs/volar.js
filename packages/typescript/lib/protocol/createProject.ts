@@ -98,8 +98,11 @@ export function createLanguage(
 					{
 						...languageServiceHost,
 						fileExists(fileName) {
-							if (extraFileExtension && fileName.endsWith('.d.ts')) {
-								const patchResult = languageServiceHost.fileExists(fileName.slice(0, -5));
+							if (extraFileExtension && fileName.endsWith(`.d.${extraFileExtension}.ts`)) {
+								const patchResult = languageServiceHost.fileExists(
+									fileName.slice(0, -`.d.${extraFileExtension}.ts`.length)
+									+ `.${extraFileExtension}`
+								);
 								if (patchResult) {
 									isPatchResult = true;
 									return true;
@@ -113,7 +116,9 @@ export function createLanguage(
 					sourceFile.impliedNodeFormat
 				);
 				if (isPatchResult && result.resolvedModule) {
-					result.resolvedModule.resolvedFileName = result.resolvedModule.resolvedFileName.slice(0, -5);
+					result.resolvedModule.resolvedFileName = result.resolvedModule.resolvedFileName
+						.slice(0, -`.d.${extraFileExtension}.ts`.length)
+						+ `.${extraFileExtension}`;
 					const sourceFile = files.get(fileNameToFileId(result.resolvedModule.resolvedFileName));
 					if (sourceFile?.generated) {
 						const tsCode = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
