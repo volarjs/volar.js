@@ -21,6 +21,24 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	let currentDocument: vscode.TextDocument | undefined;
 
+	const languageIdToFileExtension = new Map<string, string>();
+
+	for (const extension of vscode.extensions.all) {
+		try {
+			const packageJSON = extension.packageJSON;
+			if (packageJSON.contributes?.languages) {
+				for (const language of packageJSON.contributes.languages) {
+					if (language.id && language.extensions) {
+						for (const extension of language.extensions) {
+							languageIdToFileExtension.set(language.id, extension);
+							break;
+						}
+					}
+				}
+			}
+		} catch { }
+	}
+
 	const extensions: vscode.Extension<LabsInfo>[] = [];
 	const onDidChangeTreeData = new vscode.EventEmitter<void>();
 	const tree: vscode.TreeDataProvider<VirtualFileItem> = {
@@ -62,15 +80,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		},
 		getTreeItem(element) {
-			const ext = element.generated.languageId === 'typescript' ? '.ts'
-				: element.generated.languageId === 'javascript' ? '.js'
-					: element.generated.languageId === 'typescriptreact' ? '.tsx'
-						: element.generated.languageId === 'javascriptreact' ? '.jsx'
-							: element.generated.languageId === 'jade' ? '.pug'
-								: element.generated.languageId === 'markdown' ? '.md'
-									: element.generated.languageId === 'glimmer-ts' ? '.gts'
-										: element.generated.languageId === 'glimmer-js' ? '.gjs'
-											: '.' + element.generated.languageId;
+			const ext = languageIdToFileExtension.get(element.generated.languageId) ?? '.' + element.generated.languageId;
 			const uri = vscode.Uri.from({
 				scheme: VOLAR_VIRTUAL_CODE_SCHEME,
 				// @ts-expect-error
