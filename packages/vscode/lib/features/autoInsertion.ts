@@ -9,10 +9,12 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 
 	updateEnabledState();
 
-	const d1 = vscode.workspace.onDidChangeTextDocument(onDidChangeTextDocument, null);
-	const d2 = vscode.window.onDidChangeActiveTextEditor(updateEnabledState, null);
+	const disposables = [
+		vscode.workspace.onDidChangeTextDocument(onDidChangeTextDocument, null),
+		vscode.window.onDidChangeActiveTextEditor(updateEnabledState, null),
+	];
 
-	return vscode.Disposable.from(d1, d2);
+	return vscode.Disposable.from(...disposables);
 
 	function updateEnabledState() {
 		isEnabled = false;
@@ -35,11 +37,31 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 		if (document !== activeDocument) {
 			return;
 		}
+		if (timeout) {
+			clearTimeout(timeout);
+		}
 
 		const lastChange = contentChanges[contentChanges.length - 1];
+		doAutoInsert(document, lastChange);
+	}
 
-		doAutoInsert(document, lastChange, async (document, position, lastChange, isCancel) => {
+	function doAutoInsert(document: vscode.TextDocument, lastChange: vscode.TextDocumentContentChangeEvent) {
+		if (timeout) {
+			clearTimeout(timeout);
+			timeout = undefined;
+		}
+		const version = document.version;
+		timeout = setTimeout(async () => {
+			timeout = undefined;
 
+			const isCancel = () => document !== vscode.window.activeTextEditor?.document
+				|| vscode.window.activeTextEditor?.document.version !== version;
+			if (isCancel()) {
+				return;
+			}
+
+			const rangeStart = lastChange.range.start;
+			const position = new vscode.Position(rangeStart.line, rangeStart.character + lastChange.text.length);
 			const params = {
 				...client.code2ProtocolConverter.asTextDocumentPositionParams(document, position),
 				lastChange: {
@@ -47,60 +69,30 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 					range: client.code2ProtocolConverter.asRange(lastChange.range),
 				},
 			};
+			const insertion = await client.sendRequest(AutoInsertRequest.type, params);
+			const activeEditor = vscode.window.activeTextEditor;
 
-			if (isCancel()) {
-				return;
-			}
-
-			const result = await client.sendRequest(AutoInsertRequest.type, params);
-
-			if (result !== undefined && result !== null) {
-				if (typeof result === 'string') {
-					return result;
-				}
-				else {
-					return client.protocol2CodeConverter.asTextEdit(result);
-				}
-			}
-		});
-	}
-
-	function doAutoInsert(
-		document: vscode.TextDocument,
-		lastChange: vscode.TextDocumentContentChangeEvent,
-		provider: (document: vscode.TextDocument, position: vscode.Position, lastChange: vscode.TextDocumentContentChangeEvent, isCancel: () => boolean) => Thenable<string | vscode.TextEdit | null | undefined>,
-	) {
-		if (timeout) {
-			clearTimeout(timeout);
-			timeout = undefined;
-		}
-		const version = document.version;
-		timeout = setTimeout(() => {
-			const rangeStart = lastChange.range.start;
-			const position = new vscode.Position(rangeStart.line, rangeStart.character + lastChange.text.length);
-			provider(document, position, lastChange, () => vscode.window.activeTextEditor?.document.version !== version).then(text => {
-				if (text && isEnabled) {
-					const activeEditor = vscode.window.activeTextEditor;
-					if (activeEditor) {
-						const activeDocument = activeEditor.document;
-						if (document === activeDocument && activeDocument.version === version) {
-							if (typeof text === 'string') {
-								const selections = activeEditor.selections;
-								if (selections.length && selections.some(s => s.active.isEqual(position))) {
-									activeEditor.insertSnippet(new vscode.SnippetString(text), selections.map(s => s.active));
-								}
-								else {
-									activeEditor.insertSnippet(new vscode.SnippetString(text), position);
-								}
-							}
-							else {
-								activeEditor.insertSnippet(new vscode.SnippetString(text.newText), text.range);
-							}
-						}
+			if (
+				insertion !== undefined
+				&& insertion !== null
+				&& isEnabled
+				&& !isCancel()
+				&& activeEditor
+			) {
+				if (typeof insertion === 'string') {
+					const selections = activeEditor.selections;
+					if (selections.length && selections.some(s => s.active.isEqual(position))) {
+						activeEditor.insertSnippet(new vscode.SnippetString(insertion), selections.map(s => s.active));
+					}
+					else {
+						activeEditor.insertSnippet(new vscode.SnippetString(insertion), position);
 					}
 				}
-			});
-			timeout = undefined;
+				else {
+					const edit = client.protocol2CodeConverter.asTextEdit(insertion);
+					activeEditor.insertSnippet(new vscode.SnippetString(edit.newText), edit.range);
+				}
+			}
 		}, 100);
 	}
 }
