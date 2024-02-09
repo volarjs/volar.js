@@ -15,6 +15,8 @@ interface VirtualFileItem {
 
 export function activate(context: vscode.ExtensionContext) {
 
+	let currentDocument: vscode.TextDocument | undefined;
+
 	const extensions: vscode.Extension<LabsInfo>[] = [];
 	const onDidChangeTreeData = new vscode.EventEmitter<void>();
 	const tree: vscode.TreeDataProvider<VirtualFileItem> = {
@@ -46,6 +48,9 @@ export function activate(context: vscode.ExtensionContext) {
 							});
 						}
 					}
+				}
+				if (items.length) {
+					currentDocument = doc;
 				}
 				return items;
 			}
@@ -126,8 +131,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 			onDidChangeTreeData.fire();
 		}),
-		vscode.workspace.onDidChangeTextDocument(() => {
-			onDidChangeTreeData.fire();
+		vscode.workspace.onDidChangeTextDocument(e => {
+			if (e.document === currentDocument) {
+				onDidChangeTreeData.fire();
+			}
 		}),
 		treeView,
 		treeView.onDidChangeCheckboxState(e => {

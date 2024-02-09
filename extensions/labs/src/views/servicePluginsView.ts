@@ -80,9 +80,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 			onDidChangeTreeData.fire();
 		}),
-		vscode.workspace.onDidChangeTextDocument(() => {
-			onDidChangeTreeData.fire();
-		}),
 		treeView,
 		treeView.onDidChangeCheckboxState(e => {
 			for (const [item, state] of e.items) {
