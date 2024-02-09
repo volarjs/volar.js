@@ -26,12 +26,9 @@ export function activate(context: vscode.ExtensionContext) {
 	const tree: vscode.TreeDataProvider<VirtualFileItem> = {
 		onDidChangeTreeData: onDidChangeTreeData.event,
 		async getChildren(element) {
-
-			const doc = vscode.window.activeTextEditor?.document;
-			if (!doc) {
+			if (!currentDocument) {
 				return [];
 			}
-
 			if (!element) {
 				const items: VirtualFileItem[] = [];
 				for (const extension of extensions) {
@@ -39,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 						const virtualFile = await client.sendRequest(
 							extension.exports.volarLabs.languageServerProtocol.GetVirtualFileRequest.type,
 							{
-								uri: doc.uri.toString(),
+								uri: currentDocument.uri.toString(),
 							} satisfies GetVirtualFileRequest.ParamsType,
 						);
 						if (virtualFile) {
@@ -47,14 +44,11 @@ export function activate(context: vscode.ExtensionContext) {
 								extension,
 								client,
 								generated: virtualFile,
-								sourceDocumentUri: doc.uri.toString(),
+								sourceDocumentUri: currentDocument.uri.toString(),
 								isRoot: true,
 							});
 						}
 					}
-				}
-				if (items.length) {
-					currentDocument = doc;
 				}
 				return items;
 			}
@@ -62,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
 				return element.generated.embeddedCodes.map((code => ({
 					...element,
 					generated: code,
-					sourceDocumentUri: doc.uri.toString(),
+					sourceDocumentUri: currentDocument!.uri.toString(),
 					isRoot: false,
 				})));
 			}
@@ -84,7 +78,6 @@ export function activate(context: vscode.ExtensionContext) {
 				path: '/' + element.generated.virtualCodeId + ext,
 				fragment: encodeURIComponent(element.sourceDocumentUri),
 			});
-			console.log(uri.toString());
 			virtualDocUriToSourceDocUri.set(uri.toString(), {
 				fileUri: element.sourceDocumentUri,
 				virtualCodeId: element.generated.virtualCodeId,
@@ -124,22 +117,10 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('_volar.action.openVirtualFile', (uri: vscode.Uri) => {
 			vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Two, preview: false });
 		}),
-		vscode.window.onDidChangeActiveTextEditor(editor => {
-
-			if (!editor) {
-				return;
-			}
-
-			const isVirtualFile = editor.document.uri.scheme === VOLAR_VIRTUAL_CODE_SCHEME;
-			if (isVirtualFile) {
-				return;
-			}
-
-			onDidChangeTreeData.fire();
-		}),
+		vscode.window.onDidChangeActiveTextEditor(tryUpdateTreeView),
 		vscode.workspace.onDidChangeTextDocument(e => {
 			if (e.document === currentDocument) {
-				onDidChangeTreeData.fire();
+				tryUpdateTreeView();
 			}
 		}),
 		treeView,
@@ -165,19 +146,34 @@ export function activate(context: vscode.ExtensionContext) {
 			if (isValidVersion(version)) {
 				for (const languageClient of extension.exports.volarLabs.languageClients) {
 					context.subscriptions.push(
-						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+						languageClient.onDidChangeState(tryUpdateTreeView)
 					);
 				}
 				extension.exports.volarLabs.onDidAddLanguageClient(languageClient => {
 					context.subscriptions.push(
-						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+						languageClient.onDidChangeState(tryUpdateTreeView)
 					);
-					onDidChangeTreeData.fire();
+					tryUpdateTreeView();
 				});
 				extensions.push(extension);
-				onDidChangeTreeData.fire();
+				tryUpdateTreeView();
 				activateShowVirtualFiles(extension.exports);
 			}
 		}
 	);
+
+	function tryUpdateTreeView() {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			return;
+		}
+		const isVirtualFile = editor.document.uri.scheme === VOLAR_VIRTUAL_CODE_SCHEME;
+		if (!isVirtualFile) {
+			currentDocument = editor.document;
+			onDidChangeTreeData.fire();
+		}
+		else if (currentDocument) {
+			onDidChangeTreeData.fire();
+		}
+	}
 }

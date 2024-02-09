@@ -32,42 +32,30 @@ export async function activate(info: LabsInfo) {
 	const virtualUriToStacks = new Map<string, Stack[]>();
 	const virtualDocuments = new Map<string, TextDocument>();
 
-	for (const extension of info.volarLabs.languageClients) {
-		registerProviders(extension);
+	for (const client of info.volarLabs.languageClients) {
+		registerProviders(client);
 	}
 	info.volarLabs.onDidAddLanguageClient(registerProviders);
 
 	let updateVirtualDocument: NodeJS.Timeout | undefined;
 	let updateDecorationsTimeout: NodeJS.Timeout | undefined;
 
-	subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateDecorations));
-	subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateDecorations));
-	subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(updateDecorations));
-	subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => {
-		if (sourceDocUriToVirtualDocUris.has(e.document.uri.toString())) {
-			const virtualUris = sourceDocUriToVirtualDocUris.get(e.document.uri.toString());
-			clearTimeout(updateVirtualDocument);
-			updateVirtualDocument = setTimeout(() => {
-				virtualUris?.forEach(uri => {
-					docChangeEvent.fire(vscode.Uri.parse(uri));
-				});
-			}, 100);
-		}
-	}));
-
-	return vscode.Disposable.from(...subscriptions);
-
-	function registerProviders(client: BaseLanguageClient) {
-
-		subscriptions.push(client.onDidChangeState(() => {
-			for (const virtualUris of sourceDocUriToVirtualDocUris.values()) {
-				virtualUris.forEach(uri => {
-					docChangeEvent.fire(vscode.Uri.parse(uri));
-				});
+	subscriptions.push(
+		vscode.window.onDidChangeActiveTextEditor(updateDecorations),
+		vscode.window.onDidChangeTextEditorSelection(updateDecorations),
+		vscode.window.onDidChangeVisibleTextEditors(updateDecorations),
+		vscode.workspace.onDidChangeTextDocument(e => {
+			if (sourceDocUriToVirtualDocUris.has(e.document.uri.toString())) {
+				const virtualUris = sourceDocUriToVirtualDocUris.get(e.document.uri.toString());
+				clearTimeout(updateVirtualDocument);
+				updateVirtualDocument = setTimeout(() => {
+					virtualUris?.forEach(uri => {
+						docChangeEvent.fire(vscode.Uri.parse(uri));
+					});
+				}, 100);
 			}
-		}));
-
-		subscriptions.push(vscode.languages.registerHoverProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME }, {
+		}),
+		vscode.languages.registerHoverProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME }, {
 			async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
 				const maps = virtualUriToSourceMap.get(document.uri.toString());
@@ -103,9 +91,8 @@ export async function activate(info: LabsInfo) {
 					'```',
 				].join('\n')));
 			}
-		}));
-
-		subscriptions.push(vscode.languages.registerDefinitionProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME.toLowerCase() }, {
+		}),
+		vscode.languages.registerDefinitionProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME.toLowerCase() }, {
 			async provideDefinition(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
 				const stacks = virtualUriToStacks.get(document.uri.toString());
@@ -129,9 +116,8 @@ export async function activate(info: LabsInfo) {
 				};
 				return [link];
 			}
-		}));
-
-		subscriptions.push(vscode.languages.registerInlayHintsProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME.toLowerCase() }, {
+		}),
+		vscode.languages.registerInlayHintsProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME.toLowerCase() }, {
 			provideInlayHints(document, range) {
 				const stacks = virtualUriToStacks.get(document.uri.toString());
 				const result: vscode.InlayHint[] = [];
@@ -160,48 +146,70 @@ export async function activate(info: LabsInfo) {
 				}
 				return result;
 			},
-		}));
-
-		subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
+		}),
+		vscode.workspace.registerTextDocumentContentProvider(
 			VOLAR_VIRTUAL_CODE_SCHEME,
 			{
 				onDidChange: docChangeEvent.event,
 				async provideTextDocumentContent(uri: vscode.Uri): Promise<string | undefined> {
 
+					virtualUriToSourceMap.set(uri.toString(), []);
+
 					const source = virtualDocUriToSourceDocUri.get(uri.toString());
-					if (source) {
-
-						const virtualCode = await client.sendRequest(
-							info.volarLabs.languageServerProtocol.GetVirtualCodeRequest.type,
-							source
-						);
-						virtualUriToSourceMap.set(uri.toString(), []);
-
-						Object.entries(virtualCode.mappings).forEach(([sourceUri, mappings]) => {
-							const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
-							if (sourceEditor) {
-								virtualUriToSourceMap.get(uri.toString())?.push([
-									sourceEditor.document.uri.toString(),
-									sourceEditor.document.version,
-									new SourceMap(mappings),
-								]);
-								if (!sourceDocUriToVirtualDocUris.has(sourceUri)) {
-									sourceDocUriToVirtualDocUris.set(sourceUri, new Set());
-								}
-								sourceDocUriToVirtualDocUris.get(sourceUri)?.add(uri.toString());
-							}
-						});
-						virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualCode.content));
-						virtualUriToStacks.set(uri.toString(), virtualCode.codegenStacks);
-
-						clearTimeout(updateDecorationsTimeout);
-						updateDecorationsTimeout = setTimeout(updateDecorations, 100);
-
-						return virtualCode.content;
+					if (!source) {
+						return;
 					}
+
+					const clientId = uri.authority;
+					// @ts-expect-error
+					const client = info.volarLabs.languageClients.find(client => client._id === clientId);
+					if (!client) {
+						return;
+					}
+
+					const virtualCode = await client.sendRequest(
+						info.volarLabs.languageServerProtocol.GetVirtualCodeRequest.type,
+						source
+					);
+
+					Object.entries(virtualCode.mappings).forEach(([sourceUri, mappings]) => {
+						const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
+						if (sourceEditor) {
+							virtualUriToSourceMap.get(uri.toString())?.push([
+								sourceEditor.document.uri.toString(),
+								sourceEditor.document.version,
+								new SourceMap(mappings),
+							]);
+							if (!sourceDocUriToVirtualDocUris.has(sourceUri)) {
+								sourceDocUriToVirtualDocUris.set(sourceUri, new Set());
+							}
+							sourceDocUriToVirtualDocUris.get(sourceUri)?.add(uri.toString());
+						}
+					});
+					virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualCode.content));
+					virtualUriToStacks.set(uri.toString(), virtualCode.codegenStacks);
+
+					clearTimeout(updateDecorationsTimeout);
+					updateDecorationsTimeout = setTimeout(updateDecorations, 100);
+
+					return virtualCode.content;
 				}
 			},
-		));
+		),
+	);
+
+	return vscode.Disposable.from(...subscriptions);
+
+	function registerProviders(client: BaseLanguageClient) {
+		subscriptions.push(
+			client.onDidChangeState(() => {
+				for (const virtualUris of sourceDocUriToVirtualDocUris.values()) {
+					virtualUris.forEach(uri => {
+						docChangeEvent.fire(vscode.Uri.parse(uri));
+					});
+				}
+			}),
+		);
 	}
 
 	function updateDecorations() {
