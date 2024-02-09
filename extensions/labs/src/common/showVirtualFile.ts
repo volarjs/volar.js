@@ -1,6 +1,6 @@
 import type { CodeInformation } from '@volar/language-server';
 import { SourceMap, Stack } from '@volar/source-map';
-import { BaseLanguageClient, LabsInfo, TextDocument } from '@volar/vscode';
+import { LabsInfo, TextDocument } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { VOLAR_VIRTUAL_CODE_SCHEME } from '../views/virtualFilesView';
 
@@ -24,18 +24,13 @@ export const sourceDocUriToVirtualDocUris = new Map<string, Set<string>>();
 
 export const virtualDocUriToSourceDocUri = new Map<string, { fileUri: string, virtualCodeId: string; }>();
 
-export async function activate(info: LabsInfo) {
+export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 
 	const subscriptions: vscode.Disposable[] = [];
 	const docChangeEvent = new vscode.EventEmitter<vscode.Uri>();
 	const virtualUriToSourceMap = new Map<string, [string, number, SourceMap<CodeInformation>][]>();
 	const virtualUriToStacks = new Map<string, Stack[]>();
 	const virtualDocuments = new Map<string, TextDocument>();
-
-	for (const client of info.volarLabs.languageClients) {
-		registerProviders(client);
-	}
-	info.volarLabs.onDidAddLanguageClient(registerProviders);
 
 	let updateVirtualDocument: NodeJS.Timeout | undefined;
 	let updateDecorationsTimeout: NodeJS.Timeout | undefined;
@@ -161,12 +156,18 @@ export async function activate(info: LabsInfo) {
 					}
 
 					const clientId = uri.authority;
-					// @ts-expect-error
-					const client = info.volarLabs.languageClients.find(client => client._id === clientId);
-					if (!client) {
+					const info = extensions.find(extension => extension.exports.volarLabs.languageClients.some(client =>
+						// @ts-expect-error
+						client._id === clientId
+					))?.exports;
+					if (!info) {
 						return;
 					}
 
+					const client = info.volarLabs.languageClients.find(
+						// @ts-expect-error
+						client => client._id === clientId
+					)!;
 					const virtualCode = await client.sendRequest(
 						info.volarLabs.languageServerProtocol.GetVirtualCodeRequest.type,
 						source
@@ -199,18 +200,6 @@ export async function activate(info: LabsInfo) {
 	);
 
 	return vscode.Disposable.from(...subscriptions);
-
-	function registerProviders(client: BaseLanguageClient) {
-		subscriptions.push(
-			client.onDidChangeState(() => {
-				for (const virtualUris of sourceDocUriToVirtualDocUris.values()) {
-					virtualUris.forEach(uri => {
-						docChangeEvent.fire(vscode.Uri.parse(uri));
-					});
-				}
-			}),
-		);
-	}
 
 	function updateDecorations() {
 		for (const [_, sources] of virtualUriToSourceMap) {
