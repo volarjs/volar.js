@@ -31,7 +31,7 @@ export function register(context: ServiceContext) {
 export function transformDocumentLinkTarget(target: string, context: ServiceContext) {
 
 	const targetUri = URI.parse(target);
-	const clearUri = targetUri.with({ fragment: '' }).toString();
+	const clearUri = targetUri.with({ fragment: '' }).toString(true);
 	const [virtualCode] = context.documents.getVirtualCodeByUri(clearUri);
 
 	if (virtualCode) {

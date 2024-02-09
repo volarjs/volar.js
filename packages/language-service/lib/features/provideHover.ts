@@ -5,6 +5,7 @@ import { isInsideRange } from '../utils/common';
 import { errorMarkups } from './provideDiagnostics';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isHoverEnabled } from '@volar/language-core';
+import { transformDocumentLinkTarget } from './resolveDocumentLink';
 
 export function register(context: ServiceContext) {
 
@@ -64,22 +65,44 @@ export function register(context: ServiceContext) {
 
 		return hover;
 	};
-}
 
-function getHoverTexts(hover: vscode.Hover): string[] {
-	if (typeof hover.contents === 'string') {
-		return [hover.contents];
-	}
-	if (Array.isArray(hover.contents)) {
-		return hover.contents.map(content => {
-			if (typeof content === 'string') {
-				return content;
+	function getHoverTexts(hover: vscode.Hover): string[] {
+		if (typeof hover.contents === 'string') {
+			return [transformMarkdown(hover.contents)];
+		}
+		if (Array.isArray(hover.contents)) {
+			return hover.contents.map(content => {
+				if (typeof content === 'string') {
+					return transformMarkdown(content);
+				}
+				if (content.language === 'md') {
+					return `\`\`\`${content.language}\n${transformMarkdown(content.value)}\n\`\`\``;
+				}
+				else {
+					return `\`\`\`${content.language}\n${content.value}\n\`\`\``;
+				}
+			});
+		}
+		if ('kind' in hover.contents) {
+			if (hover.contents.kind === 'markdown') {
+				return [transformMarkdown(hover.contents.value)];
 			}
-			return `\`\`\`${content.language}\n${content.value}\n\`\`\``;
+			else {
+				return [hover.contents.value];
+			}
+		}
+		if (hover.contents.language === 'md') {
+			return [`\`\`\`${hover.contents.language}\n${transformMarkdown(hover.contents.value)}\n\`\`\``];
+		}
+		else {
+			return [`\`\`\`${hover.contents.language}\n${hover.contents.value}\n\`\`\``];
+		}
+	}
+
+	function transformMarkdown(content: string) {
+		return content.replace(/(\[[^\]]+\])(\([^)]+\))/g, s => {
+			const match = s.match(/(\[[^\]]+\])(\([^)]+\))/)!;
+			return `${match[1]}(${transformDocumentLinkTarget(match[2].slice(1, -1), context)})`;
 		});
 	}
-	if ('kind' in hover.contents) {
-		return [hover.contents.value];
-	}
-	return [`\`\`\`${hover.contents.language}\n${hover.contents.value}\n\`\`\``];
 }
