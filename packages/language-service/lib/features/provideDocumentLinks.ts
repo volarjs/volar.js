@@ -3,7 +3,7 @@ import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
-import { transformDocumentLinkTarget } from './resolveDocumentLink';
+import { transformDocumentLinkTarget } from '../utils/transform';
 import { isDocumentLinkEnabled } from '@volar/language-core';
 
 export interface DocumentLinkData {

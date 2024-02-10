@@ -33,6 +33,7 @@ export function register(context: ServiceContext) {
 							item,
 							embeddedRange => map.getSourceRange(embeddedRange),
 							map.virtualFileDocument,
+							context,
 						);
 					}
 				}
