@@ -4,8 +4,8 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import { isInsideRange } from '../utils/common';
 import { errorMarkups } from './provideDiagnostics';
 import { NoneCancellationToken } from '../utils/cancellation';
+import { transformMarkdown } from '../utils/transform';
 import { isHoverEnabled } from '@volar/language-core';
-import { transformDocumentLinkTarget } from './resolveDocumentLink';
 
 export function register(context: ServiceContext) {
 
@@ -68,15 +68,15 @@ export function register(context: ServiceContext) {
 
 	function getHoverTexts(hover: vscode.Hover): string[] {
 		if (typeof hover.contents === 'string') {
-			return [transformMarkdown(hover.contents)];
+			return [transformMarkdown(hover.contents, context)];
 		}
 		if (Array.isArray(hover.contents)) {
 			return hover.contents.map(content => {
 				if (typeof content === 'string') {
-					return transformMarkdown(content);
+					return transformMarkdown(content, context);
 				}
 				if (content.language === 'md') {
-					return `\`\`\`${content.language}\n${transformMarkdown(content.value)}\n\`\`\``;
+					return `\`\`\`${content.language}\n${transformMarkdown(content.value, context)}\n\`\`\``;
 				}
 				else {
 					return `\`\`\`${content.language}\n${content.value}\n\`\`\``;
@@ -85,24 +85,17 @@ export function register(context: ServiceContext) {
 		}
 		if ('kind' in hover.contents) {
 			if (hover.contents.kind === 'markdown') {
-				return [transformMarkdown(hover.contents.value)];
+				return [transformMarkdown(hover.contents.value, context)];
 			}
 			else {
 				return [hover.contents.value];
 			}
 		}
 		if (hover.contents.language === 'md') {
-			return [`\`\`\`${hover.contents.language}\n${transformMarkdown(hover.contents.value)}\n\`\`\``];
+			return [`\`\`\`${hover.contents.language}\n${transformMarkdown(hover.contents.value, context)}\n\`\`\``];
 		}
 		else {
 			return [`\`\`\`${hover.contents.language}\n${hover.contents.value}\n\`\`\``];
 		}
-	}
-
-	function transformMarkdown(content: string) {
-		return content.replace(/(\[[^\]]+\])(\([^)]+\))/g, s => {
-			const match = s.match(/(\[[^\]]+\])(\([^)]+\))/)!;
-			return `${match[1]}(${transformDocumentLinkTarget(match[2].slice(1, -1), context)})`;
-		});
 	}
 }

@@ -91,6 +91,7 @@ export function register(context: ServiceContext) {
 								cacheData.list,
 								range => map.getSourceRange(range),
 								map.virtualFileDocument,
+								context,
 							);
 						}
 					}
@@ -208,6 +209,7 @@ export function register(context: ServiceContext) {
 							completionList,
 							range => map.getSourceRange(range, isCompletionEnabled),
 							document,
+							context,
 						);
 					}
 

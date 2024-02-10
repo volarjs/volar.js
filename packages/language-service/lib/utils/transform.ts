@@ -1,13 +1,69 @@
-import { isRenameEnabled, resolveRenameEditText, type CodeInformation } from '@volar/language-core';
+import { isDocumentLinkEnabled, isRenameEnabled, resolveRenameEditText, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
+import { URI } from 'vscode-uri';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServiceContext } from '../types';
 import { notEmpty } from './common';
+
+export function transformDocumentLinkTarget(target: string, context: ServiceContext) {
+	const targetUri = URI.parse(target);
+	const clearUri = targetUri.with({ fragment: '' }).toString(true);
+	const [virtualCode] = context.documents.getVirtualCodeByUri(clearUri);
+
+	if (virtualCode) {
+		for (const map of context.documents.getMaps(virtualCode)) {
+
+			if (!map.map.mappings.some(mapping => isDocumentLinkEnabled(mapping.data))) {
+				continue;
+			}
+
+			target = map.sourceFileDocument.uri;
+
+			const hash = targetUri.fragment;
+			const range = hash.match(/^L(\d+)(,(\d+))?(-L(\d+)(,(\d+))?)?$/);
+
+			if (range) {
+				const startLine = Number(range[1]) - 1;
+				const startCharacter = Number(range[3] ?? 1) - 1;
+				if (range[5] !== undefined) {
+					const endLine = Number(range[5]) - 1;
+					const endCharacter = Number(range[7] ?? 1) - 1;
+					const sourceRange = map.getSourceRange({
+						start: { line: startLine, character: startCharacter },
+						end: { line: endLine, character: endCharacter },
+					});
+					if (sourceRange) {
+						target += '#L' + (sourceRange.start.line + 1) + ',' + (sourceRange.start.character + 1);
+						target += '-L' + (sourceRange.end.line + 1) + ',' + (sourceRange.end.character + 1);
+						break;
+					}
+				}
+				else {
+					const sourcePos = map.getSourcePosition({ line: startLine, character: startCharacter });
+					if (sourcePos) {
+						target += '#L' + (sourcePos.line + 1) + ',' + (sourcePos.character + 1);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return target;
+}
+
+export function transformMarkdown(content: string, context: ServiceContext) {
+	return content.replace(/(\[[^\]]+\])(\([^)]+\))/g, s => {
+		const match = s.match(/(\[[^\]]+\])(\([^)]+\))/)!;
+		return `${match[1]}(${transformDocumentLinkTarget(match[2].slice(1, -1), context)})`;
+	});
+}
 
 export function transformCompletionItem<T extends vscode.CompletionItem>(
 	item: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: vscode.TextDocument,
+	context: ServiceContext
 ): T {
 	return {
 		...item,
@@ -17,6 +73,13 @@ export function transformCompletionItem<T extends vscode.CompletionItem>(
 		textEdit: item.textEdit
 			? transformTextEdit(item.textEdit, getOtherRange, document)
 			: undefined,
+		documentation:
+			item.documentation ?
+				typeof item.documentation === 'string' ? transformMarkdown(item.documentation, context) :
+					item.documentation.kind === 'markdown' ?
+						{ kind: 'markdown', value: transformMarkdown(item.documentation.value, context) }
+						: item.documentation
+				: undefined
 	};
 }
 
@@ -24,6 +87,7 @@ export function transformCompletionList<T extends vscode.CompletionList>(
 	completionList: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: TextDocument,
+	context: ServiceContext,
 ): T {
 	return {
 		isIncomplete: completionList.isIncomplete,
@@ -38,7 +102,7 @@ export function transformCompletionList<T extends vscode.CompletionList>(
 					: getOtherRange(completionList.itemDefaults.editRange)
 				: undefined,
 		} : undefined,
-		items: completionList.items.map(item => transformCompletionItem(item, getOtherRange, document)),
+		items: completionList.items.map(item => transformCompletionItem(item, getOtherRange, document, context)),
 	} as T;
 }
 
