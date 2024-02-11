@@ -8,7 +8,7 @@ export async function useVolarExtensions(
 
 	const checked = new Set<string>();
 
-	let updateTimeout: NodeJS.Timeout | undefined;
+	let updateTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	context.subscriptions.push(
 		vscode.extensions.onDidChange(update),

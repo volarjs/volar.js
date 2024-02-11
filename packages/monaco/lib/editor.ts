@@ -55,7 +55,7 @@ export function activateMarkers(
 			return;
 		}
 
-		let timer: number | undefined;
+		let timer: ReturnType<typeof setTimeout> | undefined;
 		const changeSubscription = model.onDidChangeContent(() => {
 			clearTimeout(timer);
 			timer = setTimeout(() => doValidation(model), 250);
@@ -116,7 +116,7 @@ export function activateAutoInsertion(
 	const disposables: IDisposable[] = [];
 	const listener = new Map<editor.IModel, IDisposable>();
 
-	let timeout: number | undefined;
+	let timeout: ReturnType<typeof setTimeout> | undefined;
 
 	disposables.push(
 		editor.onDidCreateModel(model => hostingAutoInsertion(model)),

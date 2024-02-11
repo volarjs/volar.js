@@ -5,7 +5,7 @@ import { AutoInsertRequest } from '@volar/language-server/protocol';
 export function activate(selector: vscode.DocumentSelector, client: BaseLanguageClient) {
 
 	let isEnabled = false;
-	let timeout: NodeJS.Timeout | undefined;
+	let timeout: ReturnType<typeof setTimeout> | undefined;
 
 	updateEnabledState();
 

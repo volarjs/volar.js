@@ -32,8 +32,8 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 	const virtualUriToStacks = new Map<string, Stack[]>();
 	const virtualDocuments = new Map<string, TextDocument>();
 
-	let updateVirtualDocument: NodeJS.Timeout | undefined;
-	let updateDecorationsTimeout: NodeJS.Timeout | undefined;
+	let updateVirtualDocument: ReturnType<typeof setTimeout> | undefined;
+	let updateDecorationsTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(updateDecorations),
