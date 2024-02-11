@@ -3,6 +3,7 @@ import type * as ts from 'typescript';
 import { forEachEmbeddedCode } from '@volar/language-core';
 import * as path from 'path-browserify';
 import type { createSys } from './createSys';
+import { createResolveModuleName } from '../resolveModuleName';
 
 const scriptVersions = new Map<string, { lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>();
 const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
@@ -67,6 +68,7 @@ export function createLanguage(
 			languageServiceHost.useCaseSensitiveFileNames ? s => s : s => s.toLowerCase(),
 			languageServiceHost.getCompilationSettings()
 		);
+		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, languagePlugins, fileName => files.get(fileNameToFileId(fileName)));
 
 		let lastSysVersion = 'version' in sys ? sys.version : undefined;
 
@@ -82,52 +84,22 @@ export function createLanguage(
 				moduleCache.clear();
 			}
 			return moduleLiterals.map(moduleLiteral => {
-				let moduleName = moduleLiteral.text;
-				let extraFileExtension: string | undefined;
-				let isPatchResult = false;
-				for (const language of languagePlugins) {
-					extraFileExtension = language.typescript?.extraFileExtensions.find(ext => moduleName.endsWith('.' + ext.extension))?.extension;
-					if (extraFileExtension) {
-						break;
-					}
-				}
-				const result = ts.resolveModuleName(
-					moduleName,
-					containingFile,
-					options,
-					{
-						...languageServiceHost,
-						fileExists(fileName) {
-							if (extraFileExtension && fileName.endsWith(`.d.${extraFileExtension}.ts`)) {
-								const patchResult = languageServiceHost.fileExists(
-									fileName.slice(0, -`.d.${extraFileExtension}.ts`.length)
-									+ `.${extraFileExtension}`
-								);
-								if (patchResult) {
-									isPatchResult = true;
-									return true;
-								}
-							}
-							return sys.fileExists(fileName);
-						},
-					},
-					moduleCache,
-					redirectedReference,
-					sourceFile.impliedNodeFormat
-				);
-				if (isPatchResult && result.resolvedModule) {
-					result.resolvedModule.resolvedFileName = result.resolvedModule.resolvedFileName
-						.slice(0, -`.d.${extraFileExtension}.ts`.length)
-						+ `.${extraFileExtension}`;
-					const sourceFile = files.get(fileNameToFileId(result.resolvedModule.resolvedFileName));
-					if (sourceFile?.generated) {
-						const tsCode = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
-						if (tsCode) {
-							result.resolvedModule.extension = tsCode.extension;
-						}
-					}
-				}
-				return result;
+				return resolveModuleName(moduleLiteral.text, containingFile, options, moduleCache, redirectedReference, sourceFile.impliedNodeFormat);
+			});
+		};
+		languageServiceHost.resolveModuleNames = (
+			moduleNames,
+			containingFile,
+			_reusedNames,
+			redirectedReference,
+			options,
+		) => {
+			if ('version' in sys && lastSysVersion !== sys.version) {
+				lastSysVersion = sys.version;
+				moduleCache.clear();
+			}
+			return moduleNames.map(moduleName => {
+				return resolveModuleName(moduleName, containingFile, options, moduleCache, redirectedReference).resolvedModule;
 			});
 		};
 	}

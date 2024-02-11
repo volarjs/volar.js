@@ -1,5 +1,6 @@
 import { resolveCommonLanguageId, type FileRegistry } from '@volar/language-core';
 import type * as ts from 'typescript';
+import { createResolveModuleName } from '../resolveModuleName';
 
 export function decorateLanguageServiceHost(
 	virtualFiles: FileRegistry,
@@ -9,7 +10,8 @@ export function decorateLanguageServiceHost(
 
 	let extraProjectVersion = 0;
 
-	const exts = virtualFiles.languagePlugins
+	const { languagePlugins } = virtualFiles;
+	const exts = languagePlugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 		.flat();
 	const scripts = new Map<string, {
@@ -40,59 +42,56 @@ export function decorateLanguageServiceHost(
 		};
 	}
 
-	if (resolveModuleNameLiterals) {
-		languageServiceHost.resolveModuleNameLiterals = (
-			moduleNames,
-			containingFile,
-			redirectedReference,
-			options,
-			...rest
-		) => {
-			const resolvedModules = resolveModuleNameLiterals(
-				moduleNames,
+	if (languagePlugins.some(language => language.typescript?.extraFileExtensions.length)) {
+
+		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, languagePlugins, fileName => virtualFiles.get(fileName));
+
+		if (resolveModuleNameLiterals) {
+			languageServiceHost.resolveModuleNameLiterals = (
+				moduleLiterals,
 				containingFile,
 				redirectedReference,
 				options,
-				...rest,
-			);
-			return moduleNames.map<ts.ResolvedModuleWithFailedLookupLocations>((name, i) => {
-				if (exts.some(ext => name.text.endsWith(ext))) {
-					const resolved = resolveModuleName(name.text, containingFile, options, redirectedReference);
-					if (resolved.resolvedModule) {
-						return resolved;
-					}
-				}
-				return resolvedModules[i];
-			});
-		};
-	}
-	else if (resolveModuleNames) {
-		languageServiceHost.resolveModuleNames = (
-			moduleNames,
-			containingFile,
-			reusedNames,
-			redirectedReference,
-			options,
-			containingSourceFile
-		) => {
-			const resolvedModules = resolveModuleNames(
+				...rest
+			) => {
+				return [
+					...resolveModuleNameLiterals(
+						moduleLiterals.filter(name => !exts.some(ext => name.text.endsWith(ext))),
+						containingFile,
+						redirectedReference,
+						options,
+						...rest,
+					),
+					...moduleLiterals
+						.filter(name => exts.some(ext => name.text.endsWith(ext)))
+						.map(name => resolveModuleName(name.text, containingFile, options, undefined, redirectedReference)),
+				];
+			};
+		}
+		if (resolveModuleNames) {
+			languageServiceHost.resolveModuleNames = (
 				moduleNames,
 				containingFile,
 				reusedNames,
 				redirectedReference,
 				options,
-				containingSourceFile,
-			);
-			return moduleNames.map<ts.ResolvedModule | undefined>((name, i) => {
-				if (exts.some(ext => name.endsWith(ext))) {
-					const resolved = resolveModuleName(name, containingFile, options, redirectedReference);
-					if (resolved.resolvedModule) {
-						return resolved.resolvedModule;
-					}
-				}
-				return resolvedModules[i];
-			});
-		};
+				containingSourceFile
+			) => {
+				return [
+					...resolveModuleNames(
+						moduleNames.filter(name => !exts.some(ext => name.endsWith(ext))),
+						containingFile,
+						reusedNames,
+						redirectedReference,
+						options,
+						containingSourceFile,
+					),
+					...moduleNames
+						.filter(name => exts.some(ext => name.endsWith(ext)))
+						.map(moduleName => resolveModuleName(moduleName, containingFile, options, undefined, redirectedReference).resolvedModule),
+				];
+			};
+		}
 	}
 
 	if (getProjectVersion) {
@@ -121,37 +120,6 @@ export function decorateLanguageServiceHost(
 			}
 			return getScriptKind(fileName);
 		};
-	}
-
-	function resolveModuleName(name: string, containingFile: string, options: ts.CompilerOptions, redirectedReference?: ts.ResolvedProjectReference) {
-		const resolved = ts.resolveModuleName(name, containingFile, options, {
-			readFile(fileName) {
-				return languageServiceHost.readFile(fileName);
-			},
-			fileExists(fileName) {
-				if (exts.some(ext => fileName.endsWith(ext + '.d.ts'))) {
-					return fileExists(fileName.slice(0, -'.d.ts'.length));
-				}
-				return languageServiceHost.fileExists(fileName);
-			},
-		}, undefined, redirectedReference);
-		if (resolved.resolvedModule) {
-			resolved.resolvedModule.resolvedFileName = resolved.resolvedModule.resolvedFileName.slice(0, -'.d.ts'.length);
-			const script = updateScript(resolved.resolvedModule.resolvedFileName);
-			if (script) {
-				resolved.resolvedModule.extension = script.extension;
-			}
-		}
-		return resolved;
-	}
-
-	// fix https://github.com/vuejs/language-tools/issues/3332
-	function fileExists(fileName: string) {
-		if (languageServiceHost.fileExists(fileName)) {
-			const fileSize = ts.sys.getFileSize?.(fileName) ?? languageServiceHost.readFile(fileName)?.length ?? 0;
-			return fileSize < 4 * 1024 * 1024;
-		}
-		return false;
 	}
 
 	function updateScript(fileName: string) {
