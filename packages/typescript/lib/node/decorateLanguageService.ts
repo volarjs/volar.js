@@ -359,7 +359,7 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 			return result;
 		}
 		else {
-			return getEncodedSemanticClassifications(fileName, span);
+			return getEncodedSemanticClassifications(fileName, span, format);
 		}
 	};
 	languageService.getSyntacticDiagnostics = fileName => {
