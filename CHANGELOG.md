@@ -10,7 +10,7 @@
 
 - **language-service:** transform markdown links in completion items [#133](https://github.com/volarjs/volar.js/issues/133)
 - **typescript:** typescript plugin module resolve behavior inconsistent with language server
-- **typescript:** typescript plugin breaks semantic highlighting for .ts files
+- **typescript:** typescript plugin breaks semantic highlighting for .ts files (https://github.com/withastro/language-tools/issues/788)
 
 ## [2.0.3](https://github.com/volarjs/volar.js/compare/v2.0.2...v2.0.3) (2024-02-10)
 
