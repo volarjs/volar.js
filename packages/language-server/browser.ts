@@ -1,8 +1,8 @@
 import { FileType } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver/browser';
-import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { createServerBase } from './lib/server';
+import { fileNameToUri, uriToFileName } from './lib/uri';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from './protocol';
 
 export * from 'vscode-languageserver/browser';
@@ -98,28 +98,4 @@ export function createServer(connection: vscode.Connection) {
 			},
 		},
 	}));
-}
-
-function uriToFileName(uri: string) {
-	const parsed = URI.parse(uri);
-	if (parsed.scheme === '__invalid__') {
-		return parsed.path;
-	}
-	return `/${parsed.scheme}${parsed.authority ? '@' + parsed.authority : ''}${parsed.path}`;
-}
-
-function fileNameToUri(fileName: string) {
-	const parts = fileName.split('/');
-	if (parts.length <= 1) {
-		return URI.from({
-			scheme: '__invalid__',
-			path: fileName,
-		}).toString();
-	}
-	const firstParts = parts[1].split('@');
-	return URI.from({
-		scheme: firstParts[0],
-		authority: firstParts.length > 1 ? firstParts[1] : undefined,
-		path: '/' + parts.slice(2).join('/'),
-	}).toString();
 }

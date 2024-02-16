@@ -1,19 +1,15 @@
 import { FileSystem, FileType } from '@volar/language-service';
 import * as fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
-import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { createServerBase } from './lib/server';
 import type { InitializationOptions } from './lib/types';
+import { fileNameToUri, uriToFileName } from './lib/uri';
 
 export * from 'vscode-languageserver/node';
 export * from './index';
 export * from './lib/project/simpleProjectProvider';
 export * from './lib/project/typescriptProjectProvider';
-
-export const uriToFileName = (uri: string) => URI.parse(uri).fsPath.replace(/\\/g, '/');
-
-export const fileNameToUri = (fileName: string) => URI.file(fileName).toString();
 
 export function createFs(options: InitializationOptions): FileSystem {
 	return {
