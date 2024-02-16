@@ -1,4 +1,4 @@
-import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat, TypeScriptProjectHost } from '@volar/language-service';
+import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
 import type * as ts from 'typescript';
 import * as path from 'path-browserify';
 import { matchFiles } from '../typescript/utilities';
@@ -22,7 +22,7 @@ let currentCwd = '';
 export function createSys(
 	ts: typeof import('typescript'),
 	env: ServiceEnvironment,
-	projectHost: TypeScriptProjectHost,
+	currentDirectory: string,
 ): ts.System & {
 	version: number;
 	sync(): Promise<number>;
@@ -30,7 +30,6 @@ export function createSys(
 
 	let version = 0;
 
-	const rootPath = projectHost.getCurrentDirectory();
 	const sys = ts.sys as ts.System | undefined;
 	const root: Dir = {
 		dirs: new Map(),
@@ -81,8 +80,8 @@ export function createSys(
 		writeFile: sys?.writeFile ?? (() => { }),
 		createDirectory: sys?.createDirectory ?? (() => { }),
 		exit: sys?.exit ?? (() => { }),
-		getExecutingFilePath: sys?.getExecutingFilePath ?? (() => rootPath + '/__fake__.js'),
-		getCurrentDirectory: () => rootPath,
+		getExecutingFilePath: sys?.getExecutingFilePath ?? (() => currentDirectory + '/__fake__.js'),
+		getCurrentDirectory: () => currentDirectory,
 		getModifiedTime,
 		readFile,
 		readDirectory,
@@ -103,15 +102,15 @@ export function createSys(
 
 	function resolvePath(fsPath: string) {
 		if (sys) {
-			if (currentCwd !== rootPath) {
-				currentCwd = rootPath;
+			if (currentCwd !== currentDirectory) {
+				currentCwd = currentDirectory;
 				// https://github.com/vuejs/language-tools/issues/2039
 				// https://github.com/vuejs/language-tools/issues/2234
-				if (sys.directoryExists(rootPath)) {
+				if (sys.directoryExists(currentDirectory)) {
 					// https://github.com/vuejs/language-tools/issues/2480
 					try {
 						// @ts-ignore
-						process.chdir(rootPath);
+						process.chdir(currentDirectory);
 					} catch { }
 				}
 			}
@@ -236,7 +235,7 @@ export function createSys(
 			excludes,
 			includes,
 			sys?.useCaseSensitiveFileNames ?? false,
-			rootPath,
+			currentDirectory,
 			depth,
 			dirPath => {
 
