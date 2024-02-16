@@ -91,7 +91,11 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			return document;
 		},
 		async openInMemoryDocument(uri: string, languageId: string, content: string) {
-			const document = TextDocument.create(uri, languageId, 0, content);
+			const oldDocument = openedDocuments.get(uri);
+			if (oldDocument) {
+				await this.closeTextDocument(uri);
+			}
+			const document = TextDocument.create(uri, languageId, (oldDocument?.version ?? 0) + 1, content);
 			openedDocuments.set(uri, document);
 			await connection.sendNotification(
 				_.DidOpenTextDocumentNotification.type,
