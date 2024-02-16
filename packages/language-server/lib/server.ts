@@ -163,6 +163,9 @@ export function createServerBase(
 			updateDiagnostics(document.uri);
 		});
 		documents.onDidClose(({ document }) => {
+			if (!isServerPushEnabled()) {
+				return;
+			}
 			context.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		});
 		context.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
@@ -297,6 +300,9 @@ export function createServerBase(
 	}
 
 	function reloadDiagnostics() {
+		if (!isServerPushEnabled()) {
+			return;
+		}
 		for (const document of documents.all()) {
 			context.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		}
@@ -319,7 +325,7 @@ export function createServerBase(
 			if (context.initializeParams.capabilities.workspace?.inlayHint?.refreshSupport) {
 				context.connection.languages.inlayHint.refresh();
 			}
-			if ((context.initializeParams.initializationOptions?.diagnosticModel ?? DiagnosticModel.Push) === DiagnosticModel.Pull) {
+			if (isServerPushEnabled()) {
 				if (context.initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
 					context.connection.languages.diagnostics.refresh();
 				}
@@ -329,7 +335,7 @@ export function createServerBase(
 
 	async function updateDiagnostics(docUri?: string) {
 
-		if ((context.initializeParams.initializationOptions?.diagnosticModel ?? DiagnosticModel.Push) !== DiagnosticModel.Push) {
+		if (!isServerPushEnabled()) {
 			return;
 		}
 
@@ -369,6 +375,10 @@ export function createServerBase(
 		});
 
 		context.connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
+	}
+
+	function isServerPushEnabled() {
+		return (context.initializeParams.initializationOptions?.diagnosticModel ?? DiagnosticModel.Push) === DiagnosticModel.Push;
 	}
 }
 
