@@ -80,6 +80,7 @@ export function createTypeScriptWorkerService<T = {}>({
 
 	const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 	const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
+	const sys = createSys(ts, env, env.typescript!.uriToFileName(env.workspaceFolder));
 	const host: TypeScriptProjectHost = {
 		getCurrentDirectory() {
 			return env.typescript!.uriToFileName(env.workspaceFolder);
@@ -123,7 +124,6 @@ export function createTypeScriptWorkerService<T = {}>({
 		},
 		getLanguageId: id => resolveCommonLanguageId(id),
 	};
-	const sys = createSys(ts, env, host);
 	const languageContext = createLanguage(
 		ts,
 		sys,
