@@ -37,6 +37,13 @@ export function isInsideRange(parent: vscode.Range, child: vscode.Range) {
 	return true;
 }
 
+export function isEqualRange(a: vscode.Range, b: vscode.Range) {
+	return a.start.line === b.start.line
+		&& a.start.character === b.start.character
+		&& a.end.line === b.end.line
+		&& a.end.character === b.end.character;
+}
+
 export function stringToSnapshot(str: string): ts.IScriptSnapshot {
 	return {
 		getText: (start, end) => str.substring(start, end),

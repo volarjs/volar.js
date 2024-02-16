@@ -1,7 +1,7 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { isInsideRange, notEmpty } from '../utils/common';
+import { isEqualRange, isInsideRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformSelectionRanges } from '../utils/transform';
 import { isSelectionRangesEnabled } from '@volar/language-core';
@@ -55,17 +55,14 @@ export function register(context: ServiceContext) {
 						}
 						return 0;
 					});
-					for (let i = 1; i < pluginResults.length; i++) {
-						let root = pluginResults[i - 1];
-						while (root.parent) {
-							root = root.parent;
+					for (let j = 1; j < pluginResults.length; j++) {
+						let top = pluginResults[j - 1];
+						const parent = pluginResults[j];
+						while (top.parent && isInsideRange(parent.range, top.parent.range) && !isEqualRange(parent.range, top.parent.range)) {
+							top = top.parent;
 						}
-						let parent: vscode.SelectionRange | undefined = pluginResults[i];
-						while (parent && !isInsideRange(parent.range, root.range)) {
-							parent = parent.parent;
-						}
-						if (parent) {
-							root.parent = parent;
+						if (top) {
+							top.parent = parent;
 						}
 					}
 					result.push(pluginResults[0]);
