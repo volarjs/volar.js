@@ -54,6 +54,10 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			);
 			return result;
 		},
+		async shutdown() {
+			await connection.sendRequest(_.ShutdownRequest.type);
+			openedDocuments.clear();
+		},
 		async openTextDocument(fileName: string, languageId: string) {
 			const uri = URI.file(fileName).toString();
 			if (!openedDocuments.has(uri)) {
