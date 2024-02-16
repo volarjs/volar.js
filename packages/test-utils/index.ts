@@ -38,14 +38,14 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	return {
 		process: childProcess,
 		connection,
-		async initialize(rootUri: string, initializationOptions: _.InitializationOptions) {
+		async initialize(rootUri: string, initializationOptions: _.InitializationOptions, capabilities: _.ClientCapabilities = {}) {
 			const result = await connection.sendRequest(
 				_.InitializeRequest.type,
 				{
 					processId: childProcess.pid ?? null,
 					rootUri,
-					capabilities: {},
 					initializationOptions,
+					capabilities,
 				} satisfies _.InitializeParams
 			);
 			await connection.sendNotification(

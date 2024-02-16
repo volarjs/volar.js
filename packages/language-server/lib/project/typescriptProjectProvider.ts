@@ -225,7 +225,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 		if (!projectPromise) {
 			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaceFolders, uriToFileName);
 			const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-			projectPromise = createTypeScriptServerProject(tsconfig, context, serviceEnv, serverOptions, servicePlugins);
+			projectPromise = createTypeScriptServerProject(tsconfig, context, serviceEnv, serverOptions.getLanguagePlugins, servicePlugins);
 			configProjects.pathSet(tsconfig, projectPromise);
 		}
 		return projectPromise;
@@ -237,7 +237,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 			inferredProjects.uriSet(workspaceFolder.toString(), (async () => {
 				const inferOptions = await getInferredCompilerOptions(context.configurationHost);
 				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-				return createTypeScriptServerProject(inferOptions, context, serviceEnv, serverOptions, servicePlugins);
+				return createTypeScriptServerProject(inferOptions, context, serviceEnv, serverOptions.getLanguagePlugins, servicePlugins);
 			})());
 		}
 

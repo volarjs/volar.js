@@ -17,7 +17,7 @@ export async function createTypeScriptServerProject(
 	tsconfig: string | ts.CompilerOptions,
 	context: ServerContext,
 	serviceEnv: ServiceEnvironment,
-	serverOptions: ServerOptions,
+	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
 	servicePlugins: ServicePlugin[],
 ): Promise<TypeScriptServerProject> {
 
@@ -48,7 +48,7 @@ export async function createTypeScriptServerProject(
 		getProjectReferences: () => parsedCommandLine.projectReferences,
 		getLanguageId: uri => context.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
 	};
-	const languagePlugins = await serverOptions.getLanguagePlugins(serviceEnv, {
+	const languagePlugins = await getLanguagePlugins(serviceEnv, {
 		typescript: {
 			configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
 			host,
