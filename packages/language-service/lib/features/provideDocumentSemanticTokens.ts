@@ -35,6 +35,11 @@ export function register(context: ServiceContext) {
 			() => range!,
 			function* (map) {
 
+				for (const mapped of map.getGeneratedRanges(range!, isSemanticTokensEnabled)) {
+					yield mapped;
+					return;
+				}
+
 				let result: {
 					start: number;
 					end: number;
