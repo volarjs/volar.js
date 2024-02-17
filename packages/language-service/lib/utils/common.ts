@@ -31,8 +31,8 @@ export function findOverlapCodeRange(
 				const mappingEnd = mapping.sourceOffsets[mapping.sourceOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1];
 				const overlap = getOverlapRange(start, end, mappingStart, mappingEnd);
 				if (overlap) {
-					mappedStart ??= overlap.start;
-					mappedEnd ??= overlap.end;
+					mappedStart ??= overlap.start + mapping.generatedOffsets[0] - mappingStart;
+					mappedEnd ??= overlap.end + mapping.generatedOffsets[mapping.generatedOffsets.length - 1] - mapping.sourceOffsets[mapping.sourceOffsets.length - 1];
 					break;
 				}
 			}
