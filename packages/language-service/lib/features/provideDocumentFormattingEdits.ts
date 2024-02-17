@@ -5,7 +5,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext, ServicePluginInstance } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { isInsideRange, stringToSnapshot } from '../utils/common';
+import { isInsideRange, stringToSnapshot, findOverlapCodeRange } from '../utils/common';
 import { getEmbeddedFilesByLevel as getEmbeddedCodesByLevel } from '../utils/featureWorkers';
 
 export function register(context: ServiceContext) {
@@ -94,6 +94,20 @@ export function register(context: ServiceContext) {
 							embeddedPosition,
 							onTypeParams.ch,
 						);
+					}
+				}
+				else if (range) {
+					const mapped = findOverlapCodeRange(
+						docMap.sourceFileDocument.offsetAt(range.start),
+						docMap.sourceFileDocument.offsetAt(range.end),
+						docMap.map,
+						isFormattingEnabled,
+					);
+					if (mapped) {
+						embeddedCodeResult = await tryFormat(docMap.virtualFileDocument, {
+							start: docMap.virtualFileDocument.positionAt(mapped.start),
+							end: docMap.virtualFileDocument.positionAt(mapped.end),
+						});
 					}
 				}
 				else {
