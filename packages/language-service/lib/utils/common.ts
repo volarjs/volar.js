@@ -31,9 +31,18 @@ export function findOverlapCodeRange(
 				const mappingEnd = mapping.sourceOffsets[mapping.sourceOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1];
 				const overlap = getOverlapRange(start, end, mappingStart, mappingEnd);
 				if (overlap) {
-					mappedStart ??= overlap.start + mapping.generatedOffsets[0] - mappingStart;
-					mappedEnd ??= overlap.end + mapping.generatedOffsets[mapping.generatedOffsets.length - 1] - mapping.sourceOffsets[mapping.sourceOffsets.length - 1];
-					break;
+					if (mappedStart === undefined) {
+						mappedStart = overlap.start + mapping.generatedOffsets[0] - mappingStart;
+					}
+					else {
+						mappedStart = Math.min(mappedStart, overlap.start + mapping.generatedOffsets[0] - mappingStart);
+					}
+					if (mappedEnd === undefined) {
+						mappedEnd = overlap.end + mapping.generatedOffsets[0] - mappingStart;
+					}
+					else {
+						mappedEnd = Math.max(mappedEnd, overlap.end + mapping.generatedOffsets[0] - mappingStart);
+					}
 				}
 			}
 		}

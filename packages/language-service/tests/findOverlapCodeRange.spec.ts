@@ -36,4 +36,40 @@ describe(`Test findOverlapCodeRange()`, () => {
 		expect(findOverlapCodeRange(7, 32, map, () => true)).toEqual({ start: 7, end: 31 });
 		expect(findOverlapCodeRange(5, 30, map, () => true)).toEqual({ start: 6, end: 30 });
 	});
+
+	it('fallback to valid range (offset)', () => {
+		const mappings: Mapping<CodeInformation>[] = [
+			{
+				sourceOffsets: [6],
+				generatedOffsets: [7],
+				lengths: [25],
+				data: { verification: true, completion: true, semantic: true, navigation: true, structure: true, format: true },
+			},
+		];
+		const map = new SourceMap(mappings);
+
+		expect(findOverlapCodeRange(5, 32, map, () => true)).toEqual({ start: 7, end: 32 });
+		expect(findOverlapCodeRange(7, 32, map, () => true)).toEqual({ start: 8, end: 32 });
+		expect(findOverlapCodeRange(5, 30, map, () => true)).toEqual({ start: 7, end: 31 });
+	});
+
+	it('mutilple mappings', () => {
+		const mappings: Mapping<CodeInformation>[] = [
+			{
+				sourceOffsets: [6],
+				generatedOffsets: [6],
+				lengths: [6],
+				data: { verification: true, completion: true, semantic: true, navigation: true, structure: true, format: true },
+			},
+			{
+				sourceOffsets: [24],
+				generatedOffsets: [24],
+				lengths: [7],
+				data: { verification: true, completion: true, semantic: true, navigation: true, structure: true, format: true },
+			},
+		];
+		const map = new SourceMap(mappings);
+
+		expect(findOverlapCodeRange(0, 38, map, () => true)).toEqual({ start: 6, end: 31 });
+	});
 });
