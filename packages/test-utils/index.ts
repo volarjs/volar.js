@@ -168,6 +168,16 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				} satisfies _.DocumentFormattingParams
 			);
 		},
+		sendDocumentRangeFormattingRequestRequest(uri: string, range: _.Range, options: _.FormattingOptions) {
+			return connection.sendRequest(
+				_.DocumentRangeFormattingRequest.type,
+				{
+					textDocument: { uri },
+					range,
+					options,
+				} satisfies _.DocumentRangeFormattingParams
+			);
+		},
 		sendRenameRequest(uri: string, position: _.Position, newName: string) {
 			return connection.sendRequest(
 				_.RenameRequest.type,
