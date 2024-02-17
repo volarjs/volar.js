@@ -2,7 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { SemanticToken, ServiceContext } from '../types';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { notEmpty } from '../utils/common';
+import { notEmpty, findOverlapCodeRange } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { isSemanticTokensEnabled } from '@volar/language-core';
 
@@ -34,46 +34,16 @@ export function register(context: ServiceContext) {
 			uri,
 			() => range!,
 			function* (map) {
-
-				for (const mapped of map.getGeneratedRanges(range!, isSemanticTokensEnabled)) {
-					yield mapped;
-					return;
-				}
-
-				let result: {
-					start: number;
-					end: number;
-				} | undefined;
-
-				const start = document.offsetAt(range!.start);
-				const end = document.offsetAt(range!.end);
-
-				for (const mapping of map.map.mappings) {
-					if (isSemanticTokensEnabled(mapping.data)) {
-						for (let i = 0; i < mapping.sourceOffsets.length; i++) {
-							if (
-								mapping.sourceOffsets[i] + mapping.lengths[i] > start
-								&& mapping.sourceOffsets[i] < end
-							) {
-								if (!result) {
-									result = {
-										start: mapping.generatedOffsets[i],
-										end: mapping.generatedOffsets[i] + mapping.lengths[i],
-									};
-								}
-								else {
-									result.start = Math.min(result.start, mapping.generatedOffsets[i]);
-									result.end = Math.max(result.end, mapping.generatedOffsets[i] + mapping.lengths[i]);
-								}
-							}
-						}
-					}
-				}
-
-				if (result) {
-					yield {
-						start: map.virtualFileDocument.positionAt(result.start),
-						end: map.virtualFileDocument.positionAt(result.end),
+				const mapped = findOverlapCodeRange(
+					map.sourceFileDocument.offsetAt(range!.start),
+					map.sourceFileDocument.offsetAt(range!.end),
+					map.map,
+					isSemanticTokensEnabled,
+				);
+				if (mapped) {
+					return {
+						start: map.virtualFileDocument.positionAt(mapped.start),
+						end: map.virtualFileDocument.positionAt(mapped.end),
 					};
 				}
 			},
