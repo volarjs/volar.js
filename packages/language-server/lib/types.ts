@@ -13,8 +13,6 @@ export interface ServerRuntimeEnvironment {
 	loadTypeScript(options: InitializationOptions): Promise<typeof import('typescript') | undefined>;
 	loadTypeScriptLocalized(options: InitializationOptions, locale: string): Promise<{} | undefined>;
 	fs: FileSystem;
-	// https://github.com/microsoft/vscode/blob/7927075f89db213bc6e2182fa684d514d69e2359/extensions/html-language-features/server/src/htmlServer.ts#L53-L56
-	timer: Timer;
 	console: Console;
 }
 
@@ -37,15 +35,14 @@ export interface InitializationOptions {
 		/**
 		 * Absolute path to node_modules/typescript/lib, available for node
 		 */
-		tsdk: string;
-	} | {
+		tsdk?: string;
 		/**
 		 * URI to node_modules/typescript/lib, available for web
 		 * @example "https://cdn.jsdelivr.net/npm/typescript/lib"
 		 * @example "https://cdn.jsdelivr.net/npm/typescript@latest/lib"
 		 * @example "https://cdn.jsdelivr.net/npm/typescript@5.0.0/lib"
 		 */
-		tsdkUrl: string;
+		tsdkUrl?: string;
 	};
 	l10n?: {
 		location: string; // uri
@@ -53,7 +50,6 @@ export interface InitializationOptions {
 	diagnosticModel?: DiagnosticModel;
 	// for resolve https://github.com/sublimelsp/LSP-volar/issues/114
 	ignoreTriggerCharacters?: string[];
-	reverseConfigFilePriority?: boolean;
 	maxFileSize?: number;
 	/**
 	 * Extra semantic token types and modifiers that are supported by the client.

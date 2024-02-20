@@ -4,7 +4,7 @@ import * as vscode from 'vscode-languageserver/node';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { createServerBase } from './lib/server';
 import type { InitializationOptions } from './lib/types';
-import { fileNameToUri, uriToFileName } from './lib/uri';
+import { uriToFileName } from './lib/uri';
 
 export * from 'vscode-languageserver/node';
 export * from './index';
@@ -81,19 +81,9 @@ export function createConnection() {
 
 export function createServer(connection: vscode.Connection) {
 	return createServerBase(connection, params => ({
-		uriToFileName,
-		fileNameToUri,
 		console: connection.console,
-		timer: {
-			setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable {
-				const handle = setImmediate(callback, ...args);
-				return { dispose: () => clearImmediate(handle) };
-			},
-		},
 		loadTypeScript(options) {
-			const tsdk = options.typescript && 'tsdk' in options.typescript
-				? options.typescript.tsdk
-				: undefined;
+			const tsdk = options.typescript?.tsdk;
 			if (!tsdk) {
 				return;
 			}
@@ -110,7 +100,7 @@ export function createServer(connection: vscode.Connection) {
 				} catch { }
 			}
 
-			throw new Error(`Can't find typescript.js or tsserverlibrary.js in ${tsdk}`);
+			throw new Error(`Can't find typescript.js or tsserverlibrary.js in ${JSON.stringify(tsdk)}`);
 		},
 		async loadTypeScriptLocalized(options, locale) {
 			const tsdk = options.typescript && 'tsdk' in options.typescript

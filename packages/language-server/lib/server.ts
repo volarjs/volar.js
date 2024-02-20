@@ -12,7 +12,6 @@ import type * as ts from 'typescript';
 import type { TextDocuments } from 'vscode-languageserver';
 
 export interface ServerContext {
-	connection: vscode.Connection;
 	initializeParams: Omit<vscode.InitializeParams, 'initializationOptions'> & { initializationOptions?: InitializationOptions; };
 	runtimeEnv: ServerRuntimeEnvironment;
 	onDidChangeWatchedFiles: vscode.Connection['onDidChangeWatchedFiles'];
@@ -83,7 +82,6 @@ export function createServerBase(
 		const env = getRuntimeEnv(params);
 		context = {
 			initializeParams: params,
-			connection,
 			runtimeEnv: {
 				...env,
 				fs: createFsWithCache(env.fs),
@@ -166,7 +164,7 @@ export function createServerBase(
 			if (!isServerPushEnabled()) {
 				return;
 			}
-			context.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+			connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		});
 		context.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
 
@@ -176,7 +174,6 @@ export function createServerBase(
 			projects,
 			params,
 			getSemanticTokensLegend(),
-			context.runtimeEnv,
 		);
 
 		try {
@@ -302,7 +299,7 @@ export function createServerBase(
 			return;
 		}
 		for (const document of documents.all()) {
-			context.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+			connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		}
 		updateDiagnosticsAndSemanticTokens();
 	}
@@ -318,14 +315,14 @@ export function createServerBase(
 
 		if (req === semanticTokensReq) {
 			if (context.initializeParams.capabilities.workspace?.semanticTokens?.refreshSupport) {
-				context.connection.languages.semanticTokens.refresh();
+				connection.languages.semanticTokens.refresh();
 			}
 			if (context.initializeParams.capabilities.workspace?.inlayHint?.refreshSupport) {
-				context.connection.languages.inlayHint.refresh();
+				connection.languages.inlayHint.refresh();
 			}
 			if (isServerPushEnabled()) {
 				if (context.initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
-					context.connection.languages.diagnostics.refresh();
+					connection.languages.diagnostics.refresh();
 				}
 			}
 		}
@@ -369,10 +366,10 @@ export function createServerBase(
 
 		const languageService = (await projects.getProject(uri)).getLanguageService();
 		const errors = await languageService.doValidation(uri, cancel, result => {
-			context.connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
+			connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});
 
-		context.connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
+		connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
 	}
 
 	function isServerPushEnabled() {

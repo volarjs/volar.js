@@ -151,9 +151,8 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 
 					let chains = await getReferencesChains(project.getParsedCommandLine(), rootTsConfig, []);
 
-					if (context.initializeParams.initializationOptions?.reverseConfigFilePriority) {
-						chains = chains.reverse();
-					}
+					// This is to be consistent with tsserver behavior
+					chains = chains.reverse();
 
 					for (const chain of chains) {
 						for (let i = chain.length - 1; i >= 0; i--) {

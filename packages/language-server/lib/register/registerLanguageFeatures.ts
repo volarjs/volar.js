@@ -1,14 +1,13 @@
 import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
-import type { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
+import type { ServerProjectProvider } from '../types';
 
 export function registerLanguageFeatures(
 	connection: vscode.Connection,
 	projectProvider: ServerProjectProvider,
 	initParams: vscode.InitializeParams,
 	semanticTokensLegend: vscode.SemanticTokensLegend,
-	runtime: ServerRuntimeEnvironment,
 ) {
 
 	let lastCompleteUri: string;
@@ -288,7 +287,8 @@ export function registerLanguageFeatures(
 
 	function worker<T>(uri: string, token: embedded.CancellationToken, cb: (service: embedded.LanguageService) => T) {
 		return new Promise<T | undefined>(resolve => {
-			runtime.timer.setImmediate(async () => {
+			const timeout = setTimeout(async () => {
+				clearTimeout(timeout);
 				if (token.isCancellationRequested) {
 					resolve(undefined);
 					return;
@@ -306,7 +306,7 @@ export function registerLanguageFeatures(
 					resolve(undefined);
 					return;
 				}
-			});
+			}, 0);
 		});
 	}
 	function fixTextEdit(item: vscode.CompletionItem) {

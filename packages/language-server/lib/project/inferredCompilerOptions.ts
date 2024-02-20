@@ -3,14 +3,13 @@ import type { createConfigurationHost } from '../configurationHost';
 
 export async function getInferredCompilerOptions(configurationHost: ReturnType<typeof createConfigurationHost> | undefined) {
 
-	let [implicitProjectConfig_1, implicitProjectConfig_2] = await Promise.all([
-		configurationHost?.getConfiguration?.<any>('js/ts.implicitProjectConfig'),
-		configurationHost?.getConfiguration?.<any>('javascript.implicitProjectConfig'),
+	const [
+		implicitProjectConfig_1 = {},
+		implicitProjectConfig_2 = {},
+	] = await Promise.all([
+		configurationHost?.getConfiguration?.<ts.CompilerOptions>('js/ts.implicitProjectConfig'),
+		configurationHost?.getConfiguration?.<ts.CompilerOptions>('javascript.implicitProjectConfig'),
 	]);
-
-	implicitProjectConfig_1 = implicitProjectConfig_1 ?? {};
-	implicitProjectConfig_2 = implicitProjectConfig_2 ?? {};
-
 	const checkJs = readCheckJs();
 	const experimentalDecorators = readExperimentalDecorators();
 	const strictNullChecks = readImplicitStrictNullChecks();
@@ -21,7 +20,7 @@ export async function getInferredCompilerOptions(configurationHost: ReturnType<t
 		allowSyntheticDefaultImports: true,
 		allowNonTsExtensions: true,
 		resolveJsonModule: true,
-		jsx: 1 /* ts.JsxEmit.Preserve */,
+		jsx: 1 satisfies ts.JsxEmit.Preserve,
 	};
 
 	return options;
@@ -48,9 +47,9 @@ export async function getInferredCompilerOptions(configurationHost: ReturnType<t
 
 	function inferredProjectCompilerOptions(projectType: 'typescript' | 'javascript'): ts.CompilerOptions {
 		const projectConfig: ts.CompilerOptions = {
-			module: 1 /* ts.ModuleKind.CommonJS */,
-			target: 7 /* ts.ScriptTarget.ES2020 */,
-			jsx: 1 /* ts.JsxEmit.Preserve */,
+			module: 1 satisfies ts.ModuleKind.CommonJS,
+			target: 7 satisfies ts.ScriptTarget.ES2020,
+			jsx: 1 satisfies ts.JsxEmit.Preserve,
 		};
 
 		if (checkJs) {
