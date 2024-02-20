@@ -208,7 +208,6 @@ export function registerLanguageFeatures(
 		return await lastCallHierarchyLs?.callHierarchy.getOutgoingCalls(params.item, token) ?? [];
 	});
 	connection.languages.semanticTokens.on(async (params, token, _, resultProgress) => {
-		await sleep(200);
 		return await worker(params.textDocument.uri, token, async service => {
 			return await service?.getSemanticTokens(
 				params.textDocument.uri,
@@ -220,7 +219,6 @@ export function registerLanguageFeatures(
 		}) ?? { data: [] };
 	});
 	connection.languages.semanticTokens.onRange(async (params, token, _, resultProgress) => {
-		await sleep(200);
 		return await worker(params.textDocument.uri, token, async service => {
 			return await service?.getSemanticTokens(
 				params.textDocument.uri,
