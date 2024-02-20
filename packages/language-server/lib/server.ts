@@ -170,7 +170,7 @@ export function createServerBase(
 		});
 		context.configurationHost?.onDidChangeConfiguration?.(updateDiagnosticsAndSemanticTokens);
 
-		(await import('./register/registerEditorFeatures.js')).registerEditorFeatures(connection, projects, context.runtimeEnv);
+		(await import('./register/registerEditorFeatures.js')).registerEditorFeatures(connection, projects);
 		(await import('./register/registerLanguageFeatures.js')).registerLanguageFeatures(
 			connection,
 			projects,

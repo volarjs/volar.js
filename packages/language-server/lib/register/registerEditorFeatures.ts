@@ -15,13 +15,13 @@ import {
 	UpdateServicePluginStateNotification,
 	GetServicePluginsRequest,
 } from '../../protocol';
-import type { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
+import type { ServerProjectProvider } from '../types';
 import type { DataTransferItem } from '@volar/language-service';
+import { fileNameToUri } from '../uri';
 
 export function registerEditorFeatures(
 	connection: vscode.Connection,
 	projects: ServerProjectProvider,
-	env: ServerRuntimeEnvironment,
 ) {
 
 	const scriptVersions = new Map<string, number>();
@@ -58,7 +58,7 @@ export function registerEditorFeatures(
 		const languageService = (await projects.getProject(params.uri)).getLanguageService();
 		const configFileName = languageService.context.language.typescript?.configFileName;
 		if (configFileName) {
-			return { uri: env.fileNameToUri(configFileName) };
+			return { uri: fileNameToUri(configFileName) };
 		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async document => {

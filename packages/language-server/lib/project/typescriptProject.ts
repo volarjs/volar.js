@@ -6,6 +6,7 @@ import * as vscode from 'vscode-languageserver';
 import type { ServerProject } from '../types';
 import { UriMap, createUriMap } from '../utils/uriMap';
 import type { ServerContext, ServerOptions } from '../server';
+import { fileNameToUri, uriToFileName } from '../uri';
 
 export interface TypeScriptServerProject extends ServerProject {
 	askedFiles: UriMap<boolean>;
@@ -29,7 +30,6 @@ export async function createTypeScriptServerProject(
 	let projectVersion = 0;
 	let languageService: LanguageService | undefined;
 
-	const { uriToFileName, fileNameToUri } = context.runtimeEnv;
 	const ts = context.ts;
 	const sys = createSys(ts, serviceEnv, uriToFileName(serviceEnv.workspaceFolder));
 	const host: TypeScriptProjectHost = {

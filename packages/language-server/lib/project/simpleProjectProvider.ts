@@ -5,6 +5,7 @@ import { isFileInDir } from '../utils/isFileInDir';
 import type { WorkspaceFolderManager } from '../workspaceFolderManager';
 import { createSimpleServerProject } from './simpleProject';
 import type { ServerContext } from '../server';
+import { fileNameToUri, uriToFileName } from '../uri';
 
 export const createSimpleProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
 
@@ -13,7 +14,7 @@ export const createSimpleProjectProvider: ServerProjectProviderFactory = (contex
 	return {
 		getProject(uri) {
 
-			const workspaceFolder = getWorkspaceFolder(uri, context.workspaceFolders, context.runtimeEnv.uriToFileName);
+			const workspaceFolder = getWorkspaceFolder(uri, context.workspaceFolders);
 
 			let projectPromise = projects.get(workspaceFolder);
 			if (!projectPromise) {
@@ -51,8 +52,8 @@ export function createServiceEnvironment(context: ServerContext, workspaceFolder
 		onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
 		onDidChangeWatchedFiles: context.onDidChangeWatchedFiles,
 		typescript: {
-			fileNameToUri: context.runtimeEnv.fileNameToUri,
-			uriToFileName: context.runtimeEnv.uriToFileName,
+			fileNameToUri: fileNameToUri,
+			uriToFileName: uriToFileName,
 		},
 	};
 	return env;
@@ -61,7 +62,6 @@ export function createServiceEnvironment(context: ServerContext, workspaceFolder
 export function getWorkspaceFolder(
 	uri: string,
 	workspaceFolderManager: WorkspaceFolderManager,
-	uriToFileName: (uri: string) => string
 ) {
 
 	const fileName = uriToFileName(uri);

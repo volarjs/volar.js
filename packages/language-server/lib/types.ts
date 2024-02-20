@@ -10,8 +10,6 @@ export interface Timer {
 }
 
 export interface ServerRuntimeEnvironment {
-	uriToFileName(uri: string): string;
-	fileNameToUri(fileName: string): string;
 	loadTypeScript(options: InitializationOptions): Promise<typeof import('typescript') | undefined>;
 	loadTypeScriptLocalized(options: InitializationOptions, locale: string): Promise<{} | undefined>;
 	fs: FileSystem;

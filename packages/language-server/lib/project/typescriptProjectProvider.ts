@@ -9,12 +9,13 @@ import { createUriMap } from '../utils/uriMap';
 import { getInferredCompilerOptions } from './inferredCompilerOptions';
 import { createServiceEnvironment, getWorkspaceFolder } from './simpleProjectProvider';
 import { createTypeScriptServerProject, type TypeScriptServerProject } from './typescriptProject';
+import { fileNameToUri, uriToFileName } from '../uri';
 
 const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
 export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
 
-	const { fileNameToUri, uriToFileName, fs } = context.runtimeEnv;
+	const { fs } = context.runtimeEnv;
 	const configProjects = createUriMap<Promise<TypeScriptServerProject>>(fileNameToUri);
 	const inferredProjects = createUriMap<Promise<TypeScriptServerProject>>(fileNameToUri);
 	const rootTsConfigs = new Set<string>();
@@ -63,7 +64,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 			if (tsconfig) {
 				return await getOrCreateConfiguredProject(tsconfig);
 			}
-			const workspaceFolder = getWorkspaceFolder(uri, context.workspaceFolders, uriToFileName);
+			const workspaceFolder = getWorkspaceFolder(uri, context.workspaceFolders);
 			return await getOrCreateInferredProject(uri, workspaceFolder);
 		},
 		async getProjects() {
@@ -223,7 +224,7 @@ export const createTypeScriptProjectProvider: ServerProjectProviderFactory = (co
 		tsconfig = tsconfig.replace(/\\/g, '/');
 		let projectPromise = configProjects.pathGet(tsconfig);
 		if (!projectPromise) {
-			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaceFolders, uriToFileName);
+			const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaceFolders);
 			const serviceEnv = createServiceEnvironment(context, workspaceFolder);
 			projectPromise = createTypeScriptServerProject(tsconfig, context, serviceEnv, serverOptions.getLanguagePlugins, servicePlugins);
 			configProjects.pathSet(tsconfig, projectPromise);
