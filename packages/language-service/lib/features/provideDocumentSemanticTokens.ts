@@ -41,7 +41,7 @@ export function register(context: ServiceContext) {
 					isSemanticTokensEnabled,
 				);
 				if (mapped) {
-					return {
+					yield {
 						start: map.virtualFileDocument.positionAt(mapped.start),
 						end: map.virtualFileDocument.positionAt(mapped.end),
 					};
