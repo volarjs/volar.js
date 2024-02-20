@@ -1,11 +1,11 @@
-import { SourceMap, VirtualCode, forEachEmbeddedCode, isFormattingEnabled, resolveCommonLanguageId, updateVirtualCodeMaps } from '@volar/language-core';
+import { VirtualCode, forEachEmbeddedCode, isFormattingEnabled, resolveCommonLanguageId, updateVirtualCodeMaps } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { SourceMapWithDocuments } from '../documents';
-import type { ServiceContext, ServicePluginInstance } from '../types';
+import type { EmbeddedCodeFormattingOptions, ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { isInsideRange, stringToSnapshot, findOverlapCodeRange } from '../utils/common';
+import { findOverlapCodeRange, stringToSnapshot } from '../utils/common';
 import { getEmbeddedFilesByLevel as getEmbeddedCodesByLevel } from '../utils/featureWorkers';
 
 export function register(context: ServiceContext) {
@@ -37,218 +37,181 @@ export function register(context: ServiceContext) {
 
 		if (!sourceFile.generated) {
 			return onTypeParams
-				? (await tryFormat(document, onTypeParams.position, onTypeParams.ch))?.edits
-				: (await tryFormat(document, range, undefined))?.edits;
+				? (await tryFormat(document, document, undefined, 0, onTypeParams.position, onTypeParams.ch))?.edits
+				: (await tryFormat(document, document, undefined, 0, range, undefined))?.edits;
 		}
 
-		const initialIndentLanguageId = await context.env.getConfiguration?.<Record<string, boolean>>('volar.format.initialIndent') ?? { html: true };
+		const embeddedRanges = new Map<string, { start: number, end: number; }>();
+		const startOffset = document.offsetAt(range.start);
+		const endOffset = document.offsetAt(range.end);
 
-		let tempSourceSnapshot = sourceFile.snapshot;
-		let tempVirtualFile = sourceFile.generated.languagePlugin.createVirtualCode(uri, sourceFile.languageId, sourceFile.snapshot, context.language.files)!;
-		const originalDocument = document;
-
-		let level = 0;
-
-		while (true) {
-
-			const embeddedCodes = getEmbeddedCodesByLevel(context, sourceFile.id, tempVirtualFile, level++);
-			if (embeddedCodes.length === 0) {
-				break;
-			}
-
-			let edits: vscode.TextEdit[] = [];
-			const toPatchIndent: {
-				virtualCodeId: string;
-				isCodeBlock: boolean;
-				service: ServicePluginInstance;
-			}[] = [];
-
-			for (const code of embeddedCodes) {
-
-				if (!code.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
-					continue;
-				}
-
-				const isCodeBlock = code.mappings.length === 1
-					&& code.mappings[0].sourceOffsets.length === 1
-					&& code.mappings[0].generatedOffsets[0] === 0
-					&& code.mappings[0].lengths[0] === code.snapshot.getLength();
-				if (onTypeParams && !isCodeBlock) {
-					continue;
-				}
-
-				const docMap = createDocMap(code, uri, sourceFile.languageId, tempSourceSnapshot);
-				if (!docMap) {
-					continue;
-				}
-
-				let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
-
-				if (onTypeParams) {
-
-					const embeddedPosition = docMap.getGeneratedPosition(onTypeParams.position);
-
-					if (embeddedPosition) {
-						embeddedCodeResult = await tryFormat(
-							docMap.virtualFileDocument,
-							embeddedPosition,
-							onTypeParams.ch,
-						);
-					}
-				}
-				else if (range) {
-					const mapped = findOverlapCodeRange(
-						docMap.sourceFileDocument.offsetAt(range.start),
-						docMap.sourceFileDocument.offsetAt(range.end),
-						docMap.map,
-						isFormattingEnabled,
-					);
-					if (mapped) {
-						embeddedCodeResult = await tryFormat(docMap.virtualFileDocument, {
-							start: docMap.virtualFileDocument.positionAt(mapped.start),
-							end: docMap.virtualFileDocument.positionAt(mapped.end),
-						});
-					}
-				}
-				else {
-					embeddedCodeResult = await tryFormat(docMap.virtualFileDocument, {
-						start: docMap.virtualFileDocument.positionAt(0),
-						end: docMap.virtualFileDocument.positionAt(docMap.virtualFileDocument.getText().length),
-					});
-				}
-
-				if (!embeddedCodeResult) {
-					continue;
-				}
-
-				toPatchIndent.push({
-					virtualCodeId: code.id,
-					isCodeBlock,
-					service: embeddedCodeResult.service[1],
-				});
-
-				for (const textEdit of embeddedCodeResult.edits) {
-					const range = docMap.getSourceRange(textEdit.range);
-					if (range) {
-						edits.push({
-							newText: textEdit.newText,
-							range,
-						});
-					}
-				}
-			}
-
-			edits = edits.filter(edit => isInsideRange(range!, edit.range));
-
-			if (edits.length > 0) {
-				const newText = TextDocument.applyEdits(document, edits);
-				document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-				tempSourceSnapshot = stringToSnapshot(newText);
-				tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.language.files);
-			}
-
-			if (level > 1) {
-
-				const baseIndent = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
-				const editLines = new Set<number>();
-
-				if (onTypeParams) {
-					for (const edit of edits) {
-						for (let line = edit.range.start.line; line <= edit.range.end.line; line++) {
-							editLines.add(line);
+		for (const code of forEachEmbeddedCode(sourceFile.generated.code)) {
+			for (const [sourceFileUri, [_snapshot, map]] of context.language.files.getMaps(code)) {
+				if (sourceFileUri === uri) {
+					const embeddedRange = findOverlapCodeRange(startOffset, endOffset, map, isFormattingEnabled);
+					if (embeddedRange) {
+						if (embeddedRange.start === map.mappings[0].generatedOffsets[0]) {
+							embeddedRange.start = 0;
 						}
+						const lastMapping = map.mappings[map.mappings.length - 1];
+						if (embeddedRange.end === lastMapping.generatedOffsets[lastMapping.generatedOffsets.length - 1] + lastMapping.lengths[lastMapping.lengths.length - 1]) {
+							embeddedRange.end = code.snapshot.getLength();
+						}
+						embeddedRanges.set(code.id, embeddedRange);
 					}
+					break;
+				}
+			}
+		}
+
+		try {
+			const originalDocument = document;
+
+			let tempSourceSnapshot = sourceFile.snapshot;
+			let tempVirtualFile = context.language.files.set(sourceFile.id + '.tmp', sourceFile.languageId, sourceFile.snapshot, [sourceFile.generated.languagePlugin]).generated?.code;
+			if (!tempVirtualFile) {
+				return;
+			}
+
+			let level = 0;
+
+			while (true) {
+
+				const embeddedCodes = getEmbeddedCodesByLevel(context, sourceFile.id, tempVirtualFile, level++);
+				if (embeddedCodes.length === 0) {
+					break;
 				}
 
-				for (const item of toPatchIndent) {
+				let edits: vscode.TextEdit[] = [];
 
-					let virtualCode!: VirtualCode;
-					for (const file of forEachEmbeddedCode(tempVirtualFile)) {
-						if (file.id === item.virtualCodeId) {
-							virtualCode = file;
-							break;
-						}
+				for (const code of embeddedCodes) {
+
+					if (!code.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
+						continue;
 					}
-					const docMap = createDocMap(virtualCode, uri, sourceFile.languageId, tempSourceSnapshot);
+
+					const docMap = createDocMap(code, uri, sourceFile.languageId, tempSourceSnapshot);
 					if (!docMap) {
 						continue;
 					}
 
-					const indentSensitiveLines = new Set<number>();
+					let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
+					let embeddedRange = embeddedRanges.get(code.id);
 
-					for (const service of item.service.provideFormattingIndentSensitiveLines ? [item.service] : context.services.map(service => service[1])) {
+					if (onTypeParams) {
 
-						if (token.isCancellationRequested) {
-							break;
-						}
+						const embeddedPosition = docMap.getGeneratedPosition(onTypeParams.position);
 
-						if (service.provideFormattingIndentSensitiveLines) {
-							const lines = await service.provideFormattingIndentSensitiveLines(docMap.virtualFileDocument, token);
-							if (lines) {
-								for (const line of lines) {
-									const sourceLine = docMap.getSourcePosition({ line: line, character: 0 })?.line;
-									if (sourceLine !== undefined) {
-										indentSensitiveLines.add(sourceLine);
-									}
-								}
-							}
+						if (embeddedPosition) {
+							embeddedCodeResult = await tryFormat(
+								docMap.sourceFileDocument,
+								docMap.virtualFileDocument,
+								code,
+								level,
+								embeddedPosition,
+								onTypeParams.ch,
+							);
 						}
 					}
+					else if (embeddedRange) {
+						embeddedCodeResult = await tryFormat(
+							docMap.sourceFileDocument,
+							docMap.virtualFileDocument,
+							code,
+							level,
+							{
+								start: docMap.virtualFileDocument.positionAt(embeddedRange.start),
+								end: docMap.virtualFileDocument.positionAt(embeddedRange.end),
+							},
+						);
+					}
 
-					let indentEdits = patchIndents(
-						document,
-						item.isCodeBlock,
-						docMap.map,
-						initialIndentLanguageId[docMap.virtualFileDocument.languageId] ? baseIndent : '',
-					);
+					if (!embeddedCodeResult) {
+						continue;
+					}
 
-					indentEdits = indentEdits.filter(edit => {
-						for (let line = edit.range.start.line; line <= edit.range.end.line; line++) {
-							if (indentSensitiveLines.has(line) && !edit.newText.includes('\n')) {
-								return false;
-							}
-							if (onTypeParams && !editLines.has(line)) {
-								return false;
-							}
-							if (!isInsideRange(range!, edit.range)) {
-								return false;
-							}
+					for (const textEdit of embeddedCodeResult.edits) {
+						const range = docMap.getSourceRange(textEdit.range);
+						if (range) {
+							edits.push({
+								newText: textEdit.newText,
+								range,
+							});
 						}
-						return true;
-					});
+					}
+				}
 
-					if (indentEdits.length > 0) {
-						const newText = TextDocument.applyEdits(document, indentEdits);
-						document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
-						tempSourceSnapshot = stringToSnapshot(newText);
-						tempVirtualFile = sourceFile.generated.languagePlugin.updateVirtualCode(uri, tempVirtualFile, tempSourceSnapshot, context.language.files);
+				if (edits.length > 0) {
+					const newText = TextDocument.applyEdits(document, edits);
+					document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
+					tempSourceSnapshot = stringToSnapshot(newText);
+					tempVirtualFile = context.language.files.set(sourceFile.id + '.tmp', sourceFile.languageId, tempSourceSnapshot, [sourceFile.generated.languagePlugin]).generated?.code;
+					if (!tempVirtualFile) {
+						break;
 					}
 				}
 			}
+
+			if (document.getText() === originalDocument.getText()) {
+				return;
+			}
+
+			const editRange: vscode.Range = {
+				start: originalDocument.positionAt(0),
+				end: originalDocument.positionAt(originalDocument.getText().length),
+			};
+			const textEdit: vscode.TextEdit = {
+				range: editRange,
+				newText: document.getText(),
+			};
+
+			return [textEdit];
+		} finally {
+			context.language.files.delete(sourceFile.id + '.tmp');
 		}
-
-		if (document.getText() === originalDocument.getText()) {
-			return;
-		}
-
-		const editRange: vscode.Range = {
-			start: originalDocument.positionAt(0),
-			end: originalDocument.positionAt(originalDocument.getText().length),
-		};
-		const textEdit: vscode.TextEdit = {
-			range: editRange,
-			newText: document.getText(),
-		};
-
-		return [textEdit];
 
 		async function tryFormat(
+			sourceDocument: TextDocument,
 			document: TextDocument,
-			range: vscode.Range | vscode.Position,
+			code: VirtualCode | undefined,
+			codeLevel: number,
+			rangeOrPosition: vscode.Range | vscode.Position,
 			ch?: string,
 		) {
 
-			let formatRange = range;
+			if (context.disabledVirtualFileUris.has(document.uri)) {
+				return;
+			}
+
+			let codeOptions: EmbeddedCodeFormattingOptions | undefined;
+
+			rangeOrPosition ??= {
+				start: document.positionAt(0),
+				end: document.positionAt(document.getText().length),
+			};
+
+			if (code) {
+				codeOptions = {
+					level: codeLevel - 1,
+					initialIndentLevel: 0,
+				};
+				if (code.mappings.length) {
+					const firstMapping = code.mappings[0];
+					const startOffset = firstMapping.sourceOffsets[0];
+					const startPosition = sourceDocument.positionAt(startOffset);
+					codeOptions.initialIndentLevel = computeInitialIndent(
+						sourceDocument.getText(),
+						sourceDocument.offsetAt({ line: startPosition.line, character: 0 }),
+						options,
+					);
+				}
+				for (const service of context.services) {
+					if (context.disabledServicePlugins.has(service[1])) {
+						continue;
+					}
+					codeOptions = await service[1].resolveEmbeddedCodeFormattingOptions?.(code, codeOptions, token) ?? codeOptions;
+				}
+			}
 
 			for (const service of context.services) {
 				if (context.disabledServicePlugins.has(service[1])) {
@@ -262,13 +225,13 @@ export function register(context: ServiceContext) {
 				let edits: vscode.TextEdit[] | null | undefined;
 
 				try {
-					if (ch !== undefined && 'line' in formatRange && 'character' in formatRange) {
+					if (ch !== undefined && rangeOrPosition && 'line' in rangeOrPosition && 'character' in rangeOrPosition) {
 						if (service[0].autoFormatTriggerCharacters?.includes(ch)) {
-							edits = await service[1].provideOnTypeFormattingEdits?.(document, formatRange, ch, options, token);
+							edits = await service[1].provideOnTypeFormattingEdits?.(document, rangeOrPosition, ch, options, codeOptions, token);
 						}
 					}
-					else if (ch === undefined && 'start' in formatRange && 'end' in formatRange) {
-						edits = await service[1].provideDocumentFormattingEdits?.(document, formatRange, options, token);
+					else if (ch === undefined && rangeOrPosition && 'start' in rangeOrPosition && 'end' in rangeOrPosition) {
+						edits = await service[1].provideDocumentFormattingEdits?.(document, rangeOrPosition, options, codeOptions, token);
 					}
 				}
 				catch (err) {
@@ -315,75 +278,19 @@ export function register(context: ServiceContext) {
 	}
 }
 
-function patchIndents(document: TextDocument, isCodeBlock: boolean, map: SourceMap, initialIndent: string) {
-
-	const indentTextEdits: vscode.TextEdit[] = [];
-
-	if (!isCodeBlock) {
-		initialIndent = '';
-	}
-
-	for (let i = 0; i < map.mappings.length; i++) {
-
-		const mapping = map.mappings[i];
-
-		for (let j = 0; j < mapping.sourceOffsets.length; j++) {
-
-			const firstLineIndent = getBaseIndent(mapping.sourceOffsets[j]);
-			const text = document.getText().substring(mapping.sourceOffsets[j], mapping.sourceOffsets[j] + mapping.lengths[j]);
-			const lines = text.split('\n');
-			const baseIndent = firstLineIndent + initialIndent;
-			let lineOffset = lines[0].length + 1;
-			let insertedFinalNewLine = false;
-
-			if (!text.trim()) {
-				continue;
-			}
-
-			if (isCodeBlock && text.trimStart().length === text.length) {
-				indentTextEdits.push({
-					newText: '\n' + baseIndent,
-					range: {
-						start: document.positionAt(mapping.sourceOffsets[j]),
-						end: document.positionAt(mapping.sourceOffsets[j]),
-					},
-				});
-			}
-
-			if (isCodeBlock && text.trimEnd().length === text.length) {
-				indentTextEdits.push({
-					newText: '\n',
-					range: {
-						start: document.positionAt(mapping.sourceOffsets[j] + mapping.lengths[j]),
-						end: document.positionAt(mapping.sourceOffsets[j] + mapping.lengths[j]),
-					},
-				});
-				insertedFinalNewLine = true;
-			}
-
-			if (baseIndent && lines.length > 1) {
-				for (let i = 1; i < lines.length; i++) {
-					if (lines[i].trim() || i === lines.length - 1) {
-						const isLastLine = i === lines.length - 1 && !insertedFinalNewLine;
-						indentTextEdits.push({
-							newText: isLastLine ? firstLineIndent : baseIndent,
-							range: {
-								start: document.positionAt(mapping.sourceOffsets[j] + lineOffset),
-								end: document.positionAt(mapping.sourceOffsets[j] + lineOffset),
-							},
-						});
-					}
-					lineOffset += lines[i].length + 1;
-				}
-			}
+function computeInitialIndent(content: string, i: number, options: vscode.FormattingOptions) {
+	let nChars = 0;
+	const tabSize = options.tabSize || 4;
+	while (i < content.length) {
+		const ch = content.charAt(i);
+		if (ch === ' ') {
+			nChars++;
+		} else if (ch === '\t') {
+			nChars += tabSize;
+		} else {
+			break;
 		}
+		i++;
 	}
-
-	return indentTextEdits;
-
-	function getBaseIndent(pos: number) {
-		const startPos = document.positionAt(pos);
-		const startLineText = document.getText({ start: { line: startPos.line, character: 0 }, end: startPos });
-		return startLineText.substring(0, startLineText.length - startLineText.trimStart().length);
-	}
+	return Math.floor(nChars / tabSize);
 }
