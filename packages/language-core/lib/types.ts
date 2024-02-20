@@ -108,5 +108,5 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getProjectVersion'
 	| 'getScriptSnapshot'
 > {
-	getLanguageId(fileName: string): string;
+	getLanguageId(fileId: string): string;
 }
