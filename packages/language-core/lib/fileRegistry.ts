@@ -151,7 +151,9 @@ export function updateVirtualCodeMaps(
 
 export function* forEachEmbeddedCode(code: VirtualCode): Generator<VirtualCode> {
 	yield code;
-	for (const embeddedCode of code.embeddedCodes) {
-		yield* forEachEmbeddedCode(embeddedCode);
+	if (code.embeddedCodes) {
+		for (const embeddedCode of code.embeddedCodes) {
+			yield* forEachEmbeddedCode(embeddedCode);
+		}
 	}
 }
