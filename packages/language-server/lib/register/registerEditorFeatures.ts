@@ -80,7 +80,7 @@ export function registerEditorFeatures(
 				fileUri: sourceFile!.id,
 				virtualCodeId: code.id,
 				languageId: code.languageId,
-				embeddedCodes: code.embeddedCodes.map(prune),
+				embeddedCodes: code.embeddedCodes?.map(prune) || [],
 				version,
 				disabled: languageService.context.disabledVirtualFileUris.has(uri),
 			};

@@ -22,7 +22,7 @@ export interface VirtualCode<T extends string = string> {
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 	mappings: CodeMapping[];
-	embeddedCodes: VirtualCode[];
+	embeddedCodes?: VirtualCode[];
 	codegenStacks?: Stack[];
 	linkedCodeMappings?: Mapping[];
 }

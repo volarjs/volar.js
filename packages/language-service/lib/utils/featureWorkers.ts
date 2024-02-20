@@ -130,8 +130,10 @@ export function* eachEmbeddedDocument(
 	rootCode = current,
 ): Generator<SourceMapWithDocuments<CodeInformation>> {
 
-	for (const embeddedCode of current.embeddedCodes) {
-		yield* eachEmbeddedDocument(context, embeddedCode, rootCode);
+	if (current.embeddedCodes) {
+		for (const embeddedCode of current.embeddedCodes) {
+			yield* eachEmbeddedDocument(context, embeddedCode, rootCode);
+		}
 	}
 
 	for (const map of context.documents.getMaps(current)) {
@@ -155,10 +157,16 @@ export function getEmbeddedFilesByLevel(context: ServiceContext, sourceFileUri: 
 			return embeddedFilesByLevel[level];
 		}
 
-		let nextLevel: VirtualCode[] = [];
+		const nextLevel: VirtualCode[] = [];
 
 		for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
-			nextLevel = nextLevel.concat(file.embeddedCodes.filter(file => !context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(sourceFileUri, file.id))));
+			if (file.embeddedCodes) {
+				for (const embedded of file.embeddedCodes) {
+					if (!context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(sourceFileUri, embedded.id))) {
+						nextLevel.push(embedded);
+					}
+				}
+			}
 		}
 
 		embeddedFilesByLevel.push(nextLevel);
