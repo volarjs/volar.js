@@ -175,10 +175,8 @@ export function createServerBase(
 			connection,
 			projects,
 			params,
-			context.initializeParams.initializationOptions ?? {},
 			getSemanticTokensLegend(),
 			context.runtimeEnv,
-			documents,
 		);
 
 		try {
