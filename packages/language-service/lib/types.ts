@@ -1,4 +1,4 @@
-import type { LanguageContext } from '@volar/language-core';
+import type { LanguageContext, VirtualCode } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { DocumentProvider } from './documents';
@@ -83,6 +83,11 @@ export interface ServicePlugin {
 	create(context: ServiceContext): ServicePluginInstance;
 }
 
+export interface EmbeddedCodeFormattingOptions {
+	level: number;
+	initialIndentLevel: number;
+}
+
 export interface ServicePluginInstance<P = any> {
 	provide?: P;
 	isAdditionalCompletion?: boolean; // volar specific
@@ -95,8 +100,8 @@ export interface ServicePluginInstance<P = any> {
 	provideImplementation?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableResult<vscode.LocationLink[]>;
 	provideCodeLenses?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.CodeLens[]>;
 	provideCodeActions?(document: TextDocument, range: vscode.Range, context: vscode.CodeActionContext, token: vscode.CancellationToken): NullableResult<vscode.CodeAction[]>;
-	provideDocumentFormattingEdits?(document: TextDocument, range: vscode.Range, options: vscode.FormattingOptions, token: vscode.CancellationToken): NullableResult<vscode.TextEdit[]>;
-	provideOnTypeFormattingEdits?(document: TextDocument, position: vscode.Position, key: string, options: vscode.FormattingOptions, token: vscode.CancellationToken): NullableResult<vscode.TextEdit[]>;
+	provideDocumentFormattingEdits?(document: TextDocument, range: vscode.Range, options: vscode.FormattingOptions, embeddedCodeContext: EmbeddedCodeFormattingOptions | undefined, token: vscode.CancellationToken): NullableResult<vscode.TextEdit[]>;
+	provideOnTypeFormattingEdits?(document: TextDocument, position: vscode.Position, key: string, options: vscode.FormattingOptions, embeddedCodeContext: EmbeddedCodeFormattingOptions | undefined, token: vscode.CancellationToken): NullableResult<vscode.TextEdit[]>;
 	provideDocumentLinks?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.DocumentLink[]>;
 	provideCompletionItems?(document: TextDocument, position: vscode.Position, context: vscode.CompletionContext, token: vscode.CancellationToken): NullableResult<vscode.CompletionList>;
 	provideDocumentColors?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.ColorInformation[]>;
@@ -120,13 +125,13 @@ export interface ServicePluginInstance<P = any> {
 	provideReferencesCodeLensRanges?(document: TextDocument, token: vscode.CancellationToken): NullableResult<vscode.Range[]>; // volar specific
 	provideAutoInsertionEdit?(document: TextDocument, position: vscode.Position, lastChange: { range: vscode.Range; text: string; }, token: vscode.CancellationToken): NullableResult<string | vscode.TextEdit>; // volar specific
 	provideFileRenameEdits?(oldUri: string, newUri: string, token: vscode.CancellationToken): NullableResult<vscode.WorkspaceEdit>; // volar specific
-	provideFormattingIndentSensitiveLines?(document: TextDocument, token: vscode.CancellationToken): NullableResult<number[]>; // volar specific
 	provideDocumentDropEdits?(document: TextDocument, position: vscode.Position, dataTransfer: Map<string, DataTransferItem>, token: vscode.CancellationToken): NullableResult<DocumentDropEdit>; // volar specific
 	resolveCodeLens?(codeLens: vscode.CodeLens, token: vscode.CancellationToken): Result<vscode.CodeLens>;
 	resolveCodeAction?(codeAction: vscode.CodeAction, token: vscode.CancellationToken): Result<vscode.CodeAction>;
 	resolveCompletionItem?(item: vscode.CompletionItem, token: vscode.CancellationToken): Result<vscode.CompletionItem>;
 	resolveDocumentLink?(link: vscode.DocumentLink, token: vscode.CancellationToken): Result<vscode.DocumentLink>;
 	resolveInlayHint?(inlayHint: vscode.InlayHint, token: vscode.CancellationToken): Result<vscode.InlayHint>;
+	resolveEmbeddedCodeFormattingOptions?(code: VirtualCode, options: EmbeddedCodeFormattingOptions, token: vscode.CancellationToken): NullableResult<EmbeddedCodeFormattingOptions>; // volar specific
 	transformCompletionItem?(item: vscode.CompletionItem): vscode.CompletionItem | undefined; // volar specific
 	transformCodeAction?(item: vscode.CodeAction): vscode.CodeAction | undefined; // volar specific
 	dispose?(): void;
