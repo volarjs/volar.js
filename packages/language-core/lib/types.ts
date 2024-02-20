@@ -17,8 +17,8 @@ export interface SourceFile {
 
 export type CodeMapping = Mapping<CodeInformation>;
 
-export interface VirtualCode<T extends string = string> {
-	id: T;
+export interface VirtualCode {
+	id: string;
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 	mappings: CodeMapping[];
