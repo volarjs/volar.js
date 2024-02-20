@@ -70,8 +70,8 @@ export function register(context: ServiceContext) {
 					if (minStart !== undefined && maxEnd !== undefined) {
 						yield {
 							range: {
-								start: map.virtualFileDocument.positionAt(minStart),
-								end: map.virtualFileDocument.positionAt(maxEnd),
+								start: map.embeddedDocument.positionAt(minStart),
+								end: map.embeddedDocument.positionAt(maxEnd),
 							},
 							codeActionContext: _codeActionContext,
 						};

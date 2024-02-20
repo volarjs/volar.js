@@ -94,9 +94,9 @@ export function registerEditorFeatures(
 		const [virtualCode] = languageService.context.language.files.getVirtualCode(params.fileUri, params.virtualCodeId);
 		if (virtualCode) {
 			for (const map of languageService.context.documents.getMaps(virtualCode)) {
-				content = map.virtualFileDocument.getText();
+				content = map.embeddedDocument.getText();
 				codegenStacks = virtualCode.codegenStacks ?? [];
-				mappings[map.sourceFileDocument.uri] = map.map.mappings;
+				mappings[map.sourceDocument.uri] = map.map.mappings;
 			}
 		}
 		return {

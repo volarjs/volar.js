@@ -36,7 +36,7 @@ export function register(context: ServiceContext) {
 								data: item.data,
 							},
 							serviceIndex: context.services.indexOf(service),
-							virtualDocumentUri: map?.virtualFileDocument.uri,
+							virtualDocumentUri: map?.embeddedDocument.uri,
 						} satisfies PluginCallHierarchyData;
 					});
 					return items;
@@ -190,8 +190,8 @@ export function register(context: ServiceContext) {
 			if (!range) {
 				// TODO: <script> range
 				range = {
-					start: map.sourceFileDocument.positionAt(0),
-					end: map.sourceFileDocument.positionAt(map.sourceFileDocument.getText().length),
+					start: map.sourceDocument.positionAt(0),
+					end: map.sourceDocument.positionAt(map.sourceDocument.getText().length),
 				};
 			}
 
@@ -203,10 +203,10 @@ export function register(context: ServiceContext) {
 			const vueRanges = tsRanges.map(tsRange => map.getSourceRange(tsRange)).filter(notEmpty);
 			const vueItem: vscode.CallHierarchyItem = {
 				...tsItem,
-				name: tsItem.name === map.virtualFileDocument.uri.substring(map.virtualFileDocument.uri.lastIndexOf('/') + 1)
-					? map.sourceFileDocument.uri.substring(map.sourceFileDocument.uri.lastIndexOf('/') + 1)
+				name: tsItem.name === map.embeddedDocument.uri.substring(map.embeddedDocument.uri.lastIndexOf('/') + 1)
+					? map.sourceDocument.uri.substring(map.sourceDocument.uri.lastIndexOf('/') + 1)
 					: tsItem.name,
-				uri: map.sourceFileDocument.uri,
+				uri: map.sourceDocument.uri,
 				// TS Bug: `range: range` not works
 				range: {
 					start: range.start,

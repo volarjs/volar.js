@@ -35,15 +35,15 @@ export function register(context: ServiceContext) {
 			() => range!,
 			function* (map) {
 				const mapped = findOverlapCodeRange(
-					map.sourceFileDocument.offsetAt(range!.start),
-					map.sourceFileDocument.offsetAt(range!.end),
+					map.sourceDocument.offsetAt(range!.start),
+					map.sourceDocument.offsetAt(range!.end),
 					map.map,
 					isSemanticTokensEnabled,
 				);
 				if (mapped) {
 					yield {
-						start: map.virtualFileDocument.positionAt(mapped.start),
-						end: map.virtualFileDocument.positionAt(mapped.end),
+						start: map.embeddedDocument.positionAt(mapped.start),
+						end: map.embeddedDocument.positionAt(mapped.end),
 					};
 				}
 			},

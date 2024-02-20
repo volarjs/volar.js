@@ -32,7 +32,7 @@ export function register(context: ServiceContext) {
 						item = service[1].transformCompletionItem?.(item) ?? transformCompletionItem(
 							item,
 							embeddedRange => map.getSourceRange(embeddedRange),
-							map.virtualFileDocument,
+							map.embeddedDocument,
 							context,
 						);
 					}

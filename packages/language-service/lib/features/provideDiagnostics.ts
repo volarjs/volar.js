@@ -319,7 +319,7 @@ export function register(context: ServiceContext) {
 							if (range) {
 								relatedInfos.push({
 									location: {
-										uri: map.sourceFileDocument.uri,
+										uri: map.sourceDocument.uri,
 										range,
 									},
 									message: info.message,

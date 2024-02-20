@@ -64,8 +64,8 @@ export function register(context: ServiceContext) {
 
 				if (minStart !== undefined && maxEnd !== undefined) {
 					yield {
-						start: map.virtualFileDocument.positionAt(minStart),
-						end: map.virtualFileDocument.positionAt(maxEnd),
+						start: map.embeddedDocument.positionAt(minStart),
+						end: map.embeddedDocument.positionAt(maxEnd),
 					};
 				}
 			},
@@ -94,7 +94,7 @@ export function register(context: ServiceContext) {
 					.map((_inlayHint): vscode.InlayHint | undefined => {
 						const position = map.getSourcePosition(_inlayHint.position, isInlayHintsEnabled);
 						const edits = _inlayHint.textEdits
-							?.map(textEdit => transformTextEdit(textEdit, range => map.getSourceRange(range), map.virtualFileDocument))
+							?.map(textEdit => transformTextEdit(textEdit, range => map.getSourceRange(range), map.embeddedDocument))
 							.filter(notEmpty);
 
 						if (position) {

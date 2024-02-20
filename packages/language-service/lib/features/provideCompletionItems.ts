@@ -68,7 +68,7 @@ export function register(context: ServiceContext) {
 								continue;
 							}
 
-							cacheData.list = await cacheData.service.provideCompletionItems(map.virtualFileDocument, mapped, completionContext, token);
+							cacheData.list = await cacheData.service.provideCompletionItems(map.embeddedDocument, mapped, completionContext, token);
 
 							if (!cacheData.list) {
 								continue;
@@ -83,14 +83,14 @@ export function register(context: ServiceContext) {
 										data: item.data,
 									},
 									serviceIndex,
-									virtualDocumentUri: map.virtualFileDocument.uri,
+									virtualDocumentUri: map.embeddedDocument.uri,
 								} satisfies ServiceCompletionData;
 							}
 
 							cacheData.list = transformCompletionList(
 								cacheData.list,
 								range => map.getSourceRange(range),
-								map.virtualFileDocument,
+								map.embeddedDocument,
 								context,
 							);
 						}
@@ -233,7 +233,7 @@ export function register(context: ServiceContext) {
 						_data = data;
 						return isCompletionEnabled(data);
 					})) {
-						await worker(map.virtualFileDocument, mappedPosition, map, _data);
+						await worker(map.embeddedDocument, mappedPosition, map, _data);
 					}
 				}
 			}

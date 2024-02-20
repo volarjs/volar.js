@@ -17,7 +17,7 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 				continue;
 			}
 
-			target = map.sourceFileDocument.uri;
+			target = map.sourceDocument.uri;
 
 			const hash = targetUri.fragment;
 			const range = hash.match(/^L(\d+)(,(\d+))?(-L(\d+)(,(\d+))?)?$/);
@@ -324,7 +324,7 @@ export function transformWorkspaceEdit(
 		if (virtualCode) {
 			for (const map of documents.getMaps(virtualCode)) {
 				// TODO: check capability?
-				const uri = map.sourceFileDocument.uri;
+				const uri = map.sourceDocument.uri;
 				sourceResult.changeAnnotations[uri] = tsAnno;
 			}
 		}
@@ -352,8 +352,8 @@ export function transformWorkspaceEdit(
 						});
 
 						if (range) {
-							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
-							sourceResult.changes[map.sourceFileDocument.uri].push({
+							sourceResult.changes[map.sourceDocument.uri] ??= [];
+							sourceResult.changes[map.sourceDocument.uri].push({
 								newText: resolveRenameEditText(tsEdit.newText, _data),
 								range,
 							});
@@ -363,8 +363,8 @@ export function transformWorkspaceEdit(
 					else {
 						const range = map.getSourceRange(tsEdit.range);
 						if (range) {
-							sourceResult.changes[map.sourceFileDocument.uri] ??= [];
-							sourceResult.changes[map.sourceFileDocument.uri].push({ newText: tsEdit.newText, range });
+							sourceResult.changes[map.sourceDocument.uri] ??= [];
+							sourceResult.changes[map.sourceDocument.uri].push({ newText: tsEdit.newText, range });
 							hasResult = true;
 						}
 					}
@@ -390,8 +390,8 @@ export function transformWorkspaceEdit(
 					for (const map of documents.getMaps(virtualCode)) {
 						sourceEdit = {
 							textDocument: {
-								uri: map.sourceFileDocument.uri,
-								version: versions[map.sourceFileDocument.uri] ?? null,
+								uri: map.sourceDocument.uri,
+								version: versions[map.sourceDocument.uri] ?? null,
 							},
 							edits: [],
 						} satisfies vscode.TextDocumentEdit;
@@ -443,7 +443,7 @@ export function transformWorkspaceEdit(
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'rename',
-							oldUri: map.sourceFileDocument.uri,
+							oldUri: map.sourceDocument.uri,
 							newUri: tsDocEdit.newUri /* TODO: remove .ts? */,
 							options: tsDocEdit.options,
 							annotationId: tsDocEdit.annotationId,
@@ -463,7 +463,7 @@ export function transformWorkspaceEdit(
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'delete',
-							uri: map.sourceFileDocument.uri,
+							uri: map.sourceDocument.uri,
 							options: tsDocEdit.options,
 							annotationId: tsDocEdit.annotationId,
 						} satisfies vscode.DeleteFile;

@@ -104,8 +104,8 @@ export function register(context: ServiceContext) {
 
 						if (embeddedPosition) {
 							embeddedCodeResult = await tryFormat(
-								docMap.sourceFileDocument,
-								docMap.virtualFileDocument,
+								docMap.sourceDocument,
+								docMap.embeddedDocument,
 								code,
 								level,
 								embeddedPosition,
@@ -115,13 +115,13 @@ export function register(context: ServiceContext) {
 					}
 					else if (embeddedRange) {
 						embeddedCodeResult = await tryFormat(
-							docMap.sourceFileDocument,
-							docMap.virtualFileDocument,
+							docMap.sourceDocument,
+							docMap.embeddedDocument,
 							code,
 							level,
 							{
-								start: docMap.virtualFileDocument.positionAt(embeddedRange.start),
-								end: docMap.virtualFileDocument.positionAt(embeddedRange.end),
+								start: docMap.embeddedDocument.positionAt(embeddedRange.start),
+								end: docMap.embeddedDocument.positionAt(embeddedRange.end),
 							},
 						);
 					}

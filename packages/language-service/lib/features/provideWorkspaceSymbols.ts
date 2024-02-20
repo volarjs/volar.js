@@ -32,7 +32,7 @@ export function register(context: ServiceContext) {
 					for (const map of context.documents.getMaps(virtualCode)) {
 						const range = map.getSourceRange(loc.range);
 						if (range) {
-							return { uri: map.sourceFileDocument.uri, range };
+							return { uri: map.sourceDocument.uri, range };
 						}
 					}
 				}

@@ -8,8 +8,8 @@ export type DocumentProvider = ReturnType<typeof createDocumentProvider>;
 export class SourceMapWithDocuments<Data = any> {
 
 	constructor(
-		public sourceFileDocument: TextDocument,
-		public virtualFileDocument: TextDocument,
+		public sourceDocument: TextDocument,
+		public embeddedDocument: TextDocument,
 		public map: SourceMap<Data>,
 	) { }
 
@@ -89,13 +89,13 @@ export class SourceMapWithDocuments<Data = any> {
 	}
 
 	public * getSourcePositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
-		for (const mapped of this.findPositions(position, filter, this.virtualFileDocument, this.sourceFileDocument, 'generatedOffsets', 'sourceOffsets')) {
+		for (const mapped of this.findPositions(position, filter, this.embeddedDocument, this.sourceDocument, 'generatedOffsets', 'sourceOffsets')) {
 			yield mapped;
 		}
 	}
 
 	public * getGeneratedPositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
-		for (const mapped of this.findPositions(position, filter, this.sourceFileDocument, this.virtualFileDocument, 'sourceOffsets', 'generatedOffsets')) {
+		for (const mapped of this.findPositions(position, filter, this.sourceDocument, this.embeddedDocument, 'sourceOffsets', 'generatedOffsets')) {
 			yield mapped;
 		}
 	}
@@ -117,16 +117,16 @@ export class SourceMapWithDocuments<Data = any> {
 	}
 
 	protected matchSourcePosition(position: vscode.Position, mapping: Mapping) {
-		let offset = translateOffset(this.virtualFileDocument.offsetAt(position), mapping.generatedOffsets, mapping.sourceOffsets, mapping.lengths);
+		let offset = translateOffset(this.embeddedDocument.offsetAt(position), mapping.generatedOffsets, mapping.sourceOffsets, mapping.lengths);
 		if (offset !== undefined) {
-			return this.sourceFileDocument.positionAt(offset);
+			return this.sourceDocument.positionAt(offset);
 		}
 	}
 
 	protected matchGeneratedPosition(position: vscode.Position, mapping: Mapping) {
-		let offset = translateOffset(this.sourceFileDocument.offsetAt(position), mapping.sourceOffsets, mapping.generatedOffsets, mapping.lengths);
+		let offset = translateOffset(this.sourceDocument.offsetAt(position), mapping.sourceOffsets, mapping.generatedOffsets, mapping.lengths);
 		if (offset !== undefined) {
-			return this.virtualFileDocument.positionAt(offset);
+			return this.embeddedDocument.positionAt(offset);
 		}
 	}
 }

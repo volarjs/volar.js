@@ -116,7 +116,7 @@ export function register(
 
 						let targetRange = targetSourceMap.getSourceRange(link.targetRange);
 
-						link.targetUri = targetSourceMap.sourceFileDocument.uri;
+						link.targetUri = targetSourceMap.sourceDocument.uri;
 						// loose range mapping to for template slots, slot properties
 						link.targetRange = targetRange ?? targetSelectionRange;
 						link.targetSelectionRange = targetSelectionRange;
@@ -124,10 +124,10 @@ export function register(
 
 					if (apiName === 'provideDefinition' && !foundTargetSelectionRange) {
 						for (const targetMap of context.documents.getMaps(targetVirtualFile)) {
-							if (targetMap && targetMap.sourceFileDocument.uri !== uri) {
+							if (targetMap && targetMap.sourceDocument.uri !== uri) {
 								return {
 									...link,
-									targetUri: targetMap.sourceFileDocument.uri,
+									targetUri: targetMap.sourceDocument.uri,
 									targetRange: {
 										start: { line: 0, character: 0 },
 										end: { line: 0, character: 0 },

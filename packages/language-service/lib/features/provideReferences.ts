@@ -84,7 +84,7 @@ export function register(context: ServiceContext) {
 							const range = map.getSourceRange(reference.range, isReferencesEnabled);
 							if (range) {
 								results.push({
-									uri: map.sourceFileDocument.uri,
+									uri: map.sourceDocument.uri,
 									range,
 								});
 							}

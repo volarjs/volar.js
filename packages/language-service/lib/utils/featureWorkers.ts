@@ -55,8 +55,8 @@ export async function languageFeatureWorker<T, K>(
 					}
 
 					const embeddedResult = await safeCall(
-						() => worker(service, map.virtualFileDocument, mappedArg, map),
-						'service ' + serviceId + ' crashed on ' + map.virtualFileDocument.uri,
+						() => worker(service, map.embeddedDocument, mappedArg, map),
+						'service ' + serviceId + ' crashed on ' + map.embeddedDocument.uri,
 					);
 					if (!embeddedResult) {
 						continue;
@@ -137,7 +137,7 @@ export function* eachEmbeddedDocument(
 	}
 
 	for (const map of context.documents.getMaps(current)) {
-		const sourceFile = context.language.files.get(map.sourceFileDocument.uri);
+		const sourceFile = context.language.files.get(map.sourceDocument.uri);
 		if (
 			sourceFile?.generated?.code === rootCode
 			&& !context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(context.language.files.getByVirtualCode(current).id, current.id))
