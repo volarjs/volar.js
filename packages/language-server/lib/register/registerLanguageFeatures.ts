@@ -1,17 +1,14 @@
 import * as embedded from '@volar/language-service';
-import type { SnapshotDocument } from '@volar/snapshot-document';
 import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
-import type { InitializationOptions, ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
+import type { ServerProjectProvider, ServerRuntimeEnvironment } from '../types';
 
 export function registerLanguageFeatures(
 	connection: vscode.Connection,
 	projectProvider: ServerProjectProvider,
 	initParams: vscode.InitializeParams,
-	initOptions: InitializationOptions,
 	semanticTokensLegend: vscode.SemanticTokensLegend,
 	runtime: ServerRuntimeEnvironment,
-	documents: vscode.TextDocuments<SnapshotDocument>,
 ) {
 
 	let lastCompleteUri: string;
@@ -72,7 +69,6 @@ export function registerLanguageFeatures(
 		return worker(params.textDocument.uri, token, async service => {
 			lastCompleteUri = params.textDocument.uri;
 			lastCompleteLs = service;
-			const document = documents.get(params.textDocument.uri);
 			const list = await service.doComplete(
 				params.textDocument.uri,
 				params.position,
@@ -81,33 +77,6 @@ export function registerLanguageFeatures(
 			);
 			for (const item of list.items) {
 				fixTextEdit(item);
-			}
-			if (!initOptions.fullCompletionList && document) {
-				list.items = list.items.filter(item => {
-					const range = item.textEdit ? (
-						vscode.InsertReplaceEdit.is(item.textEdit)
-							? item.textEdit.replace
-							: item.textEdit.range
-					) : list.itemDefaults?.editRange ? (
-						vscode.Range.is(list.itemDefaults.editRange)
-							? list.itemDefaults.editRange
-							: list.itemDefaults.editRange.replace
-					) : undefined;
-					if (range) {
-						const sourceText = document.getText(range).toLowerCase();
-						if (sourceText.trim()) {
-							let filterText = (item.filterText ?? item.label).toLowerCase();
-							for (const char of sourceText) {
-								const index = filterText.indexOf(char);
-								if (index === -1) {
-									return false;
-								}
-								filterText = filterText.slice(index + 1);
-							}
-						}
-					}
-					return true;
-				});
 			}
 			return list;
 		});
