@@ -15,7 +15,7 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 
 	return {
 		languagePlugins,
-		set(id: string, languageId: string, snapshot: ts.IScriptSnapshot): SourceFile {
+		set(id: string, languageId: string, snapshot: ts.IScriptSnapshot, plugins = languagePlugins): SourceFile {
 
 			const value = sourceFiles.get(id);
 			if (value) {
@@ -45,7 +45,7 @@ export function createFileRegistry(languagePlugins: LanguagePlugin[], caseSensit
 			const sourceFile: SourceFile = { id, languageId, snapshot };
 			sourceFiles.set(id, sourceFile);
 
-			for (const languagePlugin of languagePlugins) {
+			for (const languagePlugin of plugins) {
 				const virtualCode = languagePlugin.createVirtualCode(id, languageId, snapshot, this);
 				if (virtualCode) {
 					sourceFile.generated = {
