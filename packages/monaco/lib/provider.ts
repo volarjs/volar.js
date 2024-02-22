@@ -299,14 +299,18 @@ export async function createLanguageFeaturesProvider(
 				fromPosition(position),
 				fromCompletionContext(context),
 			);
+			const wordInfo = model.getWordUntilPosition(position);
 			const monacoResult = toCompletionList(codeResult, {
 				range: {
-					startColumn: position.column,
+					startColumn: wordInfo.startColumn,
 					startLineNumber: position.lineNumber,
 					endColumn: position.column,
 					endLineNumber: position.lineNumber,
 				}
 			});
+			for (const monacoItem of monacoResult.suggestions) {
+				monacoItem.insertText ||= typeof monacoItem.label === 'string' ? monacoItem.label : monacoItem.label.label;
+			}
 			for (let i = 0; i < codeResult.items.length; i++) {
 				completionItems.set(
 					monacoResult.suggestions[i],
@@ -323,6 +327,7 @@ export async function createLanguageFeaturesProvider(
 				monacoItem = toCompletionItem(codeItem, {
 					range: 'replace' in monacoItem.range ? monacoItem.range.replace : monacoItem.range
 				});
+				monacoItem.insertText ||= typeof monacoItem.label === 'string' ? monacoItem.label : monacoItem.label.label;
 				completionItems.set(monacoItem, codeItem);
 			}
 			return monacoItem;
