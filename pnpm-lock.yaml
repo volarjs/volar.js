@@ -152,8 +152,8 @@ importers:
         specifier: 2.0.4
         version: link:../typescript
       monaco-languageserver-types:
-        specifier: ^0.3.2
-        version: 0.3.2
+        specifier: ^0.3.3
+        version: 0.3.3
       monaco-types:
         specifier: ^0.1.0
         version: 0.1.0
@@ -3176,8 +3176,8 @@ packages:
     resolution: {integrity: sha512-3eqO61jcP+YSMwVB47FNIjma51HNPepMpLsBE8pV4kFw/ynf3KEvSKAbm6HtueZnjVoatKFtSyKhXi7B58/8aA==}
     dev: true
 
-  /monaco-languageserver-types@0.3.2:
-    resolution: {integrity: sha512-KiGVYK/DiX1pnacnOjGNlM85bhV3ZTyFlM+ce7B8+KpWCbF1XJVovu51YyuGfm+K7+K54mIpT4DFX16xmi+tYA==}
+  /monaco-languageserver-types@0.3.3:
+    resolution: {integrity: sha512-4uJ6XaVwVamOQ1SXfBGusAqL4fTn7ZJzaybEinr2U5ZX7AKSjsbXWlu0X3Ah+hyefn+85+Ca7GZwbI87g55C8Q==}
     dependencies:
       monaco-types: 0.1.0
       vscode-languageserver-protocol: 3.17.5

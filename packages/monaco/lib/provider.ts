@@ -308,9 +308,6 @@ export async function createLanguageFeaturesProvider(
 					endLineNumber: position.lineNumber,
 				}
 			});
-			for (const monacoItem of monacoResult.suggestions) {
-				monacoItem.insertText ||= typeof monacoItem.label === 'string' ? monacoItem.label : monacoItem.label.label;
-			}
 			for (let i = 0; i < codeResult.items.length; i++) {
 				completionItems.set(
 					monacoResult.suggestions[i],
@@ -327,7 +324,6 @@ export async function createLanguageFeaturesProvider(
 				monacoItem = toCompletionItem(codeItem, {
 					range: 'replace' in monacoItem.range ? monacoItem.range.replace : monacoItem.range
 				});
-				monacoItem.insertText ||= typeof monacoItem.label === 'string' ? monacoItem.label : monacoItem.label.label;
 				completionItems.set(monacoItem, codeItem);
 			}
 			return monacoItem;
