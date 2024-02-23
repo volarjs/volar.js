@@ -1,24 +1,22 @@
 import { FileSystem, LanguagePlugin, ServiceEnvironment, ServicePlugin, standardSemanticTokensLegend } from '@volar/language-service';
+import { SnapshotDocument } from '@volar/snapshot-document';
 import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
+import type { TextDocuments } from 'vscode-languageserver';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { DiagnosticModel, InitializationOptions, ProjectContext, ServerProjectProvider, ServerProjectProviderFactory, ServerRuntimeEnvironment } from './types.js';
 import { createConfigurationHost } from './configurationHost.js';
-import { setupCapabilities } from './setupCapabilities.js';
-import { WorkspaceFolderManager, createWorkspaceFolderManager } from './workspaceFolderManager.js';
-import { SnapshotDocument } from '@volar/snapshot-document';
-import type * as ts from 'typescript';
-import type { TextDocuments } from 'vscode-languageserver';
+import { getServerCapabilities } from './serverCapabilities.js';
+import { DiagnosticModel, InitializationOptions, ProjectContext, ServerProjectProvider, ServerProjectProviderFactory, ServerRuntimeEnvironment } from './types.js';
+import { fileNameToUri } from './uri.js';
+import { createUriMap, type UriMap } from './utils/uriMap.js';
 
 export interface ServerContext {
 	initializeParams: Omit<vscode.InitializeParams, 'initializationOptions'> & { initializationOptions?: InitializationOptions; };
 	runtimeEnv: ServerRuntimeEnvironment;
 	onDidChangeWatchedFiles: vscode.Connection['onDidChangeWatchedFiles'];
 	configurationHost: ReturnType<typeof createConfigurationHost> | undefined;
-	ts: typeof import('typescript') | undefined;
-	tsLocalized: ts.MapLike<string> | undefined;
-	workspaceFolders: WorkspaceFolderManager;
+	workspaceFolders: UriMap<boolean>;
 	documents: TextDocuments<SnapshotDocument>;
 	reloadDiagnostics(): void;
 	updateDiagnosticsAndSemanticTokens(): void;
@@ -51,7 +49,7 @@ export function createServerBase(
 		},
 	});
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
-	const workspaceFolderManager = createWorkspaceFolderManager();
+	const workspaceFolders = createUriMap<boolean>(fileNameToUri);
 
 	documents.listen(connection);
 
@@ -65,11 +63,6 @@ export function createServerBase(
 		get env() {
 			return context.runtimeEnv;
 		},
-		get modules() {
-			return {
-				typescript: context.ts,
-			};
-		}
 	};
 
 	async function initialize(
@@ -97,18 +90,11 @@ export function createServerBase(
 					},
 				};
 			},
-			ts: undefined,
-			tsLocalized: undefined,
 			documents,
-			workspaceFolders: workspaceFolderManager,
+			workspaceFolders,
 			reloadDiagnostics,
 			updateDiagnosticsAndSemanticTokens,
 		};
-
-		context.ts = await env.loadTypeScript(context.initializeParams.initializationOptions ?? {});
-		if (context.initializeParams.locale) {
-			context.tsLocalized = await env.loadTypeScriptLocalized(context.initializeParams.initializationOptions ?? {}, context.initializeParams.locale);
-		}
 
 		if (context.initializeParams.initializationOptions?.l10n) {
 			await l10n.config({ uri: context.initializeParams.initializationOptions.l10n.location });
@@ -116,45 +102,23 @@ export function createServerBase(
 
 		if (params.capabilities.workspace?.workspaceFolders && params.workspaceFolders) {
 			for (const folder of params.workspaceFolders) {
-				workspaceFolderManager.add(URI.parse(folder.uri));
+				workspaceFolders.uriSet(folder.uri, true);
 			}
 		}
 		else if (params.rootUri) {
-			workspaceFolderManager.add(URI.parse(params.rootUri));
+			workspaceFolders.uriSet(params.rootUri, true);
 		}
 		else if (params.rootPath) {
-			workspaceFolderManager.add(URI.file(params.rootPath));
+			workspaceFolders.uriSet(URI.file(params.rootPath).toString(), true);
 		}
 
-		const result: vscode.InitializeResult = {
-			capabilities: {
-				textDocumentSync: vscode.TextDocumentSyncKind.Incremental,
-				workspace: {
-					// #18
-					workspaceFolders: {
-						supported: true,
-						changeNotifications: true,
-					},
-				},
-			},
-		};
-
 		const servicePlugins = await serverOptions.getServicePlugins();
-
-		setupCapabilities(
-			result.capabilities,
-			context.initializeParams.initializationOptions ?? {},
-			serverOptions.watchFileExtensions ?? [],
-			servicePlugins,
-			getSemanticTokensLegend(),
-		);
+		const semanticTokensLegend = getSemanticTokensLegend();
 
 		projects = projectProviderFactory(
-			{
-				...context,
-			},
-			serverOptions,
+			{ ...context },
 			servicePlugins,
+			serverOptions.getLanguagePlugins,
 		);
 
 		documents.onDidChangeContent(({ document }) => {
@@ -173,11 +137,18 @@ export function createServerBase(
 			connection,
 			projects,
 			params,
-			getSemanticTokensLegend(),
+			semanticTokensLegend,
 		);
 
+		const result: vscode.InitializeResult = {
+			capabilities: getServerCapabilities(serverOptions.watchFileExtensions ?? [], servicePlugins, semanticTokensLegend),
+		};
+
+		if (params.initializationOptions?.diagnosticModel !== DiagnosticModel.Pull) {
+			result.capabilities.diagnosticProvider = undefined;
+		}
+
 		try {
-			// show version on LSP logs
 			const packageJson = require('../package.json');
 			result.serverInfo = {
 				name: packageJson.name,
@@ -197,32 +168,32 @@ export function createServerBase(
 
 		if (context.initializeParams.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
-
 				for (const folder of e.added) {
-					workspaceFolderManager.add(URI.parse(folder.uri));
+					workspaceFolders.uriSet(folder.uri, true);
 				}
-
 				for (const folder of e.removed) {
-					workspaceFolderManager.remove(URI.parse(folder.uri));
+					workspaceFolders.uriDelete(folder.uri);
 				}
+				projects.reloadProjects();
 			});
 		}
 
-		if (context.initializeParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
-			if (serverOptions.watchFileExtensions?.length) {
-				connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
-					watchers: [
-						{
-							globPattern: `**/*.{${serverOptions.watchFileExtensions.join(',')}}`
-						},
-					]
-				});
-				connection.onDidChangeWatchedFiles(e => {
-					for (const cb of didChangeWatchedFilesCallbacks) {
-						cb(e);
-					}
-				});
-			}
+		if (
+			context.initializeParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration
+			&& serverOptions.watchFileExtensions?.length
+		) {
+			connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
+				watchers: [
+					{
+						globPattern: `**/*.{${serverOptions.watchFileExtensions.join(',')}}`
+					},
+				]
+			});
+			connection.onDidChangeWatchedFiles(e => {
+				for (const cb of didChangeWatchedFilesCallbacks) {
+					cb(e);
+				}
+			});
 		}
 
 		async function updateHttpSettings() {
@@ -285,12 +256,15 @@ export function createServerBase(
 	}
 
 	function getSemanticTokensLegend() {
-		if (!context.initializeParams.initializationOptions?.semanticTokensLegend) {
-			return standardSemanticTokensLegend;
-		}
 		return {
-			tokenTypes: [...standardSemanticTokensLegend.tokenTypes, ...context.initializeParams.initializationOptions.semanticTokensLegend.tokenTypes],
-			tokenModifiers: [...standardSemanticTokensLegend.tokenModifiers, ...context.initializeParams.initializationOptions.semanticTokensLegend.tokenModifiers],
+			tokenTypes: [
+				...standardSemanticTokensLegend.tokenTypes,
+				...context.initializeParams.initializationOptions?.semanticTokensLegend?.tokenTypes ?? [],
+			],
+			tokenModifiers: [
+				...standardSemanticTokensLegend.tokenModifiers,
+				...context.initializeParams.initializationOptions?.semanticTokensLegend?.tokenModifiers ?? [],
+			],
 		};
 	}
 

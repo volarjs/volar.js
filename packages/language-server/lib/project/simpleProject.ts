@@ -5,16 +5,15 @@ import type { ServerProject } from '../types';
 export async function createSimpleServerProject(
 	context: ServerContext,
 	serviceEnv: ServiceEnvironment,
-	serverOptions: ServerOptions,
 	servicePlugins: ServicePlugin[],
+	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
 ): Promise<ServerProject> {
 
 	let languageService: LanguageService | undefined;
 
-	const languagePlugins = await serverOptions.getLanguagePlugins(serviceEnv, {});
+	const languagePlugins = await getLanguagePlugins(serviceEnv, {});
 
 	return {
-		serviceEnv,
 		getLanguageService,
 		getLanguageServiceDontCreate: () => languageService,
 		dispose() {

@@ -20,13 +20,6 @@ export interface ServiceEnvironment {
 	onDidChangeWatchedFiles?(cb: (params: vscode.DidChangeWatchedFilesParams) => void): vscode.Disposable;
 }
 
-export interface Console {
-	error(message: string): void;
-	info(message: string): void;
-	log(message: string): void;
-	warn(message: string): void;
-}
-
 export interface FileSystem {
 	stat(uri: string): Result<FileStat | undefined>;
 	readDirectory(uri: string): Result<[string, FileType][]>;

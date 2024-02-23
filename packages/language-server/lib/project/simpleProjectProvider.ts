@@ -1,51 +1,51 @@
 import type { ServiceEnvironment } from '@volar/language-service';
 import { URI } from 'vscode-uri';
 import type { ServerProject, ServerProjectProvider, ServerProjectProviderFactory } from '../types';
-import { isFileInDir } from '../utils/isFileInDir';
-import type { WorkspaceFolderManager } from '../workspaceFolderManager';
 import { createSimpleServerProject } from './simpleProject';
 import type { ServerContext } from '../server';
 import { fileNameToUri, uriToFileName } from '../uri';
+import type { UriMap } from '../utils/uriMap';
 
-export const createSimpleProjectProvider: ServerProjectProviderFactory = (context, serverOptions, servicePlugins): ServerProjectProvider => {
+export function createSimpleProjectProviderFactory(): ServerProjectProviderFactory {
+	return (context, servicePlugins, getLanguagePlugins): ServerProjectProvider => {
 
-	const projects = new Map<URI, Promise<ServerProject>>();
+		const projects = new Map<string, Promise<ServerProject>>();
 
-	return {
-		getProject(uri) {
+		return {
+			getProject(uri) {
 
-			const workspaceFolder = getWorkspaceFolder(uri, context.workspaceFolders);
+				const workspaceFolder = getWorkspaceFolder(uri, context.workspaceFolders);
 
-			let projectPromise = projects.get(workspaceFolder);
-			if (!projectPromise) {
-				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-				projectPromise = createSimpleServerProject(context, serviceEnv, serverOptions, servicePlugins);
-				projects.set(workspaceFolder, projectPromise);
-			}
+				let projectPromise = projects.get(workspaceFolder);
+				if (!projectPromise) {
+					const serviceEnv = createServiceEnvironment(context, workspaceFolder);
+					projectPromise = createSimpleServerProject(context, serviceEnv, servicePlugins, getLanguagePlugins);
+					projects.set(workspaceFolder, projectPromise);
+				}
 
-			return projectPromise;
-		},
-		async getProjects() {
-			return await Promise.all([...projects.values()]);
-		},
-		reloadProjects() {
+				return projectPromise;
+			},
+			async getProjects() {
+				return await Promise.all([...projects.values()]);
+			},
+			reloadProjects() {
 
-			for (const project of projects.values()) {
-				project.then(project => project.dispose());
-			}
+				for (const project of projects.values()) {
+					project.then(project => project.dispose());
+				}
 
-			projects.clear();
+				projects.clear();
 
-			context.reloadDiagnostics();
-		},
+				context.reloadDiagnostics();
+			},
+		};
 	};
-};
+}
 
-export function createServiceEnvironment(context: ServerContext, workspaceFolder: URI) {
+export function createServiceEnvironment(context: ServerContext, workspaceFolder: string) {
 	const env: ServiceEnvironment = {
-		workspaceFolder: workspaceFolder.toString(),
+		workspaceFolder,
 		fs: context.runtimeEnv.fs,
-		console: context.runtimeEnv.console,
 		locale: context.initializeParams.locale,
 		clientCapabilities: context.initializeParams.capabilities,
 		getConfiguration: context.configurationHost?.getConfiguration,
@@ -59,25 +59,24 @@ export function createServiceEnvironment(context: ServerContext, workspaceFolder
 	return env;
 }
 
-export function getWorkspaceFolder(
-	uri: string,
-	workspaceFolderManager: WorkspaceFolderManager,
-) {
+export function getWorkspaceFolder(uri: string, workspaceFolders: UriMap<boolean>) {
 
-	const fileName = uriToFileName(uri);
+	let parsed = URI.parse(uri);
 
-	let folders = workspaceFolderManager
-		.getAll()
-		.filter(uri => isFileInDir(fileName, uriToFileName(uri.toString())))
-		.sort((a, b) => b.toString().length - a.toString().length);
-
-	if (!folders.length) {
-		folders = workspaceFolderManager.getAll();
+	while (true) {
+		if (workspaceFolders.uriHas(parsed.toString())) {
+			return parsed.toString();
+		}
+		const next = URI.parse(uri).with({ path: parsed.path.substring(0, parsed.path.lastIndexOf('/')) });
+		if (next.path === parsed.path) {
+			break;
+		}
+		parsed = next;
 	}
 
-	if (!folders.length) {
-		folders = [URI.parse(uri).with({ path: '/' })];
+	for (const folder of workspaceFolders.uriKeys()) {
+		return folder;
 	}
 
-	return folders[0];
+	return URI.parse(uri).with({ path: '/' }).toString();
 }

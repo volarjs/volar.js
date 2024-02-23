@@ -81,39 +81,37 @@ export function createConnection() {
 
 export function createServer(connection: vscode.Connection) {
 	return createServerBase(connection, params => ({
-		console: connection.console,
-		loadTypeScript(options) {
-			const tsdk = options.typescript?.tsdk;
-			if (!tsdk) {
-				return;
-			}
-			for (const name of ['./typescript.js', './tsserverlibrary.js']) {
-				try {
-					return require(require.resolve(name, { paths: [tsdk] }));
-				} catch { }
-			}
-
-			// for bun
-			for (const name of ['typescript.js', 'tsserverlibrary.js']) {
-				try {
-					return require(tsdk + '/' + name);
-				} catch { }
-			}
-
-			throw new Error(`Can't find typescript.js or tsserverlibrary.js in ${JSON.stringify(tsdk)}`);
-		},
-		async loadTypeScriptLocalized(options, locale) {
-			const tsdk = options.typescript && 'tsdk' in options.typescript
-				? options.typescript.tsdk
-				: undefined;
-			if (!tsdk) {
-				return;
-			}
-			try {
-				const path = require.resolve(`./${locale}/diagnosticMessages.generated.json`, { paths: [tsdk] });
-				return require(path);
-			} catch { }
-		},
 		fs: createFs(params.initializationOptions ?? {}),
 	}));
 }
+
+export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
+
+	return {
+		typescript: loadLib(),
+		diagnosticMessages: loadLocalizedDiagnosticMessages(),
+	};
+
+	function loadLib(): typeof import('typescript') {
+		for (const name of ['./typescript.js', './tsserverlibrary.js']) {
+			try {
+				return require(require.resolve(name, { paths: [tsdk] }));
+			} catch { }
+		}
+		// for bun
+		for (const name of ['typescript.js', 'tsserverlibrary.js']) {
+			try {
+				return require(tsdk + '/' + name);
+			} catch { }
+		}
+		throw new Error(`Can't find typescript.js or tsserverlibrary.js in ${JSON.stringify(tsdk)}`);
+	}
+
+	function loadLocalizedDiagnosticMessages(): import('typescript').MapLike<string> | undefined {
+		try {
+			const path = require.resolve(`./${locale}/diagnosticMessages.generated.json`, { paths: [tsdk] });
+			return require(path);
+		} catch { }
+	}
+}
+
