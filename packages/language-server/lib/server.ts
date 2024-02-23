@@ -56,7 +56,7 @@ export function createServerBase(
 	return {
 		initialize,
 		initialized,
-		dispose,
+		shutdown,
 		get projects() {
 			return projects;
 		},
@@ -202,7 +202,7 @@ export function createServerBase(
 		}
 	}
 
-	function dispose() {
+	function shutdown() {
 		projects?.reloadProjects();
 	}
 
