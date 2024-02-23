@@ -1,19 +1,10 @@
-import type { Console, FileSystem, LanguageService, ServiceEnvironment, ServicePlugin, TypeScriptProjectHost } from '@volar/language-service';
+import type { FileSystem, LanguageService, ServicePlugin, TypeScriptProjectHost } from '@volar/language-service';
 import type * as vscode from 'vscode-languageserver';
 import type { ServerContext, ServerOptions } from './server';
 import type { createSys } from '@volar/typescript';
 
-export interface Timer {
-	setImmediate(callback: (...args: any[]) => void, ...args: any[]): vscode.Disposable;
-	// Seems not useful
-	// setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): vscode.Disposable;
-}
-
 export interface ServerRuntimeEnvironment {
-	loadTypeScript(options: InitializationOptions): Promise<typeof import('typescript') | undefined>;
-	loadTypeScriptLocalized(options: InitializationOptions, locale: string): Promise<{} | undefined>;
 	fs: FileSystem;
-	console: Console;
 }
 
 export interface ProjectContext {
@@ -31,25 +22,10 @@ export enum DiagnosticModel {
 }
 
 export interface InitializationOptions {
-	typescript?: {
-		/**
-		 * Absolute path to node_modules/typescript/lib, available for node
-		 */
-		tsdk?: string;
-		/**
-		 * URI to node_modules/typescript/lib, available for web
-		 * @example "https://cdn.jsdelivr.net/npm/typescript/lib"
-		 * @example "https://cdn.jsdelivr.net/npm/typescript@latest/lib"
-		 * @example "https://cdn.jsdelivr.net/npm/typescript@5.0.0/lib"
-		 */
-		tsdkUrl?: string;
-	};
 	l10n?: {
 		location: string; // uri
 	};
 	diagnosticModel?: DiagnosticModel;
-	// for resolve https://github.com/sublimelsp/LSP-volar/issues/114
-	ignoreTriggerCharacters?: string[];
 	maxFileSize?: number;
 	/**
 	 * Extra semantic token types and modifiers that are supported by the client.
@@ -59,7 +35,6 @@ export interface InitializationOptions {
 }
 
 export interface ServerProject {
-	serviceEnv: ServiceEnvironment;
 	getLanguageService(): LanguageService;
 	getLanguageServiceDontCreate(): LanguageService | undefined;
 	dispose(): void;
@@ -74,7 +49,7 @@ export interface ServerProjectProvider {
 export interface ServerProjectProviderFactory {
 	(
 		context: ServerContext,
-		serverOptions: ServerOptions,
 		servicePlugins: ServicePlugin[],
+		getLanguagePlugins: ServerOptions['getLanguagePlugins'],
 	): ServerProjectProvider;
 }

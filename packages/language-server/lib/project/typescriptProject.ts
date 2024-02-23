@@ -15,22 +15,19 @@ export interface TypeScriptServerProject extends ServerProject {
 }
 
 export async function createTypeScriptServerProject(
+	ts: typeof import('typescript'),
+	tsLocalized: ts.MapLike<string> | undefined,
 	tsconfig: string | ts.CompilerOptions,
 	context: ServerContext,
 	serviceEnv: ServiceEnvironment,
-	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
 	servicePlugins: ServicePlugin[],
+	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
 ): Promise<TypeScriptServerProject> {
-
-	if (!context.ts) {
-		throw '!context.ts';
-	}
 
 	let parsedCommandLine: ts.ParsedCommandLine;
 	let projectVersion = 0;
 	let languageService: LanguageService | undefined;
 
-	const ts = context.ts;
 	const sys = createSys(ts, serviceEnv, uriToFileName(serviceEnv.workspaceFolder));
 	const host: TypeScriptProjectHost = {
 		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder),
@@ -44,7 +41,7 @@ export async function createTypeScriptServerProject(
 			}
 		},
 		getCompilationSettings: () => parsedCommandLine.options,
-		getLocalizedDiagnosticMessages: context.tsLocalized ? () => context.tsLocalized : undefined,
+		getLocalizedDiagnosticMessages: tsLocalized ? () => tsLocalized : undefined,
 		getProjectReferences: () => parsedCommandLine.projectReferences,
 		getLanguageId: uri => context.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
 	};
@@ -67,7 +64,6 @@ export async function createTypeScriptServerProject(
 
 	return {
 		askedFiles,
-		serviceEnv,
 		getLanguageService,
 		getLanguageServiceDontCreate: () => languageService,
 		tryAddFile(fileName: string) {

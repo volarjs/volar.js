@@ -20,36 +20,6 @@ export function createConnection() {
 
 export function createServer(connection: vscode.Connection) {
 	return createServerBase(connection, () => ({
-		console: connection.console,
-		async loadTypeScript(options) {
-			const tsdkUrl = options.typescript?.tsdkUrl;
-			if (!tsdkUrl) {
-				return;
-			}
-			const originalModule = globalThis.module;
-			try {
-				globalThis.module = { exports: {} } as typeof originalModule;
-				await import(`${tsdkUrl}/typescript.js`);
-				return globalThis.module.exports as typeof import('typescript');
-			} finally {
-				globalThis.module = originalModule;
-			}
-		},
-		async loadTypeScriptLocalized(options, locale) {
-			const tsdkUrl = options.typescript && 'tsdkUrl' in options.typescript
-				? options.typescript.tsdkUrl
-				: undefined;
-			if (!tsdkUrl) {
-				return;
-			}
-			try {
-				const json = await httpSchemaRequestHandler(`${tsdkUrl}/${locale}/diagnosticMessages.generated.json`);
-				if (json) {
-					return JSON.parse(json);
-				}
-			}
-			catch { }
-		},
 		fs: {
 			async stat(uri) {
 				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
@@ -80,4 +50,33 @@ export function createServer(connection: vscode.Connection) {
 			},
 		},
 	}));
+}
+
+export async function loadTsdkByUrl(tsdkUrl: string, locale: string | undefined) {
+
+	return {
+		typescript: await loadLib(),
+		diagnosticMessages: await loadLocalizedDiagnosticMessages(),
+	};
+
+	async function loadLib(): Promise<typeof import('typescript')> {
+		const originalModule = globalThis.module;
+		try {
+			globalThis.module = { exports: {} } as typeof originalModule;
+			await import(`${tsdkUrl}/typescript.js`);
+			return globalThis.module.exports as typeof import('typescript');
+		} finally {
+			globalThis.module = originalModule;
+		}
+	}
+
+	async function loadLocalizedDiagnosticMessages(): Promise<import('typescript').MapLike<string> | undefined> {
+		try {
+			const json = await httpSchemaRequestHandler(`${tsdkUrl}/${locale}/diagnosticMessages.generated.json`);
+			if (json) {
+				return JSON.parse(json);
+			}
+		}
+		catch { }
+	}
 }
