@@ -207,20 +207,7 @@ export function register(context: ServiceContext) {
 		}
 
 		async function collectErrors() {
-			const errors = Object.values(lastResponse).flatMap(({ errors }) => errors);
-			errorMarkups[uri] = [];
-			for (const error of errors) {
-				for (const service of context.services) {
-					if (context.disabledServicePlugins.has(service[1])) {
-						continue;
-					}
-					const markup = await service[1].provideDiagnosticMarkupContent?.(error, token);
-					if (markup) {
-						errorMarkups[uri].push({ error, markup });
-					}
-				}
-			}
-			return errors;
+			return Object.values(lastResponse).flatMap(({ errors }) => errors);
 		}
 
 		async function worker(
