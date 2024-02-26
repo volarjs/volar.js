@@ -116,7 +116,7 @@ type CacheMap = Map<
 		string,
 		{
 			documentVersion: number,
-			errors: vscode.Diagnostic[] | undefined | null,
+			errors: vscode.Diagnostic[],
 		}
 	>
 >;
@@ -239,9 +239,9 @@ export function register(context: ServiceContext) {
 						return cache.errors;
 					}
 
-					const errors = await service[1][api]?.(document, token);
+					const errors = await service[1][api]?.(document, token) || [];
 
-					errors?.forEach(error => {
+					errors.forEach(error => {
 						error.data = {
 							uri,
 							version: document.version,
