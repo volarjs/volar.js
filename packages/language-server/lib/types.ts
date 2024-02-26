@@ -22,10 +22,17 @@ export enum DiagnosticModel {
 }
 
 export interface InitializationOptions {
+	typescript?: {
+		/**
+		 * Absolute path to node_modules/typescript/lib, available for node
+		 */
+		tsdk?: string;
+	};
 	l10n?: {
 		location: string; // uri
 	};
 	diagnosticModel?: DiagnosticModel;
+	locale?: string;
 	maxFileSize?: number;
 	/**
 	 * Extra semantic token types and modifiers that are supported by the client.
