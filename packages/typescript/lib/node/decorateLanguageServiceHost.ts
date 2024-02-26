@@ -54,18 +54,12 @@ export function decorateLanguageServiceHost(
 				options,
 				...rest
 			) => {
-				return [
-					...resolveModuleNameLiterals(
-						moduleLiterals.filter(name => !exts.some(ext => name.text.endsWith(ext))),
-						containingFile,
-						redirectedReference,
-						options,
-						...rest,
-					),
-					...moduleLiterals
-						.filter(name => exts.some(ext => name.text.endsWith(ext)))
-						.map(name => resolveModuleName(name.text, containingFile, options, undefined, redirectedReference)),
-				];
+				if (moduleLiterals.every(name => !exts.some(ext => name.text.endsWith(ext)))) {
+					return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, options, ...rest);
+				}
+				return moduleLiterals.map(moduleLiteral => {
+					return resolveModuleName(moduleLiteral.text, containingFile, options, undefined, redirectedReference);
+				});
 			};
 		}
 		if (resolveModuleNames) {
@@ -77,19 +71,12 @@ export function decorateLanguageServiceHost(
 				options,
 				containingSourceFile
 			) => {
-				return [
-					...resolveModuleNames(
-						moduleNames.filter(name => !exts.some(ext => name.endsWith(ext))),
-						containingFile,
-						reusedNames,
-						redirectedReference,
-						options,
-						containingSourceFile,
-					),
-					...moduleNames
-						.filter(name => exts.some(ext => name.endsWith(ext)))
-						.map(moduleName => resolveModuleName(moduleName, containingFile, options, undefined, redirectedReference).resolvedModule),
-				];
+				if (moduleNames.every(name => !exts.some(ext => name.endsWith(ext)))) {
+					return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, options, containingSourceFile);
+				}
+				return moduleNames.map(moduleName => {
+					return resolveModuleName(moduleName, containingFile, options, undefined, redirectedReference).resolvedModule;
+				});
 			};
 		}
 	}
