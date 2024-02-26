@@ -1,5 +1,42 @@
 # Changelog
 
+## [2.1.0](https://github.com/volarjs/volar.js/compare/v2.0.4...v2.1.0) (2024-02-26)
+
+### Features
+
+- **language-service**: more reliable embedded code formatting [#138](https://github.com/volarjs/volar.js/issues/138)
+	- Embedded code indentation is no longer handled by `@volar/language-service`, but instead calculated and passed as `initialIndentLevel`, which is then reliably handled by ServicePlugin for additional indentation in specific languages.
+	- The `provideDocumentFormattingEdits` and `provideOnTypeFormattingEdits` APIs now accept the `EmbeddedCodeFormattingOptions` parameter, which includes `initialIndentLevel`.
+	- Formatting ranges are now correctly mapped to embedded code formatting ranges.
+	- Removed the no longer needed `ServicePlugin.provideFormattingIndentSensitiveLines` API.
+	- No longer relies on the conventional `volar.format.initialIndent` editor setting.
+	- Added `ServicePlugin.resolveEmbeddedCodeFormattingOptions` API, allowing downstream tools to modify the `initialIndentLevel` passed to ServicePlugin based on custom settings (replacing `volar.format.initialIndent`).
+
+### Refactors
+
+- **test-utils:** server tester support `ClientCapabilities` param for `initialize()` API
+- **test-utils:** server tester expose `sendDocumentRangeFormattingRequestRequest()` and `shutdown()` API
+- **language-core:** make embeddedCodes optional in VirtualCode [#137](https://github.com/volarjs/volar.js/issues/137)
+- **language-server:** SemanticTokens requests are no longer delayed by 200ms
+- **language-server:** APIs updates [#140](https://github.com/volarjs/volar.js/issues/140)
+	- `createSimpleProjectProvider` has been renamed to `createSimpleProjectProviderFactory` and needs to be invoked with no arguments.
+	- `createTypeScriptProjectProvider` has been renamed to `createTypeScriptProjectProviderFactory` and needs to be invoked with a TS module as an argument.
+	- Deprecate `typescript#tsdk`, `typescript#tsdkUrl`, `ignoreTriggerCharacters` initialization options.
+	- Deprecate `fullCompletionList` initialization option. [#139](https://github.com/volarjs/volar.js/issues/139)
+	- Remove experimental `provideDiagnosticMarkupContent` API.
+
+### Bug Fixes
+
+- **language-server:** language features not working for untitled documents [#135](https://github.com/volarjs/volar.js/issues/135)
+- **language-server:** `pushDiagnostics` should not be notified when closing a file if server push diagnostics are not enabled
+- **language-service** `provideSelectionRanges` API multiple result merging method is inconsistent with VSCode
+- **language-service** `provideDocumentSemanticTokens` API's `range` param is not mapped to virtual code
+- **language-service** `provideDocumentFormattingEdits` API's `range` param is not accurately mapped to virtual code [#136](https://github.com/volarjs/volar.js/issues/136)
+- **language-service** fix caching of semantic diagnostics  [#141](https://github.com/volarjs/volar.js/issues/141)
+- **test-utils:** invalidate cache when calling `openInMemoryDocument()`
+- **monaco:** `insertText` and `range` properties of completion item not converted correctly
+- **typescript:**: ts plugin incorrectly resolve module name
+
 ## [2.0.4](https://github.com/volarjs/volar.js/compare/v2.0.3...v2.0.4) (2024-02-13)
 
 ### Features
