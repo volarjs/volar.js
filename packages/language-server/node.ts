@@ -87,6 +87,8 @@ export function createServer(connection: vscode.Connection) {
 
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 
+	const _require: NodeRequire = eval('require');
+
 	return {
 		typescript: loadLib(),
 		diagnosticMessages: loadLocalizedDiagnosticMessages(),
@@ -95,13 +97,13 @@ export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 	function loadLib(): typeof import('typescript') {
 		for (const name of ['./typescript.js', './tsserverlibrary.js']) {
 			try {
-				return require(require.resolve(name, { paths: [tsdk] }));
+				return _require(_require.resolve(name, { paths: [tsdk] }));
 			} catch { }
 		}
 		// for bun
 		for (const name of ['typescript.js', 'tsserverlibrary.js']) {
 			try {
-				return require(tsdk + '/' + name);
+				return _require(tsdk + '/' + name);
 			} catch { }
 		}
 		throw new Error(`Can't find typescript.js or tsserverlibrary.js in ${JSON.stringify(tsdk)}`);
@@ -109,8 +111,8 @@ export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 
 	function loadLocalizedDiagnosticMessages(): import('typescript').MapLike<string> | undefined {
 		try {
-			const path = require.resolve(`./${locale}/diagnosticMessages.generated.json`, { paths: [tsdk] });
-			return require(path);
+			const path = _require.resolve(`./${locale}/diagnosticMessages.generated.json`, { paths: [tsdk] });
+			return _require(path);
 		} catch { }
 	}
 }
