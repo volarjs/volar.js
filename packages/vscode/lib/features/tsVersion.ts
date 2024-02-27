@@ -42,12 +42,12 @@ export function activate(
 				},
 				useConfigWorkspaceTsdk: configTsdkPath && !vscodeTsdk.isWeb ? {
 					label: (tsdk.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',
-					description: await getTsVersion(resolveWorkspaceTsdk(configTsdkPath) ?? '/') ?? 'Could not load the TypeScript version at this path',
+					description: await getTsVersion(await resolveWorkspaceTsdk(configTsdkPath) ?? '/') ?? 'Could not load the TypeScript version at this path',
 					detail: configTsdkPath,
 				} : undefined,
 				useDefaultWorkspaceTsdk: configTsdkPath !== defaultTsdkPath && !vscodeTsdk.isWeb ? {
 					label: (tsdk.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',
-					description: await getTsVersion(resolveWorkspaceTsdk(defaultTsdkPath) ?? '/') ?? 'Could not load the TypeScript version at this path',
+					description: await getTsVersion(await resolveWorkspaceTsdk(defaultTsdkPath) ?? '/') ?? 'Could not load the TypeScript version at this path',
 					detail: defaultTsdkPath,
 				} : undefined,
 			},
@@ -101,7 +101,7 @@ export function activate(
 
 export async function getTsdk(context: vscode.ExtensionContext) {
 	if (isUseWorkspaceTsdk(context)) {
-		const resolvedTsdk = resolveWorkspaceTsdk(getConfigTsdkPath() || defaultTsdkPath);
+		const resolvedTsdk = await resolveWorkspaceTsdk(getConfigTsdkPath() || defaultTsdkPath);
 		if (resolvedTsdk) {
 			return {
 				tsdk: resolvedTsdk,
@@ -118,22 +118,22 @@ export async function getTsdk(context: vscode.ExtensionContext) {
 	};
 }
 
-function resolveWorkspaceTsdk(tsdk: string) {
+async function resolveWorkspaceTsdk(tsdk: string) {
 	if (path.isAbsolute(tsdk)) {
-		try {
-			if (require.resolve('./typescript.js', { paths: [tsdk] })) {
-				return tsdk;
-			}
-		} catch { }
+		const libUri = vscode.Uri.joinPath(vscode.Uri.file(tsdk), 'typescript.js');
+		const stat = await vscode.workspace.fs.stat(libUri);
+		if (stat.type === vscode.FileType.File) {
+			return tsdk;
+		}
 	}
-	if (vscode.workspace.workspaceFolders) {
+	else if (vscode.workspace.workspaceFolders) {
 		for (const folder of vscode.workspace.workspaceFolders) {
 			const tsdkPath = path.join(folder.uri.fsPath.replace(/\\/g, '/'), tsdk);
-			try {
-				if (require.resolve('./typescript.js', { paths: [tsdkPath] })) {
-					return tsdkPath;
-				}
-			} catch { }
+			const libUri = vscode.Uri.joinPath(vscode.Uri.file(tsdkPath), 'typescript.js');
+			const stat = await vscode.workspace.fs.stat(libUri);
+			if (stat.type === vscode.FileType.File) {
+				return tsdkPath;
+			}
 		}
 	}
 }
