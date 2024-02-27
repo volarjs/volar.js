@@ -87,6 +87,7 @@ export function createServer(connection: vscode.Connection) {
 
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 
+	// webpack compatibility
 	const _require: NodeRequire = eval('require');
 
 	return {
