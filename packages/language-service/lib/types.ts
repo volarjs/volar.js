@@ -67,13 +67,13 @@ export type Result<T> = T | Thenable<T>;
 export type NullableResult<T> = Result<T | undefined | null>;
 export type SemanticToken = [number, number, number, number, number];
 
-export interface ServicePlugin {
+export interface ServicePlugin<P = any> {
 	name?: string;
 	triggerCharacters?: string[];
 	signatureHelpTriggerCharacters?: string[];
 	signatureHelpRetriggerCharacters?: string[];
 	autoFormatTriggerCharacters?: string[];
-	create(context: ServiceContext): ServicePluginInstance;
+	create(context: ServiceContext): ServicePluginInstance<P>;
 }
 
 export interface EmbeddedCodeFormattingOptions {
