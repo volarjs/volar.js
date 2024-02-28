@@ -38,7 +38,12 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	return {
 		process: childProcess,
 		connection,
-		async initialize(rootUri: string, initializationOptions: _.InitializationOptions, capabilities: _.ClientCapabilities = {}) {
+		async initialize<T = _.InitializationOptions & Record<string, unknown>>(
+			rootUri: string,
+			initializationOptions: T,
+			capabilities: _.ClientCapabilities = {},
+			locale?: string,
+		) {
 			const result = await connection.sendRequest(
 				_.InitializeRequest.type,
 				{
@@ -46,6 +51,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					rootUri,
 					initializationOptions,
 					capabilities,
+					locale,
 				} satisfies _.InitializeParams
 			);
 			await connection.sendNotification(
