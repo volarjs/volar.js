@@ -47,7 +47,7 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 				}
 
 				if (fileName.startsWith('/node_modules/')) {
-					const path = uri.substring('/node_modules/'.length);
+					const path = fileName.substring('/node_modules/'.length);
 					return await _stat(path);
 				}
 			},
@@ -57,7 +57,7 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 
 				if (fileName.startsWith('/node_modules/')) {
 
-					const path = uri.substring('/node_modules/'.length);
+					const path = fileName.substring('/node_modules/'.length);
 
 					return await _readFile(path);
 				}
@@ -68,7 +68,7 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 
 				if (fileName.startsWith('/node_modules/')) {
 
-					const path = uri.substring('/node_modules/'.length);
+					const path = fileName.substring('/node_modules/'.length);
 
 					return _readDirectory(path);
 				}
