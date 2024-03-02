@@ -237,10 +237,10 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 		const parts = path.split('/');
 		let pkgName = parts[0];
 		if (pkgName.startsWith('@')) {
-			if (parts.length < 2 || !parts[1]) {
+			if (!parts[1]) {
 				return undefined;
 			}
-			pkgName += '/' + parts[2];
+			pkgName += '/' + parts[1];
 		}
 		return pkgName;
 	}
