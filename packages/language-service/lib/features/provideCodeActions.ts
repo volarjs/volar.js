@@ -1,7 +1,7 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { getOverlapRange, notEmpty } from '../utils/common';
+import { findOverlapCodeRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
@@ -24,11 +24,6 @@ export function register(context: ServiceContext) {
 			return;
 		}
 
-		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-		const offsetRange = {
-			start: document.offsetAt(range.start),
-			end: document.offsetAt(range.end),
-		};
 		const transformedCodeActions = new WeakSet<vscode.CodeAction>();
 
 		return await languageFeatureWorker(
@@ -36,46 +31,27 @@ export function register(context: ServiceContext) {
 			uri,
 			() => ({ range, codeActionContext }),
 			function* (map) {
-				if (map.map.mappings.some(mapping => isCodeActionsEnabled(mapping.data))) {
-
-					const _codeActionContext: vscode.CodeActionContext = {
-						diagnostics: transformLocations(
-							codeActionContext.diagnostics,
-							range => map.getGeneratedRange(range),
-						),
-						only: codeActionContext.only,
+				const _codeActionContext: vscode.CodeActionContext = {
+					diagnostics: transformLocations(
+						codeActionContext.diagnostics,
+						range => map.getGeneratedRange(range),
+					),
+					only: codeActionContext.only,
+				};
+				const mapped = findOverlapCodeRange(
+					map.sourceDocument.offsetAt(range.start),
+					map.sourceDocument.offsetAt(range.end),
+					map.map,
+					isCodeActionsEnabled,
+				);
+				if (mapped) {
+					yield {
+						range: {
+							start: map.embeddedDocument.positionAt(mapped.start),
+							end: map.embeddedDocument.positionAt(mapped.end),
+						},
+						codeActionContext: _codeActionContext,
 					};
-
-					let minStart: number | undefined;
-					let maxEnd: number | undefined;
-
-					for (const mapping of map.map.mappings) {
-						const overlapRange = getOverlapRange(
-							offsetRange.start,
-							offsetRange.end,
-							mapping.sourceOffsets[0],
-							mapping.sourceOffsets[mapping.sourceOffsets.length - 1]
-							+ mapping.lengths[mapping.lengths.length - 1]
-						);
-						if (overlapRange) {
-							const start = map.map.getGeneratedOffset(overlapRange.start)?.[0];
-							const end = map.map.getGeneratedOffset(overlapRange.end)?.[0];
-							if (start !== undefined && end !== undefined) {
-								minStart = minStart === undefined ? start : Math.min(start, minStart);
-								maxEnd = maxEnd === undefined ? end : Math.max(end, maxEnd);
-							}
-						}
-					}
-
-					if (minStart !== undefined && maxEnd !== undefined) {
-						yield {
-							range: {
-								start: map.embeddedDocument.positionAt(minStart),
-								end: map.embeddedDocument.positionAt(maxEnd),
-							},
-							codeActionContext: _codeActionContext,
-						};
-					}
 				}
 			},
 			async (service, document, { range, codeActionContext }) => {
