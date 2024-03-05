@@ -47,7 +47,7 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 				}
 
 				if (fileName.startsWith('/node_modules/')) {
-					const path = uri.substring('/node_modules/'.length);
+					const path = fileName.substring('/node_modules/'.length);
 					return await _stat(path);
 				}
 			},
@@ -57,7 +57,7 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 
 				if (fileName.startsWith('/node_modules/')) {
 
-					const path = uri.substring('/node_modules/'.length);
+					const path = fileName.substring('/node_modules/'.length);
 
 					return await _readFile(path);
 				}
@@ -68,7 +68,7 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 
 				if (fileName.startsWith('/node_modules/')) {
 
-					const path = uri.substring('/node_modules/'.length);
+					const path = fileName.substring('/node_modules/'.length);
 
 					return _readDirectory(path);
 				}
@@ -237,10 +237,10 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 		const parts = path.split('/');
 		let pkgName = parts[0];
 		if (pkgName.startsWith('@')) {
-			if (parts.length < 2 || !parts[1]) {
+			if (!parts[1]) {
 				return undefined;
 			}
-			pkgName += '/' + parts[2];
+			pkgName += '/' + parts[1];
 		}
 		return pkgName;
 	}
