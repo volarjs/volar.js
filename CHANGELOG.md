@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.1.1](https://github.com/volarjs/volar.js/compare/v2.1.0...v2.1.1) (2024-03-05)
+
+### Fixes
+
+- **test-utils:** allow unknown initialization options and expose `locale` option [#142](https://github.com/volarjs/volar.js/issues/142)
+- **typescript:** virtual file update condition should be based generated snapshot rather than source script version
+- **monaco:** correct package name resolve on ATA [#149](https://github.com/volarjs/volar.js/issues/149)
+- **language-service:** provideCodeActions's range param is not accurately mapped
+- **language-service:** provideInlayHints's range param is not accurately mapped
+
+### Refactors
+
+- Webpack compatibility [#144](https://github.com/volarjs/volar.js/issues/144)
+- **language-service:** add provide generic to ServicePlugin type [#143](https://github.com/volarjs/volar.js/issues/143)
+
 ## [2.1.0](https://github.com/volarjs/volar.js/compare/v2.0.4...v2.1.0) (2024-02-26)
 
 ### Features
