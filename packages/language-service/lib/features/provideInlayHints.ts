@@ -1,6 +1,6 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext } from '../types';
-import { getOverlapRange, notEmpty } from '../utils/common';
+import { findOverlapCodeRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformTextEdit } from '../utils/transform';
@@ -21,51 +21,21 @@ export function register(context: ServiceContext) {
 			return;
 		}
 
-		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
-		const offsetRange = {
-			start: document.offsetAt(range.start),
-			end: document.offsetAt(range.end),
-		};
-
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => range,
 			function* (map) {
-
-				/**
-				 * copy from ./codeActions.ts
-				 */
-
-				if (!map.map.mappings.some(mapping => isInlayHintsEnabled(mapping.data))) {
-					return;
-				}
-
-				let minStart: number | undefined;
-				let maxEnd: number | undefined;
-
-				for (const mapping of map.map.mappings) {
-					const overlapRange = getOverlapRange(
-						offsetRange.start,
-						offsetRange.end,
-						mapping.sourceOffsets[0],
-						mapping.sourceOffsets[mapping.sourceOffsets.length - 1]
-						+ mapping.lengths[mapping.lengths.length - 1]
-					);
-					if (overlapRange) {
-						const start = map.map.getGeneratedOffset(overlapRange.start)?.[0];
-						const end = map.map.getGeneratedOffset(overlapRange.end)?.[0];
-						if (start !== undefined && end !== undefined) {
-							minStart = minStart === undefined ? start : Math.min(start, minStart);
-							maxEnd = maxEnd === undefined ? end : Math.max(end, maxEnd);
-						}
-					}
-				}
-
-				if (minStart !== undefined && maxEnd !== undefined) {
+				const mapped = findOverlapCodeRange(
+					map.sourceDocument.offsetAt(range.start),
+					map.sourceDocument.offsetAt(range.end),
+					map.map,
+					isInlayHintsEnabled,
+				);
+				if (mapped) {
 					yield {
-						start: map.embeddedDocument.positionAt(minStart),
-						end: map.embeddedDocument.positionAt(maxEnd),
+						start: map.embeddedDocument.positionAt(mapped.start),
+						end: map.embeddedDocument.positionAt(mapped.end),
 					};
 				}
 			},

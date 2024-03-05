@@ -56,7 +56,7 @@ export function findOverlapCodeRange(
 	}
 }
 
-export function getOverlapRange(
+function getOverlapRange(
 	range1Start: number,
 	range1End: number,
 	range2Start: number,
