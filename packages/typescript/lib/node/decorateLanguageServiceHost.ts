@@ -1,22 +1,21 @@
-import type { FileRegistry } from '@volar/language-core';
+import { resolveCommonLanguageId, type FileRegistry } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
 
 export function decorateLanguageServiceHost(
-	files: FileRegistry,
+	virtualFiles: FileRegistry,
 	languageServiceHost: ts.LanguageServiceHost,
 	ts: typeof import('typescript'),
 ) {
 
 	let extraProjectVersion = 0;
 
-	const { languagePlugins } = files;
+	const { languagePlugins } = virtualFiles;
 	const exts = languagePlugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 		.flat();
 	const scripts = new Map<string, {
-		projectVersion: string | undefined;
-		version: number;
+		version: string;
 		snapshot: ts.IScriptSnapshot | undefined;
 		kind: ts.ScriptKind;
 		extension: string;
@@ -27,7 +26,6 @@ export function decorateLanguageServiceHost(
 	const resolveModuleNames = languageServiceHost.resolveModuleNames?.bind(languageServiceHost);
 	const getProjectVersion = languageServiceHost.getProjectVersion?.bind(languageServiceHost);
 	const getScriptSnapshot = languageServiceHost.getScriptSnapshot.bind(languageServiceHost);
-	const getScriptVersion = languageServiceHost.getScriptVersion.bind(languageServiceHost);
 	const getScriptKind = languageServiceHost.getScriptKind?.bind(languageServiceHost);
 
 	// path completion
@@ -46,7 +44,7 @@ export function decorateLanguageServiceHost(
 
 	if (languagePlugins.some(language => language.typescript?.extraFileExtensions.length)) {
 
-		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, languagePlugins, fileName => files.get(fileName));
+		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, languagePlugins, fileName => virtualFiles.get(fileName));
 
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
@@ -96,13 +94,6 @@ export function decorateLanguageServiceHost(
 		}
 		return getScriptSnapshot(fileName);
 	};
-	languageServiceHost.getScriptVersion = fileName => {
-		if (exts.some(ext => fileName.endsWith(ext))) {
-			updateScript(fileName);
-			return scripts.get(fileName)?.version.toString() ?? '';
-		}
-		return getScriptVersion(fileName);
-	};
 
 	if (getScriptKind) {
 		languageServiceHost.getScriptKind = fileName => {
@@ -120,59 +111,45 @@ export function decorateLanguageServiceHost(
 
 	function updateScript(fileName: string) {
 
-		const version = getProjectVersion?.();
-		const cache = scripts.get(fileName);
+		const version = languageServiceHost.getScriptVersion(fileName);
 
-		if (version === undefined || version !== cache?.projectVersion) {
+		if (version !== scripts.get(fileName)?.version) {
 
-			const file = files.get(fileName);
-			const script = file?.generated?.languagePlugin.typescript?.getScript(file.generated.code);
+			let extension = '.ts';
+			let snapshotSnapshot: ts.IScriptSnapshot | undefined;
+			let scriptKind = ts.ScriptKind.TS;
 
-			if (script?.code.snapshot !== cache?.snapshot) {
+			const snapshot = getScriptSnapshot(fileName);
 
-				let extension = '.ts';
-				let snapshotSnapshot: ts.IScriptSnapshot | undefined;
-				let scriptKind = ts.ScriptKind.TS;
-
+			if (snapshot) {
 				extraProjectVersion++;
-
-				if (script) {
-					if (file?.generated) {
-						const text = file.snapshot.getText(0, file.snapshot.getLength());
-						let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
+				const sourceFile = virtualFiles.set(fileName, resolveCommonLanguageId(fileName), snapshot);
+				if (sourceFile.generated) {
+					const text = snapshot.getText(0, snapshot.getLength());
+					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
+					const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
+					if (script) {
 						extension = script.extension;
 						scriptKind = script.scriptKind;
 						patchedText += script.code.snapshot.getText(0, script.code.snapshot.getLength());
-						snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
-						if (file.generated.languagePlugin.typescript?.getExtraScripts) {
-							console.warn('getExtraScripts() is not available in this use case.');
-						}
+					}
+					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
+					if (sourceFile.generated.languagePlugin.typescript?.getExtraScripts) {
+						console.warn('getExtraScripts() is not available in this use case.');
 					}
 				}
-				else if (files.get(fileName)) {
-					files.delete(fileName);
-				}
+			}
+			else if (virtualFiles.get(fileName)) {
+				extraProjectVersion++;
+				virtualFiles.delete(fileName);
+			}
 
-				if (!cache) {
-					scripts.set(fileName, {
-						projectVersion: version,
-						version: 0,
-						extension,
-						snapshot: snapshotSnapshot,
-						kind: scriptKind,
-					});
-				}
-				else {
-					cache.projectVersion = version;
-					cache.version++;
-					cache.extension = extension;
-					cache.snapshot = snapshotSnapshot;
-					cache.kind = scriptKind;
-				}
-			}
-			else if (cache) {
-				cache.projectVersion = version;
-			}
+			scripts.set(fileName, {
+				version,
+				extension,
+				snapshot: snapshotSnapshot,
+				kind: scriptKind,
+			});
 		}
 
 		return scripts.get(fileName);
