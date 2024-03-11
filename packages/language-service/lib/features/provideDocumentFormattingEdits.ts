@@ -179,7 +179,7 @@ export function register(context: ServiceContext) {
 			ch?: string,
 		) {
 
-			if (context.disabledVirtualFileUris.has(document.uri)) {
+			if (context.disabledEmbeddedContentUris.has(document.uri)) {
 				return;
 			}
 
@@ -267,7 +267,7 @@ export function register(context: ServiceContext) {
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),
 				TextDocument.create(
-					context.documents.getVirtualCodeUri(sourceFileUri, file.id),
+					context.documents.encodeEmbeddedContentUri(sourceFileUri, file.id),
 					file.languageId,
 					version,
 					file.snapshot.getText(0, file.snapshot.getLength())

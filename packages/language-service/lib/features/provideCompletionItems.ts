@@ -11,7 +11,7 @@ export interface ServiceCompletionData {
 	uri: string;
 	original: Pick<vscode.CompletionItem, 'additionalTextEdits' | 'textEdit' | 'data'>;
 	serviceIndex: number;
-	virtualDocumentUri: string | undefined;
+	embeddedContentUri: string | undefined;
 }
 
 export function register(context: ServiceContext) {
@@ -55,7 +55,11 @@ export function register(context: ServiceContext) {
 
 				if (cacheData.virtualDocumentUri) {
 
-					const [virtualCode] = context.documents.getVirtualCodeByUri(cacheData.virtualDocumentUri);
+					const decoded = context.documents.decodeEmbeddedContentUri(cacheData.virtualDocumentUri);
+					const virtualCode = decoded
+						? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
+						: undefined;
+
 					if (!virtualCode) {
 						continue;
 					}
@@ -83,7 +87,7 @@ export function register(context: ServiceContext) {
 										data: item.data,
 									},
 									serviceIndex,
-									virtualDocumentUri: map.embeddedDocument.uri,
+									embeddedContentUri: map.embeddedDocument.uri,
 								} satisfies ServiceCompletionData;
 							}
 
@@ -118,7 +122,7 @@ export function register(context: ServiceContext) {
 								data: item.data,
 							},
 							serviceIndex,
-							virtualDocumentUri: undefined,
+							embeddedContentUri: undefined,
 						} satisfies ServiceCompletionData;
 					}
 				}
@@ -200,7 +204,7 @@ export function register(context: ServiceContext) {
 								data: item.data,
 							},
 							serviceIndex,
-							virtualDocumentUri: map ? document.uri : undefined,
+							embeddedContentUri: map ? document.uri : undefined,
 						} satisfies ServiceCompletionData;
 					}
 

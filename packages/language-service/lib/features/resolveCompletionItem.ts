@@ -20,9 +20,12 @@ export function register(context: ServiceContext) {
 
 			item = Object.assign(item, data.original);
 
-			if (data.virtualDocumentUri) {
+			if (data.embeddedContentUri) {
 
-				const [virtualCode] = context.documents.getVirtualCodeByUri(data.virtualDocumentUri);
+				const decoded = context.documents.decodeEmbeddedContentUri(data.embeddedContentUri);
+				const virtualCode = decoded
+					? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
+					: undefined;
 
 				if (virtualCode) {
 

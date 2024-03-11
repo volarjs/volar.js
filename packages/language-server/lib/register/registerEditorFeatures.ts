@@ -69,7 +69,7 @@ export function registerEditorFeatures(
 		}
 
 		function prune(code: VirtualCode): GetVirtualFileRequest.VirtualCodeInfo {
-			const uri = languageService.context.documents.getVirtualCodeUri(sourceFile!.id, code.id);
+			const uri = languageService.context.documents.encodeEmbeddedContentUri(sourceFile!.id, code.id);
 			let version = scriptVersions.get(uri) ?? 0;
 			if (!scriptVersionSnapshots.has(code.snapshot)) {
 				version++;
@@ -82,7 +82,7 @@ export function registerEditorFeatures(
 				languageId: code.languageId,
 				embeddedCodes: code.embeddedCodes?.map(prune) || [],
 				version,
-				disabled: languageService.context.disabledVirtualFileUris.has(uri),
+				disabled: languageService.context.disabledEmbeddedContentUris.has(uri),
 			};
 		}
 	});
@@ -216,12 +216,12 @@ export function registerEditorFeatures(
 		const project = await projects.getProject(params.fileUri);
 		const context = project.getLanguageServiceDontCreate()?.context;
 		if (context) {
-			const virtualFileUri = project.getLanguageService().context.documents.getVirtualCodeUri(params.fileUri, params.virtualCodeId);
+			const virtualFileUri = project.getLanguageService().context.documents.encodeEmbeddedContentUri(params.fileUri, params.virtualCodeId);
 			if (params.disabled) {
-				context.disabledVirtualFileUris.add(virtualFileUri);
+				context.disabledEmbeddedContentUris.add(virtualFileUri);
 			}
 			else {
-				context.disabledVirtualFileUris.delete(virtualFileUri);
+				context.disabledEmbeddedContentUris.delete(virtualFileUri);
 			}
 		}
 	});

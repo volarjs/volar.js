@@ -140,7 +140,7 @@ export function* eachEmbeddedDocument(
 		const sourceFile = context.language.files.get(map.sourceDocument.uri);
 		if (
 			sourceFile?.generated?.code === rootCode
-			&& !context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(context.language.files.getByVirtualCode(current).id, current.id))
+			&& !context.disabledEmbeddedContentUris.has(context.documents.encodeEmbeddedContentUri(context.language.files.getByVirtualCode(current).id, current.id))
 		) {
 			yield map;
 		}
@@ -162,7 +162,7 @@ export function getEmbeddedFilesByLevel(context: ServiceContext, sourceFileUri: 
 		for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
 			if (file.embeddedCodes) {
 				for (const embedded of file.embeddedCodes) {
-					if (!context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(sourceFileUri, embedded.id))) {
+					if (!context.disabledEmbeddedContentUris.has(context.documents.encodeEmbeddedContentUri(sourceFileUri, embedded.id))) {
 						nextLevel.push(embedded);
 					}
 				}

@@ -8,7 +8,11 @@ import { notEmpty } from './common';
 export function transformDocumentLinkTarget(target: string, context: ServiceContext) {
 	const targetUri = URI.parse(target);
 	const clearUri = targetUri.with({ fragment: '' }).toString(true);
-	const [virtualCode] = context.documents.getVirtualCodeByUri(clearUri);
+	const decoded = context.documents.decodeEmbeddedContentUri(clearUri);
+	const virtualCode = decoded
+		? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
+		: undefined;
+
 
 	if (virtualCode) {
 		for (const map of context.documents.getMaps(virtualCode)) {
@@ -306,7 +310,7 @@ export function transformWorkspaceSymbol(symbol: vscode.WorkspaceSymbol, getOthe
 
 export function transformWorkspaceEdit(
 	edit: vscode.WorkspaceEdit,
-	{ documents }: ServiceContext,
+	context: ServiceContext,
 	mode: 'fileName' | 'rename' | 'codeAction' | undefined,
 	versions: Record<string, number> = {},
 ) {
@@ -319,10 +323,14 @@ export function transformWorkspaceEdit(
 		sourceResult.changeAnnotations ??= {};
 
 		const tsAnno = edit.changeAnnotations[tsUri];
-		const [virtualCode] = documents.getVirtualCodeByUri(tsUri);
+		const decoded = context.documents.decodeEmbeddedContentUri(tsUri);
+		const virtualCode = decoded
+			? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
+			: undefined;
+
 
 		if (virtualCode) {
-			for (const map of documents.getMaps(virtualCode)) {
+			for (const map of context.documents.getMaps(virtualCode)) {
 				// TODO: check capability?
 				const uri = map.sourceDocument.uri;
 				sourceResult.changeAnnotations[uri] = tsAnno;
@@ -336,10 +344,14 @@ export function transformWorkspaceEdit(
 
 		sourceResult.changes ??= {};
 
-		const [virtualCode] = documents.getVirtualCodeByUri(tsUri);
+		const decoded = context.documents.decodeEmbeddedContentUri(tsUri);
+		const virtualCode = decoded
+			? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
+			: undefined;
+
 
 		if (virtualCode) {
-			for (const map of documents.getMaps(virtualCode)) {
+			for (const map of context.documents.getMaps(virtualCode)) {
 				const tsEdits = edit.changes[tsUri];
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
@@ -384,10 +396,14 @@ export function transformWorkspaceEdit(
 			let sourceEdit: typeof tsDocEdit | undefined;
 			if ('textDocument' in tsDocEdit) {
 
-				const [virtualCode] = documents.getVirtualCodeByUri(tsDocEdit.textDocument.uri);
+				const decoded = context.documents.decodeEmbeddedContentUri(tsDocEdit.textDocument.uri);
+				const virtualCode = decoded
+					? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
+					: undefined;
+
 
 				if (virtualCode) {
-					for (const map of documents.getMaps(virtualCode)) {
+					for (const map of context.documents.getMaps(virtualCode)) {
 						sourceEdit = {
 							textDocument: {
 								uri: map.sourceDocument.uri,
@@ -436,10 +452,13 @@ export function transformWorkspaceEdit(
 			}
 			else if (tsDocEdit.kind === 'rename') {
 
-				const [virtualCode] = documents.getVirtualCodeByUri(tsDocEdit.oldUri);
+				const decoded = context.documents.decodeEmbeddedContentUri(tsDocEdit.oldUri);
+				const virtualCode = decoded
+					? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
+					: undefined;
 
 				if (virtualCode) {
-					for (const map of documents.getMaps(virtualCode)) {
+					for (const map of context.documents.getMaps(virtualCode)) {
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'rename',
@@ -456,10 +475,13 @@ export function transformWorkspaceEdit(
 			}
 			else if (tsDocEdit.kind === 'delete') {
 
-				const [virtualCode] = documents.getVirtualCodeByUri(tsDocEdit.uri);
+				const decoded = context.documents.decodeEmbeddedContentUri(tsDocEdit.uri);
+				const virtualCode = decoded
+					? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
+					: undefined;
 
 				if (virtualCode) {
-					for (const map of documents.getMaps(virtualCode)) {
+					for (const map of context.documents.getMaps(virtualCode)) {
 						// TODO: check capability?
 						sourceEdit = {
 							kind: 'delete',

@@ -41,6 +41,7 @@ export function createLanguageService(
 	languageContext: LanguageContext,
 	servicePlugins: ServicePlugin[],
 	env: ServiceEnvironment,
+	embeddedContentScheme: string = 'volar-embedded-content',
 ) {
 
 	const context = createServiceContext();
@@ -95,7 +96,7 @@ export function createLanguageService(
 
 		const context: ServiceContext = {
 			language: languageContext,
-			documents: createDocumentProvider(languageContext.files),
+			documents: createDocumentProvider(languageContext.files, embeddedContentScheme),
 			env,
 			inject: (key, ...args) => {
 				for (const service of context.services) {
@@ -162,7 +163,7 @@ export function createLanguageService(
 					},
 				},
 			},
-			disabledVirtualFileUris: new Set(),
+			disabledEmbeddedContentUris: new Set(),
 			disabledServicePlugins: new WeakSet(),
 		};
 
