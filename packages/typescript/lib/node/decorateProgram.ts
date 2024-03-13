@@ -16,13 +16,10 @@ export function decorateProgram(files: FileRegistry, program: ts.Program) {
 	// @ts-ignore
 	const getBindAndCheckDiagnostics = program.getBindAndCheckDiagnostics;
 
-	// @ts-ignore
-	program.emit = (targetSourceFile, writeFile, cancellationToken, emitOnlyDtsFiles, customTransformers, forceDtsEmit) => {
-		// @ts-ignore
-		const result = emit(targetSourceFile, writeFile, cancellationToken, emitOnlyDtsFiles, customTransformers, forceDtsEmit);
+	program.emit = (...args) => {
+		const result = emit(...args);
 		return {
-			emitSkipped: result.emitSkipped,
-			emittedFiles: result.emittedFiles,
+			...result,
 			diagnostics: result.diagnostics
 				.map(d => transformDiagnostic(files, d))
 				.filter(notEmpty),
