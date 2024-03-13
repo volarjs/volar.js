@@ -145,7 +145,7 @@ export class LinkedCodeMapWithDocument extends SourceMapWithDocuments {
 	}
 }
 
-export function createDocumentProvider(files: FileRegistry, embeddedContentScheme: string) {
+export function createDocumentProvider(files: FileRegistry) {
 
 	let version = 0;
 
@@ -156,12 +156,11 @@ export function createDocumentProvider(files: FileRegistry, embeddedContentSchem
 	return {
 		get,
 		*getMaps(virtualCode: VirtualCode) {
-			for (const [documentUri, [sourceSnapshot, map]] of files.getMaps(virtualCode)) {
+			for (const [sourceFileUri, [sourceSnapshot, map]] of files.getMaps(virtualCode)) {
 				if (!map2DocMap.has(map)) {
-					const embeddedContentUri = this.encodeEmbeddedContentUri(documentUri, virtualCode.id);
 					map2DocMap.set(map, new SourceMapWithDocuments(
-						get(documentUri, files.get(documentUri)!.languageId, sourceSnapshot),
-						get(embeddedContentUri, virtualCode.languageId, virtualCode.snapshot),
+						get(sourceFileUri, files.get(sourceFileUri)!.languageId, sourceSnapshot),
+						get(this.getVirtualCodeUri(sourceFileUri, virtualCode.id), virtualCode.languageId, virtualCode.snapshot),
 						map,
 					));
 				}
@@ -172,29 +171,26 @@ export function createDocumentProvider(files: FileRegistry, embeddedContentSchem
 			const map = files.getLinkedCodeMap(virtualCode);
 			if (map) {
 				if (!mirrorMap2DocMirrorMap.has(map)) {
-					const documentUri = files.getByVirtualCode(virtualCode).id;
-					const embeddedContentUri = this.encodeEmbeddedContentUri(documentUri, virtualCode.id);
 					mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
-						get(embeddedContentUri, virtualCode.languageId, virtualCode.snapshot),
+						get(this.getVirtualCodeUri(files.getByVirtualCode(virtualCode).id, virtualCode.id), virtualCode.languageId, virtualCode.snapshot),
 						map,
 					));
 				}
 				return mirrorMap2DocMirrorMap.get(map)!;
 			}
 		},
-		decodeEmbeddedContentUri(maybeEmbeddedContentUri: string) {
-			if (maybeEmbeddedContentUri.startsWith(`${embeddedContentScheme}://`)) {
-				const trimed = maybeEmbeddedContentUri.substring(`${embeddedContentScheme}://`.length);
-				const embeddedCodeId = trimed.substring(0, trimed.indexOf('/'));
-				const documentUri = trimed.substring(embeddedCodeId.length + 1);
-				return {
-					documentUri: decodeURIComponent(documentUri),
-					embeddedCodeId: decodeURIComponent(embeddedCodeId),
-				};
+		// TODO: rename to getVirtualCodeByDocumentUri
+		getVirtualCodeByUri(uri: string) {
+			if (uri.includes('?virtualCodeId=')) {
+				const sourceFileUri = uri.split('?virtualCodeId=')[0];
+				const virtualCodeId = uri.split('?virtualCodeId=')[1];
+				return files.getVirtualCode(sourceFileUri, virtualCodeId);
 			}
+			return [undefined, undefined] as const;
 		},
-		encodeEmbeddedContentUri(documentUri: string, embeddedContentId: string) {
-			return `${embeddedContentScheme}://${encodeURIComponent(embeddedContentId)}/${encodeURIComponent(documentUri)}`;
+		// TODO: rename to getDocumentUriByVirtualCode
+		getVirtualCodeUri(sourceFileUri: string, virtualCodeId: string) {
+			return sourceFileUri + `?virtualCodeId=${virtualCodeId}`;
 		},
 	};
 

@@ -298,10 +298,7 @@ export function register(context: ServiceContext) {
 
 				for (const info of _error.relatedInformation) {
 
-					const decoded = context.documents.decodeEmbeddedContentUri(info.location.uri);
-					const virtualCode = decoded
-						? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
-						: undefined;
+					const [virtualCode] = context.documents.getVirtualCodeByUri(info.location.uri);
 
 					if (virtualCode) {
 						for (const map of context.documents.getMaps(virtualCode)) {

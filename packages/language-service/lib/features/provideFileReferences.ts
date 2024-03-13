@@ -23,11 +23,7 @@ export function register(context: ServiceContext) {
 			data => data
 				.map(reference => {
 
-					const decoded = context.documents.decodeEmbeddedContentUri(reference.uri);
-					const virtualCode = decoded
-						? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
-						: undefined;
-
+					const [virtualCode] = context.documents.getVirtualCodeByUri(reference.uri);
 					if (!virtualCode) {
 						return reference;
 					}

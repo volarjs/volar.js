@@ -59,7 +59,7 @@ export interface ServiceContext {
 	};
 	documents: DocumentProvider;
 	services: [ServicePlugin, ServicePluginInstance][];
-	disabledEmbeddedContentUris: Set<string>;
+	disabledVirtualFileUris: Set<string>;
 	disabledServicePlugins: WeakSet<ServicePluginInstance>;
 }
 

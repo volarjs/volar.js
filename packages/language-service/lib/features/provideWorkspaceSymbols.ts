@@ -26,10 +26,7 @@ export function register(context: ServiceContext) {
 			}
 			const symbols = embeddedSymbols.map(symbol => transformWorkspaceSymbol(symbol, loc => {
 
-				const decoded = context.documents.decodeEmbeddedContentUri(loc.uri);
-				const virtualCode = decoded
-					? context.language.files.getVirtualCode(decoded.documentUri, decoded.embeddedCodeId)[0]
-					: undefined;
+				const [virtualCode] = context.documents.getVirtualCodeByUri(loc.uri);
 
 				if (virtualCode) {
 					for (const map of context.documents.getMaps(virtualCode)) {
