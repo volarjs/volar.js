@@ -1,4 +1,4 @@
-import type { NullableProviderResult, ServiceContext } from '../types';
+import type { NullableResult, ServiceContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import type * as vscode from 'vscode-languageserver-protocol';
@@ -8,7 +8,7 @@ import { isReferencesEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, token = NoneCancellationToken): NullableProviderResult<vscode.Location[]> => {
+	return (uri: string, token = NoneCancellationToken): NullableResult<vscode.Location[]> => {
 
 		return documentFeatureWorker(
 			context,
