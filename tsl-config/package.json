@@ -1,0 +1,13 @@
+{
+	"name": "@volar/tsl-config",
+	"version": "0.0.0",
+	"files": [ "index.ts" ],
+	"devDependencies": {
+		"@types/node": "latest",
+		"tsl": "latest",
+		"typescript": "latest"
+	},
+	"peerDependencies": {
+		"tsl": "*"
+	}
+}

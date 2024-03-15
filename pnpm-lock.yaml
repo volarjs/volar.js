@@ -243,6 +243,18 @@ importers:
         specifier: ^1.82.0
         version: 1.85.0
 
+  tsl-config:
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 20.11.27
+      tsl:
+        specifier: latest
+        version: 0.0.10(typescript@5.4.2)
+      typescript:
+        specifier: latest
+        version: 5.4.2
+
 packages:
 
   /@babel/code-frame@7.23.5:
@@ -1153,6 +1165,19 @@ packages:
     engines: {node: '>=18'}
     dev: true
 
+  /@tsslint/cli@0.0.10(typescript@5.4.2):
+    resolution: {integrity: sha512-0F0LbGUbFbVinvNjA3qCyx6ynZA4ScBR2Tr1ZHOXog6BnR9wrvXMqPA/cud2GMftO7mRDMtsh1mBop9NsZeHtQ==}
+    hasBin: true
+    peerDependencies:
+      typescript: '*'
+    dependencies:
+      '@clack/prompts': 0.7.0
+      '@tsslint/config': 0.0.10
+      '@tsslint/core': 0.0.10
+      glob: 10.3.10
+      typescript: 5.4.2
+    dev: true
+
   /@tsslint/cli@0.0.9(typescript@5.3.3):
     resolution: {integrity: sha512-XPljG/PoVc3f2ca1phim/bq4JEien+zZMAi+na8s46EawCRLcqMyokysRKWOIijFLuCAjGKu9jLkW0bS56ar0g==}
     hasBin: true
@@ -1166,10 +1191,23 @@ packages:
       typescript: 5.3.3
     dev: true
 
+  /@tsslint/config@0.0.10:
+    resolution: {integrity: sha512-WdLrCFBH1VT6VOIaFifsIZrMeiLO4Vss5HGwxx/G+rWl90BwJXXOtIBCr00nDPISv+YNokD4QYMSJWrjlvBVCQ==}
+    dependencies:
+      esbuild: 0.19.11
+    dev: true
+
   /@tsslint/config@0.0.9:
     resolution: {integrity: sha512-zxePomKGSDga8zVxvM7tcA5LFmqROzpn8jz//uJlNy2a61mMvWv10abO2ukvhVFfMzbq8pocj0zCRYkjCE9kNw==}
     dependencies:
       esbuild: 0.19.11
+    dev: true
+
+  /@tsslint/core@0.0.10:
+    resolution: {integrity: sha512-21RrlBbKeTwk2HPmwG9iNBws3F+S1MWsGT4gI0mchbJBQf9THMNcalK2c24knDObSjryfRdeWuIBFalldOaPOw==}
+    dependencies:
+      error-stack-parser: 2.1.4
+      source-map-support: 0.5.21
     dev: true
 
   /@tsslint/core@0.0.9:
@@ -1198,6 +1236,12 @@ packages:
 
   /@types/node@20.10.6:
     resolution: {integrity: sha512-Vac8H+NlRNNlAmDfGUP7b5h/KA+AtWIzuXy0E6OyP8f1tCLYAtPvKRRDJjAPqhpCb0t6U2j7/xqAuLEebW2kiw==}
+    dependencies:
+      undici-types: 5.26.5
+    dev: true
+
+  /@types/node@20.11.27:
+    resolution: {integrity: sha512-qyUZfMnCg1KEz57r7pzFtSGt49f6RPkPBis3Vo4PbS7roQEDn22hiHzl/Lo1q4i4hDEgBJmBF/NTNg2XR0HbFg==}
     dependencies:
       undici-types: 5.26.5
     dev: true
@@ -4353,6 +4397,17 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dev: true
 
+  /tsl@0.0.10(typescript@5.4.2):
+    resolution: {integrity: sha512-hy7OuMp55TkicjtDKgpg1q2xq1Dboi2YWM+JexNEP4MZr3n+Fr5KXv64ZXzJx1NbPhMHbOuM36bHcFFXE4Ofcg==}
+    hasBin: true
+    dependencies:
+      '@tsslint/cli': 0.0.10(typescript@5.4.2)
+      '@tsslint/config': 0.0.10
+      '@tsslint/core': 0.0.10
+    transitivePeerDependencies:
+      - typescript
+    dev: true
+
   /tsl@0.0.9(typescript@5.3.3):
     resolution: {integrity: sha512-jtBGsgQ88GPnwJytfVbdInd0x0KBv5kmT7xlVMSEdxR63AwEWpbpkEOECCJG/MNaxQ94N8S50yXmM0M1trk5cA==}
     hasBin: true
@@ -4437,6 +4492,12 @@ packages:
     resolution: {integrity: sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  /typescript@5.4.2:
+    resolution: {integrity: sha512-+2/g0Fds1ERlP6JsakQQDXjZdZMM+rqpamFZJEKh4kwTIn3iDkgKtby0CeNd5ATNZ4Ry1ax15TMx0W2V+miizQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+    dev: true
 
   /uc.micro@1.0.6:
     resolution: {integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==}
