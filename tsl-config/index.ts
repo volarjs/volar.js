@@ -263,12 +263,21 @@ export default defineConfig({
 				}
 			}
 		},
+		/**
+		 * TODO: fix the case
+		 * let foo: Foo;
+		 * foo!.bar();
+		 * ^^^^ should not report
+		 */
 		'no-unnecessary-non-null-assertion'({ typescript: ts, sourceFile, languageService, reportWarning }) {
 			ts.forEachChild(sourceFile, function walk(node) {
 				if (ts.isNonNullExpression(node)) {
 					const typeChecker = languageService.getProgram()!.getTypeChecker();
 					const type = typeChecker.getTypeAtLocation(node.expression);
-					if (typeChecker.typeToString(type) === typeChecker.typeToString(type.getNonNullableType())) {
+					if (
+						typeChecker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation)
+						=== typeChecker.typeToString(type.getNonNullableType(), undefined, ts.TypeFormatFlags.NoTruncation)
+					) {
 						reportWarning(
 							`Unnecessary non-null assertion.`,
 							node.getStart(sourceFile),
