@@ -118,7 +118,7 @@ export default defineConfig({
 					=== ts.getLineAndCharacterOfPosition(sourceFile, node.parent.getEnd()).line;
 			}
 		},
-		'missing-import-type'({ typescript: ts, sourceFile, reportError, languageServiceHost }) {
+		'missing-dependency'({ typescript: ts, sourceFile, reportError, languageServiceHost }) {
 			const { noEmit } = languageServiceHost.getCompilationSettings();
 			if (noEmit) {
 				return;
@@ -133,42 +133,32 @@ export default defineConfig({
 				? require(parentPackageJsonPath)
 				: {};
 			ts.forEachChild(sourceFile, function walk(node) {
-				if (ts.isImportDeclaration(node) && !node.importClause?.isTypeOnly) {
-					if (ts.isStringLiteral(node.moduleSpecifier)) {
-						if (!node.moduleSpecifier.text.startsWith('./') && !node.moduleSpecifier.text.startsWith('../')) {
-							let moduleName = node.moduleSpecifier.text.split('/')[0];
-							if (moduleName.startsWith('@')) {
-								moduleName += '/' + node.moduleSpecifier.text.split('/')[1];
-							}
-							if (
-								(
-									packageJson.devDependencies?.[moduleName]
-									|| parentPackageJson.dependencies?.[moduleName]
-									|| parentPackageJson.devDependencies?.[moduleName]
-									|| parentPackageJson.peerDependencies?.[moduleName]
-								)
-								&& !packageJson.dependencies?.[moduleName]
-								&& !packageJson.peerDependencies?.[moduleName]
-							) {
-								reportError(
-									`Importing '${moduleName}' should use 'import type'.`,
-									node.getStart(sourceFile),
-									node.getEnd()
-								).withFix(
-									'Add "type" to import statement',
-									() => [{
-										fileName: sourceFile.fileName,
-										textChanges: [{
-											newText: 'import type',
-											span: {
-												start: node.getStart(sourceFile),
-												length: 'import'.length,
-											},
-										}],
-									}]
-								);
-							}
-						}
+				if (
+					ts.isImportDeclaration(node)
+					&& !node.importClause?.isTypeOnly
+					&& ts.isStringLiteral(node.moduleSpecifier)
+					&& !node.moduleSpecifier.text.startsWith('./')
+					&& !node.moduleSpecifier.text.startsWith('../')
+				) {
+					let moduleName = node.moduleSpecifier.text.split('/')[0];
+					if (moduleName.startsWith('@')) {
+						moduleName += '/' + node.moduleSpecifier.text.split('/')[1];
+					}
+					if (
+						(
+							packageJson.devDependencies?.[moduleName]
+							|| parentPackageJson.dependencies?.[moduleName]
+							|| parentPackageJson.devDependencies?.[moduleName]
+							|| parentPackageJson.peerDependencies?.[moduleName]
+						)
+						&& !packageJson.dependencies?.[moduleName]
+						&& !packageJson.peerDependencies?.[moduleName]
+					) {
+						reportError(
+							`Module '${moduleName}' should be in the dependencies.`,
+							node.getStart(sourceFile),
+							node.getEnd()
+						);
 					}
 				}
 				ts.forEachChild(node, walk);
