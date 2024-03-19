@@ -15,8 +15,11 @@ export function activate(
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];
-	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-	statusBar.command = cmd;
+	const statusBar = vscode.languages.createLanguageStatusItem(cmd, selector);
+	statusBar.command = {
+		title: 'Select Version',
+		command: cmd,
+	};
 
 	subscriptions.push({ dispose: () => statusBar.dispose() });
 	subscriptions.push(vscode.commands.registerCommand(cmd, onCommand));
@@ -74,18 +77,9 @@ export function activate(
 	}
 
 	async function updateStatusBar() {
-		if (
-			!vscode.window.activeTextEditor
-			|| !vscode.languages.match(selector, vscode.window.activeTextEditor.document)
-		) {
-			statusBar.hide();
-		}
-		else {
-			const tsVersion = (await getTsdk(context)).version;
-			statusBar.text = tsVersion ?? 'x.x.x';
-			statusBar.text = resolveStatusText(statusBar.text);
-			statusBar.show();
-		}
+		const tsVersion = (await getTsdk(context)).version;
+		statusBar.text = tsVersion ?? 'x.x.x';
+		statusBar.text = resolveStatusText(statusBar.text);
 	}
 
 	async function reloadServers() {

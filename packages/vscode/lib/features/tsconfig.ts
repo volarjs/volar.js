@@ -10,7 +10,7 @@ export function activate(
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];
-	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+	const statusBar = vscode.languages.createLanguageStatusItem(cmd, selector);
 	let currentTsconfigUri: vscode.Uri | undefined;
 
 	updateStatusBar();
@@ -31,26 +31,26 @@ export function activate(
 			!vscode.window.activeTextEditor
 			|| !vscode.languages.match(selector, vscode.window.activeTextEditor.document)
 		) {
-			statusBar.hide();
+			return;
+		}
+		const tsconfig = await client.sendRequest(
+			GetMatchTsConfigRequest.type,
+			client.code2ProtocolConverter.asTextDocumentIdentifier(vscode.window.activeTextEditor.document),
+		);
+		if (tsconfig?.uri) {
+			currentTsconfigUri = vscode.Uri.parse(tsconfig.uri);
+			statusBar.text = path.relative(
+				(vscode.workspace.rootPath?.replace(/\\/g, '/') || '/'),
+				currentTsconfigUri.fsPath.replace(/\\/g, '/'),
+			);
+			statusBar.command = {
+				title: 'Open config file',
+				command: cmd,
+			};
 		}
 		else {
-			const tsconfig = await client.sendRequest(
-				GetMatchTsConfigRequest.type,
-				client.code2ProtocolConverter.asTextDocumentIdentifier(vscode.window.activeTextEditor.document),
-			);
-			if (tsconfig?.uri) {
-				currentTsconfigUri = vscode.Uri.parse(tsconfig.uri);
-				statusBar.text = path.relative(
-					(vscode.workspace.rootPath?.replace(/\\/g, '/') || '/'),
-					currentTsconfigUri.fsPath.replace(/\\/g, '/'),
-				);
-				statusBar.command = cmd;
-			}
-			else {
-				statusBar.text = 'No tsconfig';
-				statusBar.command = undefined;
-			}
-			statusBar.show();
+			statusBar.text = 'No tsconfig';
+			statusBar.command = undefined;
 		}
 	}
 }
