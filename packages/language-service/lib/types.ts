@@ -65,7 +65,13 @@ export interface ServiceContext {
 
 export type Result<T> = T | Thenable<T>;
 export type NullableResult<T> = Result<T | undefined | null>;
-export type SemanticToken = [number, number, number, number, number];
+export type SemanticToken = [
+	line: number,
+	character: number,
+	length: number,
+	tokenTypes: number,
+	tokenModifiers: number,
+];
 
 export interface ServicePlugin<P = any> {
 	name?: string;
