@@ -109,9 +109,9 @@ export async function createTypeScriptServerProject(
 	}
 	async function onWorkspaceFilesChanged(changes: vscode.FileEvent[]) {
 
-		const creates = changes.filter(change => change.type === vscode.FileChangeType.Created);
+		const createsAndDeletes = changes.filter(change => change.type !== vscode.FileChangeType.Changed);
 
-		if (creates.length) {
+		if (createsAndDeletes.length) {
 			rootFiles = await getRootFiles(languagePlugins);
 		}
 
