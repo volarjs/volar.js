@@ -43,7 +43,7 @@ export function createSys(
 			const dirName = path.dirname(fileName);
 			const baseName = path.basename(fileName);
 			const dir = getDir(dirName);
-			if (dir.files.has(baseName)) { // is requested file
+			if (dir.files.has(baseName) || dir.requestedRead) { // is requested file or directory
 				version++;
 				if (change.type === 1 satisfies typeof FileChangeType.Created || change.type === 2 satisfies typeof FileChangeType.Changed) {
 					dir.files.set(baseName, {
