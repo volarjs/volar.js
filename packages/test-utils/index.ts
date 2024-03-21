@@ -150,6 +150,12 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				);
 			}
 		},
+		didChangeWatchedFiles(changes: _.FileEvent[]) {
+			return connection.sendNotification(
+				_.DidChangeWatchedFilesNotification.type,
+				{ changes } satisfies _.DidChangeWatchedFilesParams
+			);
+		},
 		async sendCompletionRequest(uri: string, position: _.Position) {
 			const result = await connection.sendRequest(
 				_.CompletionRequest.type,
