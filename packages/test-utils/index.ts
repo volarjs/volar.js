@@ -141,6 +141,24 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				} satisfies _.DidCloseTextDocumentParams
 			);
 		},
+		async updateTextDocument(uri: string, edits: _.TextEdit[]) {
+			let document = openedDocuments.get(uri);
+			assert(document);
+			const newText = TextDocument.applyEdits(document, edits);
+			document = TextDocument.create(uri, document.languageId, document.version + 1, newText);
+			openedDocuments.set(uri, document);
+			await connection.sendNotification(
+				_.DidChangeTextDocumentNotification.type,
+				{
+					textDocument: {
+						uri: document.uri,
+						version: document.version,
+					},
+					contentChanges: [{ text: document.getText() }],
+				} satisfies _.DidChangeTextDocumentParams
+			);
+			return document;
+		},
 		async updateConfiguration(newSettings: any) {
 			Object.assign(settings, newSettings);
 			if (running) {
