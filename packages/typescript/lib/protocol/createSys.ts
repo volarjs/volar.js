@@ -29,8 +29,6 @@ export function createSys(
 	version: number;
 	sync(): Promise<number>;
 } & Disposable {
-
-
 	let version = 0;
 
 	// sys is undefined in browser
