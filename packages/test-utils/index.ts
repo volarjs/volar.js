@@ -24,8 +24,10 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 		new _.IPCMessageWriter(childProcess)
 	);
 	const openedDocuments = new Map<string, TextDocument>();
+	const settings: any = {};
 
 	let untitledCounter = 0;
+	let running = false;
 
 	connection.listen();
 	connection.onClose(e => console.log(e));
@@ -33,6 +35,13 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	connection.onError(e => console.log(e));
 	connection.onDispose(() => {
 		childProcess.kill();
+	});
+	connection.onRequest(_.ConfigurationRequest.type, ({ items }) => {
+		return items.map(item => {
+			if (item.section) {
+				return getConfiguration(item.section);
+			}
+		});
 	});
 
 	return {
@@ -58,9 +67,11 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.InitializedNotification.type,
 				{} satisfies _.InitializedParams
 			);
+			running = true;
 			return result;
 		},
 		async shutdown() {
+			running = false;
 			await connection.sendRequest(_.ShutdownRequest.type);
 			openedDocuments.clear();
 		},
@@ -129,6 +140,15 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					textDocument: { uri },
 				} satisfies _.DidCloseTextDocumentParams
 			);
+		},
+		async updateConfiguration(newSettings: any) {
+			Object.assign(settings, newSettings);
+			if (running) {
+				await connection.sendNotification(
+					_.DidChangeConfigurationNotification.type,
+					{ settings } satisfies _.DidChangeConfigurationParams
+				);
+			}
 		},
 		async sendCompletionRequest(uri: string, position: _.Position) {
 			const result = await connection.sendRequest(
@@ -340,6 +360,30 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			);
 		},
 	};
+
+	function getConfiguration(section: string) {
+		if (section in settings) {
+			return settings[section];
+		}
+		let result: any;
+		for (const settingKey in settings) {
+			if (settingKey.startsWith(`${section}.`)) {
+				const value = settings[settingKey];
+				const props = settingKey.substring(section.length + 1).split('.');
+				result ??= {};
+				let current = result;
+				while (props.length > 1) {
+					const prop = props.shift()!;
+					if (typeof current[prop] !== 'object') {
+						current[prop] = {};
+					}
+					current = current[prop];
+				}
+				current[props.shift()!] = value;
+			}
+		}
+		return result;
+	}
 }
 
 export function* printSnapshots(sourceFile: _.SourceFile) {
