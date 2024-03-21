@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.1.4](https://github.com/volarjs/volar.js/compare/v2.1.3...v2.1.4) (2024-03-22)
+
+### Features
+
+- **test-utils:** add 3 APIs: `updateTextDocument`, `updateConfiguration`, `didChangeWatchedFiles`
+
+### Bug Fixes
+
+- **typescript:** sys cache is not updated correctly in case sensitive file system [#153](https://github.com/volarjs/volar.js/issues/153)
+- **typescript:** create a new file did not update sys cache (https://github.com/withastro/language-tools/issues/685)
+
 ## [2.1.3](https://github.com/volarjs/volar.js/compare/v2.1.2...v2.1.3) (2024-03-20)
 
 ### Bug Fixes
