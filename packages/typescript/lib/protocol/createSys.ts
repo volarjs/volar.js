@@ -4,13 +4,15 @@ import * as path from 'path-browserify';
 import { matchFiles } from '../typescript/utilities';
 
 interface File {
+	name: string;
 	text?: string;
 	stat?: FileStat;
-	requestedText?: boolean;
-	requestedStat?: boolean;
+	requestedText: boolean;
+	requestedStat: boolean;
 }
 
 interface Dir {
+	name: string;
 	dirs: Map<string, Dir>;
 	files: Map<string, File>;
 	exists?: boolean;
@@ -28,10 +30,14 @@ export function createSys(
 	sync(): Promise<number>;
 } & Disposable {
 
+
 	let version = 0;
 
+	// sys is undefined in browser
 	const sys = ts.sys as ts.System | undefined;
+	const caseSensitive = sys?.useCaseSensitiveFileNames ?? false;
 	const root: Dir = {
+		name: '',
 		dirs: new Map(),
 		files: new Map(),
 		requestedRead: false,
@@ -46,7 +52,8 @@ export function createSys(
 			if (dir.files.has(baseName) || dir.requestedRead) { // is requested file or directory
 				version++;
 				if (change.type === 1 satisfies typeof FileChangeType.Created || change.type === 2 satisfies typeof FileChangeType.Changed) {
-					dir.files.set(baseName, {
+					dir.files.set(normalizeFileId(baseName), {
+						name: baseName,
 						stat: {
 							type: 1 satisfies FileType.File,
 							ctime: Date.now(),
@@ -54,10 +61,12 @@ export function createSys(
 							size: -1,
 						},
 						requestedStat: false,
+						requestedText: false,
 					});
 				}
 				else if (change.type === 3 satisfies typeof FileChangeType.Deleted) {
-					dir.files.set(baseName, {
+					dir.files.set(normalizeFileId(baseName), {
+						name: baseName,
 						stat: undefined,
 						text: undefined,
 						requestedStat: true,
@@ -74,7 +83,7 @@ export function createSys(
 		},
 		args: sys?.args ?? [],
 		newLine: sys?.newLine ?? '\n',
-		useCaseSensitiveFileNames: sys?.useCaseSensitiveFileNames ?? false,
+		useCaseSensitiveFileNames: caseSensitive,
 		realpath: sys?.realpath,
 		write: sys?.write ?? (() => { }),
 		writeFile: sys?.writeFile ?? (() => { }),
@@ -127,7 +136,7 @@ export function createSys(
 		const name = path.basename(fileName);
 
 		readFileWorker(fileName, encoding, dir);
-		return dir.files.get(name)?.text;
+		return dir.files.get(normalizeFileId(name))?.text;
 	}
 
 	function directoryExists(dirName: string): boolean {
@@ -205,9 +214,13 @@ export function createSys(
 		const dirPath = path.dirname(fileName);
 		const baseName = path.basename(fileName);
 		const dir = getDir(dirPath);
-		let file = dir.files.get(baseName);
+		let file = dir.files.get(normalizeFileId(baseName));
 		if (!file) {
-			dir.files.set(baseName, file = {});
+			dir.files.set(normalizeFileId(baseName), file = {
+				name: baseName,
+				requestedStat: false,
+				requestedText: false,
+			});
 		}
 
 		return file;
@@ -218,7 +231,9 @@ export function createSys(
 		dirName = resolvePath(dirName);
 		readDirectoryWorker(dirName);
 		const dir = getDir(dirName);
-		return [...dir.dirs.entries()].filter(([_, dir]) => dir.exists).map(([name]) => name);
+		return [...dir.dirs.values()]
+			.filter(dir => dir.exists)
+			.map(dir => dir.name);
 	}
 
 	function readDirectory(
@@ -234,7 +249,7 @@ export function createSys(
 			extensions,
 			excludes,
 			includes,
-			sys?.useCaseSensitiveFileNames ?? false,
+			caseSensitive,
 			currentDirectory,
 			depth,
 			dirPath => {
@@ -244,8 +259,12 @@ export function createSys(
 				const dir = getDir(dirPath);
 
 				return {
-					files: [...dir.files.entries()].filter(([_, file]) => file.stat?.type === 1 satisfies FileType.File).map(([name]) => name),
-					directories: [...dir.dirs.entries()].filter(([_, dir]) => dir.exists).map(([name]) => name),
+					files: [...dir.files.values()]
+						.filter(file => file.stat?.type === 1 satisfies FileType.File)
+						.map(file => file.name),
+					directories: [...dir.dirs.values()]
+						.filter(dir => dir.exists)
+						.map(dir => dir.name),
 				};
 			},
 			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
@@ -257,9 +276,13 @@ export function createSys(
 
 		const name = path.basename(fileName);
 
-		let file = dir.files.get(name);
+		let file = dir.files.get(normalizeFileId(name));
 		if (!file) {
-			dir.files.set(name, file = {});
+			dir.files.set(normalizeFileId(name), file = {
+				name,
+				requestedStat: false,
+				requestedText: false,
+			});
 		}
 
 		if (file.requestedText) {
@@ -330,9 +353,13 @@ export function createSys(
 					stat.then(stat => {
 						promises.delete(promise);
 						if (stat?.type === 1 satisfies FileType.File) {
-							let file = dir.files.get(name);
+							let file = dir.files.get(normalizeFileId(name));
 							if (!file) {
-								dir.files.set(name, file = {});
+								dir.files.set(normalizeFileId(name), file = {
+									name,
+									requestedStat: false,
+									requestedText: false,
+								});
 							}
 							if (stat.type !== file.stat?.type || stat.mtime !== file.stat?.mtime) {
 								version++;
@@ -354,9 +381,13 @@ export function createSys(
 				}
 			}
 			if (fileType === 1 satisfies FileType.File) {
-				let file = dir.files.get(name);
+				let file = dir.files.get(normalizeFileId(name));
 				if (!file) {
-					dir.files.set(name, file = {});
+					dir.files.set(normalizeFileId(name), file = {
+						name,
+						requestedStat: false,
+						requestedText: false,
+					});
 				}
 				if (!file.stat) {
 					file.stat = {
@@ -405,13 +436,18 @@ export function createSys(
 	}
 
 	function getDirFromDir(dir: Dir, name: string) {
-		let target = dir.dirs.get(name);
+		let target = dir.dirs.get(normalizeFileId(name));
 		if (!target) {
-			dir.dirs.set(name, target = {
+			dir.dirs.set(normalizeFileId(name), target = {
+				name,
 				dirs: new Map(),
 				files: new Map(),
 			});
 		}
 		return target;
+	}
+
+	function normalizeFileId(fileName: string) {
+		return caseSensitive ? fileName : fileName.toLowerCase();
 	}
 }
