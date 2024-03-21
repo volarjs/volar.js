@@ -1,14 +1,26 @@
 # Changelog
 
+## [2.1.3](https://github.com/volarjs/volar.js/compare/v2.1.2...v2.1.3) (2024-03-20)
+
+### Bug Fixes
+
+- **typescript:** fix emit signature to enable incremental work to function properly [#150](https://github.com/volarjs/volar.js/issues/150) - thanks @skywalker512
+- **language-server:** also consider deletions for getRootFiles [#152](https://github.com/volarjs/volar.js/issues/152) - thanks @Princesseuh
+
+### Other Changes
+
+- **language-service:** add name for `SemanticToken` tuple members
+- **vscode:** migrate from `StatusBarItem` to `LanguageStatusItem`
+
 ## [2.1.2](https://github.com/volarjs/volar.js/compare/v2.1.1...v2.1.2) (2024-03-07)
 
-### Fixes
+### Bug Fixes
 
 - **typescript:** reverted [f041c79](https://github.com/volarjs/volar.js/commit/f041c79df5e3ea95c8ba78d1616405dfa9c25135) as it caused severe performance regressions [vuejs/language-tools#4024](https://github.com/vuejs/language-tools/issues/4024)
 
 ## [2.1.1](https://github.com/volarjs/volar.js/compare/v2.1.0...v2.1.1) (2024-03-05)
 
-### Fixes
+### Bug Fixes
 
 - **test-utils:** allow unknown initialization options and expose `locale` option [#142](https://github.com/volarjs/volar.js/issues/142)
 - **typescript:** virtual file update condition should be based generated snapshot rather than source script version
