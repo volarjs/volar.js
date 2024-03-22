@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.5](https://github.com/volarjs/volar.js/compare/v2.1.4...v2.1.5) (2024-03-23)
+
+### Bug Fixes
+
+- **language-server:** `GetVirtualCodeRequest` incorrectly responses empty vritual code if no mappings
+- **typescript:** mark the parent directory as exists when created a file
+
 ## [2.1.4](https://github.com/volarjs/volar.js/compare/v2.1.3...v2.1.4) (2024-03-22)
 
 ### Features
