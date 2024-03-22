@@ -42,36 +42,31 @@ export function createSys(
 	};
 	const promises = new Set<Thenable<any>>();
 	const fileWatcher = env.onDidChangeWatchedFiles?.(({ changes }) => {
+		version++;
 		for (const change of changes) {
 			const fileName = env.typescript!.uriToFileName(change.uri);
 			const dirName = path.dirname(fileName);
 			const baseName = path.basename(fileName);
-			const dir = getDir(dirName);
-			if (dir.files.has(baseName) || dir.requestedRead) { // is requested file or directory
-				version++;
-				if (change.type === 1 satisfies typeof FileChangeType.Created || change.type === 2 satisfies typeof FileChangeType.Changed) {
-					dir.files.set(normalizeFileId(baseName), {
-						name: baseName,
-						stat: {
-							type: 1 satisfies FileType.File,
-							ctime: Date.now(),
-							mtime: Date.now(),
-							size: -1,
-						},
-						requestedStat: false,
-						requestedText: false,
-					});
-				}
-				else if (change.type === 3 satisfies typeof FileChangeType.Deleted) {
-					dir.files.set(normalizeFileId(baseName), {
-						name: baseName,
-						stat: undefined,
-						text: undefined,
-						requestedStat: true,
-						requestedText: true,
-					});
-				}
-			}
+			const fileExists = change.type === 1 satisfies typeof FileChangeType.Created
+				|| change.type === 2 satisfies typeof FileChangeType.Changed;
+			const dir = getDir(dirName, fileExists);
+			dir.files.set(normalizeFileId(baseName), fileExists ? {
+				name: baseName,
+				stat: {
+					type: 1 satisfies FileType.File,
+					ctime: Date.now(),
+					mtime: Date.now(),
+					size: -1,
+				},
+				requestedStat: false,
+				requestedText: false,
+			} : {
+				name: baseName,
+				stat: undefined,
+				text: undefined,
+				requestedStat: true,
+				requestedText: true,
+			});
 		}
 	});
 
@@ -408,7 +403,7 @@ export function createSys(
 		return updated;
 	}
 
-	function getDir(dirName: string) {
+	function getDir(dirName: string, markExists = false) {
 
 		const dirNames: string[] = [];
 
@@ -428,6 +423,10 @@ export function createSys(
 		for (let i = dirNames.length - 1; i >= 0; i--) {
 			const nextDirName = dirNames[i];
 			currentDir = getDirFromDir(currentDir, nextDirName);
+			if (markExists && !currentDir.exists) {
+				currentDir.exists = true;
+				version++;
+			}
 		}
 
 		return currentDir;
