@@ -1,4 +1,4 @@
-import type { CodeMapping, Stack, VirtualCode } from '@volar/language-core';
+import type { CodeMapping, VirtualCode } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver';
 import {
@@ -87,23 +87,19 @@ export function registerEditorFeatures(
 		}
 	});
 	connection.onRequest(GetVirtualCodeRequest.type, async params => {
-		let content: string = '';
-		let codegenStacks: Stack[] = [];
 		const languageService = (await projects.getProject(params.fileUri)).getLanguageService();
-		const mappings: Record<string, CodeMapping[]> = {};
 		const [virtualCode] = languageService.context.language.files.getVirtualCode(params.fileUri, params.virtualCodeId);
 		if (virtualCode) {
+			const mappings: Record<string, CodeMapping[]> = {};
 			for (const map of languageService.context.documents.getMaps(virtualCode)) {
-				content = map.embeddedDocument.getText();
-				codegenStacks = virtualCode.codegenStacks ?? [];
 				mappings[map.sourceDocument.uri] = map.map.mappings;
 			}
+			return {
+				content: virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength()),
+				codegenStacks: virtualCode.codegenStacks ?? [],
+				mappings,
+			};
 		}
-		return {
-			content,
-			mappings,
-			codegenStacks,
-		};
 	});
 	connection.onNotification(ReloadProjectNotification.type, () => {
 		projects.reloadProjects();
