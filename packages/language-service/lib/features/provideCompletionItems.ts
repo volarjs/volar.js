@@ -19,7 +19,7 @@ export function register(context: ServiceContext) {
 	let lastResult: {
 		uri: string;
 		results: {
-			virtualDocumentUri: string | undefined;
+			embeddedDocumentUri: string | undefined;
 			service: LanguageServicePluginInstance;
 			list: vscode.CompletionList | undefined | null;
 		}[];
@@ -53,9 +53,9 @@ export function register(context: ServiceContext) {
 
 				const serviceIndex = context.services.findIndex(service => service[1] === cacheData.service);
 
-				if (cacheData.virtualDocumentUri) {
+				if (cacheData.embeddedDocumentUri) {
 
-					const decoded = context.decodeEmbeddedDocumentUri(cacheData.virtualDocumentUri);
+					const decoded = context.decodeEmbeddedDocumentUri(cacheData.embeddedDocumentUri);
 					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
@@ -217,7 +217,7 @@ export function register(context: ServiceContext) {
 					}
 
 					lastResult?.results.push({
-						virtualDocumentUri: map ? document.uri : undefined,
+						embeddedDocumentUri: map ? document.uri : undefined,
 						service: service[1],
 						list: completionList,
 					});
