@@ -1,9 +1,9 @@
 import {
 	LanguagePlugin,
-	LanguageContext,
+	Language,
 	ServicePlugin,
 	createLanguageService as _createLanguageService,
-	createFileRegistry,
+	createLanguage,
 	resolveCommonLanguageId,
 	type LanguageService,
 	type ServiceEnvironment,
@@ -11,7 +11,7 @@ import {
 } from '@volar/language-service';
 import type * as monaco from 'monaco-types';
 import type * as ts from 'typescript';
-import { createLanguage, createSys } from '@volar/typescript';
+import { createTypeScriptLanguage, createSys } from '@volar/typescript';
 
 export * from '@volar/language-service';
 export * from './lib/ata.js';
@@ -30,7 +30,7 @@ export function createSimpleWorkerService<T = {}>({
 	extraApis?: T;
 }) {
 	const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
-	const files = createFileRegistry(
+	const language = createLanguage(
 		languagePlugins,
 		false,
 		uri => {
@@ -47,15 +47,15 @@ export function createSimpleWorkerService<T = {}>({
 					getChangeRange: () => undefined,
 				};
 				snapshots.set(model, [model.version, snapshot]);
-				files.set(uri, resolveCommonLanguageId(uri), snapshot);
+				language.scripts.set(uri, resolveCommonLanguageId(uri), snapshot);
 			}
 			else {
-				files.delete(uri);
+				language.scripts.delete(uri);
 			}
 		}
 	);
 
-	return createWorkerService({ files }, servicePlugins, env, extraApis);
+	return createWorkerService(language, servicePlugins, env, extraApis);
 }
 
 export function createTypeScriptWorkerService<T = {}>({
@@ -82,6 +82,14 @@ export function createTypeScriptWorkerService<T = {}>({
 	const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
 	const sys = createSys(ts, env, env.typescript!.uriToFileName(env.workspaceFolder));
 	const host: TypeScriptProjectHost = {
+		...sys,
+		configFileName: undefined,
+		syncSystem() {
+			return sys.sync();
+		},
+		getSystemVersion() {
+			return sys.version;
+		},
 		getCurrentDirectory() {
 			return env.typescript!.uriToFileName(env.workspaceFolder);
 		},
@@ -123,30 +131,26 @@ export function createTypeScriptWorkerService<T = {}>({
 			return compilerOptions;
 		},
 		getLanguageId: id => resolveCommonLanguageId(id),
+		fileNameToScriptId: env.typescript!.fileNameToUri,
+		scriptIdToFileName: env.typescript!.uriToFileName,
 	};
-	const languageContext = createLanguage(
+	const language = createTypeScriptLanguage(
 		ts,
-		sys,
 		languagePlugins,
-		undefined,
 		host,
-		{
-			fileNameToFileId: env.typescript!.fileNameToUri,
-			fileIdToFileName: env.typescript!.uriToFileName,
-		},
 	);
 
-	return createWorkerService(languageContext, servicePlugins, env, extraApis);
+	return createWorkerService(language, servicePlugins, env, extraApis);
 }
 
 function createWorkerService<T = {}>(
-	languageContext: LanguageContext,
+	language: Language,
 	servicePlugins: ServicePlugin[],
 	env: ServiceEnvironment,
 	extraApis: T = {} as any,
 ): LanguageService & T {
 
-	const languageService = _createLanguageService(languageContext, servicePlugins, env);
+	const languageService = _createLanguageService(language, servicePlugins, env);
 
 	class WorkerService { };
 

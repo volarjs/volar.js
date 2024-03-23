@@ -1,9 +1,9 @@
-import type { FileRegistry } from '@volar/language-core';
+import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { notEmpty } from './utils';
 import { transformDiagnostic } from './transform';
 
-export function decorateProgram(files: FileRegistry, program: ts.Program) {
+export function decorateProgram(language: Language, program: ts.Program) {
 
 	const emit = program.emit;
 
@@ -21,29 +21,29 @@ export function decorateProgram(files: FileRegistry, program: ts.Program) {
 		return {
 			...result,
 			diagnostics: result.diagnostics
-				.map(d => transformDiagnostic(files, d))
+				.map(d => transformDiagnostic(language, d))
 				.filter(notEmpty),
 		};
 	};
 	program.getSyntacticDiagnostics = (sourceFile, cancellationToken) => {
 		return getSyntacticDiagnostics(sourceFile, cancellationToken)
-			.map(d => transformDiagnostic(files, d))
+			.map(d => transformDiagnostic(language, d))
 			.filter(notEmpty);
 	};
 	program.getSemanticDiagnostics = (sourceFile, cancellationToken) => {
 		return getSemanticDiagnostics(sourceFile, cancellationToken)
-			.map(d => transformDiagnostic(files, d))
+			.map(d => transformDiagnostic(language, d))
 			.filter(notEmpty);
 	};
 	program.getGlobalDiagnostics = cancellationToken => {
 		return getGlobalDiagnostics(cancellationToken)
-			.map(d => transformDiagnostic(files, d))
+			.map(d => transformDiagnostic(language, d))
 			.filter(notEmpty);
 	};
 	// @ts-ignore
 	program.getBindAndCheckDiagnostics = (sourceFile, cancellationToken) => {
 		return (getBindAndCheckDiagnostics as typeof getSyntacticDiagnostics)(sourceFile, cancellationToken)
-			.map(d => transformDiagnostic(files, d))
+			.map(d => transformDiagnostic(language, d))
 			.filter(notEmpty);
 	};
 }

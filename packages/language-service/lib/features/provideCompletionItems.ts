@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { ServiceContext, ServicePluginInstance } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformCompletionList } from '../utils/transform';
-import { eachEmbeddedDocument } from '../utils/featureWorkers';
+import { forEachEmbeddedDocument } from '../utils/featureWorkers';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
 
@@ -11,7 +11,7 @@ export interface ServiceCompletionData {
 	uri: string;
 	original: Pick<vscode.CompletionItem, 'additionalTextEdits' | 'textEdit' | 'data'>;
 	serviceIndex: number;
-	virtualDocumentUri: string | undefined;
+	embeddedDocumentUri: string | undefined;
 }
 
 export function register(context: ServiceContext) {
@@ -32,8 +32,8 @@ export function register(context: ServiceContext) {
 		token = NoneCancellationToken,
 	) => {
 
-		const sourceFile = context.language.files.get(uri);
-		if (!sourceFile) {
+		const sourceScript = context.language.scripts.get(uri);
+		if (!sourceScript) {
 			return {
 				isIncomplete: false,
 				items: [],
@@ -55,7 +55,10 @@ export function register(context: ServiceContext) {
 
 				if (cacheData.virtualDocumentUri) {
 
-					const [virtualCode] = context.documents.getVirtualCodeByUri(cacheData.virtualDocumentUri);
+					const decoded = context.decodeEmbeddedDocumentUri(cacheData.virtualDocumentUri);
+					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
+
 					if (!virtualCode) {
 						continue;
 					}
@@ -83,7 +86,7 @@ export function register(context: ServiceContext) {
 										data: item.data,
 									},
 									serviceIndex,
-									virtualDocumentUri: map.embeddedDocument.uri,
+									embeddedDocumentUri: map.embeddedDocument.uri,
 								} satisfies ServiceCompletionData;
 							}
 
@@ -102,7 +105,7 @@ export function register(context: ServiceContext) {
 						continue;
 					}
 
-					const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+					const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 					cacheData.list = await cacheData.service.provideCompletionItems(document, position, completionContext, token);
 
 					if (!cacheData.list) {
@@ -118,7 +121,7 @@ export function register(context: ServiceContext) {
 								data: item.data,
 							},
 							serviceIndex,
-							virtualDocumentUri: undefined,
+							embeddedDocumentUri: undefined,
 						} satisfies ServiceCompletionData;
 					}
 				}
@@ -200,7 +203,7 @@ export function register(context: ServiceContext) {
 								data: item.data,
 							},
 							serviceIndex,
-							virtualDocumentUri: map ? document.uri : undefined,
+							embeddedDocumentUri: map ? document.uri : undefined,
 						} satisfies ServiceCompletionData;
 					}
 
@@ -223,9 +226,9 @@ export function register(context: ServiceContext) {
 				isFirstMapping = false;
 			};
 
-			if (sourceFile.generated) {
+			if (sourceScript.generated) {
 
-				for (const map of eachEmbeddedDocument(context, sourceFile.generated.code)) {
+				for (const map of forEachEmbeddedDocument(context, sourceScript.id, sourceScript.generated.root)) {
 
 					let _data: CodeInformation | undefined;
 
@@ -239,7 +242,7 @@ export function register(context: ServiceContext) {
 			}
 			else {
 
-				const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+				const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 
 				await worker(document, position);
 			}

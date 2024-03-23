@@ -10,7 +10,7 @@ export interface PluginCallHierarchyData {
 	uri: string;
 	original: Pick<vscode.CallHierarchyItem, 'data'>;
 	serviceIndex: number;
-	virtualDocumentUri: string | undefined;
+	embeddedDocumentUri: string | undefined;
 }
 
 export function register(context: ServiceContext) {
@@ -36,7 +36,7 @@ export function register(context: ServiceContext) {
 								data: item.data,
 							},
 							serviceIndex: context.services.indexOf(service),
-							virtualDocumentUri: map?.embeddedDocument.uri,
+							embeddedDocumentUri: map?.embeddedDocument.uri,
 						} satisfies PluginCallHierarchyData;
 					});
 					return items;
@@ -68,11 +68,11 @@ export function register(context: ServiceContext) {
 
 				Object.assign(item, data.original);
 
-				if (data.virtualDocumentUri) {
+				if (data.embeddedDocumentUri) {
 
-					const [virtualCode] = context.documents.getVirtualCodeByUri(data.virtualDocumentUri);
+					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(data.embeddedDocumentUri);
 
-					if (virtualCode) {
+					if (isEmbeddedContent) {
 
 						const _calls = await service[1].provideCallHierarchyIncomingCalls(item, token);
 
@@ -129,11 +129,11 @@ export function register(context: ServiceContext) {
 
 				Object.assign(item, data.original);
 
-				if (data.virtualDocumentUri) {
+				if (data.embeddedDocumentUri) {
 
-					const [virtualCode] = context.documents.getVirtualCodeByUri(data.virtualDocumentUri);
+					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(data.embeddedDocumentUri);
 
-					if (virtualCode) {
+					if (isEmbeddedContent) {
 
 						const _calls = await service[1].provideCallHierarchyOutgoingCalls(item, token);
 
@@ -178,8 +178,9 @@ export function register(context: ServiceContext) {
 
 	function transformCallHierarchyItem(tsItem: vscode.CallHierarchyItem, tsRanges: vscode.Range[]): [vscode.CallHierarchyItem, vscode.Range[]] | undefined {
 
-		const [virtualCode] = context.documents.getVirtualCodeByUri(tsItem.uri);
-
+		const decoded = context.decodeEmbeddedDocumentUri(tsItem.uri);
+		const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+		const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 		if (!virtualCode) {
 			return [tsItem, tsRanges];
 		}

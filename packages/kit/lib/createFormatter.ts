@@ -1,4 +1,4 @@
-import { FormattingOptions, LanguagePlugin, ServicePlugin, createFileRegistry, createLanguageService } from '@volar/language-service';
+import { FormattingOptions, LanguagePlugin, ServicePlugin, createLanguage, createLanguageService } from '@volar/language-service';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
@@ -12,9 +12,9 @@ export function createFormatter(
 	let settings = {};
 
 	const env = createServiceEnvironment(() => settings);
-	const files = createFileRegistry(languages, false, () => { });
+	const language = createLanguage(languages, false, () => { });
 	const service = createLanguageService(
-		{ files },
+		language,
 		services,
 		env,
 	);
@@ -33,7 +33,7 @@ export function createFormatter(
 	async function format(content: string, languageId: string, options: FormattingOptions): Promise<string> {
 
 		const snapshot = ts.ScriptSnapshot.fromString(content);
-		files.set(fakeUri, languageId, snapshot);
+		language.scripts.set(fakeUri, languageId, snapshot);
 
 		const document = service.context.documents.get(fakeUri, languageId, snapshot);
 		const edits = await service.format(fakeUri, options, undefined, undefined);

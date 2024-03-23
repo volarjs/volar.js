@@ -1,6 +1,6 @@
-import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type LanguageContext } from '@volar/language-core';
+import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type Language } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { createDocumentProvider } from './documents';
+import { LinkedCodeMapWithDocument, SourceMapWithDocuments } from './documents';
 import * as autoInsert from './features/provideAutoInsertionEdit';
 import * as callHierarchy from './features/provideCallHierarchyItems';
 import * as codeActions from './features/provideCodeActions';
@@ -35,15 +35,156 @@ import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
 import type { ServiceContext, ServiceEnvironment, ServicePlugin } from './types';
 
+import type { CodeInformation, LinkedCodeMap, SourceMap, VirtualCode } from '@volar/language-core';
+import type * as ts from 'typescript';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
-	languageContext: LanguageContext,
+	language: Language,
 	servicePlugins: ServicePlugin[],
 	env: ServiceEnvironment,
 ) {
+	const documentVersions = new Map<string, number>();
+	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments<CodeInformation>>();
+	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, LinkedCodeMapWithDocument>();
+	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
+	const embeddedContentScheme = 'volar-embedded-content';
+	const context: ServiceContext = {
+		language,
+		documents: {
+			get(uri: string, languageId: string, snapshot: ts.IScriptSnapshot) {
+				if (!snapshot2Doc.has(snapshot)) {
+					snapshot2Doc.set(snapshot, new Map());
+				}
+				const map = snapshot2Doc.get(snapshot)!;
+				if (!map.has(uri)) {
+					const version = documentVersions.get(uri) ?? 0;
+					documentVersions.set(uri, version + 1);
+					map.set(uri, TextDocument.create(
+						uri,
+						languageId,
+						version,
+						snapshot.getText(0, snapshot.getLength()),
+					));
+				}
+				return map.get(uri)!;
+			},
+			*getMaps(virtualCode: VirtualCode) {
+				for (const [uri, [snapshot, map]] of context.language.maps.forEach(virtualCode)) {
+					if (!map2DocMap.has(map)) {
+						const embeddedUri = context.encodeEmbeddedDocumentUri(uri, virtualCode.id);
+						map2DocMap.set(map, new SourceMapWithDocuments(
+							this.get(uri, context.language.scripts.get(uri)!.languageId, snapshot),
+							this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
+							map,
+						));
+					}
+					yield map2DocMap.get(map)!;
+				}
+			},
+			getLinkedCodeMap(virtualCode: VirtualCode, sourceScriptId: string) {
+				const map = context.language.linkedCodeMaps.get(virtualCode);
+				if (map) {
+					if (!mirrorMap2DocMirrorMap.has(map)) {
+						const embeddedUri = context.encodeEmbeddedDocumentUri(sourceScriptId, virtualCode.id);
+						mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
+							this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
+							map,
+						));
+					}
+					return mirrorMap2DocMirrorMap.get(map)!;
+				}
+			},
+		},
+		env,
+		inject: (key, ...args) => {
+			for (const service of context.services) {
+				if (context.disabledServicePlugins.has(service[1])) {
+					continue;
+				}
+				const provide = service[1].provide?.[key as any];
+				if (provide) {
+					return provide(...args as any);
+				}
+			}
+			throw `No service provide ${key as any}`;
+		},
+		services: [],
+		commands: {
+			rename: {
+				create(uri, position) {
+					return {
+						title: '',
+						command: 'editor.action.rename',
+						arguments: [
+							uri,
+							position,
+						],
+					};
+				},
+				is(command) {
+					return command.command === 'editor.action.rename';
+				},
+			},
+			showReferences: {
+				create(uri, position, locations) {
+					return {
+						title: locations.length === 1 ? '1 reference' : `${locations.length} references`,
+						command: 'editor.action.showReferences',
+						arguments: [
+							uri,
+							position,
+							locations,
+						],
+					};
+				},
+				is(command) {
+					return command.command === 'editor.action.showReferences';
+				},
+			},
+			setSelection: {
+				create(position: vscode.Position) {
+					return {
+						title: '',
+						command: 'setSelection',
+						arguments: [{
+							selection: {
+								selectionStartLineNumber: position.line + 1,
+								positionLineNumber: position.line + 1,
+								selectionStartColumn: position.character + 1,
+								positionColumn: position.character + 1,
+							},
+						}],
+					};
+				},
+				is(command) {
+					return command.command === 'setSelection';
+				},
+			},
+		},
+		disabledEmbeddedDocumentUris: new Set(),
+		disabledServicePlugins: new WeakSet(),
+		decodeEmbeddedDocumentUri(maybeEmbeddedContentUri: string) {
+			if (maybeEmbeddedContentUri.startsWith(`${embeddedContentScheme}://`)) {
+				const trimed = maybeEmbeddedContentUri.substring(`${embeddedContentScheme}://`.length);
+				const embeddedCodeId = trimed.substring(0, trimed.indexOf('/'));
+				const documentUri = trimed.substring(embeddedCodeId.length + 1);
+				return [
+					decodeURIComponent(documentUri),
+					decodeURIComponent(embeddedCodeId),
+				];
+			}
+		},
+		encodeEmbeddedDocumentUri(documentUri: string, embeddedContentId: string) {
+			return `${embeddedContentScheme}://${encodeURIComponent(embeddedContentId)}/${encodeURIComponent(documentUri)}`;
+		},
+	};
 
-	const context = createServiceContext();
+	for (const servicePlugin of servicePlugins) {
+		context.services.push([servicePlugin, servicePlugin.create(context)]);
+	}
 
 	return {
 
@@ -90,86 +231,4 @@ export function createLanguageService(
 		dispose: () => context.services.forEach(service => service[1].dispose?.()),
 		context,
 	};
-
-	function createServiceContext() {
-
-		const context: ServiceContext = {
-			language: languageContext,
-			documents: createDocumentProvider(languageContext.files),
-			env,
-			inject: (key, ...args) => {
-				for (const service of context.services) {
-					if (context.disabledServicePlugins.has(service[1])) {
-						continue;
-					}
-					const provide = service[1].provide?.[key as any];
-					if (provide) {
-						return provide(...args as any);
-					}
-				}
-				throw `No service provide ${key as any}`;
-			},
-			services: [],
-			commands: {
-				rename: {
-					create(uri, position) {
-						return {
-							title: '',
-							command: 'editor.action.rename',
-							arguments: [
-								uri,
-								position,
-							],
-						};
-					},
-					is(command) {
-						return command.command === 'editor.action.rename';
-					},
-				},
-				showReferences: {
-					create(uri, position, locations) {
-						return {
-							title: locations.length === 1 ? '1 reference' : `${locations.length} references`,
-							command: 'editor.action.showReferences',
-							arguments: [
-								uri,
-								position,
-								locations,
-							],
-						};
-					},
-					is(command) {
-						return command.command === 'editor.action.showReferences';
-					},
-				},
-				setSelection: {
-					create(position: vscode.Position) {
-						return {
-							title: '',
-							command: 'setSelection',
-							arguments: [{
-								selection: {
-									selectionStartLineNumber: position.line + 1,
-									positionLineNumber: position.line + 1,
-									selectionStartColumn: position.character + 1,
-									positionColumn: position.character + 1,
-								},
-							}],
-						};
-					},
-					is(command) {
-						return command.command === 'setSelection';
-					},
-				},
-			},
-			disabledVirtualFileUris: new Set(),
-			disabledServicePlugins: new WeakSet(),
-		};
-
-		for (const servicePlugin of servicePlugins) {
-			context.services.push([servicePlugin, servicePlugin.create(context)]);
-		}
-
-		return context;
-	}
 }

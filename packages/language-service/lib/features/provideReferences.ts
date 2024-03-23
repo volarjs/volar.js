@@ -24,11 +24,11 @@ export function register(context: ServiceContext) {
 				const recursiveChecker = dedupe.createLocationSet();
 				const result: vscode.Location[] = [];
 
-				await withMirrors(document, position);
+				await withLinkedCode(document, position);
 
 				return result;
 
-				async function withMirrors(document: TextDocument, position: vscode.Position) {
+				async function withLinkedCode(document: TextDocument, position: vscode.Position) {
 
 					if (!service[1].provideReferences) {
 						return;
@@ -48,20 +48,24 @@ export function register(context: ServiceContext) {
 
 						recursiveChecker.add({ uri: reference.uri, range: { start: reference.range.start, end: reference.range.start } });
 
-						const [virtualCode] = context.documents.getVirtualCodeByUri(reference.uri);
-						const mirrorMap = virtualCode ? context.documents.getLinkedCodeMap(virtualCode) : undefined;
+						const decoded = context.decodeEmbeddedDocumentUri(reference.uri);
+						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
+						const linkedCodeMap = virtualCode && sourceScript
+							? context.documents.getLinkedCodeMap(virtualCode, sourceScript.id)
+							: undefined;
 
-						if (mirrorMap) {
+						if (linkedCodeMap) {
 
-							for (const linkedPos of mirrorMap.getLinkedCodePositions(reference.range.start)) {
+							for (const linkedPos of linkedCodeMap.getLinkedCodePositions(reference.range.start)) {
 
-								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
+								if (recursiveChecker.has({ uri: linkedCodeMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
 									continue;
 								}
 
 								foundMirrorPosition = true;
 
-								await withMirrors(mirrorMap.document, linkedPos);
+								await withLinkedCode(linkedCodeMap.document, linkedPos);
 							}
 						}
 
@@ -77,7 +81,9 @@ export function register(context: ServiceContext) {
 
 				for (const reference of data) {
 
-					const [virtualCode] = context.documents.getVirtualCodeByUri(reference.uri);
+					const decoded = context.decodeEmbeddedDocumentUri(reference.uri);
+					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 					if (virtualCode) {
 						for (const map of context.documents.getMaps(virtualCode)) {

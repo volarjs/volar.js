@@ -16,12 +16,12 @@ export function register(context: ServiceContext) {
 		_reportProgress?: (tokens: vscode.SemanticTokens) => void, // TODO
 	): Promise<vscode.SemanticTokens | undefined> => {
 
-		const sourceFile = context.language.files.get(uri);
-		if (!sourceFile) {
+		const sourceScript = context.language.scripts.get(uri);
+		if (!sourceScript) {
 			return;
 		}
 
-		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+		const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 		if (!range) {
 			range = {
 				start: { line: 0, character: 0 },
