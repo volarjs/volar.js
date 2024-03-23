@@ -251,28 +251,28 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function createDocMap(file: VirtualCode, sourceFileUri: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
+	function createDocMap(virtualCode: VirtualCode, documentUri: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
 		const mapOfMap = new Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>();
-		updateVirtualCodeMapOfMap(file, mapOfMap, sourceFileUri2 => {
+		updateVirtualCodeMapOfMap(virtualCode, mapOfMap, sourceFileUri2 => {
 			if (!sourceFileUri2) {
-				return [sourceFileUri, _sourceSnapshot];
+				return [documentUri, _sourceSnapshot];
 			}
 		});
-		if (mapOfMap.has(sourceFileUri) && mapOfMap.get(sourceFileUri)![0] === _sourceSnapshot) {
-			const map = mapOfMap.get(sourceFileUri)!;
+		if (mapOfMap.has(documentUri) && mapOfMap.get(documentUri)![0] === _sourceSnapshot) {
+			const map = mapOfMap.get(documentUri)!;
 			const version = fakeVersion++;
 			return new SourceMapWithDocuments(
 				TextDocument.create(
-					sourceFileUri,
-					sourceLanguageId ?? resolveCommonLanguageId(sourceFileUri),
+					documentUri,
+					sourceLanguageId ?? resolveCommonLanguageId(documentUri),
 					version,
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),
 				TextDocument.create(
-					context.encodeEmbeddedDocumentUri(sourceFileUri, file.id),
-					file.languageId,
+					context.encodeEmbeddedDocumentUri(documentUri, virtualCode.id),
+					virtualCode.languageId,
 					version,
-					file.snapshot.getText(0, file.snapshot.getLength())
+					virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength())
 				),
 				map[1],
 			);
