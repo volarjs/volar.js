@@ -1,4 +1,4 @@
-import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, LanguagePlugin, NotificationHandler, ServicePlugin, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId, TypeScriptProjectHost } from '@volar/language-service';
+import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, LanguagePlugin, NotificationHandler, LanguageServicePlugin, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId, TypeScriptProjectHost } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -8,7 +8,7 @@ import { createTypeScriptLanguage } from '@volar/typescript';
 
 export function createTypeScriptChecker(
 	languages: LanguagePlugin[],
-	services: ServicePlugin[],
+	services: LanguageServicePlugin[],
 	tsconfig: string,
 ) {
 	const tsconfigPath = asPosix(tsconfig);
@@ -35,7 +35,7 @@ export function createTypeScriptChecker(
 
 export function createTypeScriptInferredChecker(
 	languages: LanguagePlugin[],
-	services: ServicePlugin[],
+	services: LanguageServicePlugin[],
 	getScriptFileNames: () => string[],
 	compilerOptions = defaultCompilerOptions
 ) {
@@ -53,7 +53,7 @@ export function createTypeScriptInferredChecker(
 
 function createTypeScriptCheckerWorker(
 	languages: LanguagePlugin[],
-	services: ServicePlugin[],
+	services: LanguageServicePlugin[],
 	getProjectHost: (env: ServiceEnvironment) => TypeScriptProjectHost
 ) {
 

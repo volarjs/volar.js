@@ -1,7 +1,7 @@
 import {
 	LanguagePlugin,
 	Language,
-	ServicePlugin,
+	LanguageServicePlugin,
 	createLanguageService as _createLanguageService,
 	createLanguage,
 	resolveCommonLanguageId,
@@ -26,7 +26,7 @@ export function createSimpleWorkerService<T = {}>({
 	env: ServiceEnvironment;
 	workerContext: monaco.worker.IWorkerContext<any>;
 	languagePlugins?: LanguagePlugin[];
-	servicePlugins?: ServicePlugin[];
+	servicePlugins?: LanguageServicePlugin[];
 	extraApis?: T;
 }) {
 	const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
@@ -72,7 +72,7 @@ export function createTypeScriptWorkerService<T = {}>({
 	env: ServiceEnvironment;
 	workerContext: monaco.worker.IWorkerContext<any>;
 	languagePlugins?: LanguagePlugin[];
-	servicePlugins?: ServicePlugin[];
+	servicePlugins?: LanguageServicePlugin[];
 	extraApis?: T;
 }) {
 
@@ -145,7 +145,7 @@ export function createTypeScriptWorkerService<T = {}>({
 
 function createWorkerService<T = {}>(
 	language: Language,
-	servicePlugins: ServicePlugin[],
+	servicePlugins: LanguageServicePlugin[],
 	env: ServiceEnvironment,
 	extraApis: T = {} as any,
 ): LanguageService & T {

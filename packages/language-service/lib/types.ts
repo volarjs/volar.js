@@ -63,7 +63,7 @@ export interface ServiceContext {
 		getMaps(virtualCode: VirtualCode): Generator<SourceMapWithDocuments>;
 		getLinkedCodeMap(virtualCode: VirtualCode, sourceScriptId: string): LinkedCodeMapWithDocument | undefined;
 	};
-	services: [ServicePlugin, ServicePluginInstance][];
+	services: [LanguageServicePlugin, ServicePluginInstance][];
 	disabledEmbeddedDocumentUris: Set<string>;
 	disabledServicePlugins: WeakSet<ServicePluginInstance>;
 	decodeEmbeddedDocumentUri(maybeEmbeddedUri: string): [
@@ -83,7 +83,7 @@ export type SemanticToken = [
 	tokenModifiers: number,
 ];
 
-export interface ServicePlugin<P = any> {
+export interface LanguageServicePlugin<P = any> {
 	name?: string;
 	triggerCharacters?: string[];
 	signatureHelpTriggerCharacters?: string[];

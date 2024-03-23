@@ -33,7 +33,7 @@ import * as codeLensResolve from './features/resolveCodeLens';
 import * as completionResolve from './features/resolveCompletionItem';
 import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
-import type { ServiceContext, ServiceEnvironment, ServicePlugin } from './types';
+import type { ServiceContext, ServiceEnvironment, LanguageServicePlugin } from './types';
 
 import type { CodeInformation, LinkedCodeMap, SourceMap, VirtualCode } from '@volar/language-core';
 import type * as ts from 'typescript';
@@ -43,7 +43,7 @@ export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
 	language: Language,
-	servicePlugins: ServicePlugin[],
+	servicePlugins: LanguageServicePlugin[],
 	env: ServiceEnvironment,
 ) {
 	const documentVersions = new Map<string, number>();

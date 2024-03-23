@@ -1,11 +1,11 @@
-import { LanguageService, ServiceEnvironment, ServicePlugin, createLanguage, createLanguageService } from '@volar/language-service';
+import { LanguageService, ServiceEnvironment, LanguageServicePlugin, createLanguage, createLanguageService } from '@volar/language-service';
 import type { ServerContext, ServerOptions } from '../server';
 import type { ServerProject } from '../types';
 
 export async function createSimpleServerProject(
 	context: ServerContext,
 	serviceEnv: ServiceEnvironment,
-	servicePlugins: ServicePlugin[],
+	servicePlugins: LanguageServicePlugin[],
 	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
 ): Promise<ServerProject> {
 

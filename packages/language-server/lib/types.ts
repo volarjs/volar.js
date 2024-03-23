@@ -1,4 +1,4 @@
-import type { FileSystem, LanguageService, ServicePlugin, TypeScriptProjectHost } from '@volar/language-service';
+import type { FileSystem, LanguageService, LanguageServicePlugin, TypeScriptProjectHost } from '@volar/language-service';
 import type * as vscode from 'vscode-languageserver';
 import type { ServerContext, ServerOptions } from './server';
 import type { createSys } from '@volar/typescript';
@@ -49,7 +49,7 @@ export interface ServerProjectProvider {
 export interface ServerProjectProviderFactory {
 	(
 		context: ServerContext,
-		servicePlugins: ServicePlugin[],
+		servicePlugins: LanguageServicePlugin[],
 		getLanguagePlugins: ServerOptions['getLanguagePlugins'],
 	): ServerProjectProvider;
 }

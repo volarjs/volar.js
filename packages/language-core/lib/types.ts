@@ -86,9 +86,9 @@ export interface ExtraServiceScript extends ServiceScript {
 }
 
 export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
-	createVirtualCode(fileId: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
-	updateVirtualCode(fileId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot): T;
-	disposeVirtualCode?(fileId: string, virtualCode: T): void;
+	createVirtualCode(scriptId: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
+	updateVirtualCode(scriptId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot): T;
+	disposeVirtualCode?(scriptId: string, virtualCode: T): void;
 	typescript?: {
 		/**
 		 * LSP + TS Plugin
@@ -120,7 +120,7 @@ export interface TypeScriptProjectHost extends ts.System, Pick<
 	| 'getScriptSnapshot'
 > {
 	configFileName: string | undefined;
-	getLanguageId(fileId: string): string;
+	getLanguageId(scriptId: string): string;
 	getSystemVersion?(): number;
 	syncSystem?(): Promise<number>;
 	scriptIdToFileName(scriptId: string): string;

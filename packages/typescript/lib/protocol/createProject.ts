@@ -16,8 +16,8 @@ export function createTypeScriptLanguage(
 	const language = createLanguage(
 		languagePlugins,
 		projectHost.useCaseSensitiveFileNames,
-		fileId => {
-			const fileName = projectHost.scriptIdToFileName(fileId);
+		scriptId => {
+			const fileName = projectHost.scriptIdToFileName(scriptId);
 
 			// opened files
 			let snapshot = projectHost.getScriptSnapshot(fileName);
@@ -39,10 +39,10 @@ export function createTypeScriptLanguage(
 			}
 
 			if (snapshot) {
-				language.scripts.set(fileId, projectHost.getLanguageId(fileId), snapshot);
+				language.scripts.set(scriptId, projectHost.getLanguageId(scriptId), snapshot);
 			}
 			else {
-				language.scripts.delete(fileId);
+				language.scripts.delete(scriptId);
 			}
 		},
 	);
