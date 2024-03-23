@@ -63,9 +63,9 @@ export interface ServiceContext {
 		getMaps(virtualCode: VirtualCode): Generator<SourceMapWithDocuments>;
 		getLinkedCodeMap(virtualCode: VirtualCode, sourceScriptId: string): LinkedCodeMapWithDocument | undefined;
 	};
-	services: [LanguageServicePlugin, ServicePluginInstance][];
+	services: [LanguageServicePlugin, LanguageServicePluginInstance][];
 	disabledEmbeddedDocumentUris: Set<string>;
-	disabledServicePlugins: WeakSet<ServicePluginInstance>;
+	disabledServicePlugins: WeakSet<LanguageServicePluginInstance>;
 	decodeEmbeddedDocumentUri(maybeEmbeddedUri: string): [
 		documentUri: string,
 		embeddedCodeId: string,
@@ -89,7 +89,7 @@ export interface LanguageServicePlugin<P = any> {
 	signatureHelpTriggerCharacters?: string[];
 	signatureHelpRetriggerCharacters?: string[];
 	autoFormatTriggerCharacters?: string[];
-	create(context: ServiceContext): ServicePluginInstance<P>;
+	create(context: ServiceContext): LanguageServicePluginInstance<P>;
 }
 
 export interface EmbeddedCodeFormattingOptions {
@@ -97,7 +97,7 @@ export interface EmbeddedCodeFormattingOptions {
 	initialIndentLevel: number;
 }
 
-export interface ServicePluginInstance<P = any> {
+export interface LanguageServicePluginInstance<P = any> {
 	provide?: P;
 	isAdditionalCompletion?: boolean; // volar specific
 	provideHover?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.Hover>;
