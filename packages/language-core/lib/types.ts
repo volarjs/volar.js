@@ -1,8 +1,29 @@
-import type { Mapping, Stack } from '@volar/source-map';
+import type { Mapping, SourceMap, Stack } from '@volar/source-map';
 import type * as ts from 'typescript';
-import type { FileRegistry } from './fileRegistry';
+import type { LinkedCodeMap } from './linkedCodeMap';
 
-export interface SourceFile {
+export interface Language {
+	plugins: LanguagePlugin[];
+	scripts: {
+		get(id: string): SourceScript | undefined;
+		set(id: string, languageId: string, snapshot: ts.IScriptSnapshot, plugins?: LanguagePlugin[]): SourceScript;
+		delete(id: string): void;
+	};
+	maps: {
+		get(virtualCode: VirtualCode, scriptId?: string): SourceMap<CodeInformation> | undefined;
+		forEach(virtualCode: VirtualCode): Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>;
+	};
+	linkedCodeMaps: {
+		get(virtualCode: VirtualCode): LinkedCodeMap | undefined;
+	};
+	typescript?: {
+		projectHost: TypeScriptProjectHost;
+		languageServiceHost: ts.LanguageServiceHost;
+		getExtraServiceScript(fileName: string): ExtraServiceScript | undefined;
+	};
+}
+
+export interface SourceScript {
 	/**
 	 * uri or fileName
 	 */
@@ -10,8 +31,9 @@ export interface SourceFile {
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 	generated?: {
-		code: VirtualCode;
+		root: VirtualCode;
 		languagePlugin: LanguagePlugin;
+		embeddedCodes: Map<string, VirtualCode>;
 	};
 }
 
@@ -64,9 +86,9 @@ export interface ExtraServiceScript extends ServiceScript {
 }
 
 export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
-	createVirtualCode(fileId: string, languageId: string, snapshot: ts.IScriptSnapshot, files?: FileRegistry): T | undefined;
-	updateVirtualCode(fileId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot, files?: FileRegistry): T;
-	disposeVirtualCode?(fileId: string, virtualCode: T, files?: FileRegistry): void;
+	createVirtualCode(scriptId: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
+	updateVirtualCode(scriptId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot): T;
+	disposeVirtualCode?(scriptId: string, virtualCode: T): void;
 	typescript?: {
 		/**
 		 * LSP + TS Plugin
@@ -75,11 +97,11 @@ export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
 		/**
 		 * LSP + TS Plugin
 		 */
-		getScript(rootVirtualCode: T): ServiceScript | undefined;
+		getServiceScript(rootVirtualCode: T): ServiceScript | undefined;
 		/**
 		 * LSP only
 		 */
-		getExtraScripts?(fileName: string, rootVirtualCode: T): ExtraServiceScript[];
+		getExtraServiceScripts?(fileName: string, rootVirtualCode: T): ExtraServiceScript[];
 		/**
 		 * LSP only
 		 */
@@ -87,18 +109,7 @@ export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
 	};
 }
 
-export interface LanguageContext {
-	files: FileRegistry;
-	typescript?: {
-		configFileName: string | undefined;
-		sys: ts.System & { sync?(): Promise<number>; };
-		projectHost: TypeScriptProjectHost;
-		languageServiceHost: ts.LanguageServiceHost;
-		getExtraScript(fileName: string): ExtraServiceScript | undefined;
-	};
-}
-
-export interface TypeScriptProjectHost extends Pick<
+export interface TypeScriptProjectHost extends ts.System, Pick<
 	ts.LanguageServiceHost,
 	'getLocalizedDiagnosticMessages'
 	| 'getCompilationSettings'
@@ -108,5 +119,10 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getProjectVersion'
 	| 'getScriptSnapshot'
 > {
-	getLanguageId(fileId: string): string;
+	configFileName: string | undefined;
+	getLanguageId(scriptId: string): string;
+	getSystemVersion?(): number;
+	syncSystem?(): Promise<number>;
+	scriptIdToFileName(scriptId: string): string;
+	fileNameToScriptId(fileName: string): string;
 }

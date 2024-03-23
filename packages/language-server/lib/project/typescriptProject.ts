@@ -1,5 +1,5 @@
-import { LanguagePlugin, LanguageService, ServiceEnvironment, ServicePlugin, TypeScriptProjectHost, createLanguageService, resolveCommonLanguageId } from '@volar/language-service';
-import { createLanguage, createSys } from '@volar/typescript';
+import { LanguagePlugin, LanguageService, ServiceEnvironment, LanguageServicePlugin, TypeScriptProjectHost, createLanguageService, resolveCommonLanguageId } from '@volar/language-service';
+import { createTypeScriptLanguage, createSys } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
@@ -20,7 +20,7 @@ export async function createTypeScriptServerProject(
 	tsconfig: string | ts.CompilerOptions,
 	context: ServerContext,
 	serviceEnv: ServiceEnvironment,
-	servicePlugins: ServicePlugin[],
+	servicePlugins: LanguageServicePlugin[],
 	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
 ): Promise<TypeScriptServerProject> {
 
@@ -30,20 +30,42 @@ export async function createTypeScriptServerProject(
 
 	const sys = createSys(ts, serviceEnv, uriToFileName(serviceEnv.workspaceFolder));
 	const host: TypeScriptProjectHost = {
-		getCurrentDirectory: () => uriToFileName(serviceEnv.workspaceFolder),
-		getProjectVersion: () => projectVersion.toString(),
-		getScriptFileNames: () => rootFiles,
-		getScriptSnapshot: fileName => {
+		...sys,
+		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
+		getSystemVersion() {
+			return sys.version;
+		},
+		syncSystem() {
+			return sys.sync();
+		},
+		getCurrentDirectory() {
+			return uriToFileName(serviceEnv.workspaceFolder);
+		},
+		getProjectVersion() {
+			return projectVersion.toString();
+		},
+		getScriptFileNames() {
+			return rootFiles;
+		},
+		getScriptSnapshot(fileName) {
 			askedFiles.pathSet(fileName, true);
 			const doc = context.documents.get(fileNameToUri(fileName));
 			if (doc) {
 				return doc.getSnapshot();
 			}
 		},
-		getCompilationSettings: () => parsedCommandLine.options,
+		getCompilationSettings() {
+			return parsedCommandLine.options;
+		},
 		getLocalizedDiagnosticMessages: tsLocalized ? () => tsLocalized : undefined,
-		getProjectReferences: () => parsedCommandLine.projectReferences,
-		getLanguageId: uri => context.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri),
+		getProjectReferences() {
+			return parsedCommandLine.projectReferences;
+		},
+		getLanguageId(uri) {
+			return context.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri);
+		},
+		fileNameToScriptId: serviceEnv.typescript!.fileNameToUri,
+		scriptIdToFileName: serviceEnv.typescript!.uriToFileName,
 	};
 	const languagePlugins = await getLanguagePlugins(serviceEnv, {
 		typescript: {
@@ -88,16 +110,10 @@ export async function createTypeScriptServerProject(
 	}
 	function getLanguageService() {
 		if (!languageService) {
-			const language = createLanguage(
+			const language = createTypeScriptLanguage(
 				ts,
-				sys,
 				languagePlugins,
-				typeof tsconfig === 'string' ? tsconfig : undefined,
 				host,
-				{
-					fileNameToFileId: serviceEnv.typescript!.fileNameToUri,
-					fileIdToFileName: serviceEnv.typescript!.uriToFileName,
-				},
 			);
 			languageService = createLanguageService(
 				language,

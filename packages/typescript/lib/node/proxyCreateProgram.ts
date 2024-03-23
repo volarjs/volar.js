@@ -1,6 +1,6 @@
 import type * as ts from 'typescript';
 import { decorateProgram } from './decorateProgram';
-import { LanguagePlugin, createFileRegistry, resolveCommonLanguageId } from '@volar/language-core';
+import { LanguagePlugin, createLanguage, resolveCommonLanguageId } from '@volar/language-core';
 
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
@@ -15,7 +15,7 @@ export function proxyCreateProgram(
 			assert(!!options.host, '!!options.host');
 
 			const sourceFileToSnapshotMap = new WeakMap<ts.SourceFile, ts.IScriptSnapshot>();
-			const files = createFileRegistry(
+			const language = createLanguage(
 				getLanguagePlugins(ts, options),
 				ts.sys.useCaseSensitiveFileNames,
 				fileName => {
@@ -40,10 +40,10 @@ export function proxyCreateProgram(
 						}
 					}
 					if (snapshot) {
-						files.set(fileName, resolveCommonLanguageId(fileName), snapshot);
+						language.scripts.set(fileName, resolveCommonLanguageId(fileName), snapshot);
 					}
 					else {
-						files.delete(fileName);
+						language.scripts.delete(fileName);
 					}
 				}
 			);
@@ -79,16 +79,16 @@ export function proxyCreateProgram(
 				if (originalSourceFile && extensions.some(ext => fileName.endsWith(ext))) {
 					let sourceFile2 = parsedSourceFiles.get(originalSourceFile);
 					if (!sourceFile2) {
-						const sourceFile = files.get(fileName);
-						assert(!!sourceFile, '!!sourceFile');
+						const sourceScript = language.scripts.get(fileName);
+						assert(!!sourceScript, '!!sourceScript');
 						let patchedText = originalSourceFile.text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 						let scriptKind = ts.ScriptKind.TS;
-						if (sourceFile.generated?.languagePlugin.typescript) {
-							const { getScript, getExtraScripts } = sourceFile.generated.languagePlugin.typescript;
-							const script = getScript(sourceFile.generated.code);
-							if (script) {
-								scriptKind = script.scriptKind;
-								patchedText += script.code.snapshot.getText(0, script.code.snapshot.getLength());
+						if (sourceScript.generated?.languagePlugin.typescript) {
+							const { getServiceScript: getScript, getExtraServiceScripts: getExtraScripts } = sourceScript.generated.languagePlugin.typescript;
+							const serviceScript = getScript(sourceScript.generated.root);
+							if (serviceScript) {
+								scriptKind = serviceScript.scriptKind;
+								patchedText += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
 							}
 							if (getExtraScripts) {
 								console.warn('getExtraScripts() is not available in this use case.');
@@ -134,9 +134,10 @@ export function proxyCreateProgram(
 
 			const program = Reflect.apply(target, thisArg, [options]) as ts.Program;
 
-			decorateProgram(files, program);
+			decorateProgram(language, program);
 
-			(program as any).__volar__ = { files };
+			// TODO: #128
+			(program as any).__volar__ = { files: language };
 
 			return program;
 

@@ -1,4 +1,4 @@
-import { FileSystem, LanguagePlugin, ServiceEnvironment, ServicePlugin, standardSemanticTokensLegend } from '@volar/language-service';
+import { FileSystem, LanguagePlugin, ServiceEnvironment, LanguageServicePlugin, standardSemanticTokensLegend } from '@volar/language-service';
 import { SnapshotDocument } from '@volar/snapshot-document';
 import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
@@ -24,7 +24,7 @@ export interface ServerContext {
 
 export interface ServerOptions {
 	watchFileExtensions?: string[];
-	getServicePlugins(): ServicePlugin[] | Promise<ServicePlugin[]>;
+	getServicePlugins(): LanguageServicePlugin[] | Promise<LanguageServicePlugin[]>;
 	getLanguagePlugins(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): LanguagePlugin[] | Promise<LanguagePlugin[]>;
 }
 

@@ -19,8 +19,8 @@ export function register(context: ServiceContext) {
 
 	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = NoneCancellationToken) => {
 
-		const sourceFile = context.language.files.get(uri);
-		if (!sourceFile) {
+		const sourceScript = context.language.scripts.get(uri);
+		if (!sourceScript) {
 			return;
 		}
 

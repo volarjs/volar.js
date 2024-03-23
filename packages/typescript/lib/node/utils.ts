@@ -1,18 +1,17 @@
-import type { FileRegistry } from '@volar/language-core';
+import type { Language } from '@volar/language-core';
 
 export function notEmpty<T>(value: T | null | undefined): value is T {
 	return value !== null && value !== undefined;
 }
 
-export function getVirtualFileAndMap(files: FileRegistry, fileName: string) {
-	const sourceFile = files.get(fileName);
-	if (sourceFile?.generated) {
-		const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
-		if (script) {
-			for (const map of files.getMaps(script.code)) {
-				if (map[1][0] === sourceFile.snapshot) {
-					return [script, sourceFile, map[1][1]] as const;
-				}
+export function getServiceScript(language: Language, fileName: string) {
+	const sourceScript = language.scripts.get(fileName);
+	if (sourceScript?.generated) {
+		const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+		if (serviceScript) {
+			const map = language.maps.get(serviceScript.code, sourceScript.id);
+			if (map) {
+				return [serviceScript, sourceScript, map] as const;
 			}
 		}
 	}

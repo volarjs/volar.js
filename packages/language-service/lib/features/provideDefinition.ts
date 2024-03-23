@@ -30,11 +30,11 @@ export function register(
 				const recursiveChecker = dedupe.createLocationSet();
 				const result: vscode.LocationLink[] = [];
 
-				await withMirrors(document, position, undefined);
+				await withLinkedCode(document, position, undefined);
 
 				return result;
 
-				async function withMirrors(document: TextDocument, position: vscode.Position, originDefinition: vscode.LocationLink | undefined) {
+				async function withLinkedCode(document: TextDocument, position: vscode.Position, originDefinition: vscode.LocationLink | undefined) {
 
 					const api = service[1][apiName];
 					if (!api) {
@@ -55,20 +55,24 @@ export function register(
 
 						recursiveChecker.add({ uri: definition.targetUri, range: { start: definition.targetRange.start, end: definition.targetRange.start } });
 
-						const [virtualCode] = context.documents.getVirtualCodeByUri(definition.targetUri);
-						const mirrorMap = virtualCode ? context.documents.getLinkedCodeMap(virtualCode) : undefined;
+						const decoded = context.decodeEmbeddedDocumentUri(definition.targetUri);
+						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
+						const linkedCodeMap = virtualCode && sourceScript
+							? context.documents.getLinkedCodeMap(virtualCode, sourceScript.id)
+							: undefined;
 
-						if (mirrorMap) {
+						if (linkedCodeMap) {
 
-							for (const linkedPos of mirrorMap.getLinkedCodePositions(definition.targetSelectionRange.start)) {
+							for (const linkedPos of linkedCodeMap.getLinkedCodePositions(definition.targetSelectionRange.start)) {
 
-								if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
+								if (recursiveChecker.has({ uri: linkedCodeMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
 									continue;
 								}
 
 								foundMirrorPosition = true;
 
-								await withMirrors(mirrorMap.document, linkedPos, originDefinition ?? definition);
+								await withLinkedCode(linkedCodeMap.document, linkedPos, originDefinition ?? definition);
 							}
 						}
 
@@ -101,7 +105,9 @@ export function register(
 
 				let foundTargetSelectionRange = false;
 
-				const [targetVirtualFile] = context.documents.getVirtualCodeByUri(link.targetUri);
+				const decoded = context.decodeEmbeddedDocumentUri(link.targetUri);
+				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+				const targetVirtualFile = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 				if (targetVirtualFile) {
 

@@ -1,17 +1,16 @@
-import { resolveCommonLanguageId, type FileRegistry } from '@volar/language-core';
+import { resolveCommonLanguageId, type Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
 
 export function decorateLanguageServiceHost(
-	virtualFiles: FileRegistry,
+	language: Language,
 	languageServiceHost: ts.LanguageServiceHost,
 	ts: typeof import('typescript'),
 ) {
 
 	let extraProjectVersion = 0;
 
-	const { languagePlugins } = virtualFiles;
-	const exts = languagePlugins
+	const exts = language.plugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 		.flat();
 	const scripts = new Map<string, {
@@ -42,9 +41,9 @@ export function decorateLanguageServiceHost(
 		};
 	}
 
-	if (languagePlugins.some(language => language.typescript?.extraFileExtensions.length)) {
+	if (language.plugins.some(language => language.typescript?.extraFileExtensions.length)) {
 
-		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, languagePlugins, fileName => virtualFiles.get(fileName));
+		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(fileName));
 
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
@@ -123,25 +122,25 @@ export function decorateLanguageServiceHost(
 
 			if (snapshot) {
 				extraProjectVersion++;
-				const sourceFile = virtualFiles.set(fileName, resolveCommonLanguageId(fileName), snapshot);
-				if (sourceFile.generated) {
+				const sourceScript = language.scripts.set(fileName, resolveCommonLanguageId(fileName), snapshot);
+				if (sourceScript.generated) {
 					const text = snapshot.getText(0, snapshot.getLength());
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					const script = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
-					if (script) {
-						extension = script.extension;
-						scriptKind = script.scriptKind;
-						patchedText += script.code.snapshot.getText(0, script.code.snapshot.getLength());
+					const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+					if (serviceScript) {
+						extension = serviceScript.extension;
+						scriptKind = serviceScript.scriptKind;
+						patchedText += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
 					}
 					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
-					if (sourceFile.generated.languagePlugin.typescript?.getExtraScripts) {
+					if (sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts) {
 						console.warn('getExtraScripts() is not available in this use case.');
 					}
 				}
 			}
-			else if (virtualFiles.get(fileName)) {
+			else if (language.scripts.get(fileName)) {
 				extraProjectVersion++;
-				virtualFiles.delete(fileName);
+				language.scripts.delete(fileName);
 			}
 
 			scripts.set(fileName, {

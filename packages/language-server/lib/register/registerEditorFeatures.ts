@@ -56,39 +56,40 @@ export function registerEditorFeatures(
 	});
 	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const languageService = (await projects.getProject(params.uri)).getLanguageService();
-		const configFileName = languageService.context.language.typescript?.configFileName;
+		const configFileName = languageService.context.language.typescript?.projectHost.configFileName;
 		if (configFileName) {
 			return { uri: fileNameToUri(configFileName) };
 		}
 	});
 	connection.onRequest(GetVirtualFileRequest.type, async document => {
 		const languageService = (await projects.getProject(document.uri)).getLanguageService();
-		const sourceFile = languageService.context.language.files.get(document.uri);
-		if (sourceFile?.generated) {
-			return prune(sourceFile.generated.code);
+		const sourceScript = languageService.context.language.scripts.get(document.uri);
+		if (sourceScript?.generated) {
+			return prune(sourceScript.generated.root);
 		}
 
-		function prune(code: VirtualCode): GetVirtualFileRequest.VirtualCodeInfo {
-			const uri = languageService.context.documents.getVirtualCodeUri(sourceFile!.id, code.id);
+		function prune(virtualCode: VirtualCode): GetVirtualFileRequest.VirtualCodeInfo {
+			const uri = languageService.context.encodeEmbeddedDocumentUri(sourceScript!.id, virtualCode.id);
 			let version = scriptVersions.get(uri) ?? 0;
-			if (!scriptVersionSnapshots.has(code.snapshot)) {
+			if (!scriptVersionSnapshots.has(virtualCode.snapshot)) {
 				version++;
 				scriptVersions.set(uri, version);
-				scriptVersionSnapshots.add(code.snapshot);
+				scriptVersionSnapshots.add(virtualCode.snapshot);
 			}
 			return {
-				fileUri: sourceFile!.id,
-				virtualCodeId: code.id,
-				languageId: code.languageId,
-				embeddedCodes: code.embeddedCodes?.map(prune) || [],
+				fileUri: sourceScript!.id,
+				virtualCodeId: virtualCode.id,
+				languageId: virtualCode.languageId,
+				embeddedCodes: virtualCode.embeddedCodes?.map(prune) || [],
 				version,
-				disabled: languageService.context.disabledVirtualFileUris.has(uri),
+				disabled: languageService.context.disabledEmbeddedDocumentUris.has(uri),
 			};
 		}
 	});
 	connection.onRequest(GetVirtualCodeRequest.type, async params => {
 		const languageService = (await projects.getProject(params.fileUri)).getLanguageService();
-		const [virtualCode] = languageService.context.language.files.getVirtualCode(params.fileUri, params.virtualCodeId);
+		const sourceScript = languageService.context.language.scripts.get(params.fileUri);
+		const virtualCode = sourceScript?.generated?.embeddedCodes.get(params.virtualCodeId);
 		if (virtualCode) {
 			const mappings: Record<string, CodeMapping[]> = {};
 			for (const map of languageService.context.documents.getMaps(virtualCode)) {
@@ -126,16 +127,16 @@ export function registerEditorFeatures(
 				else {
 					const uri = languageService.context.env.typescript!.fileNameToUri(fileName);
 					if (uri.startsWith(rootUri)) {
-						const sourceFile = languageService.context.language.files.get(uri);
-						if (sourceFile?.generated) {
-							const mainScript = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
-							if (mainScript) {
-								const { snapshot } = mainScript.code;
-								fs.writeFile(fileName + mainScript.extension, snapshot.getText(0, snapshot.getLength()), () => { });
+						const sourceScript = languageService.context.language.scripts.get(uri);
+						if (sourceScript?.generated) {
+							const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+							if (serviceScript) {
+								const { snapshot } = serviceScript.code;
+								fs.writeFile(fileName + serviceScript.extension, snapshot.getText(0, snapshot.getLength()), () => { });
 							}
-							if (sourceFile.generated.languagePlugin.typescript?.getExtraScripts) {
-								for (const extraScript of sourceFile.generated.languagePlugin.typescript.getExtraScripts(uri, sourceFile.generated.code)) {
-									const { snapshot } = extraScript.code;
+							if (sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts) {
+								for (const extraServiceScript of sourceScript.generated.languagePlugin.typescript.getExtraServiceScripts(uri, sourceScript.generated.root)) {
+									const { snapshot } = extraServiceScript.code;
 									fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
 								}
 							}
@@ -157,7 +158,8 @@ export function registerEditorFeatures(
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
 			if (program && languageService.context.language.typescript) {
-				const { configFileName, languageServiceHost } = languageService.context.language.typescript;
+				const { languageServiceHost } = languageService.context.language.typescript;
+				const { configFileName } = languageService.context.language.typescript.projectHost;
 				const projectName = configFileName ?? (languageServiceHost.getCurrentDirectory() + '(inferred)');
 				const sourceFiles = program.getSourceFiles() ?? [];
 				for (const sourceFile of sourceFiles) {
@@ -212,12 +214,12 @@ export function registerEditorFeatures(
 		const project = await projects.getProject(params.fileUri);
 		const context = project.getLanguageServiceDontCreate()?.context;
 		if (context) {
-			const virtualFileUri = project.getLanguageService().context.documents.getVirtualCodeUri(params.fileUri, params.virtualCodeId);
+			const virtualFileUri = project.getLanguageService().context.encodeEmbeddedDocumentUri(params.fileUri, params.virtualCodeId);
 			if (params.disabled) {
-				context.disabledVirtualFileUris.add(virtualFileUri);
+				context.disabledEmbeddedDocumentUris.add(virtualFileUri);
 			}
 			else {
-				context.disabledVirtualFileUris.delete(virtualFileUri);
+				context.disabledEmbeddedDocumentUris.delete(virtualFileUri);
 			}
 		}
 	});

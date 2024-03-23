@@ -410,13 +410,13 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	}
 }
 
-export function* printSnapshots(sourceFile: _.SourceFile) {
-	if (sourceFile.generated) {
+export function* printSnapshots(sourceScript: _.SourceScript) {
+	if (sourceScript.generated) {
 		let lastId = 0;
-		for (const file of forEachEmbeddedCode(sourceFile.generated.code)) {
+		for (const file of forEachEmbeddedCode(sourceScript.generated.root)) {
 			const id = lastId++;
 			yield `#${id}`;
-			for (const line of printSnapshot(sourceFile, file)) {
+			for (const line of printSnapshot(sourceScript, file)) {
 				yield '  ' + line;
 			}
 		}
@@ -424,13 +424,13 @@ export function* printSnapshots(sourceFile: _.SourceFile) {
 }
 
 export function* printSnapshot(
-	sourceFile: {
-		snapshot: _.SourceFile['snapshot'];
+	sourceScript: {
+		snapshot: _.SourceScript['snapshot'];
 	},
 	file: _.VirtualCode,
 ) {
 
-	const sourceCode = sourceFile.snapshot.getText(0, sourceFile.snapshot.getLength());
+	const sourceCode = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength());
 	const sourceFileDocument = TextDocument.create('', '', 0, sourceCode);
 	const virtualCode = file.snapshot.getText(0, file.snapshot.getLength());
 	const virtualCodeLines = virtualCode.split('\n');

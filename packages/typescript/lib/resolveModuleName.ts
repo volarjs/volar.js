@@ -1,11 +1,11 @@
-import type { LanguagePlugin, SourceFile } from '@volar/language-core';
+import type { LanguagePlugin, SourceScript } from '@volar/language-core';
 import type * as ts from 'typescript';
 
 export function createResolveModuleName(
 	ts: typeof import('typescript'),
 	languageServiceHost: ts.LanguageServiceHost,
 	languagePlugins: LanguagePlugin<any>[],
-	getFile: (fileName: string) => SourceFile | undefined,
+	getSourceScript: (fileName: string) => SourceScript | undefined,
 ) {
 	const toPatchResults = new Map<string, string>();
 	const moduleResolutionHost: ts.ModuleResolutionHost = {
@@ -52,11 +52,11 @@ export function createResolveModuleName(
 		);
 		if (result.resolvedModule && toPatchResults.has(result.resolvedModule.resolvedFileName)) {
 			result.resolvedModule.resolvedFileName = toPatchResults.get(result.resolvedModule.resolvedFileName)!;
-			const sourceFile = getFile(result.resolvedModule.resolvedFileName);
-			if (sourceFile?.generated) {
-				const tsCode = sourceFile.generated.languagePlugin.typescript?.getScript(sourceFile.generated.code);
-				if (tsCode) {
-					result.resolvedModule.extension = tsCode.extension;
+			const sourceScript = getSourceScript(result.resolvedModule.resolvedFileName);
+			if (sourceScript?.generated) {
+				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+				if (serviceScript) {
+					result.resolvedModule.extension = serviceScript.extension;
 				}
 			}
 		}

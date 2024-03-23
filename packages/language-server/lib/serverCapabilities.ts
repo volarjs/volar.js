@@ -1,9 +1,9 @@
-import type { ServicePlugin } from '@volar/language-service';
+import type { LanguageServicePlugin } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 
 export function getServerCapabilities(
 	watchExts: string[],
-	servicePlugins: ServicePlugin[],
+	servicePlugins: LanguageServicePlugin[],
 	semanticTokensLegend: vscode.SemanticTokensLegend,
 ) {
 	const capabilities: vscode.ServerCapabilities = {

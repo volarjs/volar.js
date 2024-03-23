@@ -1,10 +1,10 @@
-import { FileRegistry, CodeInformation, shouldReportDiagnostics, SourceMap, SourceFile } from '@volar/language-core';
+import { Language, CodeInformation, shouldReportDiagnostics, SourceMap, SourceScript } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { getVirtualFileAndMap, notEmpty } from './utils';
+import { getServiceScript, notEmpty } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
 
-export function transformCallHierarchyItem(files: FileRegistry, item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
+export function transformCallHierarchyItem(files: Language, item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
 	const span = transformSpan(files, item.file, item.span, filter);
 	const selectionSpan = transformSpan(files, item.file, item.selectionSpan, filter);
 	return {
@@ -14,7 +14,7 @@ export function transformCallHierarchyItem(files: FileRegistry, item: ts.CallHie
 	};
 }
 
-export function transformDiagnostic<T extends ts.Diagnostic>(files: FileRegistry, diagnostic: T): T | undefined {
+export function transformDiagnostic<T extends ts.Diagnostic>(files: Language, diagnostic: T): T | undefined {
 	if (!transformedDiagnostics.has(diagnostic)) {
 		transformedDiagnostics.set(diagnostic, undefined);
 
@@ -31,9 +31,9 @@ export function transformDiagnostic<T extends ts.Diagnostic>(files: FileRegistry
 			&& diagnostic.start !== undefined
 			&& diagnostic.length !== undefined
 		) {
-			const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, diagnostic.file.fileName);
+			const [virtualCode, sourceScript, map] = getServiceScript(files, diagnostic.file.fileName);
 			if (virtualCode) {
-				const sourceRange = transformRange(sourceFile, map, diagnostic.start, diagnostic.start + diagnostic.length, shouldReportDiagnostics);
+				const sourceRange = transformRange(sourceScript, map, diagnostic.start, diagnostic.start + diagnostic.length, shouldReportDiagnostics);
 				if (sourceRange) {
 					transformedDiagnostics.set(diagnostic, {
 						...diagnostic,
@@ -53,8 +53,8 @@ export function transformDiagnostic<T extends ts.Diagnostic>(files: FileRegistry
 	return transformedDiagnostics.get(diagnostic) as T | undefined;
 }
 
-export function transformFileTextChanges(files: FileRegistry, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
-	const [_, source] = getVirtualFileAndMap(files, changes.fileName);
+export function transformFileTextChanges(files: Language, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
+	const [_, source] = getServiceScript(files, changes.fileName);
 	if (source) {
 		return {
 			...changes,
@@ -74,10 +74,10 @@ export function transformFileTextChanges(files: FileRegistry, changes: ts.FileTe
 	}
 }
 
-export function transformDocumentSpan<T extends ts.DocumentSpan>(files: FileRegistry, documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
+export function transformDocumentSpan<T extends ts.DocumentSpan>(files: Language, documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
 	let textSpan = transformSpan(files, documentSpan.fileName, documentSpan.textSpan, filter);
 	if (!textSpan && shouldFallback) {
-		const [virtualCode] = getVirtualFileAndMap(files, documentSpan.fileName);
+		const [virtualCode] = getServiceScript(files, documentSpan.fileName);
 		if (virtualCode) {
 			textSpan = {
 				fileName: documentSpan.fileName,
@@ -102,7 +102,7 @@ export function transformDocumentSpan<T extends ts.DocumentSpan>(files: FileRegi
 	};
 }
 
-export function transformSpan(files: FileRegistry, fileName: string | undefined, textSpan: ts.TextSpan | undefined, filter: (data: CodeInformation) => boolean): {
+export function transformSpan(files: Language, fileName: string | undefined, textSpan: ts.TextSpan | undefined, filter: (data: CodeInformation) => boolean): {
 	fileName: string;
 	textSpan: ts.TextSpan;
 } | undefined {
@@ -112,9 +112,9 @@ export function transformSpan(files: FileRegistry, fileName: string | undefined,
 	if (!textSpan) {
 		return;
 	}
-	const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
+	const [virtualFile, sourceScript, map] = getServiceScript(files, fileName);
 	if (virtualFile) {
-		const sourceRange = transformRange(sourceFile, map, textSpan.start, textSpan.start + textSpan.length, filter);
+		const sourceRange = transformRange(sourceScript, map, textSpan.start, textSpan.start + textSpan.length, filter);
 		if (sourceRange) {
 			return {
 				fileName,
@@ -134,15 +134,15 @@ export function transformSpan(files: FileRegistry, fileName: string | undefined,
 }
 
 function transformRange(
-	sourceFile: SourceFile,
+	sourceScript: SourceScript,
 	map: SourceMap<CodeInformation>,
 	start: number,
 	end: number,
 	filter: (data: CodeInformation) => boolean,
 ) {
-	for (const sourceStart of map.getSourceOffsets(start - sourceFile.snapshot.getLength())) {
+	for (const sourceStart of map.getSourceOffsets(start - sourceScript.snapshot.getLength())) {
 		if (filter(sourceStart[1].data)) {
-			for (const sourceEnd of map.getSourceOffsets(end - sourceFile.snapshot.getLength())) {
+			for (const sourceEnd of map.getSourceOffsets(end - sourceScript.snapshot.getLength())) {
 				if (sourceEnd[0] >= sourceStart[0] && filter(sourceEnd[1].data)) {
 					return [sourceStart[0], sourceEnd[0]];
 				}

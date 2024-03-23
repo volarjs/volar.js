@@ -1,13 +1,13 @@
 import type { CodeInformation, VirtualCode } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
-import type { ServiceContext, ServicePluginInstance, ServicePlugin } from '../types';
+import type { ServiceContext, LanguageServicePluginInstance, LanguageServicePlugin } from '../types';
 
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
 	uri: string,
 	valid: (map: SourceMapWithDocuments<CodeInformation>) => boolean,
-	worker: (service: [ServicePlugin, ServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
+	worker: (service: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
@@ -31,21 +31,21 @@ export async function languageFeatureWorker<T, K>(
 	uri: string,
 	getReadDocParams: () => K,
 	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformation>) => Generator<K>,
-	worker: (service: [ServicePlugin, ServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
+	worker: (service: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
 
-	const sourceFile = context.language.files.get(uri);
-	if (!sourceFile) {
+	const sourceScript = context.language.scripts.get(uri);
+	if (!sourceScript) {
 		return;
 	}
 
 	let results: T[] = [];
 
-	if (sourceFile.generated) {
+	if (sourceScript.generated) {
 
-		for (const map of eachEmbeddedDocument(context, sourceFile.generated.code)) {
+		for (const map of forEachEmbeddedDocument(context, sourceScript.id, sourceScript.generated.root)) {
 
 			for (const mappedArg of eachVirtualDocParams(map)) {
 
@@ -78,7 +78,7 @@ export async function languageFeatureWorker<T, K>(
 	}
 	else {
 
-		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+		const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 		const params = getReadDocParams();
 
 		for (const [serviceId, service] of Object.entries(context.services)) {
@@ -124,23 +124,22 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 	}
 }
 
-export function* eachEmbeddedDocument(
+export function* forEachEmbeddedDocument(
 	context: ServiceContext,
+	sourceScriptId: string,
 	current: VirtualCode,
-	rootCode = current,
 ): Generator<SourceMapWithDocuments<CodeInformation>> {
 
 	if (current.embeddedCodes) {
 		for (const embeddedCode of current.embeddedCodes) {
-			yield* eachEmbeddedDocument(context, embeddedCode, rootCode);
+			yield* forEachEmbeddedDocument(context, sourceScriptId, embeddedCode);
 		}
 	}
 
 	for (const map of context.documents.getMaps(current)) {
-		const sourceFile = context.language.files.get(map.sourceDocument.uri);
 		if (
-			sourceFile?.generated?.code === rootCode
-			&& !context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(context.language.files.getByVirtualCode(current).id, current.id))
+			sourceScriptId === map.sourceDocument.uri
+			&& !context.disabledEmbeddedDocumentUris.has(context.encodeEmbeddedDocumentUri(sourceScriptId, current.id))
 		) {
 			yield map;
 		}
@@ -162,7 +161,7 @@ export function getEmbeddedFilesByLevel(context: ServiceContext, sourceFileUri: 
 		for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
 			if (file.embeddedCodes) {
 				for (const embedded of file.embeddedCodes) {
-					if (!context.disabledVirtualFileUris.has(context.documents.getVirtualCodeUri(sourceFileUri, embedded.id))) {
+					if (!context.disabledEmbeddedDocumentUris.has(context.encodeEmbeddedDocumentUri(sourceFileUri, embedded.id))) {
 						nextLevel.push(embedded);
 					}
 				}

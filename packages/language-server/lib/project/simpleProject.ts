@@ -1,11 +1,11 @@
-import { LanguageService, ServiceEnvironment, ServicePlugin, createFileRegistry, createLanguageService } from '@volar/language-service';
+import { LanguageService, ServiceEnvironment, LanguageServicePlugin, createLanguage, createLanguageService } from '@volar/language-service';
 import type { ServerContext, ServerOptions } from '../server';
 import type { ServerProject } from '../types';
 
 export async function createSimpleServerProject(
 	context: ServerContext,
 	serviceEnv: ServiceEnvironment,
-	servicePlugins: ServicePlugin[],
+	servicePlugins: LanguageServicePlugin[],
 	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
 ): Promise<ServerProject> {
 
@@ -23,17 +23,17 @@ export async function createSimpleServerProject(
 
 	function getLanguageService() {
 		if (!languageService) {
-			const files = createFileRegistry(languagePlugins, false, uri => {
+			const language = createLanguage(languagePlugins, false, uri => {
 				const script = context.documents.get(uri);
 				if (script) {
-					files.set(uri, script.languageId, script.getSnapshot());
+					language.scripts.set(uri, script.languageId, script.getSnapshot());
 				}
 				else {
-					files.delete(uri);
+					language.scripts.delete(uri);
 				}
 			});
 			languageService = createLanguageService(
-				{ files },
+				language,
 				servicePlugins,
 				serviceEnv,
 			);

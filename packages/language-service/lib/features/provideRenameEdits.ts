@@ -36,11 +36,11 @@ export function register(context: ServiceContext) {
 				const recursiveChecker = dedupe.createLocationSet();
 				let result: vscode.WorkspaceEdit | undefined;
 
-				await withMirrors(document, params.position, params.newName);
+				await withLinkedCode(document, params.position, params.newName);
 
 				return result;
 
-				async function withMirrors(document: TextDocument, position: vscode.Position, newName: string) {
+				async function withLinkedCode(document: TextDocument, position: vscode.Position, newName: string) {
 
 					if (!service[1].provideRenameEdits) {
 						return;
@@ -74,20 +74,24 @@ export function register(context: ServiceContext) {
 
 								recursiveChecker.add({ uri: editUri, range: { start: textEdit.range.start, end: textEdit.range.start } });
 
-								const [virtualCode] = context.documents.getVirtualCodeByUri(editUri);
-								const mirrorMap = virtualCode ? context.documents.getLinkedCodeMap(virtualCode) : undefined;
+								const decoded = context.decodeEmbeddedDocumentUri(editUri);
+								const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+								const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
+								const linkedCodeMap = virtualCode && sourceScript
+									? context.documents.getLinkedCodeMap(virtualCode, sourceScript.id)
+									: undefined;
 
-								if (mirrorMap) {
+								if (linkedCodeMap) {
 
-									for (const linkedPos of mirrorMap.getLinkedCodePositions(textEdit.range.start)) {
+									for (const linkedPos of linkedCodeMap.getLinkedCodePositions(textEdit.range.start)) {
 
-										if (recursiveChecker.has({ uri: mirrorMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
+										if (recursiveChecker.has({ uri: linkedCodeMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
 											continue;
 										}
 
 										foundMirrorPosition = true;
 
-										await withMirrors(mirrorMap.document, linkedPos, newName);
+										await withLinkedCode(linkedCodeMap.document, linkedPos, newName);
 									}
 								}
 

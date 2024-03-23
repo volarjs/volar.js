@@ -152,12 +152,12 @@ export function register(context: ServiceContext) {
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
 
-		const sourceFile = context.language.files.get(uri);
-		if (!sourceFile) {
+		const sourceScript = context.language.scripts.get(uri);
+		if (!sourceScript) {
 			return [];
 		}
 
-		const document = context.documents.get(uri, sourceFile.languageId, sourceFile.snapshot);
+		const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 		const lastResponse = lastResponses.get(uri) ?? lastResponses.set(uri, {
 			semantic: { errors: [] },
 			syntactic: { errors: [] },
@@ -171,9 +171,9 @@ export function register(context: ServiceContext) {
 
 			const oldSnapshot = cache.snapshot;
 			const oldDocument = cache.document;
-			const change = oldSnapshot ? sourceFile.snapshot.getChangeRange(oldSnapshot) : undefined;
+			const change = oldSnapshot ? sourceScript.snapshot.getChangeRange(oldSnapshot) : undefined;
 
-			cache.snapshot = sourceFile.snapshot;
+			cache.snapshot = sourceScript.snapshot;
 			cache.document = document;
 
 			if (!updateCacheRangeFailed && oldDocument && change) {
@@ -270,7 +270,7 @@ export function register(context: ServiceContext) {
 			);
 			if (result) {
 				cache.errors = result;
-				cache.snapshot = sourceFile?.snapshot;
+				cache.snapshot = sourceScript?.snapshot;
 			}
 		}
 	};
@@ -298,7 +298,9 @@ export function register(context: ServiceContext) {
 
 				for (const info of _error.relatedInformation) {
 
-					const [virtualCode] = context.documents.getVirtualCodeByUri(info.location.uri);
+					const decoded = context.decodeEmbeddedDocumentUri(info.location.uri);
+					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 					if (virtualCode) {
 						for (const map of context.documents.getMaps(virtualCode)) {

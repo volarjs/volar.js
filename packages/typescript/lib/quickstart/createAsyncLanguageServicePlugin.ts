@@ -1,7 +1,7 @@
 import type * as ts from 'typescript';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { createFileRegistry, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
+import { createLanguage, LanguagePlugin, resolveCommonLanguageId } from '@volar/language-core';
 import { arrayItemsEqual } from './createLanguageServicePlugin';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
@@ -65,25 +65,25 @@ export function createAsyncLanguageServicePlugin(
 					}
 
 					loadLanguagePlugins(ts, info).then(languagePlugins => {
-						const files = createFileRegistry(
+						const language = createLanguage(
 							languagePlugins,
 							ts.sys.useCaseSensitiveFileNames,
 							fileName => {
 								const snapshot = getScriptSnapshot(fileName);
 								if (snapshot) {
-									files.set(
+									language.scripts.set(
 										fileName,
 										resolveCommonLanguageId(fileName),
 										snapshot
 									);
 								} else {
-									files.delete(fileName);
+									language.scripts.delete(fileName);
 								}
 							}
 						);
 
-						decorateLanguageService(files, info.languageService);
-						decorateLanguageServiceHost(files, info.languageServiceHost, ts);
+						decorateLanguageService(language, info.languageService);
+						decorateLanguageServiceHost(language, info.languageServiceHost, ts);
 
 						info.project.markAsDirty();
 						initialized = true;
