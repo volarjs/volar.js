@@ -17,7 +17,7 @@ export interface ServiceEnvironment {
 	fs?: FileSystem;
 	console?: Console;
 	getConfiguration?<T>(section: string, scopeUri?: string): Promise<T | undefined>;
-	onDidChangeConfiguration?(cb: () => void): vscode.Disposable;
+	onDidChangeConfiguration?(cb: (params: vscode.DidChangeConfigurationParams) => void): vscode.Disposable;
 	onDidChangeWatchedFiles?(cb: (params: vscode.DidChangeWatchedFilesParams) => void): vscode.Disposable;
 }
 
