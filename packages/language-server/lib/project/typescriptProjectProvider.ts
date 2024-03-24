@@ -227,7 +227,7 @@ export function createTypeScriptProjectProviderFactory(
 
 			if (!inferredProjects.uriHas(workspaceFolder)) {
 				inferredProjects.uriSet(workspaceFolder, (async () => {
-					const inferOptions = await getInferredCompilerOptions(context.configurationHost);
+					const inferOptions = await getInferredCompilerOptions(context);
 					const serviceEnv = createServiceEnvironment(context, workspaceFolder);
 					return createTypeScriptServerProject(ts, tsLocalized, inferOptions, context, serviceEnv, servicePlugins, getLanguagePlugins);
 				})());

@@ -48,8 +48,8 @@ export function createServiceEnvironment(context: ServerContext, workspaceFolder
 		fs: context.runtimeEnv.fs,
 		locale: context.initializeParams.locale,
 		clientCapabilities: context.initializeParams.capabilities,
-		getConfiguration: context.configurationHost?.getConfiguration,
-		onDidChangeConfiguration: context.configurationHost?.onDidChangeConfiguration,
+		getConfiguration: context.getConfiguration,
+		onDidChangeConfiguration: context.onDidChangeConfiguration,
 		onDidChangeWatchedFiles: context.onDidChangeWatchedFiles,
 		typescript: {
 			fileNameToUri: fileNameToUri,

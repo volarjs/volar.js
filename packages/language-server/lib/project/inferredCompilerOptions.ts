@@ -1,14 +1,14 @@
 import type * as ts from 'typescript';
-import type { createConfigurationHost } from '../configurationHost';
+import type { ServerContext } from '../server';
 
-export async function getInferredCompilerOptions(configurationHost: ReturnType<typeof createConfigurationHost> | undefined) {
+export async function getInferredCompilerOptions(context: ServerContext) {
 
 	const [
 		implicitProjectConfig_1 = {},
 		implicitProjectConfig_2 = {},
 	] = await Promise.all([
-		configurationHost?.getConfiguration?.<ts.CompilerOptions>('js/ts.implicitProjectConfig'),
-		configurationHost?.getConfiguration?.<ts.CompilerOptions>('javascript.implicitProjectConfig'),
+		context.getConfiguration<ts.CompilerOptions>('js/ts.implicitProjectConfig'),
+		context.getConfiguration<ts.CompilerOptions>('javascript.implicitProjectConfig'),
 	]);
 	const checkJs = readCheckJs();
 	const experimentalDecorators = readExperimentalDecorators();
