@@ -401,17 +401,16 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 			let start: number | undefined;
 			let end: number | undefined;
 			for (const mapping of map.mappings) {
+				// TODO reuse the logic from language service
 				if (isSemanticTokensEnabled(mapping.data) && mapping.sourceOffsets[0] >= span.start && mapping.sourceOffsets[0] <= span.start + span.length) {
 					start ??= mapping.generatedOffsets[0];
-					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1];
+					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1];
 					start = Math.min(start, mapping.generatedOffsets[0]);
-					end = Math.max(end, mapping.generatedOffsets[mapping.generatedOffsets.length - 1]);
+					end = Math.max(end, mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1]);
 				}
 			}
-			if (start === undefined || end === undefined) {
-				start = 0;
-				end = 0;
-			}
+			start ??= 0;
+			end ??= sourceFile.snapshot.getLength();
 			start += sourceFile.snapshot.getLength();
 			end += sourceFile.snapshot.getLength();
 			const result = getEncodedSemanticClassifications(fileName, { start, length: end - start }, format);
