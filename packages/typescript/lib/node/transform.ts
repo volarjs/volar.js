@@ -33,12 +33,12 @@ export function transformDiagnostic<T extends ts.Diagnostic>(files: FileRegistry
 		) {
 			const [virtualCode, sourceFile, map] = getVirtualFileAndMap(files, diagnostic.file.fileName);
 			if (virtualCode) {
-				const sourceRange = transformRange(sourceFile, map, diagnostic.start, diagnostic.start + diagnostic.length, shouldReportDiagnostics);
-				if (sourceRange) {
+				const sourceSpan = transformTextSpan(sourceFile, map, { start: diagnostic.start, length: diagnostic.length }, shouldReportDiagnostics);
+				if (sourceSpan) {
 					transformedDiagnostics.set(diagnostic, {
 						...diagnostic,
-						start: sourceRange[0],
-						length: sourceRange[1] - sourceRange[0],
+						start: sourceSpan.start,
+						length: sourceSpan.length,
 					});
 				}
 			}
@@ -106,22 +106,16 @@ export function transformSpan(files: FileRegistry, fileName: string | undefined,
 	fileName: string;
 	textSpan: ts.TextSpan;
 } | undefined {
-	if (!fileName) {
-		return;
-	}
-	if (!textSpan) {
+	if (!fileName || !textSpan) {
 		return;
 	}
 	const [virtualFile, sourceFile, map] = getVirtualFileAndMap(files, fileName);
 	if (virtualFile) {
-		const sourceRange = transformRange(sourceFile, map, textSpan.start, textSpan.start + textSpan.length, filter);
-		if (sourceRange) {
+		const sourceSpan = transformTextSpan(sourceFile, map, textSpan, filter);
+		if (sourceSpan) {
 			return {
 				fileName,
-				textSpan: {
-					start: sourceRange[0],
-					length: sourceRange[1] - sourceRange[0],
-				},
+				textSpan: sourceSpan,
 			};
 		}
 	}
@@ -133,20 +127,51 @@ export function transformSpan(files: FileRegistry, fileName: string | undefined,
 	}
 }
 
-function transformRange(
+export function transformTextChange(
 	sourceFile: SourceFile,
 	map: SourceMap<CodeInformation>,
-	start: number,
-	end: number,
+	textChange: ts.TextChange,
 	filter: (data: CodeInformation) => boolean,
-) {
-	for (const sourceStart of map.getSourceOffsets(start - sourceFile.snapshot.getLength())) {
-		if (filter(sourceStart[1].data)) {
-			for (const sourceEnd of map.getSourceOffsets(end - sourceFile.snapshot.getLength())) {
-				if (sourceEnd[0] >= sourceStart[0] && filter(sourceEnd[1].data)) {
-					return [sourceStart[0], sourceEnd[0]];
-				}
-			}
+): ts.TextChange | undefined {
+	const sourceSpan = transformTextSpan(sourceFile, map, textChange.span, filter);
+	if (sourceSpan) {
+		return {
+			newText: textChange.newText,
+			span: sourceSpan,
+		};
+	}
+}
+
+export function transformTextSpan(
+	sourceFile: SourceFile,
+	map: SourceMap<CodeInformation>,
+	textSpan: ts.TextSpan,
+	filter: (data: CodeInformation) => boolean,
+): ts.TextSpan | undefined {
+	const start = textSpan.start;
+	const end = textSpan.start + textSpan.length;
+	const sourceStart = toSourceOffset(sourceFile, map, start, filter);
+	const sourceEnd = toSourceOffset(sourceFile, map, end, filter);
+	if (sourceStart !== undefined && sourceEnd !== undefined && sourceEnd >= sourceStart) {
+		return {
+			start: sourceStart,
+			length: sourceEnd - sourceStart,
+		};
+	}
+}
+
+export function toSourceOffset(sourceFile: SourceFile, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
+	for (const [sourceOffset, mapping] of map.getSourceOffsets(position - sourceFile.snapshot.getLength())) {
+		if (filter(mapping.data)) {
+			return sourceOffset;
+		}
+	}
+}
+
+export function toGeneratedOffset(sourceFile: SourceFile, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
+	for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+		if (filter(mapping.data)) {
+			return generateOffset + sourceFile.snapshot.getLength();
 		}
 	}
 }
