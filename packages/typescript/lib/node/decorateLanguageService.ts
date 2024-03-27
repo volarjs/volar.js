@@ -137,7 +137,7 @@ export function decorateLanguageService(files: FileRegistry, languageService: ts
 	languageService.getEditsForFileRename = (oldFilePath, newFilePath, formatOptions, preferences) => {
 		const edits = getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences);
 		return edits
-			.map(edit => transformFileTextChanges(files, edit, isCodeActionsEnabled))
+			.map(edit => transformFileTextChanges(files, edit, isRenameEnabled))
 			.filter(notEmpty);
 	};
 	languageService.getLinkedEditingRangeAtPosition = (fileName, position) => {
