@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.6](https://github.com/volarjs/volar.js/compare/v2.1.5...v2.1.6) (2024-03-28)
+
+### Bug Fixes
+
+- **typescript:** ts plugin cannot generate embedded code for .ts files
+- **typescript:** handle mapping for formatting APIs in plugin [vuejs/language-tools#4066](https://github.com/vuejs/language-tools/issues/4066)
+- **typescript:** handle mapping for file rename API in plugin [vuejs/language-tools#3646](https://github.com/vuejs/language-tools/issues/3646)
+- **typescript:** semantic tokens range param does not mapped correctly [vuejs/language-tools#3934](https://github.com/vuejs/language-tools/issues/3934) [vuejs/language-tools#3935](https://github.com/vuejs/language-tools/issues/3935)
+
 ## [2.1.5](https://github.com/volarjs/volar.js/compare/v2.1.4...v2.1.5) (2024-03-23)
 
 ### Bug Fixes
