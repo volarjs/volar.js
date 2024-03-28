@@ -4,9 +4,9 @@ import { getServiceScript, notEmpty } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
 
-export function transformCallHierarchyItem(files: Language, item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
-	const span = transformSpan(files, item.file, item.span, filter);
-	const selectionSpan = transformSpan(files, item.file, item.selectionSpan, filter);
+export function transformCallHierarchyItem(language: Language, item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
+	const span = transformSpan(language, item.file, item.span, filter);
+	const selectionSpan = transformSpan(language, item.file, item.selectionSpan, filter);
 	return {
 		...item,
 		span: span?.textSpan ?? { start: 0, length: 0 },
@@ -14,7 +14,7 @@ export function transformCallHierarchyItem(files: Language, item: ts.CallHierarc
 	};
 }
 
-export function transformDiagnostic<T extends ts.Diagnostic>(files: Language, diagnostic: T): T | undefined {
+export function transformDiagnostic<T extends ts.Diagnostic>(language: Language, diagnostic: T): T | undefined {
 	if (!transformedDiagnostics.has(diagnostic)) {
 		transformedDiagnostics.set(diagnostic, undefined);
 
@@ -22,7 +22,7 @@ export function transformDiagnostic<T extends ts.Diagnostic>(files: Language, di
 
 		if (relatedInformation) {
 			diagnostic.relatedInformation = relatedInformation
-				.map(d => transformDiagnostic(files, d))
+				.map(d => transformDiagnostic(language, d))
 				.filter(notEmpty);
 		}
 
@@ -31,14 +31,14 @@ export function transformDiagnostic<T extends ts.Diagnostic>(files: Language, di
 			&& diagnostic.start !== undefined
 			&& diagnostic.length !== undefined
 		) {
-			const [virtualCode, sourceScript, map] = getServiceScript(files, diagnostic.file.fileName);
-			if (virtualCode) {
-				const sourceRange = transformRange(sourceScript, map, diagnostic.start, diagnostic.start + diagnostic.length, shouldReportDiagnostics);
-				if (sourceRange) {
+			const [serviceScript, sourceScript, map] = getServiceScript(language, diagnostic.file.fileName);
+			if (serviceScript) {
+				const sourceSpan = transformTextSpan(sourceScript, map, { start: diagnostic.start, length: diagnostic.length }, shouldReportDiagnostics);
+				if (sourceSpan) {
 					transformedDiagnostics.set(diagnostic, {
 						...diagnostic,
-						start: sourceRange[0],
-						length: sourceRange[1] - sourceRange[0],
+						start: sourceSpan.start,
+						length: sourceSpan.length,
 					});
 				}
 			}
@@ -53,13 +53,13 @@ export function transformDiagnostic<T extends ts.Diagnostic>(files: Language, di
 	return transformedDiagnostics.get(diagnostic) as T | undefined;
 }
 
-export function transformFileTextChanges(files: Language, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
-	const [_, source] = getServiceScript(files, changes.fileName);
+export function transformFileTextChanges(language: Language, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
+	const [_, source] = getServiceScript(language, changes.fileName);
 	if (source) {
 		return {
 			...changes,
 			textChanges: changes.textChanges.map(c => {
-				const span = transformSpan(files, changes.fileName, c.span, filter);
+				const span = transformSpan(language, changes.fileName, c.span, filter);
 				if (span) {
 					return {
 						...c,
@@ -74,11 +74,11 @@ export function transformFileTextChanges(files: Language, changes: ts.FileTextCh
 	}
 }
 
-export function transformDocumentSpan<T extends ts.DocumentSpan>(files: Language, documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
-	let textSpan = transformSpan(files, documentSpan.fileName, documentSpan.textSpan, filter);
+export function transformDocumentSpan<T extends ts.DocumentSpan>(language: Language, documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
+	let textSpan = transformSpan(language, documentSpan.fileName, documentSpan.textSpan, filter);
 	if (!textSpan && shouldFallback) {
-		const [virtualCode] = getServiceScript(files, documentSpan.fileName);
-		if (virtualCode) {
+		const [serviceScript] = getServiceScript(language, documentSpan.fileName);
+		if (serviceScript) {
 			textSpan = {
 				fileName: documentSpan.fileName,
 				textSpan: { start: 0, length: 0 },
@@ -88,9 +88,9 @@ export function transformDocumentSpan<T extends ts.DocumentSpan>(files: Language
 	if (!textSpan) {
 		return;
 	}
-	const contextSpan = transformSpan(files, documentSpan.fileName, documentSpan.contextSpan, filter);
-	const originalTextSpan = transformSpan(files, documentSpan.originalFileName, documentSpan.originalTextSpan, filter);
-	const originalContextSpan = transformSpan(files, documentSpan.originalFileName, documentSpan.originalContextSpan, filter);
+	const contextSpan = transformSpan(language, documentSpan.fileName, documentSpan.contextSpan, filter);
+	const originalTextSpan = transformSpan(language, documentSpan.originalFileName, documentSpan.originalTextSpan, filter);
+	const originalContextSpan = transformSpan(language, documentSpan.originalFileName, documentSpan.originalContextSpan, filter);
 	return {
 		...documentSpan,
 		fileName: textSpan.fileName,
@@ -102,26 +102,20 @@ export function transformDocumentSpan<T extends ts.DocumentSpan>(files: Language
 	};
 }
 
-export function transformSpan(files: Language, fileName: string | undefined, textSpan: ts.TextSpan | undefined, filter: (data: CodeInformation) => boolean): {
+export function transformSpan(language: Language, fileName: string | undefined, textSpan: ts.TextSpan | undefined, filter: (data: CodeInformation) => boolean): {
 	fileName: string;
 	textSpan: ts.TextSpan;
 } | undefined {
-	if (!fileName) {
+	if (!fileName || !textSpan) {
 		return;
 	}
-	if (!textSpan) {
-		return;
-	}
-	const [virtualFile, sourceScript, map] = getServiceScript(files, fileName);
+	const [virtualFile, sourceScript, map] = getServiceScript(language, fileName);
 	if (virtualFile) {
-		const sourceRange = transformRange(sourceScript, map, textSpan.start, textSpan.start + textSpan.length, filter);
-		if (sourceRange) {
+		const sourceSpan = transformTextSpan(sourceScript, map, textSpan, filter);
+		if (sourceSpan) {
 			return {
 				fileName,
-				textSpan: {
-					start: sourceRange[0],
-					length: sourceRange[1] - sourceRange[0],
-				},
+				textSpan: sourceSpan,
 			};
 		}
 	}
@@ -133,20 +127,51 @@ export function transformSpan(files: Language, fileName: string | undefined, tex
 	}
 }
 
-function transformRange(
+export function transformTextChange(
 	sourceScript: SourceScript,
 	map: SourceMap<CodeInformation>,
-	start: number,
-	end: number,
+	textChange: ts.TextChange,
 	filter: (data: CodeInformation) => boolean,
-) {
-	for (const sourceStart of map.getSourceOffsets(start - sourceScript.snapshot.getLength())) {
-		if (filter(sourceStart[1].data)) {
-			for (const sourceEnd of map.getSourceOffsets(end - sourceScript.snapshot.getLength())) {
-				if (sourceEnd[0] >= sourceStart[0] && filter(sourceEnd[1].data)) {
-					return [sourceStart[0], sourceEnd[0]];
-				}
-			}
+): ts.TextChange | undefined {
+	const sourceSpan = transformTextSpan(sourceScript, map, textChange.span, filter);
+	if (sourceSpan) {
+		return {
+			newText: textChange.newText,
+			span: sourceSpan,
+		};
+	}
+}
+
+export function transformTextSpan(
+	sourceScript: SourceScript,
+	map: SourceMap<CodeInformation>,
+	textSpan: ts.TextSpan,
+	filter: (data: CodeInformation) => boolean,
+): ts.TextSpan | undefined {
+	const start = textSpan.start;
+	const end = textSpan.start + textSpan.length;
+	const sourceStart = toSourceOffset(sourceScript, map, start, filter);
+	const sourceEnd = toSourceOffset(sourceScript, map, end, filter);
+	if (sourceStart !== undefined && sourceEnd !== undefined && sourceEnd >= sourceStart) {
+		return {
+			start: sourceStart,
+			length: sourceEnd - sourceStart,
+		};
+	}
+}
+
+export function toSourceOffset(sourceScript: SourceScript, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
+	for (const [sourceOffset, mapping] of map.getSourceOffsets(position - sourceScript.snapshot.getLength())) {
+		if (filter(mapping.data)) {
+			return sourceOffset;
+		}
+	}
+}
+
+export function toGeneratedOffset(sourceScript: SourceScript, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
+	for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+		if (filter(mapping.data)) {
+			return generateOffset + sourceScript.snapshot.getLength();
 		}
 	}
 }

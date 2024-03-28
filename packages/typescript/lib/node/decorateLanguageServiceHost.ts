@@ -13,12 +13,11 @@ export function decorateLanguageServiceHost(
 	const exts = language.plugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 		.flat();
-	const scripts = new Map<string, {
-		version: string;
-		snapshot: ts.IScriptSnapshot | undefined;
+	const scripts = new Map<string, [version: string, {
+		snapshot: ts.IScriptSnapshot;
 		kind: ts.ScriptKind;
 		extension: string;
-	}>();
+	}]>();
 
 	const readDirectory = languageServiceHost.readDirectory?.bind(languageServiceHost);
 	const resolveModuleNameLiterals = languageServiceHost.resolveModuleNameLiterals?.bind(languageServiceHost);
@@ -87,32 +86,28 @@ export function decorateLanguageServiceHost(
 	}
 
 	languageServiceHost.getScriptSnapshot = fileName => {
-		if (exts.some(ext => fileName.endsWith(ext))) {
-			updateScript(fileName);
-			return scripts.get(fileName)?.snapshot;
+		const virtualScript = updateVirtualScript(fileName);
+		if (virtualScript) {
+			return virtualScript.snapshot;
 		}
 		return getScriptSnapshot(fileName);
 	};
 
 	if (getScriptKind) {
 		languageServiceHost.getScriptKind = fileName => {
-			if (exts.some(ext => fileName.endsWith(ext))) {
-				updateScript(fileName);
-				const script = scripts.get(fileName);
-				if (script) {
-					return script.kind;
-				}
-				return ts.ScriptKind.Deferred;
+			const virtualScript = updateVirtualScript(fileName);
+			if (virtualScript) {
+				return virtualScript.kind;
 			}
 			return getScriptKind(fileName);
 		};
 	}
 
-	function updateScript(fileName: string) {
+	function updateVirtualScript(fileName: string) {
 
 		const version = languageServiceHost.getScriptVersion(fileName);
 
-		if (version !== scripts.get(fileName)?.version) {
+		if (version !== scripts.get(fileName)?.[0]) {
 
 			let extension = '.ts';
 			let snapshotSnapshot: ts.IScriptSnapshot | undefined;
@@ -143,15 +138,19 @@ export function decorateLanguageServiceHost(
 				language.scripts.delete(fileName);
 			}
 
-			scripts.set(fileName, {
-				version,
-				extension,
-				snapshot: snapshotSnapshot,
-				kind: scriptKind,
-			});
+			if (snapshotSnapshot) {
+				scripts.set(fileName, [
+					version,
+					{
+						extension,
+						snapshot: snapshotSnapshot,
+						kind: scriptKind,
+					}
+				]);
+			}
 		}
 
-		return scripts.get(fileName);
+		return scripts.get(fileName)?.[1];
 	}
 }
 
