@@ -109,7 +109,6 @@ export function createLanguageService(
 					return provide(...args as any);
 				}
 			}
-			throw `No service provide ${key as any}`;
 		},
 		services: [],
 		commands: {

@@ -52,7 +52,7 @@ export interface ServiceContext {
 	inject<Provide, K extends keyof Provide = keyof Provide>(
 		key: K,
 		...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never
-	): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never>;
+	): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never> | undefined;
 	commands: {
 		showReferences: ServiceCommand<[uri: string, position: vscode.Position, locations: vscode.Location[]]>;
 		rename: ServiceCommand<[uri: string, position: vscode.Position]>;
