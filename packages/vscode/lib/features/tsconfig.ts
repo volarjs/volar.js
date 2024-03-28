@@ -11,11 +11,16 @@ export function activate(
 
 	const subscriptions: vscode.Disposable[] = [];
 	const statusBar = vscode.languages.createLanguageStatusItem(cmd, selector);
+
 	let currentTsconfigUri: vscode.Uri | undefined;
+	let updateStatus: ReturnType<typeof setTimeout> | undefined;
 
 	updateStatusBar();
 
-	vscode.window.onDidChangeActiveTextEditor(updateStatusBar, undefined, subscriptions);
+	vscode.window.onDidChangeActiveTextEditor(() => {
+		clearTimeout(updateStatus);
+		updateStatus = setTimeout(() => updateStatusBar, 100);
+	}, undefined, subscriptions);
 
 	subscriptions.push(vscode.commands.registerCommand(cmd, async () => {
 		if (currentTsconfigUri) {
