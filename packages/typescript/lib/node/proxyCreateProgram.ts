@@ -137,7 +137,7 @@ export function proxyCreateProgram(
 			decorateProgram(language, program);
 
 			// TODO: #128
-			(program as any).__volar__ = { files: language };
+			(program as any).__volar__ = { language };
 
 			return program;
 
