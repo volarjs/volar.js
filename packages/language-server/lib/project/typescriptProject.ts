@@ -1,4 +1,4 @@
-import { LanguagePlugin, LanguageService, ServiceEnvironment, LanguageServicePlugin, TypeScriptProjectHost, createLanguageService, resolveCommonLanguageId } from '@volar/language-service';
+import { LanguagePlugin, LanguageService, ServiceEnvironment, LanguageServicePlugin, TypeScriptProjectHost, createLanguageService } from '@volar/language-service';
 import { createTypeScriptLanguage, createSys } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
@@ -22,6 +22,7 @@ export async function createTypeScriptServerProject(
 	serviceEnv: ServiceEnvironment,
 	servicePlugins: LanguageServicePlugin[],
 	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
+	getLanguageId: (uri: string) => string,
 ): Promise<TypeScriptServerProject> {
 
 	let parsedCommandLine: ts.ParsedCommandLine;
@@ -62,7 +63,7 @@ export async function createTypeScriptServerProject(
 			return parsedCommandLine.projectReferences;
 		},
 		getLanguageId(uri) {
-			return context.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri);
+			return context.documents.get(uri)?.languageId ?? getLanguageId(uri);
 		},
 		fileNameToScriptId: serviceEnv.typescript!.fileNameToUri,
 		scriptIdToFileName: serviceEnv.typescript!.uriToFileName,

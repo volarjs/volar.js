@@ -26,6 +26,7 @@ export interface ServerOptions {
 	watchFileExtensions?: string[];
 	getServicePlugins(): LanguageServicePlugin[] | Promise<LanguageServicePlugin[]>;
 	getLanguagePlugins(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): LanguagePlugin[] | Promise<LanguagePlugin[]>;
+	getLanguageId(uri: string): string;
 }
 
 export function createServerBase(
@@ -142,6 +143,7 @@ export function createServerBase(
 			{ ...context },
 			servicePlugins,
 			serverOptions.getLanguagePlugins,
+			serverOptions.getLanguageId,
 		);
 
 		documents.onDidChangeContent(({ document }) => {

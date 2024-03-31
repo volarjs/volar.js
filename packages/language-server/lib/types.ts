@@ -51,5 +51,6 @@ export interface ServerProjectProviderFactory {
 		context: ServerContext,
 		servicePlugins: LanguageServicePlugin[],
 		getLanguagePlugins: ServerOptions['getLanguagePlugins'],
+		getLanguageId: ServerOptions['getLanguageId'],
 	): ServerProjectProvider;
 }

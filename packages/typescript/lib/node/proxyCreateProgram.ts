@@ -1,12 +1,12 @@
 import type * as ts from 'typescript';
 import { decorateProgram } from './decorateProgram';
-import { LanguagePlugin, createLanguage, resolveCommonLanguageId } from '@volar/language-core';
+import { LanguagePlugin, createLanguage } from '@volar/language-core';
 
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
 	original: typeof ts['createProgram'],
-	extensions: string[],
 	getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin[],
+	getLanguageId: (fileName: string) => string,
 ) {
 	return new Proxy(original, {
 		apply: (target, thisArg, args) => {
@@ -14,9 +14,13 @@ export function proxyCreateProgram(
 			const options = args[0] as ts.CreateProgramOptions;
 			assert(!!options.host, '!!options.host');
 
+			const languagePlugins = getLanguagePlugins(ts, options);
+			const extensions = languagePlugins
+				.map(plugin => plugin.typescript?.extraFileExtensions.map(({ extension }) => `.${extension}`) ?? [])
+				.flat();
 			const sourceFileToSnapshotMap = new WeakMap<ts.SourceFile, ts.IScriptSnapshot>();
 			const language = createLanguage(
-				getLanguagePlugins(ts, options),
+				languagePlugins,
 				ts.sys.useCaseSensitiveFileNames,
 				fileName => {
 					let snapshot: ts.IScriptSnapshot | undefined;
@@ -40,7 +44,7 @@ export function proxyCreateProgram(
 						}
 					}
 					if (snapshot) {
-						language.scripts.set(fileName, resolveCommonLanguageId(fileName), snapshot);
+						language.scripts.set(fileName, getLanguageId(fileName), snapshot);
 					}
 					else {
 						language.scripts.delete(fileName);

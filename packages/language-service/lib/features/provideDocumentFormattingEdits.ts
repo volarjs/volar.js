@@ -1,4 +1,4 @@
-import { CodeInformation, SourceMap, SourceScript, VirtualCode, forEachEmbeddedCode, isFormattingEnabled, resolveCommonLanguageId, updateVirtualCodeMapOfMap } from '@volar/language-core';
+import { CodeInformation, SourceMap, SourceScript, VirtualCode, forEachEmbeddedCode, isFormattingEnabled, updateVirtualCodeMapOfMap } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -264,7 +264,7 @@ export function register(context: ServiceContext) {
 			return new SourceMapWithDocuments(
 				TextDocument.create(
 					documentUri,
-					sourceLanguageId ?? resolveCommonLanguageId(documentUri),
+					sourceLanguageId,
 					version,
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),

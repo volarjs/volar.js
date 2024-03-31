@@ -17,7 +17,7 @@ export function createTypeScriptProjectProviderFactory(
 	ts: typeof import('typescript'),
 	tsLocalized: ts.MapLike<string> | undefined,
 ): ServerProjectProviderFactory {
-	return (context, servicePlugins, getLanguagePlugins): ServerProjectProvider => {
+	return (context, servicePlugins, getLanguagePlugins, getLanguageId): ServerProjectProvider => {
 
 		const { fs } = context.runtimeEnv;
 		const configProjects = createUriMap<Promise<TypeScriptServerProject>>(fileNameToUri);
@@ -217,7 +217,16 @@ export function createTypeScriptProjectProviderFactory(
 			if (!projectPromise) {
 				const workspaceFolder = getWorkspaceFolder(fileNameToUri(tsconfig), context.workspaceFolders);
 				const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-				projectPromise = createTypeScriptServerProject(ts, tsLocalized, tsconfig, context, serviceEnv, servicePlugins, getLanguagePlugins);
+				projectPromise = createTypeScriptServerProject(
+					ts,
+					tsLocalized,
+					tsconfig,
+					context,
+					serviceEnv,
+					servicePlugins,
+					getLanguagePlugins,
+					getLanguageId,
+				);
 				configProjects.pathSet(tsconfig, projectPromise);
 			}
 			return projectPromise;
@@ -229,7 +238,16 @@ export function createTypeScriptProjectProviderFactory(
 				inferredProjects.uriSet(workspaceFolder, (async () => {
 					const inferOptions = await getInferredCompilerOptions(context);
 					const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-					return createTypeScriptServerProject(ts, tsLocalized, inferOptions, context, serviceEnv, servicePlugins, getLanguagePlugins);
+					return createTypeScriptServerProject(
+						ts,
+						tsLocalized,
+						inferOptions,
+						context,
+						serviceEnv,
+						servicePlugins,
+						getLanguagePlugins,
+						getLanguageId,
+					);
 				})());
 			}
 

@@ -7,13 +7,14 @@ import { asPosix, defaultCompilerOptions, fileNameToUri, uriToFileName } from '.
 import { createTypeScriptLanguage } from '@volar/typescript';
 
 export function createTypeScriptChecker(
-	languages: LanguagePlugin[],
-	services: LanguageServicePlugin[],
+	languagePlugins: LanguagePlugin[],
+	languageServicePlugins: LanguageServicePlugin[],
 	tsconfig: string,
+	getLanguageId = resolveCommonLanguageId,
 ) {
 	const tsconfigPath = asPosix(tsconfig);
-	return createTypeScriptCheckerWorker(languages, services, env => {
-		return createTypeScriptLanguageHost(
+	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, env => {
+		return createTypeScriptProjectHost(
 			tsconfigPath,
 			env,
 			() => {
@@ -24,36 +25,39 @@ export function createTypeScriptChecker(
 					undefined,
 					tsconfigPath,
 					undefined,
-					languages.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
+					languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
 				);
 				parsed.fileNames = parsed.fileNames.map(asPosix);
 				return parsed;
 			},
+			getLanguageId,
 		);
 	});
 }
 
 export function createTypeScriptInferredChecker(
-	languages: LanguagePlugin[],
-	services: LanguageServicePlugin[],
+	languagePlugins: LanguagePlugin[],
+	languageServicePlugins: LanguageServicePlugin[],
 	getScriptFileNames: () => string[],
+	getLanguageId = resolveCommonLanguageId,
 	compilerOptions = defaultCompilerOptions
 ) {
-	return createTypeScriptCheckerWorker(languages, services, env => {
-		return createTypeScriptLanguageHost(
+	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, env => {
+		return createTypeScriptProjectHost(
 			undefined,
 			env,
 			() => ({
 				options: compilerOptions,
 				fileNames: getScriptFileNames().map(asPosix),
 			}),
+			getLanguageId,
 		);
 	});
 }
 
 function createTypeScriptCheckerWorker(
-	languages: LanguagePlugin[],
-	services: LanguageServicePlugin[],
+	languagePlugins: LanguagePlugin[],
+	languageServicePlugins: LanguageServicePlugin[],
 	getProjectHost: (env: ServiceEnvironment) => TypeScriptProjectHost
 ) {
 
@@ -73,12 +77,12 @@ function createTypeScriptCheckerWorker(
 
 	const language = createTypeScriptLanguage(
 		ts,
-		languages,
+		languagePlugins,
 		getProjectHost(env),
 	);
 	const service = createLanguageService(
 		language,
-		services,
+		languageServicePlugins,
 		env,
 	);
 
@@ -195,10 +199,11 @@ function createTypeScriptCheckerWorker(
 	}
 }
 
-function createTypeScriptLanguageHost(
+function createTypeScriptProjectHost(
 	configFileName: string | undefined,
 	env: ServiceEnvironment,
-	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>
+	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>,
+	getLanguageId: (fileName: string) => string,
 ) {
 
 	let scriptSnapshotsCache: Map<string, ts.IScriptSnapshot | undefined> = new Map();
@@ -235,7 +240,7 @@ function createTypeScriptLanguageHost(
 			}
 			return scriptSnapshotsCache.get(fileName);
 		},
-		getLanguageId: resolveCommonLanguageId,
+		getLanguageId,
 		fileNameToScriptId: env.typescript!.fileNameToUri,
 		scriptIdToFileName: env.typescript!.uriToFileName,
 	};

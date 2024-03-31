@@ -1,11 +1,12 @@
-import { resolveCommonLanguageId, type Language } from '@volar/language-core';
+import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
 
 export function decorateLanguageServiceHost(
+	ts: typeof import('typescript'),
 	language: Language,
 	languageServiceHost: ts.LanguageServiceHost,
-	ts: typeof import('typescript'),
+	getLanguageId: (fileName: string) => string,
 ) {
 
 	let extraProjectVersion = 0;
@@ -117,7 +118,7 @@ export function decorateLanguageServiceHost(
 
 			if (snapshot) {
 				extraProjectVersion++;
-				const sourceScript = language.scripts.set(fileName, resolveCommonLanguageId(fileName), snapshot);
+				const sourceScript = language.scripts.set(fileName, getLanguageId(fileName), snapshot);
 				if (sourceScript.generated) {
 					const text = snapshot.getText(0, snapshot.getLength());
 					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
