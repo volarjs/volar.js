@@ -15,6 +15,7 @@ export function proxyCreateProgram(
 			assert(!!options.host, '!!options.host');
 
 			const sourceFileToSnapshotMap = new WeakMap<ts.SourceFile, ts.IScriptSnapshot>();
+			const customExtensions = extensions.map(ext => ext.slice(1));
 			const language = createLanguage(
 				getLanguagePlugins(ts, options),
 				ts.sys.useCaseSensitiveFileNames,
@@ -40,7 +41,11 @@ export function proxyCreateProgram(
 						}
 					}
 					if (snapshot) {
-						language.scripts.set(fileName, resolveCommonLanguageId(fileName), snapshot);
+						let languageId = resolveCommonLanguageId(fileName);
+						if (customExtensions.some(ext => ext === languageId)) {
+							languageId = 'vue';
+						}
+						language.scripts.set(fileName, languageId, snapshot);
 					}
 					else {
 						language.scripts.delete(fileName);

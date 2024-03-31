@@ -27,6 +27,7 @@ export async function createTypeScriptServerProject(
 	let parsedCommandLine: ts.ParsedCommandLine;
 	let projectVersion = 0;
 	let languageService: LanguageService | undefined;
+	let customExtensions: string[] = [];
 
 	const sys = createSys(ts, serviceEnv, uriToFileName(serviceEnv.workspaceFolder));
 	const host: TypeScriptProjectHost = {
@@ -62,7 +63,14 @@ export async function createTypeScriptServerProject(
 			return parsedCommandLine.projectReferences;
 		},
 		getLanguageId(uri) {
-			return context.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri);
+			let languageId = context.documents.get(uri)?.languageId;
+			if (!languageId) {
+				languageId = resolveCommonLanguageId(uri);
+				if (customExtensions.some(ext => ext === languageId)) {
+					languageId = 'vue';
+				}
+			}
+			return languageId;
 		},
 		fileNameToScriptId: serviceEnv.typescript!.fileNameToUri,
 		scriptIdToFileName: serviceEnv.typescript!.uriToFileName,
@@ -74,6 +82,7 @@ export async function createTypeScriptServerProject(
 			sys,
 		},
 	});
+	customExtensions = languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => ext.extension) ?? []).flat();
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
 	const docChangeWatcher = context.documents.onDidChangeContent(() => {
 		projectVersion++;
