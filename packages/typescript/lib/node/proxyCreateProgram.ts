@@ -1,6 +1,7 @@
 import type * as ts from 'typescript';
 import { decorateProgram } from './decorateProgram';
 import { LanguagePlugin, createLanguage } from '@volar/language-core';
+import { createResolveModuleName } from '../resolveModuleName';
 
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
@@ -24,8 +25,7 @@ export function proxyCreateProgram(
 				ts.sys.useCaseSensitiveFileNames,
 				fileName => {
 					let snapshot: ts.IScriptSnapshot | undefined;
-					assert(originalSourceFiles.has(fileName), `originalSourceFiles.has(${fileName})`);
-					const sourceFile = originalSourceFiles.get(fileName);
+					const sourceFile = originalHost.getSourceFile(fileName, 99 satisfies ts.ScriptTarget.ESNext);
 					if (sourceFile) {
 						snapshot = sourceFileToSnapshotMap.get(sourceFile);
 						if (!snapshot) {
@@ -51,35 +51,17 @@ export function proxyCreateProgram(
 					}
 				}
 			);
-			const originalSourceFiles = new Map<string, ts.SourceFile | undefined>();
 			const parsedSourceFiles = new WeakMap<ts.SourceFile, ts.SourceFile>();
-			const arbitraryExtensions = extensions.map(ext => `.d${ext}.ts`);
 			const originalHost = options.host;
-			const moduleResolutionHost: ts.ModuleResolutionHost = {
-				...originalHost,
-				fileExists(fileName) {
-					for (let i = 0; i < arbitraryExtensions.length; i++) {
-						if (fileName.endsWith(arbitraryExtensions[i])) {
-							return originalHost.fileExists(fileName.slice(0, -arbitraryExtensions[i].length) + extensions[i]);
-						}
-					}
-					return originalHost.fileExists(fileName);
-				},
-			};
 
 			options.host = { ...originalHost };
-			options.options.allowArbitraryExtensions = true;
 			options.host.getSourceFile = (
 				fileName,
 				languageVersionOrOptions,
 				onError,
 				shouldCreateNewSourceFile,
 			) => {
-
 				const originalSourceFile = originalHost.getSourceFile(fileName, languageVersionOrOptions, onError, shouldCreateNewSourceFile);
-
-				originalSourceFiles.set(fileName, originalSourceFile);
-
 				if (originalSourceFile && extensions.some(ext => fileName.endsWith(ext))) {
 					let sourceFile2 = parsedSourceFiles.get(originalSourceFile);
 					if (!sourceFile2) {
@@ -88,14 +70,14 @@ export function proxyCreateProgram(
 						let patchedText = originalSourceFile.text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 						let scriptKind = ts.ScriptKind.TS;
 						if (sourceScript.generated?.languagePlugin.typescript) {
-							const { getServiceScript: getScript, getExtraServiceScripts: getExtraScripts } = sourceScript.generated.languagePlugin.typescript;
-							const serviceScript = getScript(sourceScript.generated.root);
+							const { getServiceScript, getExtraServiceScripts } = sourceScript.generated.languagePlugin.typescript;
+							const serviceScript = getServiceScript(sourceScript.generated.root);
 							if (serviceScript) {
 								scriptKind = serviceScript.scriptKind;
 								patchedText += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
 							}
-							if (getExtraScripts) {
-								console.warn('getExtraScripts() is not available in this use case.');
+							if (getExtraServiceScripts) {
+								console.warn('getExtraServiceScripts() is not available in this use case.');
 							}
 						}
 						sourceFile2 = ts.createSourceFile(
@@ -114,29 +96,47 @@ export function proxyCreateProgram(
 
 				return originalSourceFile;
 			};
-			options.host.resolveModuleNameLiterals = (
-				moduleNames,
-				containingFile,
-				redirectedReference,
-				options,
-			) => {
-				return moduleNames.map<ts.ResolvedModuleWithFailedLookupLocations>(name => {
-					return resolveModuleName(name.text, containingFile, options, redirectedReference);
-				});
-			};
-			options.host.resolveModuleNames = (
-				moduleNames,
-				containingFile,
-				_reusedNames,
-				redirectedReference,
-				options,
-			) => {
-				return moduleNames.map<ts.ResolvedModule | undefined>(name => {
-					return resolveModuleName(name, containingFile, options, redirectedReference).resolvedModule;
-				});
-			};
 
-			const program = Reflect.apply(target, thisArg, [options]) as ts.Program;
+			if (extensions.length) {
+				options.options.allowArbitraryExtensions = true;
+
+				const resolveModuleName = createResolveModuleName(ts, originalHost, language.plugins, fileName => language.scripts.get(fileName));
+				const resolveModuleNameLiterals = originalHost.resolveModuleNameLiterals;
+				const resolveModuleNames = originalHost.resolveModuleNames;
+				const moduleResolutionCache = ts.createModuleResolutionCache(originalHost.getCurrentDirectory(), originalHost.getCanonicalFileName, options.options);
+
+				options.host.resolveModuleNameLiterals = (
+					moduleLiterals,
+					containingFile,
+					redirectedReference,
+					compilerOptions,
+					...rest
+				) => {
+					if (resolveModuleNameLiterals && moduleLiterals.every(name => !extensions.some(ext => name.text.endsWith(ext)))) {
+						return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, compilerOptions, ...rest);
+					}
+					return moduleLiterals.map(moduleLiteral => {
+						return resolveModuleName(moduleLiteral.text, containingFile, compilerOptions, moduleResolutionCache, redirectedReference);
+					});
+				};
+				options.host.resolveModuleNames = (
+					moduleNames,
+					containingFile,
+					reusedNames,
+					redirectedReference,
+					compilerOptions,
+					containingSourceFile
+				) => {
+					if (resolveModuleNames && moduleNames.every(name => !extensions.some(ext => name.endsWith(ext)))) {
+						return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, compilerOptions, containingSourceFile);
+					}
+					return moduleNames.map(moduleName => {
+						return resolveModuleName(moduleName, containingFile, compilerOptions, moduleResolutionCache, redirectedReference).resolvedModule;
+					});
+				};
+			}
+
+			const program = Reflect.apply(target, thisArg, args) as ts.Program;
 
 			decorateProgram(language, program);
 
@@ -144,27 +144,6 @@ export function proxyCreateProgram(
 			(program as any).__volar__ = { language };
 
 			return program;
-
-			function resolveModuleName(name: string, containingFile: string, options: ts.CompilerOptions, redirectedReference: ts.ResolvedProjectReference | undefined) {
-				const resolved = ts.resolveModuleName(
-					name,
-					containingFile,
-					options,
-					moduleResolutionHost,
-					originalHost.getModuleResolutionCache?.(),
-					redirectedReference
-				);
-				if (resolved.resolvedModule) {
-					for (let i = 0; i < arbitraryExtensions.length; i++) {
-						if (resolved.resolvedModule.resolvedFileName.endsWith(arbitraryExtensions[i])) {
-							const sourceFileName = resolved.resolvedModule.resolvedFileName.slice(0, -arbitraryExtensions[i].length) + extensions[i];
-							resolved.resolvedModule.resolvedFileName = sourceFileName;
-							resolved.resolvedModule.extension = extensions[i];
-						}
-					}
-				}
-				return resolved;
-			}
 		},
 	});
 }

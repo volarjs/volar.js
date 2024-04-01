@@ -3,18 +3,20 @@ import type * as ts from 'typescript';
 
 export function createResolveModuleName(
 	ts: typeof import('typescript'),
-	languageServiceHost: ts.LanguageServiceHost,
+	host: ts.ModuleResolutionHost,
 	languagePlugins: LanguagePlugin<any>[],
 	getSourceScript: (fileName: string) => SourceScript | undefined,
 ) {
 	const toPatchResults = new Map<string, string>();
 	const moduleResolutionHost: ts.ModuleResolutionHost = {
-		readFile: languageServiceHost.readFile.bind(languageServiceHost),
-		directoryExists: languageServiceHost.directoryExists?.bind(languageServiceHost),
-		realpath: languageServiceHost.realpath?.bind(languageServiceHost),
-		getCurrentDirectory: languageServiceHost.getCurrentDirectory.bind(languageServiceHost),
-		getDirectories: languageServiceHost.getDirectories?.bind(languageServiceHost),
-		useCaseSensitiveFileNames: languageServiceHost.useCaseSensitiveFileNames?.bind(languageServiceHost),
+		readFile: host.readFile.bind(host),
+		directoryExists: host.directoryExists?.bind(host),
+		realpath: host.realpath?.bind(host),
+		getCurrentDirectory: host.getCurrentDirectory?.bind(host),
+		getDirectories: host.getDirectories?.bind(host),
+		useCaseSensitiveFileNames: typeof host.useCaseSensitiveFileNames === 'function'
+			? host.useCaseSensitiveFileNames.bind(host)
+			: host.useCaseSensitiveFileNames,
 		fileExists(fileName) {
 			for (const { typescript } of languagePlugins) {
 				if (!typescript) {
@@ -30,7 +32,7 @@ export function createResolveModuleName(
 					}
 				}
 			}
-			return languageServiceHost.fileExists(fileName);
+			return host.fileExists(fileName);
 		},
 	};
 	return (
@@ -66,8 +68,8 @@ export function createResolveModuleName(
 
 	// fix https://github.com/vuejs/language-tools/issues/3332
 	function fileExists(fileName: string) {
-		if (languageServiceHost.fileExists(fileName)) {
-			const fileSize = ts.sys.getFileSize?.(fileName) ?? languageServiceHost.readFile(fileName)?.length ?? 0;
+		if (host.fileExists(fileName)) {
+			const fileSize = ts.sys.getFileSize?.(fileName) ?? host.readFile(fileName)?.length ?? 0;
 			return fileSize < 4 * 1024 * 1024;
 		}
 		return false;

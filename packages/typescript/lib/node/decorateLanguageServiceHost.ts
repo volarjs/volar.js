@@ -11,7 +11,7 @@ export function decorateLanguageServiceHost(
 
 	let extraProjectVersion = 0;
 
-	const exts = language.plugins
+	const extensions = language.plugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 		.flat();
 	const scripts = new Map<string, [version: string, {
@@ -31,7 +31,7 @@ export function decorateLanguageServiceHost(
 	if (readDirectory) {
 		languageServiceHost.readDirectory = (path, extensions, exclude, include, depth) => {
 			if (extensions) {
-				for (const ext of exts) {
+				for (const ext of extensions) {
 					if (!extensions.includes(ext)) {
 						extensions = [...extensions, ...ext];
 					}
@@ -41,9 +41,13 @@ export function decorateLanguageServiceHost(
 		};
 	}
 
-	if (language.plugins.some(language => language.typescript?.extraFileExtensions.length)) {
+	if (extensions.length) {
 
 		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(fileName));
+		const getCanonicalFileName = languageServiceHost.useCaseSensitiveFileNames?.()
+			? (fileName: string) => fileName
+			: (fileName: string) => fileName.toLowerCase();
+		const moduleResolutionCache = ts.createModuleResolutionCache(languageServiceHost.getCurrentDirectory(), getCanonicalFileName, languageServiceHost.getCompilationSettings());
 
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
@@ -53,11 +57,11 @@ export function decorateLanguageServiceHost(
 				options,
 				...rest
 			) => {
-				if (moduleLiterals.every(name => !exts.some(ext => name.text.endsWith(ext)))) {
+				if (moduleLiterals.every(name => !extensions.some(ext => name.text.endsWith(ext)))) {
 					return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, options, ...rest);
 				}
 				return moduleLiterals.map(moduleLiteral => {
-					return resolveModuleName(moduleLiteral.text, containingFile, options, undefined, redirectedReference);
+					return resolveModuleName(moduleLiteral.text, containingFile, options, moduleResolutionCache, redirectedReference);
 				});
 			};
 		}
@@ -70,11 +74,11 @@ export function decorateLanguageServiceHost(
 				options,
 				containingSourceFile
 			) => {
-				if (moduleNames.every(name => !exts.some(ext => name.endsWith(ext)))) {
+				if (moduleNames.every(name => !extensions.some(ext => name.endsWith(ext)))) {
 					return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, options, containingSourceFile);
 				}
 				return moduleNames.map(moduleName => {
-					return resolveModuleName(moduleName, containingFile, options, undefined, redirectedReference).resolvedModule;
+					return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference).resolvedModule;
 				});
 			};
 		}

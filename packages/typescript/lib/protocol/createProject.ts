@@ -60,7 +60,7 @@ export function createTypeScriptLanguage(
 		// TODO: can this share between monorepo packages?
 		const moduleCache = ts.createModuleResolutionCache(
 			languageServiceHost.getCurrentDirectory(),
-			languageServiceHost.useCaseSensitiveFileNames ? s => s : s => s.toLowerCase(),
+			languageServiceHost.useCaseSensitiveFileNames?.() ? s => s : s => s.toLowerCase(),
 			languageServiceHost.getCompilationSettings()
 		);
 		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, languagePlugins, fileName => language.scripts.get(projectHost.fileNameToScriptId(fileName)));
