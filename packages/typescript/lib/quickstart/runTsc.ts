@@ -42,6 +42,15 @@ export function runTsc(
 				+ s.replace('createProgram', '_createProgram')
 			);
 
+			// proxy convertToDiagnosticRelatedInformation for `--incremental`
+			try {
+				tsc = replace(tsc, /function convertToDiagnosticRelatedInformation\(.+\) {/, s =>
+					`var convertToDiagnosticRelatedInformation = require(${JSON.stringify(proxyApiPath)})`
+					+ `.proxyConvertToDiagnosticRelatedInformation(_convertToDiagnosticRelatedInformation);\n`
+					+ s.replace('convertToDiagnosticRelatedInformation', '_convertToDiagnosticRelatedInformation')
+				);
+			} catch { /*ignore*/ }
+
 			return tsc;
 		}
 		return (readFileSync as any)(...args);
