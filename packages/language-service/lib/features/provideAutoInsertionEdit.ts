@@ -6,21 +6,22 @@ import { isAutoInsertEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, position: vscode.Position, lastChange: { range: vscode.Range; text: string; }, token = NoneCancellationToken) => {
+	return (uri: string, selection: vscode.Position, change: { rangeOffset: number; rangeLength: number; text: string; }, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
 			uri,
-			() => ({ position, lastChange }),
+			() => ({ selection, change }),
 			function* (map) {
-				for (const mappedPosition of map.getGeneratedPositions(position, isAutoInsertEnabled)) {
-					const range = map.getGeneratedRange(lastChange.range);
-					if (range) {
+				for (const mappedPosition of map.getGeneratedPositions(selection, isAutoInsertEnabled)) {
+					const mapped = map.map.getGeneratedOffset(change.rangeOffset);
+					if (mapped) {
 						yield {
-							position: mappedPosition,
-							lastChange: {
-								text: lastChange.text,
-								range,
+							selection: mappedPosition,
+							change: {
+								text: change.text,
+								rangeOffset: mapped[0],
+								rangeLength: change.rangeLength,
 							},
 						};
 					}
@@ -30,7 +31,7 @@ export function register(context: ServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service[1].provideAutoInsertionEdit?.(document, args.position, args.lastChange, token);
+				return service[1].provideAutoInsertionEdit?.(document, args.selection, args.change, token);
 			},
 			(item, map) => {
 				if (!map || typeof item === 'string') {
