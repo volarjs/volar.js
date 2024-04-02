@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import { AutoInsertRequest } from '@volar/language-server/protocol';
+import type { LanguageServicePlugin } from '@volar/language-server';
 
 export function activate(selector: vscode.DocumentSelector, client: BaseLanguageClient) {
 
@@ -47,8 +48,32 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 			timeout = undefined;
 		}
 		const version = document.version;
-		const isCancel = () => document !== vscode.window.activeTextEditor?.document
-			|| vscode.window.activeTextEditor?.document.version !== version;
+		const lastCharacter = lastChange.text[lastChange.text.length - 1];
+		const isCancel = () => {
+			if (document !== vscode.window.activeTextEditor?.document) {
+				return true;
+			}
+			if (vscode.window.activeTextEditor?.document.version !== version) {
+				return true;
+			}
+			const triggerCharacters: LanguageServicePlugin['autoInsertionTriggerCharacters'] = client.initializeResult?.autoInsertion.triggerCharacters;
+			for (const char of triggerCharacters ?? []) {
+				if (typeof char === 'string') {
+					if (lastCharacter.match(new RegExp(char))) {
+						return false;
+					}
+				}
+				else {
+					if (
+						char.characters.some(char => lastCharacter.match(new RegExp(char)))
+						&& vscode.workspace.getConfiguration().get<boolean>(char.configurationSection)
+					) {
+						return false;
+					}
+				}
+			}
+			return true;
+		};
 
 		timeout = setTimeout(async () => {
 			timeout = undefined;

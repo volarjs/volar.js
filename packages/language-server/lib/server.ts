@@ -164,6 +164,10 @@ export function createServerBase(
 			capabilities: getServerCapabilities(serverOptions.watchFileExtensions ?? [], servicePlugins, semanticTokensLegend),
 		};
 
+		result.autoInsertion = {
+			triggerCharacters: servicePlugins.map(plugin => plugin.autoInsertionTriggerCharacters ?? []).flat(),
+		};
+
 		if (params.initializationOptions?.diagnosticModel !== DiagnosticModel.Pull) {
 			result.capabilities.diagnosticProvider = undefined;
 		}

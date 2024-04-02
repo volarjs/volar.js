@@ -89,6 +89,10 @@ export interface LanguageServicePlugin<P = any> {
 	signatureHelpTriggerCharacters?: string[];
 	signatureHelpRetriggerCharacters?: string[];
 	autoFormatTriggerCharacters?: string[];
+	autoInsertionTriggerCharacters?: (string | {
+		characters: string[];
+		configurationSection: string;
+	})[];
 	create(context: ServiceContext): LanguageServicePluginInstance<P>;
 }
 
