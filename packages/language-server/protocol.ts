@@ -43,7 +43,6 @@ export namespace AutoInsertRequest {
 		textDocument: vscode.TextDocumentIdentifier;
 		selection: vscode.Position;
 		change: {
-			range: vscode.Range;
 			rangeOffset: number;
 			rangeLength: number;
 			text: string;

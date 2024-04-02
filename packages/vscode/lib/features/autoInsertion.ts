@@ -74,7 +74,6 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 				selection: client.code2ProtocolConverter.asPosition(selection),
 				change: {
-					range: client.code2ProtocolConverter.asRange(lastChange.range),
 					rangeLength: lastChange.rangeLength,
 					rangeOffset: lastChange.rangeOffset,
 					text: lastChange.text,
