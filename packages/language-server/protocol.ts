@@ -39,13 +39,16 @@ export namespace GetMatchTsConfigRequest {
 }
 
 export namespace AutoInsertRequest {
-	export type ParamsType = vscode.TextDocumentPositionParams & {
-		lastChange: {
-			range: vscode.Range;
+	export type ParamsType = {
+		textDocument: vscode.TextDocumentIdentifier;
+		selection: vscode.Position;
+		change: {
+			rangeOffset: number;
+			rangeLength: number;
 			text: string;
 		};
 	};
-	export type ResponseType = string | vscode.TextEdit | null | undefined;
+	export type ResponseType = string | null | undefined;
 	export type ErrorType = never;
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/autoInsert');
 }

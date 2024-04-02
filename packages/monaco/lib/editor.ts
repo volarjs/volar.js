@@ -1,6 +1,6 @@
 import type { LanguageService } from '@volar/language-service';
 import type { editor, IDisposable, MonacoEditor, Uri } from 'monaco-types';
-import { fromPosition, fromRange, toMarkerData, toTextEdit } from 'monaco-languageserver-types';
+import { fromPosition, toMarkerData, toTextEdit } from 'monaco-languageserver-types';
 import { markers } from './markers.js';
 
 interface IInternalEditorModel extends editor.IModel {
@@ -189,8 +189,9 @@ export function activateAutoInsertion(
 						column: lastChange.range.startColumn + lastChange.text.length,
 					}),
 					{
-						range: fromRange(lastChange.range),
 						text: lastChange.text,
+						rangeOffset: lastChange.rangeOffset,
+						rangeLength: lastChange.rangeLength,
 					},
 				);
 				if (model.getVersionId() !== version) {

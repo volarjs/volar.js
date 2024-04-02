@@ -279,7 +279,7 @@ export function registerLanguageFeatures(
 	});
 	connection.onRequest(AutoInsertRequest.type, async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
-			return service.doAutoInsert(params.textDocument.uri, params.position, params.lastChange, token);
+			return service.doAutoInsert(params.textDocument.uri, params.selection, params.change, token);
 		});
 	});
 
