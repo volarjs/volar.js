@@ -11,6 +11,7 @@ export function decorateProgram(language: Language, program: ts.Program) {
 	const getSyntacticDiagnostics = program.getSyntacticDiagnostics;
 	const getSemanticDiagnostics = program.getSemanticDiagnostics;
 	const getGlobalDiagnostics = program.getGlobalDiagnostics;
+	const getSourceFileByPath = program.getSourceFileByPath;
 
 	// for tsc --noEmit --watch
 	// @ts-ignore
@@ -45,5 +46,18 @@ export function decorateProgram(language: Language, program: ts.Program) {
 		return (getBindAndCheckDiagnostics as typeof getSyntacticDiagnostics)(sourceFile, cancellationToken)
 			.map(d => transformDiagnostic(language, d))
 			.filter(notEmpty);
+	};
+
+	// fix https://github.com/vuejs/language-tools/issues/4099
+	program.getSourceFileByPath = path => {
+		const sourceFile = getSourceFileByPath(path);
+		if (sourceFile) {
+			const sourceScript = language.scripts.get(sourceFile.fileName);
+			if (sourceScript?.generated) {
+				sourceFile.text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())
+					+ sourceFile.text.substring(sourceScript.snapshot.getLength());
+			}
+		}
+		return sourceFile;
 	};
 }

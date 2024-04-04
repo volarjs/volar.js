@@ -2,7 +2,6 @@ import type * as ts from 'typescript';
 import { decorateProgram } from './decorateProgram';
 import { Language, LanguagePlugin, createLanguage } from '@volar/language-core';
 import { createResolveModuleName } from '../resolveModuleName';
-import { transformSourceFile } from './transform';
 
 let language: Language;
 
@@ -156,25 +155,4 @@ function assert(condition: unknown, message: string): asserts condition {
 		console.error(message);
 		throw new Error(message);
 	}
-}
-
-export function proxyConvertToDiagnosticRelatedInformation(
-	original: Function,
-) {
-	return new Proxy(original, {
-		apply: (target, thisArg, args) => {
-			const diagnostic = Reflect.apply(target, thisArg, args) as ts.DiagnosticRelatedInformation;
-			const { file } = diagnostic;
-			const sourceScript = file ? language.scripts.get(file.fileName) : undefined;
-
-			if (!sourceScript) {
-				return diagnostic;
-			}
-
-			return {
-				...diagnostic,
-				file: transformSourceFile(file!, sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())),
-			};
-		},
-	});
 }

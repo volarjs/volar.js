@@ -3,7 +3,6 @@ import type * as ts from 'typescript';
 import { getServiceScript, notEmpty } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
-const transformedSourceFiles = new WeakMap<ts.SourceFile, ts.SourceFile>();
 
 export function transformCallHierarchyItem(language: Language, item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
 	const span = transformSpan(language, item.file, item.span, filter);
@@ -39,7 +38,6 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 						...diagnostic,
 						start: sourceSpan.start,
 						length: sourceSpan.length,
-						file: transformSourceFile(diagnostic.file, sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())),
 					});
 				}
 			}
@@ -52,16 +50,6 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 		}
 	}
 	return transformedDiagnostics.get(diagnostic) as T | undefined;
-}
-
-export function transformSourceFile(sourceFile: ts.SourceFile, sourceText: string): ts.SourceFile {
-	if (!transformedSourceFiles.has(sourceFile)) {
-		transformedSourceFiles.set(sourceFile, {
-			...sourceFile,
-			text: sourceText,
-		});
-	}
-	return transformedSourceFiles.get(sourceFile)!;
 }
 
 export function transformFileTextChanges(language: Language, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
