@@ -1,7 +1,7 @@
-import type * as ts from 'typescript';
-import { decorateProgram } from './decorateProgram';
 import { LanguagePlugin, createLanguage } from '@volar/language-core';
+import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
+import { decorateProgram } from './decorateProgram';
 
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
