@@ -1,6 +1,6 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { notEmpty } from './utils';
+import { getServiceScript, notEmpty } from './utils';
 import { transformDiagnostic } from './transform';
 
 export function decorateProgram(language: Language, program: ts.Program) {
@@ -52,8 +52,8 @@ export function decorateProgram(language: Language, program: ts.Program) {
 	program.getSourceFileByPath = path => {
 		const sourceFile = getSourceFileByPath(path);
 		if (sourceFile) {
-			const sourceScript = language.scripts.get(sourceFile.fileName);
-			if (sourceScript?.generated) {
+			const [serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
+			if (serviceScript) {
 				sourceFile.text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())
 					+ sourceFile.text.substring(sourceScript.snapshot.getLength());
 			}
