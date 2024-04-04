@@ -1,9 +1,7 @@
+import { LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { decorateProgram } from './decorateProgram';
-import { Language, LanguagePlugin, createLanguage } from '@volar/language-core';
 import { createResolveModuleName } from '../resolveModuleName';
-
-let language: Language;
+import { decorateProgram } from './decorateProgram';
 
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
@@ -22,7 +20,7 @@ export function proxyCreateProgram(
 				.map(plugin => plugin.typescript?.extraFileExtensions.map(({ extension }) => `.${extension}`) ?? [])
 				.flat();
 			const sourceFileToSnapshotMap = new WeakMap<ts.SourceFile, ts.IScriptSnapshot>();
-			language = createLanguage(
+			const language = createLanguage(
 				languagePlugins,
 				ts.sys.useCaseSensitiveFileNames,
 				fileName => {
