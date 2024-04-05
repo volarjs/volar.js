@@ -84,7 +84,7 @@ export function createAsyncLanguageServicePlugin(
 						);
 
 						decorateLanguageService(language, info.languageService);
-						decorateLanguageServiceHost(ts, language, info.languageServiceHost, getLanguageId);
+						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 
 						info.project.markAsDirty();
 						initialized = true;
