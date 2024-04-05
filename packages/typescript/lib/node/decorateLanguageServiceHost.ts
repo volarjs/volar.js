@@ -100,44 +100,32 @@ export function decorateLanguageServiceHost(
 	}
 
 	function updateVirtualScript(fileName: string) {
-
 		const version = languageServiceHost.getScriptVersion(fileName);
-
-		if (version !== scripts.get(fileName)?.[0]) {
-
-			let extension = '.ts';
-			let snapshotSnapshot: ts.IScriptSnapshot | undefined;
-			let scriptKind = ts.ScriptKind.TS;
+		let script = scripts.get(fileName);
+		if (script?.[0] !== version) {
+			script = [version];
 
 			const sourceScript = language.scripts.get(fileName);
 			if (sourceScript?.generated) {
-				const text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength());
-				let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
 				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
 				if (serviceScript) {
-					extension = serviceScript.extension;
-					scriptKind = serviceScript.scriptKind;
-					patchedText += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
+					const sourceContents = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength());
+					let virtualContents = sourceContents.split('\n').map(line => ' '.repeat(line.length)).join('\n');
+					virtualContents += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
+					script[1] = {
+						extension: serviceScript.extension,
+						kind: serviceScript.scriptKind,
+						snapshot: ts.ScriptSnapshot.fromString(virtualContents),
+					};
 				}
-				snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
 				if (sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts) {
 					console.warn('getExtraServiceScripts() is not available in TS plugin.');
 				}
 			}
 
-			scripts.set(fileName, [
-				version,
-				snapshotSnapshot
-					? {
-						extension,
-						snapshot: snapshotSnapshot,
-						kind: scriptKind,
-					}
-					: undefined,
-			]);
+			scripts.set(fileName, script);
 		}
-
-		return scripts.get(fileName)?.[1];
+		return script[1];
 	}
 }
 
