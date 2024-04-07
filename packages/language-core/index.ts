@@ -138,6 +138,12 @@ export function updateVirtualCodeMapOfMap(
 	getSourceSnapshot: (id: string | undefined) => [string, ts.IScriptSnapshot] | undefined,
 ) {
 	const sources = new Set<string | undefined>();
+	if (!virtualCode.mappings.length) {
+		const source = getSourceSnapshot(undefined);
+		if (source) {
+			mapOfMap.set(source[0], [source[1], new SourceMap([])]);
+		}
+	}
 	for (const mapping of virtualCode.mappings) {
 		if (sources.has(mapping.source)) {
 			continue;

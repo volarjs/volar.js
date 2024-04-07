@@ -1,7 +1,7 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { getServiceScript, notEmpty } from './utils';
-import { transformDiagnostic } from './transform';
+import { notEmpty } from './utils';
+import { transformDiagnostic, fillSourceFileText } from './transform';
 
 export function decorateProgram(language: Language, program: ts.Program) {
 
@@ -48,15 +48,11 @@ export function decorateProgram(language: Language, program: ts.Program) {
 			.filter(notEmpty);
 	};
 
-	// fix https://github.com/vuejs/language-tools/issues/4099
+	// fix https://github.com/vuejs/language-tools/issues/4099 with `incremental`
 	program.getSourceFileByPath = path => {
 		const sourceFile = getSourceFileByPath(path);
 		if (sourceFile) {
-			const [serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
-			if (serviceScript) {
-				sourceFile.text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())
-					+ sourceFile.text.substring(sourceScript.snapshot.getLength());
-			}
+			fillSourceFileText(language, sourceFile);
 		}
 		return sourceFile;
 	};
