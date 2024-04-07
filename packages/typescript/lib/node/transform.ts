@@ -38,6 +38,7 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 						...diagnostic,
 						start: sourceSpan.start,
 						length: sourceSpan.length,
+						file: transformSourceFile(language, diagnostic.file),
 					});
 				}
 			}
@@ -50,6 +51,16 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 		}
 	}
 	return transformedDiagnostics.get(diagnostic) as T | undefined;
+}
+
+// fix https://github.com/vuejs/language-tools/issues/4099 without `incremental`
+export function transformSourceFile(language: Language, sourceFile: ts.SourceFile): ts.SourceFile {
+	const [serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
+	if (serviceScript) {
+		sourceFile.text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())
+			+ sourceFile.text.substring(sourceScript.snapshot.getLength());
+	}
+	return sourceFile;
 }
 
 export function transformFileTextChanges(language: Language, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
