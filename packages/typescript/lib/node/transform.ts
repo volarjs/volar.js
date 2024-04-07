@@ -3,6 +3,7 @@ import type * as ts from 'typescript';
 import { getServiceScript, notEmpty } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
+const transformedSourceFile = new WeakSet<ts.SourceFile>();
 
 export function transformCallHierarchyItem(language: Language, item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
 	const span = transformSpan(language, item.file, item.span, filter);
@@ -55,6 +56,10 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 
 // fix https://github.com/vuejs/language-tools/issues/4099 without `incremental`
 export function transformSourceFile(language: Language, sourceFile: ts.SourceFile): ts.SourceFile {
+	if (transformedSourceFile.has(sourceFile)) {
+		return sourceFile;
+	}
+	transformedSourceFile.add(sourceFile);
 	const [serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 	if (serviceScript) {
 		sourceFile.text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())
