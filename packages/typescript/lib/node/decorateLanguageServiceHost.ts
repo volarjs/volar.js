@@ -6,24 +6,21 @@ export function decorateLanguageServiceHost(
 	ts: typeof import('typescript'),
 	language: Language,
 	languageServiceHost: ts.LanguageServiceHost,
-	getLanguageId: (fileName: string) => string,
 ) {
-
-	let extraProjectVersion = 0;
-
 	const extensions = language.plugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 		.flat();
-	const scripts = new Map<string, [version: string, {
-		snapshot: ts.IScriptSnapshot;
-		kind: ts.ScriptKind;
-		extension: string;
-	}]>();
-
+	const scripts = new Map<string, [
+		version: string,
+		virtualScript?: {
+			snapshot: ts.IScriptSnapshot;
+			kind: ts.ScriptKind;
+			extension: string;
+		},
+	]>();
 	const readDirectory = languageServiceHost.readDirectory?.bind(languageServiceHost);
 	const resolveModuleNameLiterals = languageServiceHost.resolveModuleNameLiterals?.bind(languageServiceHost);
 	const resolveModuleNames = languageServiceHost.resolveModuleNames?.bind(languageServiceHost);
-	const getProjectVersion = languageServiceHost.getProjectVersion?.bind(languageServiceHost);
 	const getScriptSnapshot = languageServiceHost.getScriptSnapshot.bind(languageServiceHost);
 	const getScriptKind = languageServiceHost.getScriptKind?.bind(languageServiceHost);
 
@@ -84,12 +81,6 @@ export function decorateLanguageServiceHost(
 		}
 	}
 
-	if (getProjectVersion) {
-		languageServiceHost.getProjectVersion = () => {
-			return getProjectVersion() + ':' + extraProjectVersion;
-		};
-	}
-
 	languageServiceHost.getScriptSnapshot = fileName => {
 		const virtualScript = updateVirtualScript(fileName);
 		if (virtualScript) {
@@ -109,53 +100,32 @@ export function decorateLanguageServiceHost(
 	}
 
 	function updateVirtualScript(fileName: string) {
-
 		const version = languageServiceHost.getScriptVersion(fileName);
+		let script = scripts.get(fileName);
+		if (script?.[0] !== version) {
+			script = [version];
 
-		if (version !== scripts.get(fileName)?.[0]) {
-
-			let extension = '.ts';
-			let snapshotSnapshot: ts.IScriptSnapshot | undefined;
-			let scriptKind = ts.ScriptKind.TS;
-
-			const snapshot = getScriptSnapshot(fileName);
-
-			if (snapshot) {
-				extraProjectVersion++;
-				const sourceScript = language.scripts.set(fileName, getLanguageId(fileName), snapshot);
-				if (sourceScript.generated) {
-					const text = snapshot.getText(0, snapshot.getLength());
-					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
-					if (serviceScript) {
-						extension = serviceScript.extension;
-						scriptKind = serviceScript.scriptKind;
-						patchedText += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
-					}
-					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
-					if (sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts) {
-						console.warn('getExtraScripts() is not available in this use case.');
-					}
+			const sourceScript = language.scripts.get(fileName);
+			if (sourceScript?.generated) {
+				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+				if (serviceScript) {
+					const sourceContents = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength());
+					let virtualContents = sourceContents.split('\n').map(line => ' '.repeat(line.length)).join('\n');
+					virtualContents += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
+					script[1] = {
+						extension: serviceScript.extension,
+						kind: serviceScript.scriptKind,
+						snapshot: ts.ScriptSnapshot.fromString(virtualContents),
+					};
+				}
+				if (sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts) {
+					console.warn('getExtraServiceScripts() is not available in TS plugin.');
 				}
 			}
-			else if (language.scripts.get(fileName)) {
-				extraProjectVersion++;
-				language.scripts.delete(fileName);
-			}
 
-			if (snapshotSnapshot) {
-				scripts.set(fileName, [
-					version,
-					{
-						extension,
-						snapshot: snapshotSnapshot,
-						kind: scriptKind,
-					}
-				]);
-			}
+			scripts.set(fileName, script);
 		}
-
-		return scripts.get(fileName)?.[1];
+		return script[1];
 	}
 }
 
