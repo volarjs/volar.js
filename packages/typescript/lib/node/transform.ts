@@ -40,7 +40,6 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 						...diagnostic,
 						start: sourceSpan.start,
 						length: sourceSpan.length,
-						file: diagnostic.file,
 					});
 				}
 			}
