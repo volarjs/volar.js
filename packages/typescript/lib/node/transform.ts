@@ -3,6 +3,7 @@ import type * as ts from 'typescript';
 import { getServiceScript, notEmpty } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
+const transformedSourceFile = new WeakSet<ts.SourceFile>();
 
 export function transformCallHierarchyItem(language: Language, item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
 	const span = transformSpan(language, item.file, item.span, filter);
@@ -34,6 +35,7 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 			if (serviceScript) {
 				const sourceSpan = transformTextSpan(sourceScript, map, { start: diagnostic.start, length: diagnostic.length }, shouldReportDiagnostics);
 				if (sourceSpan) {
+					fillSourceFileText(language, diagnostic.file);
 					transformedDiagnostics.set(diagnostic, {
 						...diagnostic,
 						start: sourceSpan.start,
@@ -50,6 +52,20 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 		}
 	}
 	return transformedDiagnostics.get(diagnostic) as T | undefined;
+}
+
+// fix https://github.com/vuejs/language-tools/issues/4099 without `incremental`
+export function fillSourceFileText(language: Language, sourceFile: ts.SourceFile) {
+	if (transformedSourceFile.has(sourceFile)) {
+		return;
+	}
+	transformedSourceFile.add(sourceFile);
+	const [serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
+	if (serviceScript) {
+		sourceFile.text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())
+			+ sourceFile.text.substring(sourceScript.snapshot.getLength());
+	}
+	return;
 }
 
 export function transformFileTextChanges(language: Language, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
