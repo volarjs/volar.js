@@ -35,11 +35,12 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 			if (serviceScript) {
 				const sourceSpan = transformTextSpan(sourceScript, map, { start: diagnostic.start, length: diagnostic.length }, shouldReportDiagnostics);
 				if (sourceSpan) {
+					fillSourceFileText(language, diagnostic.file);
 					transformedDiagnostics.set(diagnostic, {
 						...diagnostic,
 						start: sourceSpan.start,
 						length: sourceSpan.length,
-						file: transformSourceFile(language, diagnostic.file),
+						file: diagnostic.file,
 					});
 				}
 			}
@@ -55,9 +56,9 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 }
 
 // fix https://github.com/vuejs/language-tools/issues/4099 without `incremental`
-export function transformSourceFile(language: Language, sourceFile: ts.SourceFile): ts.SourceFile {
+export function fillSourceFileText(language: Language, sourceFile: ts.SourceFile) {
 	if (transformedSourceFile.has(sourceFile)) {
-		return sourceFile;
+		return;
 	}
 	transformedSourceFile.add(sourceFile);
 	const [serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
@@ -65,7 +66,7 @@ export function transformSourceFile(language: Language, sourceFile: ts.SourceFil
 		sourceFile.text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())
 			+ sourceFile.text.substring(sourceScript.snapshot.getLength());
 	}
-	return sourceFile;
+	return;
 }
 
 export function transformFileTextChanges(language: Language, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {

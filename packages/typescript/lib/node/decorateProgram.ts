@@ -1,7 +1,7 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { notEmpty } from './utils';
-import { transformDiagnostic, transformSourceFile } from './transform';
+import { transformDiagnostic, fillSourceFileText } from './transform';
 
 export function decorateProgram(language: Language, program: ts.Program) {
 
@@ -51,6 +51,9 @@ export function decorateProgram(language: Language, program: ts.Program) {
 	// fix https://github.com/vuejs/language-tools/issues/4099 with `incremental`
 	program.getSourceFileByPath = path => {
 		const sourceFile = getSourceFileByPath(path);
-		return sourceFile && transformSourceFile(language, sourceFile);
+		if (sourceFile) {
+			fillSourceFileText(language, sourceFile);
+		}
+		return sourceFile;
 	};
 }
