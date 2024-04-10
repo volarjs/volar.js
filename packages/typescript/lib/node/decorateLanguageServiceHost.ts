@@ -100,9 +100,12 @@ export function decorateLanguageServiceHost(
 	}
 
 	function updateVirtualScript(fileName: string) {
-		const version = languageServiceHost.getScriptVersion(fileName);
+		const version: string | undefined = languageServiceHost.getScriptVersion(fileName);
+		if (version === undefined) {
+			return;
+		}
 		let script = scripts.get(fileName);
-		if (script?.[0] !== version) {
+		if (!script || script[0] !== version) {
 			script = [version];
 
 			const sourceScript = language.scripts.get(fileName);
