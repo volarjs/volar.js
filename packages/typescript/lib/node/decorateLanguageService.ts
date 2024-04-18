@@ -14,6 +14,7 @@ import {
 	isReferencesEnabled,
 	isRenameEnabled,
 	isSemanticTokensEnabled,
+	isSignatureHelpEnabled,
 	isTypeDefinitionEnabled,
 } from '@volar/language-core';
 import type * as ts from 'typescript';
@@ -67,6 +68,7 @@ export function decorateLanguageService(language: Language, languageService: ts.
 		getImplementationAtPosition,
 		getLinkedEditingRangeAtPosition,
 		getQuickInfoAtPosition,
+		getSignatureHelpItems,
 		getReferencesAtPosition,
 		getSemanticDiagnostics,
 		getSyntacticDiagnostics,
@@ -255,6 +257,27 @@ export function decorateLanguageService(language: Language, languageService: ts.
 		}
 		else {
 			return getQuickInfoAtPosition(fileName, position);
+		}
+	};
+	languageService.getSignatureHelpItems = (fileName, position, options) => {
+		const [serviceScript, sourceScript, map] = getServiceScript(language, fileName);
+		if (serviceScript) {
+			const generatePosition = toGeneratedOffset(sourceScript, map, position, isSignatureHelpEnabled);
+			if (generatePosition !== undefined) {
+				const result = getSignatureHelpItems(fileName, generatePosition, options);
+				if (result) {
+					const applicableSpan = transformTextSpan(sourceScript, map, result.applicableSpan, isSignatureHelpEnabled);
+					if (applicableSpan) {
+						return {
+							...result,
+							applicableSpan,
+						};
+					}
+				}
+			}
+		}
+		else {
+			return getSignatureHelpItems(fileName, position, options);
 		}
 	};
 	languageService.getDocumentHighlights = (fileName, position, filesToSearch) => {
