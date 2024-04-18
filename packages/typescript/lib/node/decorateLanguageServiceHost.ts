@@ -18,6 +18,7 @@ export function decorateLanguageServiceHost(
 			extension: string;
 		},
 	]>();
+	const crashFileNames = new Set<string>();
 	const readDirectory = languageServiceHost.readDirectory?.bind(languageServiceHost);
 	const resolveModuleNameLiterals = languageServiceHost.resolveModuleNameLiterals?.bind(languageServiceHost);
 	const resolveModuleNames = languageServiceHost.resolveModuleNames?.bind(languageServiceHost);
@@ -100,8 +101,18 @@ export function decorateLanguageServiceHost(
 	}
 
 	function updateVirtualScript(fileName: string) {
-		const version: string | undefined = languageServiceHost.getScriptVersion(fileName);
+		if (crashFileNames.has(fileName)) {
+			return;
+		}
+		let version: string | undefined;
+		try {
+			version = languageServiceHost.getScriptVersion(fileName);
+		} catch {
+			// fix https://github.com/vuejs/language-tools/issues/4278
+			crashFileNames.add(fileName);
+		}
 		if (version === undefined) {
+			// somehow getScriptVersion returns undefined
 			return;
 		}
 		let script = scripts.get(fileName);
