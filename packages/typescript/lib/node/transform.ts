@@ -93,13 +93,10 @@ export function transformFileTextChanges(language: Language, changes: ts.FileTex
 export function transformDocumentSpan<T extends ts.DocumentSpan>(language: Language, documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
 	let textSpan = transformSpan(language, documentSpan.fileName, documentSpan.textSpan, filter);
 	if (!textSpan && shouldFallback) {
-		const [serviceScript] = getServiceScript(language, documentSpan.fileName);
-		if (serviceScript) {
-			textSpan = {
-				fileName: documentSpan.fileName,
-				textSpan: { start: 0, length: 0 },
-			};
-		}
+		textSpan = {
+			fileName: documentSpan.fileName,
+			textSpan: { start: 0, length: 0 },
+		};
 	}
 	if (!textSpan) {
 		return;

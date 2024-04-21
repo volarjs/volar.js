@@ -18,7 +18,7 @@ import {
 	isTypeDefinitionEnabled,
 } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { dedupeDocumentSpans, dedupeReferencedSymbols } from './dedupe';
+import { dedupeDocumentSpans } from './dedupe';
 import { getServiceScript, notEmpty } from './utils';
 import { toGeneratedOffset, toSourceOffset, transformCallHierarchyItem, transformDiagnostic, transformDocumentSpan, transformFileTextChanges, transformSpan, transformTextChange, transformTextSpan } from './transform';
 
@@ -515,21 +515,18 @@ export function decorateLanguageService(language: Language, languageService: ts.
 				}
 			},
 		);
-		const resolved = unresolved
+		const resolved: ts.ReferencedSymbol[] = unresolved
 			.flat()
 			.map(symbol => {
-				const definition = transformDocumentSpan(language, symbol.definition, isDefinitionEnabled);
-				if (definition) {
-					return {
-						definition,
-						references: symbol.references
-							.map(r => transformDocumentSpan(language, r, isReferencesEnabled))
-							.filter(notEmpty),
-					};
-				}
-			})
-			.filter(notEmpty);
-		return dedupeReferencedSymbols(resolved);
+				const definition = transformDocumentSpan(language, symbol.definition, isDefinitionEnabled, true)!;
+				return {
+					definition,
+					references: symbol.references
+						.map(r => transformDocumentSpan(language, r, isReferencesEnabled))
+						.filter(notEmpty),
+				};
+			});
+		return resolved;
 	};
 	languageService.getDefinitionAtPosition = (fileName, position) => {
 		const unresolved = linkedCodeFeatureWorker(
@@ -743,9 +740,7 @@ export function decorateLanguageService(language: Language, languageService: ts.
 		worker: (position: number) => T | undefined,
 		getLinkedCodes: (result: T) => Generator<[fileName: string, position: number]>,
 	) {
-
-		let results: T[] = [];
-
+		const results: T[] = [];
 		const processedFilePositions = new Set<string>();
 		const [serviceScript, sourceScript, map] = getServiceScript(language, fileName);
 		if (serviceScript) {
@@ -770,7 +765,7 @@ export function decorateLanguageService(language: Language, languageService: ts.
 			if (!result) {
 				return;
 			}
-			results = results.concat(result);
+			results.push(result);
 			for (const ref of getLinkedCodes(result)) {
 
 				processedFilePositions.add(ref[0] + ':' + ref[1]);

@@ -1,13 +1,5 @@
 import type * as ts from 'typescript';
 
-export function dedupeReferencedSymbols<T extends ts.ReferencedSymbol>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.definition.fileName,
-		item.definition.textSpan.start,
-		item.definition.textSpan.length,
-	].join(':'));
-}
-
 export function dedupeDocumentSpans<T extends ts.DocumentSpan>(items: T[]): T[] {
 	return dedupe(items, item => [
 		item.fileName,
