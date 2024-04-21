@@ -22,29 +22,29 @@ export function decorateProgram(language: Language, program: ts.Program) {
 		return {
 			...result,
 			diagnostics: result.diagnostics
-				.map(d => transformDiagnostic(language, d))
+				.map(d => transformDiagnostic(language, d, true))
 				.filter(notEmpty),
 		};
 	};
 	program.getSyntacticDiagnostics = (sourceFile, cancellationToken) => {
 		return getSyntacticDiagnostics(sourceFile, cancellationToken)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, true))
 			.filter(notEmpty);
 	};
 	program.getSemanticDiagnostics = (sourceFile, cancellationToken) => {
 		return getSemanticDiagnostics(sourceFile, cancellationToken)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, true))
 			.filter(notEmpty);
 	};
 	program.getGlobalDiagnostics = cancellationToken => {
 		return getGlobalDiagnostics(cancellationToken)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, true))
 			.filter(notEmpty);
 	};
 	// @ts-ignore
 	program.getBindAndCheckDiagnostics = (sourceFile, cancellationToken) => {
 		return (getBindAndCheckDiagnostics as typeof getSyntacticDiagnostics)(sourceFile, cancellationToken)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, true))
 			.filter(notEmpty);
 	};
 

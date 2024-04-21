@@ -15,14 +15,14 @@ export function transformCallHierarchyItem(language: Language, item: ts.CallHier
 	};
 }
 
-export function transformDiagnostic<T extends ts.Diagnostic>(language: Language, diagnostic: T): T | undefined {
+export function transformDiagnostic<T extends ts.Diagnostic>(language: Language, diagnostic: T, isTsc: boolean): T | undefined {
 	if (!transformedDiagnostics.has(diagnostic)) {
 		transformedDiagnostics.set(diagnostic, undefined);
 
 		const { relatedInformation } = diagnostic;
 		if (relatedInformation) {
 			diagnostic.relatedInformation = relatedInformation
-				.map(d => transformDiagnostic(language, d))
+				.map(d => transformDiagnostic(language, d, isTsc))
 				.filter(notEmpty);
 		}
 
@@ -35,7 +35,9 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 			if (serviceScript) {
 				const sourceSpan = transformTextSpan(sourceScript, map, { start: diagnostic.start, length: diagnostic.length }, shouldReportDiagnostics);
 				if (sourceSpan) {
-					fillSourceFileText(language, diagnostic.file);
+					if (isTsc) {
+						fillSourceFileText(language, diagnostic.file);
+					}
 					transformedDiagnostics.set(diagnostic, {
 						...diagnostic,
 						start: sourceSpan.start,
@@ -65,7 +67,6 @@ export function fillSourceFileText(language: Language, sourceFile: ts.SourceFile
 		sourceFile.text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())
 			+ sourceFile.text.substring(sourceScript.snapshot.getLength());
 	}
-	return;
 }
 
 export function transformFileTextChanges(language: Language, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {

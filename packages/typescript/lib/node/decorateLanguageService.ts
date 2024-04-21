@@ -458,17 +458,17 @@ export function decorateLanguageService(language: Language, languageService: ts.
 	};
 	languageService.getSyntacticDiagnostics = fileName => {
 		return getSyntacticDiagnostics(fileName)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, false))
 			.filter(notEmpty);
 	};
 	languageService.getSemanticDiagnostics = fileName => {
 		return getSemanticDiagnostics(fileName)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, false))
 			.filter(notEmpty);
 	};
 	languageService.getSuggestionDiagnostics = fileName => {
 		return getSuggestionDiagnostics(fileName)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, false))
 			.filter(notEmpty);
 	};
 	languageService.getDefinitionAndBoundSpan = (fileName, position) => {
