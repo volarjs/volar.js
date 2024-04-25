@@ -33,7 +33,7 @@ export function runTsc(
 			tsc = replace(tsc, /function createProgram\(.+\) {/, s =>
 				`var createProgram = require(${JSON.stringify(proxyApiPath)}).proxyCreateProgram(`
 				+ [
-					`new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )`,
+					`require('typescript')`,
 					`_createProgram`,
 					`require(${JSON.stringify(__filename)}).getLanguagePlugins`,
 					`require(${JSON.stringify(__filename)}).getLanguageId`,
