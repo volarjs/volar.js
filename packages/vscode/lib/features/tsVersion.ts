@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import { quickPick } from '../common';
 import type { InitializationOptions } from '@volar/language-server';
+import * as fs from '../fs';
 
 const defaultTsdkPath = 'node_modules/typescript/lib';
 
@@ -95,13 +96,16 @@ export function activate(
 
 export async function getTsdk(context: vscode.ExtensionContext) {
 	if (isUseWorkspaceTsdk(context)) {
-		const resolvedTsdk = await resolveWorkspaceTsdk(getConfigTsdkPath() || defaultTsdkPath);
-		if (resolvedTsdk) {
-			return {
-				tsdk: resolvedTsdk,
-				version: await getTsVersion(resolvedTsdk),
-				isWorkspacePath: true,
-			};
+		const tsdkPath = getConfigTsdkPath();
+		if (tsdkPath) {
+			const resolvedTsdk = await resolveWorkspaceTsdk(tsdkPath);
+			if (resolvedTsdk) {
+				return {
+					tsdk: resolvedTsdk,
+					version: await getTsVersion(resolvedTsdk),
+					isWorkspacePath: true,
+				};
+			}
 		}
 	}
 	const tsdk = await getVScodeTsdk();
@@ -115,8 +119,8 @@ export async function getTsdk(context: vscode.ExtensionContext) {
 async function resolveWorkspaceTsdk(tsdk: string) {
 	if (path.isAbsolute(tsdk)) {
 		const libUri = vscode.Uri.joinPath(vscode.Uri.file(tsdk), 'typescript.js');
-		const stat = await vscode.workspace.fs.stat(libUri);
-		if (stat.type === vscode.FileType.File) {
+		const stat = await fs.stat(libUri);
+		if (stat?.type === vscode.FileType.File) {
 			return tsdk;
 		}
 	}
@@ -124,8 +128,8 @@ async function resolveWorkspaceTsdk(tsdk: string) {
 		for (const folder of vscode.workspace.workspaceFolders) {
 			const tsdkPath = path.join(folder.uri.fsPath.replace(/\\/g, '/'), tsdk);
 			const libUri = vscode.Uri.joinPath(vscode.Uri.file(tsdkPath), 'typescript.js');
-			const stat = await vscode.workspace.fs.stat(libUri);
-			if (stat.type === vscode.FileType.File) {
+			const stat = await fs.stat(libUri);
+			if (stat?.type === vscode.FileType.File) {
 				return tsdkPath;
 			}
 		}
@@ -182,7 +186,7 @@ async function getTsVersion(libPath: string): Promise<string | undefined> {
 	const p2 = p.slice(0, -1);
 	const modulePath = p2.join('/');
 	const filePath = modulePath + '/package.json';
-	const contents = await readFile(filePath);
+	const contents = await fs.readFile(vscode.Uri.file(filePath));
 
 	if (contents === undefined) {
 		return;
@@ -199,12 +203,4 @@ async function getTsVersion(libPath: string): Promise<string | undefined> {
 	}
 
 	return desc.version;
-}
-
-async function readFile(path: string) {
-	try {
-		const data = await vscode.workspace.fs.readFile(vscode.Uri.file(path));
-		return new TextDecoder('utf8').decode(data);
-	}
-	catch { }
 }
