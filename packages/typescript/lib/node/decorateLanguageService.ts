@@ -20,7 +20,7 @@ import {
 import type * as ts from 'typescript';
 import { dedupeDocumentSpans } from './dedupe';
 import { getServiceScript, notEmpty } from './utils';
-import { toGeneratedOffset, toSourceOffset, transformCallHierarchyItem, transformDiagnostic, transformDocumentSpan, transformFileTextChanges, transformSpan, transformTextChange, transformTextSpan } from './transform';
+import { forEachGeneratedOffset, toGeneratedOffset, toSourceOffset, transformCallHierarchyItem, transformDiagnostic, transformDocumentSpan, transformFileTextChanges, transformSpan, transformTextChange, transformTextSpan } from './transform';
 
 export function decorateLanguageService(language: Language, languageService: ts.LanguageService) {
 
@@ -369,9 +369,9 @@ export function decorateLanguageService(language: Language, languageService: ts.
 	languageService.getRenameInfo = (fileName, position, options) => {
 		const [serviceScript, sourceScript, map] = getServiceScript(language, fileName);
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(sourceScript, map, position, isRenameEnabled);
-			if (generatePosition !== undefined) {
-				const info = getRenameInfo(fileName, generatePosition, options);
+			let failed: ts.RenameInfoFailure | undefined;
+			for (const generateOffset of forEachGeneratedOffset(sourceScript, map, position, isRenameEnabled)) {
+				const info = getRenameInfo(fileName, generateOffset, options);
 				if (info.canRename) {
 					const span = transformTextSpan(sourceScript, map, info.triggerSpan, isRenameEnabled);
 					if (span) {
@@ -380,8 +380,11 @@ export function decorateLanguageService(language: Language, languageService: ts.
 					}
 				}
 				else {
-					return info;
+					failed = info;
 				}
+			}
+			if (failed) {
+				return failed;
 			}
 			return {
 				canRename: false,
