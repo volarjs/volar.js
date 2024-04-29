@@ -1,62 +1,43 @@
-import type { ServiceEnvironment } from '@volar/language-service';
+import type { LanguagePlugin, ServiceEnvironment } from '@volar/language-service';
 import { URI } from 'vscode-uri';
-import type { ServerProject, ServerProjectProvider, ServerProjectProviderFactory } from '../types';
-import { createSimpleServerProject } from './simpleProject';
-import type { ServerContext } from '../server';
+import type { ServerBase, ServerProject, ServerProjectProvider } from '../types';
 import { fileNameToUri, uriToFileName } from '../uri';
 import type { UriMap } from '../utils/uriMap';
+import { createSimpleServerProject } from './simpleProject';
 
-export function createSimpleProjectProviderFactory(): ServerProjectProviderFactory {
-	return (context, servicePlugins, getLanguagePlugins): ServerProjectProvider => {
-
-		const projects = new Map<string, Promise<ServerProject>>();
-
-		return {
-			getProject(uri) {
-
-				const workspaceFolder = getWorkspaceFolder(uri, context.workspaceFolders);
-
-				let projectPromise = projects.get(workspaceFolder);
-				if (!projectPromise) {
-					const serviceEnv = createServiceEnvironment(context, workspaceFolder);
-					projectPromise = createSimpleServerProject(context, serviceEnv, servicePlugins, getLanguagePlugins);
-					projects.set(workspaceFolder, projectPromise);
-				}
-
-				return projectPromise;
-			},
-			async getProjects() {
-				return await Promise.all([...projects.values()]);
-			},
-			reloadProjects() {
-
-				for (const project of projects.values()) {
-					project.then(project => project.dispose());
-				}
-
-				projects.clear();
-
-				context.reloadDiagnostics();
-			},
-		};
+export function createSimpleProjectProvider(languagePlugins: LanguagePlugin[]): ServerProjectProvider {
+	const map = new Map<string, Promise<ServerProject>>();
+	return {
+		get(uri) {
+			const workspaceFolder = getWorkspaceFolder(uri, this.workspaceFolders);
+			let projectPromise = map.get(workspaceFolder);
+			if (!projectPromise) {
+				const serviceEnv = createServiceEnvironment(this, workspaceFolder);
+				projectPromise = createSimpleServerProject(this, serviceEnv, languagePlugins);
+				map.set(workspaceFolder, projectPromise);
+			}
+			return projectPromise;
+		},
+		async all() {
+			return await Promise.all([...map.values()]);
+		},
 	};
 }
 
-export function createServiceEnvironment(context: ServerContext, workspaceFolder: string) {
-	const env: ServiceEnvironment = {
+export function createServiceEnvironment(server: ServerBase, workspaceFolder: string): ServiceEnvironment {
+	return {
 		workspaceFolder,
-		fs: context.runtimeEnv.fs,
-		locale: context.initializeParams.locale,
-		clientCapabilities: context.initializeParams.capabilities,
-		getConfiguration: context.getConfiguration,
-		onDidChangeConfiguration: context.onDidChangeConfiguration,
-		onDidChangeWatchedFiles: context.onDidChangeWatchedFiles,
+		fs: server.fs,
+		locale: server.initializeParams?.locale,
+		clientCapabilities: server.initializeParams?.capabilities,
+		getConfiguration: server.getConfiguration,
+		onDidChangeConfiguration: server.onDidChangeConfiguration,
+		onDidChangeWatchedFiles: server.onDidChangeWatchedFiles,
 		typescript: {
 			fileNameToUri: fileNameToUri,
 			uriToFileName: uriToFileName,
 		},
 	};
-	return env;
 }
 
 export function getWorkspaceFolder(uri: string, workspaceFolders: UriMap<boolean>) {

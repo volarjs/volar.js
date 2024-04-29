@@ -1,11 +1,7 @@
-import type { LanguageServicePlugin } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
+import type { ServerBase } from './types';
 
-export function getServerCapabilities(
-	watchExts: string[],
-	servicePlugins: LanguageServicePlugin[],
-	semanticTokensLegend: vscode.SemanticTokensLegend,
-) {
+export function getServerCapabilities(server: ServerBase) {
 	const capabilities: vscode.ServerCapabilities = {
 		textDocumentSync: vscode.TextDocumentSyncKind.Incremental,
 		workspace: {
@@ -30,11 +26,11 @@ export function getServerCapabilities(
 		hoverProvider: true,
 		renameProvider: { prepareProvider: true },
 		signatureHelpProvider: {
-			triggerCharacters: [...new Set(servicePlugins.map(service => service.signatureHelpTriggerCharacters ?? []).flat())],
-			retriggerCharacters: [...new Set(servicePlugins.map(service => service.signatureHelpRetriggerCharacters ?? []).flat())],
+			triggerCharacters: [...new Set(server.languageServicePlugins.map(service => service.signatureHelpTriggerCharacters ?? []).flat())],
+			retriggerCharacters: [...new Set(server.languageServicePlugins.map(service => service.signatureHelpRetriggerCharacters ?? []).flat())],
 		},
 		completionProvider: {
-			triggerCharacters: [...new Set(servicePlugins.map(service => service.triggerCharacters ?? []).flat())],
+			triggerCharacters: [...new Set(server.languageServicePlugins.map(service => service.triggerCharacters ?? []).flat())],
 			resolveProvider: true,
 		},
 		documentHighlightProvider: true,
@@ -43,7 +39,7 @@ export function getServerCapabilities(
 		semanticTokensProvider: {
 			range: true,
 			full: false,
-			legend: semanticTokensLegend,
+			legend: server.semanticTokensLegend,
 		},
 		codeActionProvider: {
 			codeActionKinds: [
@@ -67,27 +63,11 @@ export function getServerCapabilities(
 		},
 	};
 
-	const characters = [...new Set(servicePlugins.map(service => service.autoFormatTriggerCharacters ?? []).flat())];
+	const characters = [...new Set(server.languageServicePlugins.map(service => service.autoFormatTriggerCharacters ?? []).flat())];
 	if (characters.length) {
 		capabilities.documentOnTypeFormattingProvider = {
 			firstTriggerCharacter: characters[0],
 			moreTriggerCharacter: characters.slice(1),
-		};
-	}
-
-	if (watchExts.length) {
-		capabilities.workspace = {
-			fileOperations: {
-				willRename: {
-					filters: [
-						{
-							pattern: {
-								glob: `**/*.{${watchExts.join(',')}}`
-							}
-						},
-					]
-				}
-			}
 		};
 	}
 

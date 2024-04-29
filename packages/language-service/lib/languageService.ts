@@ -35,7 +35,7 @@ import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
 import type { ServiceContext, ServiceEnvironment, LanguageServicePlugin } from './types';
 
-import type { CodeInformation, LinkedCodeMap, SourceMap, VirtualCode } from '@volar/language-core';
+import type { CodeInformation, LinkedCodeMap, SourceMap } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -54,7 +54,7 @@ export function createLanguageService(
 	const context: ServiceContext = {
 		language,
 		documents: {
-			get(uri: string, languageId: string, snapshot: ts.IScriptSnapshot) {
+			get(uri, languageId, snapshot) {
 				if (!snapshot2Doc.has(snapshot)) {
 					snapshot2Doc.set(snapshot, new Map());
 				}
@@ -71,7 +71,7 @@ export function createLanguageService(
 				}
 				return map.get(uri)!;
 			},
-			*getMaps(virtualCode: VirtualCode) {
+			*getMaps(virtualCode) {
 				for (const [uri, [snapshot, map]] of context.language.maps.forEach(virtualCode)) {
 					if (!map2DocMap.has(map)) {
 						const embeddedUri = context.encodeEmbeddedDocumentUri(uri, virtualCode.id);
@@ -84,7 +84,7 @@ export function createLanguageService(
 					yield map2DocMap.get(map)!;
 				}
 			},
-			getLinkedCodeMap(virtualCode: VirtualCode, sourceScriptId: string) {
+			getLinkedCodeMap(virtualCode, sourceScriptId) {
 				const map = context.language.linkedCodeMaps.get(virtualCode);
 				if (map) {
 					if (!mirrorMap2DocMirrorMap.has(map)) {

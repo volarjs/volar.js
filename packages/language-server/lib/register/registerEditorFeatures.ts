@@ -1,33 +1,28 @@
 import type { CodeMapping, VirtualCode } from '@volar/language-core';
+import type { DataTransferItem } from '@volar/language-service';
 import type * as ts from 'typescript';
-import type * as vscode from 'vscode-languageserver';
 import {
-	GetMatchTsConfigRequest,
-	GetVirtualCodeRequest,
-	GetVirtualFileRequest,
-	LoadedTSFilesMetaRequest,
-	ReloadProjectNotification,
-	WriteVirtualFilesNotification,
 	DocumentDropRequest,
 	DocumentDrop_DataTransferItemAsStringRequest,
 	DocumentDrop_DataTransferItemFileDataRequest,
-	UpdateVirtualCodeStateNotification,
-	UpdateServicePluginStateNotification,
+	GetMatchTsConfigRequest,
 	GetServicePluginsRequest,
+	GetVirtualCodeRequest,
+	GetVirtualFileRequest,
+	LoadedTSFilesMetaRequest,
+	UpdateServicePluginStateNotification,
+	UpdateVirtualCodeStateNotification,
+	WriteVirtualFilesNotification,
 } from '../../protocol';
-import type { ServerProjectProvider } from '../types';
-import type { DataTransferItem } from '@volar/language-service';
+import type { ServerBase } from '../types';
 import { fileNameToUri } from '../uri';
 
-export function registerEditorFeatures(
-	connection: vscode.Connection,
-	projects: ServerProjectProvider,
-) {
+export function registerEditorFeatures(server: ServerBase) {
 
 	const scriptVersions = new Map<string, number>();
 	const scriptVersionSnapshots = new WeakSet<ts.IScriptSnapshot>();
 
-	connection.onRequest(DocumentDropRequest.type, async ({ textDocument, position, dataTransfer }, token) => {
+	server.connection.onRequest(DocumentDropRequest.type, async ({ textDocument, position, dataTransfer }, token) => {
 
 		const dataTransferMap = new Map<string, DataTransferItem>();
 
@@ -35,7 +30,7 @@ export function registerEditorFeatures(
 			dataTransferMap.set(item.mimeType, {
 				value: item.value,
 				asString() {
-					return connection.sendRequest(DocumentDrop_DataTransferItemAsStringRequest.type, { mimeType: item.mimeType });
+					return server.connection.sendRequest(DocumentDrop_DataTransferItemAsStringRequest.type, { mimeType: item.mimeType });
 				},
 				asFile() {
 					if (item.file) {
@@ -43,7 +38,7 @@ export function registerEditorFeatures(
 							name: item.file.name,
 							uri: item.file.uri,
 							data() {
-								return connection.sendRequest(DocumentDrop_DataTransferItemFileDataRequest.type, { mimeType: item.mimeType });
+								return server.connection.sendRequest(DocumentDrop_DataTransferItemFileDataRequest.type, { mimeType: item.mimeType });
 							},
 						};
 					}
@@ -51,18 +46,18 @@ export function registerEditorFeatures(
 			});
 		}
 
-		const languageService = (await projects.getProject(textDocument.uri)).getLanguageService();
+		const languageService = (await server.projects!.get.call(server, textDocument.uri)).getLanguageService();
 		return languageService.doDocumentDrop(textDocument.uri, position, dataTransferMap, token);
 	});
-	connection.onRequest(GetMatchTsConfigRequest.type, async params => {
-		const languageService = (await projects.getProject(params.uri)).getLanguageService();
+	server.connection.onRequest(GetMatchTsConfigRequest.type, async params => {
+		const languageService = (await server.projects!.get.call(server, params.uri)).getLanguageService();
 		const configFileName = languageService.context.language.typescript?.projectHost.configFileName;
 		if (configFileName) {
 			return { uri: fileNameToUri(configFileName) };
 		}
 	});
-	connection.onRequest(GetVirtualFileRequest.type, async document => {
-		const languageService = (await projects.getProject(document.uri)).getLanguageService();
+	server.connection.onRequest(GetVirtualFileRequest.type, async document => {
+		const languageService = (await server.projects!.get.call(server, document.uri)).getLanguageService();
 		const sourceScript = languageService.context.language.scripts.get(document.uri);
 		if (sourceScript?.generated) {
 			return prune(sourceScript.generated.root);
@@ -86,8 +81,8 @@ export function registerEditorFeatures(
 			};
 		}
 	});
-	connection.onRequest(GetVirtualCodeRequest.type, async params => {
-		const languageService = (await projects.getProject(params.fileUri)).getLanguageService();
+	server.connection.onRequest(GetVirtualCodeRequest.type, async params => {
+		const languageService = (await server.projects!.get.call(server, params.fileUri)).getLanguageService();
 		const sourceScript = languageService.context.language.scripts.get(params.fileUri);
 		const virtualCode = sourceScript?.generated?.embeddedCodes.get(params.virtualCodeId);
 		if (virtualCode) {
@@ -102,14 +97,11 @@ export function registerEditorFeatures(
 			};
 		}
 	});
-	connection.onNotification(ReloadProjectNotification.type, () => {
-		projects.reloadProjects();
-	});
-	connection.onNotification(WriteVirtualFilesNotification.type, async params => {
+	server.connection.onNotification(WriteVirtualFilesNotification.type, async params => {
 
 		const fsModeName = 'fs'; // avoid bundle
 		const fs: typeof import('fs') = await import(fsModeName);
-		const languageService = (await projects.getProject(params.uri)).getLanguageService();
+		const languageService = (await server.projects!.get.call(server, params.uri)).getLanguageService();
 
 		if (languageService.context.language.typescript) {
 
@@ -146,14 +138,14 @@ export function registerEditorFeatures(
 			}
 		}
 	});
-	connection.onRequest(LoadedTSFilesMetaRequest.type, async () => {
+	server.connection.onRequest(LoadedTSFilesMetaRequest.type, async () => {
 
 		const sourceFilesData = new Map<ts.SourceFile, {
 			projectNames: string[];
 			size: number;
 		}>();
 
-		for (const project of await projects.getProjects()) {
+		for (const project of await server.projects!.all.call(server)) {
 			const languageService = project.getLanguageService();
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
@@ -210,8 +202,8 @@ export function registerEditorFeatures(
 
 		return result;
 	});
-	connection.onNotification(UpdateVirtualCodeStateNotification.type, async params => {
-		const project = await projects.getProject(params.fileUri);
+	server.connection.onNotification(UpdateVirtualCodeStateNotification.type, async params => {
+		const project = await server.projects!.get.call(server, params.fileUri);
 		const context = project.getLanguageServiceDontCreate()?.context;
 		if (context) {
 			const virtualFileUri = project.getLanguageService().context.encodeEmbeddedDocumentUri(params.fileUri, params.virtualCodeId);
@@ -223,8 +215,8 @@ export function registerEditorFeatures(
 			}
 		}
 	});
-	connection.onNotification(UpdateServicePluginStateNotification.type, async params => {
-		const project = await projects.getProject(params.uri);
+	server.connection.onNotification(UpdateServicePluginStateNotification.type, async params => {
+		const project = await server.projects!.get.call(server, params.uri);
 		const context = project.getLanguageServiceDontCreate()?.context;
 		if (context) {
 			const service = context.services[params.serviceId as any][1];
@@ -236,8 +228,8 @@ export function registerEditorFeatures(
 			}
 		}
 	});
-	connection.onRequest(GetServicePluginsRequest.type, async params => {
-		const project = await projects.getProject(params.uri);
+	server.connection.onRequest(GetServicePluginsRequest.type, async params => {
+		const project = await server.projects!.get.call(server, params.uri);
 		const context = project.getLanguageServiceDontCreate()?.context;
 		if (context) {
 			const result: GetServicePluginsRequest.ResponseType = [];

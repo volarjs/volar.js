@@ -1,45 +1,32 @@
-import { FileSystem, LanguagePlugin, ServiceEnvironment, LanguageServicePlugin, standardSemanticTokensLegend } from '@volar/language-service';
+import { FileSystem, LanguageServicePlugin, standardSemanticTokensLegend } from '@volar/language-service';
 import { SnapshotDocument } from '@volar/snapshot-document';
 import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
-import type { TextDocuments } from 'vscode-languageserver';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { getServerCapabilities } from './serverCapabilities.js';
-import { DiagnosticModel, InitializationOptions, ProjectContext, ServerProjectProvider, ServerProjectProviderFactory, ServerRuntimeEnvironment } from './types.js';
+import type { VolarInitializeParams, ServerProjectProvider } from './types.js';
 import { fileNameToUri } from './uri.js';
-import { createUriMap, type UriMap } from './utils/uriMap.js';
-
-export interface ServerContext {
-	initializeParams: Omit<vscode.InitializeParams, 'initializationOptions'> & { initializationOptions?: InitializationOptions; };
-	runtimeEnv: ServerRuntimeEnvironment;
-	onDidChangeWatchedFiles: vscode.Connection['onDidChangeWatchedFiles'];
-	onDidChangeConfiguration: vscode.Connection['onDidChangeConfiguration'];
-	getConfiguration<T>(section: string, scopeUri?: string): Promise<T | undefined>;
-	workspaceFolders: UriMap<boolean>;
-	documents: TextDocuments<SnapshotDocument>;
-	reloadDiagnostics(): void;
-	updateDiagnosticsAndSemanticTokens(): void;
-}
+import { createUriMap } from './utils/uriMap.js';
+import { registerEditorFeatures } from './register/registerEditorFeatures.js';
+import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
 
 export interface ServerOptions {
-	watchFileExtensions?: string[];
-	getServicePlugins(): LanguageServicePlugin[] | Promise<LanguageServicePlugin[]>;
-	getLanguagePlugins(serviceEnv: ServiceEnvironment, projectContext: ProjectContext): LanguagePlugin[] | Promise<LanguagePlugin[]>;
-	getLanguageId(uri: string): string;
+	semanticTokensLegend?: vscode.SemanticTokensLegend;
+	pullModelDiagnostics?: boolean;
 }
 
 export function createServerBase(
 	connection: vscode.Connection,
-	getRuntimeEnv: (params: ServerContext['initializeParams']) => ServerRuntimeEnvironment,
+	getFs: (initializeParams: VolarInitializeParams) => FileSystem,
 ) {
-
-	let context: ServerContext;
-	let projects: ServerProjectProvider;
-	let serverOptions: ServerOptions;
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
 
+	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
+	const didChangeConfigurationCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeConfigurationParams>>();
+	const workspaceFolders = createUriMap<boolean>(fileNameToUri);
+	const configurations = new Map<string, Promise<any>>();
 	const documents = new vscode.TextDocuments({
 		create(uri, languageId, version, text) {
 			return new SnapshotDocument(uri, languageId, version, text);
@@ -49,124 +36,71 @@ export function createServerBase(
 			return snapshot;
 		},
 	});
-	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
-	const didChangeConfigurationCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeConfigurationParams>>();
-	const workspaceFolders = createUriMap<boolean>(fileNameToUri);
-	const configurations = new Map<string, Promise<any>>();
 
 	documents.listen(connection);
 
-	return {
+	const status = {
+		connection,
+		initializeParams: undefined as unknown as VolarInitializeParams,
+		languageServicePlugins: [] as unknown as LanguageServicePlugin[],
+		projects: undefined as unknown as ServerProjectProvider,
+		fs: undefined as unknown as FileSystem,
+		semanticTokensLegend: undefined as unknown as vscode.SemanticTokensLegend,
+		pullModelDiagnostics: false,
+		documents,
+		workspaceFolders,
 		initialize,
 		initialized,
 		shutdown,
-		get projects() {
-			return projects;
-		},
-		get env() {
-			return context.runtimeEnv;
-		},
+		watchFiles,
+		getConfiguration,
+		onDidChangeConfiguration,
+		onDidChangeWatchedFiles,
+		clearPushDiagnostics,
+		refresh,
 	};
+	return status;
 
-	async function initialize(
-		params: ServerContext['initializeParams'],
-		projectProviderFactory: ServerProjectProviderFactory,
-		_serverOptions: ServerOptions,
+	function initialize(
+		initializeParams: VolarInitializeParams,
+		languageServicePlugins: LanguageServicePlugin[],
+		projects: ServerProjectProvider,
+		options?: ServerOptions,
 	) {
+		status.initializeParams = initializeParams;
+		status.languageServicePlugins = languageServicePlugins;
+		status.projects = projects;
+		status.semanticTokensLegend = options?.semanticTokensLegend ?? standardSemanticTokensLegend;
+		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
+		status.fs = createFsWithCache(getFs(initializeParams));
 
-		serverOptions = _serverOptions;
-		const env = getRuntimeEnv(params);
-		context = {
-			initializeParams: params,
-			runtimeEnv: {
-				...env,
-				fs: createFsWithCache(env.fs),
-			},
-			getConfiguration(section, scopeUri) {
-				if (!params.capabilities.workspace?.configuration) {
-					return Promise.resolve(undefined);
-				}
-				if (!scopeUri && params.capabilities.workspace?.didChangeConfiguration) {
-					if (!configurations.has(section)) {
-						configurations.set(section, getConfigurationWorker(section, scopeUri));
-					}
-					return configurations.get(section)!;
-				}
-				return getConfigurationWorker(section, scopeUri);
-
-				async function getConfigurationWorker(section: string, scopeUri?: string) {
-					return (await connection.workspace.getConfiguration({ scopeUri, section })) ?? undefined /* replace null to undefined */;
-				}
-			},
-			onDidChangeConfiguration(cb) {
-				didChangeConfigurationCallbacks.add(cb);
-				return {
-					dispose() {
-						didChangeConfigurationCallbacks.delete(cb);
-					},
-				};
-			},
-			onDidChangeWatchedFiles: cb => {
-				didChangeWatchedFilesCallbacks.add(cb);
-				return {
-					dispose: () => {
-						didChangeWatchedFilesCallbacks.delete(cb);
-					},
-				};
-			},
-			documents,
-			workspaceFolders,
-			reloadDiagnostics,
-			updateDiagnosticsAndSemanticTokens,
-		};
-
-		if (context.initializeParams.initializationOptions?.l10n) {
-			await l10n.config({ uri: context.initializeParams.initializationOptions.l10n.location });
+		if (initializeParams.initializationOptions?.l10n) {
+			l10n.config({ uri: initializeParams.initializationOptions.l10n.location });
 		}
 
-		if (params.capabilities.workspace?.workspaceFolders && params.workspaceFolders) {
-			for (const folder of params.workspaceFolders) {
+		if (initializeParams.workspaceFolders?.length) {
+			for (const folder of initializeParams.workspaceFolders) {
 				workspaceFolders.uriSet(folder.uri, true);
 			}
 		}
-		else if (params.rootUri) {
-			workspaceFolders.uriSet(params.rootUri, true);
+		else if (initializeParams.rootUri) {
+			workspaceFolders.uriSet(initializeParams.rootUri, true);
 		}
-		else if (params.rootPath) {
-			workspaceFolders.uriSet(URI.file(params.rootPath).toString(), true);
+		else if (initializeParams.rootPath) {
+			workspaceFolders.uriSet(URI.file(initializeParams.rootPath).toString(), true);
 		}
-
-		const servicePlugins = await serverOptions.getServicePlugins();
-		const semanticTokensLegend = getSemanticTokensLegend();
-
-		projects = projectProviderFactory(
-			{ ...context },
-			servicePlugins,
-			serverOptions.getLanguagePlugins,
-			serverOptions.getLanguageId,
-		);
-
-		documents.onDidChangeContent(({ document }) => {
-			updateDiagnostics(document.uri);
-		});
-		documents.onDidClose(({ document }) => {
-			if (!isServerPushEnabled()) {
-				return;
-			}
-			connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
-		});
-		context.onDidChangeConfiguration(updateDiagnosticsAndSemanticTokens);
-
-		(await import('./register/registerEditorFeatures.js')).registerEditorFeatures(connection, projects);
-		(await import('./register/registerLanguageFeatures.js')).registerLanguageFeatures(connection, projects, params, semanticTokensLegend);
 
 		const result: vscode.InitializeResult = {
-			capabilities: getServerCapabilities(serverOptions.watchFileExtensions ?? [], servicePlugins, semanticTokensLegend),
+			capabilities: getServerCapabilities(status),
 		};
 
-		if (params.initializationOptions?.diagnosticModel !== DiagnosticModel.Pull) {
+		if (!status.pullModelDiagnostics) {
 			result.capabilities.diagnosticProvider = undefined;
+			activateServerPushDiagnostics(projects);
 		}
+
+		registerEditorFeatures(status);
+		registerLanguageFeatures(status);
 
 		return result;
 	}
@@ -174,18 +108,54 @@ export function createServerBase(
 	function initialized() {
 		registerWorkspaceFolderWatcher();
 		registerConfigurationWatcher();
-		registerFileWatcher();
 		updateHttpSettings();
-		context.onDidChangeConfiguration(updateHttpSettings);
+		onDidChangeConfiguration(updateHttpSettings);
+	}
 
-		async function updateHttpSettings() {
-			const httpSettings = await context.getConfiguration<{ proxyStrictSSL: boolean; proxy: string; }>('http');
-			configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
+	async function shutdown() {
+		for (const project of await status.projects.all.call(status)) {
+			project.dispose();
 		}
 	}
 
-	function shutdown() {
-		projects?.reloadProjects();
+	async function updateHttpSettings() {
+		const httpSettings = await getConfiguration<{ proxyStrictSSL: boolean; proxy: string; }>('http');
+		configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
+	}
+
+	function getConfiguration<T>(section: string, scopeUri?: string): Promise<T | undefined> {
+		if (!status.initializeParams?.capabilities.workspace?.configuration) {
+			return Promise.resolve(undefined);
+		}
+		if (!scopeUri && status.initializeParams.capabilities.workspace?.didChangeConfiguration) {
+			if (!configurations.has(section)) {
+				configurations.set(section, getConfigurationWorker(section, scopeUri));
+			}
+			return configurations.get(section)!;
+		}
+		return getConfigurationWorker(section, scopeUri);
+	}
+
+	async function getConfigurationWorker(section: string, scopeUri?: string) {
+		return (await connection.workspace.getConfiguration({ scopeUri, section })) ?? undefined /* replace null to undefined */;
+	}
+
+	function onDidChangeConfiguration(cb: vscode.NotificationHandler<vscode.DidChangeConfigurationParams>) {
+		didChangeConfigurationCallbacks.add(cb);
+		return {
+			dispose() {
+				didChangeConfigurationCallbacks.delete(cb);
+			},
+		};
+	}
+
+	function onDidChangeWatchedFiles(cb: vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>) {
+		didChangeWatchedFilesCallbacks.add(cb);
+		return {
+			dispose: () => {
+				didChangeWatchedFilesCallbacks.delete(cb);
+			},
+		};
 	}
 
 	function createFsWithCache(fs: FileSystem): FileSystem {
@@ -194,7 +164,7 @@ export function createServerBase(
 		const statCache = new Map<string, ReturnType<FileSystem['stat']>>();
 		const readDirectoryCache = new Map<string, ReturnType<FileSystem['readDirectory']>>();
 
-		didChangeWatchedFilesCallbacks.add(({ changes }) => {
+		onDidChangeWatchedFiles(({ changes }) => {
 			for (const change of changes) {
 				if (change.type === vscode.FileChangeType.Deleted) {
 					readFileCache.set(change.uri, undefined);
@@ -237,21 +207,8 @@ export function createServerBase(
 		};
 	}
 
-	function getSemanticTokensLegend() {
-		return {
-			tokenTypes: [
-				...standardSemanticTokensLegend.tokenTypes,
-				...context.initializeParams.initializationOptions?.semanticTokensLegend?.tokenTypes ?? [],
-			],
-			tokenModifiers: [
-				...standardSemanticTokensLegend.tokenModifiers,
-				...context.initializeParams.initializationOptions?.semanticTokensLegend?.tokenModifiers ?? [],
-			],
-		};
-	}
-
 	function registerConfigurationWatcher() {
-		const didChangeConfiguration = context.initializeParams.capabilities.workspace?.didChangeConfiguration;
+		const didChangeConfiguration = status.initializeParams?.capabilities.workspace?.didChangeConfiguration;
 		if (didChangeConfiguration) {
 			connection.onDidChangeConfiguration(params => {
 				configurations.clear();
@@ -265,9 +222,10 @@ export function createServerBase(
 		}
 	}
 
-	function registerFileWatcher() {
-		const didChangeWatchedFiles = context.initializeParams.capabilities.workspace?.didChangeWatchedFiles;
-		if (didChangeWatchedFiles && serverOptions.watchFileExtensions?.length) {
+	function watchFiles(patterns: string[]) {
+		const didChangeWatchedFiles = status.initializeParams?.capabilities.workspace?.didChangeWatchedFiles;
+		const fileOperations = status.initializeParams?.capabilities.workspace?.fileOperations;
+		if (didChangeWatchedFiles) {
 			connection.onDidChangeWatchedFiles(e => {
 				for (const cb of didChangeWatchedFilesCallbacks) {
 					cb(e);
@@ -275,18 +233,19 @@ export function createServerBase(
 			});
 			if (didChangeWatchedFiles.dynamicRegistration) {
 				connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
-					watchers: [
-						{
-							globPattern: `**/*.{${serverOptions.watchFileExtensions.join(',')}}`
-						},
-					]
+					watchers: patterns.map(pattern => ({ globPattern: pattern })),
 				});
 			}
+		}
+		if (fileOperations?.dynamicRegistration && fileOperations.willRename) {
+			connection.client.register(vscode.WillRenameFilesRequest.type, {
+				filters: patterns.map(pattern => ({ pattern: { glob: pattern } })),
+			});
 		}
 	}
 
 	function registerWorkspaceFolderWatcher() {
-		if (context.initializeParams.capabilities.workspace?.workspaceFolders) {
+		if (status.initializeParams?.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 				for (const folder of e.added) {
 					workspaceFolders.uriSet(folder.uri, true);
@@ -294,51 +253,54 @@ export function createServerBase(
 				for (const folder of e.removed) {
 					workspaceFolders.uriDelete(folder.uri);
 				}
-				projects.reloadProjects();
+				// projects.reloadProjects();
 			});
 		}
 	}
 
-	function reloadDiagnostics() {
-		if (!isServerPushEnabled()) {
-			return;
-		}
-		for (const document of documents.all()) {
+	function activateServerPushDiagnostics(projects: ServerProjectProvider) {
+		documents.onDidChangeContent(({ document }) => {
+			pushAllDiagnostics(projects, document.uri);
+		});
+		documents.onDidClose(({ document }) => {
 			connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
-		}
-		updateDiagnosticsAndSemanticTokens();
+		});
+		onDidChangeConfiguration(() => refresh(projects));
 	}
 
-	async function updateDiagnosticsAndSemanticTokens() {
+	function clearPushDiagnostics() {
+		if (!status.pullModelDiagnostics) {
+			for (const document of documents.all()) {
+				connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+			}
+		}
+	}
+
+	async function refresh(projects: ServerProjectProvider) {
 
 		const req = ++semanticTokensReq;
 
-		await updateDiagnostics();
+		if (!status.pullModelDiagnostics) {
+			await pushAllDiagnostics(projects);
+		}
 
 		const delay = 250;
 		await sleep(delay);
 
 		if (req === semanticTokensReq) {
-			if (context.initializeParams.capabilities.workspace?.semanticTokens?.refreshSupport) {
+			if (status.initializeParams?.capabilities.workspace?.semanticTokens?.refreshSupport) {
 				connection.languages.semanticTokens.refresh();
 			}
-			if (context.initializeParams.capabilities.workspace?.inlayHint?.refreshSupport) {
+			if (status.initializeParams?.capabilities.workspace?.inlayHint?.refreshSupport) {
 				connection.languages.inlayHint.refresh();
 			}
-			if (isServerPushEnabled()) {
-				if (context.initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
-					connection.languages.diagnostics.refresh();
-				}
+			if (status.pullModelDiagnostics && status.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport) {
+				connection.languages.diagnostics.refresh();
 			}
 		}
 	}
 
-	async function updateDiagnostics(docUri?: string) {
-
-		if (!isServerPushEnabled()) {
-			return;
-		}
-
+	async function pushAllDiagnostics(projects: ServerProjectProvider, docUri?: string) {
 		const req = ++documentUpdatedReq;
 		const delay = 250;
 		const token: vscode.CancellationToken = {
@@ -355,7 +317,7 @@ export function createServerBase(
 			if (token.isCancellationRequested) {
 				return;
 			}
-			await sendDocumentDiagnostics(changeDoc.uri, changeDoc.version, token);
+			await pushDiagnostics(projects, changeDoc.uri, changeDoc.version, token);
 		}
 
 		for (const doc of otherDocs) {
@@ -363,22 +325,17 @@ export function createServerBase(
 			if (token.isCancellationRequested) {
 				break;
 			}
-			await sendDocumentDiagnostics(doc.uri, doc.version, token);
+			await pushDiagnostics(projects, doc.uri, doc.version, token);
 		}
 	}
 
-	async function sendDocumentDiagnostics(uri: string, version: number, cancel: vscode.CancellationToken) {
-
-		const languageService = (await projects.getProject(uri)).getLanguageService();
+	async function pushDiagnostics(projects: ServerProjectProvider, uri: string, version: number, cancel: vscode.CancellationToken) {
+		const languageService = (await projects.get.call(status, uri)).getLanguageService();
 		const errors = await languageService.doValidation(uri, cancel, result => {
 			connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});
 
 		connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
-	}
-
-	function isServerPushEnabled() {
-		return (context.initializeParams.initializationOptions?.diagnosticModel ?? DiagnosticModel.Push) === DiagnosticModel.Push;
 	}
 }
 
