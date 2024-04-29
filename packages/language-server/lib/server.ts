@@ -11,11 +11,6 @@ import { createUriMap } from './utils/uriMap.js';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
 
-export interface ServerOptions {
-	semanticTokensLegend?: vscode.SemanticTokensLegend;
-	pullModelDiagnostics?: boolean;
-}
-
 export function createServerBase(
 	connection: vscode.Connection,
 	getFs: (initializeParams: VolarInitializeParams) => FileSystem,
@@ -65,7 +60,10 @@ export function createServerBase(
 		initializeParams: VolarInitializeParams,
 		languageServicePlugins: LanguageServicePlugin[],
 		projects: ServerProjectProvider,
-		options?: ServerOptions,
+		options?: {
+			semanticTokensLegend?: vscode.SemanticTokensLegend;
+			pullModelDiagnostics?: boolean;
+		},
 	) {
 		status.initializeParams = initializeParams;
 		status.languageServicePlugins = languageServicePlugins;
