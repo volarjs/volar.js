@@ -46,18 +46,18 @@ export function registerEditorFeatures(server: ServerBase) {
 			});
 		}
 
-		const languageService = (await server.projects!.get.call(server, textDocument.uri)).getLanguageService();
+		const languageService = (await server.projects.get.call(server, textDocument.uri)).getLanguageService();
 		return languageService.doDocumentDrop(textDocument.uri, position, dataTransferMap, token);
 	});
 	server.connection.onRequest(GetMatchTsConfigRequest.type, async params => {
-		const languageService = (await server.projects!.get.call(server, params.uri)).getLanguageService();
+		const languageService = (await server.projects.get.call(server, params.uri)).getLanguageService();
 		const configFileName = languageService.context.language.typescript?.projectHost.configFileName;
 		if (configFileName) {
 			return { uri: fileNameToUri(configFileName) };
 		}
 	});
 	server.connection.onRequest(GetVirtualFileRequest.type, async document => {
-		const languageService = (await server.projects!.get.call(server, document.uri)).getLanguageService();
+		const languageService = (await server.projects.get.call(server, document.uri)).getLanguageService();
 		const sourceScript = languageService.context.language.scripts.get(document.uri);
 		if (sourceScript?.generated) {
 			return prune(sourceScript.generated.root);
@@ -82,7 +82,7 @@ export function registerEditorFeatures(server: ServerBase) {
 		}
 	});
 	server.connection.onRequest(GetVirtualCodeRequest.type, async params => {
-		const languageService = (await server.projects!.get.call(server, params.fileUri)).getLanguageService();
+		const languageService = (await server.projects.get.call(server, params.fileUri)).getLanguageService();
 		const sourceScript = languageService.context.language.scripts.get(params.fileUri);
 		const virtualCode = sourceScript?.generated?.embeddedCodes.get(params.virtualCodeId);
 		if (virtualCode) {
@@ -101,7 +101,7 @@ export function registerEditorFeatures(server: ServerBase) {
 
 		const fsModeName = 'fs'; // avoid bundle
 		const fs: typeof import('fs') = await import(fsModeName);
-		const languageService = (await server.projects!.get.call(server, params.uri)).getLanguageService();
+		const languageService = (await server.projects.get.call(server, params.uri)).getLanguageService();
 
 		if (languageService.context.language.typescript) {
 
@@ -145,7 +145,7 @@ export function registerEditorFeatures(server: ServerBase) {
 			size: number;
 		}>();
 
-		for (const project of await server.projects!.all.call(server)) {
+		for (const project of await server.projects.all.call(server)) {
 			const languageService = project.getLanguageService();
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
@@ -203,7 +203,7 @@ export function registerEditorFeatures(server: ServerBase) {
 		return result;
 	});
 	server.connection.onNotification(UpdateVirtualCodeStateNotification.type, async params => {
-		const project = await server.projects!.get.call(server, params.fileUri);
+		const project = await server.projects.get.call(server, params.fileUri);
 		const context = project.getLanguageServiceDontCreate()?.context;
 		if (context) {
 			const virtualFileUri = project.getLanguageService().context.encodeEmbeddedDocumentUri(params.fileUri, params.virtualCodeId);
@@ -216,7 +216,7 @@ export function registerEditorFeatures(server: ServerBase) {
 		}
 	});
 	server.connection.onNotification(UpdateServicePluginStateNotification.type, async params => {
-		const project = await server.projects!.get.call(server, params.uri);
+		const project = await server.projects.get.call(server, params.uri);
 		const context = project.getLanguageServiceDontCreate()?.context;
 		if (context) {
 			const service = context.services[params.serviceId as any][1];
@@ -229,7 +229,7 @@ export function registerEditorFeatures(server: ServerBase) {
 		}
 	});
 	server.connection.onRequest(GetServicePluginsRequest.type, async params => {
-		const project = await server.projects!.get.call(server, params.uri);
+		const project = await server.projects.get.call(server, params.uri);
 		const context = project.getLanguageServiceDontCreate()?.context;
 		if (context) {
 			const result: GetServicePluginsRequest.ResponseType = [];
