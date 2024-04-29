@@ -11,6 +11,8 @@ import { createUriMap } from './utils/uriMap.js';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
 
+export * from '@volar/snapshot-document';
+
 export function createServerBase(
 	connection: vscode.Connection,
 	getFs: (initializeParams: VolarInitializeParams) => FileSystem,
