@@ -10,6 +10,7 @@ export * from 'vscode-languageserver/node';
 export * from './index';
 export * from './lib/project/simpleProjectProvider';
 export * from './lib/project/typescriptProjectProvider';
+export * from './lib/server';
 
 export function createFs(options: InitializationOptions): FileSystem {
 	return {
@@ -80,9 +81,7 @@ export function createConnection() {
 }
 
 export function createServer(connection: vscode.Connection) {
-	return createServerBase(connection, params => ({
-		fs: createFs(params.initializationOptions ?? {}),
-	}));
+	return createServerBase(connection, params => createFs(params.initializationOptions ?? {}));
 }
 
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {

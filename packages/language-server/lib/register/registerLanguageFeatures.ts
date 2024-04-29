@@ -1,15 +1,9 @@
 import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
-import type { ServerProjectProvider } from '../types';
+import type { ServerBase } from '../types';
 
-export function registerLanguageFeatures(
-	connection: vscode.Connection,
-	projectProvider: ServerProjectProvider,
-	initParams: vscode.InitializeParams,
-	semanticTokensLegend: vscode.SemanticTokensLegend,
-) {
-
+export function registerLanguageFeatures(server: ServerBase) {
 	let lastCompleteUri: string;
 	let lastCompleteLs: embedded.LanguageService;
 	let lastCodeLensLs: embedded.LanguageService;
@@ -18,53 +12,53 @@ export function registerLanguageFeatures(
 	let lastDocumentLinkLs: embedded.LanguageService;
 	let lastInlayHintLs: embedded.LanguageService;
 
-	connection.onDocumentFormatting(async (params, token) => {
+	server.connection.onDocumentFormatting(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.format(params.textDocument.uri, params.options, undefined, undefined, token);
 		});
 	});
-	connection.onDocumentRangeFormatting(async (params, token) => {
+	server.connection.onDocumentRangeFormatting(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.format(params.textDocument.uri, params.options, params.range, undefined, token);
 		});
 	});
-	connection.onDocumentOnTypeFormatting(async (params, token) => {
+	server.connection.onDocumentOnTypeFormatting(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.format(params.textDocument.uri, params.options, undefined, params, token);
 		});
 	});
-	connection.onSelectionRanges(async (params, token) => {
+	server.connection.onSelectionRanges(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.getSelectionRanges(params.textDocument.uri, params.positions, token);
 		});
 	});
-	connection.onFoldingRanges(async (params, token) => {
+	server.connection.onFoldingRanges(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.getFoldingRanges(params.textDocument.uri, token);
 		});
 	});
-	connection.languages.onLinkedEditingRange(async (params, token) => {
+	server.connection.languages.onLinkedEditingRange(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.findLinkedEditingRanges(params.textDocument.uri, params.position, token);
 		});
 	});
-	connection.onDocumentSymbol(async (params, token) => {
+	server.connection.onDocumentSymbol(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.findDocumentSymbols(params.textDocument.uri, token);
 		});
 	});
-	connection.onDocumentColor(async (params, token) => {
+	server.connection.onDocumentColor(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.findDocumentColors(params.textDocument.uri, token);
 		});
 	});
-	connection.onColorPresentation(async (params, token) => {
+	server.connection.onColorPresentation(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.getColorPresentations(params.textDocument.uri, params.color, params.range, token);
 		});
 	});
 
-	connection.onCompletion(async (params, token) => {
+	server.connection.onCompletion(async (params, token) => {
 		return worker(params.textDocument.uri, token, async service => {
 			lastCompleteUri = params.textDocument.uri;
 			lastCompleteLs = service;
@@ -80,24 +74,24 @@ export function registerLanguageFeatures(
 			return list;
 		});
 	});
-	connection.onCompletionResolve(async (item, token) => {
+	server.connection.onCompletionResolve(async (item, token) => {
 		if (lastCompleteUri && lastCompleteLs) {
 			item = await lastCompleteLs.doCompletionResolve(item, token);
 			fixTextEdit(item);
 		}
 		return item;
 	});
-	connection.onHover(async (params, token) => {
+	server.connection.onHover(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.doHover(params.textDocument.uri, params.position, token);
 		});
 	});
-	connection.onSignatureHelp(async (params, token) => {
+	server.connection.onSignatureHelp(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.getSignatureHelp(params.textDocument.uri, params.position, params.context, token);
 		});
 	});
-	connection.onPrepareRename(async (params, token) => {
+	server.connection.onPrepareRename(async (params, token) => {
 		return worker(params.textDocument.uri, token, async service => {
 			const result = await service.prepareRename(params.textDocument.uri, params.position, token);
 			if (result && 'message' in result) {
@@ -106,21 +100,21 @@ export function registerLanguageFeatures(
 			return result;
 		});
 	});
-	connection.onRenameRequest(async (params, token) => {
+	server.connection.onRenameRequest(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.doRename(params.textDocument.uri, params.position, params.newName, token);
 		});
 	});
-	connection.onCodeLens(async (params, token) => {
+	server.connection.onCodeLens(async (params, token) => {
 		return worker(params.textDocument.uri, token, async service => {
 			lastCodeLensLs = service;
 			return service.doCodeLens(params.textDocument.uri, token);
 		});
 	});
-	connection.onCodeLensResolve(async (codeLens, token) => {
+	server.connection.onCodeLensResolve(async (codeLens, token) => {
 		return await lastCodeLensLs?.doCodeLensResolve(codeLens, token) ?? codeLens;
 	});
-	connection.onCodeAction(async (params, token) => {
+	server.connection.onCodeAction(async (params, token) => {
 		return worker(params.textDocument.uri, token, async service => {
 			lastCodeActionLs = service;
 			let codeActions = await service.doCodeActions(params.textDocument.uri, params.range, params.context, token) ?? [];
@@ -132,104 +126,99 @@ export function registerLanguageFeatures(
 					codeAction.data = { uri: params.textDocument.uri };
 				}
 			}
-			if (!initParams.capabilities.textDocument?.codeAction?.disabledSupport) {
+			if (!server.initializeParams?.capabilities.textDocument?.codeAction?.disabledSupport) {
 				codeActions = codeActions.filter(codeAction => !codeAction.disabled);
 			}
 			return codeActions;
 		});
 	});
-	connection.onCodeActionResolve(async (codeAction, token) => {
+	server.connection.onCodeActionResolve(async (codeAction, token) => {
 		return await lastCodeActionLs.doCodeActionResolve(codeAction, token) ?? codeAction;
 	});
-	connection.onReferences(async (params, token) => {
+	server.connection.onReferences(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.findReferences(params.textDocument.uri, params.position, { includeDeclaration: true }, token);
 		});
 	});
-	connection.onRequest(FindFileReferenceRequest.type, async (params, token) => {
+	server.connection.onRequest(FindFileReferenceRequest.type, async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.findFileReferences(params.textDocument.uri, token);
 		});
 	});
-	connection.onImplementation(async (params, token) => {
+	server.connection.onImplementation(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.findImplementations(params.textDocument.uri, params.position, token);
 		});
 	});
-	connection.onDefinition(async (params, token) => {
+	server.connection.onDefinition(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.findDefinition(params.textDocument.uri, params.position, token);
 		});
 	});
-	connection.onTypeDefinition(async (params, token) => {
+	server.connection.onTypeDefinition(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.findTypeDefinition(params.textDocument.uri, params.position, token);
 		});
 	});
-	connection.onDocumentHighlight(async (params, token) => {
+	server.connection.onDocumentHighlight(async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.findDocumentHighlights(params.textDocument.uri, params.position, token);
 		});
 	});
-	connection.onDocumentLinks(async (params, token) => {
+	server.connection.onDocumentLinks(async (params, token) => {
 		return await worker(params.textDocument.uri, token, service => {
 			lastDocumentLinkLs = service;
 			return service.findDocumentLinks(params.textDocument.uri, token);
 		});
 	});
-	connection.onDocumentLinkResolve(async (link, token) => {
+	server.connection.onDocumentLinkResolve(async (link, token) => {
 		return await lastDocumentLinkLs.doDocumentLinkResolve(link, token);
 	});
-	connection.onWorkspaceSymbol(async (params, token) => {
-
+	server.connection.onWorkspaceSymbol(async (params, token) => {
 		let results: vscode.WorkspaceSymbol[] = [];
-
-		for (const project of await projectProvider.getProjects()) {
-
+		for (const project of await server.projects!.all.call(server)) {
 			if (token.isCancellationRequested) {
 				return;
 			}
-
 			results = results.concat(await project.getLanguageService().findWorkspaceSymbols(params.query, token));
 		}
-
 		return results;
 	});
-	connection.languages.callHierarchy.onPrepare(async (params, token) => {
+	server.connection.languages.callHierarchy.onPrepare(async (params, token) => {
 		return await worker(params.textDocument.uri, token, async service => {
 			lastCallHierarchyLs = service;
 			return service.callHierarchy.doPrepare(params.textDocument.uri, params.position, token);
 		}) ?? [];
 	});
-	connection.languages.callHierarchy.onIncomingCalls(async (params, token) => {
+	server.connection.languages.callHierarchy.onIncomingCalls(async (params, token) => {
 		return await lastCallHierarchyLs?.callHierarchy.getIncomingCalls(params.item, token) ?? [];
 	});
-	connection.languages.callHierarchy.onOutgoingCalls(async (params, token) => {
+	server.connection.languages.callHierarchy.onOutgoingCalls(async (params, token) => {
 		return await lastCallHierarchyLs?.callHierarchy.getOutgoingCalls(params.item, token) ?? [];
 	});
-	connection.languages.semanticTokens.on(async (params, token, _, resultProgress) => {
+	server.connection.languages.semanticTokens.on(async (params, token, _, resultProgress) => {
 		return await worker(params.textDocument.uri, token, async service => {
 			return await service?.getSemanticTokens(
 				params.textDocument.uri,
 				undefined,
-				semanticTokensLegend,
+				server.semanticTokensLegend,
 				token,
 				tokens => resultProgress?.report(tokens),
 			);
 		}) ?? { data: [] };
 	});
-	connection.languages.semanticTokens.onRange(async (params, token, _, resultProgress) => {
+	server.connection.languages.semanticTokens.onRange(async (params, token, _, resultProgress) => {
 		return await worker(params.textDocument.uri, token, async service => {
 			return await service?.getSemanticTokens(
 				params.textDocument.uri,
 				params.range,
-				semanticTokensLegend,
+				server.semanticTokensLegend,
 				token,
 				tokens => resultProgress?.report(tokens),
 			);
 		}) ?? { data: [] };
 	});
-	connection.languages.diagnostics.on(async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
+	server.connection.languages.diagnostics.on(async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
 		const result = await worker(params.textDocument.uri, token, service => {
 			return service.doValidation(
 				params.textDocument.uri,
@@ -252,32 +241,29 @@ export function registerLanguageFeatures(
 			items: result ?? [],
 		};
 	});
-	connection.languages.inlayHint.on(async (params, token) => {
+	server.connection.languages.inlayHint.on(async (params, token) => {
 		return worker(params.textDocument.uri, token, async service => {
 			lastInlayHintLs = service;
 			return service.getInlayHints(params.textDocument.uri, params.range, token);
 		});
 	});
-	connection.languages.inlayHint.resolve(async (hint, token) => {
+	server.connection.languages.inlayHint.resolve(async (hint, token) => {
 		return await lastInlayHintLs.doInlayHintResolve(hint, token);
 	});
-	connection.workspace.onWillRenameFiles(async (params, token) => {
-
+	server.connection.workspace.onWillRenameFiles(async (params, token) => {
 		const _edits = await Promise.all(params.files.map(async file => {
 			return await worker(file.oldUri, token, service => {
 				return service.getEditsForFileRename(file.oldUri, file.newUri, token) ?? null;
 			}) ?? null;
 		}));
 		const edits = _edits.filter((edit): edit is NonNullable<typeof edit> => !!edit);
-
 		if (edits.length) {
 			embedded.mergeWorkspaceEdits(edits[0], ...edits.slice(1));
 			return edits[0];
 		}
-
 		return null;
 	});
-	connection.onRequest(AutoInsertRequest.type, async (params, token) => {
+	server.connection.onRequest(AutoInsertRequest.type, async (params, token) => {
 		return worker(params.textDocument.uri, token, service => {
 			return service.doAutoInsert(params.textDocument.uri, params.selection, params.change, token);
 		});
@@ -291,7 +277,7 @@ export function registerLanguageFeatures(
 					resolve(undefined);
 					return;
 				}
-				const languageService = (await projectProvider.getProject(uri)).getLanguageService();
+				const languageService = (await server.projects!.get.call(server, uri)).getLanguageService();
 				try { // handle TS cancel throw
 					const result = await cb(languageService);
 					if (token.isCancellationRequested) {
@@ -307,8 +293,9 @@ export function registerLanguageFeatures(
 			}, 0);
 		});
 	}
+
 	function fixTextEdit(item: vscode.CompletionItem) {
-		const insertReplaceSupport = initParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;
+		const insertReplaceSupport = server.initializeParams?.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;
 		if (!insertReplaceSupport) {
 			if (item.textEdit && vscode.InsertReplaceEdit.is(item.textEdit)) {
 				item.textEdit = vscode.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);

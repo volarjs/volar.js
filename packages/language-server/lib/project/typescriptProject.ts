@@ -1,12 +1,11 @@
-import { LanguagePlugin, LanguageService, ServiceEnvironment, LanguageServicePlugin, TypeScriptProjectHost, createLanguageService } from '@volar/language-service';
-import { createTypeScriptLanguage, createSys } from '@volar/typescript';
+import { LanguagePlugin, LanguageService, ProviderResult, ServiceEnvironment, TypeScriptProjectHost, createLanguageService, resolveCommonLanguageId } from '@volar/language-service';
+import { createSys, createTypeScriptLanguage } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
-import type { ServerProject } from '../types';
-import { UriMap, createUriMap } from '../utils/uriMap';
-import type { ServerContext, ServerOptions } from '../server';
+import type { ServerBase, ServerProject } from '../types';
 import { fileNameToUri, uriToFileName } from '../uri';
+import { UriMap, createUriMap } from '../utils/uriMap';
 
 export interface TypeScriptServerProject extends ServerProject {
 	askedFiles: UriMap<boolean>;
@@ -18,11 +17,13 @@ export async function createTypeScriptServerProject(
 	ts: typeof import('typescript'),
 	tsLocalized: ts.MapLike<string> | undefined,
 	tsconfig: string | ts.CompilerOptions,
-	context: ServerContext,
+	server: ServerBase,
 	serviceEnv: ServiceEnvironment,
-	servicePlugins: LanguageServicePlugin[],
-	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
-	getLanguageId: (uri: string) => string,
+	getLanguagePlugins: (serviceEnv: ServiceEnvironment, projectContext: {
+		configFileName: string | undefined;
+		host: TypeScriptProjectHost;
+		sys: ReturnType<typeof createSys>;
+	}) => ProviderResult<LanguagePlugin[]>,
 ): Promise<TypeScriptServerProject> {
 
 	let parsedCommandLine: ts.ParsedCommandLine;
@@ -50,7 +51,7 @@ export async function createTypeScriptServerProject(
 		},
 		getScriptSnapshot(fileName) {
 			askedFiles.pathSet(fileName, true);
-			const doc = context.documents.get(fileNameToUri(fileName));
+			const doc = server.documents.get(fileNameToUri(fileName));
 			if (doc) {
 				return doc.getSnapshot();
 			}
@@ -63,20 +64,18 @@ export async function createTypeScriptServerProject(
 			return parsedCommandLine.projectReferences;
 		},
 		getLanguageId(uri) {
-			return context.documents.get(uri)?.languageId ?? getLanguageId(uri);
+			return server.documents.get(uri)?.languageId ?? resolveCommonLanguageId(uri);
 		},
 		fileNameToScriptId: serviceEnv.typescript!.fileNameToUri,
 		scriptIdToFileName: serviceEnv.typescript!.uriToFileName,
 	};
 	const languagePlugins = await getLanguagePlugins(serviceEnv, {
-		typescript: {
-			configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
-			host,
-			sys,
-		},
+		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
+		host,
+		sys,
 	});
 	const askedFiles = createUriMap<boolean>(fileNameToUri);
-	const docChangeWatcher = context.documents.onDidChangeContent(() => {
+	const docChangeWatcher = server.documents.onDidChangeContent(() => {
 		projectVersion++;
 	});
 	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => {
@@ -118,7 +117,7 @@ export async function createTypeScriptServerProject(
 			);
 			languageService = createLanguageService(
 				language,
-				servicePlugins,
+				server.languageServicePlugins,
 				serviceEnv,
 			);
 		}

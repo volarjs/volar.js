@@ -8,6 +8,7 @@ export * from 'vscode-languageserver/browser';
 export * from './index';
 export * from './lib/project/simpleProjectProvider';
 export * from './lib/project/typescriptProjectProvider';
+export * from './lib/server';
 
 export function createConnection() {
 
@@ -20,34 +21,32 @@ export function createConnection() {
 
 export function createServer(connection: vscode.Connection) {
 	return createServerBase(connection, () => ({
-		fs: {
-			async stat(uri) {
-				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
-					const text = await this.readFile(uri);
-					if (text !== undefined) {
-						return {
-							type: FileType.File,
-							size: text.length,
-							ctime: -1,
-							mtime: -1,
-						};
-					}
-					return undefined;
+		async stat(uri) {
+			if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
+				const text = await this.readFile(uri);
+				if (text !== undefined) {
+					return {
+						type: FileType.File,
+						size: text.length,
+						ctime: -1,
+						mtime: -1,
+					};
 				}
-				return await connection.sendRequest(FsStatRequest.type, uri);
-			},
-			async readFile(uri) {
-				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
-					return await httpSchemaRequestHandler(uri);
-				}
-				return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
-			},
-			async readDirectory(uri) {
-				if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
-					return [];
-				}
-				return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
-			},
+				return undefined;
+			}
+			return await connection.sendRequest(FsStatRequest.type, uri);
+		},
+		async readFile(uri) {
+			if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
+				return await httpSchemaRequestHandler(uri);
+			}
+			return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
+		},
+		async readDirectory(uri) {
+			if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
+				return [];
+			}
+			return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
 		},
 	}));
 }

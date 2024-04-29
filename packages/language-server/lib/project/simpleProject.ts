@@ -1,17 +1,12 @@
-import { LanguageService, ServiceEnvironment, LanguageServicePlugin, createLanguage, createLanguageService } from '@volar/language-service';
-import type { ServerContext, ServerOptions } from '../server';
-import type { ServerProject } from '../types';
+import { LanguagePlugin, LanguageService, ServiceEnvironment, createLanguage, createLanguageService } from '@volar/language-service';
+import type { ServerBase, ServerProject } from '../types';
 
 export async function createSimpleServerProject(
-	context: ServerContext,
+	server: ServerBase,
 	serviceEnv: ServiceEnvironment,
-	servicePlugins: LanguageServicePlugin[],
-	getLanguagePlugins: ServerOptions['getLanguagePlugins'],
+	languagePlugins: LanguagePlugin[],
 ): Promise<ServerProject> {
-
 	let languageService: LanguageService | undefined;
-
-	const languagePlugins = await getLanguagePlugins(serviceEnv, {});
 
 	return {
 		getLanguageService,
@@ -24,7 +19,7 @@ export async function createSimpleServerProject(
 	function getLanguageService() {
 		if (!languageService) {
 			const language = createLanguage(languagePlugins, false, uri => {
-				const script = context.documents.get(uri);
+				const script = server.documents.get(uri);
 				if (script) {
 					language.scripts.set(uri, script.languageId, script.getSnapshot());
 				}
@@ -34,7 +29,7 @@ export async function createSimpleServerProject(
 			});
 			languageService = createLanguageService(
 				language,
-				servicePlugins,
+				server.languageServicePlugins,
 				serviceEnv,
 			);
 		}
