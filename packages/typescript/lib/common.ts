@@ -12,6 +12,7 @@ export const fileLanguageIdProviderPlugin: LanguagePlugin = {
 			case 'mts': return 'typescript';
 			case 'jsx': return 'javascriptreact';
 			case 'tsx': return 'typescriptreact';
+			case 'json': return 'json';
 		}
 	},
 };

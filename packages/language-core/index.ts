@@ -34,6 +34,7 @@ export function createLanguage(plugins: LanguagePlugin[], caseSensitive: boolean
 					}
 				}
 				if (!languageId) {
+					console.warn(`languageId not found for ${id}`);
 					return;
 				}
 				if (sourceScripts.has(id)) {
