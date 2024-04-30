@@ -292,9 +292,9 @@ export function createSys(
 			result.then(result => {
 				promises.delete(promise);
 				if (result !== undefined) {
-					file!.text = result;
-					if (file!.stat) {
-						file!.stat.mtime++;
+					file.text = result;
+					if (file.stat) {
+						file.stat.mtime++;
 					}
 					version++;
 				}

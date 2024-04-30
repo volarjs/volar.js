@@ -32,11 +32,11 @@ export function register(context: ServiceContext) {
 		const tokens = await languageFeatureWorker(
 			context,
 			uri,
-			() => range!,
+			() => range,
 			function* (map) {
 				const mapped = findOverlapCodeRange(
-					map.sourceDocument.offsetAt(range!.start),
-					map.sourceDocument.offsetAt(range!.end),
+					map.sourceDocument.offsetAt(range.start),
+					map.sourceDocument.offsetAt(range.end),
 					map.map,
 					isSemanticTokensEnabled,
 				);
