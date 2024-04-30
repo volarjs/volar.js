@@ -4,12 +4,12 @@ import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { getServerCapabilities } from './serverCapabilities.js';
-import type { VolarInitializeParams, ServerProjectProvider } from './types.js';
-import { fileNameToUri } from './uri.js';
-import { createUriMap } from './utils/uriMap.js';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
+import { getServerCapabilities } from './serverCapabilities.js';
+import type { ServerProjectProvider, VolarInitializeParams } from './types.js';
+import { fileNameToUri } from './uri.js';
+import { createUriMap } from './utils/uriMap.js';
 
 export * from '@volar/snapshot-document';
 

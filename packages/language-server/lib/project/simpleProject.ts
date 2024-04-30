@@ -19,9 +19,9 @@ export async function createSimpleServerProject(
 	function getLanguageService() {
 		if (!languageService) {
 			const language = createLanguage(languagePlugins, false, uri => {
-				const script = server.documents.get(uri);
-				if (script) {
-					language.scripts.set(uri, script.languageId, script.getSnapshot());
+				const document = server.documents.get(uri);
+				if (document) {
+					language.scripts.set(uri, document.getSnapshot(), document.uri);
 				}
 				else {
 					language.scripts.delete(uri);

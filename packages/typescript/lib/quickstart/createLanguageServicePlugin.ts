@@ -2,6 +2,7 @@ import type * as ts from 'typescript';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 import { createLanguage, LanguagePlugin } from '@volar/language-core';
+import { fileLanguageIdProviderPlugin } from '../common';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
 const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
@@ -13,7 +14,6 @@ export function createLanguageServicePlugin(
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
 	) => LanguagePlugin[],
-	getLanguageId: (fileName: string) => string,
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
@@ -33,12 +33,15 @@ export function createLanguageServicePlugin(
 					projectExternalFileExtensions.set(info.project, extensions);
 					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
 					const language = createLanguage(
-						languagePlugins,
+						[
+							...languagePlugins,
+							fileLanguageIdProviderPlugin,
+						],
 						ts.sys.useCaseSensitiveFileNames,
 						fileName => {
 							const snapshot = getScriptSnapshot(fileName);
 							if (snapshot) {
-								language.scripts.set(fileName, getLanguageId(fileName), snapshot);
+								language.scripts.set(fileName, snapshot);
 							}
 							else {
 								language.scripts.delete(fileName);

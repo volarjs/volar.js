@@ -1,4 +1,4 @@
-import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, LanguagePlugin, NotificationHandler, LanguageServicePlugin, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits, resolveCommonLanguageId, TypeScriptProjectHost } from '@volar/language-service';
+import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, LanguagePlugin, NotificationHandler, LanguageServicePlugin, ServiceEnvironment, createLanguageService, mergeWorkspaceEdits, TypeScriptProjectHost } from '@volar/language-service';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -10,7 +10,6 @@ export function createTypeScriptChecker(
 	languagePlugins: LanguagePlugin[],
 	languageServicePlugins: LanguageServicePlugin[],
 	tsconfig: string,
-	getLanguageId = resolveCommonLanguageId,
 ) {
 	const tsconfigPath = asPosix(tsconfig);
 	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, env => {
@@ -30,7 +29,6 @@ export function createTypeScriptChecker(
 				parsed.fileNames = parsed.fileNames.map(asPosix);
 				return parsed;
 			},
-			getLanguageId,
 		);
 	});
 }
@@ -39,7 +37,6 @@ export function createTypeScriptInferredChecker(
 	languagePlugins: LanguagePlugin[],
 	languageServicePlugins: LanguageServicePlugin[],
 	getScriptFileNames: () => string[],
-	getLanguageId = resolveCommonLanguageId,
 	compilerOptions = defaultCompilerOptions
 ) {
 	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, env => {
@@ -50,7 +47,6 @@ export function createTypeScriptInferredChecker(
 				options: compilerOptions,
 				fileNames: getScriptFileNames().map(asPosix),
 			}),
-			getLanguageId,
 		);
 	});
 }
@@ -203,7 +199,6 @@ function createTypeScriptProjectHost(
 	configFileName: string | undefined,
 	env: ServiceEnvironment,
 	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>,
-	getLanguageId: (fileName: string) => string,
 ) {
 
 	let scriptSnapshotsCache: Map<string, ts.IScriptSnapshot | undefined> = new Map();
@@ -240,7 +235,6 @@ function createTypeScriptProjectHost(
 			}
 			return scriptSnapshotsCache.get(fileName);
 		},
-		getLanguageId,
 		fileNameToScriptId: env.typescript!.fileNameToUri,
 		scriptIdToFileName: env.typescript!.uriToFileName,
 	};

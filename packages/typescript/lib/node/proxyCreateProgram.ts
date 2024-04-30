@@ -2,6 +2,7 @@ import { Language, LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
 import { decorateProgram } from './decorateProgram';
+import { fileLanguageIdProviderPlugin } from '../common';
 
 const arrayEqual = (a: readonly any[], b: readonly any[]) => {
 	if (a.length !== b.length) {
@@ -32,7 +33,6 @@ export function proxyCreateProgram(
 	ts: typeof import('typescript'),
 	original: typeof ts['createProgram'],
 	getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin[],
-	getLanguageId: (fileName: string) => string,
 ) {
 	const sourceFileSnapshots = new Map<string, [ts.SourceFile | undefined, ts.IScriptSnapshot | undefined]>();
 	const parsedSourceFiles = new WeakMap<ts.SourceFile, ts.SourceFile>();
@@ -59,7 +59,10 @@ export function proxyCreateProgram(
 				lastOptions = options;
 				languagePlugins = getLanguagePlugins(ts, options);
 				language = createLanguage(
-					languagePlugins,
+					[
+						...languagePlugins,
+						fileLanguageIdProviderPlugin,
+					],
 					ts.sys.useCaseSensitiveFileNames,
 					fileName => {
 						if (!sourceFileSnapshots.has(fileName)) {
@@ -83,7 +86,7 @@ export function proxyCreateProgram(
 						}
 						const snapshot = sourceFileSnapshots.get(fileName)?.[1];
 						if (snapshot) {
-							language!.scripts.set(fileName, getLanguageId(fileName), snapshot);
+							language!.scripts.set(fileName, snapshot);
 						}
 						else {
 							language!.scripts.delete(fileName);

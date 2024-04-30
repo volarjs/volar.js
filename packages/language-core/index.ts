@@ -24,26 +24,44 @@ export function createLanguage(plugins: LanguagePlugin[], caseSensitive: boolean
 				sync(id);
 				return sourceScripts.get(id);
 			},
-			set(id, languageId, snapshot, _plugins = plugins) {
+			set(id, snapshot, languageId, _plugins = plugins) {
+				if (!languageId) {
+					for (const plugin of plugins) {
+						languageId = plugin.getLanguageId?.(id);
+						if (languageId) {
+							break;
+						}
+					}
+				}
+				if (!languageId) {
+					return;
+				}
 				if (sourceScripts.has(id)) {
 					const sourceScript = sourceScripts.get(id)!;
 					if (sourceScript.languageId !== languageId) {
 						// languageId changed
 						this.delete(id);
-						return this.set(id, languageId, snapshot);
+						return this.set(id, snapshot, languageId);
 					}
 					else if (sourceScript.snapshot !== snapshot) {
 						// snapshot updated
 						sourceScript.snapshot = snapshot;
 						if (sourceScript.generated) {
-							sourceScript.generated.root = sourceScript.generated.languagePlugin.updateVirtualCode(id, sourceScript.generated.root, snapshot);
-							sourceScript.generated.embeddedCodes.clear();
-							for (const code of forEachEmbeddedCode(sourceScript.generated.root)) {
-								virtualCodeToSourceFileMap.set(code, sourceScript);
-								sourceScript.generated.embeddedCodes.set(code.id, code);
+							const newVirtualCode = sourceScript.generated.languagePlugin.updateVirtualCode?.(id, sourceScript.generated.root, snapshot);
+							if (newVirtualCode) {
+								sourceScript.generated.root = newVirtualCode;
+								sourceScript.generated.embeddedCodes.clear();
+								for (const code of forEachEmbeddedCode(sourceScript.generated.root)) {
+									virtualCodeToSourceFileMap.set(code, sourceScript);
+									sourceScript.generated.embeddedCodes.set(code.id, code);
+								}
+								return sourceScript;
+							}
+							else {
+								this.delete(id);
+								return;
 							}
 						}
-						return sourceScript;
 					}
 					else {
 						// not changed
@@ -55,7 +73,7 @@ export function createLanguage(plugins: LanguagePlugin[], caseSensitive: boolean
 					const sourceScript: SourceScript = { id, languageId, snapshot };
 					sourceScripts.set(id, sourceScript);
 					for (const languagePlugin of _plugins) {
-						const virtualCode = languagePlugin.createVirtualCode(id, languageId, snapshot);
+						const virtualCode = languagePlugin.createVirtualCode?.(id, languageId, snapshot);
 						if (virtualCode) {
 							sourceScript.generated = {
 								root: virtualCode,
@@ -166,21 +184,4 @@ export function* forEachEmbeddedCode(virtualCode: VirtualCode): Generator<Virtua
 			yield* forEachEmbeddedCode(embeddedCode);
 		}
 	}
-}
-
-export function resolveCommonLanguageId(fileNameOrUri: string) {
-	const ext = fileNameOrUri.split('.').pop()!;
-	switch (ext) {
-		case 'js': return 'javascript';
-		case 'cjs': return 'javascript';
-		case 'mjs': return 'javascript';
-		case 'ts': return 'typescript';
-		case 'cts': return 'typescript';
-		case 'mts': return 'typescript';
-		case 'jsx': return 'javascriptreact';
-		case 'tsx': return 'typescriptreact';
-		case 'pug': return 'jade';
-		case 'md': return 'markdown';
-	}
-	return ext;
 }
