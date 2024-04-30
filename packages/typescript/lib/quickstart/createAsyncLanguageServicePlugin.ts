@@ -1,7 +1,7 @@
 import type * as ts from 'typescript';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { createLanguage, LanguagePlugin } from '@volar/language-core';
+import { createLanguage, FileMap, LanguagePlugin } from '@volar/language-core';
 import { arrayItemsEqual } from './createLanguageServicePlugin';
 import { fileLanguageIdProviderPlugin } from '../common';
 
@@ -66,6 +66,7 @@ export function createAsyncLanguageServicePlugin(
 					}
 
 					loadLanguagePlugins(ts, info).then(languagePlugins => {
+						const syncedScriptVersions = new FileMap<string>(ts.sys.useCaseSensitiveFileNames);
 						const language = createLanguage(
 							[
 								...languagePlugins,
@@ -73,6 +74,12 @@ export function createAsyncLanguageServicePlugin(
 							],
 							ts.sys.useCaseSensitiveFileNames,
 							fileName => {
+								const version = getScriptVersion(fileName);
+								if (syncedScriptVersions.get(fileName) === version) {
+									return;
+								}
+								syncedScriptVersions.set(fileName, version);
+
 								const snapshot = getScriptSnapshot(fileName);
 								if (snapshot) {
 									language.scripts.set(
