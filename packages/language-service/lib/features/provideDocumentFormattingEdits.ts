@@ -66,7 +66,7 @@ export function register(context: ServiceContext) {
 			const originalDocument = document;
 
 			let tempSourceSnapshot = sourceScript.snapshot;
-			let tempVirtualFile = context.language.scripts.set(sourceScript.id + '.tmp', sourceScript.languageId, sourceScript.snapshot, [sourceScript.generated.languagePlugin]).generated?.root;
+			let tempVirtualFile = context.language.scripts.set(sourceScript.id + '.tmp', sourceScript.snapshot, sourceScript.languageId, [sourceScript.generated.languagePlugin])?.generated?.root;
 			if (!tempVirtualFile) {
 				return;
 			}
@@ -145,7 +145,7 @@ export function register(context: ServiceContext) {
 					const newText = TextDocument.applyEdits(document, edits);
 					document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 					tempSourceSnapshot = stringToSnapshot(newText);
-					tempVirtualFile = context.language.scripts.set(sourceScript.id + '.tmp', sourceScript.languageId, tempSourceSnapshot, [sourceScript.generated.languagePlugin]).generated?.root;
+					tempVirtualFile = context.language.scripts.set(sourceScript.id + '.tmp', tempSourceSnapshot, sourceScript.languageId, [sourceScript.generated.languagePlugin])?.generated?.root;
 					if (!tempVirtualFile) {
 						break;
 					}

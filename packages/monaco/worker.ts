@@ -4,7 +4,6 @@ import {
 	LanguageServicePlugin,
 	createLanguageService as _createLanguageService,
 	createLanguage,
-	resolveCommonLanguageId,
 	type LanguageService,
 	type ServiceEnvironment,
 	TypeScriptProjectHost,
@@ -22,14 +21,12 @@ export function createSimpleWorkerService<T = {}>({
 	languagePlugins = [],
 	servicePlugins = [],
 	extraApis = {} as T,
-	getLanguageId = resolveCommonLanguageId,
 }: {
 	env: ServiceEnvironment;
 	workerContext: monaco.worker.IWorkerContext<any>;
 	languagePlugins?: LanguagePlugin[];
 	servicePlugins?: LanguageServicePlugin[];
 	extraApis?: T;
-	getLanguageId?: (uri: string) => string;
 }) {
 	const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 	const language = createLanguage(
@@ -49,7 +46,7 @@ export function createSimpleWorkerService<T = {}>({
 					getChangeRange: () => undefined,
 				};
 				snapshots.set(model, [model.version, snapshot]);
-				language.scripts.set(uri, getLanguageId(uri), snapshot);
+				language.scripts.set(uri, snapshot);
 			}
 			else {
 				language.scripts.delete(uri);
@@ -68,7 +65,6 @@ export function createTypeScriptWorkerService<T = {}>({
 	languagePlugins = [],
 	servicePlugins = [],
 	extraApis = {} as T,
-	getLanguageId = resolveCommonLanguageId,
 }: {
 	typescript: typeof import('typescript'),
 	compilerOptions: ts.CompilerOptions,
@@ -77,7 +73,6 @@ export function createTypeScriptWorkerService<T = {}>({
 	languagePlugins?: LanguagePlugin[];
 	servicePlugins?: LanguageServicePlugin[];
 	extraApis?: T;
-	getLanguageId?: (uri: string) => string;
 }) {
 
 	let projectVersion = 0;
@@ -134,7 +129,6 @@ export function createTypeScriptWorkerService<T = {}>({
 		getCompilationSettings() {
 			return compilerOptions;
 		},
-		getLanguageId: id => getLanguageId(id),
 		fileNameToScriptId: env.typescript!.fileNameToUri,
 		scriptIdToFileName: env.typescript!.uriToFileName,
 	};

@@ -6,7 +6,7 @@ export interface Language {
 	plugins: LanguagePlugin[];
 	scripts: {
 		get(id: string): SourceScript | undefined;
-		set(id: string, languageId: string, snapshot: ts.IScriptSnapshot, plugins?: LanguagePlugin[]): SourceScript;
+		set(id: string, snapshot: ts.IScriptSnapshot, languageId?: string, plugins?: LanguagePlugin[]): SourceScript | undefined;
 		delete(id: string): void;
 	};
 	maps: {
@@ -86,8 +86,9 @@ export interface ExtraServiceScript extends ServiceScript {
 }
 
 export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
-	createVirtualCode(scriptId: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
-	updateVirtualCode(scriptId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot): T;
+	getLanguageId(scriptId: string): string | undefined;
+	createVirtualCode?(scriptId: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
+	updateVirtualCode?(scriptId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot): T | undefined;
 	disposeVirtualCode?(scriptId: string, virtualCode: T): void;
 	typescript?: {
 		/**
@@ -120,7 +121,6 @@ export interface TypeScriptProjectHost extends ts.System, Pick<
 	| 'getScriptSnapshot'
 > {
 	configFileName: string | undefined;
-	getLanguageId(scriptId: string): string;
 	getSystemVersion?(): number;
 	syncSystem?(): Promise<number>;
 	scriptIdToFileName(scriptId: string): string;

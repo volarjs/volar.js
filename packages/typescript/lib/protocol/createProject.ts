@@ -3,6 +3,7 @@ import type * as ts from 'typescript';
 import { forEachEmbeddedCode } from '@volar/language-core';
 import * as path from 'path-browserify';
 import { createResolveModuleName } from '../resolveModuleName';
+import { fileLanguageIdProviderPlugin } from '../common';
 
 const scriptVersions = new Map<string, { lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>();
 const fsFileSnapshots = new Map<string, [number | undefined, ts.IScriptSnapshot | undefined]>();
@@ -14,7 +15,10 @@ export function createTypeScriptLanguage(
 ): Language {
 
 	const language = createLanguage(
-		languagePlugins,
+		[
+			...languagePlugins,
+			fileLanguageIdProviderPlugin,
+		],
 		projectHost.useCaseSensitiveFileNames,
 		scriptId => {
 			const fileName = projectHost.scriptIdToFileName(scriptId);
@@ -39,7 +43,7 @@ export function createTypeScriptLanguage(
 			}
 
 			if (snapshot) {
-				language.scripts.set(scriptId, projectHost.getLanguageId(scriptId), snapshot);
+				language.scripts.set(scriptId, snapshot);
 			}
 			else {
 				language.scripts.delete(scriptId);
