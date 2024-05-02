@@ -21,6 +21,12 @@ export function createSimpleProjectProvider(languagePlugins: LanguagePlugin[]): 
 		async all() {
 			return await Promise.all([...map.values()]);
 		},
+		reload() {
+			for (const project of map.values()) {
+				project.then(p => p.dispose());
+			}
+			map.clear();
+		},
 	};
 }
 

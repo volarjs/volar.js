@@ -57,6 +57,10 @@ export namespace WriteVirtualFilesNotification {
 	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar/client/writeVirtualFiles');
 }
 
+export namespace ReloadProjectNotification {
+	export const type = new vscode.NotificationType<vscode.TextDocumentIdentifier>('volar/client/reloadProject');
+}
+
 /**
  * Document Drop
  */

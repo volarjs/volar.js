@@ -21,6 +21,7 @@ export interface ServerProject {
 export interface ServerProjectProvider {
 	get(this: ServerBase, uri: string): Promise<ServerProject>;
 	all(this: ServerBase): Promise<ServerProject[]>;
+	reload(this: ServerBase): void;
 }
 
 export type ServerBase = ReturnType<typeof createServerBase>;

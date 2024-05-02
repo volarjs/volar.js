@@ -48,6 +48,16 @@ export function createTypeScriptProjectProvider(
 				...inferredProjects.values(),
 			]);
 		},
+		reload() {
+			for (const project of [
+				...configProjects.values(),
+				...inferredProjects.values(),
+			]) {
+				project.then(p => p.dispose());
+			}
+			configProjects.clear();
+			inferredProjects.clear();
+		},
 	};
 	return projects;
 
