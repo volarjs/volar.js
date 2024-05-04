@@ -189,10 +189,8 @@ export function toGeneratedOffset(sourceScript: SourceScript, map: SourceMap, po
 	}
 }
 
-export function* forEachGeneratedOffset(sourceScript: SourceScript, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
+export function* toGeneratedOffsets(sourceScript: SourceScript, map: SourceMap<CodeInformation>, position: number) {
 	for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
-		if (filter(mapping.data)) {
-			yield generateOffset + sourceScript.snapshot.getLength();
-		}
+		yield [generateOffset + sourceScript.snapshot.getLength(), mapping] as const;
 	}
 }

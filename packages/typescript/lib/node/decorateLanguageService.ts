@@ -20,7 +20,7 @@ import {
 import type * as ts from 'typescript';
 import { dedupeDocumentSpans } from './dedupe';
 import { getServiceScript, notEmpty } from './utils';
-import { forEachGeneratedOffset, toGeneratedOffset, toSourceOffset, transformCallHierarchyItem, transformDiagnostic, transformDocumentSpan, transformFileTextChanges, transformSpan, transformTextChange, transformTextSpan } from './transform';
+import { toGeneratedOffsets, toGeneratedOffset, toSourceOffset, transformCallHierarchyItem, transformDiagnostic, transformDocumentSpan, transformFileTextChanges, transformSpan, transformTextChange, transformTextSpan } from './transform';
 
 const windowsPathReg = /\\/g;
 
@@ -387,7 +387,10 @@ export function decorateLanguageService(language: Language, languageService: ts.
 		const [serviceScript, sourceScript, map] = getServiceScript(language, fileName);
 		if (serviceScript) {
 			let failed: ts.RenameInfoFailure | undefined;
-			for (const generateOffset of forEachGeneratedOffset(sourceScript, map, position, isRenameEnabled)) {
+			for (const [generateOffset, mapping] of toGeneratedOffsets(sourceScript, map, position)) {
+				if (!isRenameEnabled(mapping.data)) {
+					continue;
+				}
 				const info = getRenameInfo(fileName, generateOffset, options);
 				if (info.canRename) {
 					const span = transformTextSpan(sourceScript, map, info.triggerSpan, isRenameEnabled);
@@ -654,44 +657,37 @@ export function decorateLanguageService(language: Language, languageService: ts.
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, sourceScript, map] = getServiceScript(language, fileName);
 		if (serviceScript) {
-			let mainResult: ts.CompletionInfo | undefined;
-			let additionalResults: ts.CompletionInfo[] = [];
-			let isAdditional: boolean | undefined;
-			const generatedOffset = toGeneratedOffset(sourceScript, map, position, data => {
-				if (!isCompletionEnabled(data)) {
-					return false;
+			const results: ts.CompletionInfo[] = [];
+			for (const [generatedOffset, mapping] of toGeneratedOffsets(sourceScript, map, position)) {
+				if (!isCompletionEnabled(mapping.data)) {
+					continue;
 				}
-				isAdditional = typeof data.completion === 'object' && data.completion.isAdditional;
-				if (!isAdditional && mainResult) {
-					return false;
-				}
-				return true;
-			});
-			if (generatedOffset !== undefined) {
 				const result = getCompletionsAtPosition(fileName, generatedOffset, options, formattingSettings);
-				if (result) {
-					for (const entry of result.entries) {
-						entry.replacementSpan = entry.replacementSpan && transformTextSpan(sourceScript, map, entry.replacementSpan, isCompletionEnabled);
-					}
-					result.optionalReplacementSpan = result.optionalReplacementSpan && transformTextSpan(sourceScript, map, result.optionalReplacementSpan, isCompletionEnabled);
-					if (isAdditional) {
-						additionalResults.push(result);
-					}
-					else {
-						mainResult = result;
-					}
+				if (!result || !result.entries.length) {
+					continue;
+				}
+				if (typeof mapping.data.completion === 'object' && mapping.data.completion.onlyImport) {
+					result.entries = result.entries.filter(entry => !!entry.sourceDisplay);
+				}
+				for (const entry of result.entries) {
+					entry.replacementSpan = entry.replacementSpan && transformTextSpan(sourceScript, map, entry.replacementSpan, isCompletionEnabled);
+				}
+				result.optionalReplacementSpan = result.optionalReplacementSpan
+					&& transformTextSpan(sourceScript, map, result.optionalReplacementSpan, isCompletionEnabled);
+				const isAdditional = typeof mapping.data.completion === 'object' && mapping.data.completion.isAdditional;
+				if (isAdditional) {
+					results.push(result);
+				}
+				else {
+					results.splice(0, 0, result);
 				}
 			}
-			if (!mainResult && additionalResults.length) {
-				mainResult = additionalResults.shift();
-			}
-			if (mainResult) {
+			if (results.length) {
 				return {
-					...mainResult,
-					entries: [
-						...mainResult.entries,
-						...additionalResults.map(additionalResult => additionalResult.entries).flat(),
-					],
+					...results[0],
+					entries: results
+						.map(additionalResult => additionalResult.entries)
+						.flat(),
 				};
 			}
 		}
