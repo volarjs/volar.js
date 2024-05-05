@@ -21,7 +21,7 @@ export async function createSimpleServerProject(
 			const language = createLanguage(languagePlugins, false, uri => {
 				const document = server.documents.get(uri);
 				if (document) {
-					language.scripts.set(uri, document.getSnapshot(), document.uri);
+					language.scripts.set(uri, document.getSnapshot(), document.languageId);
 				}
 				else {
 					language.scripts.delete(uri);
