@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.2.1](https://github.com/volarjs/volar.js/compare/v2.2.0...v2.2.1) (2024-05-06)
+
+### Features
+
+- **language-server:** restored support for "Reload Project" command
+
+### Bug Fixes
+
+- **typescript:** additional completion not working in TS plugin [vuejs/language-tools#4323](https://github.com/vuejs/language-tools/issues/4323)
+- **language-server:** pass correct languageId when creating virtual code [#173](https://github.com/volarjs/volar.js/issues/173)
+
 ## [2.2.0](https://github.com/volarjs/volar.js/compare/v2.1.6...v2.2.0) (2024-05-01)
 
 ### Features
