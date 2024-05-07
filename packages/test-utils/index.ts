@@ -34,6 +34,13 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	connection.onClose(e => console.log(e));
 	connection.onUnhandledNotification(e => console.log(e));
 	connection.onError(e => console.log(e));
+	connection.onNotification(_.LogMessageNotification.type, e => {
+		if (e.type === _.MessageType.Error || e.type === _.MessageType.Warning) {
+			console.error(e.message);
+		} else {
+			console.log(e.message);
+		}
+	});
 	connection.onDispose(() => {
 		connection.end();
 	});
