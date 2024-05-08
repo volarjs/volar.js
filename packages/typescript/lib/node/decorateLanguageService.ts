@@ -253,18 +253,54 @@ export function decorateLanguageService(language: Language, languageService: ts.
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, sourceScript, map] = getServiceScript(language, fileName);
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(sourceScript, map, position, isHoverEnabled);
-			if (generatePosition !== undefined) {
-				const result = getQuickInfoAtPosition(fileName, generatePosition);
-				if (result) {
-					const textSpan = transformTextSpan(sourceScript, map, result.textSpan, isHoverEnabled);
+			const infos: ts.QuickInfo[] = [];
+			for (const [generatePosition, mapping] of toGeneratedOffsets(sourceScript, map, position)) {
+				if (!isHoverEnabled(mapping.data)) {
+					continue;
+				}
+				const info = getQuickInfoAtPosition(fileName, generatePosition);
+				if (info) {
+					const textSpan = transformTextSpan(sourceScript, map, info.textSpan, isHoverEnabled);
 					if (textSpan) {
-						return {
-							...result,
+						infos.push({
+							...info,
 							textSpan,
-						};
+						});
 					}
 				}
+			}
+			if (infos.length === 1) {
+				return infos[0];
+			}
+			else if (infos.length >= 2) {
+				const combine = { ...infos[0] };
+				combine.displayParts = combine.displayParts?.slice();
+				combine.documentation = combine.documentation?.slice();
+				combine.tags = combine.tags?.slice();
+				for (let i = 1; i < infos.length; i++) {
+					const { displayParts, documentation, tags } = infos[i];
+					if (!combine.displayParts) {
+						combine.displayParts = displayParts;
+					}
+					else if (displayParts?.length) {
+						combine.displayParts.push({ ...displayParts[0], text: '\n\n' + displayParts[0].text });
+						combine.displayParts.push(...displayParts.slice(1));
+					}
+					if (!combine.documentation) {
+						combine.documentation = documentation;
+					}
+					else if (documentation?.length) {
+						combine.documentation.push({ ...documentation[0], text: '\n\n' + documentation[0].text });
+						combine.documentation.push(...documentation.slice(1));
+					}
+					if (!combine.tags) {
+						combine.tags = tags;
+					}
+					else if (tags?.length) {
+						combine.tags.push(...tags);
+					}
+				}
+				return combine;
 			}
 		}
 		else {
