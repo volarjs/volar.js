@@ -23,7 +23,9 @@ export function isCallHierarchyEnabled(info: CodeInformation): boolean {
 }
 
 export function isRenameEnabled(info: CodeInformation): boolean {
-	return !!info.navigation;
+	return typeof info.navigation === 'object'
+		? info.navigation.shouldRename?.() ?? true
+		: !!info.navigation;
 }
 
 export function isDefinitionEnabled(info: CodeInformation): boolean {
