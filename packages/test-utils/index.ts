@@ -12,16 +12,17 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 
 	const childProcess = cp.fork(
 		serverModule,
-		['--node-ipc', `--clientProcessId=${process.pid.toString()}`],
+		['--stdio', `--clientProcessId=${process.pid.toString()}`],
 		{
 			execArgv: ['--nolazy'],
 			env: process.env,
 			cwd,
+			stdio: 'pipe',
 		}
 	);
 	const connection = _.createProtocolConnection(
-		new _.IPCMessageReader(childProcess),
-		new _.IPCMessageWriter(childProcess)
+		childProcess.stdout!,
+		childProcess.stdin!
 	);
 	const openedDocuments = new Map<string, TextDocument>();
 	const settings: any = {};
@@ -33,8 +34,15 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	connection.onClose(e => console.log(e));
 	connection.onUnhandledNotification(e => console.log(e));
 	connection.onError(e => console.log(e));
+	connection.onNotification(_.LogMessageNotification.type, e => {
+		if (e.type === _.MessageType.Error || e.type === _.MessageType.Warning) {
+			console.error(e.message);
+		} else {
+			console.log(e.message);
+		}
+	});
 	connection.onDispose(() => {
-		childProcess.kill();
+		connection.end();
 	});
 	connection.onRequest(_.ConfigurationRequest.type, ({ items }) => {
 		return items.map(item => {
