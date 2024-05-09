@@ -1,6 +1,6 @@
 {
 	"private": true,
-	"packageManager": "pnpm@9.1.0-0+sha256.c557b24d2298d9b5e3be7086ebf55a28253b008324d545f72645a6de89844102",
+	"packageManager": "pnpm@9.1.0",
 	"scripts": {
 		"build": "tsc -b",
 		"watch": "tsc -b -w",
