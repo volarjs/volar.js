@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.2.2](https://github.com/volarjs/volar.js/compare/v2.2.1...v2.2.2) (2024-05-10)
+
+### Bug Fixes
+
+- **typescript:** TS plugin only displays the first hover info
+- **language-core:** `isRenameEnabled` respect `CodeInformation.navigation.shouldRename`
+- **test-utils:** use stdio transport for test server [#175](https://github.com/volarjs/volar.js/issues/175)
+
 ## [2.2.1](https://github.com/volarjs/volar.js/compare/v2.2.0...v2.2.1) (2024-05-06)
 
 ### Features
