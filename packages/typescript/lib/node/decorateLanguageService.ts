@@ -699,7 +699,7 @@ export function decorateLanguageService(language: Language, languageService: ts.
 					continue;
 				}
 				const result = getCompletionsAtPosition(fileName, generatedOffset, options, formattingSettings);
-				if (!result || !result.entries.length) {
+				if (!result) {
 					continue;
 				}
 				if (typeof mapping.data.completion === 'object' && mapping.data.completion.onlyImport) {
@@ -715,7 +715,7 @@ export function decorateLanguageService(language: Language, languageService: ts.
 					results.push(result);
 				}
 				else {
-					results.splice(0, 0, result);
+					results.unshift(result);
 				}
 			}
 			if (results.length) {
