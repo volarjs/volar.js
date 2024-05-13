@@ -92,7 +92,7 @@ export function createAsyncLanguageServicePlugin(
 							}
 						);
 
-						decorateLanguageService(ts, language, info.languageService);
+						decorateLanguageService(language, info.languageService);
 						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 
 						info.project.markAsDirty();

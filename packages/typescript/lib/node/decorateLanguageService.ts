@@ -25,7 +25,6 @@ import { toGeneratedOffsets, toGeneratedOffset, toSourceOffset, transformCallHie
 const windowsPathReg = /\\/g;
 
 export function decorateLanguageService(
-	ts: typeof import('typescript'),
 	language: Language,
 	languageService: ts.LanguageService,
 ) {
@@ -281,31 +280,29 @@ export function decorateLanguageService(
 				combine.displayParts = combine.displayParts?.slice();
 				combine.documentation = combine.documentation?.slice();
 				combine.tags = combine.tags?.slice();
-				const displayPartsStrs = new Set([ts.displayPartsToString(infos[0].displayParts)]);
-				const documentationStrs = new Set([ts.displayPartsToString(infos[0].documentation)]);
+				const displayPartsStrs = new Set([displayPartsToString(infos[0].displayParts)]);
+				const documentationStrs = new Set([displayPartsToString(infos[0].documentation)]);
 				const tagsStrs = new Set<string>();
 				for (const tag of infos[0].tags ?? []) {
-					if (tag.text) {
-						tagsStrs.add(tag.name + '__volar__' + ts.displayPartsToString(tag.text));
-					}
+					tagsStrs.add(tag.name + '__volar__' + displayPartsToString(tag.text));
 				}
 				for (let i = 1; i < infos.length; i++) {
 					const { displayParts, documentation, tags } = infos[i];
-					if (displayParts?.length && !displayPartsStrs.has(ts.displayPartsToString(displayParts))) {
-						displayPartsStrs.add(ts.displayPartsToString(displayParts));
+					if (displayParts?.length && !displayPartsStrs.has(displayPartsToString(displayParts))) {
+						displayPartsStrs.add(displayPartsToString(displayParts));
 						combine.displayParts ??= [];
 						combine.displayParts.push({ ...displayParts[0], text: '\n\n' + displayParts[0].text });
 						combine.displayParts.push(...displayParts.slice(1));
 					}
-					if (documentation?.length && !documentationStrs.has(ts.displayPartsToString(documentation))) {
-						documentationStrs.add(ts.displayPartsToString(documentation));
+					if (documentation?.length && !documentationStrs.has(displayPartsToString(documentation))) {
+						documentationStrs.add(displayPartsToString(documentation));
 						combine.documentation ??= [];
 						combine.documentation.push({ ...documentation[0], text: '\n\n' + documentation[0].text });
 						combine.documentation.push(...documentation.slice(1));
 					}
 					for (const tag of tags ?? []) {
-						if (!tagsStrs.has(tag.name + '__volar__' + ts.displayPartsToString(tag.text))) {
-							tagsStrs.add(tag.name + '__volar__' + ts.displayPartsToString(tag.text));
+						if (!tagsStrs.has(tag.name + '__volar__' + displayPartsToString(tag.text))) {
+							tagsStrs.add(tag.name + '__volar__' + displayPartsToString(tag.text));
 							combine.tags ??= [];
 							combine.tags.push(tag);
 						}
@@ -865,4 +862,11 @@ export function decorateLanguageService(
 			}
 		}
 	}
+}
+
+function displayPartsToString(displayParts: ts.SymbolDisplayPart[] | undefined) {
+	if (displayParts) {
+		return displayParts.map(displayPart => displayPart.text).join('');
+	}
+	return '';
 }
