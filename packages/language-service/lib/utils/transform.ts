@@ -9,8 +9,13 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 	const targetUri = URI.parse(target);
 	const clearUri = targetUri.with({ fragment: '' }).toString(true);
 	const decoded = context.decodeEmbeddedDocumentUri(clearUri);
-	const sourceScript = decoded && context.language.scripts.get(decoded[0]);
-	const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
+	if (!decoded) {
+		return target;
+	}
+
+	target = decoded[0];
+	const sourceScript = context.language.scripts.get(target);
+	const virtualCode = sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 	if (virtualCode) {
 		for (const map of context.documents.getMaps(virtualCode)) {
@@ -55,9 +60,10 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 }
 
 export function transformMarkdown(content: string, context: ServiceContext) {
-	return content.replace(/(\[[^\]]+\])(\([^)]+\))/g, s => {
-		const match = s.match(/(\[[^\]]+\])(\([^)]+\))/)!;
-		return `${match[1]}(${transformDocumentLinkTarget(match[2].slice(1, -1), context)})`;
+	return content.replace(/(?!\()volar-embedded-content:\/\/\w+\/[^)]+/g, (match) => {
+		const segments = match.split('|');
+		segments[0] = transformDocumentLinkTarget(segments[0], context);
+		return segments.join('|');
 	});
 }
 
