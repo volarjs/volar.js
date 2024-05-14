@@ -60,7 +60,7 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 }
 
 export function transformMarkdown(content: string, context: ServiceContext) {
-	return content.replace(/(?!\()volar-embedded-content:\/\/\w+\/[^)]+/g, (match) => {
+	return content.replace(/(?!\()volar-embedded-content:\/\/\w+\/[^)]+/g, match => {
 		const segments = match.split('|');
 		segments[0] = transformDocumentLinkTarget(segments[0], context);
 		return segments.join('|');
