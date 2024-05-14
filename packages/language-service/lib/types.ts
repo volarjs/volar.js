@@ -3,6 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type * as ts from 'typescript';
 import type { LinkedCodeMapWithDocument, SourceMapWithDocuments } from './documents';
+import type { LanguageService } from './languageService';
 
 export type * from 'vscode-languageserver-protocol';
 
@@ -89,7 +90,7 @@ export interface LanguageServicePlugin<P = any> {
 	signatureHelpTriggerCharacters?: string[];
 	signatureHelpRetriggerCharacters?: string[];
 	autoFormatTriggerCharacters?: string[];
-	create(context: ServiceContext): LanguageServicePluginInstance<P>;
+	create(context: ServiceContext, languageService: LanguageService): LanguageServicePluginInstance<P>;
 }
 
 export interface EmbeddedCodeFormattingOptions {
