@@ -180,13 +180,7 @@ export function createLanguageService(
 			return `${embeddedContentScheme}://${encodeURIComponent(embeddedContentId)}/${encodeURIComponent(documentUri)}`;
 		},
 	};
-
-	for (const servicePlugin of servicePlugins) {
-		context.services.push([servicePlugin, servicePlugin.create(context)]);
-	}
-
-	return {
-
+	const api = {
 		getTriggerCharacters: () => servicePlugins.map(service => service.triggerCharacters ?? []).flat(),
 		getAutoFormatTriggerCharacters: () => servicePlugins.map(service => service.autoFormatTriggerCharacters ?? []).flat(),
 		getSignatureHelpTriggerCharacters: () => servicePlugins.map(service => service.signatureHelpTriggerCharacters ?? []).flat(),
@@ -230,4 +224,8 @@ export function createLanguageService(
 		dispose: () => context.services.forEach(service => service[1].dispose?.()),
 		context,
 	};
+	for (const servicePlugin of servicePlugins) {
+		context.services.push([servicePlugin, servicePlugin.create(context, api)]);
+	}
+	return api;
 }
