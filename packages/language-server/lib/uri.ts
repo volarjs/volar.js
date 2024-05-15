@@ -1,9 +1,9 @@
-import type { TextDocuments } from 'vscode-languageserver';
+import type { TextDocument, TextDocuments } from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 
 export type UriConverter = ReturnType<typeof createUriConverter>;
 
-export function createUriConverter(documents?: TextDocuments<any>) {
+export function createUriConverter(documents?: TextDocuments<TextDocument>) {
 	const syncedDocumentUriToFileName = new Map<string, string>();
 	const syncedDocumentFileNameToUri = new Map<string, string>();
 	const encodeds = new Map<string, URI>();
@@ -25,12 +25,12 @@ export function createUriConverter(documents?: TextDocuments<any>) {
 		fileNameToUri,
 	};
 
-	function uriToFileName(uri: string) {
+	function uriToFileName(uri: string, parsed?: URI) {
 		const syncedDocumentFileName = syncedDocumentUriToFileName.get(uri);
 		if (syncedDocumentFileName) {
 			return syncedDocumentFileName;
 		}
-		const parsed = URI.parse(uri);
+		parsed ??= URI.parse(uri);
 		if (parsed.scheme === 'file') {
 			return parsed.fsPath.replace(/\\/g, '/');
 		}

@@ -3,6 +3,7 @@ import { createSys, createTypeScriptLanguage } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
+import { URI } from 'vscode-uri';
 import type { ServerBase, ServerProject } from '../types';
 import { UriMap, createUriMap } from '../utils/uriMap';
 
@@ -50,7 +51,7 @@ export async function createTypeScriptServerProject(
 		},
 		getScriptSnapshot(fileName) {
 			const uri = server.uriConverter.fileNameToUri(fileName);
-			askedFiles.set(uri, true);
+			askedFiles.set(URI.parse(uri), true);
 			const document = server.documents.get(uri);
 			if (document) {
 				return document.getSnapshot();

@@ -82,14 +82,14 @@ export function createServerBase(
 
 		if (initializeParams.workspaceFolders?.length) {
 			for (const folder of initializeParams.workspaceFolders) {
-				workspaceFolders.set(folder.uri, true);
+				workspaceFolders.set(URI.parse(folder.uri), true);
 			}
 		}
 		else if (initializeParams.rootUri) {
-			workspaceFolders.set(initializeParams.rootUri, true);
+			workspaceFolders.set(URI.parse(initializeParams.rootUri), true);
 		}
 		else if (initializeParams.rootPath) {
-			workspaceFolders.set(URI.file(initializeParams.rootPath).toString(), true);
+			workspaceFolders.set(URI.file(initializeParams.rootPath), true);
 		}
 
 		const result: vscode.InitializeResult = {
@@ -250,10 +250,10 @@ export function createServerBase(
 		if (status.initializeParams?.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 				for (const folder of e.added) {
-					workspaceFolders.set(folder.uri, true);
+					workspaceFolders.set(URI.parse(folder.uri), true);
 				}
 				for (const folder of e.removed) {
-					workspaceFolders.delete(folder.uri);
+					workspaceFolders.delete(URI.parse(folder.uri));
 				}
 				status.projects.reload.call(status);
 			});

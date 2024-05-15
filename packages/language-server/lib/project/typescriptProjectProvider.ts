@@ -34,11 +34,12 @@ export function createTypeScriptProjectProvider(
 				initialized = true;
 				initialize(this);
 			}
-			const tsconfig = await findMatchTSConfig(this, URI.parse(uri));
+			const parsedUri = URI.parse(uri);
+			const tsconfig = await findMatchTSConfig(this, parsedUri);
 			if (tsconfig) {
 				return await getOrCreateConfiguredProject(this, tsconfig);
 			}
-			const workspaceFolder = getWorkspaceFolder(uri, this.workspaceFolders);
+			const workspaceFolder = getWorkspaceFolder(parsedUri, this.workspaceFolders);
 			return await getOrCreateInferredProject(this, uri, workspaceFolder);
 		},
 		async all() {
@@ -65,15 +66,17 @@ export function createTypeScriptProjectProvider(
 			const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
 
 			for (const change of tsConfigChanges) {
+				const changeUri = URI.parse(change.uri);
+				const changeFileName = server.uriConverter.uriToFileName(change.uri, changeUri);
 				if (change.type === vscode.FileChangeType.Created) {
-					rootTsConfigs.add(server.uriConverter.uriToFileName(change.uri));
+					rootTsConfigs.add(changeFileName);
 				}
-				else if ((change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Deleted) && configProjects.has(change.uri)) {
+				else if ((change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Deleted) && configProjects.has(changeUri)) {
 					if (change.type === vscode.FileChangeType.Deleted) {
-						rootTsConfigs.delete(server.uriConverter.uriToFileName(change.uri));
+						rootTsConfigs.delete(changeFileName);
 					}
-					const project = configProjects.get(change.uri);
-					configProjects.delete(change.uri);
+					const project = configProjects.get(changeUri);
+					configProjects.delete(changeUri);
 					project?.then(project => project.dispose());
 				}
 			}
@@ -87,8 +90,9 @@ export function createTypeScriptProjectProvider(
 
 	async function findMatchTSConfig(server: ServerBase, uri: URI) {
 
-		const filePath = server.uriConverter.uriToFileName(uri.toString());
-		let dir = path.dirname(filePath);
+		const fileName = server.uriConverter.uriToFileName(uri.toString());
+
+		let dir = path.dirname(fileName);
 
 		while (true) {
 			if (searchedDirs.has(dir)) {
@@ -113,12 +117,12 @@ export function createTypeScriptProjectProvider(
 			let matches: string[] = [];
 
 			for (const rootTsConfig of rootTsConfigs) {
-				if (isFileInDir(server.uriConverter.uriToFileName(uri.toString()), path.dirname(rootTsConfig))) {
+				if (isFileInDir(fileName, path.dirname(rootTsConfig))) {
 					matches.push(rootTsConfig);
 				}
 			}
 
-			matches = matches.sort((a, b) => sortTSConfigs(server.uriConverter.uriToFileName(uri.toString()), a, b));
+			matches = matches.sort((a, b) => sortTSConfigs(fileName, a, b));
 
 			if (matches.length) {
 				await getParsedCommandLine(matches[0]);
@@ -126,9 +130,9 @@ export function createTypeScriptProjectProvider(
 		}
 		function findIndirectReferenceTsconfig() {
 			return findTSConfig(async tsconfig => {
-				const tsconfigUri = server.uriConverter.fileNameToUri(tsconfig);
+				const tsconfigUri = URI.parse(server.uriConverter.fileNameToUri(tsconfig));
 				const project = await configProjects.get(tsconfigUri);
-				return project?.askedFiles.has(uri.toString()) ?? false;
+				return project?.askedFiles.has(uri) ?? false;
 			});
 		}
 		function findDirectIncludeTsconfig() {
@@ -136,18 +140,18 @@ export function createTypeScriptProjectProvider(
 				const map = createUriMap<boolean>();
 				const parsedCommandLine = await getParsedCommandLine(tsconfig);
 				for (const fileName of parsedCommandLine?.fileNames ?? []) {
-					const uri = server.uriConverter.fileNameToUri(fileName);
+					const uri = URI.parse(server.uriConverter.fileNameToUri(fileName));
 					map.set(uri, true);
 				}
-				return map.has(uri.toString());
+				return map.has(uri);
 			});
 		}
 		async function findTSConfig(match: (tsconfig: string) => Promise<boolean> | boolean) {
 
 			const checked = new Set<string>();
 
-			for (const rootTsConfig of [...rootTsConfigs].sort((a, b) => sortTSConfigs(server.uriConverter.uriToFileName(uri.toString()), a, b))) {
-				const tsconfigUri = server.uriConverter.fileNameToUri(rootTsConfig);
+			for (const rootTsConfig of [...rootTsConfigs].sort((a, b) => sortTSConfigs(fileName, a, b))) {
+				const tsconfigUri = URI.parse(server.uriConverter.fileNameToUri(rootTsConfig));
 				const project = await configProjects.get(tsconfigUri);
 				if (project) {
 
@@ -223,7 +227,7 @@ export function createTypeScriptProjectProvider(
 
 	function getOrCreateConfiguredProject(server: ServerBase, tsconfig: string) {
 		tsconfig = tsconfig.replace(/\\/g, '/');
-		const tsconfigUri = server.uriConverter.fileNameToUri(tsconfig);
+		const tsconfigUri = URI.parse(server.uriConverter.fileNameToUri(tsconfig));
 		let projectPromise = configProjects.get(tsconfigUri);
 		if (!projectPromise) {
 			const workspaceFolder = getWorkspaceFolder(tsconfigUri, server.workspaceFolders);
@@ -241,7 +245,7 @@ export function createTypeScriptProjectProvider(
 		return projectPromise;
 	}
 
-	async function getOrCreateInferredProject(server: ServerBase, uri: string, workspaceFolder: string) {
+	async function getOrCreateInferredProject(server: ServerBase, uri: string, workspaceFolder: URI) {
 
 		if (!inferredProjects.has(workspaceFolder)) {
 			inferredProjects.set(workspaceFolder, (async () => {
@@ -258,7 +262,7 @@ export function createTypeScriptProjectProvider(
 			})());
 		}
 
-		const project = await inferredProjects.get(workspaceFolder.toString())!;
+		const project = await inferredProjects.get(workspaceFolder)!;
 
 		project.tryAddFile(server.uriConverter.uriToFileName(uri));
 

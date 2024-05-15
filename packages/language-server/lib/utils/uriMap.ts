@@ -1,12 +1,11 @@
-import { URI } from 'vscode-uri';
-export * as _ from 'vscode-uri';
+import type { URI } from 'vscode-uri';
 
 export type UriMap<T> = ReturnType<typeof createUriMap<T>>;
 
 export function createUriMap<T>(caseSensitive = false) {
 	const map = new Map<string, T>();
-	const uriToNormalizedUri = new Map<string, string>();
-	const normalizedUriToUri = new Map<string, string>();
+	const rawUriToNormalizedUri = new Map<string, string>();
+	const normalizedUriToRawUri = new Map<string, URI>();
 
 	return {
 		clear: _clear,
@@ -18,50 +17,47 @@ export function createUriMap<T>(caseSensitive = false) {
 		set: _set,
 	};
 
-	function getUriByUri(uri: string) {
-		if (!uriToNormalizedUri.has(uri)) {
-			const normalizedUri = normalizeUri(uri);
-			uriToNormalizedUri.set(uri, normalizedUri);
-			normalizedUriToUri.set(normalizedUri, uri);
-		}
-		return uriToNormalizedUri.get(uri)!;
-	}
-
 	function _clear() {
-		uriToNormalizedUri.clear();
-		normalizedUriToUri.clear();
+		rawUriToNormalizedUri.clear();
+		normalizedUriToRawUri.clear();
 		return map.clear();
 	}
+
 	function _values() {
 		return map.values();
 	}
+
 	function* _keys() {
 		for (const normalizedUri of map.keys()) {
-			yield normalizedUriToUri.get(normalizedUri)!;
+			yield normalizedUriToRawUri.get(normalizedUri)!;
 		}
 	}
-	function _delete(_uri: string) {
-		return map.delete(getUriByUri(_uri));
-	}
-	function _get(_uri: string) {
-		return map.get(getUriByUri(_uri));
-	}
-	function _has(_uri: string) {
-		return map.has(getUriByUri(_uri));
-	}
-	function _set(_uri: string, item: T) {
-		return map.set(getUriByUri(_uri), item);
+	function _delete(uri: URI) {
+		return map.delete(getUriByUri(uri));
 	}
 
-	function normalizeUri(uri: string) {
-		try {
-			let normalized = URI.parse(uri).toString();
+	function _get(uri: URI) {
+		return map.get(getUriByUri(uri));
+	}
+
+	function _has(uri: URI) {
+		return map.has(getUriByUri(uri));
+	}
+
+	function _set(uri: URI, item: T) {
+		return map.set(getUriByUri(uri), item);
+	}
+
+	function getUriByUri(uri: URI) {
+		const rawUri = uri.toString();
+		if (!rawUriToNormalizedUri.has(rawUri)) {
+			let normalizedUri = uri.toString();
 			if (!caseSensitive) {
-				normalized = normalized.toLowerCase();
+				normalizedUri = normalizedUri.toLowerCase();
 			}
-			return normalized;
-		} catch {
-			return '';
+			rawUriToNormalizedUri.set(rawUri, normalizedUri);
+			normalizedUriToRawUri.set(normalizedUri, uri);
 		}
+		return rawUriToNormalizedUri.get(rawUri)!;
 	}
 }
