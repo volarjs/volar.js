@@ -3,17 +3,17 @@ import { URI } from 'vscode-uri';
 
 export type UriConverter = ReturnType<typeof createUriConverter>;
 
-export function createUriConverter(documents: TextDocuments<any>) {
+export function createUriConverter(documents?: TextDocuments<any>) {
 	const syncedDocumentUriToFileName = new Map<string, string>();
 	const syncedDocumentFileNameToUri = new Map<string, string>();
 	const encodeds = new Map<string, URI>();
 
-	documents.onDidOpen(({ document }) => {
+	documents?.onDidOpen(({ document }) => {
 		const fileName = uriToFileName(document.uri);
 		syncedDocumentUriToFileName.set(document.uri, fileName);
 		syncedDocumentFileNameToUri.set(fileName, document.uri);
 	});
-	documents.onDidClose(e => {
+	documents?.onDidClose(e => {
 		const fileName = syncedDocumentUriToFileName.get(e.document.uri);
 		assert(fileName, 'fileName not found');
 		syncedDocumentUriToFileName.delete(e.document.uri);
