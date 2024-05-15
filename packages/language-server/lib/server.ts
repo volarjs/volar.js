@@ -253,7 +253,7 @@ export function createServerBase(
 				for (const folder of e.removed) {
 					workspaceFolders.uriDelete(folder.uri);
 				}
-				// projects.reloadProjects();
+				status.projects.reload.call(status);
 			});
 		}
 	}
