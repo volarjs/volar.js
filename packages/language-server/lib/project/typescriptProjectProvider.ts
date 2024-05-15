@@ -72,8 +72,8 @@ export function createTypeScriptProjectProvider(
 					if (change.type === vscode.FileChangeType.Deleted) {
 						rootTsConfigs.delete(server.uriConverter.uriToFileName(change.uri));
 					}
-					const project = configProjects!.get(change.uri);
-					configProjects!.delete(change.uri);
+					const project = configProjects.get(change.uri);
+					configProjects.delete(change.uri);
 					project?.then(project => project.dispose());
 				}
 			}
