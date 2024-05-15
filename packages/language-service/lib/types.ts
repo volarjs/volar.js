@@ -90,6 +90,10 @@ export interface LanguageServicePlugin<P = any> {
 	signatureHelpTriggerCharacters?: string[];
 	signatureHelpRetriggerCharacters?: string[];
 	autoFormatTriggerCharacters?: string[];
+	/**
+	 * @deprecated languageService instance must be passed
+	 */
+	create(context: ServiceContext): LanguageServicePluginInstance<P>;
 	create(context: ServiceContext, languageService: LanguageService): LanguageServicePluginInstance<P>;
 }
 
