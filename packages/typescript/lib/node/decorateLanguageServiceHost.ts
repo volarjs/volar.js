@@ -7,7 +7,7 @@ export function decorateLanguageServiceHost(
 	language: Language,
 	languageServiceHost: ts.LanguageServiceHost,
 ) {
-	const extensions = language.plugins
+	const pluginExtensions = language.plugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 		.flat();
 	const scripts = new Map<string, [
@@ -29,9 +29,9 @@ export function decorateLanguageServiceHost(
 	if (readDirectory) {
 		languageServiceHost.readDirectory = (path, extensions, exclude, include, depth) => {
 			if (extensions) {
-				for (const ext of extensions) {
+				for (const ext of pluginExtensions) {
 					if (!extensions.includes(ext)) {
-						extensions = [...extensions, ...ext];
+						extensions = [...extensions, ext];
 					}
 				}
 			}
@@ -39,7 +39,7 @@ export function decorateLanguageServiceHost(
 		};
 	}
 
-	if (extensions.length) {
+	if (pluginExtensions.length) {
 
 		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(fileName));
 		const getCanonicalFileName = languageServiceHost.useCaseSensitiveFileNames?.()
@@ -55,7 +55,7 @@ export function decorateLanguageServiceHost(
 				options,
 				...rest
 			) => {
-				if (moduleLiterals.every(name => !extensions.some(ext => name.text.endsWith(ext)))) {
+				if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
 					return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, options, ...rest);
 				}
 				return moduleLiterals.map(moduleLiteral => {
@@ -72,7 +72,7 @@ export function decorateLanguageServiceHost(
 				options,
 				containingSourceFile
 			) => {
-				if (moduleNames.every(name => !extensions.some(ext => name.endsWith(ext)))) {
+				if (moduleNames.every(name => !pluginExtensions.some(ext => name.endsWith(ext)))) {
 					return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, options, containingSourceFile);
 				}
 				return moduleNames.map(moduleName => {
