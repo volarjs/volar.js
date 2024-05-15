@@ -7,22 +7,21 @@ import { URI } from 'vscode-uri';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
 import { getServerCapabilities } from './serverCapabilities.js';
-import type { ServerProjectProvider, VolarInitializeParams } from './types.js';
-import { fileNameToUri } from './uri.js';
+import type { InitializationOptions, ServerProjectProvider, VolarInitializeParams } from './types.js';
+import { UriConverter, createUriConverter } from './uri.js';
 import { createUriMap } from './utils/uriMap.js';
 
 export * from '@volar/snapshot-document';
 
 export function createServerBase(
 	connection: vscode.Connection,
-	getFs: (initializeParams: VolarInitializeParams) => FileSystem,
+	getFs: (options: InitializationOptions, uriConverter: UriConverter) => FileSystem,
 ) {
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
 
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 	const didChangeConfigurationCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeConfigurationParams>>();
-	const workspaceFolders = createUriMap<boolean>(fileNameToUri);
 	const configurations = new Map<string, Promise<any>>();
 	const documents = new vscode.TextDocuments({
 		create(uri, languageId, version, text) {
@@ -33,6 +32,8 @@ export function createServerBase(
 			return snapshot;
 		},
 	});
+	const uriConverter = createUriConverter(documents);
+	const workspaceFolders = createUriMap<boolean>();
 
 	documents.listen(connection);
 
@@ -45,6 +46,7 @@ export function createServerBase(
 		semanticTokensLegend: undefined as unknown as vscode.SemanticTokensLegend,
 		pullModelDiagnostics: false,
 		documents,
+		uriConverter,
 		workspaceFolders,
 		initialize,
 		initialized,
@@ -72,7 +74,7 @@ export function createServerBase(
 		status.projects = projects;
 		status.semanticTokensLegend = options?.semanticTokensLegend ?? standardSemanticTokensLegend;
 		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
-		status.fs = createFsWithCache(getFs(initializeParams));
+		status.fs = createFsWithCache(getFs(initializeParams.initializationOptions ?? {}, status.uriConverter));
 
 		if (initializeParams.initializationOptions?.l10n) {
 			l10n.config({ uri: initializeParams.initializationOptions.l10n.location });
@@ -80,14 +82,14 @@ export function createServerBase(
 
 		if (initializeParams.workspaceFolders?.length) {
 			for (const folder of initializeParams.workspaceFolders) {
-				workspaceFolders.uriSet(folder.uri, true);
+				workspaceFolders.set(URI.parse(folder.uri), true);
 			}
 		}
 		else if (initializeParams.rootUri) {
-			workspaceFolders.uriSet(initializeParams.rootUri, true);
+			workspaceFolders.set(URI.parse(initializeParams.rootUri), true);
 		}
 		else if (initializeParams.rootPath) {
-			workspaceFolders.uriSet(URI.file(initializeParams.rootPath).toString(), true);
+			workspaceFolders.set(URI.file(initializeParams.rootPath), true);
 		}
 
 		const result: vscode.InitializeResult = {
@@ -248,10 +250,10 @@ export function createServerBase(
 		if (status.initializeParams?.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 				for (const folder of e.added) {
-					workspaceFolders.uriSet(folder.uri, true);
+					workspaceFolders.set(URI.parse(folder.uri), true);
 				}
 				for (const folder of e.removed) {
-					workspaceFolders.uriDelete(folder.uri);
+					workspaceFolders.delete(URI.parse(folder.uri));
 				}
 				status.projects.reload.call(status);
 			});

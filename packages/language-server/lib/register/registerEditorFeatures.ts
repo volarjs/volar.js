@@ -15,7 +15,6 @@ import {
 	WriteVirtualFilesNotification,
 } from '../../protocol';
 import type { ServerBase } from '../types';
-import { fileNameToUri } from '../uri';
 
 export function registerEditorFeatures(server: ServerBase) {
 
@@ -53,7 +52,7 @@ export function registerEditorFeatures(server: ServerBase) {
 		const languageService = (await server.projects.get.call(server, params.uri)).getLanguageService();
 		const configFileName = languageService.context.language.typescript?.projectHost.configFileName;
 		if (configFileName) {
-			return { uri: fileNameToUri(configFileName) };
+			return { uri: server.uriConverter.fileNameToUri(configFileName) };
 		}
 	});
 	server.connection.onRequest(GetVirtualFileRequest.type, async document => {

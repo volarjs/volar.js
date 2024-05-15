@@ -4,7 +4,7 @@ import * as vscode from 'vscode-languageserver/node';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { createServerBase } from './lib/server';
 import type { InitializationOptions } from './lib/types';
-import { uriToFileName } from './lib/uri';
+import type { UriConverter } from './lib/uri';
 
 export * from 'vscode-languageserver/node';
 export * from './index';
@@ -12,12 +12,12 @@ export * from './lib/project/simpleProjectProvider';
 export * from './lib/project/typescriptProjectProvider';
 export * from './lib/server';
 
-export function createFs(options: InitializationOptions): FileSystem {
+export function createFs(options: InitializationOptions, uriConverter: UriConverter): FileSystem {
 	return {
 		stat(uri) {
 			if (uri.startsWith('file://')) {
 				try {
-					const stats = fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
+					const stats = fs.statSync(uriConverter.uriToFileName(uri), { throwIfNoEntry: false });
 					if (stats) {
 						return {
 							type: stats.isFile() ? FileType.File
@@ -39,13 +39,13 @@ export function createFs(options: InitializationOptions): FileSystem {
 			if (uri.startsWith('file://')) {
 				try {
 					if (options.maxFileSize) {
-						const stats = fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
+						const stats = fs.statSync(uriConverter.uriToFileName(uri), { throwIfNoEntry: false });
 						if (stats && stats.size > options.maxFileSize) {
 							console.warn(`[volar] file size exceeded limit: ${uri} (${stats.size} > ${options.maxFileSize})`);
 							return undefined;
 						}
 					}
-					return fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
+					return fs.readFileSync(uriConverter.uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
 				}
 				catch {
 					return undefined;
@@ -58,7 +58,7 @@ export function createFs(options: InitializationOptions): FileSystem {
 		readDirectory(uri) {
 			if (uri.startsWith('file://')) {
 				try {
-					const dirName = uriToFileName(uri);
+					const dirName = uriConverter.uriToFileName(uri);
 					const files = fs.readdirSync(dirName, { withFileTypes: true });
 					return files.map<[string, FileType]>(file => {
 						return [file.name, file.isFile() ? FileType.File
@@ -81,7 +81,7 @@ export function createConnection() {
 }
 
 export function createServer(connection: vscode.Connection) {
-	return createServerBase(connection, params => createFs(params.initializationOptions ?? {}));
+	return createServerBase(connection, createFs);
 }
 
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {

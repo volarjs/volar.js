@@ -1,15 +1,14 @@
 import type { LanguagePlugin, ServiceEnvironment } from '@volar/language-service';
 import { URI } from 'vscode-uri';
 import type { ServerBase, ServerProject, ServerProjectProvider } from '../types';
-import { fileNameToUri, uriToFileName } from '../uri';
-import type { UriMap } from '../utils/uriMap';
+import { createUriMap, type UriMap } from '../utils/uriMap';
 import { createSimpleServerProject } from './simpleProject';
 
 export function createSimpleProjectProvider(languagePlugins: LanguagePlugin[]): ServerProjectProvider {
-	const map = new Map<string, Promise<ServerProject>>();
+	const map = createUriMap<Promise<ServerProject>>();
 	return {
 		get(uri) {
-			const workspaceFolder = getWorkspaceFolder(uri, this.workspaceFolders);
+			const workspaceFolder = getWorkspaceFolder(URI.parse(uri), this.workspaceFolders);
 			let projectPromise = map.get(workspaceFolder);
 			if (!projectPromise) {
 				const serviceEnv = createServiceEnvironment(this, workspaceFolder);
@@ -30,9 +29,9 @@ export function createSimpleProjectProvider(languagePlugins: LanguagePlugin[]): 
 	};
 }
 
-export function createServiceEnvironment(server: ServerBase, workspaceFolder: string): ServiceEnvironment {
+export function createServiceEnvironment(server: ServerBase, workspaceFolder: URI): ServiceEnvironment {
 	return {
-		workspaceFolder,
+		workspaceFolder: workspaceFolder.toString(),
 		fs: server.fs,
 		locale: server.initializeParams?.locale,
 		clientCapabilities: server.initializeParams?.capabilities,
@@ -40,30 +39,27 @@ export function createServiceEnvironment(server: ServerBase, workspaceFolder: st
 		onDidChangeConfiguration: server.onDidChangeConfiguration,
 		onDidChangeWatchedFiles: server.onDidChangeWatchedFiles,
 		typescript: {
-			fileNameToUri: fileNameToUri,
-			uriToFileName: uriToFileName,
+			fileNameToUri: server.uriConverter.fileNameToUri,
+			uriToFileName: server.uriConverter.uriToFileName,
 		},
 	};
 }
 
-export function getWorkspaceFolder(uri: string, workspaceFolders: UriMap<boolean>) {
-
-	let parsed = URI.parse(uri);
-
+export function getWorkspaceFolder(uri: URI, workspaceFolders: UriMap<boolean>) {
 	while (true) {
-		if (workspaceFolders.uriHas(parsed.toString())) {
-			return parsed.toString();
+		if (workspaceFolders.has(uri)) {
+			return uri;
 		}
-		const next = URI.parse(uri).with({ path: parsed.path.substring(0, parsed.path.lastIndexOf('/')) });
-		if (next.path === parsed.path) {
+		const next = uri.with({ path: uri.path.substring(0, uri.path.lastIndexOf('/')) });
+		if (next.path === uri.path) {
 			break;
 		}
-		parsed = next;
+		uri = next;
 	}
 
-	for (const folder of workspaceFolders.uriKeys()) {
+	for (const folder of workspaceFolders.keys()) {
 		return folder;
 	}
 
-	return URI.parse(uri).with({ path: '/' }).toString();
+	return uri.with({ path: '/' });
 }

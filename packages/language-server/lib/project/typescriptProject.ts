@@ -3,8 +3,8 @@ import { createSys, createTypeScriptLanguage } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
+import { URI } from 'vscode-uri';
 import type { ServerBase, ServerProject } from '../types';
-import { fileNameToUri, uriToFileName } from '../uri';
 import { UriMap, createUriMap } from '../utils/uriMap';
 
 export interface TypeScriptServerProject extends ServerProject {
@@ -30,7 +30,7 @@ export async function createTypeScriptServerProject(
 	let projectVersion = 0;
 	let languageService: LanguageService | undefined;
 
-	const sys = createSys(ts, serviceEnv, uriToFileName(serviceEnv.workspaceFolder));
+	const sys = createSys(ts, serviceEnv, server.uriConverter.uriToFileName(serviceEnv.workspaceFolder));
 	const host: TypeScriptProjectHost = {
 		...sys,
 		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
@@ -41,7 +41,7 @@ export async function createTypeScriptServerProject(
 			return sys.sync();
 		},
 		getCurrentDirectory() {
-			return uriToFileName(serviceEnv.workspaceFolder);
+			return server.uriConverter.uriToFileName(serviceEnv.workspaceFolder);
 		},
 		getProjectVersion() {
 			return projectVersion.toString();
@@ -50,10 +50,11 @@ export async function createTypeScriptServerProject(
 			return rootFiles;
 		},
 		getScriptSnapshot(fileName) {
-			askedFiles.pathSet(fileName, true);
-			const doc = server.documents.get(fileNameToUri(fileName));
-			if (doc) {
-				return doc.getSnapshot();
+			const uri = server.uriConverter.fileNameToUri(fileName);
+			askedFiles.set(URI.parse(uri), true);
+			const document = server.documents.get(uri);
+			if (document) {
+				return document.getSnapshot();
 			}
 		},
 		getCompilationSettings() {
@@ -71,7 +72,7 @@ export async function createTypeScriptServerProject(
 		host,
 		sys,
 	});
-	const askedFiles = createUriMap<boolean>(fileNameToUri);
+	const askedFiles = createUriMap<boolean>();
 	const docChangeWatcher = server.documents.onDidChangeContent(() => {
 		projectVersion++;
 	});
@@ -99,7 +100,7 @@ export async function createTypeScriptServerProject(
 		parsedCommandLine = await createParsedCommandLine(
 			ts,
 			sys,
-			uriToFileName(serviceEnv.workspaceFolder),
+			server.uriConverter.uriToFileName(serviceEnv.workspaceFolder),
 			tsconfig,
 			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
 		);
