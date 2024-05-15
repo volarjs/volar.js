@@ -1,7 +1,6 @@
 import type { LanguagePlugin, ServiceEnvironment } from '@volar/language-service';
 import { URI } from 'vscode-uri';
 import type { ServerBase, ServerProject, ServerProjectProvider } from '../types';
-import { fileNameToUri, uriToFileName } from '../uri';
 import type { UriMap } from '../utils/uriMap';
 import { createSimpleServerProject } from './simpleProject';
 
@@ -40,8 +39,8 @@ export function createServiceEnvironment(server: ServerBase, workspaceFolder: st
 		onDidChangeConfiguration: server.onDidChangeConfiguration,
 		onDidChangeWatchedFiles: server.onDidChangeWatchedFiles,
 		typescript: {
-			fileNameToUri: fileNameToUri,
-			uriToFileName: uriToFileName,
+			fileNameToUri: server.uriConverter.fileNameToUri,
+			uriToFileName: server.uriConverter.uriToFileName,
 		},
 	};
 }
@@ -51,7 +50,7 @@ export function getWorkspaceFolder(uri: string, workspaceFolders: UriMap<boolean
 	let parsed = URI.parse(uri);
 
 	while (true) {
-		if (workspaceFolders.uriHas(parsed.toString())) {
+		if (workspaceFolders.has(parsed.toString())) {
 			return parsed.toString();
 		}
 		const next = URI.parse(uri).with({ path: parsed.path.substring(0, parsed.path.lastIndexOf('/')) });
@@ -61,7 +60,7 @@ export function getWorkspaceFolder(uri: string, workspaceFolders: UriMap<boolean
 		parsed = next;
 	}
 
-	for (const folder of workspaceFolders.uriKeys()) {
+	for (const folder of workspaceFolders.keys()) {
 		return folder;
 	}
 
