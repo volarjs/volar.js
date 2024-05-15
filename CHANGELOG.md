@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.4](https://github.com/volarjs/volar.js/compare/v2.2.3...v2.2.4) (2024-05-15)
+
+### Bug Fixes
+
+- typescript: path completion not working for meta files
+
 ## [2.2.3](https://github.com/volarjs/volar.js/compare/v2.2.2...v2.2.3) (2024-05-15)
 
 ### Bug Fixes
