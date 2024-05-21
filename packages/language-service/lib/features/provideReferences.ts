@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import * as dedupe from '../utils/dedupe';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
@@ -7,7 +7,7 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { isReferencesEnabled } from '@volar/language-core';
 import { URI } from 'vscode-uri';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	return (uri: string, position: vscode.Position, referenceContext: vscode.ReferenceContext, token = NoneCancellationToken) => {
 

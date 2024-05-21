@@ -1,11 +1,11 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import type { ServiceCompletionData } from './provideCompletionItems';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformCompletionItem } from '../utils/transform';
 import { URI } from 'vscode-uri';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	return async (item: vscode.CompletionItem, token = NoneCancellationToken) => {
 

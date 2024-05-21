@@ -1,10 +1,10 @@
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import { transformWorkspaceEdit } from '../utils/transform';
 import type * as _ from 'vscode-languageserver-protocol';
 import * as dedupe from '../utils/dedupe';
 import { NoneCancellationToken } from '../utils/cancellation';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	return async (oldUri: string, newUri: string, token = NoneCancellationToken) => {
 

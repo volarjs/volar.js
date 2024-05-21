@@ -1,11 +1,11 @@
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isLinkedEditingEnabled } from '@volar/language-core';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
 

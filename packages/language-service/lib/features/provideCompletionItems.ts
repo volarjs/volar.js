@@ -1,6 +1,6 @@
 import { isCompletionEnabled, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceContext, LanguageServicePluginInstance } from '../types';
+import type { ServiceContext, LanguageServicePluginInstance } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformCompletionList } from '../utils/transform';
 import { forEachEmbeddedDocument } from '../utils/featureWorkers';
@@ -15,7 +15,7 @@ export interface ServiceCompletionData {
 	embeddedDocumentUri: string | undefined;
 }
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	let lastResult: {
 		uri: string;

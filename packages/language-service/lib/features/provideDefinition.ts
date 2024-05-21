@@ -2,7 +2,7 @@ import type { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
@@ -10,7 +10,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import { URI } from 'vscode-uri';
 
 export function register(
-	context: LanguageServiceContext,
+	context: ServiceContext,
 	apiName: 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
 	isValidPosition: (data: CodeInformation) => boolean
 ) {

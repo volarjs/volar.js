@@ -1,10 +1,10 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformDocumentLinkTarget } from '../utils/transform';
 import type { DocumentLinkData } from './provideDocumentLinks';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	return async (item: vscode.DocumentLink, token = NoneCancellationToken) => {
 

@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { SemanticToken, LanguageServiceContext } from '../types';
+import type { SemanticToken, ServiceContext } from '../types';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty, findOverlapCodeRange } from '../utils/common';
@@ -7,7 +7,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import { isSemanticTokensEnabled } from '@volar/language-core';
 import { URI } from 'vscode-uri';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	return async (
 		_uri: string,

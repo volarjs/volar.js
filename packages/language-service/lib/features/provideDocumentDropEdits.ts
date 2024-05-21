@@ -1,10 +1,10 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceContext, DataTransferItem } from '../types';
+import type { ServiceContext, DataTransferItem } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformWorkspaceEdit } from '../utils/transform';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	return (uri: string, position: vscode.Position, dataTransfer: Map<string, DataTransferItem>, token = NoneCancellationToken) => {
 

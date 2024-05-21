@@ -1,12 +1,12 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isEqualRange, isInsideRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformSelectionRanges } from '../utils/transform';
 import { isSelectionRangesEnabled } from '@volar/language-core';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	return (uri: string, positions: vscode.Position[], token = NoneCancellationToken) => {
 

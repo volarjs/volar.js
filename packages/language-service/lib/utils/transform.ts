@@ -2,10 +2,10 @@ import { isDocumentLinkEnabled, isRenameEnabled, resolveRenameEditText, type Cod
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import { notEmpty } from './common';
 
-export function transformDocumentLinkTarget(_target: string, context: LanguageServiceContext) {
+export function transformDocumentLinkTarget(_target: string, context: ServiceContext) {
 	let target = URI.parse(_target);
 	const decoded = context.decodeEmbeddedDocumentUri(target);
 	if (!decoded) {
@@ -62,7 +62,7 @@ export function transformDocumentLinkTarget(_target: string, context: LanguageSe
 	return target;
 }
 
-export function transformMarkdown(content: string, context: LanguageServiceContext) {
+export function transformMarkdown(content: string, context: ServiceContext) {
 	return content.replace(/(?!\()volar-embedded-content:\/\/\w+\/[^)]+/g, match => {
 		const segments = match.split('|');
 		segments[0] = transformDocumentLinkTarget(segments[0], context).toString();
@@ -74,7 +74,7 @@ export function transformCompletionItem<T extends vscode.CompletionItem>(
 	item: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: vscode.TextDocument,
-	context: LanguageServiceContext
+	context: ServiceContext
 ): T {
 	return {
 		...item,
@@ -98,7 +98,7 @@ export function transformCompletionList<T extends vscode.CompletionList>(
 	completionList: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: TextDocument,
-	context: LanguageServiceContext,
+	context: ServiceContext,
 ): T {
 	return {
 		isIncomplete: completionList.isIncomplete,
@@ -317,7 +317,7 @@ export function transformWorkspaceSymbol(symbol: vscode.WorkspaceSymbol, getOthe
 
 export function transformWorkspaceEdit(
 	edit: vscode.WorkspaceEdit,
-	context: LanguageServiceContext,
+	context: ServiceContext,
 	mode: 'fileName' | 'rename' | 'codeAction' | undefined,
 	versions: Record<string, number> = {},
 ) {

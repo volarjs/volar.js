@@ -1,10 +1,10 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import type { ServiceCodeLensData, ServiceReferencesCodeLensData } from './provideCodeLenses';
 import * as references from './provideReferences';
 import { NoneCancellationToken } from '../utils/cancellation';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	const findReferences = references.register(context);
 

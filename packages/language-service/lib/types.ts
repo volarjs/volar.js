@@ -45,7 +45,7 @@ export interface LanguageServiceCommand<T extends any[]> {
 	is(value: vscode.Command): boolean;
 }
 
-export interface LanguageServiceContext {
+export interface ServiceContext {
 	language: Language<URI>;
 	env: LanguageServiceEnvironment;
 	inject<Provide, K extends keyof Provide = keyof Provide>(
@@ -91,8 +91,8 @@ export interface LanguageServicePlugin<P = any> {
 	/**
 	 * @deprecated languageService instance must be passed
 	 */
-	create(context: LanguageServiceContext): LanguageServicePluginInstance<P>;
-	create(context: LanguageServiceContext, languageService: LanguageService): LanguageServicePluginInstance<P>;
+	create(context: ServiceContext): LanguageServicePluginInstance<P>;
+	create(context: ServiceContext, languageService: LanguageService): LanguageServicePluginInstance<P>;
 }
 
 export interface EmbeddedCodeFormattingOptions {

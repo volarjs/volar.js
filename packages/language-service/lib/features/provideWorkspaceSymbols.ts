@@ -1,11 +1,11 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { LanguageServiceContext } from '../types';
+import type { ServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformWorkspaceSymbol } from '../utils/transform';
 import { URI } from 'vscode-uri';
 
-export function register(context: LanguageServiceContext) {
+export function register(context: ServiceContext) {
 
 	return async (query: string, token = NoneCancellationToken) => {
 

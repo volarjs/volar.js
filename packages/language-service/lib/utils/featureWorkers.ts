@@ -2,10 +2,10 @@ import type { CodeInformation, VirtualCode } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
-import type { LanguageServicePlugin, LanguageServicePluginInstance, LanguageServiceContext } from '../types';
+import type { LanguageServicePlugin, LanguageServicePluginInstance, ServiceContext } from '../types';
 
 export async function documentFeatureWorker<T>(
-	context: LanguageServiceContext,
+	context: ServiceContext,
 	uri: string,
 	valid: (map: SourceMapWithDocuments<CodeInformation>) => boolean,
 	worker: (service: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
@@ -28,7 +28,7 @@ export async function documentFeatureWorker<T>(
 }
 
 export async function languageFeatureWorker<T, K>(
-	context: LanguageServiceContext,
+	context: ServiceContext,
 	_uri: string,
 	getReadDocParams: () => K,
 	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformation>) => Generator<K>,
@@ -126,7 +126,7 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 }
 
 export function* forEachEmbeddedDocument(
-	context: LanguageServiceContext,
+	context: ServiceContext,
 	sourceScriptId: URI,
 	current: VirtualCode,
 ): Generator<SourceMapWithDocuments<CodeInformation>> {
@@ -147,7 +147,7 @@ export function* forEachEmbeddedDocument(
 	}
 }
 
-export function getEmbeddedFilesByLevel(context: LanguageServiceContext, sourceFileUri: URI, rootFile: VirtualCode, level: number) {
+export function getEmbeddedFilesByLevel(context: ServiceContext, sourceFileUri: URI, rootFile: VirtualCode, level: number) {
 
 	const embeddedFilesByLevel: VirtualCode[][] = [[rootFile]];
 
