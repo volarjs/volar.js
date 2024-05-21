@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange, notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
@@ -7,6 +7,7 @@ import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
 import type { ServiceDiagnosticData } from './provideDiagnostics';
 import { isCodeActionsEnabled } from '@volar/language-core';
+import { URI } from 'vscode-uri';
 
 export interface ServiceCodeActionData {
 	uri: string;
@@ -15,10 +16,10 @@ export interface ServiceCodeActionData {
 	serviceIndex: number;
 }
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
-	return async (uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = NoneCancellationToken) => {
-
+	return async (_uri: string, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = NoneCancellationToken) => {
+		const uri = URI.parse(_uri);
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return;
@@ -28,7 +29,7 @@ export function register(context: ServiceContext) {
 
 		return await languageFeatureWorker(
 			context,
-			uri,
+			_uri,
 			() => ({ range, codeActionContext }),
 			function* (map) {
 				const _codeActionContext: vscode.CodeActionContext = {
@@ -80,7 +81,7 @@ export function register(context: ServiceContext) {
 
 				codeActions?.forEach(codeAction => {
 					codeAction.data = {
-						uri,
+						uri: _uri,
 						version: document.version,
 						original: {
 							data: codeAction.data,

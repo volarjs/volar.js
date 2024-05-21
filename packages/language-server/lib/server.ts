@@ -1,4 +1,4 @@
-import { FileSystem, LanguageServicePlugin, standardSemanticTokensLegend } from '@volar/language-service';
+import { FileSystem, LanguageServicePlugin, createUriMap, standardSemanticTokensLegend } from '@volar/language-service';
 import { SnapshotDocument } from '@volar/snapshot-document';
 import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
@@ -8,18 +8,17 @@ import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
 import { getServerCapabilities } from './serverCapabilities.js';
 import type { InitializationOptions, ServerProjectProvider, VolarInitializeParams } from './types.js';
-import { UriConverter, createUriConverter } from './uri.js';
-import { createUriMap } from './utils/uriMap.js';
 
 export * from '@volar/snapshot-document';
 
 export function createServerBase(
 	connection: vscode.Connection,
-	getFs: (options: InitializationOptions, uriConverter: UriConverter) => FileSystem,
+	getFs: (options: InitializationOptions) => FileSystem,
 ) {
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
 
+	const syncedDocumentParsedUriToUri = new Map<string, string>();
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 	const didChangeConfigurationCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeConfigurationParams>>();
 	const configurations = new Map<string, Promise<any>>();
@@ -32,10 +31,16 @@ export function createServerBase(
 			return snapshot;
 		},
 	});
-	const uriConverter = createUriConverter(documents);
 	const workspaceFolders = createUriMap<boolean>();
 
 	documents.listen(connection);
+	documents.onDidOpen(({ document }) => {
+		const parsedUri = URI.parse(document.uri);
+		syncedDocumentParsedUriToUri.set(parsedUri.toString(), document.uri);
+	});
+	documents.onDidClose(e => {
+		syncedDocumentParsedUriToUri.delete(URI.parse(e.document.uri).toString());
+	});
 
 	const status = {
 		connection,
@@ -46,8 +51,8 @@ export function createServerBase(
 		semanticTokensLegend: undefined as unknown as vscode.SemanticTokensLegend,
 		pullModelDiagnostics: false,
 		documents,
-		uriConverter,
 		workspaceFolders,
+		getSyncedDocumentKey,
 		initialize,
 		initialized,
 		shutdown,
@@ -59,6 +64,13 @@ export function createServerBase(
 		refresh,
 	};
 	return status;
+
+	function getSyncedDocumentKey(uri: URI) {
+		const originalUri = syncedDocumentParsedUriToUri.get(uri.toString());
+		if (originalUri) {
+			return originalUri;
+		}
+	}
 
 	function initialize(
 		initializeParams: VolarInitializeParams,
@@ -74,7 +86,7 @@ export function createServerBase(
 		status.projects = projects;
 		status.semanticTokensLegend = options?.semanticTokensLegend ?? standardSemanticTokensLegend;
 		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
-		status.fs = createFsWithCache(getFs(initializeParams.initializationOptions ?? {}, status.uriConverter));
+		status.fs = createFsWithCache(getFs(initializeParams.initializationOptions ?? {}));
 
 		if (initializeParams.initializationOptions?.l10n) {
 			l10n.config({ uri: initializeParams.initializationOptions.l10n.location });
@@ -162,26 +174,26 @@ export function createServerBase(
 
 	function createFsWithCache(fs: FileSystem): FileSystem {
 
-		const readFileCache = new Map<string, ReturnType<FileSystem['readFile']>>();
-		const statCache = new Map<string, ReturnType<FileSystem['stat']>>();
-		const readDirectoryCache = new Map<string, ReturnType<FileSystem['readDirectory']>>();
+		const readFileCache = createUriMap<ReturnType<FileSystem['readFile']>>();
+		const statCache = createUriMap<ReturnType<FileSystem['stat']>>();
+		const readDirectoryCache = createUriMap<ReturnType<FileSystem['readDirectory']>>();
 
 		onDidChangeWatchedFiles(({ changes }) => {
 			for (const change of changes) {
+				const changeUri = URI.parse(change.uri);
+				const dir = URI.parse(change.uri.substring(0, change.uri.lastIndexOf('/')));
 				if (change.type === vscode.FileChangeType.Deleted) {
-					readFileCache.set(change.uri, undefined);
-					statCache.set(change.uri, undefined);
-					const dir = change.uri.substring(0, change.uri.lastIndexOf('/'));
+					readFileCache.set(changeUri, undefined);
+					statCache.set(changeUri, undefined);
 					readDirectoryCache.delete(dir);
 				}
 				else if (change.type === vscode.FileChangeType.Changed) {
-					readFileCache.delete(change.uri);
-					statCache.delete(change.uri);
+					readFileCache.delete(changeUri);
+					statCache.delete(changeUri);
 				}
 				else if (change.type === vscode.FileChangeType.Created) {
-					readFileCache.delete(change.uri);
-					statCache.delete(change.uri);
-					const dir = change.uri.substring(0, change.uri.lastIndexOf('/'));
+					readFileCache.delete(changeUri);
+					statCache.delete(changeUri);
 					readDirectoryCache.delete(dir);
 				}
 			}
@@ -332,7 +344,7 @@ export function createServerBase(
 	}
 
 	async function pushDiagnostics(projects: ServerProjectProvider, uri: string, version: number, cancel: vscode.CancellationToken) {
-		const languageService = (await projects.get.call(status, uri)).getLanguageService();
+		const languageService = (await projects.get.call(status, URI.parse(uri))).getLanguageService();
 		const errors = await languageService.doValidation(uri, cancel, result => {
 			connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
 		});

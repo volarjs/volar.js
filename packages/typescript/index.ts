@@ -4,3 +4,4 @@ export * from './lib/node/decorateProgram';
 export * from './lib/node/proxyCreateProgram';
 export * from './lib/protocol/createProject';
 export * from './lib/protocol/createSys';
+export * from './lib/common';

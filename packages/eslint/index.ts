@@ -5,7 +5,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 const windowsPath = /\\/g;
 
 export function createProcessor(
-	languagePlugins: LanguagePlugin[],
+	languagePlugins: LanguagePlugin<string>[],
 	caseSensitive: boolean,
 	extensionsMap: Record<string, string> = {
 		'javascript': '.js',
@@ -27,7 +27,7 @@ export function createProcessor(
 	},
 	supportsAutofix = true,
 ): Linter.Processor {
-	const language = createLanguage(languagePlugins, caseSensitive, () => { });
+	const language = createLanguage<string>(languagePlugins, new FileMap(caseSensitive), () => { });
 	const documents = new FileMap<{
 		sourceDocument: TextDocument;
 		embeddedDocuments: TextDocument[];

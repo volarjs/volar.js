@@ -1,5 +1,6 @@
 import { FileType } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver/browser';
+import { URI } from 'vscode-uri';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { createServerBase } from './lib/server';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from './protocol';
@@ -22,7 +23,7 @@ export function createConnection() {
 export function createServer(connection: vscode.Connection) {
 	return createServerBase(connection, () => ({
 		async stat(uri) {
-			if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
+			if (uri.scheme === 'http' || uri.scheme === 'https') { // perf
 				const text = await this.readFile(uri);
 				if (text !== undefined) {
 					return {
@@ -34,19 +35,19 @@ export function createServer(connection: vscode.Connection) {
 				}
 				return undefined;
 			}
-			return await connection.sendRequest(FsStatRequest.type, uri);
+			return await connection.sendRequest(FsStatRequest.type, uri.toString());
 		},
 		async readFile(uri) {
-			if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
+			if (uri.scheme === 'http' || uri.scheme === 'https') { // perf
 				return await httpSchemaRequestHandler(uri);
 			}
-			return await connection.sendRequest(FsReadFileRequest.type, uri) ?? undefined;
+			return await connection.sendRequest(FsReadFileRequest.type, uri.toString()) ?? undefined;
 		},
 		async readDirectory(uri) {
-			if (uri.startsWith('http://') || uri.startsWith('https://')) { // perf
+			if (uri.scheme === 'http' || uri.scheme === 'https') { // perf
 				return [];
 			}
-			return await connection.sendRequest(FsReadDirectoryRequest.type, uri);
+			return await connection.sendRequest(FsReadDirectoryRequest.type, uri.toString());
 		},
 	}));
 }
@@ -71,7 +72,7 @@ export async function loadTsdkByUrl(tsdkUrl: string, locale: string | undefined)
 
 	async function loadLocalizedDiagnosticMessages(): Promise<import('typescript').MapLike<string> | undefined> {
 		try {
-			const json = await httpSchemaRequestHandler(`${tsdkUrl}/${locale}/diagnosticMessages.generated.json`);
+			const json = await httpSchemaRequestHandler(URI.parse(`${tsdkUrl}/${locale}/diagnosticMessages.generated.json`));
 			if (json) {
 				return JSON.parse(json);
 			}

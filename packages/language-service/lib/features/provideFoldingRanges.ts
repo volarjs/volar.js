@@ -1,4 +1,4 @@
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import { NoneCancellationToken } from '../utils/cancellation';
 
@@ -6,7 +6,7 @@ import type * as _ from 'vscode-languageserver-protocol';
 import { transformFoldingRanges } from '../utils/transform';
 import { isFoldingRangesEnabled } from '@volar/language-core';
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	return (uri: string, token = NoneCancellationToken) => {
 

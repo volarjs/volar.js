@@ -1,11 +1,11 @@
 import type { LanguagePlugin, SourceScript } from '@volar/language-core';
 import type * as ts from 'typescript';
 
-export function createResolveModuleName(
+export function createResolveModuleName<T>(
 	ts: typeof import('typescript'),
 	host: ts.ModuleResolutionHost,
 	languagePlugins: LanguagePlugin<any>[],
-	getSourceScript: (fileName: string) => SourceScript | undefined,
+	getSourceScript: (fileName: string) => SourceScript<T> | undefined,
 ) {
 	const toSourceFileInfo = new Map<string, {
 		sourceFileName: string;

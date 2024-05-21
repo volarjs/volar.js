@@ -1,11 +1,12 @@
-import { Language, CodeInformation, shouldReportDiagnostics, SourceMap, SourceScript } from '@volar/language-core';
+import type { CodeInformation, SourceMap, SourceScript } from '@volar/language-core';
+import { Language, shouldReportDiagnostics } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { getServiceScript, notEmpty } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
 const transformedSourceFile = new WeakSet<ts.SourceFile>();
 
-export function transformCallHierarchyItem(language: Language, item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
+export function transformCallHierarchyItem(language: Language<string>, item: ts.CallHierarchyItem, filter: (data: CodeInformation) => boolean): ts.CallHierarchyItem {
 	const span = transformSpan(language, item.file, item.span, filter);
 	const selectionSpan = transformSpan(language, item.file, item.selectionSpan, filter);
 	return {
@@ -15,7 +16,7 @@ export function transformCallHierarchyItem(language: Language, item: ts.CallHier
 	};
 }
 
-export function transformDiagnostic<T extends ts.Diagnostic>(language: Language, diagnostic: T, isTsc: boolean): T | undefined {
+export function transformDiagnostic<T extends ts.Diagnostic>(language: Language<string>, diagnostic: T, isTsc: boolean): T | undefined {
 	if (!transformedDiagnostics.has(diagnostic)) {
 		transformedDiagnostics.set(diagnostic, undefined);
 
@@ -57,7 +58,7 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language,
 }
 
 // fix https://github.com/vuejs/language-tools/issues/4099 without `incremental`
-export function fillSourceFileText(language: Language, sourceFile: ts.SourceFile) {
+export function fillSourceFileText(language: Language<string>, sourceFile: ts.SourceFile) {
 	if (transformedSourceFile.has(sourceFile)) {
 		return;
 	}
@@ -69,7 +70,7 @@ export function fillSourceFileText(language: Language, sourceFile: ts.SourceFile
 	}
 }
 
-export function transformFileTextChanges(language: Language, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
+export function transformFileTextChanges(language: Language<string>, changes: ts.FileTextChanges, filter: (data: CodeInformation) => boolean): ts.FileTextChanges | undefined {
 	const [_, source] = getServiceScript(language, changes.fileName);
 	if (source) {
 		return {
@@ -90,7 +91,7 @@ export function transformFileTextChanges(language: Language, changes: ts.FileTex
 	}
 }
 
-export function transformDocumentSpan<T extends ts.DocumentSpan>(language: Language, documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
+export function transformDocumentSpan<T extends ts.DocumentSpan>(language: Language<string>, documentSpan: T, filter: (data: CodeInformation) => boolean, shouldFallback?: boolean): T | undefined {
 	let textSpan = transformSpan(language, documentSpan.fileName, documentSpan.textSpan, filter);
 	if (!textSpan && shouldFallback) {
 		textSpan = {
@@ -115,7 +116,7 @@ export function transformDocumentSpan<T extends ts.DocumentSpan>(language: Langu
 	};
 }
 
-export function transformSpan(language: Language, fileName: string | undefined, textSpan: ts.TextSpan | undefined, filter: (data: CodeInformation) => boolean): {
+export function transformSpan(language: Language<string>, fileName: string | undefined, textSpan: ts.TextSpan | undefined, filter: (data: CodeInformation) => boolean): {
 	fileName: string;
 	textSpan: ts.TextSpan;
 } | undefined {
@@ -141,7 +142,7 @@ export function transformSpan(language: Language, fileName: string | undefined, 
 }
 
 export function transformTextChange(
-	sourceScript: SourceScript,
+	sourceScript: SourceScript<string>,
 	map: SourceMap<CodeInformation>,
 	textChange: ts.TextChange,
 	filter: (data: CodeInformation) => boolean,
@@ -156,7 +157,7 @@ export function transformTextChange(
 }
 
 export function transformTextSpan(
-	sourceScript: SourceScript,
+	sourceScript: SourceScript<string>,
 	map: SourceMap<CodeInformation>,
 	textSpan: ts.TextSpan,
 	filter: (data: CodeInformation) => boolean,
@@ -173,7 +174,7 @@ export function transformTextSpan(
 	}
 }
 
-export function toSourceOffset(sourceScript: SourceScript, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
+export function toSourceOffset(sourceScript: SourceScript<string>, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
 	for (const [sourceOffset, mapping] of map.getSourceOffsets(position - sourceScript.snapshot.getLength())) {
 		if (filter(mapping.data)) {
 			return sourceOffset;
@@ -181,7 +182,7 @@ export function toSourceOffset(sourceScript: SourceScript, map: SourceMap, posit
 	}
 }
 
-export function toGeneratedOffset(sourceScript: SourceScript, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
+export function toGeneratedOffset(sourceScript: SourceScript<string>, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
 	for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 		if (filter(mapping.data)) {
 			return generateOffset + sourceScript.snapshot.getLength();
@@ -189,7 +190,7 @@ export function toGeneratedOffset(sourceScript: SourceScript, map: SourceMap, po
 	}
 }
 
-export function* toGeneratedOffsets(sourceScript: SourceScript, map: SourceMap<CodeInformation>, position: number) {
+export function* toGeneratedOffsets(sourceScript: SourceScript<string>, map: SourceMap<CodeInformation>, position: number) {
 	for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 		yield [generateOffset + sourceScript.snapshot.getLength(), mapping] as const;
 	}

@@ -219,6 +219,9 @@ importers:
       path-browserify:
         specifier: ^1.0.1
         version: 1.0.1
+      vscode-uri:
+        specifier: ^3.0.8
+        version: 3.0.8
     devDependencies:
       '@types/node':
         specifier: latest

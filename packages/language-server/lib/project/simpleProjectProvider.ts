@@ -1,14 +1,13 @@
-import type { LanguagePlugin, ServiceEnvironment } from '@volar/language-service';
-import { URI } from 'vscode-uri';
+import { UriMap, createUriMap, type LanguagePlugin, type LanguageServiceEnvironment } from '@volar/language-service';
+import type { URI } from 'vscode-uri';
 import type { ServerBase, ServerProject, ServerProjectProvider } from '../types';
-import { createUriMap, type UriMap } from '../utils/uriMap';
 import { createSimpleServerProject } from './simpleProject';
 
-export function createSimpleProjectProvider(languagePlugins: LanguagePlugin[]): ServerProjectProvider {
+export function createSimpleProjectProvider(languagePlugins: LanguagePlugin<URI>[]): ServerProjectProvider {
 	const map = createUriMap<Promise<ServerProject>>();
 	return {
 		get(uri) {
-			const workspaceFolder = getWorkspaceFolder(URI.parse(uri), this.workspaceFolders);
+			const workspaceFolder = getWorkspaceFolder(uri, this.workspaceFolders);
 			let projectPromise = map.get(workspaceFolder);
 			if (!projectPromise) {
 				const serviceEnv = createServiceEnvironment(this, workspaceFolder);
@@ -29,19 +28,15 @@ export function createSimpleProjectProvider(languagePlugins: LanguagePlugin[]): 
 	};
 }
 
-export function createServiceEnvironment(server: ServerBase, workspaceFolder: URI): ServiceEnvironment {
+export function createServiceEnvironment(server: ServerBase, workspaceFolder: URI): LanguageServiceEnvironment {
 	return {
-		workspaceFolder: workspaceFolder.toString(),
+		workspaceFolder: workspaceFolder,
 		fs: server.fs,
 		locale: server.initializeParams?.locale,
 		clientCapabilities: server.initializeParams?.capabilities,
 		getConfiguration: server.getConfiguration,
 		onDidChangeConfiguration: server.onDidChangeConfiguration,
 		onDidChangeWatchedFiles: server.onDidChangeWatchedFiles,
-		typescript: {
-			fileNameToUri: server.uriConverter.fileNameToUri,
-			uriToFileName: server.uriConverter.uriToFileName,
-		},
 	};
 }
 

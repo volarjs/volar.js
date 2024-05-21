@@ -1,5 +1,6 @@
 import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
+import { URI } from 'vscode-uri';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
 import type { ServerBase } from '../types';
 
@@ -277,7 +278,7 @@ export function registerLanguageFeatures(server: ServerBase) {
 					resolve(undefined);
 					return;
 				}
-				const languageService = (await server.projects.get.call(server, uri)).getLanguageService();
+				const languageService = (await server.projects.get.call(server, URI.parse(uri))).getLanguageService();
 				try { // handle TS cancel throw
 					const result = await cb(languageService);
 					if (token.isCancellationRequested) {

@@ -1,13 +1,14 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import * as dedupe from '../utils/dedupe';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isHighlightEnabled } from '@volar/language-core';
+import { URI } from 'vscode-uri';
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
 
@@ -49,7 +50,7 @@ export function register(context: ServiceContext) {
 
 						recursiveChecker.add({ uri: document.uri, range: { start: reference.range.start, end: reference.range.start } });
 
-						const decoded = context.decodeEmbeddedDocumentUri(document.uri);
+						const decoded = context.decodeEmbeddedDocumentUri(URI.parse(document.uri));
 						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 						const linkedCodeMap = virtualCode && sourceScript

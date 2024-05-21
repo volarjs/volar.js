@@ -1,10 +1,11 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformWorkspaceSymbol } from '../utils/transform';
+import { URI } from 'vscode-uri';
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	return async (query: string, token = NoneCancellationToken) => {
 
@@ -26,7 +27,7 @@ export function register(context: ServiceContext) {
 			}
 			const symbols = embeddedSymbols.map(symbol => transformWorkspaceSymbol(symbol, loc => {
 
-				const decoded = context.decodeEmbeddedDocumentUri(loc.uri);
+				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(loc.uri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 

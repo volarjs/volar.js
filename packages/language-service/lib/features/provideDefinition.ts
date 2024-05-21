@@ -2,14 +2,15 @@ import type { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { SourceMapWithDocuments } from '../documents';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
+import { URI } from 'vscode-uri';
 
 export function register(
-	context: ServiceContext,
+	context: LanguageServiceContext,
 	apiName: 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
 	isValidPosition: (data: CodeInformation) => boolean
 ) {
@@ -55,7 +56,7 @@ export function register(
 
 						recursiveChecker.add({ uri: definition.targetUri, range: { start: definition.targetRange.start, end: definition.targetRange.start } });
 
-						const decoded = context.decodeEmbeddedDocumentUri(definition.targetUri);
+						const decoded = context.decodeEmbeddedDocumentUri(URI.parse(definition.targetUri));
 						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 						const linkedCodeMap = virtualCode && sourceScript
@@ -105,7 +106,7 @@ export function register(
 
 				let foundTargetSelectionRange = false;
 
-				const decoded = context.decodeEmbeddedDocumentUri(link.targetUri);
+				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(link.targetUri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const targetVirtualFile = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 

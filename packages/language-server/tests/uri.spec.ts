@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { URI } from 'vscode-uri';
-import { createUriConverter } from '../lib/uri';
+import { createUriConverter } from '../lib/project/typescriptProjectProvider';
 
 describe('URI', () => {
 
@@ -16,7 +16,9 @@ describe('URI', () => {
 		];
 
 		for (const uri of cases) {
-			expect(uriConverter.fileNameToUri(uriConverter.uriToFileName(uri))).toBe(URI.parse(uri).toString());
+			const a = uriConverter.asUri(uriConverter.asFileName(URI.parse(uri))).toString();
+			const b = URI.parse(uri).toString();
+			expect(a).toBe(b);
 		}
 	});
 });

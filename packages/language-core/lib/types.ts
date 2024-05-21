@@ -2,37 +2,36 @@ import type { Mapping, SourceMap, Stack } from '@volar/source-map';
 import type * as ts from 'typescript';
 import type { LinkedCodeMap } from './linkedCodeMap';
 
-export interface Language {
-	plugins: LanguagePlugin[];
+export interface Language<T> {
+	plugins: LanguagePlugin<T>[];
 	scripts: {
-		get(id: string): SourceScript | undefined;
-		set(id: string, snapshot: ts.IScriptSnapshot, languageId?: string, plugins?: LanguagePlugin[]): SourceScript | undefined;
-		delete(id: string): void;
+		get(id: T): SourceScript<T> | undefined;
+		set(id: T, snapshot: ts.IScriptSnapshot, languageId?: string, plugins?: LanguagePlugin<T>[]): SourceScript<T> | undefined;
+		delete(id: T): void;
 	};
 	maps: {
-		get(virtualCode: VirtualCode, scriptId?: string): SourceMap<CodeInformation> | undefined;
-		forEach(virtualCode: VirtualCode): Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>;
+		get(virtualCode: VirtualCode, scriptId?: T): SourceMap<CodeInformation> | undefined;
+		forEach(virtualCode: VirtualCode): Map<T, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>;
 	};
 	linkedCodeMaps: {
 		get(virtualCode: VirtualCode): LinkedCodeMap | undefined;
 	};
 	typescript?: {
-		projectHost: TypeScriptProjectHost;
+		configFileName: string | undefined;
 		languageServiceHost: ts.LanguageServiceHost;
-		getExtraServiceScript(fileName: string): ExtraServiceScript | undefined;
+		getExtraServiceScript(fileName: string): TypeScriptExtraServiceScript | undefined;
+		asScriptId(fileName: string): T;
+		asFileName(scriptId: T): string;
 	};
 }
 
-export interface SourceScript {
-	/**
-	 * uri or fileName
-	 */
-	id: string;
+export interface SourceScript<T> {
+	id: T;
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 	generated?: {
 		root: VirtualCode;
-		languagePlugin: LanguagePlugin;
+		languagePlugin: LanguagePlugin<T>;
 		embeddedCodes: Map<string, VirtualCode>;
 	};
 }
@@ -75,21 +74,21 @@ export interface CodeInformation {
 	format?: boolean;
 }
 
-export interface ServiceScript {
+export interface TypeScriptServiceScript {
 	code: VirtualCode;
 	extension: '.ts' | '.js' | '.mts' | '.mjs' | '.cjs' | '.cts' | '.d.ts' | string;
 	scriptKind: ts.ScriptKind;
 }
 
-export interface ExtraServiceScript extends ServiceScript {
+export interface TypeScriptExtraServiceScript extends TypeScriptServiceScript {
 	fileName: string;
 }
 
-export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
-	getLanguageId(scriptId: string): string | undefined;
-	createVirtualCode?(scriptId: string, languageId: string, snapshot: ts.IScriptSnapshot): T | undefined;
-	updateVirtualCode?(scriptId: string, virtualCode: T, newSnapshot: ts.IScriptSnapshot): T | undefined;
-	disposeVirtualCode?(scriptId: string, virtualCode: T): void;
+export interface LanguagePlugin<T, K extends VirtualCode = VirtualCode> {
+	getLanguageId(scriptId: T): string | undefined;
+	createVirtualCode?(scriptId: T, languageId: string, snapshot: ts.IScriptSnapshot): K | undefined;
+	updateVirtualCode?(scriptId: T, virtualCode: K, newSnapshot: ts.IScriptSnapshot): K | undefined;
+	disposeVirtualCode?(scriptId: T, virtualCode: K): void;
 	typescript?: {
 		/**
 		 * LSP + TS Plugin
@@ -98,11 +97,11 @@ export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
 		/**
 		 * LSP + TS Plugin
 		 */
-		getServiceScript(rootVirtualCode: T): ServiceScript | undefined;
+		getServiceScript(rootVirtualCode: K): TypeScriptServiceScript | undefined;
 		/**
 		 * LSP only
 		 */
-		getExtraServiceScripts?(fileName: string, rootVirtualCode: T): ExtraServiceScript[];
+		getExtraServiceScripts?(fileName: string, rootVirtualCode: K): TypeScriptExtraServiceScript[];
 		/**
 		 * LSP only
 		 */
@@ -110,19 +109,3 @@ export interface LanguagePlugin<T extends VirtualCode = VirtualCode> {
 	};
 }
 
-export interface TypeScriptProjectHost extends ts.System, Pick<
-	ts.LanguageServiceHost,
-	'getLocalizedDiagnosticMessages'
-	| 'getCompilationSettings'
-	| 'getProjectReferences'
-	| 'getCurrentDirectory'
-	| 'getScriptFileNames'
-	| 'getProjectVersion'
-	| 'getScriptSnapshot'
-> {
-	configFileName: string | undefined;
-	getSystemVersion?(): number;
-	syncSystem?(): Promise<number>;
-	scriptIdToFileName(scriptId: string): string;
-	fileNameToScriptId(fileName: string): string;
-}

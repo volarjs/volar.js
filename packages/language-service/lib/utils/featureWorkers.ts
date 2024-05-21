@@ -1,10 +1,11 @@
 import type { CodeInformation, VirtualCode } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
-import type { ServiceContext, LanguageServicePluginInstance, LanguageServicePlugin } from '../types';
+import type { LanguageServicePlugin, LanguageServicePluginInstance, LanguageServiceContext } from '../types';
 
 export async function documentFeatureWorker<T>(
-	context: ServiceContext,
+	context: LanguageServiceContext,
 	uri: string,
 	valid: (map: SourceMapWithDocuments<CodeInformation>) => boolean,
 	worker: (service: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
@@ -27,15 +28,15 @@ export async function documentFeatureWorker<T>(
 }
 
 export async function languageFeatureWorker<T, K>(
-	context: ServiceContext,
-	uri: string,
+	context: LanguageServiceContext,
+	_uri: string,
 	getReadDocParams: () => K,
 	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformation>) => Generator<K>,
 	worker: (service: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
-
+	const uri = URI.parse(_uri);
 	const sourceScript = context.language.scripts.get(uri);
 	if (!sourceScript) {
 		return;
@@ -125,8 +126,8 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 }
 
 export function* forEachEmbeddedDocument(
-	context: ServiceContext,
-	sourceScriptId: string,
+	context: LanguageServiceContext,
+	sourceScriptId: URI,
 	current: VirtualCode,
 ): Generator<SourceMapWithDocuments<CodeInformation>> {
 
@@ -138,15 +139,15 @@ export function* forEachEmbeddedDocument(
 
 	for (const map of context.documents.getMaps(current)) {
 		if (
-			sourceScriptId === map.sourceDocument.uri
-			&& !context.disabledEmbeddedDocumentUris.has(context.encodeEmbeddedDocumentUri(sourceScriptId, current.id))
+			sourceScriptId.toString() === map.sourceDocument.uri
+			&& !context.disabledEmbeddedDocumentUris.get(context.encodeEmbeddedDocumentUri(sourceScriptId, current.id))
 		) {
 			yield map;
 		}
 	}
 }
 
-export function getEmbeddedFilesByLevel(context: ServiceContext, sourceFileUri: string, rootFile: VirtualCode, level: number) {
+export function getEmbeddedFilesByLevel(context: LanguageServiceContext, sourceFileUri: URI, rootFile: VirtualCode, level: number) {
 
 	const embeddedFilesByLevel: VirtualCode[][] = [[rootFile]];
 
@@ -161,7 +162,7 @@ export function getEmbeddedFilesByLevel(context: ServiceContext, sourceFileUri: 
 		for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
 			if (file.embeddedCodes) {
 				for (const embedded of file.embeddedCodes) {
-					if (!context.disabledEmbeddedDocumentUris.has(context.encodeEmbeddedDocumentUri(sourceFileUri, embedded.id))) {
+					if (!context.disabledEmbeddedDocumentUris.get(context.encodeEmbeddedDocumentUri(sourceFileUri, embedded.id))) {
 						nextLevel.push(embedded);
 					}
 				}

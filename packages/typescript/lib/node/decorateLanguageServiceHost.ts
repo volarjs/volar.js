@@ -4,7 +4,7 @@ import { createResolveModuleName } from '../resolveModuleName';
 
 export function decorateLanguageServiceHost(
 	ts: typeof import('typescript'),
-	language: Language,
+	language: Language<string>,
 	languageServiceHost: ts.LanguageServiceHost,
 ) {
 	const pluginExtensions = language.plugins

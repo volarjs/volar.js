@@ -1,13 +1,15 @@
-import { isDiagnosticsEnabled, type CodeInformation, shouldReportDiagnostics } from '@volar/language-core';
+import { isDiagnosticsEnabled, shouldReportDiagnostics, type CodeInformation } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { documentFeatureWorker } from '../utils/featureWorkers';
+import { createUriMap } from '../utils/uriMap';
 
 export function updateRange(
 	range: vscode.Range,
@@ -126,10 +128,9 @@ export const errorMarkups: Record<string, {
 	markup: vscode.MarkupContent,
 }[]> = {};
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
-	const lastResponses = new Map<
-		string,
+	const lastResponses = createUriMap<
 		{
 			semantic: Cache,
 			syntactic: Cache,
@@ -147,11 +148,11 @@ export function register(context: ServiceContext) {
 	});
 
 	return async (
-		uri: string,
+		_uri: string,
 		token = NoneCancellationToken,
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
-
+		const uri = URI.parse(_uri);
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return [];
@@ -217,7 +218,7 @@ export function register(context: ServiceContext) {
 		) {
 			const result = await documentFeatureWorker(
 				context,
-				uri,
+				_uri,
 				map => map.map.mappings.some(mapping => isDiagnosticsEnabled(mapping.data)),
 				async (service, document) => {
 
@@ -243,7 +244,7 @@ export function register(context: ServiceContext) {
 
 					errors.forEach(error => {
 						error.data = {
-							uri,
+							uri: _uri,
 							version: document.version,
 							serviceIndex,
 							isFormat: false,
@@ -298,7 +299,7 @@ export function register(context: ServiceContext) {
 
 				for (const info of _error.relatedInformation) {
 
-					const decoded = context.decodeEmbeddedDocumentUri(info.location.uri);
+					const decoded = context.decodeEmbeddedDocumentUri(URI.parse(info.location.uri));
 					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 

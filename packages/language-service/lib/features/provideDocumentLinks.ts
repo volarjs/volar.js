@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
@@ -12,7 +12,7 @@ export interface DocumentLinkData {
 	serviceIndex: number;
 }
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	return async (uri: string, token = NoneCancellationToken) => {
 
@@ -55,7 +55,7 @@ export function register(context: ServiceContext) {
 							range,
 						};
 						if (link.target) {
-							link.target = transformDocumentLinkTarget(link.target, context);
+							link.target = transformDocumentLinkTarget(link.target, context).toString();
 						}
 						return link;
 					})

@@ -1,12 +1,10 @@
-import { FileSystem, FileType, ServiceEnvironment } from '@volar/language-service';
+import { FileSystem, FileType, LanguageServiceEnvironment } from '@volar/language-service';
 import * as fs from 'fs';
 import { URI } from 'vscode-uri';
-import { fileNameToUri, uriToFileName } from './utils';
 
-export function createServiceEnvironment(getSettings: () => any): ServiceEnvironment {
-
+export function createServiceEnvironment(getSettings: () => any): LanguageServiceEnvironment {
 	return {
-		workspaceFolder: URI.file(process.cwd()).toString(),
+		workspaceFolder: URI.file(process.cwd()),
 		getConfiguration(section: string) {
 			const settings = getSettings();
 			if (section in settings) {
@@ -33,18 +31,14 @@ export function createServiceEnvironment(getSettings: () => any): ServiceEnviron
 		},
 		fs: nodeFs,
 		console,
-		typescript: {
-			fileNameToUri: fileNameToUri,
-			uriToFileName: uriToFileName,
-		},
 	};
 }
 
 const nodeFs: FileSystem = {
 	stat(uri) {
-		if (uri.startsWith('file://')) {
+		if (uri.scheme === 'file') {
 			try {
-				const stats = fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
+				const stats = fs.statSync(uri.fsPath, { throwIfNoEntry: false });
 				if (stats) {
 					return {
 						type: stats.isFile() ? FileType.File
@@ -63,9 +57,9 @@ const nodeFs: FileSystem = {
 		}
 	},
 	readFile(uri, encoding) {
-		if (uri.startsWith('file://')) {
+		if (uri.scheme === 'file') {
 			try {
-				return fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
+				return fs.readFileSync(uri.fsPath, { encoding: encoding as 'utf-8' ?? 'utf-8' });
 			}
 			catch {
 				return undefined;
@@ -73,10 +67,9 @@ const nodeFs: FileSystem = {
 		}
 	},
 	readDirectory(uri) {
-		if (uri.startsWith('file://')) {
+		if (uri.scheme === 'file') {
 			try {
-				const dirName = uriToFileName(uri);
-				const files = fs.readdirSync(dirName, { withFileTypes: true });
+				const files = fs.readdirSync(uri.fsPath, { withFileTypes: true });
 				return files.map<[string, FileType]>(file => {
 					return [file.name, file.isFile() ? FileType.File
 						: file.isDirectory() ? FileType.Directory
