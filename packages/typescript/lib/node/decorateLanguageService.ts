@@ -496,9 +496,9 @@ export function decorateLanguageService(
 				// TODO reuse the logic from language service
 				if (isSemanticTokensEnabled(mapping.data) && mapping.sourceOffsets[0] >= span.start && mapping.sourceOffsets[0] <= span.start + span.length) {
 					start ??= mapping.generatedOffsets[0];
-					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1];
+					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + (mapping.generatedLengths ?? mapping.lengths)[mapping.lengths.length - 1];
 					start = Math.min(start, mapping.generatedOffsets[0]);
-					end = Math.max(end, mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1]);
+					end = Math.max(end, mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + (mapping.generatedLengths ?? mapping.lengths)[mapping.lengths.length - 1]);
 				}
 			}
 			start ??= 0;

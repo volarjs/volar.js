@@ -56,7 +56,7 @@ export function register(context: ServiceContext) {
 						embeddedRange.start = 0;
 					}
 					const lastMapping = map.mappings[map.mappings.length - 1];
-					if (embeddedRange.end === lastMapping.generatedOffsets[lastMapping.generatedOffsets.length - 1] + lastMapping.lengths[lastMapping.lengths.length - 1]) {
+					if (embeddedRange.end === lastMapping.generatedOffsets[lastMapping.generatedOffsets.length - 1] + (lastMapping.generatedLengths ?? lastMapping.lengths)[lastMapping.lengths.length - 1]) {
 						embeddedRange.end = code.snapshot.getLength();
 					}
 					embeddedRanges.set(code.id, embeddedRange);
