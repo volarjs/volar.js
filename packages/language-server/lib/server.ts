@@ -343,13 +343,14 @@ export function createServerBase(
 		}
 	}
 
-	async function pushDiagnostics(projects: ServerProjectProvider, uri: string, version: number, cancel: vscode.CancellationToken) {
-		const languageService = (await projects.get.call(status, URI.parse(uri))).getLanguageService();
+	async function pushDiagnostics(projects: ServerProjectProvider, uriStr: string, version: number, cancel: vscode.CancellationToken) {
+		const uri = URI.parse(uriStr);
+		const languageService = (await projects.get.call(status, uri)).getLanguageService();
 		const errors = await languageService.doValidation(uri, cancel, result => {
-			connection.sendDiagnostics({ uri: uri, diagnostics: result, version });
+			connection.sendDiagnostics({ uri: uriStr, diagnostics: result, version });
 		});
 
-		connection.sendDiagnostics({ uri: uri, diagnostics: errors, version });
+		connection.sendDiagnostics({ uri: uriStr, diagnostics: errors, version });
 	}
 }
 

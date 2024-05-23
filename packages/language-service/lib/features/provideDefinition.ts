@@ -1,13 +1,13 @@
 import type { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import { URI } from 'vscode-uri';
 
 export function register(
 	context: ServiceContext,
@@ -15,7 +15,7 @@ export function register(
 	isValidPosition: (data: CodeInformation) => boolean
 ) {
 
-	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
+	return (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -131,7 +131,7 @@ export function register(
 
 					if (apiName === 'provideDefinition' && !foundTargetSelectionRange) {
 						for (const targetMap of context.documents.getMaps(targetVirtualFile)) {
-							if (targetMap && targetMap.sourceDocument.uri !== uri) {
+							if (targetMap && targetMap.sourceDocument.uri !== uri.toString()) {
 								return {
 									...link,
 									targetUri: targetMap.sourceDocument.uri,

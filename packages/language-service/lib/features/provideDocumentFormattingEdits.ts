@@ -15,7 +15,7 @@ export function register(context: ServiceContext) {
 	let fakeVersion = 0;
 
 	return async (
-		_uri: string,
+		uri: URI,
 		options: vscode.FormattingOptions,
 		range: vscode.Range | undefined,
 		onTypeParams: {
@@ -24,7 +24,6 @@ export function register(context: ServiceContext) {
 		} | undefined,
 		token = NoneCancellationToken
 	) => {
-		const uri = URI.parse(_uri);
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return;

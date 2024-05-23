@@ -1,12 +1,12 @@
 import type { CodeInformation, VirtualCode } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import { URI } from 'vscode-uri';
+import type { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
 import type { LanguageServicePlugin, LanguageServicePluginInstance, ServiceContext } from '../types';
 
 export async function documentFeatureWorker<T>(
 	context: ServiceContext,
-	uri: string,
+	uri: URI,
 	valid: (map: SourceMapWithDocuments<CodeInformation>) => boolean,
 	worker: (service: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
@@ -29,14 +29,13 @@ export async function documentFeatureWorker<T>(
 
 export async function languageFeatureWorker<T, K>(
 	context: ServiceContext,
-	_uri: string,
+	uri: URI,
 	getReadDocParams: () => K,
 	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformation>) => Generator<K>,
 	worker: (service: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
-	const uri = URI.parse(_uri);
 	const sourceScript = context.language.scripts.get(uri);
 	if (!sourceScript) {
 		return;

@@ -1,6 +1,6 @@
 import { isInlayHintsEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { URI } from 'vscode-uri';
+import type { URI } from 'vscode-uri';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange, notEmpty } from '../utils/common';
@@ -15,8 +15,7 @@ export interface InlayHintData {
 
 export function register(context: ServiceContext) {
 
-	return async (_uri: string, range: vscode.Range, token = NoneCancellationToken) => {
-		const uri = URI.parse(_uri);
+	return async (uri: URI, range: vscode.Range, token = NoneCancellationToken) => {
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return;
@@ -24,7 +23,7 @@ export function register(context: ServiceContext) {
 
 		return languageFeatureWorker(
 			context,
-			_uri,
+			uri,
 			() => range,
 			function* (map) {
 				const mapped = findOverlapCodeRange(
@@ -47,7 +46,7 @@ export function register(context: ServiceContext) {
 				const hints = await service[1].provideInlayHints?.(document, arg, token);
 				hints?.forEach(link => {
 					link.data = {
-						uri: _uri,
+						uri: uri.toString(),
 						original: {
 							data: link.data,
 						},

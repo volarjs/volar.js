@@ -123,10 +123,10 @@ type CacheMap = Map<
 	>
 >;
 
-export const errorMarkups: Record<string, {
+export const errorMarkups = createUriMap<{
 	error: vscode.Diagnostic,
 	markup: vscode.MarkupContent,
-}[]> = {};
+}[]>();
 
 export function register(context: ServiceContext) {
 
@@ -148,11 +148,10 @@ export function register(context: ServiceContext) {
 	});
 
 	return async (
-		_uri: string,
+		uri: URI,
 		token = NoneCancellationToken,
 		response?: (result: vscode.Diagnostic[]) => void,
 	) => {
-		const uri = URI.parse(_uri);
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return [];
@@ -218,7 +217,7 @@ export function register(context: ServiceContext) {
 		) {
 			const result = await documentFeatureWorker(
 				context,
-				_uri,
+				uri,
 				map => map.map.mappings.some(mapping => isDiagnosticsEnabled(mapping.data)),
 				async (service, document) => {
 
@@ -244,7 +243,7 @@ export function register(context: ServiceContext) {
 
 					errors.forEach(error => {
 						error.data = {
-							uri: _uri,
+							uri: uri.toString(),
 							version: document.version,
 							serviceIndex,
 							isFormat: false,

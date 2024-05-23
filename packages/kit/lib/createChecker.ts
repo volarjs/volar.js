@@ -161,7 +161,7 @@ function createTypeScriptCheckerWorker(
 
 	function check(fileName: string) {
 		fileName = asPosix(fileName);
-		const uri = fileNameToUri(fileName).toString();
+		const uri = fileNameToUri(fileName);
 		return service.doValidation(uri);
 	}
 
@@ -172,7 +172,7 @@ function createTypeScriptCheckerWorker(
 		if (sourceScript) {
 			const document = service.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 			const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
-			const codeActions = await service.doCodeActions(uri.toString(), range, { diagnostics, only, triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked });
+			const codeActions = await service.doCodeActions(uri, range, { diagnostics, only, triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked });
 			if (codeActions) {
 				for (let i = 0; i < codeActions.length; i++) {
 					codeActions[i] = await service.doCodeActionResolve(codeActions[i]);

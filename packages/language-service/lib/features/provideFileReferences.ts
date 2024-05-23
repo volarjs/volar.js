@@ -9,7 +9,7 @@ import { documentFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, token = NoneCancellationToken): NullableProviderResult<vscode.Location[]> => {
+	return (uri: URI, token = NoneCancellationToken): NullableProviderResult<vscode.Location[]> => {
 
 		return documentFeatureWorker(
 			context,

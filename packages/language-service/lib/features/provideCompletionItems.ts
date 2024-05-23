@@ -1,12 +1,12 @@
 import { isCompletionEnabled, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext, LanguageServicePluginInstance } from '../types';
-import { NoneCancellationToken } from '../utils/cancellation';
-import { transformCompletionList } from '../utils/transform';
-import { forEachEmbeddedDocument } from '../utils/featureWorkers';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { SourceMapWithDocuments } from '../documents';
 import { URI } from 'vscode-uri';
+import type { SourceMapWithDocuments } from '../documents';
+import type { LanguageServicePluginInstance, ServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
+import { forEachEmbeddedDocument } from '../utils/featureWorkers';
+import { transformCompletionList } from '../utils/transform';
 
 export interface ServiceCompletionData {
 	uri: string;
@@ -18,7 +18,7 @@ export interface ServiceCompletionData {
 export function register(context: ServiceContext) {
 
 	let lastResult: {
-		uri: string;
+		uri: URI;
 		results: {
 			embeddedDocumentUri: URI | undefined;
 			service: LanguageServicePluginInstance;
@@ -27,12 +27,11 @@ export function register(context: ServiceContext) {
 	} | undefined;
 
 	return async (
-		_uri: string,
+		uri: URI,
 		position: vscode.Position,
 		completionContext: vscode.CompletionContext = { triggerKind: 1 satisfies typeof vscode.CompletionTriggerKind.Invoked, },
 		token = NoneCancellationToken,
 	) => {
-		const uri = URI.parse(_uri);
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return {
@@ -80,7 +79,7 @@ export function register(context: ServiceContext) {
 
 							for (const item of cacheData.list.items) {
 								item.data = {
-									uri: _uri,
+									uri: uri.toString(),
 									original: {
 										additionalTextEdits: item.additionalTextEdits,
 										textEdit: item.textEdit,
@@ -115,7 +114,7 @@ export function register(context: ServiceContext) {
 
 					for (const item of cacheData.list.items) {
 						item.data = {
-							uri: _uri,
+							uri: uri.toString(),
 							original: {
 								additionalTextEdits: item.additionalTextEdits,
 								textEdit: item.textEdit,
@@ -131,7 +130,7 @@ export function register(context: ServiceContext) {
 		else {
 
 			lastResult = {
-				uri: _uri,
+				uri,
 				results: [],
 			};
 
@@ -197,7 +196,7 @@ export function register(context: ServiceContext) {
 
 					for (const item of completionList.items) {
 						item.data = {
-							uri: _uri,
+							uri: uri.toString(),
 							original: {
 								additionalTextEdits: item.additionalTextEdits,
 								textEdit: item.textEdit,

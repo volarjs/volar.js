@@ -48,7 +48,7 @@ export function registerEditorFeatures(server: ServerBase) {
 
 		const uri = URI.parse(textDocument.uri);
 		const languageService = (await server.projects.get.call(server, uri)).getLanguageService();
-		return languageService.doDocumentDrop(textDocument.uri, position, dataTransferMap, token);
+		return languageService.doDocumentDrop(uri, position, dataTransferMap, token);
 	});
 	server.connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const uri = URI.parse(params.uri);

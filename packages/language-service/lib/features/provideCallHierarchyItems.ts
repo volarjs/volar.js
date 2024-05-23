@@ -18,7 +18,7 @@ export function register(context: ServiceContext) {
 
 	return {
 
-		doPrepare(uri: string, position: vscode.Position, token = NoneCancellationToken) {
+		doPrepare(uri: URI, position: vscode.Position, token = NoneCancellationToken) {
 
 			return languageFeatureWorker(
 				context,
@@ -32,7 +32,7 @@ export function register(context: ServiceContext) {
 					const items = await service[1].provideCallHierarchyItems?.(document, position, token);
 					items?.forEach(item => {
 						item.data = {
-							uri,
+							uri: uri.toString(),
 							original: {
 								data: item.data,
 							},

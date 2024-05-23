@@ -1,16 +1,16 @@
-import { isRenameEnabled, type CodeInformation, resolveRenameNewName } from '@volar/language-core';
+import { isRenameEnabled, resolveRenameNewName, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { pushEditToDocumentChanges, transformWorkspaceEdit } from '../utils/transform';
-import { URI } from 'vscode-uri';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
+	return (uri: URI, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
