@@ -1,19 +1,25 @@
 # Changelog
 
+## [2.2.5](https://github.com/volarjs/volar.js/compare/v2.2.4...v2.2.5) (2024-05-23)
+
+### Features
+
+- **source-map:** add API to support generated code with different length than original code [#183](https://github.com/volarjs/volar.js/issues/183) - Thanks @piotrtomiak
+
 ## [2.2.4](https://github.com/volarjs/volar.js/compare/v2.2.3...v2.2.4) (2024-05-15)
 
 ### Bug Fixes
 
-- typescript: path completion not working for meta files
+- **typescript:** path completion not working for meta files
 
 ## [2.2.3](https://github.com/volarjs/volar.js/compare/v2.2.2...v2.2.3) (2024-05-15)
 
 ### Bug Fixes
 
-- typescript: empty items list should be valid completion result [vuejs/language-tools#4368](https://github.com/vuejs/language-tools/issues/4368)
-- typescript: deduplication when merging hover infos [#178](https://github.com/volarjs/volar.js/issues/178)
-- language-service: transforming volar embedded URIs in markdown [#180](https://github.com/volarjs/volar.js/issues/180) - Thanks @remcohaszing
-- language-server: memorize URI conversion results of synchronized documents [#181](https://github.com/volarjs/volar.js/issues/181)
+- **typescript:** empty items list should be valid completion result [vuejs/language-tools#4368](https://github.com/vuejs/language-tools/issues/4368)
+- **typescript:** deduplication when merging hover infos [#178](https://github.com/volarjs/volar.js/issues/178)
+- **language-service:** transforming volar embedded URIs in markdown [#180](https://github.com/volarjs/volar.js/issues/180) - Thanks @remcohaszing
+- **language-server:** memorize URI conversion results of synchronized documents [#181](https://github.com/volarjs/volar.js/issues/181)
 
 ## [2.2.2](https://github.com/volarjs/volar.js/compare/v2.2.1...v2.2.2) (2024-05-10)
 
