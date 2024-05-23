@@ -31,18 +31,16 @@ export function findOverlapCodeRange(
 				const mappingEnd = mapping.sourceOffsets[mapping.sourceOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1];
 				const overlap = getOverlapRange(start, end, mappingStart, mappingEnd);
 				if (overlap) {
-					if (mappedStart === undefined) {
-						mappedStart = overlap.start + mapping.generatedOffsets[0] - mappingStart;
-					}
-					else {
-						mappedStart = Math.min(mappedStart, overlap.start + mapping.generatedOffsets[0] - mappingStart);
-					}
-					if (mappedEnd === undefined) {
-						mappedEnd = overlap.end + mapping.generatedOffsets[0] - mappingStart;
-					}
-					else {
-						mappedEnd = Math.max(mappedEnd, overlap.end + mapping.generatedOffsets[0] - mappingStart);
-					}
+					const curMappedStart = (overlap.start - mappingStart) + mapping.generatedOffsets[0]
+
+					mappedStart = mappedStart === undefined ? curMappedStart : Math.min(mappedStart, curMappedStart);
+
+					const lastGeneratedLength = (mapping.generatedLengths ?? mapping.lengths)[mapping.generatedOffsets.length - 1];
+					const curMappedEndOffset = Math.min(overlap.end - mapping.sourceOffsets[mapping.sourceOffsets.length - 1], lastGeneratedLength)
+
+					const curMappedEnd = mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + curMappedEndOffset
+
+					mappedEnd = mappedEnd === undefined ? curMappedEnd : Math.max(mappedEnd, curMappedEnd);
 				}
 			}
 		}

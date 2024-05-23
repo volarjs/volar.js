@@ -234,7 +234,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 							map.mappings
 								.map(mapping => mapping.generatedOffsets.map((offset, i) => new vscode.Range(
 									getGeneratedPosition(virtualUri, offset),
-									getGeneratedPosition(virtualUri, offset + mapping.lengths[i]),
+									getGeneratedPosition(virtualUri, offset + (mapping.generatedLengths ?? mapping.lengths)[i]),
 								)))
 								.flat()
 						);
@@ -267,7 +267,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 									mappedStarts
 										.map(([_, mapping]) => mapping.generatedOffsets.map((offset, i) => new vscode.Range(
 											getGeneratedPosition(virtualUri, offset),
-											getGeneratedPosition(virtualUri, offset + mapping.lengths[i]),
+											getGeneratedPosition(virtualUri, offset + (mapping.generatedLengths ?? mapping.lengths)[i]),
 										)))
 										.flat()
 								);
@@ -305,7 +305,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 									mappedStarts
 										.map(([_, mapping]) => mapping.generatedOffsets.map((offset, i) => new vscode.Range(
 											getGeneratedPosition(virtualUri, offset),
-											getGeneratedPosition(virtualUri, offset + mapping.lengths[i]),
+											getGeneratedPosition(virtualUri, offset + (mapping.generatedLengths ?? mapping.lengths)[i]),
 										)))
 										.flat()
 								);

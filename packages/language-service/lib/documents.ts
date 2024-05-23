@@ -114,14 +114,14 @@ export class SourceMapWithDocuments<Data = any> {
 	}
 
 	protected matchSourcePosition(position: vscode.Position, mapping: Mapping) {
-		let offset = translateOffset(this.embeddedDocument.offsetAt(position), mapping.generatedOffsets, mapping.sourceOffsets, mapping.lengths);
+		let offset = translateOffset(this.embeddedDocument.offsetAt(position), mapping.generatedOffsets, mapping.sourceOffsets, mapping.generatedLengths ?? mapping.lengths, mapping.lengths);
 		if (offset !== undefined) {
 			return this.sourceDocument.positionAt(offset);
 		}
 	}
 
 	protected matchGeneratedPosition(position: vscode.Position, mapping: Mapping) {
-		let offset = translateOffset(this.sourceDocument.offsetAt(position), mapping.sourceOffsets, mapping.generatedOffsets, mapping.lengths);
+		let offset = translateOffset(this.sourceDocument.offsetAt(position), mapping.sourceOffsets, mapping.generatedOffsets, mapping.lengths, mapping.generatedLengths ?? mapping.lengths);
 		if (offset !== undefined) {
 			return this.embeddedDocument.positionAt(offset);
 		}
