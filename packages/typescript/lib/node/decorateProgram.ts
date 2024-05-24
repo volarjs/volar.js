@@ -3,7 +3,7 @@ import type * as ts from 'typescript';
 import { notEmpty } from './utils';
 import { transformDiagnostic, fillSourceFileText } from './transform';
 
-export function decorateProgram(language: Language, program: ts.Program) {
+export function decorateProgram(language: Language<string>, program: ts.Program) {
 
 	const emit = program.emit;
 

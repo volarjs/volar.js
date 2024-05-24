@@ -1,6 +1,7 @@
 import type { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
@@ -14,7 +15,7 @@ export function register(
 	isValidPosition: (data: CodeInformation) => boolean
 ) {
 
-	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
+	return (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -55,7 +56,7 @@ export function register(
 
 						recursiveChecker.add({ uri: definition.targetUri, range: { start: definition.targetRange.start, end: definition.targetRange.start } });
 
-						const decoded = context.decodeEmbeddedDocumentUri(definition.targetUri);
+						const decoded = context.decodeEmbeddedDocumentUri(URI.parse(definition.targetUri));
 						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 						const linkedCodeMap = virtualCode && sourceScript
@@ -105,7 +106,7 @@ export function register(
 
 				let foundTargetSelectionRange = false;
 
-				const decoded = context.decodeEmbeddedDocumentUri(link.targetUri);
+				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(link.targetUri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const targetVirtualFile = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
@@ -130,7 +131,7 @@ export function register(
 
 					if (apiName === 'provideDefinition' && !foundTargetSelectionRange) {
 						for (const targetMap of context.documents.getMaps(targetVirtualFile)) {
-							if (targetMap && targetMap.sourceDocument.uri !== uri) {
+							if (targetMap && targetMap.sourceDocument.uri !== uri.toString()) {
 								return {
 									...link,
 									targetUri: targetMap.sourceDocument.uri,

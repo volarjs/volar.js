@@ -1,8 +1,9 @@
 import type * as vscode from 'vscode-languageserver-protocol';
+import { URI } from 'vscode-uri';
 import type { ServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
 import type { ServiceCodeLensData, ServiceReferencesCodeLensData } from './provideCodeLenses';
 import * as references from './provideReferences';
-import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: ServiceContext) {
 
@@ -27,7 +28,7 @@ export function register(context: ServiceContext) {
 
 		if (data?.kind === 'references') {
 
-			const references = await findReferences(data.sourceFileUri, item.range.start, { includeDeclaration: false }, token) ?? [];
+			const references = await findReferences(URI.parse(data.sourceFileUri), item.range.start, { includeDeclaration: false }, token) ?? [];
 
 			item.command = context.commands.showReferences.create(data.sourceFileUri, item.range.start, references);
 		}

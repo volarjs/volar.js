@@ -1,8 +1,8 @@
+import { FileMap, LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
+import { resolveFileLanguageId } from '../common';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { createLanguage, FileMap, LanguagePlugin } from '@volar/language-core';
-import { fileLanguageIdProviderPlugin } from '../common';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
 const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
@@ -13,7 +13,7 @@ export function createLanguageServicePlugin(
 	loadLanguagePlugins: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
-	) => LanguagePlugin[],
+	) => LanguagePlugin<string>[],
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
@@ -34,12 +34,16 @@ export function createLanguageServicePlugin(
 					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
 					const getScriptVersion = info.languageServiceHost.getScriptVersion.bind(info.languageServiceHost);
 					const syncedScriptVersions = new FileMap<string>(ts.sys.useCaseSensitiveFileNames);
-					const language = createLanguage(
+					const language = createLanguage<string>(
 						[
 							...languagePlugins,
-							fileLanguageIdProviderPlugin,
+							{
+								getLanguageId(fileName) {
+									return resolveFileLanguageId(fileName);
+								},
+							},
 						],
-						ts.sys.useCaseSensitiveFileNames,
+						new FileMap(ts.sys.useCaseSensitiveFileNames),
 						fileName => {
 							const version = getScriptVersion(fileName);
 							if (syncedScriptVersions.get(fileName) === version) {

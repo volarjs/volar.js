@@ -1,5 +1,6 @@
 import type { LanguageService } from '@volar/language-service';
 import type * as vscode from 'vscode-languageserver';
+import type { URI } from 'vscode-uri';
 import type { createServerBase } from './server';
 
 export interface InitializationOptions {
@@ -19,7 +20,7 @@ export interface ServerProject {
 }
 
 export interface ServerProjectProvider {
-	get(this: ServerBase, uri: string): Promise<ServerProject>;
+	get(this: ServerBase, uri: URI): Promise<ServerProject>;
 	all(this: ServerBase): Promise<ServerProject[]>;
 	reload(this: ServerBase): void;
 }

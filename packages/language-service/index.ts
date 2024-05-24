@@ -4,6 +4,7 @@ export * from './lib/documents';
 export { mergeWorkspaceEdits } from './lib/features/provideRenameEdits';
 export * from './lib/types';
 export * from './lib/utils/transform';
+export * from './lib/utils/uriMap';
 
 import type * as vscode from 'vscode-languageserver-protocol';
 

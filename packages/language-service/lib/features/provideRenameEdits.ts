@@ -1,6 +1,7 @@
-import { isRenameEnabled, type CodeInformation, resolveRenameNewName } from '@volar/language-core';
+import { isRenameEnabled, resolveRenameNewName, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
@@ -9,7 +10,7 @@ import { pushEditToDocumentChanges, transformWorkspaceEdit } from '../utils/tran
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
+	return (uri: URI, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -74,7 +75,7 @@ export function register(context: ServiceContext) {
 
 								recursiveChecker.add({ uri: editUri, range: { start: textEdit.range.start, end: textEdit.range.start } });
 
-								const decoded = context.decodeEmbeddedDocumentUri(editUri);
+								const decoded = context.decodeEmbeddedDocumentUri(URI.parse(editUri));
 								const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 								const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 								const linkedCodeMap = virtualCode && sourceScript

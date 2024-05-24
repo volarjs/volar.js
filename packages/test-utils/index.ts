@@ -418,7 +418,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	}
 }
 
-export function* printSnapshots(sourceScript: _.SourceScript) {
+export function* printSnapshots(sourceScript: _.SourceScript<URI>) {
 	if (sourceScript.generated) {
 		let lastId = 0;
 		for (const file of forEachEmbeddedCode(sourceScript.generated.root)) {
@@ -433,7 +433,7 @@ export function* printSnapshots(sourceScript: _.SourceScript) {
 
 export function* printSnapshot(
 	sourceScript: {
-		snapshot: _.SourceScript['snapshot'];
+		snapshot: _.SourceScript<URI>['snapshot'];
 	},
 	file: _.VirtualCode,
 ) {

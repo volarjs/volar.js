@@ -1,8 +1,8 @@
-import { Language, LanguagePlugin, createLanguage } from '@volar/language-core';
+import { FileMap, Language, LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
 import { decorateProgram } from './decorateProgram';
-import { fileLanguageIdProviderPlugin } from '../common';
+import { resolveFileLanguageId } from '../common';
 
 const arrayEqual = (a: readonly any[], b: readonly any[]) => {
 	if (a.length !== b.length) {
@@ -32,14 +32,14 @@ const objectEqual = (a: any, b: any) => {
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
 	original: typeof ts['createProgram'],
-	getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin[],
+	getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin<string>[],
 ) {
-	const sourceFileSnapshots = new Map<string, [ts.SourceFile | undefined, ts.IScriptSnapshot | undefined]>();
+	const sourceFileSnapshots = new FileMap<[ts.SourceFile | undefined, ts.IScriptSnapshot | undefined]>(ts.sys.useCaseSensitiveFileNames);
 	const parsedSourceFiles = new WeakMap<ts.SourceFile, ts.SourceFile>();
 
 	let lastOptions: ts.CreateProgramOptions | undefined;
-	let languagePlugins: LanguagePlugin[] | undefined;
-	let language: Language | undefined;
+	let languagePlugins: LanguagePlugin<string>[] | undefined;
+	let language: Language<string> | undefined;
 	let moduleResolutionCache: ts.ModuleResolutionCache;
 
 	return new Proxy(original, {
@@ -58,12 +58,16 @@ export function proxyCreateProgram(
 				moduleResolutionCache = ts.createModuleResolutionCache(options.host.getCurrentDirectory(), options.host.getCanonicalFileName, options.options);
 				lastOptions = options;
 				languagePlugins = getLanguagePlugins(ts, options);
-				language = createLanguage(
+				language = createLanguage<string>(
 					[
 						...languagePlugins,
-						fileLanguageIdProviderPlugin,
+						{
+							getLanguageId(fileName) {
+								return resolveFileLanguageId(fileName);
+							},
+						},
 					],
-					ts.sys.useCaseSensitiveFileNames,
+					new FileMap(ts.sys.useCaseSensitiveFileNames),
 					fileName => {
 						if (!sourceFileSnapshots.has(fileName)) {
 							const sourceFileText = originalHost.readFile(fileName);

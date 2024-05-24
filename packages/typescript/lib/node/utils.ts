@@ -4,7 +4,7 @@ export function notEmpty<T>(value: T | null | undefined): value is T {
 	return value !== null && value !== undefined;
 }
 
-export function getServiceScript(language: Language, fileName: string) {
+export function getServiceScript(language: Language<string>, fileName: string) {
 	const sourceScript = language.scripts.get(fileName);
 	if (sourceScript?.generated) {
 		const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);

@@ -3,6 +3,7 @@ import type { ServiceContext } from '../types';
 import type { ServiceCompletionData } from './provideCompletionItems';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformCompletionItem } from '../utils/transform';
+import { URI } from 'vscode-uri';
 
 export function register(context: ServiceContext) {
 
@@ -22,7 +23,7 @@ export function register(context: ServiceContext) {
 
 			if (data.embeddedDocumentUri) {
 
-				const decoded = context.decodeEmbeddedDocumentUri(data.embeddedDocumentUri);
+				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(data.embeddedDocumentUri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 

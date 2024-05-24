@@ -25,7 +25,7 @@ import { toGeneratedOffsets, toGeneratedOffset, toSourceOffset, transformCallHie
 const windowsPathReg = /\\/g;
 
 export function decorateLanguageService(
-	language: Language,
+	language: Language<string>,
 	languageService: ts.LanguageService,
 ) {
 

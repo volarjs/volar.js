@@ -1,15 +1,16 @@
-import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import type { TextDocument } from 'vscode-languageserver-textdocument';
-import * as dedupe from '../utils/dedupe';
-import { notEmpty } from '../utils/common';
-import { NoneCancellationToken } from '../utils/cancellation';
 import { isHighlightEnabled } from '@volar/language-core';
+import type * as vscode from 'vscode-languageserver-protocol';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
+import type { ServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
+import { notEmpty } from '../utils/common';
+import * as dedupe from '../utils/dedupe';
+import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
+	return (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -49,7 +50,7 @@ export function register(context: ServiceContext) {
 
 						recursiveChecker.add({ uri: document.uri, range: { start: reference.range.start, end: reference.range.start } });
 
-						const decoded = context.decodeEmbeddedDocumentUri(document.uri);
+						const decoded = context.decodeEmbeddedDocumentUri(URI.parse(document.uri));
 						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 						const linkedCodeMap = virtualCode && sourceScript

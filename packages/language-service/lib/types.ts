@@ -4,15 +4,13 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type * as ts from 'typescript';
 import type { LinkedCodeMapWithDocument, SourceMapWithDocuments } from './documents';
 import type { LanguageService } from './languageService';
+import type { URI } from 'vscode-uri';
+import type { UriMap } from './utils/uriMap';
 
 export type * from 'vscode-languageserver-protocol';
 
-export interface ServiceEnvironment {
-	workspaceFolder: string;
-	typescript?: {
-		uriToFileName(uri: string): string;
-		fileNameToUri(fileName: string): string;
-	};
+export interface LanguageServiceEnvironment {
+	workspaceFolder: URI;
 	locale?: string;
 	clientCapabilities?: vscode.ClientCapabilities;
 	fs?: FileSystem;
@@ -23,9 +21,9 @@ export interface ServiceEnvironment {
 }
 
 export interface FileSystem {
-	stat(uri: string): ProviderResult<FileStat | undefined>;
-	readDirectory(uri: string): ProviderResult<[string, FileType][]>;
-	readFile(uri: string, encoding?: string): ProviderResult<string | undefined>;
+	stat(uri: URI): ProviderResult<FileStat | undefined>;
+	readDirectory(uri: URI): ProviderResult<[string, FileType][]>;
+	readFile(uri: URI, encoding?: string): ProviderResult<string | undefined>;
 }
 
 export interface FileStat {
@@ -42,36 +40,36 @@ export enum FileType {
 	SymbolicLink = 64,
 }
 
-export interface ServiceCommand<T extends any[]> {
+export interface LanguageServiceCommand<T extends any[]> {
 	create(...args: T): vscode.Command | undefined;
 	is(value: vscode.Command): boolean;
 }
 
 export interface ServiceContext {
-	language: Language;
-	env: ServiceEnvironment;
+	language: Language<URI>;
+	env: LanguageServiceEnvironment;
 	inject<Provide, K extends keyof Provide = keyof Provide>(
 		key: K,
 		...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never
 	): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never> | undefined;
 	commands: {
-		showReferences: ServiceCommand<[uri: string, position: vscode.Position, locations: vscode.Location[]]>;
-		rename: ServiceCommand<[uri: string, position: vscode.Position]>;
-		setSelection: ServiceCommand<[position: vscode.Position]>;
+		showReferences: LanguageServiceCommand<[uri: string, position: vscode.Position, locations: vscode.Location[]]>;
+		rename: LanguageServiceCommand<[uri: string, position: vscode.Position]>;
+		setSelection: LanguageServiceCommand<[position: vscode.Position]>;
 	};
 	documents: {
-		get(uri: string, languageId: string, snapshot: ts.IScriptSnapshot): TextDocument;
+		get(uri: URI, languageId: string, snapshot: ts.IScriptSnapshot): TextDocument;
 		getMaps(virtualCode: VirtualCode): Generator<SourceMapWithDocuments>;
-		getLinkedCodeMap(virtualCode: VirtualCode, sourceScriptId: string): LinkedCodeMapWithDocument | undefined;
+		getLinkedCodeMap(virtualCode: VirtualCode, documentUri: URI): LinkedCodeMapWithDocument | undefined;
 	};
 	services: [LanguageServicePlugin, LanguageServicePluginInstance][];
-	disabledEmbeddedDocumentUris: Set<string>;
+	disabledEmbeddedDocumentUris: UriMap<boolean>;
 	disabledServicePlugins: WeakSet<LanguageServicePluginInstance>;
-	decodeEmbeddedDocumentUri(maybeEmbeddedUri: string): [
-		documentUri: string,
+	decodeEmbeddedDocumentUri(maybeEmbeddedUri: URI): [
+		documentUri: URI,
 		embeddedCodeId: string,
 	] | undefined;
-	encodeEmbeddedDocumentUri(uri: string, embeededCodeId: string): string;
+	encodeEmbeddedDocumentUri(uri: URI, embeededCodeId: string): URI;
 }
 
 export type ProviderResult<T> = T | Thenable<T>;
@@ -137,14 +135,14 @@ export interface LanguageServicePluginInstance<P = any> {
 	provideFileReferences?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Location[]>; // volar specific
 	provideReferencesCodeLensRanges?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Range[]>; // volar specific
 	provideAutoInsertionEdit?(document: TextDocument, position: vscode.Position, lastChange: { rangeOffset: number; rangeLength: number; text: string; }, token: vscode.CancellationToken): NullableProviderResult<string | vscode.TextEdit>; // volar specific
-	provideFileRenameEdits?(oldUri: string, newUri: string, token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceEdit>; // volar specific
+	provideFileRenameEdits?(oldUri: URI, newUri: URI, token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceEdit>; // volar specific
 	provideDocumentDropEdits?(document: TextDocument, position: vscode.Position, dataTransfer: Map<string, DataTransferItem>, token: vscode.CancellationToken): NullableProviderResult<DocumentDropEdit>; // volar specific
 	resolveCodeLens?(codeLens: vscode.CodeLens, token: vscode.CancellationToken): ProviderResult<vscode.CodeLens>;
 	resolveCodeAction?(codeAction: vscode.CodeAction, token: vscode.CancellationToken): ProviderResult<vscode.CodeAction>;
 	resolveCompletionItem?(item: vscode.CompletionItem, token: vscode.CancellationToken): ProviderResult<vscode.CompletionItem>;
 	resolveDocumentLink?(link: vscode.DocumentLink, token: vscode.CancellationToken): ProviderResult<vscode.DocumentLink>;
 	resolveInlayHint?(inlayHint: vscode.InlayHint, token: vscode.CancellationToken): ProviderResult<vscode.InlayHint>;
-	resolveEmbeddedCodeFormattingOptions?(sourceScript: SourceScript, embeddedCode: VirtualCode, options: EmbeddedCodeFormattingOptions, token: vscode.CancellationToken): NullableProviderResult<EmbeddedCodeFormattingOptions>; // volar specific
+	resolveEmbeddedCodeFormattingOptions?(sourceScript: SourceScript<URI>, embeddedCode: VirtualCode, options: EmbeddedCodeFormattingOptions, token: vscode.CancellationToken): NullableProviderResult<EmbeddedCodeFormattingOptions>; // volar specific
 	transformCompletionItem?(item: vscode.CompletionItem): vscode.CompletionItem | undefined; // volar specific
 	transformCodeAction?(item: vscode.CodeAction): vscode.CodeAction | undefined; // volar specific
 	dispose?(): void;

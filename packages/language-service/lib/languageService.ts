@@ -1,5 +1,9 @@
+import type { CodeInformation, LinkedCodeMap, SourceMap } from '@volar/language-core';
 import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type Language } from '@volar/language-core';
+import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import { LinkedCodeMapWithDocument, SourceMapWithDocuments } from './documents';
 import * as autoInsert from './features/provideAutoInsertionEdit';
 import * as callHierarchy from './features/provideCallHierarchyItems';
@@ -33,37 +37,34 @@ import * as codeLensResolve from './features/resolveCodeLens';
 import * as completionResolve from './features/resolveCompletionItem';
 import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
-import type { ServiceContext, ServiceEnvironment, LanguageServicePlugin } from './types';
-
-import type { CodeInformation, LinkedCodeMap, SourceMap } from '@volar/language-core';
-import type * as ts from 'typescript';
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import type { LanguageServicePlugin, ServiceContext, LanguageServiceEnvironment } from './types';
+import { UriMap, createUriMap } from './utils/uriMap';
 
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
-	language: Language,
+	language: Language<URI>,
 	servicePlugins: LanguageServicePlugin[],
-	env: ServiceEnvironment,
+	env: LanguageServiceEnvironment,
 ) {
-	const documentVersions = new Map<string, number>();
+	const documentVersions = createUriMap<number>();
 	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments<CodeInformation>>();
 	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, LinkedCodeMapWithDocument>();
-	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
+	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, UriMap<TextDocument>>();
 	const embeddedContentScheme = 'volar-embedded-content';
 	const context: ServiceContext = {
 		language,
 		documents: {
 			get(uri, languageId, snapshot) {
 				if (!snapshot2Doc.has(snapshot)) {
-					snapshot2Doc.set(snapshot, new Map());
+					snapshot2Doc.set(snapshot, createUriMap());
 				}
 				const map = snapshot2Doc.get(snapshot)!;
 				if (!map.has(uri)) {
 					const version = documentVersions.get(uri) ?? 0;
 					documentVersions.set(uri, version + 1);
 					map.set(uri, TextDocument.create(
-						uri,
+						uri.toString(),
 						languageId,
 						version,
 						snapshot.getText(0, snapshot.getLength()),
@@ -84,11 +85,11 @@ export function createLanguageService(
 					yield map2DocMap.get(map)!;
 				}
 			},
-			getLinkedCodeMap(virtualCode, sourceScriptId) {
+			getLinkedCodeMap(virtualCode, documentUri) {
 				const map = context.language.linkedCodeMaps.get(virtualCode);
 				if (map) {
 					if (!mirrorMap2DocMirrorMap.has(map)) {
-						const embeddedUri = context.encodeEmbeddedDocumentUri(sourceScriptId, virtualCode.id);
+						const embeddedUri = context.encodeEmbeddedDocumentUri(documentUri, virtualCode.id);
 						mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
 							this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
 							map,
@@ -163,21 +164,24 @@ export function createLanguageService(
 				},
 			},
 		},
-		disabledEmbeddedDocumentUris: new Set(),
+		disabledEmbeddedDocumentUris: createUriMap(),
 		disabledServicePlugins: new WeakSet(),
-		decodeEmbeddedDocumentUri(maybeEmbeddedContentUri: string) {
-			if (maybeEmbeddedContentUri.startsWith(`${embeddedContentScheme}://`)) {
-				const trimed = maybeEmbeddedContentUri.substring(`${embeddedContentScheme}://`.length);
-				const embeddedCodeId = trimed.substring(0, trimed.indexOf('/'));
-				const documentUri = trimed.substring(embeddedCodeId.length + 1);
+		decodeEmbeddedDocumentUri(maybeEmbeddedContentUri: URI) {
+			if (maybeEmbeddedContentUri.scheme === embeddedContentScheme) {
+				const embeddedCodeId = decodeURIComponent(maybeEmbeddedContentUri.authority);
+				const documentUri = decodeURIComponent(maybeEmbeddedContentUri.path.substring(1));
 				return [
-					decodeURIComponent(documentUri),
-					decodeURIComponent(embeddedCodeId),
+					URI.parse(documentUri),
+					embeddedCodeId,
 				];
 			}
 		},
-		encodeEmbeddedDocumentUri(documentUri: string, embeddedContentId: string) {
-			return `${embeddedContentScheme}://${encodeURIComponent(embeddedContentId)}/${encodeURIComponent(documentUri)}`;
+		encodeEmbeddedDocumentUri(documentUri: URI, embeddedContentId: string) {
+			return URI.from({
+				scheme: embeddedContentScheme,
+				authority: encodeURIComponent(embeddedContentId),
+				path: '/' + encodeURIComponent(documentUri.toString()),
+			});
 		},
 	};
 	const api = {

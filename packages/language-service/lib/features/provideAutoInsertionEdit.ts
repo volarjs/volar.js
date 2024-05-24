@@ -1,12 +1,13 @@
-import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import { NoneCancellationToken } from '../utils/cancellation';
 import { isAutoInsertEnabled } from '@volar/language-core';
+import type * as vscode from 'vscode-languageserver-protocol';
+import type { URI } from 'vscode-uri';
+import type { ServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
+import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, selection: vscode.Position, change: { rangeOffset: number; rangeLength: number; text: string; }, token = NoneCancellationToken) => {
+	return (uri: URI, selection: vscode.Position, change: { rangeOffset: number; rangeLength: number; text: string; }, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,

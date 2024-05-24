@@ -1,15 +1,16 @@
-import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import { isInsideRange } from '../utils/common';
-import { errorMarkups } from './provideDiagnostics';
-import { NoneCancellationToken } from '../utils/cancellation';
-import { transformMarkdown } from '../utils/transform';
 import { isHoverEnabled } from '@volar/language-core';
+import type * as vscode from 'vscode-languageserver-protocol';
+import type { URI } from 'vscode-uri';
+import type { ServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
+import { isInsideRange } from '../utils/common';
+import { languageFeatureWorker } from '../utils/featureWorkers';
+import { transformMarkdown } from '../utils/transform';
+import { errorMarkups } from './provideDiagnostics';
 
 export function register(context: ServiceContext) {
 
-	return async (uri: string, position: vscode.Position, token = NoneCancellationToken) => {
+	return async (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
 
 		let hover = await languageFeatureWorker(
 			context,
@@ -38,7 +39,7 @@ export function register(context: ServiceContext) {
 			}),
 		);
 
-		const markups = errorMarkups[uri];
+		const markups = errorMarkups.get(uri);
 		if (markups) {
 			for (const errorAndMarkup of markups) {
 				if (isInsideRange(errorAndMarkup.error.range, { start: position, end: position })) {

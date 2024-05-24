@@ -1,14 +1,15 @@
+import { isSelectionRangesEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
+import type { URI } from 'vscode-uri';
 import type { ServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isEqualRange, isInsideRange, notEmpty } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformSelectionRanges } from '../utils/transform';
-import { isSelectionRangesEnabled } from '@volar/language-core';
 
 export function register(context: ServiceContext) {
 
-	return (uri: string, positions: vscode.Position[], token = NoneCancellationToken) => {
+	return (uri: URI, positions: vscode.Position[], token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
