@@ -1,6 +1,7 @@
+import type { VolarInitializeResult } from '@volar/language-server';
+import { AutoInsertRequest } from '@volar/language-server/protocol';
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
-import { AutoInsertRequest } from '@volar/language-server/protocol';
 
 export function activate(selector: vscode.DocumentSelector, client: BaseLanguageClient) {
 
@@ -47,8 +48,30 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 			timeout = undefined;
 		}
 		const version = document.version;
-		const isCancel = () => document !== vscode.window.activeTextEditor?.document
-			|| vscode.window.activeTextEditor?.document.version !== version;
+		const lastCharacter = lastChange.text[lastChange.text.length - 1];
+		const isCancel = () => {
+			if (document !== vscode.window.activeTextEditor?.document) {
+				return true;
+			}
+			if (vscode.window.activeTextEditor?.document.version !== version) {
+				return true;
+			}
+			const initializeResult: VolarInitializeResult | undefined = client.initializeResult;
+			if (initializeResult?.autoInsertion) {
+				for (let i = 0; i < initializeResult.autoInsertion.triggerCharacters.length; i++) {
+					const char = initializeResult.autoInsertion.triggerCharacters[i];
+					if (!lastCharacter.match(new RegExp(char))) {
+						continue;
+					}
+					const configurationSection = initializeResult.autoInsertion.configurationSections[i];
+					if (configurationSection && !vscode.workspace.getConfiguration().get<boolean>(configurationSection)) {
+						continue;
+					}
+					return false;
+				}
+			}
+			return true;
+		};
 
 		timeout = setTimeout(async () => {
 			timeout = undefined;

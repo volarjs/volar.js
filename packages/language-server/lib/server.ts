@@ -5,7 +5,7 @@ import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
-import type { Project } from './types.js';
+import type { Project, VolarInitializeResult } from './types.js';
 
 export * from '@volar/snapshot-document';
 
@@ -43,7 +43,7 @@ export function createServerBase(
 		connection,
 		fs: createFsWithCache(fs),
 		initializeParams: undefined as unknown as vscode.InitializeParams,
-		initializeResult: undefined as unknown as vscode.InitializeResult,
+		initializeResult: undefined as unknown as VolarInitializeResult,
 		languageServicePlugins: [] as unknown as LanguageServicePlugin[],
 		project: undefined as unknown as Project,
 		pullModelDiagnostics: false,
@@ -176,6 +176,30 @@ export function createServerBase(
 		if (!status.pullModelDiagnostics && status.initializeResult.capabilities.diagnosticProvider) {
 			status.initializeResult.capabilities.diagnosticProvider = undefined;
 			activateServerPushDiagnostics(languageServices);
+		}
+
+		if (status.languageServicePlugins.some(plugin => plugin.capabilities.autoInsertionProvider)) {
+			const allTriggerCharacters: string[] = [];
+			const allConfigurationSections: (string | undefined)[] = [];
+			for (const plugin of status.languageServicePlugins) {
+				if (plugin.capabilities.autoInsertionProvider) {
+					const { triggerCharacters, configurationSections } = plugin.capabilities.autoInsertionProvider;
+					allTriggerCharacters.push(...triggerCharacters);
+					if (configurationSections) {
+						if (configurationSections.length !== triggerCharacters.length) {
+							throw new Error('configurationSections.length !== triggerCharacters.length');
+						}
+						allConfigurationSections.push(...configurationSections);
+					}
+					else {
+						allConfigurationSections.push(...triggerCharacters.map(() => undefined));
+					}
+				}
+			}
+			status.initializeResult.autoInsertion = {
+				triggerCharacters: allTriggerCharacters,
+				configurationSections: allConfigurationSections,
+			};
 		}
 
 		registerEditorFeatures(status);
