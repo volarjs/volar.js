@@ -97,7 +97,6 @@ export function registerEditorFeatures(server: ServerBase) {
 			}
 			return {
 				content: virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength()),
-				codegenStacks: virtualCode.codegenStacks ?? [],
 				mappings,
 			};
 		}

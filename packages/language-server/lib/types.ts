@@ -5,7 +5,6 @@ import type { createServerBase } from './server';
 
 export interface InitializationOptions {
 	maxFileSize?: number;
-	codegenStack?: boolean;
 }
 
 export type VolarInitializeParams = Omit<vscode.InitializeParams, 'initializationOptions'> & { initializationOptions?: InitializationOptions; };;
