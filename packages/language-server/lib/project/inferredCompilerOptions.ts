@@ -1,7 +1,7 @@
 import type * as ts from 'typescript';
-import type { ServerBase } from '../types';
+import type { LanguageServer } from '../types';
 
-export async function getInferredCompilerOptions(server: ServerBase) {
+export async function getInferredCompilerOptions(server: LanguageServer) {
 
 	const [
 		implicitProjectConfig_1 = {},

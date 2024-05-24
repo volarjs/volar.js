@@ -1,229 +1,331 @@
-import { LanguagePlugin, LanguageService, LanguageServiceEnvironment, ProviderResult, UriMap, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
-import { createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
+import { FileType, LanguagePlugin, LanguageServiceEnvironment, ProviderResult, createUriMap } from '@volar/language-service';
+import type { createSys } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
-import type { URI } from 'vscode-uri';
-import type { ServerBase, ServerProject } from '../types';
+import { URI } from 'vscode-uri';
+import type { LanguageServer, Project } from '../types';
+import { isFileInDir } from '../utils/isFileInDir';
+import { getInferredCompilerOptions } from './inferredCompilerOptions';
+import { createServiceEnvironment, getWorkspaceFolder } from './simpleProject';
+import { createTypeScriptLS, type TypeScriptLS } from './typescriptProjectLs';
 
-export interface TypeScriptServerProject extends ServerProject {
-	askedFiles: UriMap<boolean>;
-	tryAddFile(fileName: string): void;
-	getParsedCommandLine(): ts.ParsedCommandLine;
-}
+const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
-const fsFileSnapshots = createUriMap<[number | undefined, ts.IScriptSnapshot | undefined]>();
-
-export async function createTypeScriptServerProject(
+export function createTypeScriptProject(
 	ts: typeof import('typescript'),
 	tsLocalized: ts.MapLike<string> | undefined,
-	tsconfig: string | ts.CompilerOptions,
-	server: ServerBase,
-	serviceEnv: LanguageServiceEnvironment,
-	workspaceFolder: URI,
 	getLanguagePlugins: (serviceEnv: LanguageServiceEnvironment, projectContext: {
 		configFileName: string | undefined;
 		sys: ReturnType<typeof createSys>;
 	}) => ProviderResult<LanguagePlugin<URI>[]>,
-	{
-		asUri,
-		asFileName,
-	}: {
-		asUri(fileName: string): URI;
-		asFileName(uri: URI): string;
-	},
-): Promise<TypeScriptServerProject> {
+) {
+	let initialized = false;
 
-	let parsedCommandLine: ts.ParsedCommandLine;
-	let projectVersion = 0;
-	let languageService: LanguageService | undefined;
-
-	const sys = createSys(ts.sys, serviceEnv, workspaceFolder, {
-		asFileName,
-		asUri,
-	});
-	const languagePlugins = await getLanguagePlugins(serviceEnv, {
-		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
-		sys,
-	});
-	const askedFiles = createUriMap<boolean>();
-	const docChangeWatcher = server.documents.onDidChangeContent(() => {
-		projectVersion++;
-	});
-	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => {
-		onWorkspaceFilesChanged(params.changes);
-	});
-
-	let rootFiles = await getRootFiles(languagePlugins);
-
-	return {
-		askedFiles,
-		getLanguageService,
-		getLanguageServiceDontCreate: () => languageService,
-		tryAddFile(fileName: string) {
-			if (!rootFiles.includes(fileName)) {
-				rootFiles.push(fileName);
-				projectVersion++;
+	const { asFileName, asUri } = createUriConverter();
+	const configProjects = createUriMap<Promise<TypeScriptLS>>();
+	const inferredProjects = createUriMap<Promise<TypeScriptLS>>();
+	const rootTsConfigs = new Set<string>();
+	const searchedDirs = new Set<string>();
+	const projects: Project = {
+		async getLanguageService(server, uri) {
+			if (!initialized) {
+				initialized = true;
+				initialize(server);
 			}
+			const tsconfig = await findMatchTSConfig(server, uri);
+			if (tsconfig) {
+				const project = await getOrCreateConfiguredProject(server, tsconfig);
+				return project.languageService;
+			}
+			const workspaceFolder = getWorkspaceFolder(uri, server.workspaceFolders);
+			const project = await getOrCreateInferredProject(server, uri, workspaceFolder);
+			return project.languageService;
 		},
-		dispose,
-		getParsedCommandLine: () => parsedCommandLine,
+		async allLanguageServices() {
+			const projects = await Promise.all([
+				...configProjects.values() ?? [],
+				...inferredProjects.values() ?? [],
+			]);
+			return projects.map(project => project.languageService);
+		},
+		reload() {
+			for (const project of [
+				...configProjects.values() ?? [],
+				...inferredProjects.values() ?? [],
+			]) {
+				project.then(p => p.dispose());
+			}
+			configProjects.clear();
+			inferredProjects.clear();
+		},
 	};
+	return projects;
 
-	async function getRootFiles(languagePlugins: LanguagePlugin<URI>[]) {
-		parsedCommandLine = await createParsedCommandLine(
-			ts,
-			sys,
-			asFileName(workspaceFolder),
-			tsconfig,
-			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
-		);
-		return parsedCommandLine.fileNames;
+	function initialize(server: LanguageServer) {
+		server.onDidChangeWatchedFiles(({ changes }) => {
+			const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
+
+			for (const change of tsConfigChanges) {
+				const changeUri = URI.parse(change.uri);
+				const changeFileName = asFileName(changeUri);
+				if (change.type === vscode.FileChangeType.Created) {
+					rootTsConfigs.add(changeFileName);
+				}
+				else if ((change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Deleted) && configProjects.has(changeUri)) {
+					if (change.type === vscode.FileChangeType.Deleted) {
+						rootTsConfigs.delete(changeFileName);
+					}
+					const project = configProjects.get(changeUri);
+					configProjects.delete(changeUri);
+					project?.then(project => project.dispose());
+				}
+			}
+
+			if (tsConfigChanges.length) {
+				server.clearPushDiagnostics();
+			}
+			server.refresh(projects);
+		});
 	}
-	function getLanguageService() {
-		if (!languageService) {
-			const language = createLanguage<URI>(
-				[
-					...languagePlugins,
-					{
-						getLanguageId(uri) {
-							return resolveFileLanguageId(uri.fsPath);
-						},
-					},
-				],
-				createUriMap(sys.useCaseSensitiveFileNames),
-				uri => {
-					askedFiles.set(uri, true);
-					const documentUri = server.getSyncedDocumentKey(uri);
 
-					let snapshot = documentUri
-						? server.documents.get(documentUri)?.getSnapshot()
-						: undefined;
+	async function findMatchTSConfig(server: LanguageServer, uri: URI) {
 
-					if (!snapshot) {
-						// fs files
-						const cache = fsFileSnapshots.get(uri);
-						const fileName = asFileName(uri);
-						const modifiedTime = sys.getModifiedTime?.(fileName)?.valueOf();
-						if (!cache || cache[0] !== modifiedTime) {
-							if (sys.fileExists(fileName)) {
-								const text = sys.readFile(fileName);
-								const snapshot = text !== undefined ? ts.ScriptSnapshot.fromString(text) : undefined;
-								fsFileSnapshots.set(uri, [modifiedTime, snapshot]);
+		const fileName = asFileName(uri);
+
+		let dir = path.dirname(fileName);
+
+		while (true) {
+			if (searchedDirs.has(dir)) {
+				break;
+			}
+			searchedDirs.add(dir);
+			for (const tsConfigName of rootTsConfigNames) {
+				const tsconfigPath = path.join(dir, tsConfigName);
+				if ((await server.fs.stat?.(asUri(tsconfigPath)))?.type === FileType.File) {
+					rootTsConfigs.add(tsconfigPath);
+				}
+			}
+			dir = path.dirname(dir);
+		}
+
+		await prepareClosestootParsedCommandLine();
+
+		return await findDirectIncludeTsconfig() ?? await findIndirectReferenceTsconfig();
+
+		async function prepareClosestootParsedCommandLine() {
+
+			let matches: string[] = [];
+
+			for (const rootTsConfig of rootTsConfigs) {
+				if (isFileInDir(fileName, path.dirname(rootTsConfig))) {
+					matches.push(rootTsConfig);
+				}
+			}
+
+			matches = matches.sort((a, b) => sortTSConfigs(fileName, a, b));
+
+			if (matches.length) {
+				await getParsedCommandLine(matches[0]);
+			}
+		}
+		function findIndirectReferenceTsconfig() {
+			return findTSConfig(async tsconfig => {
+				const tsconfigUri = asUri(tsconfig);
+				const project = await configProjects.get(tsconfigUri);
+				return project?.askedFiles.has(uri) ?? false;
+			});
+		}
+		function findDirectIncludeTsconfig() {
+			return findTSConfig(async tsconfig => {
+				const map = createUriMap<boolean>();
+				const parsedCommandLine = await getParsedCommandLine(tsconfig);
+				for (const fileName of parsedCommandLine?.fileNames ?? []) {
+					const uri = asUri(fileName);
+					map.set(uri, true);
+				}
+				return map.has(uri);
+			});
+		}
+		async function findTSConfig(match: (tsconfig: string) => Promise<boolean> | boolean) {
+
+			const checked = new Set<string>();
+
+			for (const rootTsConfig of [...rootTsConfigs].sort((a, b) => sortTSConfigs(fileName, a, b))) {
+				const tsconfigUri = asUri(rootTsConfig);
+				const project = await configProjects.get(tsconfigUri);
+				if (project) {
+
+					let chains = await getReferencesChains(project.getParsedCommandLine(), rootTsConfig, []);
+
+					// This is to be consistent with tsserver behavior
+					chains = chains.reverse();
+
+					for (const chain of chains) {
+						for (let i = chain.length - 1; i >= 0; i--) {
+							const tsconfig = chain[i];
+
+							if (checked.has(tsconfig)) {
+								continue;
 							}
-							else {
-								fsFileSnapshots.set(uri, [modifiedTime, undefined]);
+							checked.add(tsconfig);
+
+							if (await match(tsconfig)) {
+								return tsconfig;
 							}
 						}
-						snapshot = fsFileSnapshots.get(uri)?.[1];
+					}
+				}
+			}
+		}
+		async function getReferencesChains(parsedCommandLine: ts.ParsedCommandLine, tsConfig: string, before: string[]) {
+
+			if (parsedCommandLine.projectReferences?.length) {
+
+				const newChains: string[][] = [];
+
+				for (const projectReference of parsedCommandLine.projectReferences) {
+
+					let tsConfigPath = projectReference.path.replace(/\\/g, '/');
+
+					// fix https://github.com/johnsoncodehk/volar/issues/712
+					if ((await server.fs.stat?.(asUri(tsConfigPath)))?.type === FileType.File) {
+						const newTsConfigPath = path.join(tsConfigPath, 'tsconfig.json');
+						const newJsConfigPath = path.join(tsConfigPath, 'jsconfig.json');
+						if ((await server.fs.stat?.(asUri(newTsConfigPath)))?.type === FileType.File) {
+							tsConfigPath = newTsConfigPath;
+						}
+						else if ((await server.fs.stat?.(asUri(newJsConfigPath)))?.type === FileType.File) {
+							tsConfigPath = newJsConfigPath;
+						}
 					}
 
-					if (snapshot) {
-						language.scripts.set(uri, snapshot);
+					const beforeIndex = before.indexOf(tsConfigPath); // cycle
+					if (beforeIndex >= 0) {
+						newChains.push(before.slice(0, Math.max(beforeIndex, 1)));
 					}
 					else {
-						language.scripts.delete(uri);
-					}
-				},
-			);
-			language.typescript = {
-				configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
-				asScriptId: asUri,
-				asFileName: asFileName,
-				...createLanguageServiceHost(
-					ts,
-					sys,
-					language,
-					asUri,
-					{
-						getProjectVersion() {
-							return projectVersion.toString();
-						},
-						getScriptFileNames() {
-							return rootFiles;
-						},
-						getScriptSnapshot(fileName) {
-							const uri = asUri(fileName);
-							const documentKey = server.getSyncedDocumentKey(uri) ?? uri.toString();
-							const document = server.documents.get(documentKey);
-							askedFiles.set(uri, true);
-							if (document) {
-								return document.getSnapshot();
+						const referenceParsedCommandLine = await getParsedCommandLine(tsConfigPath);
+						if (referenceParsedCommandLine) {
+							for (const chain of await getReferencesChains(referenceParsedCommandLine, tsConfigPath, [...before, tsConfig])) {
+								newChains.push(chain);
 							}
-						},
-						getCompilationSettings() {
-							return parsedCommandLine.options;
-						},
-						getLocalizedDiagnosticMessages: tsLocalized ? () => tsLocalized : undefined,
-						getProjectReferences() {
-							return parsedCommandLine.projectReferences;
-						},
-					},
-				),
-			};
-			languageService = createLanguageService(
-				language,
-				server.languageServicePlugins,
+						}
+					}
+				}
+
+				return newChains;
+			}
+			else {
+				return [[...before, tsConfig]];
+			}
+		}
+		async function getParsedCommandLine(tsConfig: string) {
+			const project = await getOrCreateConfiguredProject(server, tsConfig);
+			return project?.getParsedCommandLine();
+		}
+	}
+
+	function getOrCreateConfiguredProject(server: LanguageServer, tsconfig: string) {
+		tsconfig = tsconfig.replace(/\\/g, '/');
+		const tsconfigUri = asUri(tsconfig);
+		let projectPromise = configProjects.get(tsconfigUri);
+		if (!projectPromise) {
+			const workspaceFolder = getWorkspaceFolder(tsconfigUri, server.workspaceFolders);
+			const serviceEnv = createServiceEnvironment(server, [workspaceFolder]);
+			projectPromise = createTypeScriptLS(
+				ts,
+				tsLocalized,
+				tsconfig,
+				server,
 				serviceEnv,
+				workspaceFolder,
+				getLanguagePlugins,
+				{ asUri, asFileName },
 			);
+			configProjects.set(tsconfigUri, projectPromise);
 		}
-		return languageService;
+		return projectPromise;
 	}
-	async function onWorkspaceFilesChanged(changes: vscode.FileEvent[]) {
 
-		const createsAndDeletes = changes.filter(change => change.type !== vscode.FileChangeType.Changed);
+	async function getOrCreateInferredProject(server: LanguageServer, uri: URI, workspaceFolder: URI) {
 
-		if (createsAndDeletes.length) {
-			rootFiles = await getRootFiles(languagePlugins);
+		if (!inferredProjects.has(workspaceFolder)) {
+			inferredProjects.set(workspaceFolder, (async () => {
+				const inferOptions = await getInferredCompilerOptions(server);
+				const serviceEnv = createServiceEnvironment(server, [workspaceFolder]);
+				return createTypeScriptLS(
+					ts,
+					tsLocalized,
+					inferOptions,
+					server,
+					serviceEnv,
+					workspaceFolder,
+					getLanguagePlugins,
+					{ asUri, asFileName },
+				);
+			})());
 		}
 
-		projectVersion++;
-	}
-	function dispose() {
-		sys.dispose();
-		languageService?.dispose();
-		fileWatch?.dispose();
-		docChangeWatcher.dispose();
+		const project = await inferredProjects.get(workspaceFolder)!;
+
+		project.tryAddFile(asFileName(uri));
+
+		return project;
 	}
 }
 
-async function createParsedCommandLine(
-	ts: typeof import('typescript'),
-	sys: ReturnType<typeof createSys>,
-	workspacePath: string,
-	tsconfig: string | ts.CompilerOptions,
-	extraFileExtensions: ts.FileExtensionInfo[],
-): Promise<ts.ParsedCommandLine> {
-	let content: ts.ParsedCommandLine = {
-		errors: [],
-		fileNames: [],
-		options: {},
+export function createUriConverter() {
+	const encodeds = new Map<string, URI>();
+
+	return {
+		asFileName,
+		asUri,
 	};
-	let sysVersion: number | undefined;
-	let newSysVersion = await sys.sync();
-	while (sysVersion !== newSysVersion) {
-		sysVersion = newSysVersion;
-		try {
-			if (typeof tsconfig === 'string') {
-				const config = ts.readJsonConfigFile(tsconfig, sys.readFile);
-				content = ts.parseJsonSourceFileConfigFileContent(config, sys, path.dirname(tsconfig), {}, tsconfig, undefined, extraFileExtensions);
-			}
-			else {
-				content = ts.parseJsonConfigFileContent({ files: [] }, sys, workspacePath, tsconfig, workspacePath + '/jsconfig.json', undefined, extraFileExtensions);
-			}
-			// fix https://github.com/johnsoncodehk/volar/issues/1786
-			// https://github.com/microsoft/TypeScript/issues/30457
-			// patching ts server broke with outDir + rootDir + composite/incremental
-			content.options.outDir = undefined;
-			content.fileNames = content.fileNames.map(fileName => fileName.replace(/\\/g, '/'));
+
+	function asFileName(parsed: URI) {
+		if (parsed.scheme === 'file') {
+			return parsed.fsPath.replace(/\\/g, '/');
 		}
-		catch {
-			// will be failed if web fs host first result not ready
+		const encoded = encodeURIComponent(`${parsed.scheme}://${parsed.authority}`);
+		encodeds.set(encoded, parsed);
+		return `/${encoded}${parsed.path}`;
+	}
+
+	function asUri(fileName: string) {
+		for (const [encoded, uri] of encodeds) {
+			const prefix = `/${encoded}`;
+			if (fileName.startsWith(prefix)) {
+				return URI.from({
+					scheme: uri.scheme,
+					authority: uri.authority,
+					path: fileName.substring(prefix.length),
+				});
+			}
 		}
-		newSysVersion = await sys.sync();
+		return URI.file(fileName);
 	}
-	if (content) {
-		return content;
+}
+
+export function sortTSConfigs(file: string, a: string, b: string) {
+
+	const inA = isFileInDir(file, path.dirname(a));
+	const inB = isFileInDir(file, path.dirname(b));
+
+	if (inA !== inB) {
+		const aWeight = inA ? 1 : 0;
+		const bWeight = inB ? 1 : 0;
+		return bWeight - aWeight;
 	}
-	return content;
+
+	const aLength = a.split('/').length;
+	const bLength = b.split('/').length;
+
+	if (aLength === bLength) {
+		const aWeight = path.basename(a) === 'tsconfig.json' ? 1 : 0;
+		const bWeight = path.basename(b) === 'tsconfig.json' ? 1 : 0;
+		return bWeight - aWeight;
+	}
+
+	return bLength - aLength;
 }

@@ -1,4 +1,4 @@
-import { FileSystem, FileType } from '@volar/language-service';
+import { FileType } from '@volar/language-service';
 import * as fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
@@ -6,12 +6,16 @@ import { createServerBase } from './lib/server';
 
 export * from 'vscode-languageserver/node';
 export * from './index';
-export * from './lib/project/simpleProjectProvider';
-export * from './lib/project/typescriptProjectProvider';
+export * from './lib/project/simpleProject';
+export * from './lib/project/typescriptProject';
 export * from './lib/server';
 
-export function createFs(): FileSystem {
-	return {
+export function createConnection() {
+	return vscode.createConnection(vscode.ProposedFeatures.all);
+}
+
+export function createServer(connection: vscode.Connection) {
+	return createServerBase(connection, {
 		stat(uri) {
 			if (uri.scheme === 'file') {
 				try {
@@ -63,15 +67,7 @@ export function createFs(): FileSystem {
 			}
 			return [];
 		},
-	};
-}
-
-export function createConnection() {
-	return vscode.createConnection(vscode.ProposedFeatures.all);
-}
-
-export function createServer(connection: vscode.Connection) {
-	return createServerBase(connection, createFs);
+	});
 }
 
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {

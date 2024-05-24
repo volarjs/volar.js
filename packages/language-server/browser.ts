@@ -7,8 +7,8 @@ import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from './prot
 
 export * from 'vscode-languageserver/browser';
 export * from './index';
-export * from './lib/project/simpleProjectProvider';
-export * from './lib/project/typescriptProjectProvider';
+export * from './lib/project/simpleProject';
+export * from './lib/project/typescriptProject';
 export * from './lib/server';
 
 export function createConnection() {
@@ -21,7 +21,7 @@ export function createConnection() {
 }
 
 export function createServer(connection: vscode.Connection) {
-	return createServerBase(connection, () => ({
+	return createServerBase(connection, {
 		async stat(uri) {
 			if (uri.scheme === 'http' || uri.scheme === 'https') { // perf
 				const text = await this.readFile(uri);
@@ -49,7 +49,7 @@ export function createServer(connection: vscode.Connection) {
 			}
 			return await connection.sendRequest(FsReadDirectoryRequest.type, uri.toString());
 		},
-	}));
+	});
 }
 
 export async function loadTsdkByUrl(tsdkUrl: string, locale: string | undefined) {

@@ -5,13 +5,13 @@ import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
-import type { ServerProjectProvider } from './types.js';
+import type { Project } from './types.js';
 
 export * from '@volar/snapshot-document';
 
 export function createServerBase(
 	connection: vscode.Connection,
-	getFs: () => FileSystem,
+	fs: FileSystem,
 ) {
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
@@ -41,11 +41,11 @@ export function createServerBase(
 
 	const status = {
 		connection,
+		fs: createFsWithCache(fs),
 		initializeParams: undefined as unknown as vscode.InitializeParams,
 		initializeResult: undefined as unknown as vscode.InitializeResult,
 		languageServicePlugins: [] as unknown as LanguageServicePlugin[],
-		projects: undefined as unknown as ServerProjectProvider,
-		fs: undefined as unknown as FileSystem,
+		project: undefined as unknown as Project,
 		pullModelDiagnostics: false,
 		documents,
 		workspaceFolders: createUriMap<boolean>(),
@@ -72,16 +72,15 @@ export function createServerBase(
 	function initialize(
 		initializeParams: vscode.InitializeParams,
 		languageServicePlugins: LanguageServicePlugin[],
-		projects: ServerProjectProvider,
+		languageServices: Project,
 		options?: {
 			pullModelDiagnostics?: boolean;
 		},
 	) {
 		status.initializeParams = initializeParams;
 		status.languageServicePlugins = languageServicePlugins;
-		status.projects = projects;
+		status.project = languageServices;
 		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
-		status.fs = createFsWithCache(getFs());
 
 		if (initializeParams.workspaceFolders?.length) {
 			for (const folder of initializeParams.workspaceFolders) {
@@ -176,7 +175,7 @@ export function createServerBase(
 
 		if (!status.pullModelDiagnostics && status.initializeResult.capabilities.diagnosticProvider) {
 			status.initializeResult.capabilities.diagnosticProvider = undefined;
-			activateServerPushDiagnostics(projects);
+			activateServerPushDiagnostics(languageServices);
 		}
 
 		registerEditorFeatures(status);
@@ -193,9 +192,7 @@ export function createServerBase(
 	}
 
 	async function shutdown() {
-		for (const project of await status.projects.all.call(status)) {
-			project.dispose();
-		}
+		status.project.reload(status);
 	}
 
 	async function updateHttpSettings() {
@@ -333,12 +330,12 @@ export function createServerBase(
 				for (const folder of e.removed) {
 					status.workspaceFolders.delete(URI.parse(folder.uri));
 				}
-				status.projects.reload.call(status);
+				status.project.reload(status);
 			});
 		}
 	}
 
-	function activateServerPushDiagnostics(projects: ServerProjectProvider) {
+	function activateServerPushDiagnostics(projects: Project) {
 		documents.onDidChangeContent(({ document }) => {
 			pushAllDiagnostics(projects, document.uri);
 		});
@@ -356,7 +353,7 @@ export function createServerBase(
 		}
 	}
 
-	async function refresh(projects: ServerProjectProvider) {
+	async function refresh(projects: Project) {
 
 		const req = ++semanticTokensReq;
 
@@ -380,7 +377,7 @@ export function createServerBase(
 		}
 	}
 
-	async function pushAllDiagnostics(projects: ServerProjectProvider, docUri?: string) {
+	async function pushAllDiagnostics(projects: Project, docUri?: string) {
 		const req = ++documentUpdatedReq;
 		const delay = 250;
 		const token: vscode.CancellationToken = {
@@ -409,9 +406,9 @@ export function createServerBase(
 		}
 	}
 
-	async function pushDiagnostics(projects: ServerProjectProvider, uriStr: string, version: number, cancel: vscode.CancellationToken) {
+	async function pushDiagnostics(projects: Project, uriStr: string, version: number, cancel: vscode.CancellationToken) {
 		const uri = URI.parse(uriStr);
-		const languageService = (await projects.get.call(status, uri)).getLanguageService();
+		const languageService = (await projects.getLanguageService(status, uri));
 		const errors = await languageService.doValidation(uri, cancel, result => {
 			connection.sendDiagnostics({ uri: uriStr, diagnostics: result, version });
 		});

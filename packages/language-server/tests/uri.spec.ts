@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { URI } from 'vscode-uri';
-import { createUriConverter } from '../lib/project/typescriptProjectProvider';
+import { createUriConverter } from '../lib/project/typescriptProject';
 
 describe('URI', () => {
 

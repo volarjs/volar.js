@@ -1,17 +1,11 @@
-import type { LanguageService } from '@volar/language-service';
+import type { LanguageService, ProviderResult } from '@volar/language-service';
 import type { URI } from 'vscode-uri';
 import type { createServerBase } from './server';
 
-export interface ServerProject {
-	getLanguageService(): LanguageService;
-	getLanguageServiceDontCreate(): LanguageService | undefined;
-	dispose(): void;
+export interface Project {
+	getLanguageService(server: LanguageServer, uri: URI): ProviderResult<LanguageService>;
+	allLanguageServices(server: LanguageServer): ProviderResult<LanguageService[]>;
+	reload(server: LanguageServer): void;
 }
 
-export interface ServerProjectProvider {
-	get(this: ServerBase, uri: URI): Promise<ServerProject>;
-	all(this: ServerBase): Promise<ServerProject[]>;
-	reload(this: ServerBase): void;
-}
-
-export type ServerBase = ReturnType<typeof createServerBase>;
+export type LanguageServer = ReturnType<typeof createServerBase>;

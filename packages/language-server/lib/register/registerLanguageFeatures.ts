@@ -2,9 +2,9 @@ import * as embedded from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
-import type { ServerBase } from '../types';
+import type { LanguageServer } from '../types';
 
-export function registerLanguageFeatures(server: ServerBase) {
+export function registerLanguageFeatures(server: LanguageServer) {
 	let lastCompleteUri: string;
 	let lastCompleteLs: embedded.LanguageService;
 	let lastCodeLensLs: embedded.LanguageService;
@@ -200,11 +200,11 @@ export function registerLanguageFeatures(server: ServerBase) {
 	});
 	server.connection.onWorkspaceSymbol(async (params, token) => {
 		let results: vscode.WorkspaceSymbol[] = [];
-		for (const project of await server.projects.all.call(server)) {
+		for (const languageService of await server.project.allLanguageServices(server)) {
 			if (token.isCancellationRequested) {
 				return;
 			}
-			results = results.concat(await project.getLanguageService().findWorkspaceSymbols(params.query, token));
+			results = results.concat(await languageService.findWorkspaceSymbols(params.query, token));
 		}
 		return results;
 	});
@@ -309,7 +309,7 @@ export function registerLanguageFeatures(server: ServerBase) {
 					resolve(undefined);
 					return;
 				}
-				const languageService = (await server.projects.get.call(server, uri)).getLanguageService();
+				const languageService = (await server.project.getLanguageService(server, uri));
 				try { // handle TS cancel throw
 					const result = await cb(languageService);
 					if (token.isCancellationRequested) {
