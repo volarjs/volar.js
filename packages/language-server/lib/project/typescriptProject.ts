@@ -5,7 +5,6 @@ import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import type { LanguageServer, Project } from '../types';
-import { isFileInDir } from '../utils/isFileInDir';
 import { getInferredCompilerOptions } from './inferredCompilerOptions';
 import { createServiceEnvironment, getWorkspaceFolder } from './simpleProject';
 import { createTypeScriptLS, type TypeScriptLS } from './typescriptProjectLs';
@@ -328,4 +327,9 @@ export function sortTSConfigs(file: string, a: string, b: string) {
 	}
 
 	return bLength - aLength;
+}
+
+export function isFileInDir(fileName: string, dir: string) {
+	const relative = path.relative(dir, fileName);
+	return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
