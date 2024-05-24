@@ -163,7 +163,7 @@ export function register(context: LanguageServiceContext) {
 						continue;
 					}
 
-					if (completionContext?.triggerCharacter && !service[0].triggerCharacters?.includes(completionContext.triggerCharacter)) {
+					if (completionContext?.triggerCharacter && !service[0].capabilities.completionProvider?.triggerCharacters?.includes(completionContext.triggerCharacter)) {
 						continue;
 					}
 

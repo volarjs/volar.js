@@ -84,11 +84,55 @@ export type SemanticToken = [
 
 export interface LanguageServicePlugin<P = any> {
 	name?: string;
-	triggerCharacters?: string[];
-	signatureHelpTriggerCharacters?: string[];
-	signatureHelpRetriggerCharacters?: string[];
-	autoFormatTriggerCharacters?: string[];
-	semanticTokensLegend?: vscode.SemanticTokensLegend;
+	capabilities: {
+		selectionRangeProvider?: boolean;
+		foldingRangeProvider?: boolean;
+		linkedEditingRangeProvider?: boolean;
+		colorProvider?: boolean;
+		documentSymbolProvider?: boolean;
+		documentFormattingProvider?: boolean;
+		documentRangeFormattingProvider?: boolean;
+		referencesProvider?: boolean;
+		implementationProvider?: boolean;
+		definitionProvider?: boolean;
+		typeDefinitionProvider?: boolean;
+		callHierarchyProvider?: boolean;
+		hoverProvider?: boolean;
+		documentHighlightProvider?: boolean;
+		workspaceSymbolProvider?: boolean;
+		renameProvider?: {
+			prepareProvider?: boolean;
+		};
+		signatureHelpProvider?: {
+			triggerCharacters?: string[];
+			retriggerCharacters?: string[];
+		};
+		completionProvider?: {
+			resolveProvider?: boolean;
+			triggerCharacters?: string[];
+		};
+		documentOnTypeFormattingProvider?: {
+			triggerCharacters: string[];
+		};
+		documentLinkProvider?: {
+			resolveProvider?: boolean;
+		};
+		codeLensProvider?: {
+			resolveProvider?: boolean;
+		};
+		inlayHintProvider?: {
+			resolveProvider?: boolean;
+		};
+		semanticTokensProvider?: {
+			legend?: vscode.SemanticTokensLegend;
+		};
+		codeActionProvider?: {
+			codeActionKinds?: string[];
+			resolveProvider?: boolean;
+		};
+		// TODO: interFileDependencies, workspaceDiagnostics
+		diagnosticProvider?: boolean;
+	};
 	create(context: LanguageServiceContext, languageService: LanguageService): LanguageServicePluginInstance<P>;
 }
 

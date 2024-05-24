@@ -228,7 +228,7 @@ export function register(context: LanguageServiceContext) {
 
 				try {
 					if (ch !== undefined && rangeOrPosition && 'line' in rangeOrPosition && 'character' in rangeOrPosition) {
-						if (service[0].autoFormatTriggerCharacters?.includes(ch)) {
+						if (service[0].capabilities.documentOnTypeFormattingProvider?.triggerCharacters?.includes(ch)) {
 							edits = await service[1].provideOnTypeFormattingEdits?.(document, rangeOrPosition, ch, options, codeOptions, token);
 						}
 					}

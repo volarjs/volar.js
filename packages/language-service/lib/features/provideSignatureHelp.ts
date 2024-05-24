@@ -31,8 +31,8 @@ export function register(context: LanguageServiceContext) {
 					&& signatureHelpContext.triggerCharacter
 					&& !(
 						signatureHelpContext.isRetrigger
-							? service[0].signatureHelpRetriggerCharacters
-							: service[0].signatureHelpTriggerCharacters
+							? service[0].capabilities.signatureHelpProvider?.retriggerCharacters
+							: service[0].capabilities.signatureHelpProvider?.triggerCharacters
 					)?.includes(signatureHelpContext.triggerCharacter)
 				) {
 					return;
