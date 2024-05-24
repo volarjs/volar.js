@@ -310,18 +310,12 @@ export function registerLanguageFeatures(server: LanguageServer) {
 					return;
 				}
 				const languageService = (await server.project.getLanguageService(server, uri));
-				try { // handle TS cancel throw
-					const result = await cb(languageService);
-					if (token.isCancellationRequested) {
-						resolve(undefined);
-						return;
-					}
-					resolve(result);
-				}
-				catch {
+				const result = await cb(languageService);
+				if (token.isCancellationRequested) {
 					resolve(undefined);
 					return;
 				}
+				resolve(result);
 			}, 0);
 		});
 	}
