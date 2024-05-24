@@ -1,4 +1,4 @@
-import type { LanguageService, ProviderResult } from '@volar/language-service';
+import type { InitializeResult, LanguageService, ProviderResult } from '@volar/language-service';
 import type { URI } from 'vscode-uri';
 import type { createServerBase } from './server';
 
@@ -9,3 +9,10 @@ export interface Project {
 }
 
 export type LanguageServer = ReturnType<typeof createServerBase>;
+
+export interface VolarInitializeResult extends InitializeResult {
+	autoInsertion?: {
+		triggerCharacters: string[];
+		configurationSections: (string | undefined)[];
+	};
+};

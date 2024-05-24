@@ -1,7 +1,7 @@
+import type { VolarInitializeResult } from '@volar/language-server';
+import { AutoInsertRequest } from '@volar/language-server/protocol';
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
-import { AutoInsertRequest } from '@volar/language-server/protocol';
-import type { LanguageServicePlugin } from '@volar/language-server';
 
 export function activate(selector: vscode.DocumentSelector, client: BaseLanguageClient) {
 
@@ -56,20 +56,18 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 			if (vscode.window.activeTextEditor?.document.version !== version) {
 				return true;
 			}
-			const triggerCharacters: LanguageServicePlugin['autoInsertionTriggerCharacters'] = client.initializeResult?.autoInsertion.triggerCharacters;
-			for (const char of triggerCharacters ?? []) {
-				if (typeof char === 'string') {
-					if (lastCharacter.match(new RegExp(char))) {
-						return false;
+			const initializeResult: VolarInitializeResult | undefined = client.initializeResult;
+			if (initializeResult?.autoInsertion) {
+				for (let i = 0; i < initializeResult.autoInsertion.triggerCharacters.length; i++) {
+					const char = initializeResult.autoInsertion.triggerCharacters[i];
+					if (!lastCharacter.match(new RegExp(char))) {
+						continue;
 					}
-				}
-				else {
-					if (
-						char.characters.some(char => lastCharacter.match(new RegExp(char)))
-						&& vscode.workspace.getConfiguration().get<boolean>(char.configurationSection)
-					) {
-						return false;
+					const configurationSection = initializeResult.autoInsertion.configurationSections[i];
+					if (configurationSection && !vscode.workspace.getConfiguration().get<boolean>(configurationSection)) {
+						continue;
 					}
+					return false;
 				}
 			}
 			return true;

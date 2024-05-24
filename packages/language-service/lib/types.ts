@@ -110,6 +110,10 @@ export interface LanguageServicePlugin<P = any> {
 			resolveProvider?: boolean;
 			triggerCharacters?: string[];
 		};
+		autoInsertionProvider?: {
+			triggerCharacters: string[];
+			configurationSections?: string[];
+		};
 		documentOnTypeFormattingProvider?: {
 			triggerCharacters: string[];
 		};
