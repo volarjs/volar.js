@@ -196,6 +196,10 @@ export function createServerBase(
 					}
 				}
 			}
+			status.initializeResult.autoInsertion = {
+				triggerCharacters: allTriggerCharacters,
+				configurationSections: allConfigurationSections,
+			};
 		}
 
 		registerEditorFeatures(status);
