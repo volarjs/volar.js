@@ -1,10 +1,11 @@
+import { isDocumentLinkEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
+import type { URI } from 'vscode-uri';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import { transformDocumentLinkTarget } from '../utils/transform';
-import { isDocumentLinkEnabled } from '@volar/language-core';
 
 export interface DocumentLinkData {
 	uri: string;
@@ -12,9 +13,9 @@ export interface DocumentLinkData {
 	serviceIndex: number;
 }
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
-	return async (uri: string, token = NoneCancellationToken) => {
+	return async (uri: URI, token = NoneCancellationToken) => {
 
 		return await documentFeatureWorker(
 			context,
@@ -30,7 +31,7 @@ export function register(context: ServiceContext) {
 
 				for (const link of links ?? []) {
 					link.data = {
-						uri,
+						uri: uri.toString(),
 						original: {
 							data: link.data,
 						},
@@ -55,7 +56,7 @@ export function register(context: ServiceContext) {
 							range,
 						};
 						if (link.target) {
-							link.target = transformDocumentLinkTarget(link.target, context);
+							link.target = transformDocumentLinkTarget(link.target, context).toString();
 						}
 						return link;
 					})

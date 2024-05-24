@@ -2,18 +2,20 @@ import { CodeInformation, SourceMap, SourceScript, VirtualCode, forEachEmbeddedC
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import { SourceMapWithDocuments } from '../documents';
-import type { EmbeddedCodeFormattingOptions, ServiceContext } from '../types';
+import type { EmbeddedCodeFormattingOptions, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange, stringToSnapshot } from '../utils/common';
 import { getEmbeddedFilesByLevel as getEmbeddedCodesByLevel } from '../utils/featureWorkers';
+import { createUriMap } from '../utils/uriMap';
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	let fakeVersion = 0;
 
 	return async (
-		uri: string,
+		uri: URI,
 		options: vscode.FormattingOptions,
 		range: vscode.Range | undefined,
 		onTypeParams: {
@@ -22,7 +24,6 @@ export function register(context: ServiceContext) {
 		} | undefined,
 		token = NoneCancellationToken
 	) => {
-
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return;
@@ -54,7 +55,7 @@ export function register(context: ServiceContext) {
 						embeddedRange.start = 0;
 					}
 					const lastMapping = map.mappings[map.mappings.length - 1];
-					if (embeddedRange.end === lastMapping.generatedOffsets[lastMapping.generatedOffsets.length - 1] + lastMapping.lengths[lastMapping.lengths.length - 1]) {
+					if (embeddedRange.end === lastMapping.generatedOffsets[lastMapping.generatedOffsets.length - 1] + (lastMapping.generatedLengths ?? lastMapping.lengths)[lastMapping.lengths.length - 1]) {
 						embeddedRange.end = code.snapshot.getLength();
 					}
 					embeddedRanges.set(code.id, embeddedRange);
@@ -66,7 +67,7 @@ export function register(context: ServiceContext) {
 			const originalDocument = document;
 
 			let tempSourceSnapshot = sourceScript.snapshot;
-			let tempVirtualFile = context.language.scripts.set(sourceScript.id + '.tmp', sourceScript.languageId, sourceScript.snapshot, [sourceScript.generated.languagePlugin]).generated?.root;
+			let tempVirtualFile = context.language.scripts.set(URI.parse(sourceScript.id.toString() + '.tmp'), sourceScript.snapshot, sourceScript.languageId, [sourceScript.generated.languagePlugin])?.generated?.root;
 			if (!tempVirtualFile) {
 				return;
 			}
@@ -145,7 +146,7 @@ export function register(context: ServiceContext) {
 					const newText = TextDocument.applyEdits(document, edits);
 					document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 					tempSourceSnapshot = stringToSnapshot(newText);
-					tempVirtualFile = context.language.scripts.set(sourceScript.id + '.tmp', sourceScript.languageId, tempSourceSnapshot, [sourceScript.generated.languagePlugin]).generated?.root;
+					tempVirtualFile = context.language.scripts.set(URI.parse(sourceScript.id.toString() + '.tmp'), tempSourceSnapshot, sourceScript.languageId, [sourceScript.generated.languagePlugin])?.generated?.root;
 					if (!tempVirtualFile) {
 						break;
 					}
@@ -167,20 +168,20 @@ export function register(context: ServiceContext) {
 
 			return [textEdit];
 		} finally {
-			context.language.scripts.delete(sourceScript.id + '.tmp');
+			context.language.scripts.delete(URI.parse(sourceScript.id.toString() + '.tmp'));
 		}
 
 		async function tryFormat(
 			sourceDocument: TextDocument,
 			document: TextDocument,
-			sourceScript: SourceScript,
+			sourceScript: SourceScript<URI>,
 			virtualCode: VirtualCode | undefined,
 			embeddedLevel: number,
 			rangeOrPosition: vscode.Range | vscode.Position,
 			ch?: string,
 		) {
 
-			if (context.disabledEmbeddedDocumentUris.has(document.uri)) {
+			if (context.disabledEmbeddedDocumentUris.get(URI.parse(document.uri))) {
 				return;
 			}
 
@@ -227,7 +228,7 @@ export function register(context: ServiceContext) {
 
 				try {
 					if (ch !== undefined && rangeOrPosition && 'line' in rangeOrPosition && 'character' in rangeOrPosition) {
-						if (service[0].autoFormatTriggerCharacters?.includes(ch)) {
+						if (service[0].capabilities.documentOnTypeFormattingProvider?.triggerCharacters?.includes(ch)) {
 							edits = await service[1].provideOnTypeFormattingEdits?.(document, rangeOrPosition, ch, options, codeOptions, token);
 						}
 					}
@@ -251,8 +252,8 @@ export function register(context: ServiceContext) {
 		}
 	};
 
-	function createDocMap(virtualCode: VirtualCode, documentUri: string, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
-		const mapOfMap = new Map<string, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>();
+	function createDocMap(virtualCode: VirtualCode, documentUri: URI, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
+		const mapOfMap = createUriMap<[ts.IScriptSnapshot, SourceMap<CodeInformation>]>();
 		updateVirtualCodeMapOfMap(virtualCode, mapOfMap, sourceFileUri2 => {
 			if (!sourceFileUri2) {
 				return [documentUri, _sourceSnapshot];
@@ -263,13 +264,13 @@ export function register(context: ServiceContext) {
 			const version = fakeVersion++;
 			return new SourceMapWithDocuments(
 				TextDocument.create(
-					documentUri,
+					documentUri.toString(),
 					sourceLanguageId,
 					version,
 					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
 				),
 				TextDocument.create(
-					context.encodeEmbeddedDocumentUri(documentUri, virtualCode.id),
+					context.encodeEmbeddedDocumentUri(documentUri, virtualCode.id).toString(),
 					virtualCode.languageId,
 					version,
 					virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength())

@@ -1,9 +1,9 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { notEmpty } from './utils';
-import { transformDiagnostic } from './transform';
+import { transformDiagnostic, fillSourceFileText } from './transform';
 
-export function decorateProgram(language: Language, program: ts.Program) {
+export function decorateProgram(language: Language<string>, program: ts.Program) {
 
 	const emit = program.emit;
 
@@ -11,6 +11,7 @@ export function decorateProgram(language: Language, program: ts.Program) {
 	const getSyntacticDiagnostics = program.getSyntacticDiagnostics;
 	const getSemanticDiagnostics = program.getSemanticDiagnostics;
 	const getGlobalDiagnostics = program.getGlobalDiagnostics;
+	const getSourceFileByPath = program.getSourceFileByPath;
 
 	// for tsc --noEmit --watch
 	// @ts-ignore
@@ -21,29 +22,38 @@ export function decorateProgram(language: Language, program: ts.Program) {
 		return {
 			...result,
 			diagnostics: result.diagnostics
-				.map(d => transformDiagnostic(language, d))
+				.map(d => transformDiagnostic(language, d, true))
 				.filter(notEmpty),
 		};
 	};
 	program.getSyntacticDiagnostics = (sourceFile, cancellationToken) => {
 		return getSyntacticDiagnostics(sourceFile, cancellationToken)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, true))
 			.filter(notEmpty);
 	};
 	program.getSemanticDiagnostics = (sourceFile, cancellationToken) => {
 		return getSemanticDiagnostics(sourceFile, cancellationToken)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, true))
 			.filter(notEmpty);
 	};
 	program.getGlobalDiagnostics = cancellationToken => {
 		return getGlobalDiagnostics(cancellationToken)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, true))
 			.filter(notEmpty);
 	};
 	// @ts-ignore
 	program.getBindAndCheckDiagnostics = (sourceFile, cancellationToken) => {
 		return (getBindAndCheckDiagnostics as typeof getSyntacticDiagnostics)(sourceFile, cancellationToken)
-			.map(d => transformDiagnostic(language, d))
+			.map(d => transformDiagnostic(language, d, true))
 			.filter(notEmpty);
+	};
+
+	// fix https://github.com/vuejs/language-tools/issues/4099 with `incremental`
+	program.getSourceFileByPath = path => {
+		const sourceFile = getSourceFileByPath(path);
+		if (sourceFile) {
+			fillSourceFileText(language, sourceFile);
+		}
+		return sourceFile;
 	};
 }

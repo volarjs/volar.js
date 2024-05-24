@@ -1,13 +1,16 @@
 import type { LanguagePlugin, SourceScript } from '@volar/language-core';
 import type * as ts from 'typescript';
 
-export function createResolveModuleName(
+export function createResolveModuleName<T>(
 	ts: typeof import('typescript'),
 	host: ts.ModuleResolutionHost,
 	languagePlugins: LanguagePlugin<any>[],
-	getSourceScript: (fileName: string) => SourceScript | undefined,
+	getSourceScript: (fileName: string) => SourceScript<T> | undefined,
 ) {
-	const toPatchResults = new Map<string, string>();
+	const toSourceFileInfo = new Map<string, {
+		sourceFileName: string;
+		extension: string;
+	}>();
 	const moduleResolutionHost: ts.ModuleResolutionHost = {
 		readFile: host.readFile.bind(host),
 		directoryExists: host.directoryExists?.bind(host),
@@ -24,10 +27,28 @@ export function createResolveModuleName(
 				}
 				for (const { extension } of typescript.extraFileExtensions) {
 					if (fileName.endsWith(`.d.${extension}.ts`)) {
-						const patchFileName = fileName.slice(0, -`.d.${extension}.ts`.length) + `.${extension}`;
-						if (fileExists(patchFileName)) {
-							toPatchResults.set(fileName, patchFileName);
-							return true;
+						const sourceFileName = fileName.slice(0, -`.d.${extension}.ts`.length) + `.${extension}`;
+						if (fileExists(sourceFileName)) {
+							const sourceScript = getSourceScript(sourceFileName);
+							if (sourceScript?.generated) {
+								const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+								if (serviceScript) {
+									const dtsPath = sourceFileName + '.d.ts';
+									if ((serviceScript.extension === '.js' || serviceScript.extension === '.jsx') && fileExists(dtsPath)) {
+										toSourceFileInfo.set(fileName, {
+											sourceFileName: dtsPath,
+											extension: '.ts',
+										});
+									}
+									else {
+										toSourceFileInfo.set(fileName, {
+											sourceFileName,
+											extension: serviceScript.extension,
+										});
+									}
+									return true;
+								}
+							}
 						}
 					}
 				}
@@ -52,17 +73,14 @@ export function createResolveModuleName(
 			redirectedReference,
 			resolutionMode
 		);
-		if (result.resolvedModule && toPatchResults.has(result.resolvedModule.resolvedFileName)) {
-			result.resolvedModule.resolvedFileName = toPatchResults.get(result.resolvedModule.resolvedFileName)!;
-			const sourceScript = getSourceScript(result.resolvedModule.resolvedFileName);
-			if (sourceScript?.generated) {
-				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
-				if (serviceScript) {
-					result.resolvedModule.extension = serviceScript.extension;
-				}
+		if (result.resolvedModule) {
+			const sourceFileInfo = toSourceFileInfo.get(result.resolvedModule.resolvedFileName);
+			if (sourceFileInfo) {
+				result.resolvedModule.resolvedFileName = sourceFileInfo.sourceFileName;
+				result.resolvedModule.extension = sourceFileInfo.extension;
 			}
 		}
-		toPatchResults.clear();
+		toSourceFileInfo.clear();
 		return result;
 	};
 

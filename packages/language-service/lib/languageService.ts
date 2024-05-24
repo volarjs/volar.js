@@ -1,5 +1,9 @@
+import type { CodeInformation, LinkedCodeMap, SourceMap } from '@volar/language-core';
 import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type Language } from '@volar/language-core';
+import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import { LinkedCodeMapWithDocument, SourceMapWithDocuments } from './documents';
 import * as autoInsert from './features/provideAutoInsertionEdit';
 import * as callHierarchy from './features/provideCallHierarchyItems';
@@ -33,37 +37,34 @@ import * as codeLensResolve from './features/resolveCodeLens';
 import * as completionResolve from './features/resolveCompletionItem';
 import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
-import type { ServiceContext, ServiceEnvironment, LanguageServicePlugin } from './types';
-
-import type { CodeInformation, LinkedCodeMap, SourceMap, VirtualCode } from '@volar/language-core';
-import type * as ts from 'typescript';
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import type { LanguageServicePlugin, LanguageServiceContext, LanguageServiceEnvironment } from './types';
+import { UriMap, createUriMap } from './utils/uriMap';
 
 export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
-	language: Language,
-	servicePlugins: LanguageServicePlugin[],
-	env: ServiceEnvironment,
+	language: Language<URI>,
+	plugins: LanguageServicePlugin[],
+	env: LanguageServiceEnvironment,
 ) {
-	const documentVersions = new Map<string, number>();
+	const documentVersions = createUriMap<number>();
 	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments<CodeInformation>>();
 	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, LinkedCodeMapWithDocument>();
-	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, Map<string, TextDocument>>();
+	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, UriMap<TextDocument>>();
 	const embeddedContentScheme = 'volar-embedded-content';
-	const context: ServiceContext = {
+	const context: LanguageServiceContext = {
 		language,
 		documents: {
-			get(uri: string, languageId: string, snapshot: ts.IScriptSnapshot) {
+			get(uri, languageId, snapshot) {
 				if (!snapshot2Doc.has(snapshot)) {
-					snapshot2Doc.set(snapshot, new Map());
+					snapshot2Doc.set(snapshot, createUriMap());
 				}
 				const map = snapshot2Doc.get(snapshot)!;
 				if (!map.has(uri)) {
 					const version = documentVersions.get(uri) ?? 0;
 					documentVersions.set(uri, version + 1);
 					map.set(uri, TextDocument.create(
-						uri,
+						uri.toString(),
 						languageId,
 						version,
 						snapshot.getText(0, snapshot.getLength()),
@@ -71,7 +72,7 @@ export function createLanguageService(
 				}
 				return map.get(uri)!;
 			},
-			*getMaps(virtualCode: VirtualCode) {
+			*getMaps(virtualCode) {
 				for (const [uri, [snapshot, map]] of context.language.maps.forEach(virtualCode)) {
 					if (!map2DocMap.has(map)) {
 						const embeddedUri = context.encodeEmbeddedDocumentUri(uri, virtualCode.id);
@@ -84,11 +85,11 @@ export function createLanguageService(
 					yield map2DocMap.get(map)!;
 				}
 			},
-			getLinkedCodeMap(virtualCode: VirtualCode, sourceScriptId: string) {
+			getLinkedCodeMap(virtualCode, documentUri) {
 				const map = context.language.linkedCodeMaps.get(virtualCode);
 				if (map) {
 					if (!mirrorMap2DocMirrorMap.has(map)) {
-						const embeddedUri = context.encodeEmbeddedDocumentUri(sourceScriptId, virtualCode.id);
+						const embeddedUri = context.encodeEmbeddedDocumentUri(documentUri, virtualCode.id);
 						mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
 							this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
 							map,
@@ -163,34 +164,39 @@ export function createLanguageService(
 				},
 			},
 		},
-		disabledEmbeddedDocumentUris: new Set(),
+		disabledEmbeddedDocumentUris: createUriMap(),
 		disabledServicePlugins: new WeakSet(),
-		decodeEmbeddedDocumentUri(maybeEmbeddedContentUri: string) {
-			if (maybeEmbeddedContentUri.startsWith(`${embeddedContentScheme}://`)) {
-				const trimed = maybeEmbeddedContentUri.substring(`${embeddedContentScheme}://`.length);
-				const embeddedCodeId = trimed.substring(0, trimed.indexOf('/'));
-				const documentUri = trimed.substring(embeddedCodeId.length + 1);
+		decodeEmbeddedDocumentUri(maybeEmbeddedContentUri: URI) {
+			if (maybeEmbeddedContentUri.scheme === embeddedContentScheme) {
+				const embeddedCodeId = decodeURIComponent(maybeEmbeddedContentUri.authority);
+				const documentUri = decodeURIComponent(maybeEmbeddedContentUri.path.substring(1));
 				return [
-					decodeURIComponent(documentUri),
-					decodeURIComponent(embeddedCodeId),
+					URI.parse(documentUri),
+					embeddedCodeId,
 				];
 			}
 		},
-		encodeEmbeddedDocumentUri(documentUri: string, embeddedContentId: string) {
-			return `${embeddedContentScheme}://${encodeURIComponent(embeddedContentId)}/${encodeURIComponent(documentUri)}`;
+		encodeEmbeddedDocumentUri(documentUri: URI, embeddedContentId: string) {
+			return URI.from({
+				scheme: embeddedContentScheme,
+				authority: encodeURIComponent(embeddedContentId),
+				path: '/' + encodeURIComponent(documentUri.toString()),
+			});
 		},
 	};
-
-	for (const servicePlugin of servicePlugins) {
-		context.services.push([servicePlugin, servicePlugin.create(context)]);
-	}
-
-	return {
-
-		getTriggerCharacters: () => servicePlugins.map(service => service.triggerCharacters ?? []).flat(),
-		getAutoFormatTriggerCharacters: () => servicePlugins.map(service => service.autoFormatTriggerCharacters ?? []).flat(),
-		getSignatureHelpTriggerCharacters: () => servicePlugins.map(service => service.signatureHelpTriggerCharacters ?? []).flat(),
-		getSignatureHelpRetriggerCharacters: () => servicePlugins.map(service => service.signatureHelpRetriggerCharacters ?? []).flat(),
+	const api = {
+		getSemanticTokenLegend: () => {
+			const tokenModifiers = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat();
+			const tokenTypes = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat();
+			return {
+				tokenModifiers: [...new Set(tokenModifiers)],
+				tokenTypes: [...new Set(tokenTypes)],
+			};
+		},
+		getTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.completionProvider?.triggerCharacters ?? []).flat(),
+		getAutoFormatTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat(),
+		getSignatureHelpTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat(),
+		getSignatureHelpRetriggerCharacters: () => plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat(),
 
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),
@@ -230,4 +236,8 @@ export function createLanguageService(
 		dispose: () => context.services.forEach(service => service[1].dispose?.()),
 		context,
 	};
+	for (const servicePlugin of plugins) {
+		context.services.push([servicePlugin, servicePlugin.create(context, api)]);
+	}
+	return api;
 }

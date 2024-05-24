@@ -1,10 +1,11 @@
+import { isCallHierarchyEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
-import { NoneCancellationToken } from '../utils/cancellation';
-import { isCallHierarchyEnabled } from '@volar/language-core';
+import { URI } from 'vscode-uri';
 
 export interface PluginCallHierarchyData {
 	uri: string;
@@ -13,11 +14,11 @@ export interface PluginCallHierarchyData {
 	embeddedDocumentUri: string | undefined;
 }
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	return {
 
-		doPrepare(uri: string, position: vscode.Position, token = NoneCancellationToken) {
+		doPrepare(uri: URI, position: vscode.Position, token = NoneCancellationToken) {
 
 			return languageFeatureWorker(
 				context,
@@ -31,7 +32,7 @@ export function register(context: ServiceContext) {
 					const items = await service[1].provideCallHierarchyItems?.(document, position, token);
 					items?.forEach(item => {
 						item.data = {
-							uri,
+							uri: uri.toString(),
 							original: {
 								data: item.data,
 							},
@@ -70,7 +71,7 @@ export function register(context: ServiceContext) {
 
 				if (data.embeddedDocumentUri) {
 
-					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(data.embeddedDocumentUri);
+					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(URI.parse(data.embeddedDocumentUri));
 
 					if (isEmbeddedContent) {
 
@@ -131,7 +132,7 @@ export function register(context: ServiceContext) {
 
 				if (data.embeddedDocumentUri) {
 
-					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(data.embeddedDocumentUri);
+					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(URI.parse(data.embeddedDocumentUri));
 
 					if (isEmbeddedContent) {
 
@@ -178,7 +179,7 @@ export function register(context: ServiceContext) {
 
 	function transformCallHierarchyItem(tsItem: vscode.CallHierarchyItem, tsRanges: vscode.Range[]): [vscode.CallHierarchyItem, vscode.Range[]] | undefined {
 
-		const decoded = context.decodeEmbeddedDocumentUri(tsItem.uri);
+		const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsItem.uri));
 		const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 		const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 		if (!virtualCode) {

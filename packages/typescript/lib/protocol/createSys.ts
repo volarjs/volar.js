@@ -1,7 +1,8 @@
-import type { FileChangeType, FileType, ServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
+import type { FileChangeType, FileType, LanguageServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
 import type * as ts from 'typescript';
 import * as path from 'path-browserify';
 import { matchFiles } from '../typescript/utilities';
+import { URI } from 'vscode-uri';
 
 interface File {
 	name: string;
@@ -22,17 +23,20 @@ interface Dir {
 let currentCwd = '';
 
 export function createSys(
-	ts: typeof import('typescript'),
-	env: ServiceEnvironment,
-	currentDirectory: string,
+	sys: ts.System | undefined,
+	env: LanguageServiceEnvironment,
+	workspaceFolder: URI | undefined,
+	uriConverter: {
+		asUri(fileName: string): URI;
+		asFileName(uri: URI): string;
+	},
 ): ts.System & {
 	version: number;
 	sync(): Promise<number>;
 } & Disposable {
 	let version = 0;
 
-	// sys is undefined in browser
-	const sys = ts.sys as ts.System | undefined;
+	const currentDirectory = workspaceFolder ? uriConverter.asFileName(workspaceFolder) : '';
 	const caseSensitive = sys?.useCaseSensitiveFileNames ?? false;
 	const root: Dir = {
 		name: '',
@@ -44,7 +48,8 @@ export function createSys(
 	const fileWatcher = env.onDidChangeWatchedFiles?.(({ changes }) => {
 		version++;
 		for (const change of changes) {
-			const fileName = env.typescript!.uriToFileName(change.uri);
+			const changeUri = URI.parse(change.uri);
+			const fileName = uriConverter.asFileName(changeUri);
 			const dirName = path.dirname(fileName);
 			const baseName = path.basename(fileName);
 			const fileExists = change.type === 1 satisfies typeof FileChangeType.Created
@@ -139,7 +144,7 @@ export function createSys(
 		const dir = getDir(dirName);
 		if (dir.exists === undefined) {
 			dir.exists = false;
-			const result = env.fs?.stat(env.typescript!.fileNameToUri(dirName));
+			const result = env.fs?.stat(uriConverter.asUri(dirName));
 			if (typeof result === 'object' && 'then' in result) {
 				const promise = result;
 				promises.add(promise);
@@ -183,7 +188,7 @@ export function createSys(
 	}
 
 	function handleStat(fileName: string, file: File) {
-		const result = env.fs?.stat(env.typescript!.fileNameToUri(fileName));
+		const result = env.fs?.stat(uriConverter.asUri(fileName));
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
 			promises.add(promise);
@@ -283,7 +288,7 @@ export function createSys(
 		}
 		file.requestedText = true;
 
-		const uri = env.typescript!.fileNameToUri(fileName);
+		const uri = uriConverter.asUri(fileName);
 		const result = env.fs?.readFile(uri, encoding);
 
 		if (typeof result === 'object' && 'then' in result) {
@@ -292,9 +297,9 @@ export function createSys(
 			result.then(result => {
 				promises.delete(promise);
 				if (result !== undefined) {
-					file!.text = result;
-					if (file!.stat) {
-						file!.stat.mtime++;
+					file.text = result;
+					if (file.stat) {
+						file.stat.mtime++;
 					}
 					version++;
 				}
@@ -313,7 +318,7 @@ export function createSys(
 		}
 		dir.requestedRead = true;
 
-		const result = env.fs?.readDirectory(env.typescript!.fileNameToUri(dirName || '.'));
+		const result = env.fs?.readDirectory(uriConverter.asUri(dirName || '.'));
 
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
@@ -339,7 +344,7 @@ export function createSys(
 		for (const [name, _fileType] of result) {
 			let fileType = _fileType;
 			if (fileType === 64 satisfies FileType.SymbolicLink) {
-				const stat = env.fs?.stat(env.typescript!.fileNameToUri(dirName + '/' + name));
+				const stat = env.fs?.stat(uriConverter.asUri(dirName + '/' + name));
 				if (typeof stat === 'object' && 'then' in stat) {
 					const promise = stat;
 					promises.add(promise);

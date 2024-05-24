@@ -1,12 +1,14 @@
-import type { ServiceContext } from '../types';
-import { transformWorkspaceEdit } from '../utils/transform';
-import type * as _ from 'vscode-languageserver-protocol';
-import * as dedupe from '../utils/dedupe';
+import type { URI } from 'vscode-uri';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
+import * as dedupe from '../utils/dedupe';
+import { transformWorkspaceEdit } from '../utils/transform';
 
-export function register(context: ServiceContext) {
+import type * as _ from 'vscode-languageserver-protocol';
 
-	return async (oldUri: string, newUri: string, token = NoneCancellationToken) => {
+export function register(context: LanguageServiceContext) {
+
+	return async (oldUri: URI, newUri: URI, token = NoneCancellationToken) => {
 
 		for (const service of context.services) {
 			if (context.disabledServicePlugins.has(service[1])) {

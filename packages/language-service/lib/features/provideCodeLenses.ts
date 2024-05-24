@@ -1,9 +1,10 @@
+import { isCodeLensEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
+import type { URI } from 'vscode-uri';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
-import { isCodeLensEnabled } from '@volar/language-core';
 
 export interface ServiceCodeLensData {
 	kind: 'normal';
@@ -20,9 +21,9 @@ export interface ServiceReferencesCodeLensData {
 	serviceIndex: number;
 }
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
-	return async (uri: string, token = NoneCancellationToken) => {
+	return async (uri: URI, token = NoneCancellationToken) => {
 
 		return await documentFeatureWorker(
 			context,
@@ -39,7 +40,7 @@ export function register(context: ServiceContext) {
 				codeLens?.forEach(codeLens => {
 					codeLens.data = {
 						kind: 'normal',
-						uri,
+						uri: uri.toString(),
 						original: {
 							data: codeLens.data,
 						},
@@ -52,7 +53,7 @@ export function register(context: ServiceContext) {
 					range,
 					data: {
 						kind: 'references',
-						sourceFileUri: uri,
+						sourceFileUri: uri.toString(),
 						workerFileUri: document.uri,
 						workerFileRange: range,
 						serviceIndex,

@@ -40,32 +40,69 @@ This module acts as a Language Server Protocol (LSP) language client. Its primar
 
 This module is an extension of Volar.js for the Monaco Editor. It utilizes the language services provided by `@volar/language-service` and integrates these services into the Monaco Editor. This includes features like syntax highlighting, code completion, and definition jumping. Essentially, `@volar/monaco` serves as a bridge to bring Volar.js's language services into the Monaco Editor.
 
----
-
-<a href="https://stackblitz.com/"><img src="https://raw.githubusercontent.com/vuejs/language-tools/HEAD/.github/sponsors/StackBlitz.png" height="80" /></a>
-
-*(This project is mainly supported by StackBlitz)*
-
-### Our Platinum Sponsors
+## Sponsors
 
 <table>
   <tbody>
     <tr>
+      <td align="center" valign="middle" colspan="2">
+        <b>Special Sponsor</b>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle" colspan="2">
+        <a href="https://stackblitz.com/">
+          <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/StackBlitz.svg" height="80" />
+        </a>
+        <p>Stay in the flow with instant dev experiences.<br>No more hours stashing/pulling/installing locally</p>
+        <p><b> — just click, and start coding.</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle" colspan="2">
+        <b>Platinum Sponsors</b>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle" width="50%">
+        <a href="https://vuejs.org/">
+          <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/Vue.svg" height="80" />
+        </a>
+        <p>An approachable, performant and versatile framework for building web user interfaces.</p>
+      </td>
+      <td align="center" valign="middle" width="50%">
+        <a href="https://astro.build/">
+          <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/Astro.svg" height="80" />
+        </a>
+        <p>Astro powers the world's fastest websites, client-side web apps, dynamic API endpoints, and everything in-between.</p>
+      </td>
+    </tr>
+    <tr>
       <td align="center" valign="middle">
-        <a href="https://vuejs.org/"><img src="https://raw.githubusercontent.com/vuejs/language-tools/HEAD/.github/sponsors/vue.png" height="80" /></a>
+        <a href="https://www.jetbrains.com/">
+          <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/JetBrains.svg" height="80" />
+        </a>
+        <p>Essential tools for software developers and teams.</p>
+      </td>
+      <td align="center" valign="middle">
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle" colspan="2">
+        <b>Silver Sponsors</b>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://www.prefect.io/"><img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/Prefect.svg" height="50" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://www.techjobasia.com/"><img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/TechJobAsia.svg" height="50" /></a>
       </td>
     </tr>
   </tbody>
 </table>
 
-### Our Silver Sponsors
-
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://www.prefect.io/"><img src="https://raw.githubusercontent.com/vuejs/language-tools/HEAD/.github/sponsors/prefect.svg" height="60" /></a>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<p align="center">
+	<a href="https://github.com/sponsors/johnsoncodehk">Become a sponsor</a>
+</p>

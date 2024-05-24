@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient, State } from 'vscode-languageclient';
 import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from '@volar/language-server/protocol';
+import * as fs from '../fs';
 
 export function activate(client: BaseLanguageClient) {
 
 	const subscriptions: vscode.Disposable[] = [];
-	const textDecoder = new TextDecoder();
 	const jobs = new Map<Promise<any>, string>();
 	const progressAssets = new Set<string>();
 
@@ -81,7 +81,7 @@ export function activate(client: BaseLanguageClient) {
 			}
 
 			const uri2 = client.protocol2CodeConverter.asUri(uri);
-			return await _stat(uri2);
+			return await fs.stat(uri2);
 		}
 
 		async function readFile(uri: string) {
@@ -96,36 +96,17 @@ export function activate(client: BaseLanguageClient) {
 				return;
 			}
 
-			return await _readFile(uri2);
+			return await fs.readFile(uri2);
 		}
 
 		async function readDirectory(uri: string): Promise<[string, vscode.FileType][]> {
 
 			const uri2 = client.protocol2CodeConverter.asUri(uri);
 
-			return await (await _readDirectory(uri2))
+			return await (await fs.readDirectory(uri2))
 				.filter(([name]) => !name.startsWith('.'));
 		}
 
-		async function _readFile(uri: vscode.Uri) {
-			try {
-				return textDecoder.decode(await vscode.workspace.fs.readFile(uri));
-			} catch { }
-		}
-
-		async function _readDirectory(uri: vscode.Uri) {
-			try {
-				return await vscode.workspace.fs.readDirectory(uri);
-			} catch {
-				return [];
-			}
-		}
-
-		async function _stat(uri: vscode.Uri) {
-			try {
-				return await vscode.workspace.fs.stat(uri);
-			} catch { }
-		}
 	}
 }
 

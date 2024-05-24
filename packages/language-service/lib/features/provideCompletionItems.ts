@@ -1,11 +1,12 @@
 import { isCompletionEnabled, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext, LanguageServicePluginInstance } from '../types';
-import { NoneCancellationToken } from '../utils/cancellation';
-import { transformCompletionList } from '../utils/transform';
-import { forEachEmbeddedDocument } from '../utils/featureWorkers';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
+import type { LanguageServicePluginInstance, LanguageServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
+import { forEachEmbeddedDocument } from '../utils/featureWorkers';
+import { transformCompletionList } from '../utils/transform';
 
 export interface ServiceCompletionData {
 	uri: string;
@@ -14,24 +15,23 @@ export interface ServiceCompletionData {
 	embeddedDocumentUri: string | undefined;
 }
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	let lastResult: {
-		uri: string;
+		uri: URI;
 		results: {
-			embeddedDocumentUri: string | undefined;
+			embeddedDocumentUri: URI | undefined;
 			service: LanguageServicePluginInstance;
 			list: vscode.CompletionList | undefined | null;
 		}[];
 	} | undefined;
 
 	return async (
-		uri: string,
+		uri: URI,
 		position: vscode.Position,
 		completionContext: vscode.CompletionContext = { triggerKind: 1 satisfies typeof vscode.CompletionTriggerKind.Invoked, },
 		token = NoneCancellationToken,
 	) => {
-
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return {
@@ -42,7 +42,7 @@ export function register(context: ServiceContext) {
 
 		if (
 			completionContext?.triggerKind === 3 satisfies typeof vscode.CompletionTriggerKind.TriggerForIncompleteCompletions
-			&& lastResult?.uri === uri
+			&& lastResult?.uri.toString() === uri.toString()
 		) {
 
 			for (const cacheData of lastResult.results) {
@@ -79,7 +79,7 @@ export function register(context: ServiceContext) {
 
 							for (const item of cacheData.list.items) {
 								item.data = {
-									uri,
+									uri: uri.toString(),
 									original: {
 										additionalTextEdits: item.additionalTextEdits,
 										textEdit: item.textEdit,
@@ -114,7 +114,7 @@ export function register(context: ServiceContext) {
 
 					for (const item of cacheData.list.items) {
 						item.data = {
-							uri,
+							uri: uri.toString(),
 							original: {
 								additionalTextEdits: item.additionalTextEdits,
 								textEdit: item.textEdit,
@@ -163,7 +163,7 @@ export function register(context: ServiceContext) {
 						continue;
 					}
 
-					if (completionContext?.triggerCharacter && !service[0].triggerCharacters?.includes(completionContext.triggerCharacter)) {
+					if (completionContext?.triggerCharacter && !service[0].capabilities.completionProvider?.triggerCharacters?.includes(completionContext.triggerCharacter)) {
 						continue;
 					}
 
@@ -196,7 +196,7 @@ export function register(context: ServiceContext) {
 
 					for (const item of completionList.items) {
 						item.data = {
-							uri,
+							uri: uri.toString(),
 							original: {
 								additionalTextEdits: item.additionalTextEdits,
 								textEdit: item.textEdit,
@@ -217,7 +217,7 @@ export function register(context: ServiceContext) {
 					}
 
 					lastResult?.results.push({
-						embeddedDocumentUri: map ? document.uri : undefined,
+						embeddedDocumentUri: map ? URI.parse(document.uri) : undefined,
 						service: service[1],
 						list: completionList,
 					});

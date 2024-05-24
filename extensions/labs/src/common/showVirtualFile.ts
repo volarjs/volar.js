@@ -1,5 +1,5 @@
 import type { CodeInformation } from '@volar/language-server';
-import { SourceMap, Stack } from '@volar/source-map';
+import { SourceMap } from '@volar/source-map';
 import { LabsInfo, TextDocument } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { VOLAR_VIRTUAL_CODE_SCHEME } from '../views/virtualFilesView';
@@ -29,7 +29,6 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 	const subscriptions: vscode.Disposable[] = [];
 	const docChangeEvent = new vscode.EventEmitter<vscode.Uri>();
 	const virtualUriToSourceMap = new Map<string, [string, number, SourceMap<CodeInformation>][]>();
-	const virtualUriToStacks = new Map<string, Stack[]>();
 	const virtualDocuments = new Map<string, TextDocument>();
 
 	let updateVirtualDocument: ReturnType<typeof setTimeout> | undefined;
@@ -87,61 +86,6 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 				].join('\n')));
 			}
 		}),
-		vscode.languages.registerDefinitionProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME.toLowerCase() }, {
-			async provideDefinition(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
-
-				const stacks = virtualUriToStacks.get(document.uri.toString());
-				if (!stacks) {
-					return;
-				}
-
-				const offset = document.offsetAt(position);
-				const stack = stacks.find(stack => stack.range[0] <= offset && offset <= stack.range[1]);
-				if (!stack) {
-					return;
-				}
-
-				const line = Number(stack.source.split(':').at(-2));
-				const character = Number(stack.source.split(':').at(-1));
-				const fileName = stack.source.split(':').slice(0, -2).join(':');
-				const link: vscode.DefinitionLink = {
-					originSelectionRange: new vscode.Range(document.positionAt(stack.range[0]), document.positionAt(stack.range[1])),
-					targetUri: vscode.Uri.file(fileName),
-					targetRange: new vscode.Range(line - 1, character - 1, line - 1, character - 1),
-				};
-				return [link];
-			}
-		}),
-		vscode.languages.registerInlayHintsProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME.toLowerCase() }, {
-			provideInlayHints(document, range) {
-				const stacks = virtualUriToStacks.get(document.uri.toString());
-				const result: vscode.InlayHint[] = [];
-				const range2 = [document.offsetAt(range.start), document.offsetAt(range.end)];
-				const text = document.getText();
-				for (const stack of stacks ?? []) {
-					let [start, end] = stack.range;
-					let startText = '[';
-					let endText = ']';
-					while (end > start && text[end - 1] === '\n') {
-						end--;
-						endText = '\n' + endText;
-					}
-					while (start < end && text[start] === '\n') {
-						start++;
-						startText = '\n' + startText;
-					}
-					if (start >= range2[0] && start <= range2[1]) {
-						result.push(new vscode.InlayHint(document.positionAt(start), startText));
-						result[result.length - 1].paddingLeft = true;
-					}
-					if (end >= range2[0] && end <= range2[1]) {
-						result.push(new vscode.InlayHint(document.positionAt(end), endText));
-						result[result.length - 1].paddingRight = true;
-					}
-				}
-				return result;
-			},
-		}),
 		vscode.workspace.registerTextDocumentContentProvider(
 			VOLAR_VIRTUAL_CODE_SCHEME,
 			{
@@ -188,7 +132,6 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 						}
 					});
 					virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualCode.content));
-					virtualUriToStacks.set(uri.toString(), virtualCode.codegenStacks);
 
 					clearTimeout(updateDecorationsTimeout);
 					updateDecorationsTimeout = setTimeout(updateDecorations, 100);
@@ -234,7 +177,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 							map.mappings
 								.map(mapping => mapping.generatedOffsets.map((offset, i) => new vscode.Range(
 									getGeneratedPosition(virtualUri, offset),
-									getGeneratedPosition(virtualUri, offset + mapping.lengths[i]),
+									getGeneratedPosition(virtualUri, offset + (mapping.generatedLengths ?? mapping.lengths)[i]),
 								)))
 								.flat()
 						);
@@ -267,7 +210,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 									mappedStarts
 										.map(([_, mapping]) => mapping.generatedOffsets.map((offset, i) => new vscode.Range(
 											getGeneratedPosition(virtualUri, offset),
-											getGeneratedPosition(virtualUri, offset + mapping.lengths[i]),
+											getGeneratedPosition(virtualUri, offset + (mapping.generatedLengths ?? mapping.lengths)[i]),
 										)))
 										.flat()
 								);
@@ -305,7 +248,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 									mappedStarts
 										.map(([_, mapping]) => mapping.generatedOffsets.map((offset, i) => new vscode.Range(
 											getGeneratedPosition(virtualUri, offset),
-											getGeneratedPosition(virtualUri, offset + mapping.lengths[i]),
+											getGeneratedPosition(virtualUri, offset + (mapping.generatedLengths ?? mapping.lengths)[i]),
 										)))
 										.flat()
 								);

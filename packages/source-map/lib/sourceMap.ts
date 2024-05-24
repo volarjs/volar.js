@@ -8,6 +8,7 @@ export interface Mapping<T = any> {
 	sourceOffsets: number[];
 	generatedOffsets: number[];
 	lengths: number[];
+	generatedLengths?: number[];
 	data: T;
 }
 
@@ -59,7 +60,7 @@ export class SourceMap<Data = any> {
 				}
 				skip.add(mapping);
 
-				const mapped = translateOffset(offset, mapping[fromRange], mapping[toRange], mapping.lengths);
+				const mapped = translateOffset(offset, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
 				if (mapped !== undefined) {
 					yield [mapped, mapping] as const;
 				}
@@ -78,7 +79,7 @@ export class SourceMap<Data = any> {
 		for (const mapping of this.mappings) {
 			for (let i = 0; i < mapping[key].length; i++) {
 				offsetsSet.add(mapping[key][i]);
-				offsetsSet.add(mapping[key][i] + mapping.lengths[i]);
+				offsetsSet.add(mapping[key][i] + getLengths(mapping, key)[i]);
 			}
 		}
 
@@ -88,7 +89,7 @@ export class SourceMap<Data = any> {
 		for (const mapping of this.mappings) {
 			for (let i = 0; i < mapping[key].length; i++) {
 				const startIndex = binarySearch(offsets, mapping[key][i]).match!;
-				const endIndex = binarySearch(offsets, mapping[key][i] + mapping.lengths[i]).match!;
+				const endIndex = binarySearch(offsets, mapping[key][i] + getLengths(mapping, key)[i]).match!;
 				for (let i = startIndex; i <= endIndex; i++) {
 					mappings[i].add(mapping);
 				}
@@ -97,4 +98,8 @@ export class SourceMap<Data = any> {
 
 		return { offsets, mappings };
 	}
+}
+
+function getLengths<Data>(mapping: Mapping<Data>, key: CodeRangeKey) {
+	return key == "sourceOffsets" ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths
 }

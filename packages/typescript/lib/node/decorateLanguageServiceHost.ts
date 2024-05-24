@@ -4,26 +4,24 @@ import { createResolveModuleName } from '../resolveModuleName';
 
 export function decorateLanguageServiceHost(
 	ts: typeof import('typescript'),
-	language: Language,
+	language: Language<string>,
 	languageServiceHost: ts.LanguageServiceHost,
-	getLanguageId: (fileName: string) => string,
 ) {
-
-	let extraProjectVersion = 0;
-
-	const extensions = language.plugins
+	const pluginExtensions = language.plugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 		.flat();
-	const scripts = new Map<string, [version: string, {
-		snapshot: ts.IScriptSnapshot;
-		kind: ts.ScriptKind;
-		extension: string;
-	}]>();
-
+	const scripts = new Map<string, [
+		version: string,
+		virtualScript?: {
+			snapshot: ts.IScriptSnapshot;
+			kind: ts.ScriptKind;
+			extension: string;
+		},
+	]>();
+	const crashFileNames = new Set<string>();
 	const readDirectory = languageServiceHost.readDirectory?.bind(languageServiceHost);
 	const resolveModuleNameLiterals = languageServiceHost.resolveModuleNameLiterals?.bind(languageServiceHost);
 	const resolveModuleNames = languageServiceHost.resolveModuleNames?.bind(languageServiceHost);
-	const getProjectVersion = languageServiceHost.getProjectVersion?.bind(languageServiceHost);
 	const getScriptSnapshot = languageServiceHost.getScriptSnapshot.bind(languageServiceHost);
 	const getScriptKind = languageServiceHost.getScriptKind?.bind(languageServiceHost);
 
@@ -31,9 +29,9 @@ export function decorateLanguageServiceHost(
 	if (readDirectory) {
 		languageServiceHost.readDirectory = (path, extensions, exclude, include, depth) => {
 			if (extensions) {
-				for (const ext of extensions) {
+				for (const ext of pluginExtensions) {
 					if (!extensions.includes(ext)) {
-						extensions = [...extensions, ...ext];
+						extensions = [...extensions, ext];
 					}
 				}
 			}
@@ -41,7 +39,7 @@ export function decorateLanguageServiceHost(
 		};
 	}
 
-	if (extensions.length) {
+	if (pluginExtensions.length) {
 
 		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(fileName));
 		const getCanonicalFileName = languageServiceHost.useCaseSensitiveFileNames?.()
@@ -57,7 +55,7 @@ export function decorateLanguageServiceHost(
 				options,
 				...rest
 			) => {
-				if (moduleLiterals.every(name => !extensions.some(ext => name.text.endsWith(ext)))) {
+				if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
 					return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, options, ...rest);
 				}
 				return moduleLiterals.map(moduleLiteral => {
@@ -74,7 +72,7 @@ export function decorateLanguageServiceHost(
 				options,
 				containingSourceFile
 			) => {
-				if (moduleNames.every(name => !extensions.some(ext => name.endsWith(ext)))) {
+				if (moduleNames.every(name => !pluginExtensions.some(ext => name.endsWith(ext)))) {
 					return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, options, containingSourceFile);
 				}
 				return moduleNames.map(moduleName => {
@@ -82,12 +80,6 @@ export function decorateLanguageServiceHost(
 				});
 			};
 		}
-	}
-
-	if (getProjectVersion) {
-		languageServiceHost.getProjectVersion = () => {
-			return getProjectVersion() + ':' + extraProjectVersion;
-		};
 	}
 
 	languageServiceHost.getScriptSnapshot = fileName => {
@@ -109,53 +101,45 @@ export function decorateLanguageServiceHost(
 	}
 
 	function updateVirtualScript(fileName: string) {
+		if (crashFileNames.has(fileName)) {
+			return;
+		}
+		let version: string | undefined;
+		try {
+			version = languageServiceHost.getScriptVersion(fileName);
+		} catch {
+			// fix https://github.com/vuejs/language-tools/issues/4278
+			crashFileNames.add(fileName);
+		}
+		if (version === undefined) {
+			// somehow getScriptVersion returns undefined
+			return;
+		}
+		let script = scripts.get(fileName);
+		if (!script || script[0] !== version) {
+			script = [version];
 
-		const version = languageServiceHost.getScriptVersion(fileName);
-
-		if (version !== scripts.get(fileName)?.[0]) {
-
-			let extension = '.ts';
-			let snapshotSnapshot: ts.IScriptSnapshot | undefined;
-			let scriptKind = ts.ScriptKind.TS;
-
-			const snapshot = getScriptSnapshot(fileName);
-
-			if (snapshot) {
-				extraProjectVersion++;
-				const sourceScript = language.scripts.set(fileName, getLanguageId(fileName), snapshot);
-				if (sourceScript.generated) {
-					const text = snapshot.getText(0, snapshot.getLength());
-					let patchedText = text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
-					if (serviceScript) {
-						extension = serviceScript.extension;
-						scriptKind = serviceScript.scriptKind;
-						patchedText += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
-					}
-					snapshotSnapshot = ts.ScriptSnapshot.fromString(patchedText);
-					if (sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts) {
-						console.warn('getExtraScripts() is not available in this use case.');
-					}
+			const sourceScript = language.scripts.get(fileName);
+			if (sourceScript?.generated) {
+				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+				if (serviceScript) {
+					const sourceContents = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength());
+					let virtualContents = sourceContents.split('\n').map(line => ' '.repeat(line.length)).join('\n');
+					virtualContents += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
+					script[1] = {
+						extension: serviceScript.extension,
+						kind: serviceScript.scriptKind,
+						snapshot: ts.ScriptSnapshot.fromString(virtualContents),
+					};
+				}
+				if (sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts) {
+					console.warn('getExtraServiceScripts() is not available in TS plugin.');
 				}
 			}
-			else if (language.scripts.get(fileName)) {
-				extraProjectVersion++;
-				language.scripts.delete(fileName);
-			}
 
-			if (snapshotSnapshot) {
-				scripts.set(fileName, [
-					version,
-					{
-						extension,
-						snapshot: snapshotSnapshot,
-						kind: scriptKind,
-					}
-				]);
-			}
+			scripts.set(fileName, script);
 		}
-
-		return scripts.get(fileName)?.[1];
+		return script[1];
 	}
 }
 

@@ -1,4 +1,4 @@
-import type { CodeMapping, Stack } from '@volar/language-core';
+import type { CodeMapping } from '@volar/language-core';
 import type { FileStat, FileType, DocumentDropEdit } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver-protocol';
 
@@ -156,7 +156,6 @@ export namespace GetVirtualCodeRequest {
 	export type ResponseType = {
 		content: string;
 		mappings: Record<string, CodeMapping[]>;
-		codegenStacks: Stack[];
 	};
 	export type ErrorType = never;
 	export const type = new vscode.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFile');

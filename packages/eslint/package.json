@@ -1,0 +1,19 @@
+{
+	"name": "@volar/eslint",
+	"version": "2.2.5",
+	"license": "MIT",
+	"files": [
+		"**/*.js",
+		"**/*.d.ts"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/volarjs/volar.js.git",
+		"directory": "packages/eslint"
+	},
+	"dependencies": {
+		"@types/eslint": "^8.56.10",
+		"@volar/language-core": "2.2.5",
+		"vscode-languageserver-textdocument": "^1.0.11"
+	}
+}

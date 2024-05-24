@@ -2,15 +2,19 @@ import { isDocumentLinkEnabled, isRenameEnabled, resolveRenameEditText, type Cod
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { notEmpty } from './common';
 
-export function transformDocumentLinkTarget(target: string, context: ServiceContext) {
-	const targetUri = URI.parse(target);
-	const clearUri = targetUri.with({ fragment: '' }).toString(true);
-	const decoded = context.decodeEmbeddedDocumentUri(clearUri);
-	const sourceScript = decoded && context.language.scripts.get(decoded[0]);
-	const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
+export function transformDocumentLinkTarget(_target: string, context: LanguageServiceContext) {
+	let target = URI.parse(_target);
+	const decoded = context.decodeEmbeddedDocumentUri(target);
+	if (!decoded) {
+		return target;
+	}
+
+	target = decoded[0];
+	const sourceScript = context.language.scripts.get(target);
+	const virtualCode = sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 	if (virtualCode) {
 		for (const map of context.documents.getMaps(virtualCode)) {
@@ -19,9 +23,9 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 				continue;
 			}
 
-			target = map.sourceDocument.uri;
+			target = URI.parse(map.sourceDocument.uri);
 
-			const hash = targetUri.fragment;
+			const hash = target.fragment;
 			const range = hash.match(/^L(\d+)(,(\d+))?(-L(\d+)(,(\d+))?)?$/);
 
 			if (range) {
@@ -35,15 +39,19 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 						end: { line: endLine, character: endCharacter },
 					});
 					if (sourceRange) {
-						target += '#L' + (sourceRange.start.line + 1) + ',' + (sourceRange.start.character + 1);
-						target += '-L' + (sourceRange.end.line + 1) + ',' + (sourceRange.end.character + 1);
+						target = target.with({
+							fragment: 'L' + (sourceRange.start.line + 1) + ',' + (sourceRange.start.character + 1)
+								+ '-L' + (sourceRange.end.line + 1) + ',' + (sourceRange.end.character + 1),
+						});
 						break;
 					}
 				}
 				else {
 					const sourcePos = map.getSourcePosition({ line: startLine, character: startCharacter });
 					if (sourcePos) {
-						target += '#L' + (sourcePos.line + 1) + ',' + (sourcePos.character + 1);
+						target = target.with({
+							fragment: 'L' + (sourcePos.line + 1) + ',' + (sourcePos.character + 1),
+						});
 						break;
 					}
 				}
@@ -54,10 +62,11 @@ export function transformDocumentLinkTarget(target: string, context: ServiceCont
 	return target;
 }
 
-export function transformMarkdown(content: string, context: ServiceContext) {
-	return content.replace(/(\[[^\]]+\])(\([^)]+\))/g, s => {
-		const match = s.match(/(\[[^\]]+\])(\([^)]+\))/)!;
-		return `${match[1]}(${transformDocumentLinkTarget(match[2].slice(1, -1), context)})`;
+export function transformMarkdown(content: string, context: LanguageServiceContext) {
+	return content.replace(/(?!\()volar-embedded-content:\/\/\w+\/[^)]+/g, match => {
+		const segments = match.split('|');
+		segments[0] = transformDocumentLinkTarget(segments[0], context).toString();
+		return segments.join('|');
 	});
 }
 
@@ -65,7 +74,7 @@ export function transformCompletionItem<T extends vscode.CompletionItem>(
 	item: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: vscode.TextDocument,
-	context: ServiceContext
+	context: LanguageServiceContext
 ): T {
 	return {
 		...item,
@@ -89,7 +98,7 @@ export function transformCompletionList<T extends vscode.CompletionList>(
 	completionList: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: TextDocument,
-	context: ServiceContext,
+	context: LanguageServiceContext,
 ): T {
 	return {
 		isIncomplete: completionList.isIncomplete,
@@ -308,7 +317,7 @@ export function transformWorkspaceSymbol(symbol: vscode.WorkspaceSymbol, getOthe
 
 export function transformWorkspaceEdit(
 	edit: vscode.WorkspaceEdit,
-	context: ServiceContext,
+	context: LanguageServiceContext,
 	mode: 'fileName' | 'rename' | 'codeAction' | undefined,
 	versions: Record<string, number> = {},
 ) {
@@ -321,7 +330,7 @@ export function transformWorkspaceEdit(
 		sourceResult.changeAnnotations ??= {};
 
 		const tsAnno = edit.changeAnnotations[tsUri];
-		const decoded = context.decodeEmbeddedDocumentUri(tsUri);
+		const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsUri));
 		const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 		const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
@@ -340,7 +349,7 @@ export function transformWorkspaceEdit(
 
 		sourceResult.changes ??= {};
 
-		const decoded = context.decodeEmbeddedDocumentUri(tsUri);
+		const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsUri));
 		const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 		const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
@@ -390,7 +399,7 @@ export function transformWorkspaceEdit(
 			let sourceEdit: typeof tsDocEdit | undefined;
 			if ('textDocument' in tsDocEdit) {
 
-				const decoded = context.decodeEmbeddedDocumentUri(tsDocEdit.textDocument.uri);
+				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsDocEdit.textDocument.uri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
@@ -444,7 +453,7 @@ export function transformWorkspaceEdit(
 			}
 			else if (tsDocEdit.kind === 'rename') {
 
-				const decoded = context.decodeEmbeddedDocumentUri(tsDocEdit.oldUri);
+				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsDocEdit.oldUri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
@@ -466,7 +475,7 @@ export function transformWorkspaceEdit(
 			}
 			else if (tsDocEdit.kind === 'delete') {
 
-				const decoded = context.decodeEmbeddedDocumentUri(tsDocEdit.uri);
+				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsDocEdit.uri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 

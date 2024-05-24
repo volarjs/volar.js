@@ -1,22 +1,25 @@
-import { FileSystem, FileType } from '@volar/language-service';
+import { FileType } from '@volar/language-service';
 import * as fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { createServerBase } from './lib/server';
-import type { InitializationOptions } from './lib/types';
-import { uriToFileName } from './lib/uri';
 
 export * from 'vscode-languageserver/node';
 export * from './index';
-export * from './lib/project/simpleProjectProvider';
-export * from './lib/project/typescriptProjectProvider';
+export * from './lib/project/simpleProject';
+export * from './lib/project/typescriptProject';
+export * from './lib/server';
 
-export function createFs(options: InitializationOptions): FileSystem {
-	return {
+export function createConnection() {
+	return vscode.createConnection(vscode.ProposedFeatures.all);
+}
+
+export function createServer(connection: vscode.Connection) {
+	return createServerBase(connection, {
 		stat(uri) {
-			if (uri.startsWith('file://')) {
+			if (uri.scheme === 'file') {
 				try {
-					const stats = fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
+					const stats = fs.statSync(uri.fsPath, { throwIfNoEntry: false });
 					if (stats) {
 						return {
 							type: stats.isFile() ? FileType.File
@@ -35,30 +38,22 @@ export function createFs(options: InitializationOptions): FileSystem {
 			}
 		},
 		readFile(uri, encoding) {
-			if (uri.startsWith('file://')) {
+			if (uri.scheme === 'file') {
 				try {
-					if (options.maxFileSize) {
-						const stats = fs.statSync(uriToFileName(uri), { throwIfNoEntry: false });
-						if (stats && stats.size > options.maxFileSize) {
-							console.warn(`[volar] file size exceeded limit: ${uri} (${stats.size} > ${options.maxFileSize})`);
-							return undefined;
-						}
-					}
-					return fs.readFileSync(uriToFileName(uri), { encoding: encoding as 'utf-8' ?? 'utf-8' });
+					return fs.readFileSync(uri.fsPath, { encoding: encoding as 'utf-8' ?? 'utf-8' });
 				}
 				catch {
 					return undefined;
 				}
 			}
-			if (uri.startsWith('http://') || uri.startsWith('https://')) {
+			if (uri.scheme === 'http' || uri.scheme === 'https') {
 				return httpSchemaRequestHandler(uri);
 			}
 		},
 		readDirectory(uri) {
-			if (uri.startsWith('file://')) {
+			if (uri.scheme === 'file') {
 				try {
-					const dirName = uriToFileName(uri);
-					const files = fs.readdirSync(dirName, { withFileTypes: true });
+					const files = fs.readdirSync(uri.fsPath, { withFileTypes: true });
 					return files.map<[string, FileType]>(file => {
 						return [file.name, file.isFile() ? FileType.File
 							: file.isDirectory() ? FileType.Directory
@@ -72,17 +67,7 @@ export function createFs(options: InitializationOptions): FileSystem {
 			}
 			return [];
 		},
-	};
-}
-
-export function createConnection() {
-	return vscode.createConnection(vscode.ProposedFeatures.all);
-}
-
-export function createServer(connection: vscode.Connection) {
-	return createServerBase(connection, params => ({
-		fs: createFs(params.initializationOptions ?? {}),
-	}));
+	});
 }
 
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {

@@ -18,7 +18,7 @@ interface InvalidLanguageClientItem {
 }
 
 interface LanguageClientFieldItem extends LanguageClientItem {
-	field: 'start' | 'stop' | 'restart' | 'enableCodegenStack' | 'disableCodegenStack' | 'initializationOptions' | 'initializeResult' | 'memory';
+	field: 'start' | 'stop' | 'restart' | 'initializationOptions' | 'initializeResult' | 'memory';
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -55,15 +55,6 @@ export function activate(context: vscode.ExtensionContext) {
 				if (element.client.state === lsp.State.Running) {
 					stats.push({ ...element, field: 'stop' });
 					stats.push({ ...element, field: 'restart' });
-					if (element.extension.exports.volarLabs.codegenStackSupport) {
-						element.client.clientOptions.initializationOptions ??= {};
-						if (element.client.clientOptions.initializationOptions.codegenStack) {
-							stats.push({ ...element, field: 'disableCodegenStack' });
-						}
-						else {
-							stats.push({ ...element, field: 'enableCodegenStack' });
-						}
-					}
 					stats.push({ ...element, field: 'initializationOptions' });
 					stats.push({ ...element, field: 'initializeResult' });
 					stats.push({ ...element, field: 'memory' });
@@ -122,30 +113,6 @@ export function activate(context: vscode.ExtensionContext) {
 						collapsibleState: vscode.TreeItemCollapsibleState.None,
 						command: {
 							command: '_volar.action.tsMemoryTreemap',
-							title: '',
-							arguments: [element.client],
-						},
-					};
-				}
-				else if (element.field === 'enableCodegenStack') {
-					return {
-						iconPath: new vscode.ThemeIcon('primitive-dot'),
-						label: 'Enable Codegen Stack',
-						collapsibleState: vscode.TreeItemCollapsibleState.None,
-						command: {
-							command: '_volar.action.enableCodegenStack',
-							title: '',
-							arguments: [element.client],
-						},
-					};
-				}
-				else if (element.field === 'disableCodegenStack') {
-					return {
-						iconPath: new vscode.ThemeIcon('debug-breakpoint'),
-						label: 'Disable Codegen Stack',
-						collapsibleState: vscode.TreeItemCollapsibleState.None,
-						command: {
-							command: '_volar.action.disableCodegenStack',
 							title: '',
 							arguments: [element.client],
 						},
@@ -274,16 +241,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 				progress.report({ increment: 100 });
 			});
-		}),
-		vscode.commands.registerCommand('_volar.action.enableCodegenStack', async (client: lsp.BaseLanguageClient) => {
-			client.clientOptions.initializationOptions.codegenStack = true;
-			await client.stop();
-			await client.start();
-		}),
-		vscode.commands.registerCommand('_volar.action.disableCodegenStack', async (client: lsp.BaseLanguageClient) => {
-			client.clientOptions.initializationOptions.codegenStack = false;
-			await client.stop();
-			await client.start();
 		}),
 		vscode.commands.registerCommand('volar.action.serverStat.initializationOptions', async (client: lsp.BaseLanguageClient) => {
 			const doc = await vscode.workspace.openTextDocument({ content: JSON.stringify(client.clientOptions.initializationOptions, undefined, '\t'), language: 'json' });

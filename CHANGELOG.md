@@ -1,5 +1,85 @@
 # Changelog
 
+## [2.2.5](https://github.com/volarjs/volar.js/compare/v2.2.4...v2.2.5) (2024-05-23)
+
+### Features
+
+- **source-map:** add API to support generated code with different length than original code [#183](https://github.com/volarjs/volar.js/issues/183) - Thanks @piotrtomiak
+
+## [2.2.4](https://github.com/volarjs/volar.js/compare/v2.2.3...v2.2.4) (2024-05-15)
+
+### Bug Fixes
+
+- **typescript:** path completion not working for meta files
+
+## [2.2.3](https://github.com/volarjs/volar.js/compare/v2.2.2...v2.2.3) (2024-05-15)
+
+### Bug Fixes
+
+- **typescript:** empty items list should be valid completion result [vuejs/language-tools#4368](https://github.com/vuejs/language-tools/issues/4368)
+- **typescript:** deduplication when merging hover infos [#178](https://github.com/volarjs/volar.js/issues/178)
+- **language-service:** transforming volar embedded URIs in markdown [#180](https://github.com/volarjs/volar.js/issues/180) - Thanks @remcohaszing
+- **language-server:** memorize URI conversion results of synchronized documents [#181](https://github.com/volarjs/volar.js/issues/181)
+
+## [2.2.2](https://github.com/volarjs/volar.js/compare/v2.2.1...v2.2.2) (2024-05-10)
+
+### Bug Fixes
+
+- **typescript:** TS plugin only displays the first hover info
+- **language-core:** `isRenameEnabled` respect `CodeInformation.navigation.shouldRename`
+- **test-utils:** use stdio transport for test server [#175](https://github.com/volarjs/volar.js/issues/175)
+
+## [2.2.1](https://github.com/volarjs/volar.js/compare/v2.2.0...v2.2.1) (2024-05-06)
+
+### Features
+
+- **language-server:** restored support for "Reload Project" command
+
+### Bug Fixes
+
+- **typescript:** additional completion not working in TS plugin [vuejs/language-tools#4323](https://github.com/vuejs/language-tools/issues/4323)
+- **language-server:** pass correct languageId when creating virtual code [#173](https://github.com/volarjs/volar.js/issues/173)
+
+## [2.2.0](https://github.com/volarjs/volar.js/compare/v2.1.6...v2.2.0) (2024-05-01)
+
+### Features
+
+- Add ESLint integration [#171](https://github.com/volarjs/volar.js/issues/171)
+- **language-service:** auto insertion does not abstract selection [#156](https://github.com/volarjs/volar.js/issues/156)
+
+### Bug Fixes
+
+- **typescript:** `runTsc` cannot display source code for errors [vuejs/language-tools#4099](https://github.com/vuejs/language-tools/issues/4099)
+- **typescript:** `runTsc` cannot display source code for errors with `--incremental` [#158](https://github.com/volarjs/volar.js/issues/158) [#162](https://github.com/volarjs/volar.js/issues/162) - Thanks @wangshunnn
+- **typescript:** handle invalid references result
+- **typescript:** parameter hints not working in TS plugin [vuejs/language-tools#3948](https://github.com/vuejs/language-tools/issues/3948)
+- **typescript:** fault tolerance with TS file size assertion [vuejs/language-tools#4278](https://github.com/vuejs/language-tools/issues/4278)
+- **typescript:** TS plugin find reference result's definition span should be able to fall back to file root
+- **typescript:** prioritize resolving JS virtual script to matched `.d.ts` file
+- **typescript:** more inclusive performance rename operation [vuejs/language-tools#4297](https://github.com/vuejs/language-tools/issues/4297)
+- **typescript:** normalize filePath for language service APIs [vuejs/language-tools#4297](https://github.com/vuejs/language-tools/issues/4297)
+- **typescript:** avoid eagerly updating source scripts [#166](https://github.com/volarjs/volar.js/issues/166)
+- **vscode:** newly created file failed to match tsconfig immediately [vuejs/language-tools#4297](https://github.com/vuejs/language-tools/issues/4297)
+- **vscode:** avoid crash when workspace tsdk does not exist
+- **language-server:** fault-tolerant URI translation [#159](https://github.com/volarjs/volar.js/issues/159)
+- **language-core:** handle empty mappings in updateVirtualCodeMapOfMap [#161](https://github.com/volarjs/volar.js/issues/161) - Thanks @remcohaszing
+
+### Performance
+
+- **typescript:** fix `runTsc` performance regression since 2.0 [vuejs/language-tools#4238](https://github.com/vuejs/language-tools/issues/4238)
+- **typescript:** `runTsc` cache module resolution result [vuejs/language-tools#4177](https://github.com/vuejs/language-tools/issues/4177)
+
+### Refactors
+
+- More accurate interface design and terminology [#154](https://github.com/volarjs/volar.js/issues/154)
+- **language-server:** architecture improvements [#167](https://github.com/volarjs/volar.js/issues/167)
+- **language-server:** remove `ConfigurationHost` abstract
+- **language-service:** expose changed setting sections on `onDidChangeConfiguration`
+- **language-service:** `ServiceContext.inject` method return nullable
+- **typescript:** `decorateLanguageServiceHost` less side effects [#160](https://github.com/volarjs/volar.js/issues/160)
+- **language-core:** make `CodeInformation` properties optional
+- **language-core:** resolved language ID by LangaugePlugin [#168](https://github.com/volarjs/volar.js/issues/168)
+
 ## [2.1.6](https://github.com/volarjs/volar.js/compare/v2.1.5...v2.1.6) (2024-03-28)
 
 ### Bug Fixes

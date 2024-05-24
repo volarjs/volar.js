@@ -1,9 +1,9 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import type { InlayHintData } from './provideInlayHints';
 import { NoneCancellationToken } from '../utils/cancellation';
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	return async (item: vscode.InlayHint, token = NoneCancellationToken) => {
 

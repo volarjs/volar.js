@@ -1,14 +1,15 @@
-import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import * as dedupe from '../utils/dedupe';
-import type { TextDocument } from 'vscode-languageserver-textdocument';
-import { NoneCancellationToken } from '../utils/cancellation';
 import { isReferencesEnabled } from '@volar/language-core';
+import type * as vscode from 'vscode-languageserver-protocol';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
+import type { LanguageServiceContext } from '../types';
+import { NoneCancellationToken } from '../utils/cancellation';
+import * as dedupe from '../utils/dedupe';
+import { languageFeatureWorker } from '../utils/featureWorkers';
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
-	return (uri: string, position: vscode.Position, referenceContext: vscode.ReferenceContext, token = NoneCancellationToken) => {
+	return (uri: URI, position: vscode.Position, referenceContext: vscode.ReferenceContext, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
@@ -48,7 +49,7 @@ export function register(context: ServiceContext) {
 
 						recursiveChecker.add({ uri: reference.uri, range: { start: reference.range.start, end: reference.range.start } });
 
-						const decoded = context.decodeEmbeddedDocumentUri(reference.uri);
+						const decoded = context.decodeEmbeddedDocumentUri(URI.parse(reference.uri));
 						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 						const linkedCodeMap = virtualCode && sourceScript
@@ -81,7 +82,7 @@ export function register(context: ServiceContext) {
 
 				for (const reference of data) {
 
-					const decoded = context.decodeEmbeddedDocumentUri(reference.uri);
+					const decoded = context.decodeEmbeddedDocumentUri(URI.parse(reference.uri));
 					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 

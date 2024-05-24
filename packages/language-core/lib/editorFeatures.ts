@@ -15,7 +15,7 @@ export function isCodeLensEnabled(info: CodeInformation): boolean {
 export function isSemanticTokensEnabled(info: CodeInformation): boolean {
 	return typeof info.semantic === 'object'
 		? info.semantic.shouldHighlight?.() ?? true
-		: info.semantic;
+		: !!info.semantic;
 }
 
 export function isCallHierarchyEnabled(info: CodeInformation): boolean {
@@ -23,7 +23,9 @@ export function isCallHierarchyEnabled(info: CodeInformation): boolean {
 }
 
 export function isRenameEnabled(info: CodeInformation): boolean {
-	return !!info.navigation;
+	return typeof info.navigation === 'object'
+		? info.navigation.shouldRename?.() ?? true
+		: !!info.navigation;
 }
 
 export function isDefinitionEnabled(info: CodeInformation): boolean {
@@ -47,27 +49,27 @@ export function isHighlightEnabled(info: CodeInformation): boolean {
 }
 
 export function isSymbolsEnabled(info: CodeInformation): boolean {
-	return info.structure;
+	return !!info.structure;
 }
 
 export function isFoldingRangesEnabled(info: CodeInformation): boolean {
-	return info.structure;
+	return !!info.structure;
 }
 
 export function isSelectionRangesEnabled(info: CodeInformation): boolean {
-	return info.structure;
+	return !!info.structure;
 }
 
 export function isLinkedEditingEnabled(info: CodeInformation): boolean {
-	return info.structure;
+	return !!info.structure;
 }
 
 export function isColorEnabled(info: CodeInformation): boolean {
-	return info.structure;
+	return !!info.structure;
 }
 
 export function isDocumentLinkEnabled(info: CodeInformation): boolean {
-	return info.structure;
+	return !!info.structure;
 }
 
 export function isDiagnosticsEnabled(info: CodeInformation): boolean {
@@ -79,7 +81,7 @@ export function isCodeActionsEnabled(info: CodeInformation): boolean {
 }
 
 export function isFormattingEnabled(info: CodeInformation): boolean {
-	return info.format;
+	return !!info.format;
 }
 
 export function isCompletionEnabled(info: CodeInformation): boolean {
@@ -99,7 +101,7 @@ export function isSignatureHelpEnabled(info: CodeInformation): boolean {
 export function shouldReportDiagnostics(info: CodeInformation): boolean {
 	return typeof info.verification === 'object'
 		? info.verification.shouldReport?.() ?? true
-		: info.verification;
+		: !!info.verification;
 }
 
 //  resolve...

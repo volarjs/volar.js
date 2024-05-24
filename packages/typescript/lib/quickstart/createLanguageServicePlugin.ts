@@ -1,7 +1,8 @@
+import { FileMap, LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
+import { resolveFileLanguageId } from '../common';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { createLanguage, LanguagePlugin } from '@volar/language-core';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
 const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
@@ -12,8 +13,7 @@ export function createLanguageServicePlugin(
 	loadLanguagePlugins: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
-	) => LanguagePlugin[],
-	getLanguageId: (fileName: string) => string,
+	) => LanguagePlugin<string>[],
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
@@ -32,13 +32,28 @@ export function createLanguageServicePlugin(
 						.flat();
 					projectExternalFileExtensions.set(info.project, extensions);
 					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
-					const language = createLanguage(
-						languagePlugins,
-						ts.sys.useCaseSensitiveFileNames,
+					const getScriptVersion = info.languageServiceHost.getScriptVersion.bind(info.languageServiceHost);
+					const syncedScriptVersions = new FileMap<string>(ts.sys.useCaseSensitiveFileNames);
+					const language = createLanguage<string>(
+						[
+							...languagePlugins,
+							{
+								getLanguageId(fileName) {
+									return resolveFileLanguageId(fileName);
+								},
+							},
+						],
+						new FileMap(ts.sys.useCaseSensitiveFileNames),
 						fileName => {
+							const version = getScriptVersion(fileName);
+							if (syncedScriptVersions.get(fileName) === version) {
+								return;
+							}
+							syncedScriptVersions.set(fileName, version);
+
 							const snapshot = getScriptSnapshot(fileName);
 							if (snapshot) {
-								language.scripts.set(fileName, getLanguageId(fileName), snapshot);
+								language.scripts.set(fileName, snapshot);
 							}
 							else {
 								language.scripts.delete(fileName);
@@ -47,7 +62,7 @@ export function createLanguageServicePlugin(
 					);
 
 					decorateLanguageService(language, info.languageService);
-					decorateLanguageServiceHost(ts, language, info.languageServiceHost, getLanguageId);
+					decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 				}
 
 				return info.languageService;

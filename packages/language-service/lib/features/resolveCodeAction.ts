@@ -1,10 +1,10 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import type { ServiceCodeActionData } from './provideCodeActions';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformWorkspaceEdit } from '../utils/transform';
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	return async (item: vscode.CodeAction, token = NoneCancellationToken) => {
 

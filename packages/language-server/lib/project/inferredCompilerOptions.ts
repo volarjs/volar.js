@@ -1,14 +1,14 @@
 import type * as ts from 'typescript';
-import type { ServerContext } from '../server';
+import type { LanguageServer } from '../types';
 
-export async function getInferredCompilerOptions(context: ServerContext) {
+export async function getInferredCompilerOptions(server: LanguageServer) {
 
 	const [
 		implicitProjectConfig_1 = {},
 		implicitProjectConfig_2 = {},
 	] = await Promise.all([
-		context.getConfiguration<ts.CompilerOptions>('js/ts.implicitProjectConfig'),
-		context.getConfiguration<ts.CompilerOptions>('javascript.implicitProjectConfig'),
+		server.getConfiguration<ts.CompilerOptions>('js/ts.implicitProjectConfig'),
+		server.getConfiguration<ts.CompilerOptions>('javascript.implicitProjectConfig'),
 	]);
 	const checkJs = readCheckJs();
 	const experimentalDecorators = readExperimentalDecorators();

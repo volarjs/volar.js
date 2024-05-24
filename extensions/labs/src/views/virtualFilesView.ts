@@ -104,7 +104,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			return {
 				checkboxState: element.generated.disabled ? vscode.TreeItemCheckboxState.Unchecked : vscode.TreeItemCheckboxState.Checked,
-				iconPath: element.client.clientOptions.initializationOptions.codegenStack ? new vscode.ThemeIcon('debug-breakpoint') : new vscode.ThemeIcon('file'),
+				iconPath: new vscode.ThemeIcon('file'),
 				label: element.generated.virtualCodeId,
 				description,
 				collapsibleState: element.generated.embeddedCodes.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,

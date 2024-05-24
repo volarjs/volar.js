@@ -1,7 +1,8 @@
+import { FileMap, LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
+import { resolveFileLanguageId } from '../common';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { createLanguage, LanguagePlugin } from '@volar/language-core';
 import { arrayItemsEqual } from './createLanguageServicePlugin';
 
 const externalFiles = new WeakMap<ts.server.Project, string[]>();
@@ -14,8 +15,7 @@ export function createAsyncLanguageServicePlugin(
 	loadLanguagePlugins: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
-	) => Promise<LanguagePlugin[]>,
-	getLanguageId: (fileName: string) => string,
+	) => Promise<LanguagePlugin<string>[]>,
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
@@ -66,15 +66,28 @@ export function createAsyncLanguageServicePlugin(
 					}
 
 					loadLanguagePlugins(ts, info).then(languagePlugins => {
-						const language = createLanguage(
-							languagePlugins,
-							ts.sys.useCaseSensitiveFileNames,
+						const syncedScriptVersions = new FileMap<string>(ts.sys.useCaseSensitiveFileNames);
+						const language = createLanguage<string>(
+							[
+								...languagePlugins,
+								{
+									getLanguageId(fileName) {
+										return resolveFileLanguageId(fileName);
+									},
+								},
+							],
+							new FileMap(ts.sys.useCaseSensitiveFileNames),
 							fileName => {
+								const version = getScriptVersion(fileName);
+								if (syncedScriptVersions.get(fileName) === version) {
+									return;
+								}
+								syncedScriptVersions.set(fileName, version);
+
 								const snapshot = getScriptSnapshot(fileName);
 								if (snapshot) {
 									language.scripts.set(
 										fileName,
-										getLanguageId(fileName),
 										snapshot
 									);
 								} else {
@@ -84,7 +97,7 @@ export function createAsyncLanguageServicePlugin(
 						);
 
 						decorateLanguageService(language, info.languageService);
-						decorateLanguageServiceHost(ts, language, info.languageServiceHost, getLanguageId);
+						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 
 						info.project.markAsDirty();
 						initialized = true;

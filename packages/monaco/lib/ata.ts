@@ -1,7 +1,13 @@
-import type { FileType, FileSystem, ServiceEnvironment } from '@volar/language-service';
+import type { FileSystem, FileType, LanguageServiceEnvironment } from '@volar/language-service';
+import type { URI } from 'vscode-uri';
 
-export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetch?: (path: string, content: string) => void) {
-
+export function activateAutomaticTypeAcquisition(
+	env: LanguageServiceEnvironment,
+	uriConverter: {
+		asFileName(uri: URI): string;
+	},
+	onFetch?: (path: string, content: string) => void,
+) {
 	const textCache = new Map<string, Promise<string | undefined>>();
 	const jsonCache = new Map<string, Promise<any>>();
 	const npmFs = createJsDelivrNpmFileSystem();
@@ -35,7 +41,7 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 		return {
 			async stat(uri) {
 
-				const fileName = env.typescript!.uriToFileName(uri);
+				const fileName = uriConverter.asFileName(uri);
 
 				if (fileName === '/node_modules') {
 					return {
@@ -53,7 +59,7 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 			},
 			async readFile(uri) {
 
-				const fileName = env.typescript!.uriToFileName(uri);
+				const fileName = uriConverter.asFileName(uri);
 
 				if (fileName.startsWith('/node_modules/')) {
 
@@ -64,7 +70,7 @@ export function activateAutomaticTypeAcquisition(env: ServiceEnvironment, onFetc
 			},
 			async readDirectory(uri) {
 
-				const fileName = env.typescript!.uriToFileName(uri);
+				const fileName = uriConverter.asFileName(uri);
 
 				if (fileName.startsWith('/node_modules/')) {
 
