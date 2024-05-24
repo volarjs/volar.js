@@ -25,7 +25,7 @@ let currentCwd = '';
 export function createSys(
 	sys: ts.System | undefined,
 	env: LanguageServiceEnvironment,
-	workspaceFolder: URI,
+	workspaceFolder: URI | undefined,
 	uriConverter: {
 		asUri(fileName: string): URI;
 		asFileName(uri: URI): string;
@@ -36,7 +36,7 @@ export function createSys(
 } & Disposable {
 	let version = 0;
 
-	const currentDirectory = uriConverter.asFileName(workspaceFolder);
+	const currentDirectory = workspaceFolder ? uriConverter.asFileName(workspaceFolder) : '';
 	const caseSensitive = sys?.useCaseSensitiveFileNames ?? false;
 	const root: Dir = {
 		name: '',

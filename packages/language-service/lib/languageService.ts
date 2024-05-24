@@ -37,7 +37,7 @@ import * as codeLensResolve from './features/resolveCodeLens';
 import * as completionResolve from './features/resolveCompletionItem';
 import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
-import type { LanguageServicePlugin, ServiceContext, LanguageServiceEnvironment } from './types';
+import type { LanguageServicePlugin, LanguageServiceContext, LanguageServiceEnvironment } from './types';
 import { UriMap, createUriMap } from './utils/uriMap';
 
 export type LanguageService = ReturnType<typeof createLanguageService>;
@@ -52,7 +52,7 @@ export function createLanguageService(
 	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, LinkedCodeMapWithDocument>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, UriMap<TextDocument>>();
 	const embeddedContentScheme = 'volar-embedded-content';
-	const context: ServiceContext = {
+	const context: LanguageServiceContext = {
 		language,
 		documents: {
 			get(uri, languageId, snapshot) {

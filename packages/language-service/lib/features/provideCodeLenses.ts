@@ -1,7 +1,7 @@
 import { isCodeLensEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
@@ -21,7 +21,7 @@ export interface ServiceReferencesCodeLensData {
 	serviceIndex: number;
 }
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	return async (uri: URI, token = NoneCancellationToken) => {
 

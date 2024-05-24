@@ -4,7 +4,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
-import type { ServiceContext } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
@@ -128,7 +128,7 @@ export const errorMarkups = createUriMap<{
 	markup: vscode.MarkupContent,
 }[]>();
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	const lastResponses = createUriMap<
 		{

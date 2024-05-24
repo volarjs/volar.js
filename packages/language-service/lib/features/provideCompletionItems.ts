@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
-import type { LanguageServicePluginInstance, ServiceContext } from '../types';
+import type { LanguageServicePluginInstance, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { forEachEmbeddedDocument } from '../utils/featureWorkers';
 import { transformCompletionList } from '../utils/transform';
@@ -15,7 +15,7 @@ export interface ServiceCompletionData {
 	embeddedDocumentUri: string | undefined;
 }
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	let lastResult: {
 		uri: URI;

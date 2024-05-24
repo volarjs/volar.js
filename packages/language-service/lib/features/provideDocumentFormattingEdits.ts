@@ -4,13 +4,13 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { SourceMapWithDocuments } from '../documents';
-import type { EmbeddedCodeFormattingOptions, ServiceContext } from '../types';
+import type { EmbeddedCodeFormattingOptions, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange, stringToSnapshot } from '../utils/common';
 import { getEmbeddedFilesByLevel as getEmbeddedCodesByLevel } from '../utils/featureWorkers';
 import { createUriMap } from '../utils/uriMap';
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	let fakeVersion = 0;
 

@@ -1,13 +1,13 @@
 import { isReferencesEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
-import type { NullableProviderResult, ServiceContext } from '../types';
+import type { NullableProviderResult, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 
-export function register(context: ServiceContext) {
+export function register(context: LanguageServiceContext) {
 
 	return (uri: URI, token = NoneCancellationToken): NullableProviderResult<vscode.Location[]> => {
 
