@@ -10,7 +10,7 @@ import type { UriMap } from './utils/uriMap';
 export type * from 'vscode-languageserver-protocol';
 
 export interface LanguageServiceEnvironment {
-	workspaceFolder: URI;
+	workspaceFolders: URI[];
 	locale?: string;
 	clientCapabilities?: vscode.ClientCapabilities;
 	fs?: FileSystem;

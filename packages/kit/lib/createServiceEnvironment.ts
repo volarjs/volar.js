@@ -4,7 +4,7 @@ import { URI } from 'vscode-uri';
 
 export function createServiceEnvironment(getSettings: () => any): LanguageServiceEnvironment {
 	return {
-		workspaceFolder: URI.file(process.cwd()),
+		workspaceFolders: [URI.file(process.cwd())],
 		getConfiguration(section: string) {
 			const settings = getSettings();
 			if (section in settings) {

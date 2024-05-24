@@ -20,6 +20,7 @@ export async function createTypeScriptServerProject(
 	tsconfig: string | ts.CompilerOptions,
 	server: ServerBase,
 	serviceEnv: LanguageServiceEnvironment,
+	workspaceFolder: URI,
 	getLanguagePlugins: (serviceEnv: LanguageServiceEnvironment, projectContext: {
 		configFileName: string | undefined;
 		sys: ReturnType<typeof createSys>;
@@ -37,7 +38,7 @@ export async function createTypeScriptServerProject(
 	let projectVersion = 0;
 	let languageService: LanguageService | undefined;
 
-	const sys = createSys(ts.sys, serviceEnv, {
+	const sys = createSys(ts.sys, serviceEnv, workspaceFolder, {
 		asFileName,
 		asUri,
 	});
@@ -73,7 +74,7 @@ export async function createTypeScriptServerProject(
 		parsedCommandLine = await createParsedCommandLine(
 			ts,
 			sys,
-			asFileName(serviceEnv.workspaceFolder),
+			asFileName(workspaceFolder),
 			tsconfig,
 			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
 		);

@@ -1,36 +1,31 @@
-import { UriMap, createUriMap, type LanguagePlugin, type LanguageServiceEnvironment } from '@volar/language-service';
+import type { UriMap, LanguagePlugin, LanguageServiceEnvironment } from '@volar/language-service';
 import type { URI } from 'vscode-uri';
 import type { ServerBase, ServerProject, ServerProjectProvider } from '../types';
 import { createSimpleServerProject } from './simpleProject';
 
 export function createSimpleProjectProvider(languagePlugins: LanguagePlugin<URI>[]): ServerProjectProvider {
-	const map = createUriMap<Promise<ServerProject>>();
+	let project: Promise<ServerProject> | undefined;
 	return {
-		get(uri) {
-			const workspaceFolder = getWorkspaceFolder(uri, this.workspaceFolders);
-			let projectPromise = map.get(workspaceFolder);
-			if (!projectPromise) {
-				const serviceEnv = createServiceEnvironment(this, workspaceFolder);
-				projectPromise = createSimpleServerProject(this, serviceEnv, languagePlugins);
-				map.set(workspaceFolder, projectPromise);
-			}
-			return projectPromise;
+		get() {
+			project ??= createSimpleServerProject(this, createServiceEnvironment(this, [...this.workspaceFolders.keys()]), languagePlugins);
+			return project;
 		},
 		async all() {
-			return await Promise.all([...map.values()]);
+			if (project) {
+				return [await project];
+			}
+			return [];
 		},
 		reload() {
-			for (const project of map.values()) {
-				project.then(p => p.dispose());
-			}
-			map.clear();
+			project?.then(project => project.dispose());
+			project = undefined;
 		},
 	};
 }
 
-export function createServiceEnvironment(server: ServerBase, workspaceFolder: URI): LanguageServiceEnvironment {
+export function createServiceEnvironment(server: ServerBase, workspaceFolders: URI[]): LanguageServiceEnvironment {
 	return {
-		workspaceFolder: workspaceFolder,
+		workspaceFolders,
 		fs: server.fs,
 		locale: server.initializeParams?.locale,
 		clientCapabilities: server.initializeParams?.capabilities,
