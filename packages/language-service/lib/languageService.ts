@@ -44,7 +44,7 @@ export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
 	language: Language<URI>,
-	servicePlugins: LanguageServicePlugin[],
+	plugins: LanguageServicePlugin[],
 	env: LanguageServiceEnvironment,
 ) {
 	const documentVersions = createUriMap<number>();
@@ -185,10 +185,18 @@ export function createLanguageService(
 		},
 	};
 	const api = {
-		getTriggerCharacters: () => servicePlugins.map(service => service.triggerCharacters ?? []).flat(),
-		getAutoFormatTriggerCharacters: () => servicePlugins.map(service => service.autoFormatTriggerCharacters ?? []).flat(),
-		getSignatureHelpTriggerCharacters: () => servicePlugins.map(service => service.signatureHelpTriggerCharacters ?? []).flat(),
-		getSignatureHelpRetriggerCharacters: () => servicePlugins.map(service => service.signatureHelpRetriggerCharacters ?? []).flat(),
+		getSemanticTokenLegend: () => {
+			const tokenModifiers = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat();
+			const tokenTypes = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat();
+			return {
+				tokenModifiers: [...new Set(tokenModifiers)],
+				tokenTypes: [...new Set(tokenTypes)],
+			};
+		},
+		getTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.completionProvider?.triggerCharacters ?? []).flat(),
+		getAutoFormatTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat(),
+		getSignatureHelpTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat(),
+		getSignatureHelpRetriggerCharacters: () => plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat(),
 
 		format: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),
@@ -228,7 +236,7 @@ export function createLanguageService(
 		dispose: () => context.services.forEach(service => service[1].dispose?.()),
 		context,
 	};
-	for (const servicePlugin of servicePlugins) {
+	for (const servicePlugin of plugins) {
 		context.services.push([servicePlugin, servicePlugin.create(context, api)]);
 	}
 	return api;

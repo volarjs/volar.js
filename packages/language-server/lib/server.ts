@@ -1,18 +1,17 @@
-import { FileSystem, LanguageServicePlugin, createUriMap, standardSemanticTokensLegend } from '@volar/language-service';
+import { FileSystem, LanguageServicePlugin, createUriMap } from '@volar/language-service';
 import { SnapshotDocument } from '@volar/snapshot-document';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
-import { getServerCapabilities } from './serverCapabilities.js';
 import type { ServerProjectProvider } from './types.js';
 
 export * from '@volar/snapshot-document';
 
 export function createServerBase(
 	connection: vscode.Connection,
-	getFs: (options: vscode.InitializeParams) => FileSystem,
+	getFs: () => FileSystem,
 ) {
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
@@ -30,7 +29,6 @@ export function createServerBase(
 			return snapshot;
 		},
 	});
-	const workspaceFolders = createUriMap<boolean>();
 
 	documents.listen(connection);
 	documents.onDidOpen(({ document }) => {
@@ -44,13 +42,13 @@ export function createServerBase(
 	const status = {
 		connection,
 		initializeParams: undefined as unknown as vscode.InitializeParams,
+		initializeResult: undefined as unknown as vscode.InitializeResult,
 		languageServicePlugins: [] as unknown as LanguageServicePlugin[],
 		projects: undefined as unknown as ServerProjectProvider,
 		fs: undefined as unknown as FileSystem,
-		semanticTokensLegend: undefined as unknown as vscode.SemanticTokensLegend,
 		pullModelDiagnostics: false,
 		documents,
-		workspaceFolders,
+		workspaceFolders: createUriMap<boolean>(),
 		getSyncedDocumentKey,
 		initialize,
 		initialized,
@@ -76,42 +74,115 @@ export function createServerBase(
 		languageServicePlugins: LanguageServicePlugin[],
 		projects: ServerProjectProvider,
 		options?: {
-			semanticTokensLegend?: vscode.SemanticTokensLegend;
 			pullModelDiagnostics?: boolean;
 		},
 	) {
 		status.initializeParams = initializeParams;
 		status.languageServicePlugins = languageServicePlugins;
 		status.projects = projects;
-		status.semanticTokensLegend = options?.semanticTokensLegend ?? standardSemanticTokensLegend;
 		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
-		status.fs = createFsWithCache(getFs(initializeParams.initializationOptions ?? {}));
+		status.fs = createFsWithCache(getFs());
 
 		if (initializeParams.workspaceFolders?.length) {
 			for (const folder of initializeParams.workspaceFolders) {
-				workspaceFolders.set(URI.parse(folder.uri), true);
+				status.workspaceFolders.set(URI.parse(folder.uri), true);
 			}
 		}
 		else if (initializeParams.rootUri) {
-			workspaceFolders.set(URI.parse(initializeParams.rootUri), true);
+			status.workspaceFolders.set(URI.parse(initializeParams.rootUri), true);
 		}
 		else if (initializeParams.rootPath) {
-			workspaceFolders.set(URI.file(initializeParams.rootPath), true);
+			status.workspaceFolders.set(URI.file(initializeParams.rootPath), true);
 		}
 
-		const result: vscode.InitializeResult = {
-			capabilities: getServerCapabilities(status),
+		status.initializeResult = { capabilities: {} };
+		status.initializeResult.capabilities = {
+			textDocumentSync: vscode.TextDocumentSyncKind.Incremental,
+			workspace: {
+				// #18
+				workspaceFolders: {
+					supported: true,
+					changeNotifications: true,
+				},
+			},
+			selectionRangeProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.selectionRangeProvider),
+			foldingRangeProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.foldingRangeProvider),
+			linkedEditingRangeProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.linkedEditingRangeProvider),
+			colorProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.colorProvider),
+			documentSymbolProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentSymbolProvider),
+			documentFormattingProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentFormattingProvider),
+			documentRangeFormattingProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentFormattingProvider),
+			referencesProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.referencesProvider),
+			implementationProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.implementationProvider),
+			definitionProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.definitionProvider),
+			typeDefinitionProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.typeDefinitionProvider),
+			callHierarchyProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.callHierarchyProvider),
+			hoverProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.hoverProvider),
+			documentHighlightProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentHighlightProvider),
+			workspaceSymbolProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.workspaceSymbolProvider),
+			renameProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.renameProvider)
+				? { prepareProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.renameProvider?.prepareProvider) }
+				: undefined,
+			documentLinkProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentLinkProvider)
+				? { resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentLinkProvider?.resolveProvider) }
+				: undefined,
+			codeLensProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.codeLensProvider)
+				? { resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.codeLensProvider?.resolveProvider) }
+				: undefined,
+			inlayHintProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.inlayHintProvider)
+				? { resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.inlayHintProvider?.resolveProvider) }
+				: undefined,
+			signatureHelpProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.signatureHelpProvider)
+				? {
+					triggerCharacters: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat())],
+					retriggerCharacters: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
+				}
+				: undefined,
+			completionProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.completionProvider)
+				? {
+					resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.completionProvider?.resolveProvider),
+					triggerCharacters: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.completionProvider?.triggerCharacters ?? []).flat())],
+				}
+				: undefined,
+			semanticTokensProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.semanticTokensProvider)
+				? {
+					range: true,
+					full: false,
+					legend: {
+						tokenTypes: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
+						tokenModifiers: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
+					},
+				}
+				: undefined,
+			codeActionProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.codeActionProvider)
+				? {
+					resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.codeActionProvider?.resolveProvider),
+					codeActionKinds: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.codeActionProvider?.codeActionKinds ?? []).flat())],
+				}
+				: undefined,
+			diagnosticProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.diagnosticProvider)
+				? {
+					interFileDependencies: true,
+					workspaceDiagnostics: false,
+				}
+				: undefined,
+			documentOnTypeFormattingProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentOnTypeFormattingProvider)
+				? {
+					firstTriggerCharacter: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
+					moreTriggerCharacter: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
+				}
+				: undefined,
 		};
 
-		if (!status.pullModelDiagnostics) {
-			result.capabilities.diagnosticProvider = undefined;
+		if (!status.pullModelDiagnostics && status.initializeResult.capabilities.diagnosticProvider) {
+			status.initializeResult.capabilities.diagnosticProvider = undefined;
 			activateServerPushDiagnostics(projects);
 		}
 
 		registerEditorFeatures(status);
 		registerLanguageFeatures(status);
 
-		return result;
+		return status.initializeResult;
 	}
 
 	function initialized() {
@@ -257,10 +328,10 @@ export function createServerBase(
 		if (status.initializeParams?.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 				for (const folder of e.added) {
-					workspaceFolders.set(URI.parse(folder.uri), true);
+					status.workspaceFolders.set(URI.parse(folder.uri), true);
 				}
 				for (const folder of e.removed) {
-					workspaceFolders.delete(URI.parse(folder.uri));
+					status.workspaceFolders.delete(URI.parse(folder.uri));
 				}
 				status.projects.reload.call(status);
 			});
