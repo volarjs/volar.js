@@ -16,7 +16,6 @@
 		"@volar/language-service": "2.2.5",
 		"@volar/snapshot-document": "2.2.5",
 		"@volar/typescript": "2.2.5",
-		"@vscode/l10n": "^0.0.16",
 		"path-browserify": "^1.0.1",
 		"request-light": "^0.7.0",
 		"vscode-languageserver": "^9.0.1",

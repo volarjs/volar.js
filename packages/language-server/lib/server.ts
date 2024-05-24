@@ -1,6 +1,5 @@
 import { FileSystem, LanguageServicePlugin, createUriMap, standardSemanticTokensLegend } from '@volar/language-service';
 import { SnapshotDocument } from '@volar/snapshot-document';
-import * as l10n from '@vscode/l10n';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
@@ -87,10 +86,6 @@ export function createServerBase(
 		status.semanticTokensLegend = options?.semanticTokensLegend ?? standardSemanticTokensLegend;
 		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
 		status.fs = createFsWithCache(getFs(initializeParams.initializationOptions ?? {}));
-
-		if (initializeParams.initializationOptions?.l10n) {
-			l10n.config({ uri: initializeParams.initializationOptions.l10n.location });
-		}
 
 		if (initializeParams.workspaceFolders?.length) {
 			for (const folder of initializeParams.workspaceFolders) {

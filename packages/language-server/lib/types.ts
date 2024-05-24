@@ -4,9 +4,6 @@ import type { URI } from 'vscode-uri';
 import type { createServerBase } from './server';
 
 export interface InitializationOptions {
-	l10n?: {
-		location: string; // uri
-	};
 	maxFileSize?: number;
 	codegenStack?: boolean;
 }
