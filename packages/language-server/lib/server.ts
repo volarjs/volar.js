@@ -111,7 +111,7 @@ export function createServerBase(
 			colorProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.colorProvider),
 			documentSymbolProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentSymbolProvider),
 			documentFormattingProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentFormattingProvider),
-			documentRangeFormattingProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentRangeFormattingProvider),
+			documentRangeFormattingProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentFormattingProvider),
 			referencesProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.referencesProvider),
 			implementationProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.implementationProvider),
 			definitionProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.definitionProvider),

@@ -91,7 +91,6 @@ export interface LanguageServicePlugin<P = any> {
 		colorProvider?: boolean;
 		documentSymbolProvider?: boolean;
 		documentFormattingProvider?: boolean;
-		documentRangeFormattingProvider?: boolean;
 		referencesProvider?: boolean;
 		implementationProvider?: boolean;
 		definitionProvider?: boolean;
