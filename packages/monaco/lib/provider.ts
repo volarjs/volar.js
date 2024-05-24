@@ -1,4 +1,4 @@
-import {
+import type {
 	CodeAction,
 	CodeLens,
 	ColorInformation,
@@ -7,7 +7,6 @@ import {
 	DocumentLink,
 	InlayHint,
 	LanguageService,
-	standardSemanticTokensLegend,
 } from '@volar/language-service';
 import {
 	fromCompletionContext,
@@ -77,6 +76,7 @@ export async function createLanguageFeaturesProvider(
 	const documentLinks = new WeakMap<languages.ILink, DocumentLink>();
 	const inlayHints = new WeakMap<languages.InlayHint, InlayHint>();
 	const languageService = await worker.getProxy();
+	const legend = await languageService.getSemanticTokenLegend();
 
 	return {
 
@@ -86,14 +86,14 @@ export async function createLanguageFeaturesProvider(
 		signatureHelpRetriggerCharacters: await languageService.getSignatureHelpRetriggerCharacters(),
 
 		getLegend() {
-			return standardSemanticTokensLegend;
+			return legend;
 		},
 		async provideDocumentSemanticTokens(model, _lastResultId) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getSemanticTokens(
 				model.uri as URI,
 				undefined,
-				standardSemanticTokensLegend,
+				legend,
 			);
 			if (codeResult) {
 				return toSemanticTokens(codeResult);
@@ -101,7 +101,7 @@ export async function createLanguageFeaturesProvider(
 		},
 		async provideDocumentRangeSemanticTokens(model, range) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
-			const codeResult = await languageService.getSemanticTokens(model.uri as URI, fromRange(range), standardSemanticTokensLegend);
+			const codeResult = await languageService.getSemanticTokens(model.uri as URI, fromRange(range), legend);
 			if (codeResult) {
 				return toSemanticTokens(codeResult);
 			}

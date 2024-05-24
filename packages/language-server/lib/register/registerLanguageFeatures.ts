@@ -227,7 +227,7 @@ export function registerLanguageFeatures(server: ServerBase) {
 			return await service?.getSemanticTokens(
 				uri,
 				undefined,
-				server.semanticTokensLegend,
+				server.initializeResult.capabilities.semanticTokensProvider!.legend,
 				token,
 				tokens => resultProgress?.report(tokens),
 			);
@@ -239,7 +239,7 @@ export function registerLanguageFeatures(server: ServerBase) {
 			return await service?.getSemanticTokens(
 				uri,
 				params.range,
-				server.semanticTokensLegend,
+				server.initializeResult.capabilities.semanticTokensProvider!.legend,
 				token,
 				tokens => resultProgress?.report(tokens),
 			);

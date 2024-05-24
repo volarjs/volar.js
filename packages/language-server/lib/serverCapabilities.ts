@@ -39,7 +39,10 @@ export function getServerCapabilities(server: ServerBase) {
 		semanticTokensProvider: {
 			range: true,
 			full: false,
-			legend: server.semanticTokensLegend,
+			legend: {
+				tokenTypes: [...new Set(server.languageServicePlugins.map(service => service.semanticTokensLegend?.tokenTypes ?? []).flat())],
+				tokenModifiers: [...new Set(server.languageServicePlugins.map(service => service.semanticTokensLegend?.tokenModifiers ?? []).flat())],
+			},
 		},
 		codeActionProvider: {
 			codeActionKinds: [

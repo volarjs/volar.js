@@ -1,4 +1,4 @@
-import { FileSystem, LanguageServicePlugin, createUriMap, standardSemanticTokensLegend } from '@volar/language-service';
+import { FileSystem, LanguageServicePlugin, createUriMap } from '@volar/language-service';
 import { SnapshotDocument } from '@volar/snapshot-document';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
@@ -44,10 +44,10 @@ export function createServerBase(
 	const status = {
 		connection,
 		initializeParams: undefined as unknown as vscode.InitializeParams,
+		initializeResult: undefined as unknown as vscode.InitializeResult,
 		languageServicePlugins: [] as unknown as LanguageServicePlugin[],
 		projects: undefined as unknown as ServerProjectProvider,
 		fs: undefined as unknown as FileSystem,
-		semanticTokensLegend: undefined as unknown as vscode.SemanticTokensLegend,
 		pullModelDiagnostics: false,
 		documents,
 		workspaceFolders,
@@ -76,14 +76,12 @@ export function createServerBase(
 		languageServicePlugins: LanguageServicePlugin[],
 		projects: ServerProjectProvider,
 		options?: {
-			semanticTokensLegend?: vscode.SemanticTokensLegend;
 			pullModelDiagnostics?: boolean;
 		},
 	) {
 		status.initializeParams = initializeParams;
 		status.languageServicePlugins = languageServicePlugins;
 		status.projects = projects;
-		status.semanticTokensLegend = options?.semanticTokensLegend ?? standardSemanticTokensLegend;
 		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
 		status.fs = createFsWithCache(getFs(initializeParams.initializationOptions ?? {}));
 
@@ -99,19 +97,19 @@ export function createServerBase(
 			workspaceFolders.set(URI.file(initializeParams.rootPath), true);
 		}
 
-		const result: vscode.InitializeResult = {
+		status.initializeResult = {
 			capabilities: getServerCapabilities(status),
 		};
 
 		if (!status.pullModelDiagnostics) {
-			result.capabilities.diagnosticProvider = undefined;
+			status.initializeResult.capabilities.diagnosticProvider = undefined;
 			activateServerPushDiagnostics(projects);
 		}
 
 		registerEditorFeatures(status);
 		registerLanguageFeatures(status);
 
-		return result;
+		return status.initializeResult;
 	}
 
 	function initialized() {

@@ -88,10 +88,7 @@ export interface LanguageServicePlugin<P = any> {
 	signatureHelpTriggerCharacters?: string[];
 	signatureHelpRetriggerCharacters?: string[];
 	autoFormatTriggerCharacters?: string[];
-	/**
-	 * @deprecated languageService instance must be passed
-	 */
-	create(context: LanguageServiceContext): LanguageServicePluginInstance<P>;
+	semanticTokensLegend?: vscode.SemanticTokensLegend;
 	create(context: LanguageServiceContext, languageService: LanguageService): LanguageServicePluginInstance<P>;
 }
 

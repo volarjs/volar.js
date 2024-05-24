@@ -185,6 +185,14 @@ export function createLanguageService(
 		},
 	};
 	const api = {
+		getSemanticTokenLegend: () => {
+			const tokenModifiers = servicePlugins.map(service => service.semanticTokensLegend?.tokenModifiers ?? []).flat();
+			const tokenTypes = servicePlugins.map(service => service.semanticTokensLegend?.tokenTypes ?? []).flat();
+			return {
+				tokenModifiers: [...new Set(tokenModifiers)],
+				tokenTypes: [...new Set(tokenTypes)],
+			};
+		},
 		getTriggerCharacters: () => servicePlugins.map(service => service.triggerCharacters ?? []).flat(),
 		getAutoFormatTriggerCharacters: () => servicePlugins.map(service => service.autoFormatTriggerCharacters ?? []).flat(),
 		getSignatureHelpTriggerCharacters: () => servicePlugins.map(service => service.signatureHelpTriggerCharacters ?? []).flat(),
