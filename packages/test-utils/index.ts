@@ -55,9 +55,9 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	return {
 		process: childProcess,
 		connection,
-		async initialize<T = _.InitializationOptions & Record<string, unknown>>(
+		async initialize(
 			rootUri: string,
-			initializationOptions: T,
+			initializationOptions: _._InitializeParams['initializationOptions'],
 			capabilities: _.ClientCapabilities = {},
 			locale?: string,
 		) {

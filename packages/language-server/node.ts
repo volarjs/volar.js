@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { createServerBase } from './lib/server';
-import type { InitializationOptions } from './lib/types';
 
 export * from 'vscode-languageserver/node';
 export * from './index';
@@ -11,7 +10,7 @@ export * from './lib/project/simpleProjectProvider';
 export * from './lib/project/typescriptProjectProvider';
 export * from './lib/server';
 
-export function createFs(options: InitializationOptions): FileSystem {
+export function createFs(): FileSystem {
 	return {
 		stat(uri) {
 			if (uri.scheme === 'file') {
@@ -37,13 +36,6 @@ export function createFs(options: InitializationOptions): FileSystem {
 		readFile(uri, encoding) {
 			if (uri.scheme === 'file') {
 				try {
-					if (options.maxFileSize) {
-						const stats = fs.statSync(uri.fsPath, { throwIfNoEntry: false });
-						if (stats && stats.size > options.maxFileSize) {
-							console.warn(`[volar] file size exceeded limit: ${uri} (${stats.size} > ${options.maxFileSize})`);
-							return undefined;
-						}
-					}
 					return fs.readFileSync(uri.fsPath, { encoding: encoding as 'utf-8' ?? 'utf-8' });
 				}
 				catch {

@@ -6,13 +6,13 @@ import { URI } from 'vscode-uri';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
 import { getServerCapabilities } from './serverCapabilities.js';
-import type { InitializationOptions, ServerProjectProvider, VolarInitializeParams } from './types.js';
+import type { ServerProjectProvider } from './types.js';
 
 export * from '@volar/snapshot-document';
 
 export function createServerBase(
 	connection: vscode.Connection,
-	getFs: (options: InitializationOptions) => FileSystem,
+	getFs: (options: vscode.InitializeParams) => FileSystem,
 ) {
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
@@ -43,7 +43,7 @@ export function createServerBase(
 
 	const status = {
 		connection,
-		initializeParams: undefined as unknown as VolarInitializeParams,
+		initializeParams: undefined as unknown as vscode.InitializeParams,
 		languageServicePlugins: [] as unknown as LanguageServicePlugin[],
 		projects: undefined as unknown as ServerProjectProvider,
 		fs: undefined as unknown as FileSystem,
@@ -72,7 +72,7 @@ export function createServerBase(
 	}
 
 	function initialize(
-		initializeParams: VolarInitializeParams,
+		initializeParams: vscode.InitializeParams,
 		languageServicePlugins: LanguageServicePlugin[],
 		projects: ServerProjectProvider,
 		options?: {

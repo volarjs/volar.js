@@ -2,7 +2,6 @@ import * as path from 'path-browserify';
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import { quickPick } from '../common';
-import type { InitializationOptions } from '@volar/language-server';
 import * as fs from '../fs';
 
 const defaultTsdkPath = 'node_modules/typescript/lib';
@@ -13,6 +12,7 @@ export function activate(
 	context: vscode.ExtensionContext,
 	client: BaseLanguageClient,
 	resolveStatusText: (text: string) => string,
+	getInitializationOptions: () => any,
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];
@@ -84,12 +84,7 @@ export function activate(
 	}
 
 	async function reloadServers() {
-		const tsPaths = await getTsdk(context);
-		const newInitOptions: InitializationOptions = {
-			...client.clientOptions.initializationOptions,
-			typescript: tsPaths,
-		};
-		client.clientOptions.initializationOptions = newInitOptions;
+		client.clientOptions.initializationOptions = await getInitializationOptions();
 		vscode.commands.executeCommand('volar.action.restartServer');
 	}
 }
