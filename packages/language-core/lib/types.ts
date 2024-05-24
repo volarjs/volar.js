@@ -1,4 +1,4 @@
-import type { Mapping, SourceMap, Stack } from '@volar/source-map';
+import type { Mapping, SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript';
 import type { LinkedCodeMap } from './linkedCodeMap';
 
@@ -44,7 +44,6 @@ export interface VirtualCode {
 	snapshot: ts.IScriptSnapshot;
 	mappings: CodeMapping[];
 	embeddedCodes?: VirtualCode[];
-	codegenStacks?: Stack[];
 	linkedCodeMappings?: Mapping[];
 }
 

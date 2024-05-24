@@ -106,6 +106,5 @@ export interface LabsInfo {
 		languageClients: BaseLanguageClient[];
 		onDidAddLanguageClient: vscode.Event<BaseLanguageClient>;
 		languageServerProtocol: typeof import('@volar/language-server/protocol');
-		codegenStackSupport?: boolean;
 	};
 }
