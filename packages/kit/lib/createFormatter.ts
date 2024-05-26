@@ -13,7 +13,7 @@ export function createFormatter(
 	const fakeUri = URI.parse('file:///dummy.txt');
 	const env = createServiceEnvironment(() => settings);
 	const language = createLanguage(languages, createUriMap(false), () => { });
-	const service = createLanguageService(
+	const languageService = createLanguageService(
 		language,
 		services,
 		env,
@@ -35,8 +35,8 @@ export function createFormatter(
 		const snapshot = ts.ScriptSnapshot.fromString(content);
 		language.scripts.set(fakeUri, snapshot, languageId);
 
-		const document = service.context.documents.get(fakeUri, languageId, snapshot);
-		const edits = await service.format(fakeUri, options, undefined, undefined);
+		const document = languageService.context.documents.get(fakeUri, languageId, snapshot);
+		const edits = await languageService.format(fakeUri, options, undefined, undefined);
 		if (edits?.length) {
 			const newString = TextDocument.applyEdits(document, edits);
 			return newString;

@@ -11,7 +11,7 @@ import { transformCompletionList } from '../utils/transform';
 export interface ServiceCompletionData {
 	uri: string;
 	original: Pick<vscode.CompletionItem, 'additionalTextEdits' | 'textEdit' | 'data'>;
-	serviceIndex: number;
+	pluginIndex: number;
 	embeddedDocumentUri: string | undefined;
 }
 
@@ -21,7 +21,7 @@ export function register(context: LanguageServiceContext) {
 		uri: URI;
 		results: {
 			embeddedDocumentUri: URI | undefined;
-			service: LanguageServicePluginInstance;
+			plugin: LanguageServicePluginInstance;
 			list: vscode.CompletionList | undefined | null;
 		}[];
 	} | undefined;
@@ -51,7 +51,7 @@ export function register(context: LanguageServiceContext) {
 					continue;
 				}
 
-				const serviceIndex = context.services.findIndex(service => service[1] === cacheData.service);
+				const pluginIndex = context.plugins.findIndex(plugin => plugin[1] === cacheData.plugin);
 
 				if (cacheData.embeddedDocumentUri) {
 
@@ -67,11 +67,11 @@ export function register(context: LanguageServiceContext) {
 
 						for (const mapped of map.getGeneratedPositions(position, data => isCompletionEnabled(data))) {
 
-							if (!cacheData.service.provideCompletionItems) {
+							if (!cacheData.plugin.provideCompletionItems) {
 								continue;
 							}
 
-							cacheData.list = await cacheData.service.provideCompletionItems(map.embeddedDocument, mapped, completionContext, token);
+							cacheData.list = await cacheData.plugin.provideCompletionItems(map.embeddedDocument, mapped, completionContext, token);
 
 							if (!cacheData.list) {
 								continue;
@@ -85,7 +85,7 @@ export function register(context: LanguageServiceContext) {
 										textEdit: item.textEdit,
 										data: item.data,
 									},
-									serviceIndex,
+									pluginIndex: pluginIndex,
 									embeddedDocumentUri: map.embeddedDocument.uri,
 								} satisfies ServiceCompletionData;
 							}
@@ -101,12 +101,12 @@ export function register(context: LanguageServiceContext) {
 				}
 				else {
 
-					if (!cacheData.service.provideCompletionItems) {
+					if (!cacheData.plugin.provideCompletionItems) {
 						continue;
 					}
 
 					const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
-					cacheData.list = await cacheData.service.provideCompletionItems(document, position, completionContext, token);
+					cacheData.list = await cacheData.plugin.provideCompletionItems(document, position, completionContext, token);
 
 					if (!cacheData.list) {
 						continue;
@@ -120,7 +120,7 @@ export function register(context: LanguageServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							serviceIndex,
+							pluginIndex: pluginIndex,
 							embeddedDocumentUri: undefined,
 						} satisfies ServiceCompletionData;
 					}
@@ -138,8 +138,8 @@ export function register(context: LanguageServiceContext) {
 			let isFirstMapping = true;
 			let mainCompletionUri: string | undefined;
 
-			const services = [...context.services]
-				.filter(service => !context.disabledServicePlugins.has(service[1]))
+			const sortedPlugins = [...context.plugins]
+				.filter(plugin => !context.disabledServicePlugins.has(plugin[1]))
 				.sort((a, b) => sortServices(a[1], b[1]));
 
 			const worker = async (
@@ -149,36 +149,36 @@ export function register(context: LanguageServiceContext) {
 				codeInfo?: CodeInformation | undefined,
 			) => {
 
-				for (const service of services) {
+				for (const plugin of sortedPlugins) {
 
 					if (token.isCancellationRequested) {
 						break;
 					}
 
-					if (!service[1].provideCompletionItems) {
+					if (!plugin[1].provideCompletionItems) {
 						continue;
 					}
 
-					if (service[1].isAdditionalCompletion && !isFirstMapping) {
+					if (plugin[1].isAdditionalCompletion && !isFirstMapping) {
 						continue;
 					}
 
-					if (completionContext?.triggerCharacter && !service[0].capabilities.completionProvider?.triggerCharacters?.includes(completionContext.triggerCharacter)) {
+					if (completionContext?.triggerCharacter && !plugin[0].capabilities.completionProvider?.triggerCharacters?.includes(completionContext.triggerCharacter)) {
 						continue;
 					}
 
-					const isAdditional = (codeInfo && typeof codeInfo.completion === 'object' && codeInfo.completion.isAdditional) || service[1].isAdditionalCompletion;
+					const isAdditional = (codeInfo && typeof codeInfo.completion === 'object' && codeInfo.completion.isAdditional) || plugin[1].isAdditionalCompletion;
 
 					if (mainCompletionUri && (!isAdditional || mainCompletionUri !== document.uri)) {
 						continue;
 					}
 
 					// avoid duplicate items with .vue and .vue.html
-					if (service[1].isAdditionalCompletion && lastResult?.results.some(data => data.service === service[1])) {
+					if (plugin[1].isAdditionalCompletion && lastResult?.results.some(data => data.plugin === plugin[1])) {
 						continue;
 					}
 
-					let completionList = await service[1].provideCompletionItems(document, position, completionContext, token);
+					let completionList = await plugin[1].provideCompletionItems(document, position, completionContext, token);
 
 					if (!completionList || !completionList.items.length) {
 						continue;
@@ -192,7 +192,7 @@ export function register(context: LanguageServiceContext) {
 						mainCompletionUri = document.uri;
 					}
 
-					const serviceIndex = context.services.indexOf(service);
+					const pluginIndex = context.plugins.indexOf(plugin);
 
 					for (const item of completionList.items) {
 						item.data = {
@@ -202,7 +202,7 @@ export function register(context: LanguageServiceContext) {
 								textEdit: item.textEdit,
 								data: item.data,
 							},
-							serviceIndex,
+							pluginIndex,
 							embeddedDocumentUri: map ? document.uri : undefined,
 						} satisfies ServiceCompletionData;
 					}
@@ -218,7 +218,7 @@ export function register(context: LanguageServiceContext) {
 
 					lastResult?.results.push({
 						embeddedDocumentUri: map ? URI.parse(document.uri) : undefined,
-						service: service[1],
+						plugin: plugin[1],
 						list: completionList,
 					});
 				}

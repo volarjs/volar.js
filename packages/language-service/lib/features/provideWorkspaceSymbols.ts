@@ -11,17 +11,17 @@ export function register(context: LanguageServiceContext) {
 
 		const symbolsList: vscode.WorkspaceSymbol[][] = [];
 
-		for (const service of context.services) {
-			if (context.disabledServicePlugins.has(service[1])) {
+		for (const plugin of context.plugins) {
+			if (context.disabledServicePlugins.has(plugin[1])) {
 				continue;
 			}
 			if (token.isCancellationRequested) {
 				break;
 			}
-			if (!service[1].provideWorkspaceSymbols) {
+			if (!plugin[1].provideWorkspaceSymbols) {
 				continue;
 			}
-			const embeddedSymbols = await service[1].provideWorkspaceSymbols(query, token);
+			const embeddedSymbols = await plugin[1].provideWorkspaceSymbols(query, token);
 			if (!embeddedSymbols) {
 				continue;
 			}

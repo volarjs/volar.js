@@ -17,11 +17,11 @@ export function register(context: LanguageServiceContext) {
 			uri,
 			() => position,
 			map => map.getGeneratedPositions(position, isHoverEnabled),
-			(service, document, position) => {
+			(plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service[1].provideHover?.(document, position, token);
+				return plugin[1].provideHover?.(document, position, token);
 			},
 			(item, map) => {
 				if (!map || !item.range) {

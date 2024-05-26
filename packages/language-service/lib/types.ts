@@ -62,7 +62,7 @@ export interface LanguageServiceContext {
 		getMaps(virtualCode: VirtualCode): Generator<SourceMapWithDocuments>;
 		getLinkedCodeMap(virtualCode: VirtualCode, documentUri: URI): LinkedCodeMapWithDocument | undefined;
 	};
-	services: [LanguageServicePlugin, LanguageServicePluginInstance][];
+	plugins: [LanguageServicePlugin, LanguageServicePluginInstance][];
 	disabledEmbeddedDocumentUris: UriMap<boolean>;
 	disabledServicePlugins: WeakSet<LanguageServicePluginInstance>;
 	decodeEmbeddedDocumentUri(maybeEmbeddedUri: URI): [

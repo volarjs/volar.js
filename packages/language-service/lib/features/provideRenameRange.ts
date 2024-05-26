@@ -14,11 +14,11 @@ export function register(context: LanguageServiceContext) {
 			uri,
 			() => position,
 			map => map.getGeneratedPositions(position, isRenameEnabled),
-			(service, document, position) => {
+			(plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service[1].provideRenameRange?.(document, position, token);
+				return plugin[1].provideRenameRange?.(document, position, token);
 			},
 			(item, map) => {
 				if (!map) {

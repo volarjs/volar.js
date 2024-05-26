@@ -47,13 +47,13 @@ export function register(context: LanguageServiceContext) {
 					};
 				}
 			},
-			(service, document, range) => {
+			(plugin, document, range) => {
 
 				if (token?.isCancellationRequested) {
 					return;
 				}
 
-				return service[1].provideDocumentSemanticTokens?.(
+				return plugin[1].provideDocumentSemanticTokens?.(
 					document,
 					range,
 					legend,

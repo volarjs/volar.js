@@ -18,11 +18,11 @@ export function register(context: LanguageServiceContext) {
 					yield mappedPosition;
 				}
 			},
-			(service, document, arg) => {
+			(plugin, document, arg) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service[1].provideDocumentDropEdits?.(document, arg, dataTransfer, token);
+				return plugin[1].provideDocumentDropEdits?.(document, arg, dataTransfer, token);
 			},
 			edit => {
 				if (edit.additionalEdit) {

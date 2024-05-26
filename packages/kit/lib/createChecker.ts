@@ -119,7 +119,7 @@ function createTypeScriptCheckerWorker(
 			getProjectHost(env),
 		),
 	};
-	const service = createLanguageService(
+	const languageService = createLanguageService(
 		language,
 		languageServicePlugins,
 		env,
@@ -162,20 +162,20 @@ function createTypeScriptCheckerWorker(
 	function check(fileName: string) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		return service.doValidation(uri);
+		return languageService.doValidation(uri);
 	}
 
 	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		const sourceScript = service.context.language.scripts.get(uri);
+		const sourceScript = languageService.context.language.scripts.get(uri);
 		if (sourceScript) {
-			const document = service.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
+			const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 			const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
-			const codeActions = await service.doCodeActions(uri, range, { diagnostics, only, triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked });
+			const codeActions = await languageService.doCodeActions(uri, range, { diagnostics, only, triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked });
 			if (codeActions) {
 				for (let i = 0; i < codeActions.length; i++) {
-					codeActions[i] = await service.doCodeActionResolve(codeActions[i]);
+					codeActions[i] = await languageService.doCodeActionResolve(codeActions[i]);
 				}
 				const edits = codeActions.map(codeAction => codeAction.edit).filter((edit): edit is NonNullable<typeof edit> => !!edit);
 				if (edits.length) {
@@ -185,9 +185,9 @@ function createTypeScriptCheckerWorker(
 						const edits = rootEdit.changes![uri];
 						if (edits.length) {
 							const parsedUri = URI.parse(uri);
-							const editFile = service.context.language.scripts.get(parsedUri);
+							const editFile = languageService.context.language.scripts.get(parsedUri);
 							if (editFile) {
-								const editDocument = service.context.documents.get(parsedUri, editFile.languageId, editFile.snapshot);
+								const editDocument = languageService.context.documents.get(parsedUri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, edits);
 								await writeFile(uriToFileName(parsedUri), newString);
 							}
@@ -196,9 +196,9 @@ function createTypeScriptCheckerWorker(
 					for (const change of rootEdit.documentChanges ?? []) {
 						if ('textDocument' in change) {
 							const changeUri = URI.parse(change.textDocument.uri);
-							const editFile = service.context.language.scripts.get(changeUri);
+							const editFile = languageService.context.language.scripts.get(changeUri);
 							if (editFile) {
-								const editDocument = service.context.documents.get(changeUri, editFile.languageId, editFile.snapshot);
+								const editDocument = languageService.context.documents.get(changeUri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, change.edits);
 								await writeFile(uriToFileName(changeUri), newString);
 							}
@@ -221,8 +221,8 @@ function createTypeScriptCheckerWorker(
 	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath: string) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		const sourceScript = service.context.language.scripts.get(uri)!;
-		const document = service.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
+		const sourceScript = languageService.context.language.scripts.get(uri)!;
+		const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
 			category: diagnostic.severity === 1 satisfies typeof DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
 			code: diagnostic.code as number,

@@ -8,7 +8,7 @@ export async function documentFeatureWorker<T>(
 	context: LanguageServiceContext,
 	uri: URI,
 	valid: (map: SourceMapWithDocuments<CodeInformation>) => boolean,
-	worker: (service: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
+	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
@@ -30,9 +30,9 @@ export async function documentFeatureWorker<T>(
 export async function languageFeatureWorker<T, K>(
 	context: LanguageServiceContext,
 	uri: URI,
-	getReadDocParams: () => K,
+	getRealDocParams: () => K,
 	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformation>) => Generator<K>,
-	worker: (service: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
+	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
@@ -49,14 +49,14 @@ export async function languageFeatureWorker<T, K>(
 
 			for (const mappedArg of eachVirtualDocParams(map)) {
 
-				for (const [serviceId, service] of Object.entries(context.services)) {
-					if (context.disabledServicePlugins.has(service[1])) {
+				for (const [pluginIndex, plugin] of Object.entries(context.plugins)) {
+					if (context.disabledServicePlugins.has(plugin[1])) {
 						continue;
 					}
 
 					const embeddedResult = await safeCall(
-						() => worker(service, map.embeddedDocument, mappedArg, map),
-						'service ' + serviceId + ' crashed on ' + map.embeddedDocument.uri,
+						() => worker(plugin, map.embeddedDocument, mappedArg, map),
+						`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${map.embeddedDocument.uri}.`,
 					);
 					if (!embeddedResult) {
 						continue;
@@ -79,16 +79,16 @@ export async function languageFeatureWorker<T, K>(
 	else {
 
 		const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
-		const params = getReadDocParams();
+		const params = getRealDocParams();
 
-		for (const [serviceId, service] of Object.entries(context.services)) {
-			if (context.disabledServicePlugins.has(service[1])) {
+		for (const [pluginIndex, plugin] of Object.entries(context.plugins)) {
+			if (context.disabledServicePlugins.has(plugin[1])) {
 				continue;
 			}
 
 			const embeddedResult = await safeCall(
-				() => worker(service, document, params, undefined),
-				'service ' + serviceId + ' crashed on ' + uri,
+				() => worker(plugin, document, params, undefined),
+				`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${document.uri}.`,
 			);
 			if (!embeddedResult) {
 				continue;

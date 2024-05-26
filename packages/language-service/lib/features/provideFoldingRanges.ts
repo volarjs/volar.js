@@ -15,11 +15,11 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			map => map.map.mappings.some(mapping => isFoldingRangesEnabled(mapping.data)),
-			(service, document) => {
+			(plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service[1].provideFoldingRanges?.(document, token);
+				return plugin[1].provideFoldingRanges?.(document, token);
 			},
 			(data, map) => {
 				if (!map) {

@@ -10,7 +10,7 @@ export interface ServiceCodeLensData {
 	kind: 'normal';
 	uri: string;
 	original: Pick<vscode.CodeLens, 'data'>;
-	serviceIndex: number;
+	pluginIndex: number;
 }
 
 export interface ServiceReferencesCodeLensData {
@@ -29,13 +29,13 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			map => map.map.mappings.some(mapping => isCodeLensEnabled(mapping.data)),
-			async (service, document) => {
+			async (plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				let codeLens = await service[1].provideCodeLenses?.(document, token);
+				let codeLens = await plugin[1].provideCodeLenses?.(document, token);
 
-				const serviceIndex = context.services.indexOf(service);
+				const pluginIndex = context.plugins.indexOf(plugin);
 
 				codeLens?.forEach(codeLens => {
 					codeLens.data = {
@@ -44,11 +44,11 @@ export function register(context: LanguageServiceContext) {
 						original: {
 							data: codeLens.data,
 						},
-						serviceIndex,
+						pluginIndex,
 					} satisfies ServiceCodeLensData;
 				});
 
-				const ranges = await service[1].provideReferencesCodeLensRanges?.(document, token);
+				const ranges = await plugin[1].provideReferencesCodeLensRanges?.(document, token);
 				const referencesCodeLens = ranges?.map<vscode.CodeLens>(range => ({
 					range,
 					data: {
@@ -56,7 +56,7 @@ export function register(context: LanguageServiceContext) {
 						sourceFileUri: uri.toString(),
 						workerFileUri: document.uri,
 						workerFileRange: range,
-						serviceIndex,
+						serviceIndex: pluginIndex,
 					} satisfies ServiceReferencesCodeLensData,
 				}));
 

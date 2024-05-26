@@ -10,7 +10,7 @@ import { transformDocumentLinkTarget } from '../utils/transform';
 export interface DocumentLinkData {
 	uri: string;
 	original: Pick<vscode.DocumentLink, 'data'>;
-	serviceIndex: number;
+	pluginIndex: number;
 }
 
 export function register(context: LanguageServiceContext) {
@@ -21,13 +21,13 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			map => map.map.mappings.some(mapping => isDocumentLinkEnabled(mapping.data)),
-			async (service, document) => {
+			async (plugin, document) => {
 
 				if (token.isCancellationRequested) {
 					return;
 				}
 
-				const links = await service[1].provideDocumentLinks?.(document, token);
+				const links = await plugin[1].provideDocumentLinks?.(document, token);
 
 				for (const link of links ?? []) {
 					link.data = {
@@ -35,7 +35,7 @@ export function register(context: LanguageServiceContext) {
 						original: {
 							data: link.data,
 						},
-						serviceIndex: context.services.indexOf(service),
+						pluginIndex: context.plugins.indexOf(plugin),
 					} satisfies DocumentLinkData;
 				}
 

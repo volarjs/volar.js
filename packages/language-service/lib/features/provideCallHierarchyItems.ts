@@ -10,7 +10,7 @@ import { URI } from 'vscode-uri';
 export interface PluginCallHierarchyData {
 	uri: string;
 	original: Pick<vscode.CallHierarchyItem, 'data'>;
-	serviceIndex: number;
+	pluginIndex: number;
 	embeddedDocumentUri: string | undefined;
 }
 
@@ -25,18 +25,18 @@ export function register(context: LanguageServiceContext) {
 				uri,
 				() => position,
 				map => map.getGeneratedPositions(position, data => isCallHierarchyEnabled(data)),
-				async (service, document, position, map) => {
+				async (plugin, document, position, map) => {
 					if (token.isCancellationRequested) {
 						return;
 					}
-					const items = await service[1].provideCallHierarchyItems?.(document, position, token);
+					const items = await plugin[1].provideCallHierarchyItems?.(document, position, token);
 					items?.forEach(item => {
 						item.data = {
 							uri: uri.toString(),
 							original: {
 								data: item.data,
 							},
-							serviceIndex: context.services.indexOf(service),
+							pluginIndex: context.plugins.indexOf(plugin),
 							embeddedDocumentUri: map?.embeddedDocument.uri,
 						} satisfies PluginCallHierarchyData;
 					});
@@ -61,9 +61,9 @@ export function register(context: LanguageServiceContext) {
 
 			if (data) {
 
-				const service = context.services[data.serviceIndex];
+				const plugin = context.plugins[data.pluginIndex];
 
-				if (!service[1].provideCallHierarchyIncomingCalls) {
+				if (!plugin[1].provideCallHierarchyIncomingCalls) {
 					return incomingItems;
 				}
 
@@ -75,7 +75,7 @@ export function register(context: LanguageServiceContext) {
 
 					if (isEmbeddedContent) {
 
-						const _calls = await service[1].provideCallHierarchyIncomingCalls(item, token);
+						const _calls = await plugin[1].provideCallHierarchyIncomingCalls(item, token);
 
 						for (const _call of _calls) {
 
@@ -94,7 +94,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				else {
 
-					const _calls = await service[1].provideCallHierarchyIncomingCalls(item, token);
+					const _calls = await plugin[1].provideCallHierarchyIncomingCalls(item, token);
 
 					for (const _call of _calls) {
 
@@ -122,9 +122,9 @@ export function register(context: LanguageServiceContext) {
 
 			if (data) {
 
-				const service = context.services[data.serviceIndex];
+				const plugin = context.plugins[data.pluginIndex];
 
-				if (!service[1].provideCallHierarchyOutgoingCalls) {
+				if (!plugin[1].provideCallHierarchyOutgoingCalls) {
 					return items;
 				}
 
@@ -136,7 +136,7 @@ export function register(context: LanguageServiceContext) {
 
 					if (isEmbeddedContent) {
 
-						const _calls = await service[1].provideCallHierarchyOutgoingCalls(item, token);
+						const _calls = await plugin[1].provideCallHierarchyOutgoingCalls(item, token);
 
 						for (const call of _calls) {
 
@@ -155,7 +155,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				else {
 
-					const _calls = await service[1].provideCallHierarchyOutgoingCalls(item, token);
+					const _calls = await plugin[1].provideCallHierarchyOutgoingCalls(item, token);
 
 					for (const call of _calls) {
 

@@ -15,11 +15,11 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			map => map.map.mappings.some(mapping => isSymbolsEnabled(mapping.data)),
-			async (service, document) => {
+			async (plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service[1].provideDocumentSymbols?.(document, token);
+				return plugin[1].provideDocumentSymbols?.(document, token);
 			},
 			(data, map) => {
 				if (!map) {

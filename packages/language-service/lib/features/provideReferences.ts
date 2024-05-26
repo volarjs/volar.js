@@ -16,7 +16,7 @@ export function register(context: LanguageServiceContext) {
 			uri,
 			() => position,
 			map => map.getGeneratedPositions(position, isReferencesEnabled),
-			async (service, document, position) => {
+			async (plugin, document, position) => {
 
 				if (token.isCancellationRequested) {
 					return;
@@ -31,7 +31,7 @@ export function register(context: LanguageServiceContext) {
 
 				async function withLinkedCode(document: TextDocument, position: vscode.Position) {
 
-					if (!service[1].provideReferences) {
+					if (!plugin[1].provideReferences) {
 						return;
 					}
 
@@ -41,7 +41,7 @@ export function register(context: LanguageServiceContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const references = await service[1].provideReferences(document, position, referenceContext, token) ?? [];
+					const references = await plugin[1].provideReferences(document, position, referenceContext, token) ?? [];
 
 					for (const reference of references) {
 

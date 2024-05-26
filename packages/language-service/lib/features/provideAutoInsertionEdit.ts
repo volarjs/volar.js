@@ -28,11 +28,11 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 			},
-			(service, document, args) => {
+			(plugin, document, args) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service[1].provideAutoInsertionEdit?.(document, args.selection, args.change, token);
+				return plugin[1].provideAutoInsertionEdit?.(document, args.selection, args.change, token);
 			},
 			(item, map) => {
 				if (!map || typeof item === 'string') {

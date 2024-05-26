@@ -219,7 +219,7 @@ export function register(context: LanguageServiceContext) {
 				context,
 				uri,
 				map => map.map.mappings.some(mapping => isDiagnosticsEnabled(mapping.data)),
-				async (service, document) => {
+				async (plugin, document) => {
 
 					if (token) {
 						if (Date.now() - lastCheckCancelAt >= 5) {
@@ -231,21 +231,21 @@ export function register(context: LanguageServiceContext) {
 						}
 					}
 
-					const serviceIndex = context.services.indexOf(service);
-					const serviceCache = cacheMap.get(serviceIndex) ?? cacheMap.set(serviceIndex, new Map()).get(serviceIndex)!;
-					const cache = serviceCache.get(document.uri);
+					const pluginIndex = context.plugins.indexOf(plugin);
+					const pluginCache = cacheMap.get(pluginIndex) ?? cacheMap.set(pluginIndex, new Map()).get(pluginIndex)!;
+					const cache = pluginCache.get(document.uri);
 
 					if (api !== 'provideSemanticDiagnostics' && cache && cache.documentVersion === document.version) {
 						return cache.errors;
 					}
 
-					const errors = await service[1][api]?.(document, token) || [];
+					const errors = await plugin[1][api]?.(document, token) || [];
 
 					errors.forEach(error => {
 						error.data = {
 							uri: uri.toString(),
 							version: document.version,
-							serviceIndex,
+							serviceIndex: pluginIndex,
 							isFormat: false,
 							original: {
 								data: error.data,
@@ -256,7 +256,7 @@ export function register(context: LanguageServiceContext) {
 
 					errorsUpdated = true;
 
-					serviceCache.set(document.uri, {
+					pluginCache.set(document.uri, {
 						documentVersion: document.version,
 						errors,
 					});

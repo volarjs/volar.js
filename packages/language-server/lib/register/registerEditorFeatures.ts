@@ -215,25 +215,25 @@ export function registerEditorFeatures(server: LanguageServer) {
 	server.connection.onNotification(UpdateServicePluginStateNotification.type, async params => {
 		const uri = URI.parse(params.uri);
 		const languageService = await server.project.getLanguageService(server, uri);
-		const service = languageService.context.services[params.serviceId as any][1];
+		const plugin = languageService.context.plugins[params.serviceId][1];
 		if (params.disabled) {
-			languageService.context.disabledServicePlugins.add(service);
+			languageService.context.disabledServicePlugins.add(plugin);
 		}
 		else {
-			languageService.context.disabledServicePlugins.delete(service);
+			languageService.context.disabledServicePlugins.delete(plugin);
 		}
 	});
 	server.connection.onRequest(GetServicePluginsRequest.type, async params => {
 		const uri = URI.parse(params.uri);
 		const languageService = await server.project.getLanguageService(server, uri);
 		const result: GetServicePluginsRequest.ResponseType = [];
-		for (let id in languageService.context.services) {
-			const service = languageService.context.services[id];
+		for (let pluginIndex = 0; pluginIndex < languageService.context.plugins.length; pluginIndex++) {
+			const plugin = languageService.context.plugins[pluginIndex];
 			result.push({
-				id,
-				name: service[0].name,
-				disabled: languageService.context.disabledServicePlugins.has(service[1]),
-				features: Object.keys(service[1]),
+				id: pluginIndex,
+				name: plugin[0].name,
+				disabled: languageService.context.disabledServicePlugins.has(plugin[1]),
+				features: Object.keys(plugin[1]),
 			});
 		}
 		return result;

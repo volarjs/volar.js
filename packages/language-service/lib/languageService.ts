@@ -101,17 +101,17 @@ export function createLanguageService(
 		},
 		env,
 		inject: (key, ...args) => {
-			for (const service of context.services) {
-				if (context.disabledServicePlugins.has(service[1])) {
+			for (const plugin of context.plugins) {
+				if (context.disabledServicePlugins.has(plugin[1])) {
 					continue;
 				}
-				const provide = service[1].provide?.[key as any];
+				const provide = plugin[1].provide?.[key as any];
 				if (provide) {
 					return provide(...args as any);
 				}
 			}
 		},
-		services: [],
+		plugins: [],
 		commands: {
 			rename: {
 				create(uri, position) {
@@ -233,11 +233,11 @@ export function createLanguageService(
 		getInlayHints: inlayHints.register(context),
 		doInlayHintResolve: inlayHintResolve.register(context),
 		callHierarchy: callHierarchy.register(context),
-		dispose: () => context.services.forEach(service => service[1].dispose?.()),
+		dispose: () => context.plugins.forEach(plugin => plugin[1].dispose?.()),
 		context,
 	};
-	for (const servicePlugin of plugins) {
-		context.services.push([servicePlugin, servicePlugin.create(context, api)]);
+	for (const plugin of plugins) {
+		context.plugins.push([plugin, plugin.create(context, api)]);
 	}
 	return api;
 }

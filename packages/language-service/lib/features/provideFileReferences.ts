@@ -15,11 +15,11 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => true,
-			async (service, document) => {
+			async (plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return await service[1].provideFileReferences?.(document, token) ?? [];
+				return await plugin[1].provideFileReferences?.(document, token) ?? [];
 			},
 			data => data
 				.map(reference => {

@@ -14,11 +14,11 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			map => map.map.mappings.some(mapping => isColorEnabled(mapping.data)),
-			(service, document) => {
+			(plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service[1].provideDocumentColors?.(document, token);
+				return plugin[1].provideDocumentColors?.(document, token);
 			},
 			(data, map) => {
 				if (!map) {

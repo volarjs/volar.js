@@ -13,9 +13,9 @@ export function register(context: LanguageServiceContext) {
 
 		if (data) {
 
-			const service = context.services[data.serviceIndex];
+			const plugin = context.plugins[data.pluginIndex];
 
-			if (!service[1].resolveCompletionItem) {
+			if (!plugin[1].resolveCompletionItem) {
 				return item;
 			}
 
@@ -31,8 +31,8 @@ export function register(context: LanguageServiceContext) {
 
 					for (const map of context.documents.getMaps(virtualCode)) {
 
-						item = await service[1].resolveCompletionItem(item, token);
-						item = service[1].transformCompletionItem?.(item) ?? transformCompletionItem(
+						item = await plugin[1].resolveCompletionItem(item, token);
+						item = plugin[1].transformCompletionItem?.(item) ?? transformCompletionItem(
 							item,
 							embeddedRange => map.getSourceRange(embeddedRange),
 							map.embeddedDocument,
@@ -42,7 +42,7 @@ export function register(context: LanguageServiceContext) {
 				}
 			}
 			else {
-				item = await service[1].resolveCompletionItem(item, token);
+				item = await plugin[1].resolveCompletionItem(item, token);
 			}
 		}
 

@@ -22,7 +22,7 @@ export function register(
 			uri,
 			() => position,
 			map => map.getGeneratedPositions(position, isValidPosition),
-			async (service, document, position) => {
+			async (plugin, document, position) => {
 
 				if (token.isCancellationRequested) {
 					return;
@@ -37,7 +37,7 @@ export function register(
 
 				async function withLinkedCode(document: TextDocument, position: vscode.Position, originDefinition: vscode.LocationLink | undefined) {
 
-					const api = service[1][apiName];
+					const api = plugin[1][apiName];
 					if (!api) {
 						return;
 					}

@@ -13,7 +13,7 @@ export interface ServiceCodeActionData {
 	uri: string;
 	version: number;
 	original: Pick<vscode.CodeAction, 'data' | 'edit'>;
-	serviceIndex: number;
+	pluginIndex: number;
 }
 
 export function register(context: LanguageServiceContext) {
@@ -54,17 +54,17 @@ export function register(context: LanguageServiceContext) {
 					};
 				}
 			},
-			async (service, document, { range, codeActionContext }) => {
+			async (plugin, document, { range, codeActionContext }) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				const serviceIndex = context.services.indexOf(service);
+				const pluginIndex = context.plugins.indexOf(plugin);
 				const diagnostics = codeActionContext.diagnostics.filter(diagnostic => {
 					const data: ServiceDiagnosticData | undefined = diagnostic.data;
 					if (data && data.version !== document.version) {
 						return false;
 					}
-					return data?.serviceIndex === serviceIndex;
+					return data?.serviceIndex === pluginIndex;
 				}).map(diagnostic => {
 					const data: ServiceDiagnosticData = diagnostic.data;
 					return {
@@ -73,7 +73,7 @@ export function register(context: LanguageServiceContext) {
 					};
 				});
 
-				const codeActions = await service[1].provideCodeActions?.(document, range, {
+				const codeActions = await plugin[1].provideCodeActions?.(document, range, {
 					...codeActionContext,
 					diagnostics,
 				}, token);
@@ -86,13 +86,13 @@ export function register(context: LanguageServiceContext) {
 							data: codeAction.data,
 							edit: codeAction.edit,
 						},
-						serviceIndex: context.services.indexOf(service),
+						pluginIndex: context.plugins.indexOf(plugin),
 					} satisfies ServiceCodeActionData;
 				});
 
-				if (codeActions && service[1].transformCodeAction) {
+				if (codeActions && plugin[1].transformCodeAction) {
 					for (let i = 0; i < codeActions.length; i++) {
-						const transformed = service[1].transformCodeAction(codeActions[i]);
+						const transformed = plugin[1].transformCodeAction(codeActions[i]);
 						if (transformed) {
 							codeActions[i] = transformed;
 							transformedCodeActions.add(transformed);

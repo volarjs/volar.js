@@ -15,13 +15,13 @@ export function register(context: LanguageServiceContext) {
 
 		if (data?.kind === 'normal') {
 
-			const service = context.services[data.serviceIndex];
-			if (!service[1].resolveCodeLens) {
+			const plugin = context.plugins[data.pluginIndex];
+			if (!plugin[1].resolveCodeLens) {
 				return item;
 			}
 
 			Object.assign(item, data.original);
-			item = await service[1].resolveCodeLens(item, token);
+			item = await plugin[1].resolveCodeLens(item, token);
 
 			// item.range already transformed in codeLens request
 		}

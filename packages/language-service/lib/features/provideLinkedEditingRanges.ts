@@ -19,13 +19,13 @@ export function register(context: LanguageServiceContext) {
 					yield pos;
 				}
 			},
-			(service, document, position) => {
+			(plugin, document, position) => {
 
 				if (token.isCancellationRequested) {
 					return;
 				}
 
-				return service[1].provideLinkedEditingRanges?.(document, position, token);
+				return plugin[1].provideLinkedEditingRanges?.(document, position, token);
 			},
 			(ranges, map) => {
 				if (!map) {

@@ -28,7 +28,7 @@ export function register(context: LanguageServiceContext) {
 					};
 				};
 			},
-			async (service, document, params) => {
+			async (plugin, document, params) => {
 
 				if (token.isCancellationRequested) {
 					return;
@@ -43,7 +43,7 @@ export function register(context: LanguageServiceContext) {
 
 				async function withLinkedCode(document: TextDocument, position: vscode.Position, newName: string) {
 
-					if (!service[1].provideRenameEdits) {
+					if (!plugin[1].provideRenameEdits) {
 						return;
 					}
 
@@ -53,7 +53,7 @@ export function register(context: LanguageServiceContext) {
 
 					recursiveChecker.add({ uri: document.uri, range: { start: position, end: position } });
 
-					const workspaceEdit = await service[1].provideRenameEdits(document, position, newName, token);
+					const workspaceEdit = await plugin[1].provideRenameEdits(document, position, newName, token);
 
 					if (!workspaceEdit) {
 						return;

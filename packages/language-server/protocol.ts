@@ -115,7 +115,7 @@ export namespace UpdateVirtualCodeStateNotification {
 export namespace UpdateServicePluginStateNotification {
 	export type ParamsType = {
 		uri: string;
-		serviceId: string;
+		serviceId: number;
 		disabled: boolean;
 	};
 	export const type = new vscode.NotificationType<ParamsType>('volar/client/labs/updateServicePluginState');
@@ -124,7 +124,7 @@ export namespace UpdateServicePluginStateNotification {
 export namespace GetServicePluginsRequest {
 	export type ParamsType = vscode.TextDocumentIdentifier;
 	export type ResponseType = {
-		id: string;
+		id: number;
 		name?: string;
 		features: string[];
 		disabled: boolean;

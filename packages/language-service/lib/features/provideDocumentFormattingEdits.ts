@@ -207,16 +207,16 @@ export function register(context: LanguageServiceContext) {
 						options,
 					);
 				}
-				for (const service of context.services) {
-					if (context.disabledServicePlugins.has(service[1])) {
+				for (const plugin of context.plugins) {
+					if (context.disabledServicePlugins.has(plugin[1])) {
 						continue;
 					}
-					codeOptions = await service[1].resolveEmbeddedCodeFormattingOptions?.(sourceScript, virtualCode, codeOptions, token) ?? codeOptions;
+					codeOptions = await plugin[1].resolveEmbeddedCodeFormattingOptions?.(sourceScript, virtualCode, codeOptions, token) ?? codeOptions;
 				}
 			}
 
-			for (const service of context.services) {
-				if (context.disabledServicePlugins.has(service[1])) {
+			for (const plugin of context.plugins) {
+				if (context.disabledServicePlugins.has(plugin[1])) {
 					continue;
 				}
 
@@ -228,12 +228,12 @@ export function register(context: LanguageServiceContext) {
 
 				try {
 					if (ch !== undefined && rangeOrPosition && 'line' in rangeOrPosition && 'character' in rangeOrPosition) {
-						if (service[0].capabilities.documentOnTypeFormattingProvider?.triggerCharacters?.includes(ch)) {
-							edits = await service[1].provideOnTypeFormattingEdits?.(document, rangeOrPosition, ch, options, codeOptions, token);
+						if (plugin[0].capabilities.documentOnTypeFormattingProvider?.triggerCharacters?.includes(ch)) {
+							edits = await plugin[1].provideOnTypeFormattingEdits?.(document, rangeOrPosition, ch, options, codeOptions, token);
 						}
 					}
 					else if (ch === undefined && rangeOrPosition && 'start' in rangeOrPosition && 'end' in rangeOrPosition) {
-						edits = await service[1].provideDocumentFormattingEdits?.(document, rangeOrPosition, options, codeOptions, token);
+						edits = await plugin[1].provideDocumentFormattingEdits?.(document, rangeOrPosition, options, codeOptions, token);
 					}
 				}
 				catch (err) {
@@ -245,7 +245,7 @@ export function register(context: LanguageServiceContext) {
 				}
 
 				return {
-					service,
+					plugin,
 					edits,
 				};
 			}

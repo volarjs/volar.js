@@ -19,11 +19,11 @@ export function register(context: LanguageServiceContext) {
 					yield mappedRange;
 				}
 			},
-			(service, document, range) => {
+			(plugin, document, range) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return service[1].provideColorPresentations?.(document, color, range, token);
+				return plugin[1].provideColorPresentations?.(document, color, range, token);
 			},
 			(data, map) => {
 				if (!map) {

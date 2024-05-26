@@ -12,15 +12,15 @@ export function register(context: LanguageServiceContext) {
 
 		if (data) {
 
-			const service = context.services[data.serviceIndex];
-			if (!service[1].resolveCodeAction) {
+			const plugin = context.plugins[data.pluginIndex];
+			if (!plugin[1].resolveCodeAction) {
 				return item;
 			}
 
 			Object.assign(item, data.original);
 
-			item = await service[1].resolveCodeAction(item, token);
-			item = service[1].transformCodeAction?.(item)
+			item = await plugin[1].resolveCodeAction(item, token);
+			item = plugin[1].transformCodeAction?.(item)
 				?? (
 					item.edit
 						? {

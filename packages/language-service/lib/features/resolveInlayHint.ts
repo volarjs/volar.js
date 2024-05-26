@@ -9,13 +9,13 @@ export function register(context: LanguageServiceContext) {
 
 		const data: InlayHintData | undefined = item.data;
 		if (data) {
-			const service = context.services[data.serviceIndex];
-			if (!service[1].resolveInlayHint) {
+			const plugin = context.plugins[data.pluginIndex];
+			if (!plugin[1].resolveInlayHint) {
 				return item;
 			}
 
 			Object.assign(item, data.original);
-			item = await service[1].resolveInlayHint(item, token);
+			item = await plugin[1].resolveInlayHint(item, token);
 		}
 
 		return item;

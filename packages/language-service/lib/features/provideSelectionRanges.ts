@@ -23,13 +23,13 @@ export function register(context: LanguageServiceContext) {
 					yield result;
 				}
 			},
-			(service, document, positions) => {
+			(plugin, document, positions) => {
 
 				if (token.isCancellationRequested) {
 					return;
 				}
 
-				return service[1].provideSelectionRanges?.(document, positions, token);
+				return plugin[1].provideSelectionRanges?.(document, positions, token);
 			},
 			(data, map) => {
 				if (!map) {

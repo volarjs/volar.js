@@ -10,7 +10,7 @@ import { transformTextEdit } from '../utils/transform';
 export interface InlayHintData {
 	uri: string;
 	original: Pick<vscode.CodeAction, 'data' | 'edit'>;
-	serviceIndex: number;
+	pluginIndex: number;
 }
 
 export function register(context: LanguageServiceContext) {
@@ -39,18 +39,18 @@ export function register(context: LanguageServiceContext) {
 					};
 				}
 			},
-			async (service, document, arg) => {
+			async (plugin, document, arg) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				const hints = await service[1].provideInlayHints?.(document, arg, token);
+				const hints = await plugin[1].provideInlayHints?.(document, arg, token);
 				hints?.forEach(link => {
 					link.data = {
 						uri: uri.toString(),
 						original: {
 							data: link.data,
 						},
-						serviceIndex: context.services.indexOf(service),
+						pluginIndex: context.plugins.indexOf(plugin),
 					} satisfies InlayHintData;
 				});
 

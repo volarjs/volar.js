@@ -10,8 +10,8 @@ export function register(context: LanguageServiceContext) {
 
 	return async (oldUri: URI, newUri: URI, token = NoneCancellationToken) => {
 
-		for (const service of context.services) {
-			if (context.disabledServicePlugins.has(service[1])) {
+		for (const plugin of context.plugins) {
+			if (context.disabledServicePlugins.has(plugin[1])) {
 				continue;
 			}
 
@@ -19,11 +19,11 @@ export function register(context: LanguageServiceContext) {
 				break;
 			}
 
-			if (!service[1].provideFileRenameEdits) {
+			if (!plugin[1].provideFileRenameEdits) {
 				continue;
 			}
 
-			const workspaceEdit = await service[1].provideFileRenameEdits(oldUri, newUri, token);
+			const workspaceEdit = await plugin[1].provideFileRenameEdits(oldUri, newUri, token);
 
 			if (workspaceEdit) {
 
