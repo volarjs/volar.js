@@ -32,18 +32,9 @@ export function register(context: LanguageServiceContext) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				return plugin[1].provideAutoInsertionEdit?.(document, args.selection, args.change, token);
+				return plugin[1].provideAutoInsertSnippet?.(document, args.selection, args.change, token);
 			},
-			(item, map) => {
-				if (!map || typeof item === 'string') {
-					return item;
-				}
-				const range = map.getSourceRange(item.range, isAutoInsertEnabled);
-				if (range) {
-					item.range = range;
-					return item;
-				}
-			},
+			snippet => snippet,
 		);
 	};
 }
