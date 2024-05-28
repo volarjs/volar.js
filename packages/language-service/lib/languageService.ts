@@ -48,7 +48,7 @@ export function createLanguageService(
 	env: LanguageServiceEnvironment,
 ) {
 	const documentVersions = createUriMap<number>();
-	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments<CodeInformation>>();
+	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments>();
 	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, LinkedCodeMapWithDocument>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, UriMap<TextDocument>>();
 	const embeddedContentScheme = 'volar-embedded-content';
@@ -80,6 +80,7 @@ export function createLanguageService(
 							this.get(uri, context.language.scripts.get(uri)!.languageId, snapshot),
 							this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
 							map,
+							virtualCode,
 						));
 					}
 					yield map2DocMap.get(map)!;
@@ -93,6 +94,7 @@ export function createLanguageService(
 						mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
 							this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
 							map,
+							virtualCode,
 						));
 					}
 					return mirrorMap2DocMirrorMap.get(map)!;

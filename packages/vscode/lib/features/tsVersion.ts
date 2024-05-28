@@ -1,6 +1,5 @@
 import * as path from 'path-browserify';
 import * as vscode from 'vscode';
-import type { BaseLanguageClient } from 'vscode-languageclient';
 import { quickPick } from '../common';
 import * as fs from '../fs';
 
@@ -10,9 +9,8 @@ export function activate(
 	selector: vscode.DocumentSelector,
 	cmd: string,
 	context: vscode.ExtensionContext,
-	client: BaseLanguageClient,
 	resolveStatusText: (text: string) => string,
-	getInitializationOptions: () => any,
+	onRestart?: () => void,
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];
@@ -66,14 +64,14 @@ export function activate(
 		const useWorkspaceTsdk = select === 'useConfigWorkspaceTsdk' || select === 'useDefaultWorkspaceTsdk';
 		if (useWorkspaceTsdk !== isUseWorkspaceTsdk(context)) {
 			context.workspaceState.update('typescript.useWorkspaceTsdk', useWorkspaceTsdk);
-			reloadServers();
+			onRestart?.();
 		}
 		updateStatusBar();
 	}
 
 	function onDidChangeConfiguration(e: vscode.ConfigurationChangeEvent) {
 		if (e.affectsConfiguration('typescript.tsdk') && isUseWorkspaceTsdk(context)) {
-			reloadServers();
+			onRestart?.();
 		}
 	}
 
@@ -81,11 +79,6 @@ export function activate(
 		const tsVersion = (await getTsdk(context)).version;
 		statusBar.text = tsVersion ?? 'x.x.x';
 		statusBar.text = resolveStatusText(statusBar.text);
-	}
-
-	async function reloadServers() {
-		client.clientOptions.initializationOptions = await getInitializationOptions();
-		vscode.commands.executeCommand('volar.action.restartServer');
 	}
 }
 

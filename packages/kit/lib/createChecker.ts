@@ -109,6 +109,7 @@ function createTypeScriptCheckerWorker(
 	);
 	language.typescript = {
 		configFileName,
+		sys: ts.sys,
 		asFileName: uriToFileName,
 		asScriptId: fileNameToUri,
 		...createLanguageServiceHost(
@@ -250,6 +251,9 @@ function createTypeScriptProjectHost(
 	let shouldCheckRootFiles = false;
 
 	const host: TypeScriptProjectHost = {
+		getCurrentDirectory: () => env.workspaceFolders.length
+			? uriToFileName(env.workspaceFolders[0])
+			: process.cwd(),
 		getCompilationSettings: () => {
 			return parsedCommandLine.options;
 		},

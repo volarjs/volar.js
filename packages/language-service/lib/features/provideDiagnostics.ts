@@ -275,7 +275,7 @@ export function register(context: LanguageServiceContext) {
 		}
 	};
 
-	function transformErrorRangeBase(errors: vscode.Diagnostic[], map: SourceMapWithDocuments<CodeInformation> | undefined, filter: (data: CodeInformation) => boolean) {
+	function transformErrorRangeBase(errors: vscode.Diagnostic[], map: SourceMapWithDocuments | undefined, filter: (data: CodeInformation) => boolean) {
 
 		const result: vscode.Diagnostic[] = [];
 

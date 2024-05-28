@@ -276,6 +276,7 @@ export function register(context: LanguageServiceContext) {
 					virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength())
 				),
 				map[1],
+				virtualCode,
 			);
 		}
 	}

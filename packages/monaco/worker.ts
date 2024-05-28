@@ -129,6 +129,7 @@ export function createTypeScriptWorkerService<T = {}>({
 	);
 	language.typescript = {
 		configFileName: undefined,
+		sys,
 		asFileName: uriConverter.asFileName,
 		asScriptId: uriConverter.asUri,
 		...createLanguageServiceHost(
@@ -137,6 +138,9 @@ export function createTypeScriptWorkerService<T = {}>({
 			language,
 			uriConverter.asUri,
 			{
+				getCurrentDirectory() {
+					return sys.getCurrentDirectory();
+				},
 				getScriptFileNames() {
 					return workerContext.getMirrorModels().map(model => uriConverter.asFileName(model.uri as URI));
 				},

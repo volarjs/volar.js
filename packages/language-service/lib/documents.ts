@@ -1,36 +1,37 @@
-import { CodeRangeKey, LinkedCodeMap, Mapping, SourceMap, translateOffset } from '@volar/language-core';
+import { CodeInformation, CodeRangeKey, LinkedCodeMap, Mapping, SourceMap, VirtualCode, translateOffset } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
-export class SourceMapWithDocuments<Data = any> {
+export class SourceMapWithDocuments {
 
 	constructor(
 		public sourceDocument: TextDocument,
 		public embeddedDocument: TextDocument,
-		public map: SourceMap<Data>,
+		public map: SourceMap<CodeInformation>,
+		public virtuaoCode?: VirtualCode,
 	) { }
 
 	// Range APIs
 
-	public getSourceRange(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
+	public getSourceRange(range: vscode.Range, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const result of this.getSourceRanges(range, filter)) {
 			return result;
 		}
 	}
 
-	public getGeneratedRange(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
+	public getGeneratedRange(range: vscode.Range, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const result of this.getGeneratedRanges(range, filter)) {
 			return result;
 		}
 	}
 
-	public * getSourceRanges(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
+	public * getSourceRanges(range: vscode.Range, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const result of this.findRanges(range, filter, 'getSourcePositionsBase', 'matchSourcePosition')) {
 			yield result;
 		}
 	}
 
-	public * getGeneratedRanges(range: vscode.Range, filter: (data: Data) => boolean = () => true) {
+	public * getGeneratedRanges(range: vscode.Range, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const result of this.findRanges(range, filter, 'getGeneratedPositionsBase', 'matchGeneratedPosition')) {
 			yield result;
 		}
@@ -38,11 +39,11 @@ export class SourceMapWithDocuments<Data = any> {
 
 	protected * findRanges(
 		range: vscode.Range,
-		filter: (data: Data) => boolean,
+		filter: (data: CodeInformation) => boolean,
 		api: 'getSourcePositionsBase' | 'getGeneratedPositionsBase',
 		api2: 'matchSourcePosition' | 'matchGeneratedPosition'
 	) {
-		const failedLookUps: (readonly [vscode.Position, Mapping<Data>])[] = [];
+		const failedLookUps: (readonly [vscode.Position, Mapping<CodeInformation>])[] = [];
 		for (const mapped of this[api](range.start, filter)) {
 			const end = this[api2](range.end, mapped[1]);
 			if (end) {
@@ -61,37 +62,37 @@ export class SourceMapWithDocuments<Data = any> {
 
 	// Position APIs
 
-	public getSourcePosition(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+	public getSourcePosition(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const mapped of this.getSourcePositions(position, filter)) {
 			return mapped;
 		}
 	}
 
-	public getGeneratedPosition(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+	public getGeneratedPosition(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const mapped of this.getGeneratedPositions(position, filter)) {
 			return mapped;
 		}
 	}
 
-	public * getSourcePositions(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+	public * getSourcePositions(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const mapped of this.getSourcePositionsBase(position, filter)) {
 			yield mapped[0];
 		}
 	}
 
-	public * getGeneratedPositions(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+	public * getGeneratedPositions(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const mapped of this.getGeneratedPositionsBase(position, filter)) {
 			yield mapped[0];
 		}
 	}
 
-	public * getSourcePositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+	public * getSourcePositionsBase(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const mapped of this.findPositions(position, filter, this.embeddedDocument, this.sourceDocument, 'generatedOffsets', 'sourceOffsets')) {
 			yield mapped;
 		}
 	}
 
-	public * getGeneratedPositionsBase(position: vscode.Position, filter: (data: Data) => boolean = () => true) {
+	public * getGeneratedPositionsBase(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
 		for (const mapped of this.findPositions(position, filter, this.sourceDocument, this.embeddedDocument, 'sourceOffsets', 'generatedOffsets')) {
 			yield mapped;
 		}
@@ -99,7 +100,7 @@ export class SourceMapWithDocuments<Data = any> {
 
 	protected * findPositions(
 		position: vscode.Position,
-		filter: (data: Data) => boolean,
+		filter: (data: CodeInformation) => boolean,
 		fromDoc: TextDocument,
 		toDoc: TextDocument,
 		from: CodeRangeKey,
@@ -131,9 +132,10 @@ export class SourceMapWithDocuments<Data = any> {
 export class LinkedCodeMapWithDocument extends SourceMapWithDocuments {
 	constructor(
 		public document: TextDocument,
-		private linkedMap: LinkedCodeMap,
+		public linkedMap: LinkedCodeMap,
+		public virtualCode: VirtualCode,
 	) {
-		super(document, document, linkedMap);
+		super(document, document, linkedMap, virtualCode);
 	}
 	*getLinkedCodePositions(posotion: vscode.Position) {
 		for (const linkedPosition of this.linkedMap.getLinkedOffsets(this.document.offsetAt(posotion))) {

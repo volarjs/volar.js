@@ -127,7 +127,7 @@ export interface LanguageServicePlugin<P = any> {
 			resolveProvider?: boolean;
 		};
 		semanticTokensProvider?: {
-			legend?: vscode.SemanticTokensLegend;
+			legend: vscode.SemanticTokensLegend;
 		};
 		codeActionProvider?: {
 			codeActionKinds?: string[];

@@ -7,6 +7,7 @@ import type { createSys } from './createSys';
 export interface TypeScriptProjectHost extends Pick<
 	ts.LanguageServiceHost,
 	'getLocalizedDiagnosticMessages'
+	| 'getCurrentDirectory'
 	| 'getCompilationSettings'
 	| 'getProjectReferences'
 	| 'getScriptFileNames'
@@ -31,6 +32,9 @@ export function createLanguageServiceHost<T>(
 	let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let languageServiceHost: ts.LanguageServiceHost = {
 		...sys,
+		getCurrentDirectory() {
+			return projectHost.getCurrentDirectory();
+		},
 		useCaseSensitiveFileNames() {
 			return sys.useCaseSensitiveFileNames;
 		},

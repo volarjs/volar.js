@@ -1,4 +1,4 @@
-import type { CodeInformation, VirtualCode } from '@volar/language-core';
+import type { VirtualCode } from '@volar/language-core';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
@@ -7,9 +7,9 @@ import type { LanguageServicePlugin, LanguageServicePluginInstance, LanguageServ
 export async function documentFeatureWorker<T>(
 	context: LanguageServiceContext,
 	uri: URI,
-	valid: (map: SourceMapWithDocuments<CodeInformation>) => boolean,
+	valid: (map: SourceMapWithDocuments) => boolean,
 	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
-	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
+	transformResult: (result: T, map?: SourceMapWithDocuments) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
 	return languageFeatureWorker(
@@ -31,9 +31,9 @@ export async function languageFeatureWorker<T, K>(
 	context: LanguageServiceContext,
 	uri: URI,
 	getRealDocParams: () => K,
-	eachVirtualDocParams: (map: SourceMapWithDocuments<CodeInformation>) => Generator<K>,
-	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments<CodeInformation>) => Thenable<T | null | undefined> | T | null | undefined,
-	transformResult: (result: T, map?: SourceMapWithDocuments<CodeInformation>) => T | undefined,
+	eachVirtualDocParams: (map: SourceMapWithDocuments) => Generator<K>,
+	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments) => Thenable<T | null | undefined> | T | null | undefined,
+	transformResult: (result: T, map?: SourceMapWithDocuments) => T | undefined,
 	combineResult?: (results: T[]) => T,
 ) {
 	const sourceScript = context.language.scripts.get(uri);
@@ -47,31 +47,38 @@ export async function languageFeatureWorker<T, K>(
 
 		for (const map of forEachEmbeddedDocument(context, sourceScript.id, sourceScript.generated.root)) {
 
+			if (results.length && !combineResult) {
+				continue;
+			}
+
 			for (const mappedArg of eachVirtualDocParams(map)) {
+
+				if (results.length && !combineResult) {
+					continue;
+				}
 
 				for (const [pluginIndex, plugin] of Object.entries(context.plugins)) {
 					if (context.disabledServicePlugins.has(plugin[1])) {
 						continue;
 					}
 
-					const embeddedResult = await safeCall(
+					if (results.length && !combineResult) {
+						continue;
+					}
+
+					const rawResult = await safeCall(
 						() => worker(plugin, map.embeddedDocument, mappedArg, map),
 						`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${map.embeddedDocument.uri}.`,
 					);
-					if (!embeddedResult) {
+					if (!rawResult) {
+						continue;
+					}
+					const mappedResult = transformResult(rawResult, map);
+					if (!mappedResult) {
 						continue;
 					}
 
-					const result = transformResult(embeddedResult, map);
-					if (!result) {
-						continue;
-					}
-
-					results.push(result);
-
-					if (!combineResult) {
-						break;
-					}
+					results.push(mappedResult);
 				}
 			}
 		}
@@ -108,7 +115,8 @@ export async function languageFeatureWorker<T, K>(
 	}
 
 	if (combineResult && results.length > 0) {
-		return combineResult(results);
+		const combined = combineResult(results);
+		return combined;
 	}
 	else if (results.length > 0) {
 		return results[0];
@@ -128,7 +136,7 @@ export function* forEachEmbeddedDocument(
 	context: LanguageServiceContext,
 	sourceScriptId: URI,
 	current: VirtualCode,
-): Generator<SourceMapWithDocuments<CodeInformation>> {
+): Generator<SourceMapWithDocuments> {
 
 	if (current.embeddedCodes) {
 		for (const embeddedCode of current.embeddedCodes) {

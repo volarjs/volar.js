@@ -94,6 +94,8 @@ export function createServerBase(
 			status.workspaceFolders.set(URI.file(initializeParams.rootPath), true);
 		}
 
+		const capabilitiesArr = status.languageServicePlugins.map(plugin => plugin.capabilities);
+
 		status.initializeResult = { capabilities: {} };
 		status.initializeResult.capabilities = {
 			textDocumentSync: vscode.TextDocumentSyncKind.Incremental,
@@ -104,71 +106,76 @@ export function createServerBase(
 					changeNotifications: true,
 				},
 			},
-			selectionRangeProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.selectionRangeProvider) ? true : undefined,
-			foldingRangeProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.foldingRangeProvider) ? true : undefined,
-			linkedEditingRangeProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.linkedEditingRangeProvider) ? true : undefined,
-			colorProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.colorProvider) ? true : undefined,
-			documentSymbolProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentSymbolProvider) ? true : undefined,
-			documentFormattingProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentFormattingProvider) ? true : undefined,
-			documentRangeFormattingProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentFormattingProvider) ? true : undefined,
-			referencesProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.referencesProvider) ? true : undefined,
-			implementationProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.implementationProvider) ? true : undefined,
-			definitionProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.definitionProvider) ? true : undefined,
-			typeDefinitionProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.typeDefinitionProvider) ? true : undefined,
-			callHierarchyProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.callHierarchyProvider) ? true : undefined,
-			hoverProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.hoverProvider) ? true : undefined,
-			documentHighlightProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentHighlightProvider) ? true : undefined,
-			workspaceSymbolProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.workspaceSymbolProvider) ? true : undefined,
-			renameProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.renameProvider)
-				? { prepareProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.renameProvider?.prepareProvider) }
+			selectionRangeProvider: capabilitiesArr.some(data => data.selectionRangeProvider) ? true : undefined,
+			foldingRangeProvider: capabilitiesArr.some(data => data.foldingRangeProvider) ? true : undefined,
+			linkedEditingRangeProvider: capabilitiesArr.some(data => data.linkedEditingRangeProvider) ? true : undefined,
+			colorProvider: capabilitiesArr.some(data => data.colorProvider) ? true : undefined,
+			documentSymbolProvider: capabilitiesArr.some(data => data.documentSymbolProvider) ? true : undefined,
+			documentFormattingProvider: capabilitiesArr.some(data => data.documentFormattingProvider) ? true : undefined,
+			documentRangeFormattingProvider: capabilitiesArr.some(data => data.documentFormattingProvider) ? true : undefined,
+			referencesProvider: capabilitiesArr.some(data => data.referencesProvider) ? true : undefined,
+			implementationProvider: capabilitiesArr.some(data => data.implementationProvider) ? true : undefined,
+			definitionProvider: capabilitiesArr.some(data => data.definitionProvider) ? true : undefined,
+			typeDefinitionProvider: capabilitiesArr.some(data => data.typeDefinitionProvider) ? true : undefined,
+			callHierarchyProvider: capabilitiesArr.some(data => data.callHierarchyProvider) ? true : undefined,
+			hoverProvider: capabilitiesArr.some(data => data.hoverProvider) ? true : undefined,
+			documentHighlightProvider: capabilitiesArr.some(data => data.documentHighlightProvider) ? true : undefined,
+			workspaceSymbolProvider: capabilitiesArr.some(data => data.workspaceSymbolProvider) ? true : undefined,
+			renameProvider: capabilitiesArr.some(data => data.renameProvider)
+				? { prepareProvider: capabilitiesArr.some(data => data.renameProvider?.prepareProvider) }
 				: undefined,
-			documentLinkProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentLinkProvider)
-				? { resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentLinkProvider?.resolveProvider) }
+			documentLinkProvider: capabilitiesArr.some(data => data.documentLinkProvider)
+				? { resolveProvider: capabilitiesArr.some(data => data.documentLinkProvider?.resolveProvider) }
 				: undefined,
-			codeLensProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.codeLensProvider)
-				? { resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.codeLensProvider?.resolveProvider) }
+			codeLensProvider: capabilitiesArr.some(data => data.codeLensProvider)
+				? { resolveProvider: capabilitiesArr.some(data => data.codeLensProvider?.resolveProvider) }
 				: undefined,
-			inlayHintProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.inlayHintProvider)
-				? { resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.inlayHintProvider?.resolveProvider) }
+			inlayHintProvider: capabilitiesArr.some(data => data.inlayHintProvider)
+				? { resolveProvider: capabilitiesArr.some(data => data.inlayHintProvider?.resolveProvider) }
 				: undefined,
-			signatureHelpProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.signatureHelpProvider)
+			signatureHelpProvider: capabilitiesArr.some(data => data.signatureHelpProvider)
 				? {
-					triggerCharacters: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat())],
-					retriggerCharacters: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
+
+					triggerCharacters: [...new Set(capabilitiesArr.map(data => data.signatureHelpProvider?.triggerCharacters ?? []).flat())],
+					retriggerCharacters: [...new Set(capabilitiesArr.map(data => data.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
 				}
 				: undefined,
-			completionProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.completionProvider)
+			completionProvider: capabilitiesArr.some(data => data.completionProvider)
 				? {
-					resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.completionProvider?.resolveProvider),
-					triggerCharacters: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.completionProvider?.triggerCharacters ?? []).flat())],
+					resolveProvider: capabilitiesArr.some(data => data.completionProvider?.resolveProvider),
+					triggerCharacters: [...new Set(capabilitiesArr.map(data => data.completionProvider?.triggerCharacters ?? []).flat())],
 				}
 				: undefined,
-			semanticTokensProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.semanticTokensProvider)
+			semanticTokensProvider: capabilitiesArr.some(data => data.semanticTokensProvider)
 				? {
 					range: true,
 					full: false,
 					legend: {
-						tokenTypes: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
-						tokenModifiers: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
+						tokenTypes: [...new Set(capabilitiesArr.map(data => data.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
+						tokenModifiers: [...new Set(capabilitiesArr.map(data => data.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
 					},
 				}
 				: undefined,
-			codeActionProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.codeActionProvider)
+			codeActionProvider: capabilitiesArr.some(data => data.codeActionProvider)
 				? {
-					resolveProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.codeActionProvider?.resolveProvider),
-					codeActionKinds: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.codeActionProvider?.codeActionKinds ?? []).flat())],
+					resolveProvider: capabilitiesArr.some(data => data.codeActionProvider?.resolveProvider),
+					codeActionKinds: capabilitiesArr
+						.filter(data => data.codeActionProvider)
+						.every(data => data.codeActionProvider?.codeActionKinds)
+						? [...new Set(capabilitiesArr.map(data => data.codeActionProvider?.codeActionKinds ?? []).flat())]
+						: undefined,
 				}
 				: undefined,
-			diagnosticProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.diagnosticProvider)
+			diagnosticProvider: capabilitiesArr.some(data => data.diagnosticProvider)
 				? {
 					interFileDependencies: true,
 					workspaceDiagnostics: false,
 				}
 				: undefined,
-			documentOnTypeFormattingProvider: status.languageServicePlugins.some(plugin => plugin.capabilities.documentOnTypeFormattingProvider)
+			documentOnTypeFormattingProvider: capabilitiesArr.some(data => data.documentOnTypeFormattingProvider)
 				? {
-					firstTriggerCharacter: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
-					moreTriggerCharacter: [...new Set(status.languageServicePlugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
+					firstTriggerCharacter: [...new Set(capabilitiesArr.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
+					moreTriggerCharacter: [...new Set(capabilitiesArr.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
 				}
 				: undefined,
 		};
@@ -178,12 +185,12 @@ export function createServerBase(
 			activateServerPushDiagnostics(languageServices);
 		}
 
-		if (status.languageServicePlugins.some(plugin => plugin.capabilities.autoInsertionProvider)) {
+		if (capabilitiesArr.some(data => data.autoInsertionProvider)) {
 			const allTriggerCharacters: string[] = [];
 			const allConfigurationSections: (string | undefined)[] = [];
-			for (const plugin of status.languageServicePlugins) {
-				if (plugin.capabilities.autoInsertionProvider) {
-					const { triggerCharacters, configurationSections } = plugin.capabilities.autoInsertionProvider;
+			for (const data of capabilitiesArr) {
+				if (data.autoInsertionProvider) {
+					const { triggerCharacters, configurationSections } = data.autoInsertionProvider;
 					allTriggerCharacters.push(...triggerCharacters);
 					if (configurationSections) {
 						if (configurationSections.length !== triggerCharacters.length) {

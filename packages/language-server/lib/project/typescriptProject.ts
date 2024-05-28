@@ -1,23 +1,22 @@
-import { FileType, LanguagePlugin, LanguageServiceEnvironment, ProviderResult, createUriMap } from '@volar/language-service';
-import type { createSys } from '@volar/typescript';
+import { FileType, LanguagePlugin, LanguageServiceEnvironment, ProviderResult, UriMap, createUriMap } from '@volar/language-service';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import type { LanguageServer, Project } from '../types';
 import { getInferredCompilerOptions } from './inferredCompilerOptions';
-import { createServiceEnvironment, getWorkspaceFolder } from './simpleProject';
-import { createTypeScriptLS, type TypeScriptLS } from './typescriptProjectLs';
+import { createLanguageServiceEnvironment } from './simpleProject';
+import { ProjectExposeContext, createTypeScriptLS, type TypeScriptLS } from './typescriptProjectLs';
 
 const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
 export function createTypeScriptProject(
 	ts: typeof import('typescript'),
 	tsLocalized: ts.MapLike<string> | undefined,
-	getLanguagePlugins: (serviceEnv: LanguageServiceEnvironment, projectContext: {
-		configFileName: string | undefined;
-		sys: ReturnType<typeof createSys>;
-	}) => ProviderResult<LanguagePlugin<URI>[]>,
+	getLanguagePlugins: (
+		serviceEnv: LanguageServiceEnvironment,
+		projectContext: ProjectExposeContext
+	) => ProviderResult<LanguagePlugin<URI>[]>,
 ) {
 	let initialized = false;
 
@@ -231,7 +230,7 @@ export function createTypeScriptProject(
 		let projectPromise = configProjects.get(tsconfigUri);
 		if (!projectPromise) {
 			const workspaceFolder = getWorkspaceFolder(tsconfigUri, server.workspaceFolders);
-			const serviceEnv = createServiceEnvironment(server, [workspaceFolder]);
+			const serviceEnv = createLanguageServiceEnvironment(server, [workspaceFolder]);
 			projectPromise = createTypeScriptLS(
 				ts,
 				tsLocalized,
@@ -252,7 +251,7 @@ export function createTypeScriptProject(
 		if (!inferredProjects.has(workspaceFolder)) {
 			inferredProjects.set(workspaceFolder, (async () => {
 				const inferOptions = await getInferredCompilerOptions(server);
-				const serviceEnv = createServiceEnvironment(server, [workspaceFolder]);
+				const serviceEnv = createLanguageServiceEnvironment(server, [workspaceFolder]);
 				return createTypeScriptLS(
 					ts,
 					tsLocalized,
@@ -332,4 +331,23 @@ export function sortTSConfigs(file: string, a: string, b: string) {
 export function isFileInDir(fileName: string, dir: string) {
 	const relative = path.relative(dir, fileName);
 	return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
+export function getWorkspaceFolder(uri: URI, workspaceFolders: UriMap<boolean>) {
+	while (true) {
+		if (workspaceFolders.has(uri)) {
+			return uri;
+		}
+		const next = uri.with({ path: uri.path.substring(0, uri.path.lastIndexOf('/')) });
+		if (next.path === uri.path) {
+			break;
+		}
+		uri = next;
+	}
+
+	for (const folder of workspaceFolders.keys()) {
+		return folder;
+	}
+
+	return uri.with({ path: '/' });
 }

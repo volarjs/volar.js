@@ -145,7 +145,7 @@ export function register(context: LanguageServiceContext) {
 			const worker = async (
 				document: TextDocument,
 				position: vscode.Position,
-				map?: SourceMapWithDocuments<CodeInformation>,
+				map?: SourceMapWithDocuments,
 				codeInfo?: CodeInformation | undefined,
 			) => {
 

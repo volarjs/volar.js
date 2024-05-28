@@ -18,6 +18,10 @@ export interface Language<T> {
 	};
 	typescript?: {
 		configFileName: string | undefined;
+		sys: ts.System & {
+			version?: number;
+			sync?(): Promise<number>;
+		};
 		languageServiceHost: ts.LanguageServiceHost;
 		getExtraServiceScript(fileName: string): TypeScriptExtraServiceScript | undefined;
 		asScriptId(fileName: string): T;
