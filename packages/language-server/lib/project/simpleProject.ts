@@ -11,7 +11,7 @@ export function createSimpleProject(languagePlugins: LanguagePlugin<URI>[]): Pro
 			languageService ??= create(server);
 			return languageService;
 		},
-		allLanguageServices() {
+		getExistingLanguageServices() {
 			if (languageService) {
 				return [languageService];
 			}

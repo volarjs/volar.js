@@ -200,7 +200,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	});
 	server.connection.onWorkspaceSymbol(async (params, token) => {
 		let results: vscode.WorkspaceSymbol[] = [];
-		for (const languageService of await server.project.allLanguageServices(server)) {
+		for (const languageService of await server.project.getExistingLanguageServices(server)) {
 			if (token.isCancellationRequested) {
 				return;
 			}

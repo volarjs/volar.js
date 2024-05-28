@@ -146,7 +146,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 			size: number;
 		}>();
 
-		for (const languageService of await server.project.allLanguageServices(server)) {
+		for (const languageService of await server.project.getExistingLanguageServices(server)) {
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
 			if (program && languageService.context.language.typescript) {

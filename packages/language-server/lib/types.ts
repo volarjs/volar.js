@@ -4,7 +4,7 @@ import type { createServerBase } from './server';
 
 export interface Project {
 	getLanguageService(server: LanguageServer, uri: URI): ProviderResult<LanguageService>;
-	allLanguageServices(server: LanguageServer): ProviderResult<LanguageService[]>;
+	getExistingLanguageServices(server: LanguageServer): ProviderResult<LanguageService[]>;
 	reload(server: LanguageServer): void;
 }
 

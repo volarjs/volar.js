@@ -41,7 +41,7 @@ export function createTypeScriptProject(
 			const project = await getOrCreateInferredProject(server, uri, workspaceFolder);
 			return project.languageService;
 		},
-		async allLanguageServices() {
+		async getExistingLanguageServices() {
 			const projects = await Promise.all([
 				...configProjects.values() ?? [],
 				...inferredProjects.values() ?? [],
