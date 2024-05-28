@@ -5,7 +5,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { LinkedCodeMapWithDocument, SourceMapWithDocuments } from './documents';
-import * as autoInsert from './features/provideAutoInsertionEdit';
+import * as autoInsert from './features/provideAutoInsertSnippet';
 import * as callHierarchy from './features/provideCallHierarchyItems';
 import * as codeActions from './features/provideCodeActions';
 import * as codeLens from './features/provideCodeLenses';
