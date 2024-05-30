@@ -23,7 +23,7 @@ export interface Language<T> {
 			sync?(): Promise<number>;
 		};
 		languageServiceHost: ts.LanguageServiceHost;
-		getExtraServiceScript(fileName: string): TypeScriptExtraServiceScript | undefined;
+		getExtraServiceScript(fileName: string): [SourceScript<T>, TypeScriptExtraServiceScript] | undefined;
 		asScriptId(fileName: string): T;
 		asFileName(scriptId: T): string;
 	};
