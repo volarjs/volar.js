@@ -1,5 +1,5 @@
-import { FileType } from '@volar/language-service';
-import * as fs from 'fs';
+import { FileSystem, FileType } from '@volar/language-service';
+import * as _fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
 import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
 import { createServerBase } from './lib/server';
@@ -15,60 +15,62 @@ export function createConnection() {
 }
 
 export function createServer(connection: vscode.Connection) {
-	return createServerBase(connection, {
-		stat(uri) {
-			if (uri.scheme === 'file') {
-				try {
-					const stats = fs.statSync(uri.fsPath, { throwIfNoEntry: false });
-					if (stats) {
-						return {
-							type: stats.isFile() ? FileType.File
-								: stats.isDirectory() ? FileType.Directory
-									: stats.isSymbolicLink() ? FileType.SymbolicLink
-										: FileType.Unknown,
-							ctime: stats.ctimeMs,
-							mtime: stats.mtimeMs,
-							size: stats.size,
-						};
-					}
-				}
-				catch {
-					return undefined;
-				}
-			}
-		},
-		readFile(uri, encoding) {
-			if (uri.scheme === 'file') {
-				try {
-					return fs.readFileSync(uri.fsPath, { encoding: encoding as 'utf-8' ?? 'utf-8' });
-				}
-				catch {
-					return undefined;
-				}
-			}
-			if (uri.scheme === 'http' || uri.scheme === 'https') {
-				return httpSchemaRequestHandler(uri);
-			}
-		},
-		readDirectory(uri) {
-			if (uri.scheme === 'file') {
-				try {
-					const files = fs.readdirSync(uri.fsPath, { withFileTypes: true });
-					return files.map<[string, FileType]>(file => {
-						return [file.name, file.isFile() ? FileType.File
-							: file.isDirectory() ? FileType.Directory
-								: file.isSymbolicLink() ? FileType.SymbolicLink
-									: FileType.Unknown];
-					});
-				}
-				catch {
-					return [];
-				}
-			}
-			return [];
-		},
-	});
+	return createServerBase(connection, fs);
 }
+
+export const fs: FileSystem = {
+	stat(uri) {
+		if (uri.scheme === 'file') {
+			try {
+				const stats = _fs.statSync(uri.fsPath, { throwIfNoEntry: false });
+				if (stats) {
+					return {
+						type: stats.isFile() ? FileType.File
+							: stats.isDirectory() ? FileType.Directory
+								: stats.isSymbolicLink() ? FileType.SymbolicLink
+									: FileType.Unknown,
+						ctime: stats.ctimeMs,
+						mtime: stats.mtimeMs,
+						size: stats.size,
+					};
+				}
+			}
+			catch {
+				return undefined;
+			}
+		}
+	},
+	readFile(uri, encoding) {
+		if (uri.scheme === 'file') {
+			try {
+				return _fs.readFileSync(uri.fsPath, { encoding: encoding as 'utf-8' ?? 'utf-8' });
+			}
+			catch {
+				return undefined;
+			}
+		}
+		if (uri.scheme === 'http' || uri.scheme === 'https') {
+			return httpSchemaRequestHandler(uri);
+		}
+	},
+	readDirectory(uri) {
+		if (uri.scheme === 'file') {
+			try {
+				const files = _fs.readdirSync(uri.fsPath, { withFileTypes: true });
+				return files.map<[string, FileType]>(file => {
+					return [file.name, file.isFile() ? FileType.File
+						: file.isDirectory() ? FileType.Directory
+							: file.isSymbolicLink() ? FileType.SymbolicLink
+								: FileType.Unknown];
+				});
+			}
+			catch {
+				return [];
+			}
+		}
+		return [];
+	},
+};
 
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 
