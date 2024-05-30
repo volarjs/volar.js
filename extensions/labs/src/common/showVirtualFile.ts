@@ -63,12 +63,12 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 				}[] = [];
 
 				for (const [sourceUri, _, map] of maps) {
-					const source = map.getSourceOffset(document.offsetAt(position));
-					if (source) {
+					for (const source of map.getSourceOffsets(document.offsetAt(position))) {
 						data.push({
 							uri: sourceUri,
 							mapping: source,
 						});
+						break;
 					}
 				}
 

@@ -24,18 +24,6 @@ export class SourceMap<Data = any> {
 
 	constructor(public readonly mappings: Mapping<Data>[]) { }
 
-	getSourceOffset(generatedOffset: number) {
-		for (const mapped of this.findMatching(generatedOffset, 'generatedOffsets', 'sourceOffsets')) {
-			return mapped;
-		}
-	}
-
-	getGeneratedOffset(sourceOffset: number) {
-		for (const mapped of this.findMatching(sourceOffset, 'sourceOffsets', 'generatedOffsets')) {
-			return mapped;
-		}
-	}
-
 	getSourceOffsets(generatedOffset: number) {
 		return this.findMatching(generatedOffset, 'generatedOffsets', 'sourceOffsets');
 	}
@@ -101,5 +89,5 @@ export class SourceMap<Data = any> {
 }
 
 function getLengths<Data>(mapping: Mapping<Data>, key: CodeRangeKey) {
-	return key == "sourceOffsets" ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths
+	return key == "sourceOffsets" ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths;
 }
