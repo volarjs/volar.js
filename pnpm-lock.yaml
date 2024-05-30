@@ -22,27 +22,27 @@ importers:
         version: 5.4.5
       vite:
         specifier: latest
-        version: 5.2.12(@types/node@20.12.12)
+        version: 5.2.12(@types/node@20.12.13)
       vitest:
         specifier: latest
-        version: 1.6.0(@types/node@20.12.12)
+        version: 1.6.0(@types/node@20.12.13)
 
   extensions/labs:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.12
+        version: 20.12.13
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.89.0
       '@volar/language-server':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../../packages/vscode
       esbuild:
         specifier: latest
@@ -63,7 +63,7 @@ importers:
         specifier: ^8.56.10
         version: 8.56.10
       '@volar/language-core':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-core
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -72,10 +72,10 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -92,27 +92,27 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.12
+        version: 20.12.13
 
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-service
       '@volar/snapshot-document':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../snapshot-document
       '@volar/typescript':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../typescript
       path-browserify:
         specifier: ^1.0.1
@@ -140,7 +140,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-core
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -155,10 +155,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.3.3
@@ -192,10 +192,10 @@ importers:
   packages/test-utils:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-core
       '@volar/language-server':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-server
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -206,12 +206,12 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.12
+        version: 20.12.13
 
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-core
       path-browserify:
         specifier: ^1.0.1
@@ -222,18 +222,18 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.12
+        version: 20.12.13
       '@types/path-browserify':
         specifier: latest
         version: 1.0.2
       '@volar/language-service':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 2.3.0-alpha.0
+        specifier: 2.3.0-alpha.1
         version: link:../language-server
       path-browserify:
         specifier: ^1.0.1
@@ -247,7 +247,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.12
+        version: 20.12.13
       '@types/path-browserify':
         specifier: latest
         version: 1.0.2
@@ -259,7 +259,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.12
+        version: 20.12.13
       tsl:
         specifier: latest
         version: 0.0.10(typescript@5.4.5)
@@ -1018,8 +1018,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@20.12.12':
-    resolution: {integrity: sha512-eWLDGF/FOSPtAvEqeRAQ4C8LSA7M1I7i0ky1I8U7kD1J5ITyW3AsRhQrKVoWf5pFKZ2kILsEGJhsI9r93PYnOw==}
+  '@types/node@20.12.13':
+    resolution: {integrity: sha512-gBGeanV41c1L171rR7wjbMiEpEI/l5XFQdLLfhr/REwpgDy/4U8y89+i8kRiLzDyZdOkXh+cRaTetUnCYutoXA==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -1674,10 +1674,12 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   globby@11.1.0:
     resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
@@ -3727,7 +3729,7 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@20.12.12':
+  '@types/node@20.12.13':
     dependencies:
       undici-types: 5.26.5
 
@@ -5736,13 +5738,13 @@ snapshots:
     dependencies:
       builtins: 5.1.0
 
-  vite-node@1.6.0(@types/node@20.12.12):
+  vite-node@1.6.0(@types/node@20.12.13):
     dependencies:
       cac: 6.7.14
       debug: 4.3.4
       pathe: 1.1.2
       picocolors: 1.0.0
-      vite: 5.2.12(@types/node@20.12.12)
+      vite: 5.2.12(@types/node@20.12.13)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5753,16 +5755,16 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.2.12(@types/node@20.12.12):
+  vite@5.2.12(@types/node@20.12.13):
     dependencies:
       esbuild: 0.20.2
       postcss: 8.4.38
       rollup: 4.17.2
     optionalDependencies:
-      '@types/node': 20.12.12
+      '@types/node': 20.12.13
       fsevents: 2.3.3
 
-  vitest@1.6.0(@types/node@20.12.12):
+  vitest@1.6.0(@types/node@20.12.13):
     dependencies:
       '@vitest/expect': 1.6.0
       '@vitest/runner': 1.6.0
@@ -5781,11 +5783,11 @@ snapshots:
       strip-literal: 2.1.0
       tinybench: 2.8.0
       tinypool: 0.8.4
-      vite: 5.2.12(@types/node@20.12.12)
-      vite-node: 1.6.0(@types/node@20.12.12)
+      vite: 5.2.12(@types/node@20.12.13)
+      vite-node: 1.6.0(@types/node@20.12.13)
       why-is-node-running: 2.2.2
     optionalDependencies:
-      '@types/node': 20.12.12
+      '@types/node': 20.12.13
     transitivePeerDependencies:
       - less
       - lightningcss
