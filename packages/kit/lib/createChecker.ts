@@ -107,6 +107,7 @@ function createTypeScriptCheckerWorker(
 			}
 		},
 	);
+	const projectHost = getProjectHost(env);
 	language.typescript = {
 		configFileName,
 		sys: ts.sys,
@@ -117,7 +118,7 @@ function createTypeScriptCheckerWorker(
 			ts.sys,
 			language,
 			fileNameToUri,
-			getProjectHost(env),
+			projectHost,
 		),
 	};
 	const languageService = createLanguageService(
@@ -131,6 +132,7 @@ function createTypeScriptCheckerWorker(
 		check,
 		fixErrors,
 		printErrors,
+		projectHost,
 		language,
 
 		// settings
