@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@lerna-lite/cli':
         specifier: latest
-        version: 3.4.0(@lerna-lite/publish@3.4.0)(@lerna-lite/version@3.4.0)(typescript@5.4.5)
+        version: 3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(@lerna-lite/version@3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)
       '@lerna-lite/publish':
         specifier: latest
         version: 3.4.0(typescript@5.4.5)
@@ -22,27 +22,27 @@ importers:
         version: 5.4.5
       vite:
         specifier: latest
-        version: 5.2.12
+        version: 5.2.12(@types/node@20.13.0)
       vitest:
         specifier: latest
-        version: 1.6.0
+        version: 1.6.0(@types/node@20.13.0)
 
   extensions/labs:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.13
+        version: 20.13.0
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.89.0
       '@volar/language-server':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../../packages/vscode
       esbuild:
         specifier: latest
@@ -63,7 +63,7 @@ importers:
         specifier: ^8.56.10
         version: 8.56.10
       '@volar/language-core':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-core
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -72,10 +72,10 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -92,27 +92,27 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.13
+        version: 20.13.0
 
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-service
       '@volar/snapshot-document':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../snapshot-document
       '@volar/typescript':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../typescript
       path-browserify:
         specifier: ^1.0.1
@@ -140,7 +140,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-core
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -155,10 +155,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.3.3
@@ -192,10 +192,10 @@ importers:
   packages/test-utils:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-core
       '@volar/language-server':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-server
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -206,12 +206,12 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.13
+        version: 20.13.0
 
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-core
       path-browserify:
         specifier: ^1.0.1
@@ -222,18 +222,18 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.13
+        version: 20.13.0
       '@types/path-browserify':
         specifier: latest
         version: 1.0.2
       '@volar/language-service':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 2.3.0-alpha.3
+        specifier: 2.3.0-alpha.4
         version: link:../language-server
       path-browserify:
         specifier: ^1.0.1
@@ -247,7 +247,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.13
+        version: 20.13.0
       '@types/path-browserify':
         specifier: latest
         version: 1.0.2
@@ -259,7 +259,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 20.12.13
+        version: 20.13.0
       tsl:
         specifier: latest
         version: 0.0.10(typescript@5.4.5)
@@ -1018,8 +1018,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@20.12.13':
-    resolution: {integrity: sha512-gBGeanV41c1L171rR7wjbMiEpEI/l5XFQdLLfhr/REwpgDy/4U8y89+i8kRiLzDyZdOkXh+cRaTetUnCYutoXA==}
+  '@types/node@20.13.0':
+    resolution: {integrity: sha512-FM6AOb3khNkNIXPnHFDYaHerSv8uN22C91z098AnGccVu+Pcdhi+pNUFDi0iLmPIsVE0JBD0KVS7mzUYt4nRzQ==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -3304,18 +3304,19 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.4.15': {}
 
-  '@lerna-lite/cli@3.4.0(@lerna-lite/publish@3.4.0)(@lerna-lite/version@3.4.0)(typescript@5.4.5)':
+  '@lerna-lite/cli@3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(@lerna-lite/version@3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)':
     dependencies:
       '@lerna-lite/core': 3.4.0(typescript@5.4.5)
       '@lerna-lite/init': 3.4.0(typescript@5.4.5)
-      '@lerna-lite/publish': 3.4.0(typescript@5.4.5)
-      '@lerna-lite/version': 3.4.0(@lerna-lite/publish@3.4.0)(typescript@5.4.5)
       dedent: 1.5.3
       dotenv: 16.4.5
       import-local: 3.1.0
       load-json-file: 7.0.1
       npmlog: 7.0.1
       yargs: 17.7.2
+    optionalDependencies:
+      '@lerna-lite/publish': 3.4.0(typescript@5.4.5)
+      '@lerna-lite/version': 3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(typescript@5.4.5)
     transitivePeerDependencies:
       - babel-plugin-macros
       - bluebird
@@ -3370,9 +3371,9 @@ snapshots:
 
   '@lerna-lite/publish@3.4.0(typescript@5.4.5)':
     dependencies:
-      '@lerna-lite/cli': 3.4.0(@lerna-lite/publish@3.4.0)(@lerna-lite/version@3.4.0)(typescript@5.4.5)
+      '@lerna-lite/cli': 3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(@lerna-lite/version@3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)
       '@lerna-lite/core': 3.4.0(typescript@5.4.5)
-      '@lerna-lite/version': 3.4.0(@lerna-lite/publish@3.4.0)(typescript@5.4.5)
+      '@lerna-lite/version': 3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(typescript@5.4.5)
       byte-size: 8.1.1
       chalk: 5.3.0
       columnify: 1.6.0
@@ -3405,9 +3406,9 @@ snapshots:
       - supports-color
       - typescript
 
-  '@lerna-lite/version@3.4.0(@lerna-lite/publish@3.4.0)(typescript@5.4.5)':
+  '@lerna-lite/version@3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(typescript@5.4.5)':
     dependencies:
-      '@lerna-lite/cli': 3.4.0(@lerna-lite/publish@3.4.0)(@lerna-lite/version@3.4.0)(typescript@5.4.5)
+      '@lerna-lite/cli': 3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(@lerna-lite/version@3.4.0(@lerna-lite/publish@3.4.0(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)
       '@lerna-lite/core': 3.4.0(typescript@5.4.5)
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 20.1.1
@@ -3717,7 +3718,7 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@20.12.13':
+  '@types/node@20.13.0':
     dependencies:
       undici-types: 5.26.5
 
@@ -4070,6 +4071,7 @@ snapshots:
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       parse-json: 5.2.0
+    optionalDependencies:
       typescript: 5.4.5
 
   cross-spawn@7.0.3:
@@ -5702,13 +5704,13 @@ snapshots:
 
   validate-npm-package-name@5.0.1: {}
 
-  vite-node@1.6.0:
+  vite-node@1.6.0(@types/node@20.13.0):
     dependencies:
       cac: 6.7.14
       debug: 4.3.5
       pathe: 1.1.2
       picocolors: 1.0.1
-      vite: 5.2.12
+      vite: 5.2.12(@types/node@20.13.0)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5719,15 +5721,16 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.2.12:
+  vite@5.2.12(@types/node@20.13.0):
     dependencies:
       esbuild: 0.20.2
       postcss: 8.4.38
       rollup: 4.18.0
     optionalDependencies:
+      '@types/node': 20.13.0
       fsevents: 2.3.3
 
-  vitest@1.6.0:
+  vitest@1.6.0(@types/node@20.13.0):
     dependencies:
       '@vitest/expect': 1.6.0
       '@vitest/runner': 1.6.0
@@ -5746,9 +5749,11 @@ snapshots:
       strip-literal: 2.1.0
       tinybench: 2.8.0
       tinypool: 0.8.4
-      vite: 5.2.12
-      vite-node: 1.6.0
+      vite: 5.2.12(@types/node@20.13.0)
+      vite-node: 1.6.0(@types/node@20.13.0)
       why-is-node-running: 2.2.2
+    optionalDependencies:
+      '@types/node': 20.13.0
     transitivePeerDependencies:
       - less
       - lightningcss
