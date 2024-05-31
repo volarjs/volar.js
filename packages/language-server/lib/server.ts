@@ -159,9 +159,7 @@ export function createServerBase(
 			codeActionProvider: capabilitiesArr.some(data => data.codeActionProvider)
 				? {
 					resolveProvider: capabilitiesArr.some(data => data.codeActionProvider?.resolveProvider),
-					codeActionKinds: capabilitiesArr
-						.filter(data => data.codeActionProvider)
-						.every(data => data.codeActionProvider?.codeActionKinds)
+					codeActionKinds: capabilitiesArr.some(data => data.codeActionProvider?.codeActionKinds)
 						? [...new Set(capabilitiesArr.map(data => data.codeActionProvider?.codeActionKinds ?? []).flat())]
 						: undefined,
 				}
