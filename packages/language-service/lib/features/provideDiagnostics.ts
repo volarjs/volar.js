@@ -102,7 +102,7 @@ export interface ServiceDiagnosticData {
 	version: number;
 	original: Pick<vscode.Diagnostic, 'data'>;
 	isFormat: boolean;
-	serviceIndex: number;
+	pluginIndex: number;
 	documentUri: string;
 }
 
@@ -245,7 +245,7 @@ export function register(context: LanguageServiceContext) {
 						error.data = {
 							uri: uri.toString(),
 							version: document.version,
-							serviceIndex: pluginIndex,
+							pluginIndex: pluginIndex,
 							isFormat: false,
 							original: {
 								data: error.data,

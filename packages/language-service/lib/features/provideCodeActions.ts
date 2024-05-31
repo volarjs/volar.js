@@ -64,7 +64,7 @@ export function register(context: LanguageServiceContext) {
 					if (data && data.version !== document.version) {
 						return false;
 					}
-					return data?.serviceIndex === pluginIndex;
+					return data?.pluginIndex === pluginIndex;
 				}).map(diagnostic => {
 					const data: ServiceDiagnosticData = diagnostic.data;
 					return {
