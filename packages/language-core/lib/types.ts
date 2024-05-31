@@ -100,6 +100,10 @@ export interface LanguagePlugin<T, K extends VirtualCode = VirtualCode> {
 		/**
 		 * LSP + TS Plugin
 		 */
+		resolveHiddenExtensions?: boolean;
+		/**
+		 * LSP + TS Plugin
+		 */
 		getServiceScript(rootVirtualCode: K): TypeScriptServiceScript | undefined;
 		/**
 		 * LSP only
