@@ -25,7 +25,10 @@ export function createSimpleProject(languagePlugins: LanguagePlugin<URI>[]): Pro
 
 	function create(server: LanguageServer) {
 		const language = createLanguage(
-			languagePlugins,
+			[
+				{ getLanguageId: uri => server.documents.get(server.getSyncedDocumentKey(uri) ?? uri.toString())?.languageId },
+				...languagePlugins,
+			],
 			createUriMap(false),
 			uri => {
 				const documentKey = server.getSyncedDocumentKey(uri) ?? uri.toString();

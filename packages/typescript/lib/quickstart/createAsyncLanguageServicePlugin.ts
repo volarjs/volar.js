@@ -70,11 +70,7 @@ export function createAsyncLanguageServicePlugin(
 						const language = createLanguage<string>(
 							[
 								...languagePlugins,
-								{
-									getLanguageId(fileName) {
-										return resolveFileLanguageId(fileName);
-									},
-								},
+								{ getLanguageId: resolveFileLanguageId },
 							],
 							new FileMap(ts.sys.useCaseSensitiveFileNames),
 							fileName => {

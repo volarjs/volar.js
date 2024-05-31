@@ -76,11 +76,7 @@ function createTypeScriptCheckerWorker(
 	const language = createLanguage(
 		[
 			...languagePlugins,
-			{
-				getLanguageId(uri) {
-					return resolveFileLanguageId(uri.fsPath);
-				},
-			},
+			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
 		],
 		createUriMap(ts.sys.useCaseSensitiveFileNames),
 		uri => {

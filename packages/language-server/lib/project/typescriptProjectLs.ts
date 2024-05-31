@@ -97,12 +97,9 @@ export async function createTypeScriptLS(
 
 	const language = createLanguage<URI>(
 		[
+			{ getLanguageId: uri => server.documents.get(server.getSyncedDocumentKey(uri) ?? uri.toString())?.languageId },
 			...languagePlugins,
-			{
-				getLanguageId(uri) {
-					return resolveFileLanguageId(uri.fsPath);
-				},
-			},
+			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
 		],
 		createUriMap(sys.useCaseSensitiveFileNames),
 		uri => {

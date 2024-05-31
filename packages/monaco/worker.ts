@@ -91,11 +91,7 @@ export function createTypeScriptWorkerService<T = {}>({
 	const language = createLanguage<URI>(
 		[
 			...languagePlugins,
-			{
-				getLanguageId(uri) {
-					return resolveFileLanguageId(uri.fsPath);
-				},
-			},
+			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
 		],
 		createUriMap(sys.useCaseSensitiveFileNames),
 		uri => {
