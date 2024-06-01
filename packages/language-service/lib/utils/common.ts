@@ -6,7 +6,7 @@ export function findOverlapCodeRange(
 	start: number,
 	end: number,
 	map: SourceMap<CodeInformation>,
-	filter: (data: CodeInformation) => boolean,
+	filter: (data: CodeInformation) => boolean
 ) {
 	let mappedStart: number | undefined;
 	let mappedEnd: number | undefined;
@@ -58,7 +58,7 @@ function getOverlapRange(
 	range1Start: number,
 	range1End: number,
 	range2Start: number,
-	range2End: number,
+	range2End: number
 ): { start: number, end: number; } | undefined {
 
 	const start = Math.max(range1Start, range2Start);

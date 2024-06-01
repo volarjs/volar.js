@@ -16,7 +16,7 @@ export function updateRange(
 	change: {
 		range: vscode.Range,
 		newEnd: vscode.Position;
-	},
+	}
 ) {
 	if (!updatePosition(range.start, change, false)) {
 		return;
@@ -36,7 +36,7 @@ function updatePosition(
 		range: vscode.Range,
 		newEnd: vscode.Position;
 	},
-	isEnd: boolean,
+	isEnd: boolean
 ) {
 	if (change.range.end.line > position.line) {
 		if (change.newEnd.line > position.line) {
@@ -150,7 +150,7 @@ export function register(context: LanguageServiceContext) {
 	return async (
 		uri: URI,
 		token = NoneCancellationToken,
-		response?: (result: vscode.Diagnostic[]) => void,
+		response?: (result: vscode.Diagnostic[]) => void
 	) => {
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
@@ -213,7 +213,7 @@ export function register(context: LanguageServiceContext) {
 		async function worker(
 			api: 'provideDiagnostics' | 'provideSemanticDiagnostics',
 			cacheMap: CacheMap,
-			cache: Cache,
+			cache: Cache
 		) {
 			const result = await documentFeatureWorker(
 				context,

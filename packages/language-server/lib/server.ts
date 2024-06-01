@@ -11,7 +11,7 @@ export * from '@volar/snapshot-document';
 
 export function createServerBase(
 	connection: vscode.Connection,
-	fs: FileSystem,
+	fs: FileSystem
 ) {
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
@@ -75,7 +75,7 @@ export function createServerBase(
 		languageServices: Project,
 		options?: {
 			pullModelDiagnostics?: boolean;
-		},
+		}
 	) {
 		status.initializeParams = initializeParams;
 		status.languageServicePlugins = languageServicePlugins;

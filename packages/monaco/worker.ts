@@ -189,7 +189,7 @@ function createWorkerService<T = {}>(
 	language: Language<URI>,
 	servicePlugins: LanguageServicePlugin[],
 	env: LanguageServiceEnvironment,
-	extraApis: T = {} as any,
+	extraApis: T = {} as any
 ): LanguageService & T {
 
 	const languageService = _createLanguageService(language, servicePlugins, env);

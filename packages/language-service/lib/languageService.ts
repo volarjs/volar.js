@@ -45,7 +45,7 @@ export type LanguageService = ReturnType<typeof createLanguageService>;
 export function createLanguageService(
 	language: Language<URI>,
 	plugins: LanguageServicePlugin[],
-	env: LanguageServiceEnvironment,
+	env: LanguageServiceEnvironment
 ) {
 	const documentVersions = createUriMap<number>();
 	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments>();

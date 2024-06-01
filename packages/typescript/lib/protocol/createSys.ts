@@ -29,7 +29,7 @@ export function createSys(
 	uriConverter: {
 		asUri(fileName: string): URI;
 		asFileName(uri: URI): string;
-	},
+	}
 ): ts.System & {
 	version: number;
 	sync(): Promise<number>;
@@ -239,7 +239,7 @@ export function createSys(
 		extensions?: readonly string[],
 		excludes?: readonly string[],
 		includes?: readonly string[],
-		depth?: number,
+		depth?: number
 	) {
 		dirName = resolvePath(dirName);
 		const matches = matchFiles(

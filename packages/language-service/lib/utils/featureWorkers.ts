@@ -10,7 +10,7 @@ export async function documentFeatureWorker<T>(
 	valid: (map: SourceMapWithDocuments) => boolean,
 	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments) => T | undefined,
-	combineResult?: (results: T[]) => T,
+	combineResult?: (results: T[]) => T
 ) {
 	return languageFeatureWorker(
 		context,
@@ -34,7 +34,7 @@ export async function languageFeatureWorker<T, K>(
 	eachVirtualDocParams: (map: SourceMapWithDocuments) => Generator<K>,
 	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments) => Thenable<T | null | undefined> | T | null | undefined,
 	transformResult: (result: T, map?: SourceMapWithDocuments) => T | undefined,
-	combineResult?: (results: T[]) => T,
+	combineResult?: (results: T[]) => T
 ) {
 	const sourceScript = context.language.scripts.get(uri);
 	if (!sourceScript) {
@@ -135,7 +135,7 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 export function* forEachEmbeddedDocument(
 	context: LanguageServiceContext,
 	sourceScriptId: URI,
-	current: VirtualCode,
+	current: VirtualCode
 ): Generator<SourceMapWithDocuments> {
 
 	if (current.embeddedCodes) {

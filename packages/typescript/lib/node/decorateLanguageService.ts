@@ -26,7 +26,7 @@ const windowsPathReg = /\\/g;
 
 export function decorateLanguageService(
 	language: Language<string>,
-	languageService: ts.LanguageService,
+	languageService: ts.LanguageService
 ) {
 
 	// ignored methods
@@ -814,7 +814,7 @@ export function decorateLanguageService(
 		position: number,
 		filter: (data: CodeInformation) => boolean,
 		worker: (position: number) => T | undefined,
-		getLinkedCodes: (result: T) => Generator<[fileName: string, position: number]>,
+		getLinkedCodes: (result: T) => Generator<[fileName: string, position: number]>
 	) {
 		const results: T[] = [];
 		const processedFilePositions = new Set<string>();

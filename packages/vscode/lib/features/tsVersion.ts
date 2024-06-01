@@ -10,7 +10,7 @@ export function activate(
 	cmd: string,
 	context: vscode.ExtensionContext,
 	resolveStatusText: (text: string) => string,
-	onRestart?: () => void,
+	onRestart?: () => void
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];

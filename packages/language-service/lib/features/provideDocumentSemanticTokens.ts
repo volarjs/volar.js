@@ -14,7 +14,7 @@ export function register(context: LanguageServiceContext) {
 		range: vscode.Range | undefined,
 		legend: vscode.SemanticTokensLegend,
 		token = NoneCancellationToken,
-		_reportProgress?: (tokens: vscode.SemanticTokens) => void, // TODO
+		_reportProgress?: (tokens: vscode.SemanticTokens) => void // TODO
 	): Promise<vscode.SemanticTokens | undefined> => {
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {

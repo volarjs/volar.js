@@ -7,7 +7,7 @@ export let getLanguagePlugins: (ts: typeof import('typescript'), options: ts.Cre
 export function runTsc(
 	tscPath: string,
 	extensions: string[],
-	_getLanguagePlugins: typeof getLanguagePlugins,
+	_getLanguagePlugins: typeof getLanguagePlugins
 ) {
 
 	getLanguagePlugins = _getLanguagePlugins;

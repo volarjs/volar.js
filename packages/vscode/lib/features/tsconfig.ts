@@ -6,7 +6,7 @@ import * as path from 'path-browserify';
 export function activate(
 	selector: vscode.DocumentSelector,
 	cmd: string,
-	client: BaseLanguageClient,
+	client: BaseLanguageClient
 ) {
 
 	const subscriptions: vscode.Disposable[] = [];

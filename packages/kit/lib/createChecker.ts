@@ -10,7 +10,7 @@ import { TypeScriptProjectHost, createLanguageServiceHost, resolveFileLanguageId
 export function createTypeScriptChecker(
 	languagePlugins: LanguagePlugin<URI>[],
 	languageServicePlugins: LanguageServicePlugin[],
-	tsconfig: string,
+	tsconfig: string
 ) {
 	const tsconfigPath = asPosix(tsconfig);
 	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, tsconfigPath, env => {
@@ -56,7 +56,7 @@ function createTypeScriptCheckerWorker(
 	languagePlugins: LanguagePlugin<URI>[],
 	languageServicePlugins: LanguageServicePlugin[],
 	configFileName: string | undefined,
-	getProjectHost: (env: LanguageServiceEnvironment) => TypeScriptProjectHost,
+	getProjectHost: (env: LanguageServiceEnvironment) => TypeScriptProjectHost
 ) {
 
 	let settings = {};
@@ -241,7 +241,7 @@ function createTypeScriptCheckerWorker(
 
 function createTypeScriptProjectHost(
 	env: LanguageServiceEnvironment,
-	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>,
+	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>
 ) {
 	let scriptSnapshotsCache: Map<string, ts.IScriptSnapshot | undefined> = new Map();
 	let parsedCommandLine = createParsedCommandLine();

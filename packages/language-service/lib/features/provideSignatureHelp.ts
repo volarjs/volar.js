@@ -14,7 +14,7 @@ export function register(context: LanguageServiceContext) {
 			triggerKind: 1 satisfies typeof vscode.SignatureHelpTriggerKind.Invoked,
 			isRetrigger: false,
 		},
-		token = NoneCancellationToken,
+		token = NoneCancellationToken
 	) => {
 
 		return languageFeatureWorker(

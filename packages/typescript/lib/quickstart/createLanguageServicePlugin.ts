@@ -13,7 +13,7 @@ export function createLanguageServicePlugin(
 	loadLanguagePlugins: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
-	) => LanguagePlugin<string>[],
+	) => LanguagePlugin<string>[]
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;

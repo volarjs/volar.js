@@ -145,7 +145,7 @@ export function transformTextChange(
 	sourceScript: SourceScript<string>,
 	map: SourceMap<CodeInformation>,
 	textChange: ts.TextChange,
-	filter: (data: CodeInformation) => boolean,
+	filter: (data: CodeInformation) => boolean
 ): ts.TextChange | undefined {
 	const sourceSpan = transformTextSpan(sourceScript, map, textChange.span, filter);
 	if (sourceSpan) {
@@ -160,7 +160,7 @@ export function transformTextSpan(
 	sourceScript: SourceScript<string>,
 	map: SourceMap<CodeInformation>,
 	textSpan: ts.TextSpan,
-	filter: (data: CodeInformation) => boolean,
+	filter: (data: CodeInformation) => boolean
 ): ts.TextSpan | undefined {
 	const start = textSpan.start;
 	const end = textSpan.start + textSpan.length;

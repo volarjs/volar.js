@@ -15,7 +15,7 @@ export function createAsyncLanguageServicePlugin(
 	loadLanguagePlugins: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
-	) => Promise<LanguagePlugin<string>[]>,
+	) => Promise<LanguagePlugin<string>[]>
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;

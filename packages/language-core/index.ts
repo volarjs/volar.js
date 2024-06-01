@@ -12,7 +12,7 @@ import type { CodeInformation, Language, LanguagePlugin, SourceScript, VirtualCo
 export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],
 	scriptRegistry: Map<T, SourceScript<T>>,
-	sync: (id: T) => void,
+	sync: (id: T) => void
 ): Language<T> {
 	const virtualCodeToSourceFileMap = new WeakMap<VirtualCode, SourceScript<T>>();
 	const virtualCodeToMaps = new WeakMap<ts.IScriptSnapshot, Map<T, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>>();
@@ -156,7 +156,7 @@ export function createLanguage<T>(
 export function updateVirtualCodeMapOfMap<T>(
 	virtualCode: VirtualCode,
 	mapOfMap: Map<T, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>,
-	getSourceSnapshot: (source: string | undefined) => [T, ts.IScriptSnapshot] | undefined,
+	getSourceSnapshot: (source: string | undefined) => [T, ts.IScriptSnapshot] | undefined
 ) {
 	const sources = new Set<string | undefined>();
 	if (!virtualCode.mappings.length) {

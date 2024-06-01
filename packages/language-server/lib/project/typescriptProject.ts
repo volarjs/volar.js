@@ -16,7 +16,7 @@ export function createTypeScriptProject(
 	getLanguagePlugins: (
 		serviceEnv: LanguageServiceEnvironment,
 		projectContext: ProjectExposeContext
-	) => ProviderResult<LanguagePlugin<URI>[]>,
+	) => ProviderResult<LanguagePlugin<URI>[]>
 ) {
 	let initialized = false;
 

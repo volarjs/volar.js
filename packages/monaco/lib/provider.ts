@@ -41,7 +41,7 @@ import { markers } from './markers.js';
 
 export async function createLanguageFeaturesProvider(
 	worker: editor.MonacoWebWorker<LanguageService>,
-	getSyncUris: () => Uri[],
+	getSyncUris: () => Uri[]
 ): Promise<
 	languages.HoverProvider &
 	languages.DocumentSymbolProvider &

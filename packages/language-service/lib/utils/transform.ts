@@ -92,7 +92,7 @@ export function transformCompletionList<T extends vscode.CompletionList>(
 	completionList: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: TextDocument,
-	context: LanguageServiceContext,
+	context: LanguageServiceContext
 ): T {
 	return {
 		isIncomplete: completionList.isIncomplete,
@@ -215,7 +215,7 @@ export function transformSelectionRanges<T extends vscode.SelectionRange>(locati
 export function transformTextEdit<T extends vscode.TextEdit | vscode.InsertReplaceEdit>(
 	textEdit: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
-	document: vscode.TextDocument,
+	document: vscode.TextDocument
 ): T | undefined {
 	if ('range' in textEdit) {
 
@@ -269,7 +269,7 @@ function tryRecoverTextEdit(
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	replaceRange: vscode.Range,
 	newText: string,
-	document: vscode.TextDocument,
+	document: vscode.TextDocument
 ): vscode.TextEdit | undefined {
 	if (replaceRange.start.line === replaceRange.end.line && replaceRange.end.character > replaceRange.start.character) {
 
@@ -313,7 +313,7 @@ export function transformWorkspaceEdit(
 	edit: vscode.WorkspaceEdit,
 	context: LanguageServiceContext,
 	mode: 'fileName' | 'rename' | 'codeAction' | undefined,
-	versions: Record<string, number> = {},
+	versions: Record<string, number> = {}
 ) {
 
 	const sourceResult: vscode.WorkspaceEdit = {};

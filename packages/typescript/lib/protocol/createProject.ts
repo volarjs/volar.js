@@ -20,7 +20,7 @@ export function createLanguageServiceHost<T>(
 	sys: ReturnType<typeof createSys> | ts.System,
 	language: Language<T>,
 	asScrpitId: (fileName: string) => T,
-	projectHost: TypeScriptProjectHost,
+	projectHost: TypeScriptProjectHost
 ) {
 	const scriptVersions = new FileMap<{ lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>(sys.useCaseSensitiveFileNames);
 
@@ -170,7 +170,7 @@ export function createLanguageServiceHost<T>(
 			containingFile,
 			_reusedNames,
 			redirectedReference,
-			options,
+			options
 		) => {
 			if ('version' in sys && lastSysVersion !== sys.version) {
 				lastSysVersion = sys.version;

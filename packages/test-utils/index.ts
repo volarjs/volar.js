@@ -59,7 +59,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			rootUri: string,
 			initializationOptions: _._InitializeParams['initializationOptions'],
 			capabilities: _.ClientCapabilities = {},
-			locale?: string,
+			locale?: string
 		) {
 			const result = await connection.sendRequest(
 				_.InitializeRequest.type,
@@ -435,7 +435,7 @@ export function* printSnapshot(
 	sourceScript: {
 		snapshot: _.SourceScript<URI>['snapshot'];
 	},
-	file: _.VirtualCode,
+	file: _.VirtualCode
 ) {
 
 	const sourceCode = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength());

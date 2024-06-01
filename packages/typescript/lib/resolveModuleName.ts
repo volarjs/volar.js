@@ -5,7 +5,7 @@ export function createResolveModuleName<T>(
 	ts: typeof import('typescript'),
 	host: ts.ModuleResolutionHost,
 	languagePlugins: LanguagePlugin<any>[],
-	getSourceScript: (fileName: string) => SourceScript<T> | undefined,
+	getSourceScript: (fileName: string) => SourceScript<T> | undefined
 ) {
 	const toSourceFileInfo = new Map<string, {
 		sourceFileName: string;

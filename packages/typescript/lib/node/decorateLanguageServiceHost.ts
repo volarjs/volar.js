@@ -5,7 +5,7 @@ import { createResolveModuleName } from '../resolveModuleName';
 export function decorateLanguageServiceHost(
 	ts: typeof import('typescript'),
 	language: Language<string>,
-	languageServiceHost: ts.LanguageServiceHost,
+	languageServiceHost: ts.LanguageServiceHost
 ) {
 	const pluginExtensions = language.plugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])

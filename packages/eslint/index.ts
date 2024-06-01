@@ -25,7 +25,7 @@ export function createProcessor(
 		'yaml': '.yaml',
 		'markdown': '.md',
 	},
-	supportsAutofix = true,
+	supportsAutofix = true
 ): Linter.Processor {
 	const language = createLanguage<string>(languagePlugins, new FileMap(caseSensitive), () => { });
 	const documents = new FileMap<{

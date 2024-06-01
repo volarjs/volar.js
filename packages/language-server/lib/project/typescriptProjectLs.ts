@@ -41,7 +41,7 @@ export async function createTypeScriptLS(
 	}: {
 		asUri(fileName: string): URI;
 		asFileName(uri: URI): string;
-	},
+	}
 ): Promise<TypeScriptLS> {
 
 	let parsedCommandLine: ts.ParsedCommandLine;
@@ -201,7 +201,7 @@ async function createParsedCommandLine(
 	sys: ReturnType<typeof createSys>,
 	workspacePath: string,
 	tsconfig: string | ts.CompilerOptions,
-	extraFileExtensions: ts.FileExtensionInfo[],
+	extraFileExtensions: ts.FileExtensionInfo[]
 ): Promise<ts.ParsedCommandLine> {
 	let content: ts.ParsedCommandLine = {
 		errors: [],

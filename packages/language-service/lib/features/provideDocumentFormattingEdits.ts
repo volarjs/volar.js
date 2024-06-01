@@ -178,7 +178,7 @@ export function register(context: LanguageServiceContext) {
 			virtualCode: VirtualCode | undefined,
 			embeddedLevel: number,
 			rangeOrPosition: vscode.Range | vscode.Position,
-			ch?: string,
+			ch?: string
 		) {
 
 			if (context.disabledEmbeddedDocumentUris.get(URI.parse(document.uri))) {

@@ -6,7 +6,7 @@ export function activateAutomaticTypeAcquisition(
 	uriConverter: {
 		asFileName(uri: URI): string;
 	},
-	onFetch?: (path: string, content: string) => void,
+	onFetch?: (path: string, content: string) => void
 ) {
 	const textCache = new Map<string, Promise<string | undefined>>();
 	const jsonCache = new Map<string, Promise<any>>();

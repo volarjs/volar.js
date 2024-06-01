@@ -14,7 +14,7 @@ export function activateMarkers(
 	languages: string[],
 	markersOwn: string,
 	getSyncUris: () => Uri[],
-	editor: MonacoEditor['editor'],
+	editor: MonacoEditor['editor']
 ): IDisposable {
 
 	const disposables: IDisposable[] = [];
@@ -170,7 +170,7 @@ export function activateAutoInsertion(
 
 	async function doAutoInsert(
 		model: editor.ITextModel,
-		lastChange: editor.IModelContentChange,
+		lastChange: editor.IModelContentChange
 	) {
 		if (timeout) {
 			clearTimeout(timeout);

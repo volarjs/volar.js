@@ -32,7 +32,7 @@ const objectEqual = (a: any, b: any) => {
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
 	original: typeof ts['createProgram'],
-	getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin<string>[],
+	getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin<string>[]
 ) {
 	const sourceFileSnapshots = new FileMap<[ts.SourceFile | undefined, ts.IScriptSnapshot | undefined]>(ts.sys.useCaseSensitiveFileNames);
 	const parsedSourceFiles = new WeakMap<ts.SourceFile, ts.SourceFile>();
@@ -105,7 +105,7 @@ export function proxyCreateProgram(
 				fileName,
 				languageVersionOrOptions,
 				onError,
-				shouldCreateNewSourceFile,
+				shouldCreateNewSourceFile
 			) => {
 				const originalSourceFile = originalHost.getSourceFile(fileName, languageVersionOrOptions, onError, shouldCreateNewSourceFile);
 				if (
