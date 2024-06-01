@@ -373,5 +373,34 @@ export default defineConfig({
 				ts.forEachChild(node, walk);
 			});
 		},
+		'no-trailing-comma-in-function'({ typescript: ts, sourceFile, reportWarning }) {
+			const { text } = sourceFile;
+			ts.forEachChild(sourceFile, function walk(node) {
+				if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node)) {
+					const parameters = node.parameters;
+					if (parameters.length > 0) {
+						const lastParameter = parameters[parameters.length - 1];
+						const nextCharIndex = lastParameter.end;
+						if (text[nextCharIndex] === ',') {
+							reportWarning(
+								`The last parameter of a function should not have a trailing comma.`,
+								lastParameter.getStart(sourceFile),
+								lastParameter.getEnd()
+							).withFix(
+								'Remove trailing comma',
+								() => [{
+									fileName: sourceFile.fileName,
+									textChanges: [{
+										span: { start: nextCharIndex, length: 1 },
+										newText: ''
+									}]
+								}]
+							);
+						}
+					}
+				}
+				ts.forEachChild(node, walk);
+			});
+		},
 	},
 });
