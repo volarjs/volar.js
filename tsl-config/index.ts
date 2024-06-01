@@ -402,5 +402,33 @@ export default defineConfig({
 				ts.forEachChild(node, walk);
 			});
 		},
+		'no-trailing-comma-in-function-call'({ typescript: ts, sourceFile, reportWarning }) {
+			const { text } = sourceFile;
+			ts.forEachChild(sourceFile, function walk(node) {
+				if (ts.isCallExpression(node)) {
+					if (node.arguments.length > 0) {
+						const lastArgument = node.arguments[node.arguments.length - 1];
+						const nextCharIndex = lastArgument.end;
+						if (text[nextCharIndex] === ',') {
+							reportWarning(
+								`The last argument of a function call should not have a trailing comma.`,
+								lastArgument.getStart(sourceFile),
+								lastArgument.getEnd()
+							).withFix(
+								'Remove trailing comma',
+								() => [{
+									fileName: sourceFile.fileName,
+									textChanges: [{
+										span: { start: nextCharIndex, length: 1 },
+										newText: ''
+									}]
+								}]
+							);
+						}
+					}
+				}
+				ts.forEachChild(node, walk);
+			});
+		},
 	},
 });
