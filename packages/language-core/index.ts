@@ -49,7 +49,10 @@ export function createLanguage<T>(
 						// snapshot updated
 						sourceScript.snapshot = snapshot;
 						if (sourceScript.generated) {
-							const newVirtualCode = sourceScript.generated.languagePlugin.updateVirtualCode?.(id, sourceScript.generated.root, snapshot);
+							const { updateVirtualCode, createVirtualCode } = sourceScript.generated.languagePlugin;
+							const newVirtualCode = updateVirtualCode
+								? updateVirtualCode(id, sourceScript.generated.root, snapshot)
+								: createVirtualCode?.(id, languageId, snapshot);
 							if (newVirtualCode) {
 								sourceScript.generated.root = newVirtualCode;
 								sourceScript.generated.embeddedCodes.clear();
