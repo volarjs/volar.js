@@ -149,7 +149,7 @@ export function proxyCreateProgram(
 								patchedText,
 								languageVersionOrOptions,
 								undefined,
-								scriptKind,
+								scriptKind
 							);
 							// @ts-expect-error
 							parsedSourceFile.version = originalSourceFile.version;

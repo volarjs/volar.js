@@ -28,7 +28,7 @@ export function register(context: LanguageServiceContext) {
 				return data
 					.map(symbol => transformDocumentSymbol(
 						symbol,
-						range => map.getSourceRange(range, isSymbolsEnabled),
+						range => map.getSourceRange(range, isSymbolsEnabled)
 					))
 					.filter(notEmpty);
 			},
@@ -51,7 +51,7 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 				return results.flat();
-			},
+			}
 		);
 	};
 }

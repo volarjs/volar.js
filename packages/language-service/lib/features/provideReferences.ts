@@ -104,7 +104,7 @@ export function register(context: LanguageServiceContext) {
 
 				return results;
 			},
-			arr => dedupe.withLocations(arr.flat()),
+			arr => dedupe.withLocations(arr.flat())
 		);
 	};
 }

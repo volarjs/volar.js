@@ -69,7 +69,7 @@ export function register(context: LanguageServiceContext) {
 					result.push(pluginResults[0]);
 				}
 				return result;
-			},
+			}
 		);
 	};
 }

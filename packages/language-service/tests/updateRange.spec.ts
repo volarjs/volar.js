@@ -23,7 +23,7 @@ describe(`Test updateRange()`, () => {
 					end: { line: 0, character: 3 },
 				},
 				newEnd: { line: 0, character: 4 },
-			},
+			}
 		)).toEqual({
 			start: { line: 0, character: 0 },
 			end: { line: 0, character: 3 },
@@ -50,7 +50,7 @@ xx
 					end: { line: 0, character: 1 },
 				},
 				newEnd: { line: 0, character: 2 },
-			},
+			}
 		)).toEqual({
 			start: { line: 1, character: 0 },
 			end: { line: 1, character: 3 },
@@ -75,7 +75,7 @@ xx
 					end: { line: 0, character: 3 },
 				},
 				newEnd: { line: 0, character: 5 },
-			},
+			}
 		)).toEqual({
 			start: { line: 0, character: 0 },
 			end: { line: 0, character: 3 },
@@ -102,7 +102,7 @@ x123
 					end: { line: 0, character: 0 },
 				},
 				newEnd: { line: 0, character: 1 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 1 },
@@ -129,7 +129,7 @@ x123
 					end: { line: 0, character: 1 },
 				},
 				newEnd: { line: 0, character: 0 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 0 },
@@ -156,7 +156,7 @@ x123
 					end: { line: 0, character: 1 },
 				},
 				newEnd: { line: 0, character: 2 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 0 },
@@ -183,7 +183,7 @@ xxx23
 					end: { line: 0, character: 1 },
 				},
 				newEnd: { line: 0, character: 3 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 0 },
@@ -210,7 +210,7 @@ xxx23
 					end: { line: 0, character: 4 },
 				},
 				newEnd: { line: 0, character: 2 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 0 },
@@ -237,7 +237,7 @@ xx
 					end: { line: 0, character: 3 },
 				},
 				newEnd: { line: 0, character: 1 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 1 },
@@ -264,7 +264,7 @@ xx
 					end: { line: 0, character: 4 },
 				},
 				newEnd: { line: 0, character: 1 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 1 },
@@ -291,7 +291,7 @@ xx
 					end: { line: 0, character: 1 },
 				},
 				newEnd: { line: 0, character: 2 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 2 },
@@ -321,7 +321,7 @@ x
 					end: { line: 0, character: 0 },
 				},
 				newEnd: { line: 1, character: 0 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 1, character: 0 },
@@ -349,7 +349,7 @@ x123
 					end: { line: 0, character: 0 },
 				},
 				newEnd: { line: 1, character: 1 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 1, character: 1 },
@@ -377,7 +377,7 @@ x
 					end: { line: 1, character: 0 },
 				},
 				newEnd: { line: 0, character: 0 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 0 },
@@ -406,7 +406,7 @@ x
 					end: { line: 0, character: 2 },
 				},
 				newEnd: { line: 1, character: 0 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 0 },
@@ -435,7 +435,7 @@ x3
 					end: { line: 0, character: 2 },
 				},
 				newEnd: { line: 1, character: 1 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 0 },
@@ -463,7 +463,7 @@ xxxxx
 					end: { line: 1, character: 0 },
 				},
 				newEnd: { line: 0, character: 0 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 0 },
@@ -491,7 +491,7 @@ xx
 					end: { line: 1, character: 5 },
 				},
 				newEnd: { line: 0, character: 2 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 2 },
@@ -519,7 +519,7 @@ xxx123
 					end: { line: 1, character: 0 },
 				},
 				newEnd: { line: 0, character: 3 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 3 },
@@ -547,7 +547,7 @@ xxx
 					end: { line: 1, character: 0 },
 				},
 				newEnd: { line: 0, character: 0 },
-			},
+			}
 		)).toEqual(
 			{
 				start: { line: 0, character: 0 },

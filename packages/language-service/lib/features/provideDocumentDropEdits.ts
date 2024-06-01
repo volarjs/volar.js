@@ -29,11 +29,11 @@ export function register(context: LanguageServiceContext) {
 					edit.additionalEdit = transformWorkspaceEdit(
 						edit.additionalEdit,
 						context,
-						undefined,
+						undefined
 					);
 				}
 				return edit;
-			},
+			}
 		);
 	};
 }

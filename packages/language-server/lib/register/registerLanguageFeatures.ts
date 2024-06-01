@@ -77,7 +77,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 				uri,
 				params.position,
 				params.context,
-				token,
+				token
 			);
 			for (const item of list.items) {
 				fixTextEdit(item);
@@ -229,7 +229,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 				undefined,
 				server.initializeResult.capabilities.semanticTokensProvider!.legend,
 				token,
-				tokens => resultProgress?.report(tokens),
+				tokens => resultProgress?.report(tokens)
 			);
 		}) ?? { data: [] };
 	});
@@ -241,7 +241,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 				params.range,
 				server.initializeResult.capabilities.semanticTokensProvider!.legend,
 				token,
-				tokens => resultProgress?.report(tokens),
+				tokens => resultProgress?.report(tokens)
 			);
 		}) ?? { data: [] };
 	});
@@ -261,7 +261,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 							},
 						},
 					});
-				},
+				}
 			);
 		});
 		return {

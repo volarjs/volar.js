@@ -23,7 +23,7 @@ export async function documentFeatureWorker<T>(
 		},
 		worker,
 		transformResult,
-		combineResult,
+		combineResult
 	);
 }
 
@@ -68,7 +68,7 @@ export async function languageFeatureWorker<T, K>(
 
 					const rawResult = await safeCall(
 						() => worker(plugin, map.embeddedDocument, mappedArg, map),
-						`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${map.embeddedDocument.uri}.`,
+						`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${map.embeddedDocument.uri}.`
 					);
 					if (!rawResult) {
 						continue;
@@ -95,7 +95,7 @@ export async function languageFeatureWorker<T, K>(
 
 			const embeddedResult = await safeCall(
 				() => worker(plugin, document, params, undefined),
-				`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${document.uri}.`,
+				`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${document.uri}.`
 			);
 			if (!embeddedResult) {
 				continue;

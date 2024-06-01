@@ -36,7 +36,7 @@ export function register(context: LanguageServiceContext) {
 					value: hovers.map(getHoverTexts).flat().join('\n\n---\n\n'),
 				},
 				range: hovers.find(hover => hover.range && isInsideRange(hover.range, { start: position, end: position }))?.range ?? hovers[0].range,
-			}),
+			})
 		);
 
 		const markups = errorMarkups.get(uri);

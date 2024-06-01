@@ -55,7 +55,7 @@ export async function activate(context: vscode.ExtensionContext) {
 							extension.exports.volarLabs.languageServerProtocol.GetVirtualFileRequest.type,
 							{
 								uri: currentDocument.uri.toString(),
-							} satisfies GetVirtualFileRequest.ParamsType,
+							} satisfies GetVirtualFileRequest.ParamsType
 						);
 						if (virtualFile) {
 							items.push({
@@ -147,7 +147,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				);
 			}
 		}),
-		await activateShowVirtualFiles(extensions),
+		await activateShowVirtualFiles(extensions)
 	);
 
 	useVolarExtensions(

@@ -24,11 +24,11 @@ export function createTypeScriptChecker(
 					undefined,
 					tsconfigPath,
 					undefined,
-					languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
+					languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat()
 				);
 				parsed.fileNames = parsed.fileNames.map(asPosix);
 				return parsed;
-			},
+			}
 		);
 	});
 }
@@ -45,7 +45,7 @@ export function createTypeScriptInferredChecker(
 			() => ({
 				options: compilerOptions,
 				fileNames: getScriptFileNames().map(asPosix),
-			}),
+			})
 		);
 	});
 }
@@ -101,7 +101,7 @@ function createTypeScriptCheckerWorker(
 			else {
 				language.scripts.delete(uri);
 			}
-		},
+		}
 	);
 	const projectHost = getProjectHost(env);
 	language.typescript = {
@@ -114,13 +114,13 @@ function createTypeScriptCheckerWorker(
 			ts.sys,
 			language,
 			fileNameToUri,
-			projectHost,
+			projectHost
 		),
 	};
 	const languageService = createLanguageService(
 		language,
 		languageServicePlugins,
-		env,
+		env
 	);
 
 	return {

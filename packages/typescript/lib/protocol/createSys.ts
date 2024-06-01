@@ -265,7 +265,7 @@ export function createSys(
 						.map(dir => dir.name),
 				};
 			},
-			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
+			sys?.realpath ? (path => sys.realpath!(path)) : (path => path)
 		);
 		return [...new Set(matches)];
 	}

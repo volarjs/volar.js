@@ -34,7 +34,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return plugin[1].provideAutoInsertSnippet?.(document, args.selection, args.change, token);
 			},
-			snippet => snippet,
+			snippet => snippet
 		);
 	};
 }

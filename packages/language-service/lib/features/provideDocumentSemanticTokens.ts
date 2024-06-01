@@ -38,7 +38,7 @@ export function register(context: LanguageServiceContext) {
 					map.sourceDocument.offsetAt(range.start),
 					map.sourceDocument.offsetAt(range.end),
 					map.map,
-					isSemanticTokensEnabled,
+					isSemanticTokensEnabled
 				);
 				if (mapped) {
 					yield {
@@ -57,7 +57,7 @@ export function register(context: LanguageServiceContext) {
 					document,
 					range,
 					legend,
-					token,
+					token
 				);
 			},
 			(tokens, map) => {
@@ -76,7 +76,7 @@ export function register(context: LanguageServiceContext) {
 					})
 					.filter(notEmpty);
 			},
-			tokens => tokens.flat(),
+			tokens => tokens.flat()
 			// tokens => reportProgress?.(buildTokens(tokens)), // TODO: this has no effect with LSP
 		);
 		if (tokens) {

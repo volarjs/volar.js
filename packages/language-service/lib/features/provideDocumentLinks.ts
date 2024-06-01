@@ -62,7 +62,7 @@ export function register(context: LanguageServiceContext) {
 					})
 					.filter(notEmpty);
 			},
-			arr => arr.flat(),
+			arr => arr.flat()
 		) ?? [];
 	};
 }

@@ -67,7 +67,7 @@ export function createLanguageService(
 						uri.toString(),
 						languageId,
 						version,
-						snapshot.getText(0, snapshot.getLength()),
+						snapshot.getText(0, snapshot.getLength())
 					));
 				}
 				return map.get(uri)!;

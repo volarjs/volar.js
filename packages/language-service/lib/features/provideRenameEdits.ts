@@ -138,7 +138,7 @@ export function register(context: LanguageServiceContext) {
 				return transformWorkspaceEdit(
 					data,
 					context,
-					'rename',
+					'rename'
 				);
 			},
 			workspaceEdits => {
@@ -155,7 +155,7 @@ export function register(context: LanguageServiceContext) {
 				}
 
 				return workspaceEdits[0];
-			},
+			}
 		);
 	};
 }

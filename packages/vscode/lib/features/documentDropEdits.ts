@@ -54,7 +54,7 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 											ignoreIfExists: create.options?.ignoreIfExists,
 											overwrite: create.options?.overwrite,
 											contents: await file.data(),
-										},
+										}
 									);
 								}
 							}
@@ -63,6 +63,6 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 					}
 				},
 			}
-		),
+		)
 	);
 }

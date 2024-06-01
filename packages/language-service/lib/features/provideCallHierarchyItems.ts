@@ -50,7 +50,7 @@ export function register(context: LanguageServiceContext) {
 						.map(item => transformCallHierarchyItem(item, [])?.[0])
 						.filter(notEmpty);
 				},
-				arr => dedupe.withLocations(arr.flat()),
+				arr => dedupe.withLocations(arr.flat())
 			);
 		},
 

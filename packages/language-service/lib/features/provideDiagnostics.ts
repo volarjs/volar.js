@@ -266,7 +266,7 @@ export function register(context: LanguageServiceContext) {
 				(errors, map) => {
 					return transformErrorRangeBase(errors, map, shouldReportDiagnostics);
 				},
-				arr => dedupe.withDiagnostics(arr.flat()),
+				arr => dedupe.withDiagnostics(arr.flat())
 			);
 			if (result) {
 				cache.errors = result;

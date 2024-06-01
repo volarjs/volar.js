@@ -121,7 +121,7 @@ export function createTypeScriptWorkerService<T = {}>({
 			else {
 				language.scripts.delete(uri);
 			}
-		},
+		}
 	);
 	language.typescript = {
 		configFileName: undefined,
@@ -161,7 +161,7 @@ export function createTypeScriptWorkerService<T = {}>({
 				getCompilationSettings() {
 					return compilerOptions;
 				},
-			},
+			}
 		),
 	};
 

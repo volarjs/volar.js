@@ -253,7 +253,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.createTreeView('volar-servers', {
 			showCollapseAll: false,
 			treeDataProvider: tree,
-		}),
+		})
 	);
 
 	useVolarExtensions(
@@ -279,7 +279,7 @@ export function activate(context: vscode.ExtensionContext) {
 				invalidExtensions.push(extension);
 				onDidChangeTreeData.fire();
 			}
-		},
+		}
 	);
 }
 

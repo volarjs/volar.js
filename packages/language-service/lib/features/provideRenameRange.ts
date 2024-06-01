@@ -36,7 +36,7 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 				return prepares[0] as vscode.ResponseError;
-			},
+			}
 		);
 	};
 }

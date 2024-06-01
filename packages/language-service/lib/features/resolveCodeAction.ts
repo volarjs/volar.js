@@ -29,7 +29,7 @@ export function register(context: LanguageServiceContext) {
 								item.edit,
 								context,
 								'codeAction',
-								{ [data.uri]: data.version },
+								{ [data.uri]: data.version }
 							),
 						}
 						: item

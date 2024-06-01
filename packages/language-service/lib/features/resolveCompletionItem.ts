@@ -36,7 +36,7 @@ export function register(context: LanguageServiceContext) {
 							item,
 							embeddedRange => map.getSourceRange(embeddedRange),
 							map.embeddedDocument,
-							context,
+							context
 						);
 					}
 				}

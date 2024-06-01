@@ -39,12 +39,12 @@ export function createSimpleProject(languagePlugins: LanguagePlugin<URI>[]): Pro
 				else {
 					language.scripts.delete(uri);
 				}
-			},
+			}
 		);
 		return createLanguageService(
 			language,
 			server.languageServicePlugins,
-			createLanguageServiceEnvironment(server, [...server.workspaceFolders.keys()]),
+			createLanguageServiceEnvironment(server, [...server.workspaceFolders.keys()])
 		);
 	}
 }

@@ -40,13 +40,13 @@ export function activate(
 		}
 		const tsconfig = await client.sendRequest(
 			GetMatchTsConfigRequest.type,
-			client.code2ProtocolConverter.asTextDocumentIdentifier(vscode.window.activeTextEditor.document),
+			client.code2ProtocolConverter.asTextDocumentIdentifier(vscode.window.activeTextEditor.document)
 		);
 		if (tsconfig?.uri) {
 			currentTsconfigUri = vscode.Uri.parse(tsconfig.uri);
 			statusBar.text = path.relative(
 				(vscode.workspace.rootPath?.replace(/\\/g, '/') || '/'),
-				currentTsconfigUri.fsPath.replace(/\\/g, '/'),
+				currentTsconfigUri.fsPath.replace(/\\/g, '/')
 			);
 			statusBar.command = {
 				title: 'Open config file',

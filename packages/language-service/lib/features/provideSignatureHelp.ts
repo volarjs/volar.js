@@ -39,7 +39,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return plugin[1].provideSignatureHelp?.(document, position, signatureHelpContext, token);
 			},
-			data => data,
+			data => data
 		);
 	};
 }

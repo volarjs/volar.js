@@ -94,7 +94,7 @@ export function register(context: LanguageServiceContext) {
 								cacheData.list,
 								range => map.getSourceRange(range),
 								map.embeddedDocument,
-								context,
+								context
 							);
 						}
 					}
@@ -212,7 +212,7 @@ export function register(context: LanguageServiceContext) {
 							completionList,
 							range => map.getSourceRange(range, isCompletionEnabled),
 							document,
-							context,
+							context
 						);
 					}
 

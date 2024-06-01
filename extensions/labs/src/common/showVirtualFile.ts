@@ -138,8 +138,8 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 
 					return virtualCode.content;
 				}
-			},
-		),
+			}
+		)
 	);
 
 	return vscode.Disposable.from(...subscriptions);

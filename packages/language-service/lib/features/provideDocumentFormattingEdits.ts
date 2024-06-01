@@ -109,7 +109,7 @@ export function register(context: LanguageServiceContext) {
 								code,
 								level,
 								embeddedPosition,
-								onTypeParams.ch,
+								onTypeParams.ch
 							);
 						}
 					}
@@ -123,7 +123,7 @@ export function register(context: LanguageServiceContext) {
 							{
 								start: docMap.embeddedDocument.positionAt(embeddedRange.start),
 								end: docMap.embeddedDocument.positionAt(embeddedRange.end),
-							},
+							}
 						);
 					}
 
@@ -204,7 +204,7 @@ export function register(context: LanguageServiceContext) {
 					codeOptions.initialIndentLevel = computeInitialIndent(
 						sourceDocument.getText(),
 						sourceDocument.offsetAt({ line: startPosition.line, character: 0 }),
-						options,
+						options
 					);
 				}
 				for (const plugin of context.plugins) {

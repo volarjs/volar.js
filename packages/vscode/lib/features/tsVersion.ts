@@ -130,7 +130,7 @@ async function getVScodeTsdk() {
 	if (nightly) {
 		const libPath = path.join(
 			nightly.extensionPath.replace(/\\/g, '/'),
-			'node_modules/typescript/lib',
+			'node_modules/typescript/lib'
 		);
 		return {
 			path: libPath,
@@ -142,7 +142,7 @@ async function getVScodeTsdk() {
 	if (vscode.env.appRoot) {
 		const libPath = path.join(
 			vscode.env.appRoot.replace(/\\/g, '/'),
-			'extensions/node_modules/typescript/lib',
+			'extensions/node_modules/typescript/lib'
 		);
 		return {
 			path: libPath,

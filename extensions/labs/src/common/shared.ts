@@ -12,7 +12,7 @@ export async function useVolarExtensions(
 
 	context.subscriptions.push(
 		vscode.extensions.onDidChange(update),
-		vscode.window.onDidChangeActiveTextEditor(update),
+		vscode.window.onDidChangeActiveTextEditor(update)
 	);
 
 	update();

@@ -134,7 +134,7 @@ export async function createTypeScriptLS(
 			else {
 				language.scripts.delete(uri);
 			}
-		},
+		}
 	);
 	language.typescript = {
 		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
@@ -146,13 +146,13 @@ export async function createTypeScriptLS(
 			sys,
 			language,
 			asUri,
-			projectHost,
+			projectHost
 		),
 	};
 	const languageService = createLanguageService(
 		language,
 		server.languageServicePlugins,
-		serviceEnv,
+		serviceEnv
 	);
 
 	return {
@@ -174,7 +174,7 @@ export async function createTypeScriptLS(
 			sys,
 			asFileName(workspaceFolder),
 			tsconfig,
-			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
+			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat()
 		);
 		return parsedCommandLine.fileNames;
 	}

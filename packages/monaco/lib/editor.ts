@@ -33,7 +33,7 @@ export function activateMarkers(
 					stopHostingMarkers(model);
 				}
 			}
-		},
+		}
 	);
 
 	for (const model of editor.getModels()) {
@@ -77,7 +77,7 @@ export function activateMarkers(
 					visibleSubscription.dispose();
 					clearTimeout(timer);
 				}
-			},
+			}
 		);
 
 		doValidation(model);
@@ -133,7 +133,7 @@ export function activateAutoInsertion(
 				}
 				listener.clear();
 			}
-		},
+		}
 	);
 
 	for (const model of editor.getModels()) {
@@ -193,7 +193,7 @@ export function activateAutoInsertion(
 						text: lastChange.text,
 						rangeOffset: lastChange.rangeOffset,
 						rangeLength: lastChange.rangeLength,
-					},
+					}
 				);
 				if (model.getVersionId() !== version) {
 					return;

@@ -239,7 +239,7 @@ export function createTypeScriptProject(
 				serviceEnv,
 				workspaceFolder,
 				getLanguagePlugins,
-				{ asUri, asFileName },
+				{ asUri, asFileName }
 			);
 			configProjects.set(tsconfigUri, projectPromise);
 		}
@@ -260,7 +260,7 @@ export function createTypeScriptProject(
 					serviceEnv,
 					workspaceFolder,
 					getLanguagePlugins,
-					{ asUri, asFileName },
+					{ asUri, asFileName }
 				);
 			})());
 		}

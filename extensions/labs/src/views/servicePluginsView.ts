@@ -88,7 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
 					} satisfies UpdateServicePluginStateNotification.ParamsType
 				);
 			}
-		}),
+		})
 	);
 
 	useVolarExtensions(

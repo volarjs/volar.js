@@ -350,7 +350,7 @@ export function decorateLanguageService(
 						yield [reference.fileName ?? ref.fileName, reference.textSpan.start];
 					}
 				}
-			},
+			}
 		);
 		const resolved = unresolved
 			.flat()
@@ -404,7 +404,7 @@ export function decorateLanguageService(
 				typeof positionOrRange === 'number'
 					? positionOrRange
 					: positionOrRange.pos,
-				isCodeActionsEnabled,
+				isCodeActionsEnabled
 			);
 			if (generatePosition !== undefined) {
 				const por = typeof positionOrRange === 'number'
@@ -473,7 +473,7 @@ export function decorateLanguageService(
 					generateEnd,
 					errorCodes,
 					formatOptions,
-					preferences,
+					preferences
 				);
 			}
 		}
@@ -554,7 +554,7 @@ export function decorateLanguageService(
 				for (const ref of result.definitions ?? []) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			},
+			}
 		);
 		const textSpan = unresolved
 			.map(s => transformSpan(language, fileName, s.textSpan, isDefinitionEnabled)?.textSpan)
@@ -587,7 +587,7 @@ export function decorateLanguageService(
 						yield [reference.fileName, reference.textSpan.start];
 					}
 				}
-			},
+			}
 		);
 		const resolved: ts.ReferencedSymbol[] = unresolved
 			.flat()
@@ -613,7 +613,7 @@ export function decorateLanguageService(
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			},
+			}
 		);
 		const resolved = unresolved
 			.flat()
@@ -632,7 +632,7 @@ export function decorateLanguageService(
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			},
+			}
 		);
 		const resolved = unresolved
 			.flat()
@@ -651,7 +651,7 @@ export function decorateLanguageService(
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			},
+			}
 		);
 		const resolved = unresolved
 			.flat()
@@ -670,7 +670,7 @@ export function decorateLanguageService(
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			},
+			}
 		);
 		const resolved = unresolved
 			.flat()
@@ -689,7 +689,7 @@ export function decorateLanguageService(
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			},
+			}
 		);
 		const resolved = unresolved
 			.flat()

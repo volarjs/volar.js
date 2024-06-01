@@ -30,7 +30,7 @@ export function register(context: LanguageServiceContext) {
 				const result = transformWorkspaceEdit(
 					workspaceEdit,
 					context,
-					'fileName',
+					'fileName'
 				);
 
 				if (result?.documentChanges) {
