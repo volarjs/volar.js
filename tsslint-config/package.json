@@ -1,0 +1,20 @@
+{
+	"name": "@volar/tsslint-config",
+	"version": "0.0.0-20240602",
+	"license": "MIT",
+	"files": [
+		"**/*.js",
+		"**/*.d.ts"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/volarjs/volar.js.git",
+		"directory": "tsslint-config"
+	},
+	"peerDependencies": {
+		"@tsslint/config": "latest"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	}
+}

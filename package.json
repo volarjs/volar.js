@@ -9,13 +9,15 @@
 		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
 		"release:next": "npm run release -- --dist-tag next",
 		"test": "vitest run",
-		"lint": "tsl --projects **/tsconfig.json",
+		"lint": "tsslint --projects '**/tsconfig.json'",
 		"lint:fix": "npm run lint -- --fix"
 	},
 	"devDependencies": {
 		"@lerna-lite/cli": "latest",
 		"@lerna-lite/publish": "latest",
-		"tsl": "latest",
+		"@tsslint/cli": "latest",
+		"@tsslint/config": "latest",
+		"@volar/tsslint-config": "latest",
 		"typescript": "latest",
 		"vite": "latest",
 		"vitest": "latest"

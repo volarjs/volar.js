@@ -10,3 +10,7 @@ packages/*/*.map
 packages/*/lib/**/*.d.ts
 packages/*/lib/**/*.js
 packages/*/lib/**/*.map
+
+tsslint-config/*.d.ts
+tsslint-config/*.js
+tsslint-config/*.map

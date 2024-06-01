@@ -20,7 +20,7 @@ export async function useVolarExtensions(
 	async function update() {
 		if (updateTimeout) {
 			clearTimeout(updateTimeout);
-		};
+		}
 		updateTimeout = setTimeout(() => {
 			updateTimeout = undefined;
 			vscode.extensions.all.forEach(extension => {

@@ -1,4 +1,4 @@
-import { defineConfig } from 'tsl';
+import { defineConfig } from '@tsslint/config';
 import type * as ts from 'typescript';
 import * as path from 'path';
 
@@ -6,15 +6,10 @@ export default defineConfig({
 	rules: {
 		/**
 		 * @example
-		 * ```ts
+		 * ```diff
 		 * interface MyInterface {
-		 *   prop: string,
-		 * }
-		 * ```
-		 * should be
-		 * ```ts
-		 * interface MyInterface {
-		 *   prop: string;
+		 * -   prop: string,
+		 * +   prop: string;
 		 * }
 		 * ```
 		 */
@@ -49,14 +44,11 @@ export default defineConfig({
 		},
 		/**
 		 * @example
-		 * ```ts
-		 * if (foo) bar();
-		 * ```
-		 * should be
-		 * ```ts
-		 * if (foo) {
-		 * 	bar();
-		 * }
+		 * ```diff
+		 * - if (foo) bar();
+		 * + if (foo) {
+		 * +   bar();
+		 * + }
 		 * ```
 		 */
 		'braces-around-statements'({ typescript: ts, sourceFile, reportWarning }) {
@@ -103,7 +95,7 @@ export default defineConfig({
 									start:
 										ts.getTrailingCommentRanges(
 											sourceFile.text,
-											statement.getEnd(),
+											statement.getEnd()
 										)?.reverse()?.[0]?.end
 										?? statement.getEnd(),
 									length: 0,
@@ -166,12 +158,9 @@ export default defineConfig({
 		},
 		/**
 		 * @example
-		 * ```ts
-		 * const foo = (bar) => {};
-		 * ```
-		 * should be
-		 * ```ts
-		 * const foo = bar => {};
+		 * ```diff
+		 * - const foo = (bar) => {};
+		 * + const foo = bar => {};
 		 * ```
 		 */
 		'arrow-parens'({ typescript: ts, sourceFile, reportWarning }) {
@@ -304,15 +293,9 @@ export default defineConfig({
 		},
 		/**
 		 * @example
-		 * ```ts
-		 * const obj = { prop: 'value' };
-		 * obj.prop;
-		 * ```
-		 * should be
-		 * ```ts
-		 * const obj = { prop: 'value' };
-		 * // Use the property
-		 * console.log(obj.prop);
+		 * ```diff
+		 * console.log(obj.prop); // used
+		 * - obj.prop; // unused
 		 * ```
 		 */
 		'no-unused-property-access'({ typescript: ts, sourceFile, reportWarning }) {
