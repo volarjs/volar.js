@@ -155,6 +155,7 @@ export namespace GetVirtualCodeRequest {
 	};
 	export type ResponseType = {
 		content: string;
+		// TODO: Simplify this, no map required
 		mappings: Record<string, CodeMapping[]>;
 	};
 	export type ErrorType = never;

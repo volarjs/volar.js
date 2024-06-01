@@ -87,14 +87,13 @@ export function register(context: LanguageServiceContext) {
 					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 					if (virtualCode) {
-						for (const map of context.documents.getMaps(virtualCode)) {
-							const range = map.getSourceRange(reference.range, isReferencesEnabled);
-							if (range) {
-								results.push({
-									uri: map.sourceDocument.uri,
-									range,
-								});
-							}
+						const map = context.documents.getSourceMap(virtualCode);
+						const range = map.getSourceRange(reference.range, isReferencesEnabled);
+						if (range) {
+							results.push({
+								uri: map.sourceDocument.uri,
+								range,
+							});
 						}
 					}
 					else {

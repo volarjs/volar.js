@@ -8,10 +8,10 @@ export interface Language<T> {
 		get(id: T): SourceScript<T> | undefined;
 		set(id: T, snapshot: ts.IScriptSnapshot, languageId?: string, plugins?: LanguagePlugin<T>[]): SourceScript<T> | undefined;
 		delete(id: T): void;
+		fromVirtualCode(virtualCode: VirtualCode): SourceScript<T>;
 	};
 	maps: {
-		get(virtualCode: VirtualCode, scriptId?: T): SourceMap<CodeInformation> | undefined;
-		forEach(virtualCode: VirtualCode): Map<T, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>;
+		get(virtualCode: VirtualCode): SourceMap<CodeInformation>;
 	};
 	linkedCodeMaps: {
 		get(virtualCode: VirtualCode): LinkedCodeMap | undefined;
@@ -23,7 +23,7 @@ export interface Language<T> {
 			sync?(): Promise<number>;
 		};
 		languageServiceHost: ts.LanguageServiceHost;
-		getExtraServiceScript(fileName: string): [SourceScript<T>, TypeScriptExtraServiceScript] | undefined;
+		getExtraServiceScript(fileName: string): TypeScriptExtraServiceScript | undefined;
 		asScriptId(fileName: string): T;
 		asFileName(scriptId: T): string;
 	};
@@ -88,31 +88,38 @@ export interface TypeScriptExtraServiceScript extends TypeScriptServiceScript {
 }
 
 export interface LanguagePlugin<T, K extends VirtualCode = VirtualCode> {
+	/**
+	 * For files that are not opened in the IDE, the language ID will not be synchronized to the language server, so a hook is needed to parse the language ID of files that are known extension but not opened in the IDE.
+	 */
 	getLanguageId(scriptId: T): string | undefined;
+	/**
+	 * Generate a virtual code.
+	 */
 	createVirtualCode?(scriptId: T, languageId: string, snapshot: ts.IScriptSnapshot): K | undefined;
+	/**
+	 * Incremental update a virtual code. If not provide, call createVirtualCode again.
+	 */
 	updateVirtualCode?(scriptId: T, virtualCode: K, newSnapshot: ts.IScriptSnapshot): K | undefined;
+	/**
+	 * Cleanup a virtual code.
+	 */
 	disposeVirtualCode?(scriptId: T, virtualCode: K): void;
-	typescript?: {
-		/**
-		 * LSP + TS Plugin
-		 */
-		extraFileExtensions: ts.FileExtensionInfo[];
-		/**
-		 * LSP + TS Plugin
-		 */
-		resolveHiddenExtensions?: boolean;
-		/**
-		 * LSP + TS Plugin
-		 */
-		getServiceScript(rootVirtualCode: K): TypeScriptServiceScript | undefined;
-		/**
-		 * LSP only
-		 */
-		getExtraServiceScripts?(fileName: string, rootVirtualCode: K): TypeScriptExtraServiceScript[];
-		/**
-		 * LSP only
-		 */
-		resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
-	};
+	typescript?: TypeScriptGenericOptions<K> & TypeScriptNonTSPluginOptions<K>;
 }
 
+/**
+ * The following options available to all situations.
+ */
+interface TypeScriptGenericOptions<T> {
+	extraFileExtensions: ts.FileExtensionInfo[];
+	resolveHiddenExtensions?: boolean;
+	getServiceScript(rootVirtualCode: T): TypeScriptServiceScript | undefined;
+}
+
+/**
+ * The following options will not be available in TS plugin.
+ */
+interface TypeScriptNonTSPluginOptions<T> {
+	getExtraServiceScripts?(fileName: string, rootVirtualCode: T): TypeScriptExtraServiceScript[];
+	resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
+}

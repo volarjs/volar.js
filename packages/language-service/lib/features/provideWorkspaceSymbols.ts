@@ -32,11 +32,10 @@ export function register(context: LanguageServiceContext) {
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 				if (virtualCode) {
-					for (const map of context.documents.getMaps(virtualCode)) {
-						const range = map.getSourceRange(loc.range);
-						if (range) {
-							return { uri: map.sourceDocument.uri, range };
-						}
+					const map = context.documents.getSourceMap(virtualCode);
+					const range = map.getSourceRange(loc.range);
+					if (range) {
+						return { uri: map.sourceDocument.uri, range };
 					}
 				}
 				else {

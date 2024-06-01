@@ -72,19 +72,23 @@ export function createLanguageService(
 				}
 				return map.get(uri)!;
 			},
-			*getMaps(virtualCode) {
-				for (const [uri, [snapshot, map]] of context.language.maps.forEach(virtualCode)) {
-					if (!map2DocMap.has(map)) {
-						const embeddedUri = context.encodeEmbeddedDocumentUri(uri, virtualCode.id);
-						map2DocMap.set(map, new SourceMapWithDocuments(
-							this.get(uri, context.language.scripts.get(uri)!.languageId, snapshot),
+			getSourceMap(virtualCode) {
+				const map = context.language.maps.get(virtualCode);
+				let result = map2DocMap.get(map);
+				if (!result) {
+					const sourceScript = context.language.scripts.fromVirtualCode(virtualCode);
+					const embeddedUri = context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id);
+					map2DocMap.set(
+						map,
+						result = new SourceMapWithDocuments(
+							this.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot),
 							this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
 							map,
 							virtualCode,
-						));
-					}
-					yield map2DocMap.get(map)!;
+						)
+					);
 				}
+				return result;
 			},
 			getLinkedCodeMap(virtualCode, documentUri) {
 				const map = context.language.linkedCodeMaps.get(virtualCode);

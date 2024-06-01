@@ -59,7 +59,7 @@ export interface LanguageServiceContext {
 	};
 	documents: {
 		get(uri: URI, languageId: string, snapshot: ts.IScriptSnapshot): TextDocument;
-		getMaps(virtualCode: VirtualCode): Generator<SourceMapWithDocuments>;
+		getSourceMap(virtualCode: VirtualCode): SourceMapWithDocuments;
 		getLinkedCodeMap(virtualCode: VirtualCode, documentUri: URI): LinkedCodeMapWithDocument | undefined;
 	};
 	plugins: [LanguageServicePlugin, LanguageServicePluginInstance][];

@@ -144,13 +144,9 @@ export function* forEachEmbeddedDocument(
 		}
 	}
 
-	for (const map of context.documents.getMaps(current)) {
-		if (
-			sourceScriptId.toString() === map.sourceDocument.uri
-			&& !context.disabledEmbeddedDocumentUris.get(context.encodeEmbeddedDocumentUri(sourceScriptId, current.id))
-		) {
-			yield map;
-		}
+	const map = context.documents.getSourceMap(current);
+	if (!context.disabledEmbeddedDocumentUris.get(context.encodeEmbeddedDocumentUri(sourceScriptId, current.id))) {
+		yield map;
 	}
 }
 

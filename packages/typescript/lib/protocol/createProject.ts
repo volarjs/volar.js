@@ -1,4 +1,4 @@
-import { FileMap, Language, SourceScript, TypeScriptExtraServiceScript, forEachEmbeddedCode } from '@volar/language-core';
+import { FileMap, Language, TypeScriptExtraServiceScript, forEachEmbeddedCode } from '@volar/language-core';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
@@ -27,7 +27,7 @@ export function createLanguageServiceHost<T>(
 	let lastProjectVersion: number | string | undefined;
 	let tsProjectVersion = 0;
 	let tsFileRegistry = new FileMap<boolean>(sys.useCaseSensitiveFileNames);
-	let extraScriptRegistry = new FileMap<[SourceScript<T>, TypeScriptExtraServiceScript]>(sys.useCaseSensitiveFileNames);
+	let extraScriptRegistry = new FileMap<TypeScriptExtraServiceScript>(sys.useCaseSensitiveFileNames);
 	let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let languageServiceHost: ts.LanguageServiceHost = {
@@ -99,7 +99,7 @@ export function createLanguageServiceHost<T>(
 			sync();
 
 			if (extraScriptRegistry.has(fileName)) {
-				return extraScriptRegistry.get(fileName)![1].scriptKind;
+				return extraScriptRegistry.get(fileName)!.scriptKind;
 			}
 
 			const sourceScript = language.scripts.get(asScrpitId(fileName));
@@ -218,7 +218,7 @@ export function createLanguageServiceHost<T>(
 				for (const extraServiceScript of sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts?.(fileName, sourceScript.generated.root) ?? []) {
 					newTsVirtualFileSnapshots.add(extraServiceScript.code.snapshot);
 					tsFileNamesSet.add(extraServiceScript.fileName);
-					extraScriptRegistry.set(extraServiceScript.fileName, [sourceScript, extraServiceScript]);
+					extraScriptRegistry.set(extraServiceScript.fileName, extraServiceScript);
 				}
 				for (const code of forEachEmbeddedCode(sourceScript.generated.root)) {
 					newOtherVirtualFileSnapshots.add(code.snapshot);
@@ -251,7 +251,7 @@ export function createLanguageServiceHost<T>(
 		sync();
 
 		if (extraScriptRegistry.has(fileName)) {
-			return extraScriptRegistry.get(fileName)![1].code.snapshot;
+			return extraScriptRegistry.get(fileName)!.code.snapshot;
 		}
 
 		const sourceScript = language.scripts.get(asScrpitId(fileName));
@@ -278,7 +278,7 @@ export function createLanguageServiceHost<T>(
 		const version = scriptVersions.get(fileName)!;
 
 		if (extraScriptRegistry.has(fileName)) {
-			const snapshot = extraScriptRegistry.get(fileName)![1].code.snapshot;
+			const snapshot = extraScriptRegistry.get(fileName)!.code.snapshot;
 			if (!version.map.has(snapshot)) {
 				version.map.set(snapshot, version.lastVersion++);
 			}

@@ -14,13 +14,16 @@ export function createLanguage<T>(
 	scriptRegistry: Map<T, SourceScript<T>>,
 	sync: (id: T) => void
 ): Language<T> {
-	const virtualCodeToSourceFileMap = new WeakMap<VirtualCode, SourceScript<T>>();
-	const virtualCodeToMaps = new WeakMap<ts.IScriptSnapshot, Map<T, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>>();
-	const virtualCodeToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, LinkedCodeMap | undefined>();
+	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode, SourceScript<T>>();
+	const virtualCodeToSourceMap = new WeakMap<ts.IScriptSnapshot, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>();
+	const virtualCodeToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, [ts.IScriptSnapshot, LinkedCodeMap | undefined]>();
 
 	return {
 		plugins,
 		scripts: {
+			fromVirtualCode(virtualCode) {
+				return virtualCodeToSourceScriptMap.get(virtualCode)!;
+			},
 			get(id) {
 				sync(id);
 				return scriptRegistry.get(id);
@@ -57,7 +60,7 @@ export function createLanguage<T>(
 								sourceScript.generated.root = newVirtualCode;
 								sourceScript.generated.embeddedCodes.clear();
 								for (const code of forEachEmbeddedCode(sourceScript.generated.root)) {
-									virtualCodeToSourceFileMap.set(code, sourceScript);
+									virtualCodeToSourceScriptMap.set(code, sourceScript);
 									sourceScript.generated.embeddedCodes.set(code.id, code);
 								}
 								return sourceScript;
@@ -86,7 +89,7 @@ export function createLanguage<T>(
 								embeddedCodes: new Map(),
 							};
 							for (const code of forEachEmbeddedCode(virtualCode)) {
-								virtualCodeToSourceFileMap.set(code, sourceScript);
+								virtualCodeToSourceScriptMap.set(code, sourceScript);
 								sourceScript.generated.embeddedCodes.set(code.id, code);
 							}
 							break;
@@ -106,81 +109,43 @@ export function createLanguage<T>(
 			},
 		},
 		maps: {
-			get(virtualCode, scriptId) {
-				if (!scriptId) {
-					const sourceScript = virtualCodeToSourceFileMap.get(virtualCode);
-					if (!sourceScript) {
-						return;
-					}
-					scriptId = sourceScript.id;
-				}
-				for (const [id, [_snapshot, map]] of this.forEach(virtualCode)) {
-					if (id === scriptId) {
-						return map;
-					}
-				}
-			},
-			forEach(virtualCode) {
-				let map = virtualCodeToMaps.get(virtualCode.snapshot);
-				if (!map) {
-					map = new Map();
-					virtualCodeToMaps.set(virtualCode.snapshot, map);
-				}
-				updateVirtualCodeMapOfMap<T>(virtualCode, map, id => {
-					if (id) {
+			get(virtualCode) {
+				const sourceScript = virtualCodeToSourceScriptMap.get(virtualCode)!;
+				let mapCache = virtualCodeToSourceMap.get(virtualCode.snapshot);
+				if (mapCache?.[0] !== sourceScript.snapshot) {
+					if (virtualCode.mappings.some(mapping => mapping.source)) {
 						throw 'not implemented';
-						// const sourceScript = sourceScripts.get(id)!;
-						// return [id, sourceScript.snapshot];
 					}
-					else {
-						const sourceScript = virtualCodeToSourceFileMap.get(virtualCode)!;
-						return [sourceScript.id, sourceScript.snapshot];
-					}
-				});
-				return map;
+					virtualCodeToSourceMap.set(
+						virtualCode.snapshot,
+						mapCache = [
+							sourceScript.snapshot,
+							new SourceMap(virtualCode.mappings),
+						]
+					);
+				}
+				return mapCache[1];
 			},
 		},
 		linkedCodeMaps: {
 			get(virtualCode) {
-				if (!virtualCodeToLinkedCodeMap.has(virtualCode.snapshot)) {
+				const sourceScript = virtualCodeToSourceScriptMap.get(virtualCode)!;
+				let mapCache = virtualCodeToLinkedCodeMap.get(virtualCode.snapshot);
+				if (mapCache?.[0] !== sourceScript.snapshot) {
 					virtualCodeToLinkedCodeMap.set(
 						virtualCode.snapshot,
-						virtualCode.linkedCodeMappings
-							? new LinkedCodeMap(virtualCode.linkedCodeMappings)
-							: undefined
+						mapCache = [
+							sourceScript.snapshot,
+							virtualCode.linkedCodeMappings
+								? new LinkedCodeMap(virtualCode.linkedCodeMappings)
+								: undefined,
+						]
 					);
 				}
-				return virtualCodeToLinkedCodeMap.get(virtualCode.snapshot);
+				return mapCache[1];
 			},
 		},
 	};
-}
-
-export function updateVirtualCodeMapOfMap<T>(
-	virtualCode: VirtualCode,
-	mapOfMap: Map<T, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>,
-	getSourceSnapshot: (source: string | undefined) => [T, ts.IScriptSnapshot] | undefined
-) {
-	const sources = new Set<string | undefined>();
-	if (!virtualCode.mappings.length) {
-		const source = getSourceSnapshot(undefined);
-		if (source) {
-			mapOfMap.set(source[0], [source[1], new SourceMap([])]);
-		}
-	}
-	for (const mapping of virtualCode.mappings) {
-		if (sources.has(mapping.source)) {
-			continue;
-		}
-		sources.add(mapping.source);
-		const source = getSourceSnapshot(mapping.source);
-		if (!source) {
-			continue;
-		}
-		if (!mapOfMap.has(source[0]) || mapOfMap.get(source[0])![0] !== source[1]) {
-			mapOfMap.set(source[0], [source[1], new SourceMap(virtualCode.mappings.filter(mapping2 => mapping2.source === mapping.source))]);
-		}
-	}
 }
 
 export function* forEachEmbeddedCode(virtualCode: VirtualCode): Generator<VirtualCode> {
