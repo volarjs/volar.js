@@ -16,10 +16,10 @@ importers:
         version: 3.4.0(typescript@5.4.5)
       '@tsslint/cli':
         specifier: latest
-        version: 0.0.11(typescript@5.4.5)
+        version: 0.0.12(typescript@5.4.5)
       '@tsslint/config':
         specifier: latest
-        version: 0.0.11
+        version: 0.0.12
       '@volar/tsslint-config':
         specifier: latest
         version: link:tsslint-config
@@ -42,13 +42,13 @@ importers:
         specifier: ^1.82.0
         version: 1.89.0
       '@volar/language-server':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../../packages/vscode
       esbuild:
         specifier: latest
@@ -69,7 +69,7 @@ importers:
         specifier: ^8.56.10
         version: 8.56.10
       '@volar/language-core':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-core
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -78,10 +78,10 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -103,22 +103,22 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-service
       '@volar/snapshot-document':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../snapshot-document
       '@volar/typescript':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../typescript
       path-browserify:
         specifier: ^1.0.1
@@ -146,7 +146,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-core
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -161,10 +161,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.3.3
@@ -198,10 +198,10 @@ importers:
   packages/test-utils:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-core
       '@volar/language-server':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-server
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -217,7 +217,7 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-core
       path-browserify:
         specifier: ^1.0.1
@@ -233,13 +233,13 @@ importers:
         specifier: latest
         version: 1.0.2
       '@volar/language-service':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 2.3.0-alpha.4
+        specifier: 2.3.0-alpha.5
         version: link:../language-server
       path-browserify:
         specifier: ^1.0.1
@@ -265,7 +265,7 @@ importers:
     dependencies:
       '@tsslint/config':
         specifier: latest
-        version: 0.0.11
+        version: 0.0.12
     devDependencies:
       '@types/node':
         specifier: latest
@@ -993,17 +993,17 @@ packages:
     resolution: {integrity: sha512-LtoMMhxAlorcGhmFYI+LhPgbPZCkgP6ra1YL604EeF6U98pLlQ3iWIGMdWSC+vWmPBWBNgmDBAhnAobLROJmwg==}
     engines: {node: '>=18'}
 
-  '@tsslint/cli@0.0.11':
-    resolution: {integrity: sha512-4qC7S+yGtdUIVHOz2L7Y62E5tN3D7uV6h9XW53Xypb0Hmpi28nm0JH3ZdeUyN8sW02znLAyx53KbWlAQGmHNQQ==}
+  '@tsslint/cli@0.0.12':
+    resolution: {integrity: sha512-Tk93hP6eoPYHoQMGqrmrTas8gfX5CLSqaX9KZBUkx9A3U9/9B2KowOe1bo2vZjXZCIvFKa/8dovr61nmsvFylg==}
     hasBin: true
     peerDependencies:
       typescript: '*'
 
-  '@tsslint/config@0.0.11':
-    resolution: {integrity: sha512-pcq9CpwL2W4IiiTT2MpdMJeHInXvOLmIANjAh80tJaxV75S8z1pi7IUIkzgFxTLOUIRskWq1Xn0BlTD76t8l1Q==}
+  '@tsslint/config@0.0.12':
+    resolution: {integrity: sha512-SCgNA7y4tCvRVGZrb0kTd/XkEyhs11zu4awC9CzFLyzj6DKlJR82oOqPQo6xKM0xEuyl6h2rysF2LJwFPL3PHA==}
 
-  '@tsslint/core@0.0.11':
-    resolution: {integrity: sha512-MLGN6HrdvoQIgaPMw4d+Ky7e92Os/9OzOhSi0kY/J+KHw+bADQDFgZA24QC9DGUWhy30k3Kpw1FooqGyCNyByA==}
+  '@tsslint/core@0.0.12':
+    resolution: {integrity: sha512-UkNNGzoX0Kd2FlVO2qzGXd4ZZzBuz34WVrWR+gBTJMo2K1fDV/sSjgNF7tjdeikJg/tgcKk4O6xkBbzdrchESQ==}
 
   '@tufjs/canonical-json@2.0.0':
     resolution: {integrity: sha512-yVtV8zsdo8qFHe+/3kw81dSLyF7D576A5cCFCi4X7B39tWT7SekaEFUnvnWJHz+9qO7qJTah1JbrDjWKqFtdWA==}
@@ -3685,19 +3685,19 @@ snapshots:
 
   '@sindresorhus/merge-streams@2.3.0': {}
 
-  '@tsslint/cli@0.0.11(typescript@5.4.5)':
+  '@tsslint/cli@0.0.12(typescript@5.4.5)':
     dependencies:
       '@clack/prompts': 0.7.0
-      '@tsslint/config': 0.0.11
-      '@tsslint/core': 0.0.11
+      '@tsslint/config': 0.0.12
+      '@tsslint/core': 0.0.12
       glob: 10.4.1
       typescript: 5.4.5
 
-  '@tsslint/config@0.0.11':
+  '@tsslint/config@0.0.12':
     dependencies:
       esbuild: 0.19.12
 
-  '@tsslint/core@0.0.11':
+  '@tsslint/core@0.0.12':
     dependencies:
       error-stack-parser: 2.1.4
       source-map-support: 0.5.21
