@@ -71,15 +71,15 @@ export function createServerBase(
 
 	function initialize(
 		initializeParams: vscode.InitializeParams,
+		project: Project,
 		languageServicePlugins: LanguageServicePlugin[],
-		languageServices: Project,
 		options?: {
 			pullModelDiagnostics?: boolean;
 		}
 	) {
 		status.initializeParams = initializeParams;
+		status.project = project;
 		status.languageServicePlugins = languageServicePlugins;
-		status.project = languageServices;
 		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
 
 		if (initializeParams.workspaceFolders?.length) {
@@ -180,7 +180,7 @@ export function createServerBase(
 
 		if (!status.pullModelDiagnostics && status.initializeResult.capabilities.diagnosticProvider) {
 			status.initializeResult.capabilities.diagnosticProvider = undefined;
-			activateServerPushDiagnostics(languageServices);
+			activateServerPushDiagnostics(project);
 		}
 
 		if (capabilitiesArr.some(data => data.autoInsertionProvider)) {
