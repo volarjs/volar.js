@@ -14,6 +14,6 @@ export type LanguageServer = ReturnType<typeof createServerBase>;
 export interface VolarInitializeResult extends InitializeResult {
 	autoInsertion?: {
 		triggerCharacters: string[];
-		configurationSections: (string | undefined)[];
+		configurationSections: (string | null)[];
 	};
 };

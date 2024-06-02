@@ -185,7 +185,14 @@ export function createServerBase(
 
 		if (capabilitiesArr.some(data => data.autoInsertionProvider)) {
 			const allTriggerCharacters: string[] = [];
-			const allConfigurationSections: (string | undefined)[] = [];
+			const allConfigurationSections: (string | null)[] = [];
+			const tryAdd = (char: string, section: string | null) => {
+				const index = allTriggerCharacters.indexOf(char);
+				if (index === -1 || allConfigurationSections[index] !== section) {
+					allTriggerCharacters.push(char);
+					allConfigurationSections.push(section);
+				}
+			};
 			for (const data of capabilitiesArr) {
 				if (data.autoInsertionProvider) {
 					const { triggerCharacters, configurationSections } = data.autoInsertionProvider;
@@ -194,10 +201,14 @@ export function createServerBase(
 						if (configurationSections.length !== triggerCharacters.length) {
 							throw new Error('configurationSections.length !== triggerCharacters.length');
 						}
-						allConfigurationSections.push(...configurationSections);
+						for (let i = 0; i < configurationSections.length; i++) {
+							tryAdd(triggerCharacters[i], configurationSections[i]);
+						}
 					}
 					else {
-						allConfigurationSections.push(...triggerCharacters.map(() => undefined));
+						for (const char of triggerCharacters) {
+							tryAdd(char, null);
+						}
 					}
 				}
 			}
@@ -215,7 +226,7 @@ export function createServerBase(
 
 	function initialized() {
 		status.project.setup(status);
-		registerWorkspaceFolderWatcher();
+		registerWorkspaceFoldersWatcher();
 		registerConfigurationWatcher();
 		updateHttpSettings();
 		onDidChangeConfiguration(updateHttpSettings);
@@ -351,7 +362,7 @@ export function createServerBase(
 		}
 	}
 
-	function registerWorkspaceFolderWatcher() {
+	function registerWorkspaceFoldersWatcher() {
 		if (status.initializeParams?.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 				for (const folder of e.added) {
