@@ -15,62 +15,62 @@ export function registerLanguageFeatures(server: LanguageServer) {
 
 	server.connection.onDocumentFormatting(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.format(uri, params.options, undefined, undefined, token);
 		});
 	});
 	server.connection.onDocumentRangeFormatting(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.format(uri, params.options, params.range, undefined, token);
 		});
 	});
 	server.connection.onDocumentOnTypeFormatting(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.format(uri, params.options, undefined, params, token);
 		});
 	});
 	server.connection.onSelectionRanges(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.getSelectionRanges(uri, params.positions, token);
 		});
 	});
 	server.connection.onFoldingRanges(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.getFoldingRanges(uri, token);
 		});
 	});
 	server.connection.languages.onLinkedEditingRange(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.findLinkedEditingRanges(uri, params.position, token);
 		});
 	});
 	server.connection.onDocumentSymbol(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.findDocumentSymbols(uri, token);
 		});
 	});
 	server.connection.onDocumentColor(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.findDocumentColors(uri, token);
 		});
 	});
 	server.connection.onColorPresentation(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.getColorPresentations(uri, params.color, params.range, token);
 		});
 	});
 
 	server.connection.onCompletion(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, async languageService => {
+		return await worker(uri, token, async languageService => {
 			lastCompleteUri = params.textDocument.uri;
 			lastCompleteLs = languageService;
 			const list = await languageService.doComplete(
@@ -94,19 +94,19 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	});
 	server.connection.onHover(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.doHover(uri, params.position, token);
 		});
 	});
 	server.connection.onSignatureHelp(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.getSignatureHelp(uri, params.position, params.context, token);
 		});
 	});
 	server.connection.onPrepareRename(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, async languageService => {
+		return await worker(uri, token, async languageService => {
 			const result = await languageService.prepareRename(uri, params.position, token);
 			if (result && 'message' in result) {
 				return new vscode.ResponseError(0, result.message);
@@ -116,13 +116,13 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	});
 	server.connection.onRenameRequest(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.doRename(uri, params.position, params.newName, token);
 		});
 	});
 	server.connection.onCodeLens(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, async languageService => {
+		return await worker(uri, token, languageService => {
 			lastCodeLensLs = languageService;
 			return languageService.doCodeLens(uri, token);
 		});
@@ -132,7 +132,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	});
 	server.connection.onCodeAction(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, async languageService => {
+		return await worker(uri, token, async languageService => {
 			lastCodeActionLs = languageService;
 			let codeActions = await languageService.doCodeActions(uri, params.range, params.context, token) ?? [];
 			for (const codeAction of codeActions) {
@@ -154,37 +154,37 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	});
 	server.connection.onReferences(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.findReferences(uri, params.position, { includeDeclaration: true }, token);
 		});
 	});
 	server.connection.onRequest(FindFileReferenceRequest.type, async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.findFileReferences(uri, token);
 		});
 	});
 	server.connection.onImplementation(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.findImplementations(uri, params.position, token);
 		});
 	});
 	server.connection.onDefinition(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.findDefinition(uri, params.position, token);
 		});
 	});
 	server.connection.onTypeDefinition(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.findTypeDefinition(uri, params.position, token);
 		});
 	});
 	server.connection.onDocumentHighlight(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.findDocumentHighlights(uri, params.position, token);
 		});
 	});
@@ -210,7 +210,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	});
 	server.connection.languages.callHierarchy.onPrepare(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return await worker(uri, token, async languageService => {
+		return await worker(uri, token, languageService => {
 			lastCallHierarchyLs = languageService;
 			return languageService.callHierarchy.doPrepare(uri, params.position, token);
 		}) ?? [];
@@ -271,7 +271,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	});
 	server.connection.languages.inlayHint.on(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, async languageService => {
+		return await worker(uri, token, languageService => {
 			lastInlayHintLs = languageService;
 			return languageService.getInlayHints(uri, params.range, token);
 		});
@@ -296,7 +296,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	});
 	server.connection.onRequest(AutoInsertRequest.type, async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
-		return worker(uri, token, languageService => {
+		return await worker(uri, token, languageService => {
 			return languageService.doAutoInsert(uri, params.selection, params.change, token);
 		});
 	});

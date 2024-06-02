@@ -413,5 +413,39 @@ export default defineConfig({
 				ts.forEachChild(node, walk);
 			});
 		},
+		'no-async-without-await'({ typescript: ts, sourceFile, reportWarning }) {
+			ts.forEachChild(sourceFile, function walk(node) {
+				if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node)) {
+					const awaitModifer = node.modifiers?.find(modifier => modifier.kind === ts.SyntaxKind.AsyncKeyword);
+					if (awaitModifer && node.body) {
+						let hasAwait = false;
+						ts.forEachChild(node.body, function walk(node) {
+							hasAwait ||= ts.isAwaitExpression(node);
+							ts.forEachChild(node, walk);
+						});
+						if (!hasAwait) {
+							reportWarning(
+								`Function is declared as async but does not use await.`,
+								awaitModifer.getStart(sourceFile),
+								awaitModifer.getEnd()
+							).withFix(
+								'Remove async modifier',
+								() => [{
+									fileName: sourceFile.fileName,
+									textChanges: [{
+										span: {
+											start: awaitModifer.getStart(sourceFile),
+											length: awaitModifer.getEnd() - awaitModifer.getStart(sourceFile),
+										},
+										newText: ''
+									}]
+								}]
+							);
+						}
+					}
+				}
+				ts.forEachChild(node, walk);
+			});
+		},
 	},
 });

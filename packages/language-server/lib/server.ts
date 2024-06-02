@@ -218,14 +218,13 @@ export function createServerBase(
 			};
 		}
 
-		registerEditorFeatures(status);
-		registerLanguageFeatures(status);
-
 		return status.initializeResult;
 	}
 
 	function initialized() {
 		status.project.setup(status);
+		registerEditorFeatures(status);
+		registerLanguageFeatures(status);
 		registerWorkspaceFoldersWatcher();
 		registerConfigurationWatcher();
 		updateHttpSettings();
