@@ -206,7 +206,7 @@ export function register(context: LanguageServiceContext) {
 			}
 		}
 
-		async function collectErrors() {
+		function collectErrors() {
 			return Object.values(lastResponse).flatMap(({ errors }) => errors);
 		}
 

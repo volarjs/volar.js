@@ -47,7 +47,7 @@ describe('SnapshotDocument', () => {
 		expect(changeRange).toEqual({ span: { start: 5, length: 0 }, newLength: 5 });
 	});
 
-	it('allows GC of unreferenced snapshots', async () => {
+	it('allows GC of unreferenced snapshots', () => {
 		const _WeakRef = globalThis.WeakRef;
 
 		(globalThis as any).WeakRef = class <T> {

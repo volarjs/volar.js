@@ -4,7 +4,7 @@ import type { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
 import type { LanguageServicePlugin, LanguageServicePluginInstance, LanguageServiceContext } from '../types';
 
-export async function documentFeatureWorker<T>(
+export function documentFeatureWorker<T>(
 	context: LanguageServiceContext,
 	uri: URI,
 	valid: (map: SourceMapWithDocuments) => boolean,

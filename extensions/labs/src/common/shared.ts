@@ -1,7 +1,7 @@
 import type { LabsInfo } from '@volar/vscode';
 import * as vscode from 'vscode';
 
-export async function useVolarExtensions(
+export function useVolarExtensions(
 	context: vscode.ExtensionContext,
 	addExtension: (extension: vscode.Extension<LabsInfo>) => void
 ) {
@@ -17,7 +17,7 @@ export async function useVolarExtensions(
 
 	update();
 
-	async function update() {
+	function update() {
 		if (updateTimeout) {
 			clearTimeout(updateTimeout);
 		}

@@ -231,7 +231,7 @@ export function createServerBase(
 		onDidChangeConfiguration(updateHttpSettings);
 	}
 
-	async function shutdown() {
+	function shutdown() {
 		status.project.reload();
 	}
 

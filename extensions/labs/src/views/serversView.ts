@@ -28,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeTreeData = new vscode.EventEmitter<void>();
 	const tree: vscode.TreeDataProvider<LanguageClientItem | InvalidLanguageClientItem | LanguageClientFieldItem> = {
 		onDidChangeTreeData: onDidChangeTreeData.event,
-		async getChildren(element) {
+		getChildren(element) {
 			// root
 			if (!element) {
 				return [

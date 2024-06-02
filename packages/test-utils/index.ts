@@ -194,7 +194,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			assert(!Array.isArray(result));
 			return result;
 		},
-		async sendCompletionResolveRequest(item: _.CompletionItem) {
+		sendCompletionResolveRequest(item: _.CompletionItem) {
 			return connection.sendRequest(
 				_.CompletionResolveRequest.type,
 				item satisfies _.CompletionItem

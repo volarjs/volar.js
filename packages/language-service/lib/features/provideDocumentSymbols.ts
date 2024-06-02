@@ -15,7 +15,7 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			map => map.map.mappings.some(mapping => isSymbolsEnabled(mapping.data)),
-			async (plugin, document) => {
+			(plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
 				}

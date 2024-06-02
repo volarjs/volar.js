@@ -50,7 +50,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 			}
 		}),
 		vscode.languages.registerHoverProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME }, {
-			async provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
+			provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
 
 				const maps = virtualUriToSourceMap.get(document.uri.toString());
 				if (!maps) {

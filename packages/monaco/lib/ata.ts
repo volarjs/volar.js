@@ -68,7 +68,7 @@ export function activateAutomaticTypeAcquisition(
 					return await _readFile(path);
 				}
 			},
-			async readDirectory(uri) {
+			readDirectory(uri) {
 
 				const fileName = uriConverter.asFileName(uri);
 
