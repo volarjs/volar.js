@@ -6,7 +6,7 @@ import * as vscode from 'vscode-languageserver';
 import type { URI } from 'vscode-uri';
 import type { LanguageServer } from '../types';
 
-export interface TypeScriptLS {
+export interface TypeScriptProjectLS {
 	askedFiles: UriMap<boolean>;
 	tryAddFile(fileName: string): void;
 	getParsedCommandLine(): ts.ParsedCommandLine;
@@ -32,7 +32,7 @@ export async function createTypeScriptLS(
 	serviceEnv: LanguageServiceEnvironment,
 	workspaceFolder: URI,
 	getLanguagePlugins: (
-		serviceEnv: LanguageServiceEnvironment,
+		env: LanguageServiceEnvironment,
 		projectContext: ProjectExposeContext
 	) => ProviderResult<LanguagePlugin<URI>[]>,
 	{
@@ -42,7 +42,7 @@ export async function createTypeScriptLS(
 		asUri(fileName: string): URI;
 		asFileName(uri: URI): string;
 	}
-): Promise<TypeScriptLS> {
+): Promise<TypeScriptProjectLS> {
 
 	let parsedCommandLine: ts.ParsedCommandLine;
 	let projectVersion = 0;

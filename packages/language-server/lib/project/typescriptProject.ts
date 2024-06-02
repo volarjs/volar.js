@@ -3,10 +3,10 @@ import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import type { LanguageServer, Project } from '../types';
+import type { LanguageServer, LanguageServerProject } from '../types';
 import { getInferredCompilerOptions } from './inferredCompilerOptions';
 import { createLanguageServiceEnvironment } from './simpleProject';
-import { ProjectExposeContext, createTypeScriptLS, type TypeScriptLS } from './typescriptProjectLs';
+import { ProjectExposeContext, createTypeScriptLS, type TypeScriptProjectLS } from './typescriptProjectLs';
 
 const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
@@ -18,19 +18,42 @@ export function createTypeScriptProject(
 		projectContext: ProjectExposeContext
 	) => ProviderResult<LanguagePlugin<URI>[]>
 ) {
-	let initialized = false;
+	let server: LanguageServer;
 
 	const { asFileName, asUri } = createUriConverter();
-	const configProjects = createUriMap<Promise<TypeScriptLS>>();
-	const inferredProjects = createUriMap<Promise<TypeScriptLS>>();
+	const configProjects = createUriMap<Promise<TypeScriptProjectLS>>();
+	const inferredProjects = createUriMap<Promise<TypeScriptProjectLS>>();
 	const rootTsConfigs = new Set<string>();
 	const searchedDirs = new Set<string>();
-	const projects: Project = {
-		async getLanguageService(server, uri) {
-			if (!initialized) {
-				initialized = true;
-				initialize(server);
-			}
+	const projects: LanguageServerProject = {
+		setup(_server) {
+			server = _server;
+			server.onDidChangeWatchedFiles(({ changes }) => {
+				const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
+
+				for (const change of tsConfigChanges) {
+					const changeUri = URI.parse(change.uri);
+					const changeFileName = asFileName(changeUri);
+					if (change.type === vscode.FileChangeType.Created) {
+						rootTsConfigs.add(changeFileName);
+					}
+					else if ((change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Deleted) && configProjects.has(changeUri)) {
+						if (change.type === vscode.FileChangeType.Deleted) {
+							rootTsConfigs.delete(changeFileName);
+						}
+						const project = configProjects.get(changeUri);
+						configProjects.delete(changeUri);
+						project?.then(project => project.dispose());
+					}
+				}
+
+				if (tsConfigChanges.length) {
+					server.clearPushDiagnostics();
+				}
+				server.refresh(projects);
+			});
+		},
+		async getLanguageService(uri) {
 			const tsconfig = await findMatchTSConfig(server, uri);
 			if (tsconfig) {
 				const project = await getOrCreateConfiguredProject(server, tsconfig);
@@ -59,33 +82,6 @@ export function createTypeScriptProject(
 		},
 	};
 	return projects;
-
-	function initialize(server: LanguageServer) {
-		server.onDidChangeWatchedFiles(({ changes }) => {
-			const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
-
-			for (const change of tsConfigChanges) {
-				const changeUri = URI.parse(change.uri);
-				const changeFileName = asFileName(changeUri);
-				if (change.type === vscode.FileChangeType.Created) {
-					rootTsConfigs.add(changeFileName);
-				}
-				else if ((change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Deleted) && configProjects.has(changeUri)) {
-					if (change.type === vscode.FileChangeType.Deleted) {
-						rootTsConfigs.delete(changeFileName);
-					}
-					const project = configProjects.get(changeUri);
-					configProjects.delete(changeUri);
-					project?.then(project => project.dispose());
-				}
-			}
-
-			if (tsConfigChanges.length) {
-				server.clearPushDiagnostics();
-			}
-			server.refresh(projects);
-		});
-	}
 
 	async function findMatchTSConfig(server: LanguageServer, uri: URI) {
 

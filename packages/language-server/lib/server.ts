@@ -5,7 +5,7 @@ import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
-import type { Project, VolarInitializeResult } from './types.js';
+import type { LanguageServerProject, VolarInitializeResult } from './types.js';
 
 export * from '@volar/snapshot-document';
 
@@ -45,7 +45,7 @@ export function createServerBase(
 		initializeParams: undefined as unknown as vscode.InitializeParams,
 		initializeResult: undefined as unknown as VolarInitializeResult,
 		languageServicePlugins: [] as unknown as LanguageServicePlugin[],
-		project: undefined as unknown as Project,
+		project: undefined as unknown as LanguageServerProject,
 		pullModelDiagnostics: false,
 		documents,
 		workspaceFolders: createUriMap<boolean>(),
@@ -71,7 +71,7 @@ export function createServerBase(
 
 	function initialize(
 		initializeParams: vscode.InitializeParams,
-		project: Project,
+		project: LanguageServerProject,
 		languageServicePlugins: LanguageServicePlugin[],
 		options?: {
 			pullModelDiagnostics?: boolean;
@@ -214,6 +214,7 @@ export function createServerBase(
 	}
 
 	function initialized() {
+		status.project.setup(status);
 		registerWorkspaceFolderWatcher();
 		registerConfigurationWatcher();
 		updateHttpSettings();
@@ -221,7 +222,7 @@ export function createServerBase(
 	}
 
 	async function shutdown() {
-		status.project.reload(status);
+		status.project.reload();
 	}
 
 	async function updateHttpSettings() {
@@ -359,12 +360,12 @@ export function createServerBase(
 				for (const folder of e.removed) {
 					status.workspaceFolders.delete(URI.parse(folder.uri));
 				}
-				status.project.reload(status);
+				status.project.reload();
 			});
 		}
 	}
 
-	function activateServerPushDiagnostics(projects: Project) {
+	function activateServerPushDiagnostics(projects: LanguageServerProject) {
 		documents.onDidChangeContent(({ document }) => {
 			pushAllDiagnostics(projects, document.uri);
 		});
@@ -382,7 +383,7 @@ export function createServerBase(
 		}
 	}
 
-	async function refresh(projects: Project) {
+	async function refresh(projects: LanguageServerProject) {
 
 		const req = ++semanticTokensReq;
 
@@ -406,7 +407,7 @@ export function createServerBase(
 		}
 	}
 
-	async function pushAllDiagnostics(projects: Project, docUri?: string) {
+	async function pushAllDiagnostics(projects: LanguageServerProject, docUri?: string) {
 		const req = ++documentUpdatedReq;
 		const delay = 250;
 		const token: vscode.CancellationToken = {
@@ -435,9 +436,9 @@ export function createServerBase(
 		}
 	}
 
-	async function pushDiagnostics(projects: Project, uriStr: string, version: number, cancel: vscode.CancellationToken) {
+	async function pushDiagnostics(projects: LanguageServerProject, uriStr: string, version: number, cancel: vscode.CancellationToken) {
 		const uri = URI.parse(uriStr);
-		const languageService = (await projects.getLanguageService(status, uri));
+		const languageService = (await projects.getLanguageService(uri));
 		const errors = await languageService.doValidation(uri, cancel, result => {
 			connection.sendDiagnostics({ uri: uriStr, diagnostics: result, version });
 		});

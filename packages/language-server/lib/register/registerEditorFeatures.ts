@@ -47,12 +47,12 @@ export function registerEditorFeatures(server: LanguageServer) {
 		}
 
 		const uri = URI.parse(textDocument.uri);
-		const languageService = (await server.project.getLanguageService(server, uri));
+		const languageService = (await server.project.getLanguageService(uri));
 		return languageService.doDocumentDrop(uri, position, dataTransferMap, token);
 	});
 	server.connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const uri = URI.parse(params.uri);
-		const languageService = (await server.project.getLanguageService(server, uri));
+		const languageService = (await server.project.getLanguageService(uri));
 		if (languageService.context.language.typescript?.configFileName) {
 			const { configFileName, asScriptId } = languageService.context.language.typescript;
 			return { uri: asScriptId(configFileName).toString() };
@@ -60,7 +60,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 	});
 	server.connection.onRequest(GetVirtualFileRequest.type, async document => {
 		const uri = URI.parse(document.uri);
-		const languageService = (await server.project.getLanguageService(server, uri));
+		const languageService = (await server.project.getLanguageService(uri));
 		const documentUri = URI.parse(document.uri);
 		const sourceScript = languageService.context.language.scripts.get(documentUri);
 		if (sourceScript?.generated) {
@@ -87,7 +87,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 	});
 	server.connection.onRequest(GetVirtualCodeRequest.type, async params => {
 		const uri = URI.parse(params.fileUri);
-		const languageService = (await server.project.getLanguageService(server, uri));
+		const languageService = (await server.project.getLanguageService(uri));
 		const sourceScript = languageService.context.language.scripts.get(URI.parse(params.fileUri));
 		const virtualCode = sourceScript?.generated?.embeddedCodes.get(params.virtualCodeId);
 		if (virtualCode) {
@@ -105,7 +105,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 		const fsModeName = 'fs'; // avoid bundle
 		const fs: typeof import('fs') = await import(fsModeName);
 		const uri = URI.parse(params.uri);
-		const languageService = (await server.project.getLanguageService(server, uri));
+		const languageService = (await server.project.getLanguageService(uri));
 
 		if (languageService.context.language.typescript) {
 
@@ -145,7 +145,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 			size: number;
 		}>();
 
-		for (const languageService of await server.project.getExistingLanguageServices(server)) {
+		for (const languageService of await server.project.getExistingLanguageServices()) {
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
 			if (program && languageService.context.language.typescript) {
@@ -202,7 +202,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 	});
 	server.connection.onNotification(UpdateVirtualCodeStateNotification.type, async params => {
 		const uri = URI.parse(params.fileUri);
-		const languageService = await server.project.getLanguageService(server, uri);
+		const languageService = await server.project.getLanguageService(uri);
 		const virtualFileUri = languageService.context.encodeEmbeddedDocumentUri(URI.parse(params.fileUri), params.virtualCodeId);
 		if (params.disabled) {
 			languageService.context.disabledEmbeddedDocumentUris.set(virtualFileUri, true);
@@ -213,7 +213,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 	});
 	server.connection.onNotification(UpdateServicePluginStateNotification.type, async params => {
 		const uri = URI.parse(params.uri);
-		const languageService = await server.project.getLanguageService(server, uri);
+		const languageService = await server.project.getLanguageService(uri);
 		const plugin = languageService.context.plugins[params.serviceId][1];
 		if (params.disabled) {
 			languageService.context.disabledServicePlugins.add(plugin);
@@ -224,7 +224,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 	});
 	server.connection.onRequest(GetServicePluginsRequest.type, async params => {
 		const uri = URI.parse(params.uri);
-		const languageService = await server.project.getLanguageService(server, uri);
+		const languageService = await server.project.getLanguageService(uri);
 		const result: GetServicePluginsRequest.ResponseType = [];
 		for (let pluginIndex = 0; pluginIndex < languageService.context.plugins.length; pluginIndex++) {
 			const plugin = languageService.context.plugins[pluginIndex];
