@@ -81,6 +81,8 @@ export interface TypeScriptServiceScript {
 	code: VirtualCode;
 	extension: '.ts' | '.js' | '.mts' | '.mjs' | '.cjs' | '.cts' | '.d.ts' | string;
 	scriptKind: ts.ScriptKind;
+	/** See #188 */
+	preventLeadingOffset?: boolean;
 }
 
 export interface TypeScriptExtraServiceScript extends TypeScriptServiceScript {

@@ -1,4 +1,4 @@
-import type { CodeInformation, SourceMap, SourceScript } from '@volar/language-core';
+import type { CodeInformation, SourceMap, SourceScript, TypeScriptServiceScript } from '@volar/language-core';
 import { Language, shouldReportDiagnostics } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { getServiceScript, notEmpty } from './utils';
@@ -34,7 +34,7 @@ export function transformDiagnostic<T extends ts.Diagnostic>(language: Language<
 		) {
 			const [serviceScript, sourceScript, map] = getServiceScript(language, diagnostic.file.fileName);
 			if (serviceScript) {
-				const sourceSpan = transformTextSpan(sourceScript, map, { start: diagnostic.start, length: diagnostic.length }, shouldReportDiagnostics);
+				const sourceSpan = transformTextSpan(serviceScript, sourceScript, map, { start: diagnostic.start, length: diagnostic.length }, shouldReportDiagnostics);
 				if (sourceSpan) {
 					if (isTsc) {
 						fillSourceFileText(language, diagnostic.file);
@@ -64,7 +64,7 @@ export function fillSourceFileText(language: Language<string>, sourceFile: ts.So
 	}
 	transformedSourceFile.add(sourceFile);
 	const [serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
-	if (serviceScript) {
+	if (serviceScript && !serviceScript.preventLeadingOffset) {
 		sourceFile.text = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength())
 			+ sourceFile.text.substring(sourceScript.snapshot.getLength());
 	}
@@ -116,16 +116,21 @@ export function transformDocumentSpan<T extends ts.DocumentSpan>(language: Langu
 	};
 }
 
-export function transformSpan(language: Language<string>, fileName: string | undefined, textSpan: ts.TextSpan | undefined, filter: (data: CodeInformation) => boolean): {
+export function transformSpan(
+	language: Language<string>,
+	fileName: string | undefined,
+	textSpan: ts.TextSpan | undefined,
+	filter: (data: CodeInformation) => boolean
+): {
 	fileName: string;
 	textSpan: ts.TextSpan;
 } | undefined {
 	if (!fileName || !textSpan) {
 		return;
 	}
-	const [virtualFile, sourceScript, map] = getServiceScript(language, fileName);
-	if (virtualFile) {
-		const sourceSpan = transformTextSpan(sourceScript, map, textSpan, filter);
+	const [serviceScript, sourceScript, map] = getServiceScript(language, fileName);
+	if (serviceScript) {
+		const sourceSpan = transformTextSpan(serviceScript, sourceScript, map, textSpan, filter);
 		if (sourceSpan) {
 			return {
 				fileName,
@@ -142,12 +147,13 @@ export function transformSpan(language: Language<string>, fileName: string | und
 }
 
 export function transformTextChange(
+	serviceScript: TypeScriptServiceScript,
 	sourceScript: SourceScript<string>,
 	map: SourceMap<CodeInformation>,
 	textChange: ts.TextChange,
 	filter: (data: CodeInformation) => boolean
 ): ts.TextChange | undefined {
-	const sourceSpan = transformTextSpan(sourceScript, map, textChange.span, filter);
+	const sourceSpan = transformTextSpan(serviceScript, sourceScript, map, textChange.span, filter);
 	if (sourceSpan) {
 		return {
 			newText: textChange.newText,
@@ -157,6 +163,7 @@ export function transformTextChange(
 }
 
 export function transformTextSpan(
+	serviceScript: TypeScriptServiceScript,
 	sourceScript: SourceScript<string>,
 	map: SourceMap<CodeInformation>,
 	textSpan: ts.TextSpan,
@@ -164,8 +171,8 @@ export function transformTextSpan(
 ): ts.TextSpan | undefined {
 	const start = textSpan.start;
 	const end = textSpan.start + textSpan.length;
-	const sourceStart = toSourceOffset(sourceScript, map, start, filter);
-	const sourceEnd = toSourceOffset(sourceScript, map, end, filter);
+	const sourceStart = toSourceOffset(serviceScript, sourceScript, map, start, filter);
+	const sourceEnd = toSourceOffset(serviceScript, sourceScript, map, end, filter);
 	if (sourceStart !== undefined && sourceEnd !== undefined && sourceEnd >= sourceStart) {
 		return {
 			start: sourceStart,
@@ -174,24 +181,47 @@ export function transformTextSpan(
 	}
 }
 
-export function toSourceOffset(sourceScript: SourceScript<string>, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
-	for (const [sourceOffset, mapping] of map.getSourceOffsets(position - sourceScript.snapshot.getLength())) {
+export function toSourceOffset(
+	serviceScript: TypeScriptServiceScript,
+	sourceScript: SourceScript<string>,
+	map: SourceMap,
+	position: number,
+	filter: (data: CodeInformation) => boolean
+) {
+	for (const [sourceOffset, mapping] of map.getSourceOffsets(position - getMappingOffset(serviceScript, sourceScript))) {
 		if (filter(mapping.data)) {
 			return sourceOffset;
 		}
 	}
 }
 
-export function toGeneratedOffset(sourceScript: SourceScript<string>, map: SourceMap, position: number, filter: (data: CodeInformation) => boolean) {
+export function toGeneratedOffset(
+	serviceScript: TypeScriptServiceScript,
+	sourceScript: SourceScript<string>,
+	map: SourceMap,
+	position: number,
+	filter: (data: CodeInformation) => boolean
+) {
 	for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
 		if (filter(mapping.data)) {
-			return generateOffset + sourceScript.snapshot.getLength();
+			return generateOffset + getMappingOffset(serviceScript, sourceScript);
 		}
 	}
 }
 
-export function* toGeneratedOffsets(sourceScript: SourceScript<string>, map: SourceMap<CodeInformation>, position: number) {
+export function* toGeneratedOffsets(
+	serviceScript: TypeScriptServiceScript,
+	sourceScript: SourceScript<string>,
+	map: SourceMap<CodeInformation>,
+	position: number
+) {
 	for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
-		yield [generateOffset + sourceScript.snapshot.getLength(), mapping] as const;
+		yield [generateOffset + getMappingOffset(serviceScript, sourceScript), mapping] as const;
 	}
+}
+
+export function getMappingOffset(serviceScript: TypeScriptServiceScript, sourceScript: SourceScript<string>) {
+	return !serviceScript.preventLeadingOffset
+		? sourceScript.snapshot.getLength()
+		: 0;
 }
