@@ -14,7 +14,7 @@ export function decorateLanguageServiceHost(
 		version: string,
 		virtualScript?: {
 			snapshot: ts.IScriptSnapshot;
-			kind: ts.ScriptKind;
+			scriptKind: ts.ScriptKind;
 			extension: string;
 		},
 	]>();
@@ -94,7 +94,7 @@ export function decorateLanguageServiceHost(
 		languageServiceHost.getScriptKind = fileName => {
 			const virtualScript = updateVirtualScript(fileName);
 			if (virtualScript) {
-				return virtualScript.kind;
+				return virtualScript.scriptKind;
 			}
 			return getScriptKind(fileName);
 		};
@@ -123,14 +123,23 @@ export function decorateLanguageServiceHost(
 			if (sourceScript?.generated) {
 				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
 				if (serviceScript) {
-					const sourceContents = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength());
-					let virtualContents = sourceContents.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-					virtualContents += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
-					script[1] = {
-						extension: serviceScript.extension,
-						kind: serviceScript.scriptKind,
-						snapshot: ts.ScriptSnapshot.fromString(virtualContents),
-					};
+					if (serviceScript.preventLeadingOffset) {
+						script[1] = {
+							extension: serviceScript.extension,
+							scriptKind: serviceScript.scriptKind,
+							snapshot: serviceScript.code.snapshot,
+						};
+					}
+					else {
+						const sourceContents = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength());
+						const virtualContents = sourceContents.split('\n').map(line => ' '.repeat(line.length)).join('\n')
+							+ serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
+						script[1] = {
+							extension: serviceScript.extension,
+							scriptKind: serviceScript.scriptKind,
+							snapshot: ts.ScriptSnapshot.fromString(virtualContents),
+						};
+					}
 				}
 				if (sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts) {
 					console.warn('getExtraServiceScripts() is not available in TS plugin.');
