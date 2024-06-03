@@ -12,7 +12,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 				sourceOffsets: [0],
 				generatedOffsets: [0],
 				lengths: [38],
-				data: { verification: true, completion: true, semantic: true, navigation: true, structure: true, format: true },
+				data: {},
 			},
 		];
 		const map = new SourceMap(mappings);
@@ -27,7 +27,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 				sourceOffsets: [6],
 				generatedOffsets: [6],
 				lengths: [25],
-				data: { verification: true, completion: true, semantic: true, navigation: true, structure: true, format: true },
+				data: {},
 			},
 		];
 		const map = new SourceMap(mappings);
@@ -43,7 +43,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 				sourceOffsets: [6],
 				generatedOffsets: [7],
 				lengths: [25],
-				data: { verification: true, completion: true, semantic: true, navigation: true, structure: true, format: true },
+				data: {},
 			},
 		];
 		const map = new SourceMap(mappings);
@@ -60,7 +60,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 				generatedOffsets: [7],
 				lengths: [25],
 				generatedLengths: [23],
-				data: { verification: true, completion: true, semantic: true, navigation: true, structure: true, format: true },
+				data: {},
 			},
 		];
 		const map = new SourceMap(mappings);
@@ -77,13 +77,13 @@ describe(`Test findOverlapCodeRange()`, () => {
 				sourceOffsets: [6],
 				generatedOffsets: [6],
 				lengths: [6],
-				data: { verification: true, completion: true, semantic: true, navigation: true, structure: true, format: true },
+				data: {},
 			},
 			{
 				sourceOffsets: [24],
 				generatedOffsets: [26],
 				lengths: [7],
-				data: { verification: true, completion: true, semantic: true, navigation: true, structure: true, format: true },
+				data: {},
 			},
 		];
 		const map = new SourceMap(mappings);
