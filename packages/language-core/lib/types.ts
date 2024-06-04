@@ -51,7 +51,7 @@ export interface VirtualCode<T = unknown> {
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
 	mappings: CodeMapping[];
-	relatedMappings?: Map<T, CodeMapping[]>;
+	associatedScriptMappings?: Map<T, CodeMapping[]>;
 	embeddedCodes?: VirtualCode<T>[];
 	linkedCodeMappings?: Mapping[];
 }
@@ -115,7 +115,7 @@ export interface LanguagePlugin<T, K extends VirtualCode<T> = VirtualCode<T>> {
 }
 
 export interface CodegenContext<T> {
-	getRelatedSourceScript(scriptId: T): SourceScript<T> | undefined;
+	getAssociatedScript(scriptId: T): SourceScript<T> | undefined;
 }
 
 /**

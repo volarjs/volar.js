@@ -142,8 +142,8 @@ export function createLanguage<T>(
 				}
 				yield [sourceScript.id, sourceScript.snapshot, mapCache.get(sourceScript.snapshot)!];
 
-				if (virtualCode.relatedMappings) {
-					for (const [relatedScriptId, relatedMappings] of virtualCode.relatedMappings) {
+				if (virtualCode.associatedScriptMappings) {
+					for (const [relatedScriptId, relatedMappings] of virtualCode.associatedScriptMappings) {
 						const relatedSourceScript = scriptRegistry.get(relatedScriptId);
 						if (relatedSourceScript) {
 							if (!mapCache.has(relatedSourceScript.snapshot)) {
@@ -194,7 +194,7 @@ export function createLanguage<T>(
 		sourceScript.relateds.clear();
 		sourceScript.isRelatedDirty = false;
 		return {
-			getRelatedSourceScript(id) {
+			getAssociatedScript(id) {
 				sync(id);
 				const relatedSourceScript = scriptRegistry.get(id);
 				if (relatedSourceScript) {
