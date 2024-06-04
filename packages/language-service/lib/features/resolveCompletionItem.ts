@@ -28,14 +28,17 @@ export function register(context: LanguageServiceContext) {
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 				if (virtualCode) {
-					const map = context.documents.getSourceMap(virtualCode);
-					item = await plugin[1].resolveCompletionItem(item, token);
-					item = plugin[1].transformCompletionItem?.(item) ?? transformCompletionItem(
-						item,
-						embeddedRange => map.getSourceRange(embeddedRange),
-						map.embeddedDocument,
-						context
-					);
+
+					for (const map of context.documents.getMaps(virtualCode)) {
+
+						item = await plugin[1].resolveCompletionItem(item, token);
+						item = plugin[1].transformCompletionItem?.(item) ?? transformCompletionItem(
+							item,
+							embeddedRange => map.getSourceRange(embeddedRange),
+							map.embeddedDocument,
+							context
+						);
+					}
 				}
 			}
 			else {

@@ -104,15 +104,23 @@ export function register(
 					link.originSelectionRange = originSelectionRange;
 				}
 
+				let foundTargetSelectionRange = false;
+
 				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(link.targetUri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const targetVirtualFile = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 				if (targetVirtualFile) {
 
-					const targetSourceMap = context.documents.getSourceMap(targetVirtualFile);
-					const targetSelectionRange = targetSourceMap.getSourceRange(link.targetSelectionRange);
-					if (targetSelectionRange) {
+					for (const targetSourceMap of context.documents.getMaps(targetVirtualFile)) {
+
+						const targetSelectionRange = targetSourceMap.getSourceRange(link.targetSelectionRange);
+						if (!targetSelectionRange) {
+							continue;
+						}
+
+						foundTargetSelectionRange = true;
+
 						let targetRange = targetSourceMap.getSourceRange(link.targetRange);
 
 						link.targetUri = targetSourceMap.sourceDocument.uri;
@@ -120,28 +128,26 @@ export function register(
 						link.targetRange = targetRange ?? targetSelectionRange;
 						link.targetSelectionRange = targetSelectionRange;
 					}
-					else if (apiName === 'provideDefinition') {
-						const targetMap = context.documents.getSourceMap(targetVirtualFile);
-						// cross file definition
-						if (targetMap.sourceDocument.uri !== uri.toString()) {
-							return {
-								...link,
-								targetUri: targetMap.sourceDocument.uri,
-								targetRange: {
-									start: { line: 0, character: 0 },
-									end: { line: 0, character: 0 },
-								},
-								targetSelectionRange: {
-									start: { line: 0, character: 0 },
-									end: { line: 0, character: 0 },
-								},
-							};
-						}
-						else {
-							return;
-						}
-					}
 
+					if (apiName === 'provideDefinition' && !foundTargetSelectionRange) {
+						for (const targetMap of context.documents.getMaps(targetVirtualFile)) {
+							if (targetMap && targetMap.sourceDocument.uri !== uri.toString()) {
+								return {
+									...link,
+									targetUri: targetMap.sourceDocument.uri,
+									targetRange: {
+										start: { line: 0, character: 0 },
+										end: { line: 0, character: 0 },
+									},
+									targetSelectionRange: {
+										start: { line: 0, character: 0 },
+										end: { line: 0, character: 0 },
+									},
+								};
+							}
+						}
+						return;
+					}
 				}
 
 				return link;

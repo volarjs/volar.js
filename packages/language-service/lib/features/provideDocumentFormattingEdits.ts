@@ -1,4 +1,4 @@
-import { SourceMap, SourceScript, VirtualCode, forEachEmbeddedCode, isFormattingEnabled } from '@volar/language-core';
+import { CodeInformation, SourceMap, SourceScript, VirtualCode, forEachEmbeddedCode, isFormattingEnabled, updateVirtualCodeMapOfMap } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -8,6 +8,7 @@ import type { EmbeddedCodeFormattingOptions, LanguageServiceContext } from '../t
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange, stringToSnapshot } from '../utils/common';
 import { getEmbeddedFilesByLevel as getEmbeddedCodesByLevel } from '../utils/featureWorkers';
+import { createUriMap } from '../utils/uriMap';
 
 export function register(context: LanguageServiceContext) {
 
@@ -252,24 +253,32 @@ export function register(context: LanguageServiceContext) {
 	};
 
 	function createDocMap(virtualCode: VirtualCode, documentUri: URI, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
-		const map = new SourceMap(virtualCode.mappings);
-		const version = fakeVersion++;
-		return new SourceMapWithDocuments(
-			TextDocument.create(
-				documentUri.toString(),
-				sourceLanguageId,
-				version,
-				_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
-			),
-			TextDocument.create(
-				context.encodeEmbeddedDocumentUri(documentUri, virtualCode.id).toString(),
-				virtualCode.languageId,
-				version,
-				virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength())
-			),
-			map,
-			virtualCode,
-		);
+		const mapOfMap = createUriMap<[ts.IScriptSnapshot, SourceMap<CodeInformation>]>();
+		updateVirtualCodeMapOfMap(virtualCode, mapOfMap, sourceFileUri2 => {
+			if (!sourceFileUri2) {
+				return [documentUri, _sourceSnapshot];
+			}
+		});
+		if (mapOfMap.has(documentUri) && mapOfMap.get(documentUri)![0] === _sourceSnapshot) {
+			const map = mapOfMap.get(documentUri)!;
+			const version = fakeVersion++;
+			return new SourceMapWithDocuments(
+				TextDocument.create(
+					documentUri.toString(),
+					sourceLanguageId,
+					version,
+					_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
+				),
+				TextDocument.create(
+					context.encodeEmbeddedDocumentUri(documentUri, virtualCode.id).toString(),
+					virtualCode.languageId,
+					version,
+					virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength())
+				),
+				map[1],
+				virtualCode,
+			);
+		}
 	}
 }
 

@@ -63,39 +63,40 @@ export function register(context: LanguageServiceContext) {
 						continue;
 					}
 
-					const map = context.documents.getSourceMap(virtualCode);
+					for (const map of context.documents.getMaps(virtualCode)) {
 
-					for (const mapped of map.getGeneratedPositions(position, data => isCompletionEnabled(data))) {
+						for (const mapped of map.getGeneratedPositions(position, data => isCompletionEnabled(data))) {
 
-						if (!cacheData.plugin.provideCompletionItems) {
-							continue;
+							if (!cacheData.plugin.provideCompletionItems) {
+								continue;
+							}
+
+							cacheData.list = await cacheData.plugin.provideCompletionItems(map.embeddedDocument, mapped, completionContext, token);
+
+							if (!cacheData.list) {
+								continue;
+							}
+
+							for (const item of cacheData.list.items) {
+								item.data = {
+									uri: uri.toString(),
+									original: {
+										additionalTextEdits: item.additionalTextEdits,
+										textEdit: item.textEdit,
+										data: item.data,
+									},
+									pluginIndex: pluginIndex,
+									embeddedDocumentUri: map.embeddedDocument.uri,
+								} satisfies ServiceCompletionData;
+							}
+
+							cacheData.list = transformCompletionList(
+								cacheData.list,
+								range => map.getSourceRange(range),
+								map.embeddedDocument,
+								context
+							);
 						}
-
-						cacheData.list = await cacheData.plugin.provideCompletionItems(map.embeddedDocument, mapped, completionContext, token);
-
-						if (!cacheData.list) {
-							continue;
-						}
-
-						for (const item of cacheData.list.items) {
-							item.data = {
-								uri: uri.toString(),
-								original: {
-									additionalTextEdits: item.additionalTextEdits,
-									textEdit: item.textEdit,
-									data: item.data,
-								},
-								pluginIndex: pluginIndex,
-								embeddedDocumentUri: map.embeddedDocument.uri,
-							} satisfies ServiceCompletionData;
-						}
-
-						cacheData.list = transformCompletionList(
-							cacheData.list,
-							range => map.getSourceRange(range),
-							map.embeddedDocument,
-							context
-						);
 					}
 				}
 				else {
