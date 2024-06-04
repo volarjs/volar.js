@@ -48,7 +48,7 @@ export function createLanguage<T>(
 						this.delete(id);
 						return this.set(id, snapshot, languageId);
 					}
-					else if (sourceScript.isRelatedDirty || sourceScript.snapshot !== snapshot) {
+					else if (sourceScript.isAssociationDirty || sourceScript.snapshot !== snapshot) {
 						// snapshot updated
 						sourceScript.snapshot = snapshot;
 						const codegenCtx = prepareCreateVirtualCode(sourceScript);
@@ -84,8 +84,8 @@ export function createLanguage<T>(
 						id: id,
 						languageId,
 						snapshot,
-						relateds: new Set(),
-						targets: new Set(),
+						associatedIds: new Set(),
+						targetIds: new Set(),
 					};
 					scriptRegistry.set(id, sourceScript);
 
@@ -179,27 +179,27 @@ export function createLanguage<T>(
 	};
 
 	function triggerTargetsDirty(sourceScript: SourceScript<T>) {
-		sourceScript.targets.forEach(id => {
+		sourceScript.targetIds.forEach(id => {
 			const sourceScript = scriptRegistry.get(id);
 			if (sourceScript) {
-				sourceScript.isRelatedDirty = true;
+				sourceScript.isAssociationDirty = true;
 			}
 		});
 	}
 
 	function prepareCreateVirtualCode(sourceScript: SourceScript<T>): CodegenContext<T> {
-		for (const id of sourceScript.relateds) {
-			scriptRegistry.get(id)?.targets.delete(sourceScript.id);
+		for (const id of sourceScript.associatedIds) {
+			scriptRegistry.get(id)?.targetIds.delete(sourceScript.id);
 		}
-		sourceScript.relateds.clear();
-		sourceScript.isRelatedDirty = false;
+		sourceScript.associatedIds.clear();
+		sourceScript.isAssociationDirty = false;
 		return {
 			getAssociatedScript(id) {
 				sync(id);
 				const relatedSourceScript = scriptRegistry.get(id);
 				if (relatedSourceScript) {
-					relatedSourceScript.targets.add(sourceScript.id);
-					sourceScript.relateds.add(relatedSourceScript.id);
+					relatedSourceScript.targetIds.add(sourceScript.id);
+					sourceScript.associatedIds.add(relatedSourceScript.id);
 				}
 				return relatedSourceScript;
 			},

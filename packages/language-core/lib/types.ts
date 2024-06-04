@@ -34,9 +34,9 @@ export interface SourceScript<T> {
 	id: T;
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
-	relateds: Set<T>;
-	targets: Set<T>;
-	isRelatedDirty?: boolean;
+	targetIds: Set<T>;
+	associatedIds: Set<T>;
+	isAssociationDirty?: boolean;
 	generated?: {
 		root: VirtualCode<T>;
 		languagePlugin: LanguagePlugin<T>;
