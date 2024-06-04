@@ -7,15 +7,15 @@ export * from './lib/utils';
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript';
 import { LinkedCodeMap } from './lib/linkedCodeMap';
-import type { CodeInformation, Language, LanguagePlugin, SourceScript, VirtualCode } from './lib/types';
+import type { CodeInformation, CodegenContext, Language, LanguagePlugin, SourceScript, VirtualCode } from './lib/types';
 
 export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],
 	scriptRegistry: Map<T, SourceScript<T>>,
 	sync: (id: T) => void
 ): Language<T> {
-	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode, SourceScript<T>>();
-	const virtualCodeToSourceMap = new WeakMap<ts.IScriptSnapshot, [ts.IScriptSnapshot, SourceMap<CodeInformation>]>();
+	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode<T>, SourceScript<T>>();
+	const virtualCodeToSourceMap = new WeakMap<ts.IScriptSnapshot, WeakMap<ts.IScriptSnapshot, SourceMap<CodeInformation>>>();
 	const virtualCodeToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, [ts.IScriptSnapshot, LinkedCodeMap | undefined]>();
 
 	return {
@@ -48,14 +48,15 @@ export function createLanguage<T>(
 						this.delete(id);
 						return this.set(id, snapshot, languageId);
 					}
-					else if (sourceScript.snapshot !== snapshot) {
+					else if (sourceScript.isRelatedDirty || sourceScript.snapshot !== snapshot) {
 						// snapshot updated
 						sourceScript.snapshot = snapshot;
+						const codegenCtx = prepareCreateVirtualCode(sourceScript);
 						if (sourceScript.generated) {
 							const { updateVirtualCode, createVirtualCode } = sourceScript.generated.languagePlugin;
 							const newVirtualCode = updateVirtualCode
-								? updateVirtualCode(id, sourceScript.generated.root, snapshot)
-								: createVirtualCode?.(id, languageId, snapshot);
+								? updateVirtualCode(id, sourceScript.generated.root, snapshot, codegenCtx)
+								: createVirtualCode?.(id, languageId, snapshot, codegenCtx);
 							if (newVirtualCode) {
 								sourceScript.generated.root = newVirtualCode;
 								sourceScript.generated.embeddedCodes.clear();
@@ -70,6 +71,7 @@ export function createLanguage<T>(
 								return;
 							}
 						}
+						triggerTargetsDirty(sourceScript);
 					}
 					else {
 						// not changed
@@ -78,10 +80,17 @@ export function createLanguage<T>(
 				}
 				else {
 					// created
-					const sourceScript: SourceScript<T> = { id, languageId, snapshot };
+					const sourceScript: SourceScript<T> = {
+						id: id,
+						languageId,
+						snapshot,
+						relateds: new Set(),
+						targets: new Set(),
+					};
 					scriptRegistry.set(id, sourceScript);
+
 					for (const languagePlugin of _plugins) {
-						const virtualCode = languagePlugin.createVirtualCode?.(id, languageId, snapshot);
+						const virtualCode = languagePlugin.createVirtualCode?.(id, languageId, snapshot, prepareCreateVirtualCode(sourceScript));
 						if (virtualCode) {
 							sourceScript.generated = {
 								root: virtualCode,
@@ -95,36 +104,58 @@ export function createLanguage<T>(
 							break;
 						}
 					}
+
 					return sourceScript;
 				}
 			},
 			delete(id) {
-				const value = scriptRegistry.get(id);
-				if (value) {
-					if (value.generated) {
-						value.generated.languagePlugin.disposeVirtualCode?.(id, value.generated.root);
-					}
+				const sourceScript = scriptRegistry.get(id);
+				if (sourceScript) {
+					sourceScript.generated?.languagePlugin.disposeVirtualCode?.(id, sourceScript.generated.root);
 					scriptRegistry.delete(id);
+					triggerTargetsDirty(sourceScript);
 				}
 			},
 		},
 		maps: {
 			get(virtualCode) {
-				const sourceScript = virtualCodeToSourceScriptMap.get(virtualCode)!;
+				for (const map of this.forEach(virtualCode)) {
+					return map[2];
+				}
+				throw `no map found for ${virtualCode.id}`;
+			},
+			*forEach(virtualCode) {
 				let mapCache = virtualCodeToSourceMap.get(virtualCode.snapshot);
-				if (mapCache?.[0] !== sourceScript.snapshot) {
-					if (virtualCode.mappings.some(mapping => mapping.source)) {
-						throw 'not implemented';
-					}
+				if (!mapCache) {
 					virtualCodeToSourceMap.set(
 						virtualCode.snapshot,
-						mapCache = [
-							sourceScript.snapshot,
-							new SourceMap(virtualCode.mappings),
-						]
+						mapCache = new WeakMap()
 					);
 				}
-				return mapCache[1];
+
+				const sourceScript = virtualCodeToSourceScriptMap.get(virtualCode)!;
+				if (!mapCache.has(sourceScript.snapshot)) {
+					mapCache.set(
+						sourceScript.snapshot,
+						new SourceMap(virtualCode.mappings)
+					);
+				}
+				yield [sourceScript.id, sourceScript.snapshot, mapCache.get(sourceScript.snapshot)!];
+
+				if (virtualCode.relatedMappings) {
+					for (const [relatedScriptId, relatedMappings] of virtualCode.relatedMappings) {
+						const relatedSourceScript = scriptRegistry.get(relatedScriptId);
+						if (relatedSourceScript) {
+							if (!mapCache.has(relatedSourceScript.snapshot)) {
+								mapCache.set(
+									relatedSourceScript.snapshot,
+									new SourceMap(relatedMappings)
+								);
+							}
+							yield [relatedSourceScript.id, relatedSourceScript.snapshot, mapCache.get(relatedSourceScript.snapshot)!];
+						}
+					}
+				}
 			},
 		},
 		linkedCodeMaps: {
@@ -146,9 +177,37 @@ export function createLanguage<T>(
 			},
 		},
 	};
+
+	function triggerTargetsDirty(sourceScript: SourceScript<T>) {
+		sourceScript.targets.forEach(id => {
+			const sourceScript = scriptRegistry.get(id);
+			if (sourceScript) {
+				sourceScript.isRelatedDirty = true;
+			}
+		});
+	}
+
+	function prepareCreateVirtualCode(sourceScript: SourceScript<T>): CodegenContext<T> {
+		for (const id of sourceScript.relateds) {
+			scriptRegistry.get(id)?.targets.delete(sourceScript.id);
+		}
+		sourceScript.relateds.clear();
+		sourceScript.isRelatedDirty = false;
+		return {
+			getRelatedSourceScript(id) {
+				sync(id);
+				const relatedSourceScript = scriptRegistry.get(id);
+				if (relatedSourceScript) {
+					relatedSourceScript.targets.add(sourceScript.id);
+					sourceScript.relateds.add(relatedSourceScript.id);
+				}
+				return relatedSourceScript;
+			},
+		};
+	}
 }
 
-export function* forEachEmbeddedCode(virtualCode: VirtualCode): Generator<VirtualCode> {
+export function* forEachEmbeddedCode<T>(virtualCode: VirtualCode<T>): Generator<VirtualCode<T>> {
 	yield virtualCode;
 	if (virtualCode.embeddedCodes) {
 		for (const embeddedCode of virtualCode.embeddedCodes) {

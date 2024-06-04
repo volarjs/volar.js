@@ -9,7 +9,7 @@ export function getServiceScript(language: Language<string>, fileName: string) {
 	if (sourceScript?.generated) {
 		const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
 		if (serviceScript) {
-			const map = language.maps.get(serviceScript.code, sourceScript.id);
+			const map = language.maps.get(serviceScript.code);
 			if (map) {
 				return [serviceScript, sourceScript, map] as const;
 			}

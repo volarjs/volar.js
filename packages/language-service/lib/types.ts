@@ -59,8 +59,8 @@ export interface LanguageServiceContext {
 	};
 	documents: {
 		get(uri: URI, languageId: string, snapshot: ts.IScriptSnapshot): TextDocument;
-		getMaps(virtualCode: VirtualCode): Generator<SourceMapWithDocuments>;
-		getLinkedCodeMap(virtualCode: VirtualCode, documentUri: URI): LinkedCodeMapWithDocument | undefined;
+		getMaps(virtualCode: VirtualCode<URI>): Generator<SourceMapWithDocuments>;
+		getLinkedCodeMap(virtualCode: VirtualCode<URI>, documentUri: URI): LinkedCodeMapWithDocument | undefined;
 	};
 	plugins: [LanguageServicePlugin, LanguageServicePluginInstance][];
 	disabledEmbeddedDocumentUris: UriMap<boolean>;

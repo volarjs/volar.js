@@ -73,7 +73,7 @@ export function createLanguageService(
 				return map.get(uri)!;
 			},
 			*getMaps(virtualCode) {
-				for (const [uri, [snapshot, map]] of context.language.maps.forEach(virtualCode)) {
+				for (const [uri, snapshot, map] of context.language.maps.forEach(virtualCode)) {
 					if (!map2DocMap.has(map)) {
 						const embeddedUri = context.encodeEmbeddedDocumentUri(uri, virtualCode.id);
 						map2DocMap.set(map, new SourceMapWithDocuments(

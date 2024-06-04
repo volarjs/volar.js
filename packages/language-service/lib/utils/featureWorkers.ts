@@ -135,7 +135,7 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 export function* forEachEmbeddedDocument(
 	context: LanguageServiceContext,
 	sourceScriptId: URI,
-	current: VirtualCode
+	current: VirtualCode<URI>
 ): Generator<SourceMapWithDocuments> {
 
 	if (current.embeddedCodes) {

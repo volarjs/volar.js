@@ -500,8 +500,7 @@ export function* printSnapshot(
 					' '.repeat(log.lineOffset),
 					sourceLineHead,
 					'(exact match)',
-					`(${log.mapping.source
-					+ ':' + (sourcePosition.line + 1)
+					`(${':' + (sourcePosition.line + 1)
 					+ ':' + (sourcePosition.character + 1)
 					})`,
 				].join(' ');
@@ -512,8 +511,7 @@ export function* printSnapshot(
 					' '.repeat(log.lineOffset),
 					sourceLineHead,
 					normalizeLogText(sourceLine),
-					`(${log.mapping.source
-					+ ':' + (sourcePosition.line + 1)
+					`(${':' + (sourcePosition.line + 1)
 					+ ':' + (sourcePosition.character + 1)})`,
 				].join(' ');
 				yield [

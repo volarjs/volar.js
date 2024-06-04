@@ -10,7 +10,6 @@ export function buildMappings<T>(chunks: Segment<T>[]) {
 		}
 		else {
 			mappings.push({
-				source: segment[1],
 				sourceOffsets: [segment[2]],
 				generatedOffsets: [length],
 				lengths: [segment[0].length],
