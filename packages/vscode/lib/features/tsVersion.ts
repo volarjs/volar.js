@@ -35,7 +35,7 @@ export function activate(
 
 		const tsdk = await getTsdk(context);
 		const configTsdkPath = getConfigTsdkPath();
-		const vscodeTsdk = await getVScodeTsdk();
+		const vscodeTsdk = await getVSCodeTsdk();
 
 		const useVSCodeTsdk = !!vscodeTsdk;
 		const useConfigWorkspaceTsdk = !!configTsdkPath && !vscodeTsdk?.isWeb;
@@ -110,11 +110,10 @@ export async function getTsdk(context: vscode.ExtensionContext) {
 						isWorkspacePath: true,
 					};
 				}
-				
 			}
 		}
 	}
-	const tsdk = await getVScodeTsdk();
+	const tsdk = await getVSCodeTsdk();
 	return tsdk ? {
 		tsdk: tsdk.path,
 		version: tsdk.version,
@@ -142,7 +141,7 @@ async function resolveWorkspaceTsdk(tsdk: string) {
 	}
 }
 
-async function getVScodeTsdk() {
+async function getVSCodeTsdk() {
 
 	const nightly = vscode.extensions.getExtension('ms-vscode.vscode-typescript-next');
 	if (nightly) {
