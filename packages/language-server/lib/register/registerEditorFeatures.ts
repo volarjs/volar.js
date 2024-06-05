@@ -92,8 +92,9 @@ export function registerEditorFeatures(server: LanguageServer) {
 		const virtualCode = sourceScript?.generated?.embeddedCodes.get(params.virtualCodeId);
 		if (virtualCode) {
 			const mappings: Record<string, CodeMapping[]> = {};
-			const map = languageService.context.documents.getSourceMap(virtualCode);
-			mappings[map.sourceDocument.uri] = map.map.mappings;
+			for (const map of languageService.context.documents.getMaps(virtualCode)) {
+				mappings[map.sourceDocument.uri] = map.map.mappings;
+			}
 			return {
 				content: virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength()),
 				mappings,

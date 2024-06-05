@@ -27,7 +27,7 @@ export function createLanguageServiceHost<T>(
 	let lastProjectVersion: number | string | undefined;
 	let tsProjectVersion = 0;
 	let tsFileRegistry = new FileMap<boolean>(sys.useCaseSensitiveFileNames);
-	let extraScriptRegistry = new FileMap<TypeScriptExtraServiceScript>(sys.useCaseSensitiveFileNames);
+	let extraScriptRegistry = new FileMap<TypeScriptExtraServiceScript<T>>(sys.useCaseSensitiveFileNames);
 	let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let languageServiceHost: ts.LanguageServiceHost = {

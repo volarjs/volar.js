@@ -3,24 +3,23 @@ import { translateOffset } from './translateOffset';
 
 export type CodeRangeKey = 'sourceOffsets' | 'generatedOffsets';
 
-export interface Mapping<T = any> {
-	source?: string;
+export interface Mapping<Data = unknown> {
 	sourceOffsets: number[];
 	generatedOffsets: number[];
 	lengths: number[];
 	generatedLengths?: number[];
-	data: T;
+	data: Data;
 }
 
-interface MappingMemo<Data> {
+interface MappingMemo {
 	offsets: number[];
-	mappings: Set<Mapping<Data>>[];
+	mappings: Set<Mapping>[];
 }
 
-export class SourceMap<Data = any> {
+export class SourceMap<Data = unknown> {
 
-	private sourceCodeOffsetsMemo: MappingMemo<Data> | undefined;
-	private generatedCodeOffsetsMemo: MappingMemo<Data> | undefined;
+	private sourceCodeOffsetsMemo: MappingMemo | undefined;
+	private generatedCodeOffsetsMemo: MappingMemo | undefined;
 
 	constructor(public readonly mappings: Mapping<Data>[]) { }
 
@@ -39,7 +38,7 @@ export class SourceMap<Data = any> {
 		}
 
 		const { low: start, high: end } = binarySearch(memo.offsets, offset);
-		const skip = new Set<Mapping<Data>>();
+		const skip = new Set<Mapping>();
 
 		for (let i = start; i <= end; i++) {
 			for (const mapping of memo.mappings[i]) {
@@ -50,7 +49,7 @@ export class SourceMap<Data = any> {
 
 				const mapped = translateOffset(offset, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
 				if (mapped !== undefined) {
-					yield [mapped, mapping] as const;
+					yield [mapped, mapping as Mapping<Data>] as const;
 				}
 			}
 		}
@@ -62,7 +61,7 @@ export class SourceMap<Data = any> {
 			: this.generatedCodeOffsetsMemo ??= this.createMemo('generatedOffsets');
 	}
 
-	private createMemo(key: CodeRangeKey): MappingMemo<Data> {
+	private createMemo(key: CodeRangeKey): MappingMemo {
 		const offsetsSet = new Set<number>();
 		for (const mapping of this.mappings) {
 			for (let i = 0; i < mapping[key].length; i++) {
@@ -88,6 +87,6 @@ export class SourceMap<Data = any> {
 	}
 }
 
-function getLengths<Data>(mapping: Mapping<Data>, key: CodeRangeKey) {
+function getLengths(mapping: Mapping, key: CodeRangeKey) {
 	return key == "sourceOffsets" ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths;
 }

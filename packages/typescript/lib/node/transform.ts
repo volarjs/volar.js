@@ -184,7 +184,7 @@ export function transformTextSpan(
 export function toSourceOffset(
 	serviceScript: TypeScriptServiceScript,
 	sourceScript: SourceScript<string>,
-	map: SourceMap,
+	map: SourceMap<CodeInformation>,
 	position: number,
 	filter: (data: CodeInformation) => boolean
 ) {
@@ -198,7 +198,7 @@ export function toSourceOffset(
 export function toGeneratedOffset(
 	serviceScript: TypeScriptServiceScript,
 	sourceScript: SourceScript<string>,
-	map: SourceMap,
+	map: SourceMap<CodeInformation>,
 	position: number,
 	filter: (data: CodeInformation) => boolean
 ) {

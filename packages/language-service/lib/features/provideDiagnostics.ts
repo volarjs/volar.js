@@ -303,16 +303,17 @@ export function register(context: LanguageServiceContext) {
 					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 					if (virtualCode) {
-						const map = context.documents.getSourceMap(virtualCode);
-						const range = map.getSourceRange(info.location.range, filter);
-						if (range) {
-							relatedInfos.push({
-								location: {
-									uri: map.sourceDocument.uri,
-									range,
-								},
-								message: info.message,
-							});
+						for (const map of context.documents.getMaps(virtualCode)) {
+							const range = map.getSourceRange(info.location.range, filter);
+							if (range) {
+								relatedInfos.push({
+									location: {
+										uri: map.sourceDocument.uri,
+										range,
+									},
+									message: info.message,
+								});
+							}
 						}
 					}
 					else {

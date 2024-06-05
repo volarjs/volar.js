@@ -19,8 +19,11 @@ export function transformDocumentLinkTarget(_target: string, context: LanguageSe
 	target = decoded[0];
 
 	if (embeddedRange && virtualCode) {
-		const map = context.documents.getSourceMap(virtualCode);
-		if (map.map.mappings.some(mapping => isDocumentLinkEnabled(mapping.data))) {
+		for (const map of context.documents.getMaps(virtualCode)) {
+			if (!map.map.mappings.some(mapping => isDocumentLinkEnabled(mapping.data))) {
+				continue;
+			}
+
 			const startLine = Number(embeddedRange[1]) - 1;
 			const startCharacter = Number(embeddedRange[3] ?? 1) - 1;
 			if (embeddedRange[5] !== undefined) {
@@ -35,6 +38,7 @@ export function transformDocumentLinkTarget(_target: string, context: LanguageSe
 						fragment: 'L' + (sourceRange.start.line + 1) + ',' + (sourceRange.start.character + 1)
 							+ '-L' + (sourceRange.end.line + 1) + ',' + (sourceRange.end.character + 1),
 					});
+					break;
 				}
 			}
 			else {
@@ -43,6 +47,7 @@ export function transformDocumentLinkTarget(_target: string, context: LanguageSe
 					target = target.with({
 						fragment: 'L' + (sourcePos.line + 1) + ',' + (sourcePos.character + 1),
 					});
+					break;
 				}
 			}
 		}
@@ -324,10 +329,11 @@ export function transformWorkspaceEdit(
 		const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 		if (virtualCode) {
-			const map = context.documents.getSourceMap(virtualCode);
-			// TODO: check capability?
-			const uri = map.sourceDocument.uri;
-			sourceResult.changeAnnotations[uri] = tsAnno;
+			for (const map of context.documents.getMaps(virtualCode)) {
+				// TODO: check capability?
+				const uri = map.sourceDocument.uri;
+				sourceResult.changeAnnotations[uri] = tsAnno;
+			}
 		}
 		else {
 			sourceResult.changeAnnotations[tsUri] = tsAnno;
@@ -342,33 +348,34 @@ export function transformWorkspaceEdit(
 		const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 		if (virtualCode) {
-			const map = context.documents.getSourceMap(virtualCode);
-			const tsEdits = edit.changes[tsUri];
-			for (const tsEdit of tsEdits) {
-				if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
+			for (const map of context.documents.getMaps(virtualCode)) {
+				const tsEdits = edit.changes[tsUri];
+				for (const tsEdit of tsEdits) {
+					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
 
-					let _data!: CodeInformation;
+						let _data!: CodeInformation;
 
-					const range = map.getSourceRange(tsEdit.range, data => {
-						_data = data;
-						return isRenameEnabled(data);
-					});
-
-					if (range) {
-						sourceResult.changes[map.sourceDocument.uri] ??= [];
-						sourceResult.changes[map.sourceDocument.uri].push({
-							newText: resolveRenameEditText(tsEdit.newText, _data),
-							range,
+						const range = map.getSourceRange(tsEdit.range, data => {
+							_data = data;
+							return isRenameEnabled(data);
 						});
-						hasResult = true;
+
+						if (range) {
+							sourceResult.changes[map.sourceDocument.uri] ??= [];
+							sourceResult.changes[map.sourceDocument.uri].push({
+								newText: resolveRenameEditText(tsEdit.newText, _data),
+								range,
+							});
+							hasResult = true;
+						}
 					}
-				}
-				else {
-					const range = map.getSourceRange(tsEdit.range);
-					if (range) {
-						sourceResult.changes[map.sourceDocument.uri] ??= [];
-						sourceResult.changes[map.sourceDocument.uri].push({ newText: tsEdit.newText, range });
-						hasResult = true;
+					else {
+						const range = map.getSourceRange(tsEdit.range);
+						if (range) {
+							sourceResult.changes[map.sourceDocument.uri] ??= [];
+							sourceResult.changes[map.sourceDocument.uri].push({ newText: tsEdit.newText, range });
+							hasResult = true;
+						}
 					}
 				}
 			}
@@ -391,43 +398,44 @@ export function transformWorkspaceEdit(
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 				if (virtualCode) {
-					const map = context.documents.getSourceMap(virtualCode);
-					sourceEdit = {
-						textDocument: {
-							uri: map.sourceDocument.uri,
-							version: versions[map.sourceDocument.uri] ?? null,
-						},
-						edits: [],
-					} satisfies vscode.TextDocumentEdit;
-					for (const tsEdit of tsDocEdit.edits) {
-						if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-							let _data!: CodeInformation;
-							const range = map.getSourceRange(tsEdit.range, data => {
-								_data = data;
-								// fix https://github.com/johnsoncodehk/volar/issues/1091
-								return isRenameEnabled(data);
-							});
-							if (range) {
-								sourceEdit.edits.push({
-									annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
-									newText: resolveRenameEditText(tsEdit.newText, _data),
-									range,
+					for (const map of context.documents.getMaps(virtualCode)) {
+						sourceEdit = {
+							textDocument: {
+								uri: map.sourceDocument.uri,
+								version: versions[map.sourceDocument.uri] ?? null,
+							},
+							edits: [],
+						} satisfies vscode.TextDocumentEdit;
+						for (const tsEdit of tsDocEdit.edits) {
+							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
+								let _data!: CodeInformation;
+								const range = map.getSourceRange(tsEdit.range, data => {
+									_data = data;
+									// fix https://github.com/johnsoncodehk/volar/issues/1091
+									return isRenameEnabled(data);
 								});
+								if (range) {
+									sourceEdit.edits.push({
+										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
+										newText: resolveRenameEditText(tsEdit.newText, _data),
+										range,
+									});
+								}
+							}
+							else {
+								const range = map.getSourceRange(tsEdit.range);
+								if (range) {
+									sourceEdit.edits.push({
+										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
+										newText: tsEdit.newText,
+										range,
+									});
+								}
 							}
 						}
-						else {
-							const range = map.getSourceRange(tsEdit.range);
-							if (range) {
-								sourceEdit.edits.push({
-									annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
-									newText: tsEdit.newText,
-									range,
-								});
-							}
+						if (!sourceEdit.edits.length) {
+							sourceEdit = undefined;
 						}
-					}
-					if (!sourceEdit.edits.length) {
-						sourceEdit = undefined;
 					}
 				}
 				else {
@@ -444,15 +452,16 @@ export function transformWorkspaceEdit(
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 				if (virtualCode) {
-					const map = context.documents.getSourceMap(virtualCode);
-					// TODO: check capability?
-					sourceEdit = {
-						kind: 'rename',
-						oldUri: map.sourceDocument.uri,
-						newUri: tsDocEdit.newUri /* TODO: remove .ts? */,
-						options: tsDocEdit.options,
-						annotationId: tsDocEdit.annotationId,
-					} satisfies vscode.RenameFile;
+					for (const map of context.documents.getMaps(virtualCode)) {
+						// TODO: check capability?
+						sourceEdit = {
+							kind: 'rename',
+							oldUri: map.sourceDocument.uri,
+							newUri: tsDocEdit.newUri /* TODO: remove .ts? */,
+							options: tsDocEdit.options,
+							annotationId: tsDocEdit.annotationId,
+						} satisfies vscode.RenameFile;
+					}
 				}
 				else {
 					sourceEdit = tsDocEdit;
@@ -465,14 +474,15 @@ export function transformWorkspaceEdit(
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
 				if (virtualCode) {
-					const map = context.documents.getSourceMap(virtualCode);
-					// TODO: check capability?
-					sourceEdit = {
-						kind: 'delete',
-						uri: map.sourceDocument.uri,
-						options: tsDocEdit.options,
-						annotationId: tsDocEdit.annotationId,
-					} satisfies vscode.DeleteFile;
+					for (const map of context.documents.getMaps(virtualCode)) {
+						// TODO: check capability?
+						sourceEdit = {
+							kind: 'delete',
+							uri: map.sourceDocument.uri,
+							options: tsDocEdit.options,
+							annotationId: tsDocEdit.annotationId,
+						} satisfies vscode.DeleteFile;
+					}
 				}
 				else {
 					sourceEdit = tsDocEdit;
