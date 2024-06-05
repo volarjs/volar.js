@@ -20,9 +20,16 @@ export function createServerBase(
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
 	const didChangeConfigurationCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeConfigurationParams>>();
 	const configurations = new Map<string, Promise<any>>();
+	const documentsCache = new Map<string, WeakRef<SnapshotDocument>>();
 	const documents = new vscode.TextDocuments({
 		create(uri, languageId, version, text) {
-			return new SnapshotDocument(uri, languageId, version, text);
+			const cache = documentsCache.get(uri)?.deref();
+			if (cache && cache.languageId === languageId && cache.version === version && cache.getText() === text) {
+				return cache;
+			}
+			const document = new SnapshotDocument(uri, languageId, version, text);
+			documentsCache.set(uri, new WeakRef(document));
+			return document;
 		},
 		update(snapshot, contentChanges, version) {
 			snapshot.update(contentChanges, version);
@@ -280,6 +287,12 @@ export function createServerBase(
 		const readFileCache = createUriMap<ReturnType<FileSystem['readFile']>>();
 		const statCache = createUriMap<ReturnType<FileSystem['stat']>>();
 		const readDirectoryCache = createUriMap<ReturnType<FileSystem['readDirectory']>>();
+
+		documents.onDidSave(({ document }) => {
+			const uri = URI.parse(document.uri);
+			readFileCache.set(uri, document.getText());
+			statCache.delete(uri);
+		});
 
 		onDidChangeWatchedFiles(({ changes }) => {
 			for (const change of changes) {
