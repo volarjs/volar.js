@@ -1,6 +1,6 @@
 {
 	"name": "@volar/kit",
-	"version": "2.3.0-alpha.6",
+	"version": "2.3.0-alpha.7",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
@@ -12,8 +12,8 @@
 		"directory": "packages/kit"
 	},
 	"dependencies": {
-		"@volar/language-service": "2.3.0-alpha.6",
-		"@volar/typescript": "2.3.0-alpha.6",
+		"@volar/language-service": "2.3.0-alpha.7",
+		"@volar/typescript": "2.3.0-alpha.7",
 		"typesafe-path": "^0.2.2",
 		"vscode-languageserver-textdocument": "^1.0.11",
 		"vscode-uri": "^3.0.8"
