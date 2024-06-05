@@ -160,7 +160,9 @@ export function transformSpan(
 		return;
 	}
 	const [serviceScript, sourceScript, map] = getServiceScript(language, fileName);
-	if (serviceScript) {
+	if (sourceScript?.associatedOnly) {
+		return;
+	} else if (serviceScript) {
 		const [sourceSpanFileName, sourceSpan] = transformTextSpan(serviceScript, sourceScript, map, textSpan, filter) ?? [];
 		if (sourceSpan && sourceSpanFileName) {
 			return {

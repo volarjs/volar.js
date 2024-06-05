@@ -53,12 +53,21 @@ export function createLanguage<T>(
 					console.warn(`languageId not found for ${id}`);
 					return;
 				}
+				let associatedOnly = false
+				for (const plugin of plugins) {
+					if (plugin.isAssociatedFileOnly?.(id, languageId)) {
+						associatedOnly = true;
+						break;
+					}
+				}
 				if (scriptRegistry.has(id)) {
 					const sourceScript = scriptRegistry.get(id)!;
-					if (sourceScript.languageId !== languageId) {
-						// languageId changed
+					if (sourceScript.languageId !== languageId || sourceScript.associatedOnly !== associatedOnly) {
 						this.delete(id);
 						return this.set(id, snapshot, languageId);
+					}
+					else if (associatedOnly) {
+						sourceScript.snapshot = snapshot;
 					}
 					else if (sourceScript.isAssociationDirty || sourceScript.snapshot !== snapshot) {
 						// snapshot updated
@@ -98,9 +107,12 @@ export function createLanguage<T>(
 						snapshot,
 						associatedIds: new Set(),
 						targetIds: new Set(),
+						associatedOnly
 					};
 					scriptRegistry.set(id, sourceScript);
-
+					if (associatedOnly) {
+						return sourceScript;
+					}
 					for (const languagePlugin of _plugins) {
 						const virtualCode = languagePlugin.createVirtualCode?.(id, languageId, snapshot, prepareCreateVirtualCode(sourceScript));
 						if (virtualCode) {

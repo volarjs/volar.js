@@ -6,6 +6,7 @@ export function notEmpty<T>(value: T | null | undefined): value is T {
 
 export function getServiceScript(language: Language<string>, fileName: string)
 	: [TypeScriptServiceScript, SourceScript<string>, SourceMap<CodeInformation, string>]
+	| [undefined, SourceScript<string>, undefined]
 	| [undefined, undefined, undefined] {
 	let sourceScript = language.scripts.get(fileName);
 	if (sourceScript?.targetIds && sourceScript?.targetIds.size > 0) {
@@ -24,6 +25,9 @@ export function getServiceScript(language: Language<string>, fileName: string)
 				}
 			}
 		}
+	}
+	if (sourceScript?.associatedOnly) {
+		return [undefined, sourceScript, undefined]
 	}
 	if (sourceScript?.generated) {
 		const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
