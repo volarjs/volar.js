@@ -7,7 +7,15 @@ export * from './lib/utils';
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript';
 import { LinkedCodeMap } from './lib/linkedCodeMap';
-import type { CodeInformation, CodegenContext, Language, LanguagePlugin, SourceScript, VirtualCode } from './lib/types';
+import type {
+	CodeInformation,
+	CodegenContext,
+	Language,
+	LanguagePlugin,
+	SourceScript,
+	VirtualCode,
+	CodeMapping
+} from './lib/types';
 
 export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],
@@ -15,7 +23,7 @@ export function createLanguage<T>(
 	sync: (id: T) => void
 ): Language<T> {
 	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode, SourceScript<T>>();
-	const virtualCodeToSourceMap = new WeakMap<ts.IScriptSnapshot, WeakMap<ts.IScriptSnapshot, SourceMap<CodeInformation>>>();
+	const virtualCodeToSourceMap = new WeakMap<ts.IScriptSnapshot, WeakMap<ts.IScriptSnapshot, SourceMap<CodeInformation, T>>>();
 	const virtualCodeToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, [ts.IScriptSnapshot, LinkedCodeMap | undefined]>();
 
 	return {
@@ -26,6 +34,10 @@ export function createLanguage<T>(
 			},
 			get(id) {
 				sync(id);
+				const result = scriptRegistry.get(id)
+				if (result?.isAssociationDirty) {
+					this.set(id, result.snapshot, result.languageId)
+				}
 				return scriptRegistry.get(id);
 			},
 			set(id, snapshot, languageId, _plugins = plugins) {
@@ -135,9 +147,22 @@ export function createLanguage<T>(
 
 				const sourceScript = virtualCodeToSourceScriptMap.get(virtualCode)!;
 				if (!mapCache.has(sourceScript.snapshot)) {
+					const allMappings: ({ source: T } & CodeMapping)[] = []
+					virtualCode.mappings.forEach(mapping => allMappings.push({
+						...mapping,
+						source: sourceScript.id
+					}))
+					if (virtualCode.associatedScriptMappings) {
+						for (const [relatedScriptId, relatedMappings] of virtualCode.associatedScriptMappings) {
+							relatedMappings.forEach(mapping => allMappings.push({
+								...mapping,
+								source: relatedScriptId as T
+							}))
+						}
+					}
 					mapCache.set(
 						sourceScript.snapshot,
-						new SourceMap(virtualCode.mappings)
+						new SourceMap(allMappings, sourceScript.id)
 					);
 				}
 				yield [sourceScript.id, sourceScript.snapshot, mapCache.get(sourceScript.snapshot)!];
