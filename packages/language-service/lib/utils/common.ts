@@ -31,14 +31,14 @@ export function findOverlapCodeRange(
 				const mappingEnd = mapping.sourceOffsets[mapping.sourceOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1];
 				const overlap = getOverlapRange(start, end, mappingStart, mappingEnd);
 				if (overlap) {
-					const curMappedStart = (overlap.start - mappingStart) + mapping.generatedOffsets[0]
+					const curMappedStart = (overlap.start - mappingStart) + mapping.generatedOffsets[0];
 
 					mappedStart = mappedStart === undefined ? curMappedStart : Math.min(mappedStart, curMappedStart);
 
 					const lastGeneratedLength = (mapping.generatedLengths ?? mapping.lengths)[mapping.generatedOffsets.length - 1];
-					const curMappedEndOffset = Math.min(overlap.end - mapping.sourceOffsets[mapping.sourceOffsets.length - 1], lastGeneratedLength)
+					const curMappedEndOffset = Math.min(overlap.end - mapping.sourceOffsets[mapping.sourceOffsets.length - 1], lastGeneratedLength);
 
-					const curMappedEnd = mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + curMappedEndOffset
+					const curMappedEnd = mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + curMappedEndOffset;
 
 					mappedEnd = mappedEnd === undefined ? curMappedEnd : Math.max(mappedEnd, curMappedEnd);
 				}

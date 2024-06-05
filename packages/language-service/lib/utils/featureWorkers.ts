@@ -135,7 +135,7 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 export function* forEachEmbeddedDocument(
 	context: LanguageServiceContext,
 	sourceScriptId: URI,
-	current: VirtualCode
+	current: VirtualCode<URI>
 ): Generator<SourceMapWithDocuments> {
 
 	if (current.embeddedCodes) {
@@ -144,9 +144,13 @@ export function* forEachEmbeddedDocument(
 		}
 	}
 
-	const map = context.documents.getSourceMap(current);
-	if (!context.disabledEmbeddedDocumentUris.get(context.encodeEmbeddedDocumentUri(sourceScriptId, current.id))) {
-		yield map;
+	for (const map of context.documents.getMaps(current)) {
+		if (
+			sourceScriptId.toString() === map.sourceDocument.uri
+			&& !context.disabledEmbeddedDocumentUris.get(context.encodeEmbeddedDocumentUri(sourceScriptId, current.id))
+		) {
+			yield map;
+		}
 	}
 }
 

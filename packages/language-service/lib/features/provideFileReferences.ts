@@ -32,12 +32,13 @@ export function register(context: LanguageServiceContext) {
 						return reference;
 					}
 
-					const map = context.documents.getSourceMap(virtualCode);
-					const range = map.getSourceRange(reference.range, isReferencesEnabled);
-					if (range) {
-						reference.uri = map.sourceDocument.uri;
-						reference.range = range;
-						return reference;
+					for (const map of context.documents.getMaps(virtualCode)) {
+						const range = map.getSourceRange(reference.range, isReferencesEnabled);
+						if (range) {
+							reference.uri = map.sourceDocument.uri;
+							reference.range = range;
+							return reference;
+						}
 					}
 				})
 				.filter(notEmpty),

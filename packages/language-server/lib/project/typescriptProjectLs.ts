@@ -1,9 +1,10 @@
 import { LanguagePlugin, LanguageService, LanguageServiceEnvironment, ProviderResult, UriMap, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
+import type { SnapshotDocument } from '@volar/snapshot-document';
 import { TypeScriptProjectHost, createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
-import type { URI } from 'vscode-uri';
+import { URI } from 'vscode-uri';
 import type { LanguageServer } from '../types';
 
 export interface TypeScriptProjectLS {
@@ -86,12 +87,10 @@ export async function createTypeScriptLS(
 		asUri,
 	});
 	const askedFiles = createUriMap<boolean>();
-	const docChangeWatcher = server.documents.onDidChangeContent(() => {
-		projectVersion++;
-	});
-	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => {
-		onWorkspaceFilesChanged(params.changes);
-	});
+	const docOpenWatcher = server.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document));
+	const docSaveWatcher = server.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document));
+	const docChangeWatcher = server.documents.onDidChangeContent(() => projectVersion++);
+	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => onWorkspaceFilesChanged(params.changes));
 
 	let rootFiles = await getRootFiles(languagePlugins);
 
@@ -104,13 +103,16 @@ export async function createTypeScriptLS(
 		createUriMap(sys.useCaseSensitiveFileNames),
 		uri => {
 			askedFiles.set(uri, true);
+
 			const documentUri = server.getSyncedDocumentKey(uri);
+			const syncedDocument = documentUri ? server.documents.get(documentUri) : undefined;
 
-			let snapshot = documentUri
-				? server.documents.get(documentUri)?.getSnapshot()
-				: undefined;
+			let snapshot: ts.IScriptSnapshot | undefined;
 
-			if (!snapshot) {
+			if (syncedDocument) {
+				snapshot = syncedDocument.getSnapshot();
+			}
+			else {
 				// fs files
 				const cache = fsFileSnapshots.get(uri);
 				const fileName = asFileName(uri);
@@ -164,9 +166,25 @@ export async function createTypeScriptLS(
 				projectVersion++;
 			}
 		},
-		dispose,
+		dispose: () => {
+			sys.dispose();
+			languageService?.dispose();
+			fileWatch?.dispose();
+			docOpenWatcher.dispose();
+			docSaveWatcher.dispose();
+			docChangeWatcher.dispose();
+		},
 		getParsedCommandLine: () => parsedCommandLine,
 	};
+
+	function updateFsCacheFromSyncedDocument(document: SnapshotDocument) {
+		const uri = URI.parse(document.uri);
+		const fileName = asFileName(uri);
+		if (fsFileSnapshots.has(uri) || sys.fileExists(fileName)) {
+			const modifiedTime = sys.getModifiedTime?.(fileName);
+			fsFileSnapshots.set(uri, [modifiedTime?.valueOf(), document.getSnapshot()]);
+		}
+	}
 
 	async function getRootFiles(languagePlugins: LanguagePlugin<URI>[]) {
 		parsedCommandLine = await createParsedCommandLine(
@@ -187,12 +205,6 @@ export async function createTypeScriptLS(
 		}
 
 		projectVersion++;
-	}
-	function dispose() {
-		sys.dispose();
-		languageService?.dispose();
-		fileWatch?.dispose();
-		docChangeWatcher.dispose();
 	}
 }
 

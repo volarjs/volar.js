@@ -186,19 +186,22 @@ export function register(context: LanguageServiceContext) {
 			return [tsItem, tsRanges];
 		}
 
-		const map = context.documents.getSourceMap(virtualCode);
+		for (const map of context.documents.getMaps(virtualCode)) {
 
-		let range = map.getSourceRange(tsItem.range);
-		if (!range) {
-			// TODO: <script> range
-			range = {
-				start: map.sourceDocument.positionAt(0),
-				end: map.sourceDocument.positionAt(map.sourceDocument.getText().length),
-			};
-		}
+			let range = map.getSourceRange(tsItem.range);
+			if (!range) {
+				// TODO: <script> range
+				range = {
+					start: map.sourceDocument.positionAt(0),
+					end: map.sourceDocument.positionAt(map.sourceDocument.getText().length),
+				};
+			}
 
-		const selectionRange = map.getSourceRange(tsItem.selectionRange);
-		if (selectionRange) {
+			const selectionRange = map.getSourceRange(tsItem.selectionRange);
+			if (!selectionRange) {
+				continue;
+			}
+
 			const vueRanges = tsRanges.map(tsRange => map.getSourceRange(tsRange)).filter(notEmpty);
 			const vueItem: vscode.CallHierarchyItem = {
 				...tsItem,
