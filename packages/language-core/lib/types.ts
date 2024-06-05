@@ -2,7 +2,7 @@ import type { Mapping, SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript';
 import type { LinkedCodeMap } from './linkedCodeMap';
 
-export interface Language<T> {
+export interface Language<T = unknown> {
 	plugins: LanguagePlugin<T>[];
 	scripts: {
 		get(id: T): SourceScript<T> | undefined;
@@ -30,7 +30,7 @@ export interface Language<T> {
 	};
 }
 
-export interface SourceScript<T> {
+export interface SourceScript<T = unknown> {
 	id: T;
 	languageId: string;
 	snapshot: ts.IScriptSnapshot;
@@ -90,11 +90,11 @@ export interface TypeScriptServiceScript<T = unknown> {
 	preventLeadingOffset?: boolean;
 }
 
-export interface TypeScriptExtraServiceScript<T> extends TypeScriptServiceScript<T> {
+export interface TypeScriptExtraServiceScript<T = unknown> extends TypeScriptServiceScript<T> {
 	fileName: string;
 }
 
-export interface LanguagePlugin<T, K extends VirtualCode<T> = VirtualCode<T>> {
+export interface LanguagePlugin<T = unknown, K extends VirtualCode<T> = VirtualCode<T>> {
 	/**
 	 * For files that are not opened in the IDE, the language ID will not be synchronized to the language server, so a hook is needed to parse the language ID of files that are known extension but not opened in the IDE.
 	 */
@@ -114,7 +114,7 @@ export interface LanguagePlugin<T, K extends VirtualCode<T> = VirtualCode<T>> {
 	typescript?: TypeScriptGenericOptions<T, K> & TypeScriptNonTSPluginOptions<T, K>;
 }
 
-export interface CodegenContext<T> {
+export interface CodegenContext<T = unknown> {
 	getAssociatedScript(scriptId: T): SourceScript<T> | undefined;
 }
 
