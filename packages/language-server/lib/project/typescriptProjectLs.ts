@@ -179,8 +179,8 @@ export async function createTypeScriptLS(
 
 	function updateFsCacheFromSyncedDocument(document: SnapshotDocument) {
 		const uri = URI.parse(document.uri);
-		if (fsFileSnapshots.has(uri)) {
-			const fileName = asFileName(uri);
+		const fileName = asFileName(uri);
+		if (fsFileSnapshots.has(uri) || sys.fileExists(fileName)) {
 			const modifiedTime = sys.getModifiedTime?.(fileName);
 			fsFileSnapshots.set(uri, [modifiedTime?.valueOf(), document.getSnapshot()]);
 		}
