@@ -31,7 +31,7 @@ export function createProcessor(
 	const documents = new FileMap<{
 		sourceDocument: TextDocument;
 		embeddedDocuments: TextDocument[];
-		codes: VirtualCode<string>[];
+		codes: VirtualCode[];
 	}>(caseSensitive);
 	return {
 		supportsAutofix,

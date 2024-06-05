@@ -14,7 +14,7 @@ export function createLanguage<T>(
 	scriptRegistry: Map<T, SourceScript<T>>,
 	sync: (id: T) => void
 ): Language<T> {
-	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode<T>, SourceScript<T>>();
+	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode, SourceScript<T>>();
 	const virtualCodeToSourceMap = new WeakMap<ts.IScriptSnapshot, WeakMap<ts.IScriptSnapshot, SourceMap<CodeInformation>>>();
 	const virtualCodeToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, [ts.IScriptSnapshot, LinkedCodeMap | undefined]>();
 
@@ -144,7 +144,7 @@ export function createLanguage<T>(
 
 				if (virtualCode.associatedScriptMappings) {
 					for (const [relatedScriptId, relatedMappings] of virtualCode.associatedScriptMappings) {
-						const relatedSourceScript = scriptRegistry.get(relatedScriptId);
+						const relatedSourceScript = scriptRegistry.get(relatedScriptId as T);
 						if (relatedSourceScript) {
 							if (!mapCache.has(relatedSourceScript.snapshot)) {
 								mapCache.set(
@@ -207,7 +207,7 @@ export function createLanguage<T>(
 	}
 }
 
-export function* forEachEmbeddedCode<T>(virtualCode: VirtualCode<T>): Generator<VirtualCode<T>> {
+export function* forEachEmbeddedCode(virtualCode: VirtualCode): Generator<VirtualCode> {
 	yield virtualCode;
 	if (virtualCode.embeddedCodes) {
 		for (const embeddedCode of virtualCode.embeddedCodes) {
