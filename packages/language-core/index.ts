@@ -34,6 +34,7 @@ export function createLanguage<T>(
 			get(id) {
 				sync(id);
 				const result = scriptRegistry.get(id);
+				// The sync function provider may not always call the set function due to caching, so it is necessary to explicitly check isAssociationDirty.
 				if (result?.isAssociationDirty) {
 					this.set(id, result.snapshot, result.languageId);
 				}
