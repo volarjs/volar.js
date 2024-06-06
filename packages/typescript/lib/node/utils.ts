@@ -5,7 +5,7 @@ export function notEmpty<T>(value: T | null | undefined): value is T {
 }
 
 export function getServiceScript(language: Language<string>, fileName: string)
-	: [TypeScriptServiceScript, SourceScript<string>, SourceMap<CodeInformation, string>]
+	: [TypeScriptServiceScript, SourceScript<string>, SourceMap<CodeInformation>]
 	| [undefined, SourceScript<string>, undefined]
 	| [undefined, undefined, undefined] {
 	let sourceScript = language.scripts.get(fileName);

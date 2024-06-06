@@ -57,7 +57,7 @@ export function createLanguageServicePlugin(
 						}
 					);
 
-					decorateLanguageService(language, info.languageService, ts.sys.useCaseSensitiveFileNames);
+					decorateLanguageService(language, info.languageService);
 					decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 				}
 

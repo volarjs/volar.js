@@ -16,12 +16,12 @@ interface MappingMemo {
 	mappings: Set<Mapping>[];
 }
 
-export class SourceMap<Data = unknown, T = unknown> {
+export class SourceMap<Data = unknown> {
 
 	private sourceCodeOffsetsMemo: MappingMemo | undefined;
 	private generatedCodeOffsetsMemo: MappingMemo | undefined;
 
-	constructor(public readonly mappings: ({ source?: T } & Mapping<Data>)[], private scriptId?: T) { }
+	constructor(public readonly mappings: Mapping<Data>[]) { }
 
 	getSourceOffsets(generatedOffset: number) {
 		return this.findMatching(generatedOffset, 'generatedOffsets', 'sourceOffsets');
@@ -49,7 +49,7 @@ export class SourceMap<Data = unknown, T = unknown> {
 
 				const mapped = translateOffset(offset, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
 				if (mapped !== undefined) {
-					yield [mapped, mapping as ({ source?: T } & Mapping<Data>)] as const;
+					yield [mapped, mapping as Mapping<Data>] as const;
 				}
 			}
 		}
@@ -63,10 +63,7 @@ export class SourceMap<Data = unknown, T = unknown> {
 
 	private createMemo(key: CodeRangeKey): MappingMemo {
 		const offsetsSet = new Set<number>();
-		const filteredMappings = this.scriptId && key === 'sourceOffsets'
-			? this.mappings.filter(mapping => mapping.source === this.scriptId)
-			: this.mappings
-		for (const mapping of filteredMappings) {
+		for (const mapping of this.mappings) {
 			for (let i = 0; i < mapping[key].length; i++) {
 				offsetsSet.add(mapping[key][i]);
 				offsetsSet.add(mapping[key][i] + getLengths(mapping, key)[i]);
@@ -76,7 +73,7 @@ export class SourceMap<Data = unknown, T = unknown> {
 		const offsets = [...offsetsSet].sort((a, b) => a - b);
 		const mappings = offsets.map(() => new Set<Mapping<Data>>());
 
-		for (const mapping of filteredMappings) {
+		for (const mapping of this.mappings) {
 			for (let i = 0; i < mapping[key].length; i++) {
 				const startIndex = binarySearch(offsets, mapping[key][i]).match!;
 				const endIndex = binarySearch(offsets, mapping[key][i] + getLengths(mapping, key)[i]).match!;
@@ -91,5 +88,5 @@ export class SourceMap<Data = unknown, T = unknown> {
 }
 
 function getLengths(mapping: Mapping, key: CodeRangeKey) {
-	return key == "sourceOffsets" ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths;
+	return key == 'sourceOffsets' ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths;
 }

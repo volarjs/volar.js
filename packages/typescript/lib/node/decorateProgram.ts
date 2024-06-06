@@ -1,7 +1,7 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
+import { ToSourceMode, fillSourceFileText, transformDiagnostic } from './transform';
 import { getServiceScript, notEmpty } from './utils';
-import { transformDiagnostic, fillSourceFileText, transformAndFilterDiagnostics } from './transform';
 
 export function decorateProgram(language: Language<string>, program: ts.Program) {
 
@@ -22,42 +22,45 @@ export function decorateProgram(language: Language<string>, program: ts.Program)
 		return {
 			...result,
 			diagnostics: result.diagnostics
-				.map(d => transformDiagnostic(language, d, program, true))
+				.map(d => transformDiagnostic(ToSourceMode.IncludeAssciated, language, d, program, true))
 				.filter(notEmpty),
 		};
 	};
 	program.getSyntacticDiagnostics = (sourceFile, cancellationToken) => {
 		if (!sourceFile) {
-			return []
+			return [];
 		}
 		const [_serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 		const actualSourceFile = sourceScript ? program.getSourceFile(sourceScript.id) : sourceFile;
-		return transformAndFilterDiagnostics(getSyntacticDiagnostics(actualSourceFile, cancellationToken),
-			language, sourceFile.fileName, program, true)
+		return getSyntacticDiagnostics(actualSourceFile, cancellationToken)
+			.map(d => transformDiagnostic(ToSourceMode.SkipAssciated, language, d, program, true))
+			.filter(notEmpty);
 	};
 	program.getSemanticDiagnostics = (sourceFile, cancellationToken) => {
 		if (!sourceFile) {
-			return []
+			return [];
 		}
 		const [_serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 		const actualSourceFile = sourceScript ? program.getSourceFile(sourceScript.id) : sourceFile;
-		return transformAndFilterDiagnostics(getSemanticDiagnostics(actualSourceFile, cancellationToken),
-			language, sourceFile.fileName, program, true)
+		return getSemanticDiagnostics(actualSourceFile, cancellationToken)
+			.map(d => transformDiagnostic(ToSourceMode.SkipAssciated, language, d, program, true))
+			.filter(notEmpty);
 	};
 	program.getGlobalDiagnostics = cancellationToken => {
 		return getGlobalDiagnostics(cancellationToken)
-			.map(d => transformDiagnostic(language, d, program, true))
+			.map(d => transformDiagnostic(ToSourceMode.IncludeAssciated, language, d, program, true))
 			.filter(notEmpty);
 	};
 	// @ts-ignore
 	program.getBindAndCheckDiagnostics = (sourceFile, cancellationToken) => {
 		if (!sourceFile) {
-			return []
+			return [];
 		}
 		const [_serviceScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 		const actualSourceFile = sourceScript ? program.getSourceFile(sourceScript.id) : sourceFile;
-		return transformAndFilterDiagnostics((getBindAndCheckDiagnostics as typeof getSyntacticDiagnostics)(actualSourceFile, cancellationToken),
-			language, sourceFile.fileName, program, true)
+		return (getBindAndCheckDiagnostics as typeof getSyntacticDiagnostics)(actualSourceFile, cancellationToken)
+			.map(d => transformDiagnostic(ToSourceMode.SkipAssciated, language, d, program, true))
+			.filter(notEmpty);
 	};
 
 	// fix https://github.com/vuejs/language-tools/issues/4099 with `incremental`
