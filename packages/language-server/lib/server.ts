@@ -191,19 +191,19 @@ export function createServerBase(
 		}
 
 		if (capabilitiesArr.some(data => data.autoInsertionProvider)) {
-			const allTriggerCharacters: string[] = [];
-			const allConfigurationSections: (string | null)[] = [];
-			const tryAdd = (char: string, section: string | null) => {
-				const index = allTriggerCharacters.indexOf(char);
-				if (index === -1 || allConfigurationSections[index] !== section) {
-					allTriggerCharacters.push(char);
-					allConfigurationSections.push(section);
+			const triggerCharacterToConfigurationSections = new Map<string, Set<string>>();
+			const tryAdd = (char: string, section?: string) => {
+				let sectionSet = triggerCharacterToConfigurationSections.get(char);
+				if (!sectionSet) {
+					triggerCharacterToConfigurationSections.set(char, sectionSet = new Set());
+				}
+				if (section) {
+					sectionSet.add(section);
 				}
 			};
 			for (const data of capabilitiesArr) {
 				if (data.autoInsertionProvider) {
 					const { triggerCharacters, configurationSections } = data.autoInsertionProvider;
-					allTriggerCharacters.push(...triggerCharacters);
 					if (configurationSections) {
 						if (configurationSections.length !== triggerCharacters.length) {
 							throw new Error('configurationSections.length !== triggerCharacters.length');
@@ -214,15 +214,27 @@ export function createServerBase(
 					}
 					else {
 						for (const char of triggerCharacters) {
-							tryAdd(char, null);
+							tryAdd(char);
 						}
 					}
 				}
 			}
 			status.initializeResult.autoInsertion = {
-				triggerCharacters: allTriggerCharacters,
-				configurationSections: allConfigurationSections,
+				triggerCharacters: [],
+				configurationSections: [],
 			};
+			for (const [char, sections] of triggerCharacterToConfigurationSections) {
+				if (sections.size) {
+					for (const section of sections) {
+						status.initializeResult.autoInsertion.triggerCharacters.push(char);
+						status.initializeResult.autoInsertion.configurationSections.push(section);
+					}
+				}
+				else {
+					status.initializeResult.autoInsertion.triggerCharacters.push(char);
+					status.initializeResult.autoInsertion.configurationSections.push(null);
+				}
+			}
 		}
 
 		return status.initializeResult;
