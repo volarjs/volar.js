@@ -69,7 +69,8 @@ export function createLanguageServicePlugin(
 					|| !externalFiles.has(project)
 				) {
 					const oldFiles = externalFiles.get(project);
-					const newFiles = searchExternalFiles(ts, project, projectExternalFileExtensions.get(project)!);
+					const extensions = projectExternalFileExtensions.get(project);
+					const newFiles = extensions?.length ? searchExternalFiles(ts, project, extensions) : [];
 					externalFiles.set(project, newFiles);
 					if (oldFiles && !arrayItemsEqual(oldFiles, newFiles)) {
 						project.refreshDiagnostics();
