@@ -11,7 +11,7 @@ export interface Language<T = unknown> {
 		fromVirtualCode(virtualCode: VirtualCode): SourceScript<T>;
 	};
 	maps: {
-		get(virtualCode: VirtualCode, sourceScript: SourceScript<T>, mappings?: Mapping<CodeInformation>[]): SourceMap<CodeInformation>;
+		get(virtualCode: VirtualCode, sourceScript: SourceScript<T>): SourceMap<CodeInformation>;
 		forEach(virtualCode: VirtualCode): Generator<[id: T, snapshot: ts.IScriptSnapshot, map: SourceMap<CodeInformation>]>;
 	};
 	linkedCodeMaps: {

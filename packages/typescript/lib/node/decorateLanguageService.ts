@@ -135,8 +135,8 @@ export function decorateLanguageService(
 			return [];
 		}
 		if (serviceScript) {
-			const generateStart = toGeneratedOffset(language, serviceScript, targetScript, start, isFormattingEnabled);
-			const generateEnd = toGeneratedOffset(language, serviceScript, targetScript, end, isFormattingEnabled);
+			const generateStart = toGeneratedOffset(language, serviceScript, sourceScript, start, isFormattingEnabled);
+			const generateEnd = toGeneratedOffset(language, serviceScript, sourceScript, end, isFormattingEnabled);
 			if (generateStart !== undefined && generateEnd !== undefined) {
 				const edits = getFormattingEditsForRange(targetScript.id, generateStart, generateEnd, options);
 				return edits
@@ -156,7 +156,7 @@ export function decorateLanguageService(
 			return [];
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, targetScript, position, isFormattingEnabled);
+			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isFormattingEnabled);
 			if (generatePosition !== undefined) {
 				const edits = getFormattingEditsAfterKeystroke(targetScript.id, generatePosition, key, options);
 				return edits
@@ -180,7 +180,7 @@ export function decorateLanguageService(
 			return undefined;
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, targetScript, position, isLinkedEditingEnabled);
+			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isLinkedEditingEnabled);
 			if (generatePosition !== undefined) {
 				const info = getLinkedEditingRangeAtPosition(targetScript.id, generatePosition);
 				if (info) {
@@ -199,12 +199,12 @@ export function decorateLanguageService(
 	};
 	languageService.prepareCallHierarchy = (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
-		const [serviceScript, targetScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return undefined;
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, targetScript, position, isCallHierarchyEnabled);
+			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isCallHierarchyEnabled);
 			if (generatePosition !== undefined) {
 				const item = prepareCallHierarchy(targetScript.id, generatePosition);
 				if (Array.isArray(item)) {
@@ -222,12 +222,12 @@ export function decorateLanguageService(
 	languageService.provideCallHierarchyIncomingCalls = (filePath, position) => {
 		let calls: ts.CallHierarchyIncomingCall[] = [];
 		const fileName = filePath.replace(windowsPathReg, '/');
-		const [serviceScript, targetScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return [];
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, targetScript, position, isCallHierarchyEnabled);
+			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isCallHierarchyEnabled);
 			if (generatePosition !== undefined) {
 				calls = provideCallHierarchyIncomingCalls(targetScript.id, generatePosition);
 			}
@@ -255,9 +255,9 @@ export function decorateLanguageService(
 			return [];
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, targetScript, position, isCallHierarchyEnabled);
+			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isCallHierarchyEnabled);
 			if (generatePosition !== undefined) {
-				calls = provideCallHierarchyOutgoingCalls(fileName, generatePosition);
+				calls = provideCallHierarchyOutgoingCalls(targetScript.id, generatePosition);
 			}
 		}
 		else {
@@ -290,7 +290,7 @@ export function decorateLanguageService(
 		}
 		if (serviceScript) {
 			const infos: ts.QuickInfo[] = [];
-			for (const [generatePosition] of toGeneratedOffsets(language, serviceScript, targetScript, position, isHoverEnabled)) {
+			for (const [generatePosition] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isHoverEnabled)) {
 				const info = getQuickInfoAtPosition(targetScript.id, generatePosition);
 				if (info) {
 					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, isHoverEnabled)?.[1];
@@ -352,7 +352,7 @@ export function decorateLanguageService(
 			return undefined;
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, targetScript, position, isSignatureHelpEnabled);
+			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isSignatureHelpEnabled);
 			if (generatePosition !== undefined) {
 				const result = getSignatureHelpItems(targetScript.id, generatePosition, options);
 				if (result) {
@@ -408,12 +408,12 @@ export function decorateLanguageService(
 	};
 	languageService.getApplicableRefactors = (filePath, positionOrRange, preferences, triggerReason, kind, includeInteractiveActions) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
-		const [serviceScript, targetScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return [];
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, targetScript, typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos, isCodeActionsEnabled);
+			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos, isCodeActionsEnabled);
 			if (generatePosition !== undefined) {
 				const por = typeof positionOrRange === 'number'
 					? generatePosition
@@ -432,7 +432,7 @@ export function decorateLanguageService(
 	languageService.getEditsForRefactor = (filePath, formatOptions, positionOrRange, refactorName, actionName, preferences) => {
 		let edits: ts.RefactorEditInfo | undefined;
 		const fileName = filePath.replace(windowsPathReg, '/');
-		const [serviceScript, targetScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return undefined;
 		}
@@ -440,7 +440,7 @@ export function decorateLanguageService(
 			const generatePosition = toGeneratedOffset(
 				language,
 				serviceScript,
-				targetScript,
+				sourceScript,
 				typeof positionOrRange === 'number'
 					? positionOrRange
 					: positionOrRange.pos,
@@ -475,7 +475,7 @@ export function decorateLanguageService(
 		}
 		if (serviceScript) {
 			let failed: ts.RenameInfoFailure | undefined;
-			for (const [generateOffset] of toGeneratedOffsets(language, serviceScript, targetScript, position, isRenameEnabled)) {
+			for (const [generateOffset] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isRenameEnabled)) {
 				const info = getRenameInfo(targetScript.id, generateOffset, options);
 				if (info.canRename) {
 					const span = transformTextSpan(sourceScript, language, serviceScript, info.triggerSpan, isRenameEnabled)?.[1];
@@ -503,13 +503,13 @@ export function decorateLanguageService(
 	languageService.getCodeFixesAtPosition = (filePath, start, end, errorCodes, formatOptions, preferences) => {
 		let fixes: readonly ts.CodeFixAction[] = [];
 		const fileName = filePath.replace(windowsPathReg, '/');
-		const [serviceScript, targetScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return [];
 		}
 		if (serviceScript) {
-			const generateStart = toGeneratedOffset(language, serviceScript, targetScript, start, isCodeActionsEnabled);
-			const generateEnd = toGeneratedOffset(language, serviceScript, targetScript, end, isCodeActionsEnabled);
+			const generateStart = toGeneratedOffset(language, serviceScript, sourceScript, start, isCodeActionsEnabled);
+			const generateEnd = toGeneratedOffset(language, serviceScript, sourceScript, end, isCodeActionsEnabled);
 			if (generateStart !== undefined && generateEnd !== undefined) {
 				fixes = getCodeFixesAtPosition(
 					targetScript.id,
@@ -778,7 +778,7 @@ export function decorateLanguageService(
 		}
 		if (serviceScript) {
 			const results: ts.CompletionInfo[] = [];
-			for (const [generatedOffset, mapping] of toGeneratedOffsets(language, serviceScript, targetScript, position, isCompletionEnabled)) {
+			for (const [generatedOffset, mapping] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isCompletionEnabled)) {
 				const result = getCompletionsAtPosition(targetScript.id, generatedOffset, options, formattingSettings);
 				if (!result) {
 					continue;
@@ -817,12 +817,12 @@ export function decorateLanguageService(
 		let details: ts.CompletionEntryDetails | undefined;
 
 		const fileName = filePath.replace(windowsPathReg, '/');
-		const [serviceScript, targetScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return undefined;
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, targetScript, position, isCompletionEnabled);
+			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isCompletionEnabled);
 			if (generatePosition !== undefined) {
 				details = getCompletionEntryDetails(targetScript.id, generatePosition, entryName, formatOptions, source, preferences, data);
 			}
@@ -899,9 +899,9 @@ export function decorateLanguageService(
 	) {
 		const results: T[] = [];
 		const processedFilePositions = new Set<string>();
-		const [serviceScript, targetScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (serviceScript) {
-			for (const [generatedOffset] of toGeneratedOffsets(language, serviceScript, targetScript, position, filter)) {
+			for (const [generatedOffset] of toGeneratedOffsets(language, serviceScript, sourceScript, position, filter)) {
 				process(targetScript.id, generatedOffset);
 			}
 		}

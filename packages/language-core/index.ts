@@ -142,7 +142,7 @@ export function createLanguage<T>(
 			},
 		},
 		maps: {
-			get(virtualCode, sourceScript, mappings) {
+			get(virtualCode, sourceScript) {
 				let mapCache = virtualCodeToSourceMap.get(virtualCode.snapshot);
 				if (!mapCache) {
 					virtualCodeToSourceMap.set(
@@ -151,9 +151,10 @@ export function createLanguage<T>(
 					);
 				}
 				if (!mapCache.has(sourceScript.snapshot)) {
+					const mappings = virtualCode.associatedScriptMappings?.get(sourceScript.id) ?? virtualCode.mappings;
 					mapCache.set(
 						sourceScript.snapshot,
-						new SourceMap(mappings ?? virtualCode.mappings)
+						new SourceMap(mappings)
 					);
 				}
 				return mapCache.get(sourceScript.snapshot)!;
@@ -166,13 +167,13 @@ export function createLanguage<T>(
 					this.get(virtualCode, sourceScript),
 				];
 				if (virtualCode.associatedScriptMappings) {
-					for (const [relatedScriptId, relatedMappings] of virtualCode.associatedScriptMappings) {
+					for (const [relatedScriptId] of virtualCode.associatedScriptMappings) {
 						const relatedSourceScript = scriptRegistry.get(relatedScriptId as T);
 						if (relatedSourceScript) {
 							yield [
 								relatedSourceScript.id,
 								relatedSourceScript.snapshot,
-								this.get(virtualCode, relatedSourceScript, relatedMappings),
+								this.get(virtualCode, relatedSourceScript),
 							];
 						}
 					}
