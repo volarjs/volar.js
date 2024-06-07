@@ -589,7 +589,7 @@ export function decorateLanguageService(
 		if (targetScript?.associatedOnly) {
 			return [];
 		}
-		return getSyntacticDiagnostics(fileName)
+		return getSyntacticDiagnostics(targetScript?.id ?? fileName)
 			.map(d => transformDiagnostic(sourceScript, language, d, languageService.getProgram(), false))
 			.filter(notEmpty);
 	};
@@ -599,7 +599,7 @@ export function decorateLanguageService(
 		if (targetScript?.associatedOnly) {
 			return [];
 		}
-		return getSemanticDiagnostics(fileName)
+		return getSemanticDiagnostics(targetScript?.id ?? fileName)
 			.map(d => transformDiagnostic(sourceScript, language, d, languageService.getProgram(), false))
 			.filter(notEmpty);
 	};
@@ -609,7 +609,7 @@ export function decorateLanguageService(
 		if (targetScript?.associatedOnly) {
 			return [];
 		}
-		return getSuggestionDiagnostics(fileName)
+		return getSuggestionDiagnostics(targetScript?.id ?? fileName)
 			.map(d => transformDiagnostic(sourceScript, language, d, languageService.getProgram(), false))
 			.filter(notEmpty);
 	};
