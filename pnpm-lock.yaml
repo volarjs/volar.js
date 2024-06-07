@@ -167,8 +167,8 @@ importers:
         specifier: 2.3.0-alpha.13
         version: link:../typescript
       monaco-languageserver-types:
-        specifier: ^0.3.3
-        version: 0.3.3
+        specifier: ^0.3.4
+        version: 0.3.4
       monaco-types:
         specifier: ^0.1.0
         version: 0.1.0
@@ -2122,8 +2122,8 @@ packages:
   monaco-editor-core@0.49.0:
     resolution: {integrity: sha512-MANZcpLnpcM5qceEMsdwndvyB9rlGu+Sd8mVLd6y4VpSZCQenpoUAYk0K+UAPtcnCOYhgIsR/ZS9PxzMnCFkYw==}
 
-  monaco-languageserver-types@0.3.3:
-    resolution: {integrity: sha512-4uJ6XaVwVamOQ1SXfBGusAqL4fTn7ZJzaybEinr2U5ZX7AKSjsbXWlu0X3Ah+hyefn+85+Ca7GZwbI87g55C8Q==}
+  monaco-languageserver-types@0.3.4:
+    resolution: {integrity: sha512-d58sP5yNhjs8uG1ESXs0hFnuX2YfdMhiGeWhdgTUZyG9aaWgyI4dDwrK1khf1mPF2u9Sljv42sfYqPFZnqYMYg==}
 
   monaco-types@0.1.0:
     resolution: {integrity: sha512-aWK7SN9hAqNYi0WosPoMjenMeXJjwCxDibOqWffyQ/qXdzB/86xshGQobRferfmNz7BSNQ8GB0MD0oby9/5fTQ==}
@@ -4921,7 +4921,7 @@ snapshots:
 
   monaco-editor-core@0.49.0: {}
 
-  monaco-languageserver-types@0.3.3:
+  monaco-languageserver-types@0.3.4:
     dependencies:
       monaco-types: 0.1.0
       vscode-languageserver-protocol: 3.17.5
