@@ -590,8 +590,9 @@ export function decorateLanguageService(
 			return [];
 		}
 		return getSyntacticDiagnostics(targetScript?.id ?? fileName)
-			.map(d => transformDiagnostic(sourceScript, language, d, languageService.getProgram(), false))
-			.filter(notEmpty);
+			.map(d => transformDiagnostic(language, d, languageService.getProgram(), false))
+			.filter(notEmpty)
+			.filter(d => language.scripts.get(d.file.fileName) === sourceScript);
 	};
 	languageService.getSemanticDiagnostics = filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
@@ -600,8 +601,9 @@ export function decorateLanguageService(
 			return [];
 		}
 		return getSemanticDiagnostics(targetScript?.id ?? fileName)
-			.map(d => transformDiagnostic(sourceScript, language, d, languageService.getProgram(), false))
-			.filter(notEmpty);
+			.map(d => transformDiagnostic(language, d, languageService.getProgram(), false))
+			.filter(notEmpty)
+			.filter(d => !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 	languageService.getSuggestionDiagnostics = filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
@@ -610,8 +612,9 @@ export function decorateLanguageService(
 			return [];
 		}
 		return getSuggestionDiagnostics(targetScript?.id ?? fileName)
-			.map(d => transformDiagnostic(sourceScript, language, d, languageService.getProgram(), false))
-			.filter(notEmpty);
+			.map(d => transformDiagnostic(language, d, languageService.getProgram(), false))
+			.filter(notEmpty)
+			.filter(d => !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 	languageService.getDefinitionAndBoundSpan = (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');

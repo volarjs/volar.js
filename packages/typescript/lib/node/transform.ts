@@ -23,7 +23,6 @@ export function transformCallHierarchyItem(
 }
 
 export function transformDiagnostic<T extends ts.Diagnostic>(
-	sourceScript: SourceScript<string> | undefined,
 	language: Language<string>,
 	diagnostic: T,
 	program: ts.Program | undefined,
@@ -35,7 +34,7 @@ export function transformDiagnostic<T extends ts.Diagnostic>(
 		const { relatedInformation } = diagnostic;
 		if (relatedInformation) {
 			diagnostic.relatedInformation = relatedInformation
-				.map(d => transformDiagnostic(undefined, language, d, program, isTsc))
+				.map(d => transformDiagnostic(language, d, program, isTsc))
 				.filter(notEmpty);
 		}
 
@@ -46,7 +45,7 @@ export function transformDiagnostic<T extends ts.Diagnostic>(
 		) {
 			const [serviceScript] = getServiceScript(language, diagnostic.file.fileName);
 			if (serviceScript) {
-				const [sourceSpanFileName, sourceSpan] = transformTextSpan(sourceScript, language, serviceScript, {
+				const [sourceSpanFileName, sourceSpan] = transformTextSpan(undefined, language, serviceScript, {
 					start: diagnostic.start,
 					length: diagnostic.length
 				}, shouldReportDiagnostics) ?? [];
