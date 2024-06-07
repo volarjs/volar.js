@@ -29,7 +29,7 @@ import {
 	toLinkedEditingRanges,
 	toLocation,
 	toLocationLink,
-	toSelectionRange,
+	toSelectionRanges,
 	toSemanticTokens,
 	toSignatureHelp,
 	toTextEdit,
@@ -374,17 +374,11 @@ export async function createLanguageFeaturesProvider(
 		},
 		async provideSelectionRanges(model, positions) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
-			const codeResults = await Promise.all(
-				positions.map(position =>
-					languageService.getSelectionRanges(
-						model.uri as URI,
-						[fromPosition(position)]
-					)
-				)
+			const codeResults = await languageService.getSelectionRanges(
+				model.uri as URI,
+				positions.map(fromPosition)
 			);
-			return codeResults.map(
-				codeResult => codeResult?.map(toSelectionRange) ?? []
-			);
+			return codeResults?.map(toSelectionRanges);
 		},
 		async provideSignatureHelp(model, position, _token, context) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
