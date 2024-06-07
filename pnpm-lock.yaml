@@ -10,10 +10,10 @@ importers:
     devDependencies:
       '@lerna-lite/cli':
         specifier: latest
-        version: 3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(@lerna-lite/version@3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)
+        version: 3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(@lerna-lite/version@3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)
       '@lerna-lite/publish':
         specifier: latest
-        version: 3.5.0(typescript@5.4.5)
+        version: 3.5.1(typescript@5.4.5)
       '@tsslint/cli':
         specifier: latest
         version: 0.0.12(typescript@5.4.5)
@@ -28,7 +28,7 @@ importers:
         version: 5.4.5
       vite:
         specifier: latest
-        version: 5.2.12(@types/node@20.14.2)
+        version: 5.2.13(@types/node@20.14.2)
       vitest:
         specifier: latest
         version: 1.6.0(@types/node@20.14.2)
@@ -42,13 +42,13 @@ importers:
         specifier: ^1.82.0
         version: 1.89.0
       '@volar/language-server':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../../packages/vscode
       esbuild:
         specifier: latest
@@ -69,7 +69,7 @@ importers:
         specifier: ^8.56.10
         version: 8.56.10
       '@volar/language-core':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-core
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -78,10 +78,10 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -103,22 +103,22 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-service
       '@volar/snapshot-document':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../snapshot-document
       '@volar/typescript':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../typescript
       path-browserify:
         specifier: ^1.0.1
@@ -146,7 +146,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-core
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -161,10 +161,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.3.3
@@ -198,10 +198,10 @@ importers:
   packages/test-utils:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-core
       '@volar/language-server':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-server
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -217,7 +217,7 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-core
       path-browserify:
         specifier: ^1.0.1
@@ -233,13 +233,13 @@ importers:
         specifier: latest
         version: 1.0.2
       '@volar/language-service':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 2.3.0-alpha.12
+        specifier: 2.3.0-alpha.13
         version: link:../language-server
       path-browserify:
         specifier: ^1.0.1
@@ -711,8 +711,8 @@ packages:
     resolution: {integrity: sha512-e5+YUKENATs1JgYHMzTr2MW/NDcXGfYFAuOQU8gJgF/kEh4EqKgfGrfLI67bMD4tbhZVlkigz/9YYwWcbOFthg==}
     engines: {node: '>=10.13.0'}
 
-  '@inquirer/figures@1.0.2':
-    resolution: {integrity: sha512-4F1MBwVr3c/m4bAUef6LgkvBfSjzwH+OfldgHqcuacWwSUetFebM2wi58WfG9uk1rR98U6GwLed4asLJbwdV5w==}
+  '@inquirer/figures@1.0.3':
+    resolution: {integrity: sha512-ErXXzENMH5pJt5/ssXV0DfWUZqly8nGzf0UcBV9xTnP+KyffE2mqyxIMBrZ8ijQck2nU0TQm40EQB53YreyWHw==}
     engines: {node: '>=18'}
 
   '@isaacs/cliui@8.0.2':
@@ -726,8 +726,8 @@ packages:
   '@jridgewell/sourcemap-codec@1.4.15':
     resolution: {integrity: sha512-eF2rxCRulEKXHTRiDrDy6erMYWqNw4LPdQ8UQA4huuxaQsVeRPFl2oM8oDGxMFhJUWZf9McpLtJasDDZb/Bpeg==}
 
-  '@lerna-lite/cli@3.5.0':
-    resolution: {integrity: sha512-7+3A9znjBqpReSMB7jU15wS0cp6jLlHgOh2H6WXecpDUdyKJOj6ULv0UZlWX7gsPG3SYc1U9EKPWBV413sr72A==}
+  '@lerna-lite/cli@3.5.1':
+    resolution: {integrity: sha512-kWhjomm8iwI6MxC/Au7Mv9pztOm4QVEKR72+YQ59qfP1sVwIX6jlWNaBmszXonry34v226GDs6gDE31Vl3QHoQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -751,20 +751,20 @@ packages:
       '@lerna-lite/watch':
         optional: true
 
-  '@lerna-lite/core@3.5.0':
-    resolution: {integrity: sha512-TFBVpPN0OjY8RR1JyFzVsdh535ZXtCaSf10fieyv9YiWFHykullm+UM/atiEpIr4LShkYf05pHBECOJ2+f+JEA==}
+  '@lerna-lite/core@3.5.1':
+    resolution: {integrity: sha512-cPOcwlEETXyraa2A0202B4GKYdlHsJ7i2YGzPY5PYrtV7AkjpETqKbQhhWzuQWXFJpdIuzuowmMeX/6XcVtorA==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
-  '@lerna-lite/init@3.5.0':
-    resolution: {integrity: sha512-kd51wBShaYRq8Y6uVWAeBF7AsTojUsusaQmfyE8af5AcujQYzHoF/JEoM9v8gBKagXlSU24XdHBKH+QxhxclcQ==}
+  '@lerna-lite/init@3.5.1':
+    resolution: {integrity: sha512-N7p9ByH4OE/UaWUzz7BL51pnkNxU4tQetEMbn/4QFTh0EfFYP4OXF3zq2Y5Egs8l1Mx/iso9Ly68VHaE8aKPeQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
-  '@lerna-lite/publish@3.5.0':
-    resolution: {integrity: sha512-c+BsBAkIVWhtqCD/SeL6ikXLEGMI1m3WsbRJlBDmbM0Z/jPhc8yIHgTcjkBRM3hvhMdDL14lNsuLyAl8x1zZ8w==}
+  '@lerna-lite/publish@3.5.1':
+    resolution: {integrity: sha512-odDrME24EeKiNeLARn8aW79MJ0gEZlBevS5qvtQ189Gg1T0PbpR7iQeskRfwAFmIPfKJWdWMa6Q9vdbYG1FoEw==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
-  '@lerna-lite/version@3.5.0':
-    resolution: {integrity: sha512-FO6RDsMc2u7y6MlxNj9ZQADTqIEk117apyl23kYlzBxRo98a95S1fr+0ewfiYTiEBLJSJKu/gj/bMgOP3KhNYw==}
+  '@lerna-lite/version@3.5.1':
+    resolution: {integrity: sha512-IRRgPkWvitN+6bH/SUUCCnW8k9+O+8eZH6WmE6g+wXL7XCnG7EyeNs6RMGbTIQkYJ+CZNbSn7OTzVxr2udFigw==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
   '@ljharb/through@2.3.13':
@@ -1804,8 +1804,8 @@ packages:
   ini@1.3.8:
     resolution: {integrity: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==}
 
-  inquirer@9.2.22:
-    resolution: {integrity: sha512-SqLLa/Oe5rZUagTR9z+Zd6izyatHglbmbvVofo1KzuVB54YHleWzeHNLoR7FOICGOeQSqeLh1cordb3MzhGcEw==}
+  inquirer@9.2.23:
+    resolution: {integrity: sha512-kod5s+FBPIDM2xiy9fu+6wdU/SkK5le5GS9lh4FEBjBHqiMgD9lLFbCbuqFNAjNL2ZOy9Wd9F694IOzN9pZHBA==}
     engines: {node: '>=18'}
 
   ip-address@9.0.5:
@@ -2874,8 +2874,8 @@ packages:
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
 
-  vite@5.2.12:
-    resolution: {integrity: sha512-/gC8GxzxMK5ntBwb48pR32GGhENnjtY30G4A0jemunsBkiEZFw60s8InGpN8gkhHEkjnRK1aSAxeQgwvFhUHAA==}
+  vite@5.2.13:
+    resolution: {integrity: sha512-SSq1noJfY9pR3I1TUENL3rQYDQCFqgD+lM6fTRAM8Nv6Lsg5hDLaXkjETVeBt+7vZBCMoibD+6IWnT2mJ+Zb/A==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -3287,7 +3287,7 @@ snapshots:
 
   '@hutson/parse-repository-url@5.0.0': {}
 
-  '@inquirer/figures@1.0.2': {}
+  '@inquirer/figures@1.0.3': {}
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -3304,10 +3304,10 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.4.15': {}
 
-  '@lerna-lite/cli@3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(@lerna-lite/version@3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)':
+  '@lerna-lite/cli@3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(@lerna-lite/version@3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)':
     dependencies:
-      '@lerna-lite/core': 3.5.0(typescript@5.4.5)
-      '@lerna-lite/init': 3.5.0(typescript@5.4.5)
+      '@lerna-lite/core': 3.5.1(typescript@5.4.5)
+      '@lerna-lite/init': 3.5.1(typescript@5.4.5)
       dedent: 1.5.3
       dotenv: 16.4.5
       import-local: 3.1.0
@@ -3315,15 +3315,15 @@ snapshots:
       npmlog: 7.0.1
       yargs: 17.7.2
     optionalDependencies:
-      '@lerna-lite/publish': 3.5.0(typescript@5.4.5)
-      '@lerna-lite/version': 3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(typescript@5.4.5)
+      '@lerna-lite/publish': 3.5.1(typescript@5.4.5)
+      '@lerna-lite/version': 3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(typescript@5.4.5)
     transitivePeerDependencies:
       - babel-plugin-macros
       - bluebird
       - supports-color
       - typescript
 
-  '@lerna-lite/core@3.5.0(typescript@5.4.5)':
+  '@lerna-lite/core@3.5.1(typescript@5.4.5)':
     dependencies:
       '@npmcli/run-script': 8.1.0
       chalk: 5.3.0
@@ -3335,7 +3335,7 @@ snapshots:
       fs-extra: 11.2.0
       glob-parent: 6.0.2
       globby: 14.0.1
-      inquirer: 9.2.22
+      inquirer: 9.2.23
       is-ci: 3.0.1
       json5: 2.2.3
       load-json-file: 7.0.1
@@ -3357,9 +3357,9 @@ snapshots:
       - supports-color
       - typescript
 
-  '@lerna-lite/init@3.5.0(typescript@5.4.5)':
+  '@lerna-lite/init@3.5.1(typescript@5.4.5)':
     dependencies:
-      '@lerna-lite/core': 3.5.0(typescript@5.4.5)
+      '@lerna-lite/core': 3.5.1(typescript@5.4.5)
       fs-extra: 11.2.0
       p-map: 7.0.2
       write-json-file: 5.0.0
@@ -3369,11 +3369,11 @@ snapshots:
       - supports-color
       - typescript
 
-  '@lerna-lite/publish@3.5.0(typescript@5.4.5)':
+  '@lerna-lite/publish@3.5.1(typescript@5.4.5)':
     dependencies:
-      '@lerna-lite/cli': 3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(@lerna-lite/version@3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)
-      '@lerna-lite/core': 3.5.0(typescript@5.4.5)
-      '@lerna-lite/version': 3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(typescript@5.4.5)
+      '@lerna-lite/cli': 3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(@lerna-lite/version@3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)
+      '@lerna-lite/core': 3.5.1(typescript@5.4.5)
+      '@lerna-lite/version': 3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(typescript@5.4.5)
       byte-size: 8.1.1
       chalk: 5.3.0
       columnify: 1.6.0
@@ -3406,10 +3406,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@lerna-lite/version@3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(typescript@5.4.5)':
+  '@lerna-lite/version@3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(typescript@5.4.5)':
     dependencies:
-      '@lerna-lite/cli': 3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(@lerna-lite/version@3.5.0(@lerna-lite/publish@3.5.0(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)
-      '@lerna-lite/core': 3.5.0(typescript@5.4.5)
+      '@lerna-lite/cli': 3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(@lerna-lite/version@3.5.1(@lerna-lite/publish@3.5.1(typescript@5.4.5))(typescript@5.4.5))(typescript@5.4.5)
+      '@lerna-lite/core': 3.5.1(typescript@5.4.5)
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 20.1.1
       chalk: 5.3.0
@@ -4612,9 +4612,9 @@ snapshots:
 
   ini@1.3.8: {}
 
-  inquirer@9.2.22:
+  inquirer@9.2.23:
     dependencies:
-      '@inquirer/figures': 1.0.2
+      '@inquirer/figures': 1.0.3
       '@ljharb/through': 2.3.13
       ansi-escapes: 4.3.2
       chalk: 5.3.0
@@ -5703,7 +5703,7 @@ snapshots:
       debug: 4.3.5
       pathe: 1.1.2
       picocolors: 1.0.1
-      vite: 5.2.12(@types/node@20.14.2)
+      vite: 5.2.13(@types/node@20.14.2)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5714,7 +5714,7 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.2.12(@types/node@20.14.2):
+  vite@5.2.13(@types/node@20.14.2):
     dependencies:
       esbuild: 0.20.2
       postcss: 8.4.38
@@ -5742,7 +5742,7 @@ snapshots:
       strip-literal: 2.1.0
       tinybench: 2.8.0
       tinypool: 0.8.4
-      vite: 5.2.12(@types/node@20.14.2)
+      vite: 5.2.13(@types/node@20.14.2)
       vite-node: 1.6.0(@types/node@20.14.2)
       why-is-node-running: 2.2.2
     optionalDependencies:
