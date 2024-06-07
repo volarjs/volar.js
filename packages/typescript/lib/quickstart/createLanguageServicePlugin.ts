@@ -1,4 +1,4 @@
-import { FileMap, LanguagePlugin, createLanguage } from '@volar/language-core';
+import { FileMap, Language, LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { resolveFileLanguageId } from '../common';
 import { decorateLanguageService } from '../node/decorateLanguageService';
@@ -10,10 +10,13 @@ const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
 const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
 
 export function createLanguageServicePlugin(
-	loadLanguagePlugins: (
+	create: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
-	) => LanguagePlugin<string>[]
+	) => {
+		languagePlugins: LanguagePlugin<string>[],
+		setup?: (language: Language<string>) => void;
+	}
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
@@ -26,7 +29,7 @@ export function createLanguageServicePlugin(
 					decoratedLanguageServices.add(info.languageService);
 					decoratedLanguageServiceHosts.add(info.languageServiceHost);
 
-					const languagePlugins = loadLanguagePlugins(ts, info);
+					const { languagePlugins, setup } = create(ts, info);
 					const extensions = languagePlugins
 						.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 						.flat();
@@ -59,6 +62,7 @@ export function createLanguageServicePlugin(
 
 					decorateLanguageService(language, info.languageService);
 					decorateLanguageServiceHost(ts, language, info.languageServiceHost);
+					setup?.(language);
 				}
 
 				return info.languageService;
