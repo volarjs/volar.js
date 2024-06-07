@@ -3,11 +3,7 @@ import type * as ts from 'typescript';
 import { resolveFileLanguageId } from '../common';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { arrayItemsEqual } from './createLanguageServicePlugin';
-
-const externalFiles = new WeakMap<ts.server.Project, string[]>();
-const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
-const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
+import { arrayItemsEqual, decoratedLanguageServiceHosts, decoratedLanguageServices, externalFiles } from './createLanguageServicePlugin';
 
 export function createAsyncLanguageServicePlugin(
 	extensions: string[],

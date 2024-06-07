@@ -4,10 +4,10 @@ import { resolveFileLanguageId } from '../common';
 import { decorateLanguageService } from '../node/decorateLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 
-const externalFiles = new WeakMap<ts.server.Project, string[]>();
-const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
-const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
-const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
+export const externalFiles = new WeakMap<ts.server.Project, string[]>();
+export const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
+export const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
+export const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
 
 export function createLanguageServicePlugin(
 	create: (
