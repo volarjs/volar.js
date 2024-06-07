@@ -7,7 +7,14 @@ export * from './lib/utils';
 import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript';
 import { LinkedCodeMap } from './lib/linkedCodeMap';
-import type { CodeInformation, CodegenContext, Language, LanguagePlugin, SourceScript, VirtualCode } from './lib/types';
+import type {
+	CodeInformation,
+	CodegenContext,
+	Language,
+	LanguagePlugin,
+	SourceScript,
+	VirtualCode,
+} from './lib/types';
 
 export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],
@@ -26,6 +33,11 @@ export function createLanguage<T>(
 			},
 			get(id) {
 				sync(id);
+				const result = scriptRegistry.get(id);
+				// The sync function provider may not always call the set function due to caching, so it is necessary to explicitly check isAssociationDirty.
+				if (result?.isAssociationDirty) {
+					this.set(id, result.snapshot, result.languageId);
+				}
 				return scriptRegistry.get(id);
 			},
 			set(id, snapshot, languageId, _plugins = plugins) {
@@ -41,12 +53,21 @@ export function createLanguage<T>(
 					console.warn(`languageId not found for ${id}`);
 					return;
 				}
+				let associatedOnly = false;
+				for (const plugin of plugins) {
+					if (plugin.isAssociatedFileOnly?.(id, languageId)) {
+						associatedOnly = true;
+						break;
+					}
+				}
 				if (scriptRegistry.has(id)) {
 					const sourceScript = scriptRegistry.get(id)!;
-					if (sourceScript.languageId !== languageId) {
-						// languageId changed
+					if (sourceScript.languageId !== languageId || sourceScript.associatedOnly !== associatedOnly) {
 						this.delete(id);
 						return this.set(id, snapshot, languageId);
+					}
+					else if (associatedOnly) {
+						sourceScript.snapshot = snapshot;
 					}
 					else if (sourceScript.isAssociationDirty || sourceScript.snapshot !== snapshot) {
 						// snapshot updated
@@ -86,9 +107,12 @@ export function createLanguage<T>(
 						snapshot,
 						associatedIds: new Set(),
 						targetIds: new Set(),
+						associatedOnly
 					};
 					scriptRegistry.set(id, sourceScript);
-
+					if (associatedOnly) {
+						return sourceScript;
+					}
 					for (const languagePlugin of _plugins) {
 						const virtualCode = languagePlugin.createVirtualCode?.(id, languageId, snapshot, prepareCreateVirtualCode(sourceScript));
 						if (virtualCode) {
@@ -118,13 +142,7 @@ export function createLanguage<T>(
 			},
 		},
 		maps: {
-			get(virtualCode) {
-				for (const map of this.forEach(virtualCode)) {
-					return map[2];
-				}
-				throw `no map found for ${virtualCode.id}`;
-			},
-			*forEach(virtualCode) {
+			get(virtualCode, sourceScript, mappings) {
 				let mapCache = virtualCodeToSourceMap.get(virtualCode.snapshot);
 				if (!mapCache) {
 					virtualCodeToSourceMap.set(
@@ -132,27 +150,30 @@ export function createLanguage<T>(
 						mapCache = new WeakMap()
 					);
 				}
-
-				const sourceScript = virtualCodeToSourceScriptMap.get(virtualCode)!;
 				if (!mapCache.has(sourceScript.snapshot)) {
 					mapCache.set(
 						sourceScript.snapshot,
-						new SourceMap(virtualCode.mappings)
+						new SourceMap(mappings ?? virtualCode.mappings)
 					);
 				}
-				yield [sourceScript.id, sourceScript.snapshot, mapCache.get(sourceScript.snapshot)!];
-
+				return mapCache.get(sourceScript.snapshot)!;
+			},
+			*forEach(virtualCode) {
+				const sourceScript = virtualCodeToSourceScriptMap.get(virtualCode)!;
+				yield [
+					sourceScript.id,
+					sourceScript.snapshot,
+					this.get(virtualCode, sourceScript),
+				];
 				if (virtualCode.associatedScriptMappings) {
 					for (const [relatedScriptId, relatedMappings] of virtualCode.associatedScriptMappings) {
 						const relatedSourceScript = scriptRegistry.get(relatedScriptId as T);
 						if (relatedSourceScript) {
-							if (!mapCache.has(relatedSourceScript.snapshot)) {
-								mapCache.set(
-									relatedSourceScript.snapshot,
-									new SourceMap(relatedMappings)
-								);
-							}
-							yield [relatedSourceScript.id, relatedSourceScript.snapshot, mapCache.get(relatedSourceScript.snapshot)!];
+							yield [
+								relatedSourceScript.id,
+								relatedSourceScript.snapshot,
+								this.get(virtualCode, relatedSourceScript, relatedMappings),
+							];
 						}
 					}
 				}

@@ -46,7 +46,7 @@ export function register(context: LanguageServiceContext) {
 		const endOffset = document.offsetAt(range.end);
 
 		for (const code of forEachEmbeddedCode(sourceScript.generated.root)) {
-			const map = context.language.maps.get(code);
+			const map = context.language.maps.get(code, sourceScript);
 			if (map) {
 				const embeddedRange = findOverlapCodeRange(startOffset, endOffset, map, isFormattingEnabled);
 				if (embeddedRange) {

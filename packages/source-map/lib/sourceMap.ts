@@ -88,5 +88,5 @@ export class SourceMap<Data = unknown> {
 }
 
 function getLengths(mapping: Mapping, key: CodeRangeKey) {
-	return key == "sourceOffsets" ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths;
+	return key == 'sourceOffsets' ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths;
 }

@@ -11,7 +11,7 @@ export interface Language<T = unknown> {
 		fromVirtualCode(virtualCode: VirtualCode): SourceScript<T>;
 	};
 	maps: {
-		get(virtualCode: VirtualCode): SourceMap<CodeInformation>;
+		get(virtualCode: VirtualCode, sourceScript: SourceScript<T>, mappings?: Mapping<CodeInformation>[]): SourceMap<CodeInformation>;
 		forEach(virtualCode: VirtualCode): Generator<[id: T, snapshot: ts.IScriptSnapshot, map: SourceMap<CodeInformation>]>;
 	};
 	linkedCodeMaps: {
@@ -36,6 +36,7 @@ export interface SourceScript<T = unknown> {
 	snapshot: ts.IScriptSnapshot;
 	targetIds: Set<T>;
 	associatedIds: Set<T>;
+	associatedOnly: boolean;
 	isAssociationDirty?: boolean;
 	generated?: {
 		root: VirtualCode;
@@ -111,6 +112,13 @@ export interface LanguagePlugin<T = unknown, K extends VirtualCode = VirtualCode
 	 * Cleanup a virtual code.
 	 */
 	disposeVirtualCode?(scriptId: T, virtualCode: K): void;
+	/**
+	 * Some file types should not be parsed or processed as TypeScript files,
+	 * as they are used only as sources for generated files.
+	 *
+	 * This functionality is required only in TS plugin mode.
+	 */
+	isAssociatedFileOnly?(scriptId: T, languageId: string): boolean;
 	typescript?: TypeScriptGenericOptions<K> & TypeScriptNonTSPluginOptions<K>;
 }
 
