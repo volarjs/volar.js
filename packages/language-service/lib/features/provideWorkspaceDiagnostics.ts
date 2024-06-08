@@ -8,7 +8,7 @@ import { shouldReportDiagnostics } from '@volar/language-core';
 
 export function register(context: LanguageServiceContext) {
 
-	return async (token = NoneCancellationToken): Promise<vscode.WorkspaceDiagnosticReport> => {
+	return async (token = NoneCancellationToken) => {
 
 		const allItems: vscode.WorkspaceDocumentDiagnosticReport[] = [];
 
@@ -26,7 +26,7 @@ export function register(context: LanguageServiceContext) {
 			if (!report) {
 				continue;
 			}
-			const items = report.items
+			const items = report
 				.map<vscode.WorkspaceDocumentDiagnosticReport>(item => {
 					const decoded = context.decodeEmbeddedDocumentUri(URI.parse(item.uri));
 					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
@@ -65,6 +65,6 @@ export function register(context: LanguageServiceContext) {
 			allItems.push(...items);
 		}
 
-		return { items: allItems };
+		return allItems;
 	};
 }

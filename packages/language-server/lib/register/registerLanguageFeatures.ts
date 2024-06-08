@@ -277,7 +277,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 				break;
 			}
 			const result = await languageService.getWorkspaceDiagnostics(token);
-			items.push(...result.items);
+			items.push(...result);
 		}
 		return { items };
 	});
