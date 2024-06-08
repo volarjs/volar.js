@@ -1,6 +1,6 @@
 {
 	"name": "@volar/snapshot-document",
-	"version": "2.3.0-alpha.14",
+	"version": "2.3.0-alpha.15",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
