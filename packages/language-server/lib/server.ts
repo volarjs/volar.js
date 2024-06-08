@@ -174,7 +174,7 @@ export function createServerBase(
 			diagnosticProvider: capabilitiesArr.some(data => data.diagnosticProvider)
 				? {
 					interFileDependencies: true,
-					workspaceDiagnostics: false,
+					workspaceDiagnostics: capabilitiesArr.some(data => data.diagnosticProvider?.workspaceDiagnostics),
 				}
 				: undefined,
 			documentOnTypeFormattingProvider: capabilitiesArr.some(data => data.documentOnTypeFormattingProvider)

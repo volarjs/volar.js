@@ -59,6 +59,7 @@ export interface LanguageServiceContext {
 	};
 	documents: {
 		get(uri: URI, languageId: string, snapshot: ts.IScriptSnapshot): TextDocument;
+		getMap(virtualCode: VirtualCode, sourceScript: SourceScript<URI>): SourceMapWithDocuments;
 		getMaps(virtualCode: VirtualCode): Generator<SourceMapWithDocuments>;
 		getLinkedCodeMap(virtualCode: VirtualCode, documentUri: URI): LinkedCodeMapWithDocument | undefined;
 	};
@@ -133,8 +134,10 @@ export interface LanguageServicePlugin<P = any> {
 			codeActionKinds?: string[];
 			resolveProvider?: boolean;
 		};
-		// TODO: interFileDependencies, workspaceDiagnostics
-		diagnosticProvider?: boolean;
+		// TODO: interFileDependencies
+		diagnosticProvider?: {
+			workspaceDiagnostics?: boolean;
+		};
 	};
 	create(context: LanguageServiceContext, languageService: LanguageService): LanguageServicePluginInstance<P>;
 }
@@ -176,6 +179,7 @@ export interface LanguageServicePluginInstance<P = any> {
 	provideWorkspaceSymbols?(query: string, token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceSymbol[]>;
 	provideDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Diagnostic[]>;
 	provideSemanticDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Diagnostic[]>;
+	provideWorkspaceDiagnostics?(token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceDiagnosticReport>;
 	provideFileReferences?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Location[]>; // volar specific
 	provideReferencesCodeLensRanges?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Range[]>; // volar specific
 	provideAutoInsertSnippet?(document: TextDocument, position: vscode.Position, lastChange: { rangeOffset: number; rangeLength: number; text: string; }, token: vscode.CancellationToken): NullableProviderResult<string>; // volar specific

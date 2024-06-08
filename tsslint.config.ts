@@ -176,6 +176,7 @@ export default defineConfig({
 						ts.isIdentifier(parameter.name)
 						&& !parameter.type
 						&& !parameter.dotDotDotToken
+						&& !parameter.initializer
 						&& sourceFile.text[parameter.getStart(sourceFile) - 1] === '('
 						&& sourceFile.text[parameter.getEnd()] === ')'
 					) {

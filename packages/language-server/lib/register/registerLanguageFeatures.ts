@@ -208,6 +208,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 		}
 		return results;
 	});
+	// TODO: onWorkspaceSymbolResolve
 	server.connection.languages.callHierarchy.onPrepare(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
 		return await worker(uri, token, languageService => {
@@ -268,6 +269,17 @@ export function registerLanguageFeatures(server: LanguageServer) {
 			kind: vscode.DocumentDiagnosticReportKind.Full,
 			items: result ?? [],
 		};
+	});
+	server.connection.languages.diagnostics.onWorkspace(async (_params, token) => {
+		const items: embedded.WorkspaceDocumentDiagnosticReport[] = [];
+		for (const languageService of await server.project.getExistingLanguageServices()) {
+			if (token.isCancellationRequested) {
+				break;
+			}
+			const result = await languageService.getWorkspaceDiagnostics(token);
+			items.push(...result.items);
+		}
+		return { items };
 	});
 	server.connection.languages.inlayHint.on(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
