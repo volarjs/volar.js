@@ -41,7 +41,7 @@ import * as inlayHintResolve from './features/resolveInlayHint';
 import type { LanguageServicePlugin, LanguageServiceContext, LanguageServiceEnvironment } from './types';
 import { UriMap, createUriMap } from './utils/uriMap';
 
-export type LanguageService = ReturnType<typeof createLanguageService>;
+export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
 export function createLanguageService(
 	language: Language<URI>,
@@ -55,6 +55,7 @@ export function createLanguageService(
 	const embeddedContentScheme = 'volar-embedded-content';
 	const context: LanguageServiceContext = {
 		language,
+		getLanguageService: () => langaugeService,
 		documents: {
 			get(uri, languageId, snapshot) {
 				if (!snapshot2Doc.has(snapshot)) {
@@ -200,7 +201,18 @@ export function createLanguageService(
 			});
 		},
 	};
-	const api = {
+	for (const plugin of plugins) {
+		context.plugins.push([plugin, plugin.create(context)]);
+	}
+	const langaugeService = createLanguageServiceBase(plugins, context);
+	return langaugeService;
+}
+
+function createLanguageServiceBase(
+	plugins: LanguageServicePlugin[],
+	context: LanguageServiceContext
+) {
+	return {
 		getSemanticTokenLegend: () => {
 			const tokenModifiers = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat();
 			const tokenTypes = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat();
@@ -255,8 +267,4 @@ export function createLanguageService(
 		dispose: () => context.plugins.forEach(plugin => plugin[1].dispose?.()),
 		context,
 	};
-	for (const plugin of plugins) {
-		context.plugins.push([plugin, plugin.create(context, api)]);
-	}
-	return api;
 }

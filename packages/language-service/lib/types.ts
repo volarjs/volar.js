@@ -47,6 +47,7 @@ export interface LanguageServiceCommand<T extends any[]> {
 
 export interface LanguageServiceContext {
 	language: Language<URI>;
+	getLanguageService(): LanguageService;
 	env: LanguageServiceEnvironment;
 	inject<Provide, K extends keyof Provide = keyof Provide>(
 		key: K,
@@ -139,7 +140,7 @@ export interface LanguageServicePlugin<P = any> {
 			workspaceDiagnostics?: boolean;
 		};
 	};
-	create(context: LanguageServiceContext, languageService: LanguageService): LanguageServicePluginInstance<P>;
+	create(context: LanguageServiceContext): LanguageServicePluginInstance<P>;
 }
 
 export interface EmbeddedCodeFormattingOptions {
