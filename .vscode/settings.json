@@ -18,9 +18,6 @@
 		"editor.defaultFormatter": "vscode.json-language-features"
 	},
 	"files.exclude": {
-		"tsslint-config/*.d.ts": true,
-		"tsslint-config/*.js": true,
-		"tsslint-config/*.map": true,
 		"packages/*/*.d.ts": true,
 		"packages/*/*.js": true,
 		"packages/*/*.map": true,

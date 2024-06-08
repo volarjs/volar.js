@@ -6,7 +6,6 @@
 	},
 	"include": [ "packages/*/tests" ],
 	"references": [
-		{ "path": "./tsslint-config/tsconfig.json" },
 		{ "path": "./packages/eslint/tsconfig.json" },
 		{ "path": "./packages/kit/tsconfig.json" },
 		{ "path": "./packages/typescript/tsconfig.json" },
