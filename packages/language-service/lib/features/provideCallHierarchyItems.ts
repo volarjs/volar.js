@@ -18,7 +18,7 @@ export function register(context: LanguageServiceContext) {
 
 	return {
 
-		doPrepare(uri: URI, position: vscode.Position, token = NoneCancellationToken) {
+		getCallHierarchyItems(uri: URI, position: vscode.Position, token = NoneCancellationToken) {
 
 			return languageFeatureWorker(
 				context,
@@ -54,7 +54,7 @@ export function register(context: LanguageServiceContext) {
 			);
 		},
 
-		async getIncomingCalls(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
+		async getCallHierarchyIncomingCalls(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
 
 			const data: PluginCallHierarchyData | undefined = item.data;
 			let incomingItems: vscode.CallHierarchyIncomingCall[] = [];
@@ -115,7 +115,7 @@ export function register(context: LanguageServiceContext) {
 			return dedupe.withCallHierarchyIncomingCalls(incomingItems);
 		},
 
-		async getOutgoingCalls(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
+		async getCallHierarchyOutgoingCalls(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
 
 			const data: PluginCallHierarchyData | undefined = item.data;
 			let items: vscode.CallHierarchyOutgoingCall[] = [];

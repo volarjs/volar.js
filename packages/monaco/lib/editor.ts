@@ -93,7 +93,7 @@ export function activateMarkers(
 
 		const version = model.getVersionId();
 		const languageService = await worker.withSyncedResources(getSyncUris());
-		const diagnostics = await languageService.doValidation(model.uri as URI);
+		const diagnostics = await languageService.getDiagnostics(model.uri as URI);
 		if (model.getVersionId() !== version) {
 			return;
 		}
@@ -183,7 +183,7 @@ export function activateAutoInsertion(
 					return;
 				}
 				const languageService = await worker.withSyncedResources(getSyncUris());
-				const edit = await languageService.doAutoInsert(
+				const edit = await languageService.getAutoInsertSnippet(
 					model.uri as URI,
 					fromPosition({
 						lineNumber: lastChange.range.startLineNumber,

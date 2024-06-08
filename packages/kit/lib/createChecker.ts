@@ -161,7 +161,7 @@ function createTypeScriptCheckerWorker(
 	function check(fileName: string) {
 		fileName = asPosix(fileName);
 		const uri = fileNameToUri(fileName);
-		return languageService.doValidation(uri);
+		return languageService.getDiagnostics(uri);
 	}
 
 	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
@@ -171,10 +171,10 @@ function createTypeScriptCheckerWorker(
 		if (sourceScript) {
 			const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 			const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
-			const codeActions = await languageService.doCodeActions(uri, range, { diagnostics, only, triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked });
+			const codeActions = await languageService.getCodeActions(uri, range, { diagnostics, only, triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked });
 			if (codeActions) {
 				for (let i = 0; i < codeActions.length; i++) {
-					codeActions[i] = await languageService.doCodeActionResolve(codeActions[i]);
+					codeActions[i] = await languageService.resolveCodeAction(codeActions[i]);
 				}
 				const edits = codeActions.map(codeAction => codeAction.edit).filter((edit): edit is NonNullable<typeof edit> => !!edit);
 				if (edits.length) {

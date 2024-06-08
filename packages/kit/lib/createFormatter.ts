@@ -36,7 +36,7 @@ export function createFormatter(
 		language.scripts.set(fakeUri, snapshot, languageId);
 
 		const document = languageService.context.documents.get(fakeUri, languageId, snapshot);
-		const edits = await languageService.format(fakeUri, options, undefined, undefined);
+		const edits = await languageService.getDocumentFormattingEdits(fakeUri, options, undefined, undefined);
 		if (edits?.length) {
 			const newString = TextDocument.applyEdits(document, edits);
 			return newString;
