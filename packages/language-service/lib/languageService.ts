@@ -13,6 +13,7 @@ import * as colorPresentations from './features/provideColorPresentations';
 import * as completions from './features/provideCompletionItems';
 import * as definition from './features/provideDefinition';
 import * as diagnostics from './features/provideDiagnostics';
+import * as workspaceDiagnostics from './features/provideWorkspaceDiagnostics';
 import * as documentColors from './features/provideDocumentColors';
 import * as documentDrop from './features/provideDocumentDropEdits';
 import * as format from './features/provideDocumentFormattingEdits';
@@ -71,6 +72,19 @@ export function createLanguageService(
 					));
 				}
 				return map.get(uri)!;
+			},
+			getMap(virtualCode, sourceScript) {
+				const map = context.language.maps.get(virtualCode, sourceScript);
+				if (!map2DocMap.has(map)) {
+					const embeddedUri = context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id);
+					map2DocMap.set(map, new SourceMapWithDocuments(
+						this.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot),
+						this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
+						map,
+						virtualCode,
+					));
+				}
+				return map2DocMap.get(map)!;
 			},
 			*getMaps(virtualCode) {
 				for (const [uri, snapshot, map] of context.language.maps.forEach(virtualCode)) {
@@ -209,6 +223,7 @@ export function createLanguageService(
 		getColorPresentations: colorPresentations.register(context),
 
 		doValidation: diagnostics.register(context),
+		getWorkspaceDiagnostics: workspaceDiagnostics.register(context),
 		findReferences: references.register(context),
 		findFileReferences: fileReferences.register(context),
 		findDefinition: definition.register(context, 'provideDefinition', isDefinitionEnabled),
