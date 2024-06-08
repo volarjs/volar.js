@@ -585,36 +585,36 @@ export function decorateLanguageService(
 	};
 	languageService.getSyntacticDiagnostics = filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
-		const [_serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return [];
 		}
 		return getSyntacticDiagnostics(targetScript?.id ?? fileName)
 			.map(d => transformDiagnostic(language, d, languageService.getProgram(), false))
 			.filter(notEmpty)
-			.filter(d => language.scripts.get(d.file.fileName) === sourceScript);
+			.filter(d => !serviceScript || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 	languageService.getSemanticDiagnostics = filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
-		const [_serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return [];
 		}
 		return getSemanticDiagnostics(targetScript?.id ?? fileName)
 			.map(d => transformDiagnostic(language, d, languageService.getProgram(), false))
 			.filter(notEmpty)
-			.filter(d => !d.file || language.scripts.get(d.file.fileName) === sourceScript);
+			.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 	languageService.getSuggestionDiagnostics = filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
-		const [_serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
+		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return [];
 		}
 		return getSuggestionDiagnostics(targetScript?.id ?? fileName)
 			.map(d => transformDiagnostic(language, d, languageService.getProgram(), false))
 			.filter(notEmpty)
-			.filter(d => !d.file || language.scripts.get(d.file.fileName) === sourceScript);
+			.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 	languageService.getDefinitionAndBoundSpan = (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');

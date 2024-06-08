@@ -33,12 +33,12 @@ export function decorateProgram(language: Language<string>, program: ts.Program)
 				.filter(notEmpty);
 		}
 		else {
-			const [_serviceScript, targetScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
+			const [serviceScript, targetScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 			const actualSourceFile = targetScript ? program.getSourceFile(targetScript.id) : sourceFile;
 			return getSyntacticDiagnostics(actualSourceFile, cancellationToken)
 				.map(d => transformDiagnostic(language, d, program, true))
 				.filter(notEmpty)
-				.filter(d => !d.file || language.scripts.get(d.file.fileName) === sourceScript);
+				.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 		}
 	};
 	program.getSemanticDiagnostics = (sourceFile, cancellationToken) => {
@@ -48,12 +48,12 @@ export function decorateProgram(language: Language<string>, program: ts.Program)
 				.filter(notEmpty);
 		}
 		else {
-			const [_serviceScript, targetScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
+			const [serviceScript, targetScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 			const actualSourceFile = targetScript ? program.getSourceFile(targetScript.id) : sourceFile;
 			return getSemanticDiagnostics(actualSourceFile, cancellationToken)
 				.map(d => transformDiagnostic(language, d, program, true))
 				.filter(notEmpty)
-				.filter(d => !d.file || language.scripts.get(d.file.fileName) === sourceScript);
+				.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 		}
 	};
 	program.getGlobalDiagnostics = cancellationToken => {
@@ -69,12 +69,12 @@ export function decorateProgram(language: Language<string>, program: ts.Program)
 				.filter(notEmpty);
 		}
 		else {
-			const [_serviceScript, targetScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
+			const [serviceScript, targetScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 			const actualSourceFile = targetScript ? program.getSourceFile(targetScript.id) : sourceFile;
 			return (getBindAndCheckDiagnostics as typeof getSyntacticDiagnostics)(actualSourceFile, cancellationToken)
 				.map(d => transformDiagnostic(language, d, program, true))
 				.filter(notEmpty)
-				.filter(d => language.scripts.get(d.file.fileName) === sourceScript);
+				.filter(d => !serviceScript || language.scripts.get(d.file.fileName) === sourceScript);
 		}
 	};
 
