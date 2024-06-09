@@ -1,10 +1,14 @@
-import { defineConfig } from '@tsslint/config';
+import { Rules, defineConfig } from '@tsslint/config';
 import type * as ts from 'typescript';
 // @ts-ignore
 import * as path from 'node:path';
 
 export default defineConfig({
-	rules: {
+	rules: getDefaultRules(),
+});
+
+export function getDefaultRules(): Rules {
+	return {
 		/**
 		 * @example
 		 * ```diff
@@ -449,5 +453,5 @@ export default defineConfig({
 				ts.forEachChild(node, visit);
 			});
 		},
-	},
-});
+	};
+}

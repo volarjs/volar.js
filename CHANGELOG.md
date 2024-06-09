@@ -6,7 +6,7 @@
 
 - **language-core:** added option to resolve hidden extensions ([#190](https://github.com/volarjs/volar.js/issues/190))
 - **language-core:** reimplemented multi-source mapping ([#194](https://github.com/volarjs/volar.js/issues/194))
-- **language-core:** completed support for multi-source mapping in plugin mode ([#197](https://github.com/volarjs/volar.js/issues/197))
+- **language-core:** completed support for multi-source mapping in plugin mode ([#197](https://github.com/volarjs/volar.js/issues/197)) - Thanks @piotrtomiak
 - **language-server:** added support for Workspace Diagnostics ([#199](https://github.com/volarjs/volar.js/issues/199))
 - **language-server:** accurately defined language server capabilities ([#185](https://github.com/volarjs/volar.js/issues/185))
 - **typescript:** added option to prevent offset in plugin mode ([#191](https://github.com/volarjs/volar.js/issues/191))
