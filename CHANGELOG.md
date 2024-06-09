@@ -1,5 +1,43 @@
 # Changelog
 
+## [2.3.0](https://github.com/volarjs/volar.js/compare/v2.2.5...v2.3.0) (2024-06-09)
+
+### Features
+
+- **language-core:** added option to resolve hidden extensions ([#190](https://github.com/volarjs/volar.js/issues/190))
+- **language-core:** reimplemented multi-source mapping ([#194](https://github.com/volarjs/volar.js/issues/194))
+- **language-core:** completed support for multi-source mapping in plugin mode ([#197](https://github.com/volarjs/volar.js/issues/197))
+- **language-server:** added support for Workspace Diagnostics ([#199](https://github.com/volarjs/volar.js/issues/199))
+- **language-server:** accurately defined language server capabilities ([#185](https://github.com/volarjs/volar.js/issues/185))
+- **typescript:** added option to prevent offset in plugin mode ([#191](https://github.com/volarjs/volar.js/issues/191))
+
+### Bug Fixes
+
+- **language-service:** fixed conversion of markdown links
+- **vscode:** showed error on missing TypeScript lib ([#195](https://github.com/volarjs/volar.js/issues/195)) - Thanks @msujew
+- **monaco:** fixed Monaco selection ranges conversion ([#198](https://github.com/volarjs/volar.js/issues/198)) - Thanks @remcohaszing
+
+### Performance
+
+- **vscode:** auto insertion request now exits early on vscode ([#157](https://github.com/volarjs/volar.js/issues/157))
+- **language-server:** improved snapshot reusability ([#196](https://github.com/volarjs/volar.js/issues/196))
+- **typescript:** skips `searchExternalFiles` if extra extensions are empty
+
+### Refactors
+
+- **typescript:** added `setup` option for `createLanguageServicePlugin`, `createAsyncLanguageServicePlugin`
+- **language-core:** `LanguagePlugin` now requires the first generic parameter to specify the script ID type
+- **language-core:** `updateVirtualCode` is now optional, if not provided, `createVirtualCode` is always called to update source script
+- **language-server:** `createTypeScriptProjectProvider` has been renamed to `createTypeScriptProject`
+- **language-server:** `createSimpleProjectProvider` has been renamed to `createSimpleProject`
+- **language-server:** no longer handles `@vscode/l10n`
+- **language-server:** removed `InitializationOptions` interface
+- **language-service:** LSP related logic has been changed to be completely based on URI ([#182](https://github.com/volarjs/volar.js/issues/182))
+- **language-service:** `LanguageServiceEnvironment#workapceFolder` is now a URI array and has been renamed to `workspaceFolders`
+- **language-service:** `provideAutoInsertionEdit` has been renamed to `provideAutoInsertSnippet`
+- **language-service:** normalized `LanguageService` API name format
+- **labs:** Codegen Stacks debug feature has been removed (#184)
+
 ## [2.2.5](https://github.com/volarjs/volar.js/compare/v2.2.4...v2.2.5) (2024-05-23)
 
 ### Features
