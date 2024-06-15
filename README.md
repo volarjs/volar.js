@@ -72,6 +72,7 @@ This module is an extension of Volar.js for the Monaco Editor. It utilizes the l
       </td>
       <td align="center" valign="middle" width="50%">
         <a href="https://astro.build/">
+          <!-- Expire: 2025-02-04 -->
           <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/Astro.svg" height="80" />
         </a>
         <p>Astro powers the world's fastest websites, client-side web apps, dynamic API endpoints, and everything in-between.</p>
@@ -79,12 +80,18 @@ This module is an extension of Volar.js for the Monaco Editor. It utilizes the l
     </tr>
     <tr>
       <td align="center" valign="middle">
+        <!-- Expire: 2025-02-04 -->
         <a href="https://www.jetbrains.com/">
           <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/JetBrains.svg" height="80" />
         </a>
         <p>Essential tools for software developers and teams.</p>
       </td>
       <td align="center" valign="middle">
+        <!-- Expire: 2024-08-16 -->
+        <a href="https://opensource.microsoft.com/">
+          <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/Microsoft.svg" height="80" />
+        </a>
+        <p>Open Source enables Microsoft products and services to bring choice, technology and community to our customers.</p>
       </td>
     </tr>
     <tr>
