@@ -102,7 +102,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 					const clientId = uri.authority;
 					const info = extensions.find(extension => extension.exports.volarLabs.languageClients.some(client =>
 						// @ts-expect-error
-						client._id === clientId
+						client._id.toLowerCase() === clientId.toLowerCase()
 					))?.exports;
 					if (!info) {
 						return;
@@ -110,7 +110,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 
 					const client = info.volarLabs.languageClients.find(
 						// @ts-expect-error
-						client => client._id === clientId
+						client => client._id.toLowerCase() === clientId.toLowerCase()
 					)!;
 					const virtualCode = await client.sendRequest(
 						info.volarLabs.languageServerProtocol.GetVirtualCodeRequest.type,

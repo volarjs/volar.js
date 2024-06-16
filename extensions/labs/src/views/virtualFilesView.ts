@@ -84,7 +84,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			const uri = vscode.Uri.from({
 				scheme: VOLAR_VIRTUAL_CODE_SCHEME,
 				// @ts-expect-error
-				authority: element.client._id,
+				authority: element.client._id.toLowerCase(),
 				path: '/' + element.generated.virtualCodeId + ext,
 				fragment: encodeURIComponent(element.sourceDocumentUri),
 			});
