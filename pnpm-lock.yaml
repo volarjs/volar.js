@@ -186,11 +186,7 @@ importers:
         specifier: ^1.0.11
         version: 1.0.11
 
-  packages/source-map:
-    dependencies:
-      muggle-string:
-        specifier: ^0.4.0
-        version: 0.4.1
+  packages/source-map: {}
 
   packages/test-utils:
     dependencies:
@@ -1974,9 +1970,6 @@ packages:
 
   ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
-
-  muggle-string@0.4.1:
-    resolution: {integrity: sha512-VNTrAak/KhO2i8dqqnqnAHOa3cYBwXEZe9h+D5h/1ZqFSTEFHdM65lR7RoIqq3tBBYavsOXV84NoHXZ0AkPyqQ==}
 
   mute-stream@0.0.8:
     resolution: {integrity: sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==}
@@ -4679,8 +4672,6 @@ snapshots:
   monaco-types@0.1.0: {}
 
   ms@2.1.2: {}
-
-  muggle-string@0.4.1: {}
 
   mute-stream@0.0.8: {}
 
