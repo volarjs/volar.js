@@ -8,7 +8,7 @@ export class SourceMapWithDocuments {
 		public sourceDocument: TextDocument,
 		public embeddedDocument: TextDocument,
 		public map: SourceMap<CodeInformation>,
-		public virtuaoCode?: VirtualCode,
+		public virtualCode?: VirtualCode,
 	) { }
 
 	// Range APIs
