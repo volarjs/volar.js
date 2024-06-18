@@ -17,7 +17,11 @@ export function register(context: LanguageServiceContext) {
 			() => positions,
 			function* (map) {
 				const result = positions
-					.map(position => map.getGeneratedPosition(position, isSelectionRangesEnabled))
+					.map(position => {
+						for (const mappedPosition of map.getGeneratedPositions(position, isSelectionRangesEnabled)) {
+							return mappedPosition;
+						}
+					})
 					.filter(notEmpty);
 				if (result.length) {
 					yield result;

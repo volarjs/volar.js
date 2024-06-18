@@ -62,12 +62,11 @@ export function register(context: LanguageServiceContext) {
 				}
 				return inlayHints
 					.map((_inlayHint): vscode.InlayHint | undefined => {
-						const position = map.getSourcePosition(_inlayHint.position, isInlayHintsEnabled);
 						const edits = _inlayHint.textEdits
 							?.map(textEdit => transformTextEdit(textEdit, range => map.getSourceRange(range), map.embeddedDocument))
 							.filter(notEmpty);
 
-						if (position) {
+						for (const position of map.getSourcePositions(_inlayHint.position, isInlayHintsEnabled)) {
 							return {
 								..._inlayHint,
 								position,

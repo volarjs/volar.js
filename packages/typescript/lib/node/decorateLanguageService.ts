@@ -23,8 +23,9 @@ import {
 	getMappingOffset,
 	toGeneratedOffset,
 	toGeneratedOffsets,
+	toGeneratedRanges,
 	toSourceOffset,
-	toSourceOffsets,
+	toSourceRanges,
 	transformCallHierarchyItem,
 	transformDiagnostic,
 	transformDocumentSpan,
@@ -413,15 +414,16 @@ export function decorateLanguageService(
 			return [];
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos, isCodeActionsEnabled);
-			if (generatePosition !== undefined) {
-				const por = typeof positionOrRange === 'number'
-					? generatePosition
-					: {
-						pos: generatePosition,
-						end: generatePosition + positionOrRange.end - positionOrRange.pos,
-					};
-				return getApplicableRefactors(targetScript.id, por, preferences, triggerReason, kind, includeInteractiveActions);
+			if (typeof positionOrRange === 'number') {
+				const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, positionOrRange, isCodeActionsEnabled);
+				if (generatePosition !== undefined) {
+					return getApplicableRefactors(targetScript.id, generatePosition, preferences, triggerReason, kind, includeInteractiveActions);
+				}
+			}
+			else {
+				for (const [generatedStart, generatedEnd] of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange.pos, positionOrRange.end, isCodeActionsEnabled)) {
+					return getApplicableRefactors(targetScript.id, { pos: generatedStart, end: generatedEnd }, preferences, triggerReason, kind, includeInteractiveActions);
+				}
 			}
 			return [];
 		}
@@ -437,23 +439,16 @@ export function decorateLanguageService(
 			return undefined;
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(
-				language,
-				serviceScript,
-				sourceScript,
-				typeof positionOrRange === 'number'
-					? positionOrRange
-					: positionOrRange.pos,
-				isCodeActionsEnabled
-			);
-			if (generatePosition !== undefined) {
-				const por = typeof positionOrRange === 'number'
-					? generatePosition
-					: {
-						pos: generatePosition,
-						end: generatePosition + positionOrRange.end - positionOrRange.pos,
-					};
-				edits = getEditsForRefactor(targetScript.id, formatOptions, por, refactorName, actionName, preferences);
+			if (typeof positionOrRange === 'number') {
+				const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, positionOrRange, isCodeActionsEnabled);
+				if (generatePosition !== undefined) {
+					edits = getEditsForRefactor(targetScript.id, formatOptions, generatePosition, refactorName, actionName, preferences);
+				}
+			}
+			else {
+				for (const [generatedStart, generatedEnd] of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange.pos, positionOrRange.end, isCodeActionsEnabled)) {
+					edits = getEditsForRefactor(targetScript.id, formatOptions, { pos: generatedStart, end: generatedEnd }, refactorName, actionName, preferences);
+				}
 			}
 		}
 		else {
@@ -560,20 +555,13 @@ export function decorateLanguageService(
 			const result = getEncodedSemanticClassifications(targetScript.id, { start, length: end - start }, format);
 			const spans: number[] = [];
 			for (let i = 0; i < result.spans.length; i += 3) {
-				for (const sourceStart of toSourceOffsets(sourceScript, language, serviceScript, result.spans[i], isSemanticTokensEnabled)) {
-					for (const sourceEnd of toSourceOffsets(sourceScript, language, serviceScript, result.spans[i] + result.spans[i + 1], isSemanticTokensEnabled)) {
-						if (sourceStart[0] === sourceEnd[0] && sourceEnd[1] >= sourceStart[1]) {
-							spans.push(
-								sourceStart[1],
-								sourceEnd[1] - sourceStart[1],
-								result.spans[i + 2]
-							);
-							break;
-						}
-					}
-					if (spans.length) {
-						break;
-					}
+				for (const [_, sourceStart, sourceEnd] of toSourceRanges(sourceScript, language, serviceScript, result.spans[i], result.spans[i] + result.spans[i + 1], isSemanticTokensEnabled)) {
+					spans.push(
+						sourceStart,
+						sourceEnd - sourceStart,
+						result.spans[i + 2]
+					);
+					break;
 				}
 			}
 			result.spans = spans;

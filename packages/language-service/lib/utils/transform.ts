@@ -42,11 +42,15 @@ export function transformDocumentLinkTarget(_target: string, context: LanguageSe
 				}
 			}
 			else {
-				const sourcePos = map.getSourcePosition({ line: startLine, character: startCharacter });
-				if (sourcePos) {
+				let mapped = false;
+				for (const sourcePos of map.getSourcePositions({ line: startLine, character: startCharacter })) {
+					mapped = true;
 					target = target.with({
 						fragment: 'L' + (sourcePos.line + 1) + ',' + (sourcePos.character + 1),
 					});
+					break;
+				}
+				if (mapped) {
 					break;
 				}
 			}

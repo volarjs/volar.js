@@ -215,18 +215,11 @@ export function transformTextSpan(
 ): [string, ts.TextSpan] | undefined {
 	const start = textSpan.start;
 	const end = textSpan.start + textSpan.length;
-	for (const sourceStart of toSourceOffsets(sourceScript, language, serviceScript, start, filter)) {
-		for (const sourceEnd of toSourceOffsets(sourceScript, language, serviceScript, end, filter)) {
-			if (
-				sourceStart[0] === sourceEnd[0]
-				&& sourceEnd[1] >= sourceStart[1]
-			) {
-				return [sourceStart[0], {
-					start: sourceStart[1],
-					length: sourceEnd[1] - sourceStart[1],
-				}];
-			}
-		}
+	for (const [fileName, sourceStart, sourceEnd] of toSourceRanges(sourceScript, language, serviceScript, start, end, filter)) {
+		return [fileName, {
+			start: sourceStart,
+			length: sourceEnd - sourceStart,
+		}];
 	}
 }
 
@@ -239,6 +232,49 @@ export function toSourceOffset(
 ) {
 	for (const source of toSourceOffsets(sourceScript, language, serviceScript, position, filter)) {
 		return source;
+	}
+}
+
+export function* toSourceRanges(
+	sourceScript: SourceScript<string> | undefined,
+	language: Language<string>,
+	serviceScript: TypeScriptServiceScript,
+	start: number,
+	end: number,
+	filter: (data: CodeInformation) => boolean
+): Generator<[fileName: string, start: number, end: number]> {
+	if (sourceScript) {
+		const map = language.maps.get(serviceScript.code, sourceScript);
+		let mapped = false;
+		for (const [sourceStart, sourceEnd, mapping] of map.getSourceStartEnd(start - getMappingOffset(language, serviceScript), end - getMappingOffset(language, serviceScript))) {
+			if (filter(mapping.data)) {
+				mapped = true;
+				yield [sourceScript.id, sourceStart, sourceEnd];
+			}
+		}
+		if (!mapped) {
+			// fallback
+			for (const sourceStart of toSourceOffsets(sourceScript, language, serviceScript, start, filter)) {
+				for (const sourceEnd of toSourceOffsets(sourceScript, language, serviceScript, end, filter)) {
+					if (
+						sourceStart[0] === sourceEnd[0]
+						&& sourceEnd[1] >= sourceStart[1]
+					) {
+						yield [sourceStart[0], sourceStart[1], sourceEnd[1]];
+						break;
+					}
+				}
+			}
+		}
+	}
+	else {
+		for (const [fileName, _snapshot, map] of language.maps.forEach(serviceScript.code)) {
+			for (const [sourceStart, sourceEnd, mapping] of map.getSourceStartEnd(start - getMappingOffset(language, serviceScript), end - getMappingOffset(language, serviceScript))) {
+				if (filter(mapping.data)) {
+					yield [fileName, sourceStart, sourceEnd];
+				}
+			}
+		}
 	}
 }
 
@@ -262,6 +298,38 @@ export function* toSourceOffsets(
 			for (const [sourceOffset, mapping] of map.getSourceOffsets(position - getMappingOffset(language, serviceScript))) {
 				if (filter(mapping.data)) {
 					yield [fileName, sourceOffset];
+				}
+			}
+		}
+	}
+}
+
+export function* toGeneratedRanges(
+	language: Language,
+	serviceScript: TypeScriptServiceScript,
+	sourceScript: SourceScript<string>,
+	start: number,
+	end: number,
+	filter: (data: CodeInformation) => boolean
+) {
+	const map = language.maps.get(serviceScript.code, sourceScript);
+	let mapped = false;
+	for (const [generateStart, generateEnd, mapping] of map.getGeneratedStartEnd(start, end)) {
+		if (filter(mapping.data)) {
+			mapped = true;
+			yield [
+				generateStart + getMappingOffset(language, serviceScript),
+				generateEnd + getMappingOffset(language, serviceScript),
+			] as const;
+		}
+	}
+	if (!mapped) {
+		// fallback
+		for (const [generatedStart] of toGeneratedOffsets(language, serviceScript, sourceScript, start, filter)) {
+			for (const [generatedEnd] of toGeneratedOffsets(language, serviceScript, sourceScript, end, filter)) {
+				if (generatedEnd >= generatedStart) {
+					yield [generatedStart, generatedEnd] as const;
+					break;
 				}
 			}
 		}
