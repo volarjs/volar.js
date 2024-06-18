@@ -23,6 +23,23 @@ export class SourceMap<Data = unknown> {
 
 	constructor(public readonly mappings: Mapping<Data>[]) { }
 
+	getSourceStartEnd(generatedStart: number, generatedEnd: number) {
+		return this.findMatchingStartEnd(generatedStart, generatedEnd, 'generatedOffsets', 'sourceOffsets');
+	}
+
+	getGeneratedStartEnd(sourceStart: number, sourceEnd: number) {
+		return this.findMatchingStartEnd(sourceStart, sourceEnd, 'sourceOffsets', 'generatedOffsets');
+	}
+
+	* findMatchingStartEnd(start: number, end: number, fromRange: CodeRangeKey, toRange: CodeRangeKey) {
+		for (const [mappedStart, mapping] of this.findMatching(start, fromRange, toRange)) {
+			const mappedEnd = translateOffset(end, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
+			if (mappedEnd !== undefined) {
+				yield [mappedStart, mappedEnd, mapping] as const;
+			}
+		};
+	}
+
 	getSourceOffsets(generatedOffset: number) {
 		return this.findMatching(generatedOffset, 'generatedOffsets', 'sourceOffsets');
 	}

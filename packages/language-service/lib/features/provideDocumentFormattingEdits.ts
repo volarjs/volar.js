@@ -98,9 +98,7 @@ export function register(context: LanguageServiceContext) {
 
 					if (onTypeParams) {
 
-						const embeddedPosition = docMap.getGeneratedPosition(onTypeParams.position);
-
-						if (embeddedPosition) {
+						for (const embeddedPosition of docMap.getGeneratedPositions(onTypeParams.position)) {
 							embeddedCodeResult = await tryFormat(
 								docMap.sourceDocument,
 								docMap.embeddedDocument,
@@ -110,6 +108,7 @@ export function register(context: LanguageServiceContext) {
 								embeddedPosition,
 								onTypeParams.ch
 							);
+							break;
 						}
 					}
 					else if (embeddedRange) {
