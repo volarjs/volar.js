@@ -1,6 +1,5 @@
 import {
 	CodeInformation,
-	Language,
 	isCallHierarchyEnabled,
 	isCodeActionsEnabled,
 	isCompletionEnabled,
@@ -16,6 +15,7 @@ import {
 	isSemanticTokensEnabled,
 	isSignatureHelpEnabled,
 	isTypeDefinitionEnabled,
+	Language,
 } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { dedupeDocumentSpans } from './dedupe';
@@ -23,9 +23,8 @@ import {
 	getMappingOffset,
 	toGeneratedOffset,
 	toGeneratedOffsets,
-	toGeneratedRanges,
+	toGeneratedRange, toGeneratedRanges,
 	toSourceOffset,
-	toSourceRanges,
 	transformCallHierarchyItem,
 	transformDiagnostic,
 	transformDocumentSpan,
@@ -136,10 +135,9 @@ export function decorateLanguageService(
 			return [];
 		}
 		if (serviceScript) {
-			const generateStart = toGeneratedOffset(language, serviceScript, sourceScript, start, isFormattingEnabled);
-			const generateEnd = toGeneratedOffset(language, serviceScript, sourceScript, end, isFormattingEnabled);
-			if (generateStart !== undefined && generateEnd !== undefined) {
-				const edits = getFormattingEditsForRange(targetScript.id, generateStart, generateEnd, options);
+			const generatedRange = toGeneratedRange(language, serviceScript, sourceScript, { pos: start, end }, isCodeActionsEnabled);
+			if (generatedRange !== undefined) {
+				const edits = getFormattingEditsForRange(targetScript.id, generatedRange.pos, generatedRange.end, options);
 				return edits
 					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
 					.filter(notEmpty);
@@ -421,8 +419,8 @@ export function decorateLanguageService(
 				}
 			}
 			else {
-				for (const [generatedStart, generatedEnd] of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange.pos, positionOrRange.end, isCodeActionsEnabled)) {
-					return getApplicableRefactors(targetScript.id, { pos: generatedStart, end: generatedEnd }, preferences, triggerReason, kind, includeInteractiveActions);
+				for (const generatedRange of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange, isCodeActionsEnabled)) {
+					return getApplicableRefactors(targetScript.id, generatedRange, preferences, triggerReason, kind, includeInteractiveActions);
 				}
 			}
 			return [];
@@ -446,8 +444,8 @@ export function decorateLanguageService(
 				}
 			}
 			else {
-				for (const [generatedStart, generatedEnd] of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange.pos, positionOrRange.end, isCodeActionsEnabled)) {
-					edits = getEditsForRefactor(targetScript.id, formatOptions, { pos: generatedStart, end: generatedEnd }, refactorName, actionName, preferences);
+				for (const range of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange, isCodeActionsEnabled)) {
+					edits = getEditsForRefactor(targetScript.id, formatOptions, range, refactorName, actionName, preferences);
 				}
 			}
 		}
@@ -503,13 +501,12 @@ export function decorateLanguageService(
 			return [];
 		}
 		if (serviceScript) {
-			const generateStart = toGeneratedOffset(language, serviceScript, sourceScript, start, isCodeActionsEnabled);
-			const generateEnd = toGeneratedOffset(language, serviceScript, sourceScript, end, isCodeActionsEnabled);
-			if (generateStart !== undefined && generateEnd !== undefined) {
+			const generatedRange = toGeneratedRange(language, serviceScript, sourceScript, { pos: start, end }, isCodeActionsEnabled);
+			if (generatedRange !== undefined) {
 				fixes = getCodeFixesAtPosition(
 					targetScript.id,
-					generateStart,
-					generateEnd,
+					generatedRange.pos,
+					generatedRange.end,
 					errorCodes,
 					formatOptions,
 					preferences
@@ -555,13 +552,12 @@ export function decorateLanguageService(
 			const result = getEncodedSemanticClassifications(targetScript.id, { start, length: end - start }, format);
 			const spans: number[] = [];
 			for (let i = 0; i < result.spans.length; i += 3) {
-				for (const [_, sourceStart, sourceEnd] of toSourceRanges(sourceScript, language, serviceScript, result.spans[i], result.spans[i] + result.spans[i + 1], isSemanticTokensEnabled)) {
-					spans.push(
-						sourceStart,
-						sourceEnd - sourceStart,
-						result.spans[i + 2]
-					);
-					break;
+				const [_, span] = transformTextSpan(sourceScript, language, serviceScript, {
+					start: result.spans[i],
+					length: result.spans[i + 1]
+				}, isSemanticTokensEnabled) ?? []
+				if (span) {
+					spans.push(span.start, span.length, result.spans[i + 2])
 				}
 			}
 			result.spans = spans;
