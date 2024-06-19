@@ -11,17 +11,20 @@ export function findOverlapCodeRange(
 	let mappedStart: number | undefined;
 	let mappedEnd: number | undefined;
 
-	for (const [mapped, mapping] of map.getGeneratedOffsets(start)) {
-		if (filter(mapping.data)) {
-			mappedStart = mapped;
-			break;
+	for (const [mappedStart, mappedEnd] of map.getGeneratedStartEnd(start, end, filter)) {
+		return {
+			start: mappedStart,
+			end: mappedEnd,
 		}
 	}
-	for (const [mapped, mapping] of map.getGeneratedOffsets(end)) {
-		if (filter(mapping.data)) {
-			mappedEnd = mapped;
-			break;
-		}
+
+	for (const [mapped] of map.getGeneratedOffsets(start, filter)) {
+		mappedStart = mapped;
+		break;
+	}
+	for (const [mapped] of map.getGeneratedOffsets(end, filter)) {
+		mappedEnd = mapped;
+		break;
 	}
 
 	if (mappedStart === undefined || mappedEnd === undefined) {

@@ -159,4 +159,160 @@ describe('sourceMap', () => {
 			],
 		]);
 	});
+	test('Angular template with full ranges', () => {
+		const map = new SourceMap([
+			{
+				sourceOffsets: [
+					`{{|data?.icon?.toString()}}`.indexOf('|'),
+					//  ^^^^
+				],
+				generatedOffsets: [
+					`(null as any ? ((null as any ? ((null as any ? (this.|data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					//                                                     ^^^^
+				],
+				lengths: [
+					`data`.length,
+				],
+				data: {},
+			}, {
+				sourceOffsets: [
+					`{{data?.|icon?.toString()}}`.indexOf('|'),
+					//        ^^^^
+				],
+				generatedOffsets: [
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.|icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					//                                                            ^^^^
+				],
+				lengths: [
+					`icon`.length,
+				],
+				data: {},
+			}, {
+				sourceOffsets: [
+					`{{data?.icon?.|toString()}}`.indexOf('|'),
+					//              ^^^^^^^^
+				],
+				generatedOffsets: [
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.|toString : undefined))!() : undefined)`.indexOf('|'),
+					//                                                                               ^^^^^^^^
+				],
+				lengths: [
+					`toString`.length,
+				],
+				data: {},
+			}, {
+				sourceOffsets: [
+					`{{data?.icon?.|toString()}}`.indexOf('|'),
+					//                      ^^
+				],
+				generatedOffsets: [
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!|() : undefined)`.indexOf('|'),
+					//                                                                                                      ^^
+				],
+				lengths: [
+					`()`.length,
+				],
+				data: {},
+			}, {
+				sourceOffsets: [
+					`{{|data?.icon?.toString()}}`.indexOf('|'),
+					//  ^^^^^^^^^^
+				],
+				generatedOffsets: [
+					`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					//                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+				],
+				lengths: [
+					`data?.icon`.length,
+				],
+				generatedLengths: [
+					`(null as any ? (this.data)!.icon : undefined)`.length,
+				],
+				data: {},
+			}, {
+				sourceOffsets: [
+					`{{|data?.icon?.toString()}}`.indexOf('|'),
+					//  ^^^^^^^^^^^^^^^^^^^^
+				],
+				generatedOffsets: [
+					`(null as any ? (|(null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					//                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+				],
+				lengths: [
+					`data?.icon?.toString`.length,
+				],
+				generatedLengths: [
+					`(null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))`.length,
+				],
+				data: {},
+			}, {
+				sourceOffsets: [
+					`{{|data?.icon?.toString()}}`.indexOf('|'),
+					//  ^^^^^^^^^^^^^^^^^^^^^^
+				],
+				generatedOffsets: [
+					`|(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+				],
+				lengths: [
+					`data?.icon?.toString()`.length
+				],
+				generatedLengths: [
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.length,
+				],
+				data: {}
+			}
+		]);
+
+		expect([...map.getGeneratedStartEnd(
+			`{{|data?.icon?.toString()}}`.indexOf('|'),
+			`{{data|?.icon?.toString()}}`.indexOf('|')
+		)].map(mapped => mapped.slice(0, 2))).toEqual([
+			[
+				`(null as any ? ((null as any ? ((null as any ? (this.|data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				//                                                    ^
+				`(null as any ? ((null as any ? ((null as any ? (this.data|)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				//                                                        ^
+			],
+		]);
+
+		expect([...map.getGeneratedStartEnd(
+			`{{|data?.icon?.toString()}}`.indexOf('|'),
+			`{{data?.ic|on?.toString()}}`.indexOf('|')
+		)].map(mapped => mapped.slice(0, 2))).toEqual([]);
+
+		expect([...map.getGeneratedStartEnd(
+			`{{|data?.icon?.toString()}}`.indexOf('|'),
+			`{{data?.icon|?.toString()}}`.indexOf('|')
+		)].map(mapped => mapped.slice(0, 2))).toEqual([
+			[
+				`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				//                               ^
+				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`.indexOf('|'),
+				//                                                                            ^
+			],
+		]);
+
+		expect([...map.getGeneratedStartEnd(
+			`{{|data?.icon?.toString()}}`.indexOf('|'),
+			`{{data?.icon?.toString|()}}`.indexOf('|')
+		)].map(mapped => mapped.slice(0, 2))).toEqual([
+			[
+				`(null as any ? (|(null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				//               ^
+				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))|!() : undefined)`.indexOf('|'),
+				//                                                                                                    ^
+			],
+		]);
+
+		expect([...map.getGeneratedStartEnd(
+			`{{|data?.icon?.toString()}}`.indexOf('|'),
+			`{{data?.icon?.toString()|}}`.indexOf('|')
+		)].map(mapped => mapped.slice(0, 2))).toEqual([
+			[
+				0,
+				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.length,
+			],
+		]);
+	});
 });
