@@ -24,15 +24,24 @@ export class SourceMap<Data = unknown> {
 	constructor(public readonly mappings: Mapping<Data>[]) { }
 
 	getSourceStartEnd(generatedStart: number, generatedEnd: number) {
-		return this.findMatchingStartEnd(generatedStart, generatedEnd, 'generatedOffsets', 'sourceOffsets');
+		return this.findMatchingStartEnd(generatedStart, generatedEnd, 'generatedOffsets');
 	}
 
 	getGeneratedStartEnd(sourceStart: number, sourceEnd: number) {
-		return this.findMatchingStartEnd(sourceStart, sourceEnd, 'sourceOffsets', 'generatedOffsets');
+		return this.findMatchingStartEnd(sourceStart, sourceEnd, 'sourceOffsets');
 	}
 
-	* findMatchingStartEnd(start: number, end: number, fromRange: CodeRangeKey, toRange: CodeRangeKey) {
-		for (const [mappedStart, mapping] of this.findMatching(start, fromRange, toRange)) {
+	getSourceOffsets(generatedOffset: number) {
+		return this.findMatchingOffsets(generatedOffset, 'generatedOffsets');
+	}
+
+	getGeneratedOffsets(sourceOffset: number) {
+		return this.findMatchingOffsets(sourceOffset, 'sourceOffsets');
+	}
+
+	* findMatchingStartEnd(start: number, end: number, fromRange: CodeRangeKey) {
+		const toRange: CodeRangeKey = fromRange == 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
+		for (const [mappedStart, mapping] of this.findMatchingOffsets(start, fromRange)) {
 			const mappedEnd = translateOffset(end, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
 			if (mappedEnd !== undefined) {
 				yield [mappedStart, mappedEnd, mapping] as const;
@@ -40,15 +49,7 @@ export class SourceMap<Data = unknown> {
 		};
 	}
 
-	getSourceOffsets(generatedOffset: number) {
-		return this.findMatching(generatedOffset, 'generatedOffsets', 'sourceOffsets');
-	}
-
-	getGeneratedOffsets(sourceOffset: number) {
-		return this.findMatching(sourceOffset, 'sourceOffsets', 'generatedOffsets');
-	}
-
-	* findMatching(offset: number, fromRange: CodeRangeKey, toRange: CodeRangeKey) {
+	* findMatchingOffsets(offset: number, fromRange: CodeRangeKey) {
 		const memo = this.getMemoBasedOnRange(fromRange);
 		if (memo.offsets.length === 0) {
 			return;
@@ -56,6 +57,7 @@ export class SourceMap<Data = unknown> {
 
 		const { low: start, high: end } = binarySearch(memo.offsets, offset);
 		const skip = new Set<Mapping>();
+		const toRange: CodeRangeKey = fromRange == 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
 
 		for (let i = start; i <= end; i++) {
 			for (const mapping of memo.mappings[i]) {

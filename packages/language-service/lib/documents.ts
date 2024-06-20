@@ -60,13 +60,13 @@ export class SourceMapWithDocuments {
 	}
 
 	public * getSourcePositions(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
-		for (const mapped of this.findPositions(position, filter, this.embeddedDocument, this.sourceDocument, 'generatedOffsets', 'sourceOffsets')) {
+		for (const mapped of this.findPositions(position, filter, this.embeddedDocument, this.sourceDocument, 'generatedOffsets')) {
 			yield mapped[0];
 		}
 	}
 
 	public * getGeneratedPositions(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
-		for (const mapped of this.findPositions(position, filter, this.sourceDocument, this.embeddedDocument, 'sourceOffsets', 'generatedOffsets')) {
+		for (const mapped of this.findPositions(position, filter, this.sourceDocument, this.embeddedDocument, 'sourceOffsets')) {
 			yield mapped[0];
 		}
 	}
@@ -76,10 +76,9 @@ export class SourceMapWithDocuments {
 		filter: (data: CodeInformation) => boolean,
 		fromDoc: TextDocument,
 		toDoc: TextDocument,
-		from: CodeRangeKey,
-		to: CodeRangeKey
+		from: CodeRangeKey
 	) {
-		for (const mapped of this.map.findMatching(fromDoc.offsetAt(position), from, to)) {
+		for (const mapped of this.map.findMatchingOffsets(fromDoc.offsetAt(position), from)) {
 			if (!filter(mapped[1].data)) {
 				continue;
 			}
