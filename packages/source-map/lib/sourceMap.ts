@@ -39,16 +39,6 @@ export class SourceMap<Data = unknown> {
 		return this.findMatchingOffsets(sourceOffset, 'sourceOffsets');
 	}
 
-	* findMatchingStartEnd(start: number, end: number, fromRange: CodeRangeKey) {
-		const toRange: CodeRangeKey = fromRange == 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
-		for (const [mappedStart, mapping] of this.findMatchingOffsets(start, fromRange)) {
-			const mappedEnd = translateOffset(end, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
-			if (mappedEnd !== undefined) {
-				yield [mappedStart, mappedEnd, mapping] as const;
-			}
-		};
-	}
-
 	* findMatchingOffsets(offset: number, fromRange: CodeRangeKey) {
 		const memo = this.getMemoBasedOnRange(fromRange);
 		if (memo.offsets.length === 0) {
@@ -72,6 +62,16 @@ export class SourceMap<Data = unknown> {
 				}
 			}
 		}
+	}
+
+	* findMatchingStartEnd(start: number, end: number, fromRange: CodeRangeKey) {
+		const toRange: CodeRangeKey = fromRange == 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
+		for (const [mappedStart, mapping] of this.findMatchingOffsets(start, fromRange)) {
+			const mappedEnd = translateOffset(end, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
+			if (mappedEnd !== undefined) {
+				yield [mappedStart, mappedEnd, mapping] as const;
+			}
+		};
 	}
 
 	private getMemoBasedOnRange(fromRange: CodeRangeKey) {
