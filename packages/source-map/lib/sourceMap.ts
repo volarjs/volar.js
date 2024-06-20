@@ -19,12 +19,12 @@ export class SourceMap<Data = unknown> {
 	constructor(public readonly mappings: Mapping<Data>[]) {
 	}
 
-	getSourceStartEnd(generatedStart: number, generatedEnd: number, filter?: (data: Data) => boolean): Generator<[start: number, end: number, Mapping<Data>]> {
-		return this.findMatchingStartEnd(generatedStart, generatedEnd, 'generatedOffsets', filter);
+	getSourceStartEnd(generatedStart: number, generatedEnd: number, filter?: (data: Data) => boolean, fallbackToAnyMatch?: boolean): Generator<[start: number, end: number, Mapping<Data>]> {
+		return this.findMatchingStartEnd(generatedStart, generatedEnd, 'generatedOffsets', filter, fallbackToAnyMatch);
 	}
 
-	getGeneratedStartEnd(sourceStart: number, sourceEnd: number, filter?: (data: Data) => boolean): Generator<[start: number, end: number, Mapping<Data>]> {
-		return this.findMatchingStartEnd(sourceStart, sourceEnd, 'sourceOffsets', filter);
+	getGeneratedStartEnd(sourceStart: number, sourceEnd: number, filter?: (data: Data) => boolean, fallbackToAnyMatch?: boolean): Generator<[start: number, end: number, Mapping<Data>]> {
+		return this.findMatchingStartEnd(sourceStart, sourceEnd, 'sourceOffsets', filter, fallbackToAnyMatch);
 	}
 
 	getSourceOffsets(generatedOffset: number, filter?: (data: Data) => boolean): Generator<[offset: number, Mapping<Data>]> {
@@ -42,7 +42,11 @@ export class SourceMap<Data = unknown> {
 		}
 	}
 
-	* findMatchingStartEnd(start: number, end: number, fromRange: CodeRangeKey, filter?: (data: Data) => boolean): Generator<[start: number, end: number, Mapping<Data>]> {
+	* findMatchingStartEnd(
+		start: number, end: number, fromRange: CodeRangeKey,
+		filter?: (data: Data) => boolean,
+		fallbackToAnyMatch?: boolean
+	): Generator<[start: number, end: number, Mapping<Data>]> {
 		const length = end - start
 		if (length < 0) {
 			return
@@ -55,44 +59,32 @@ export class SourceMap<Data = unknown> {
 		}
 
 		const startMatches: [Mapping<Data>, number][] = []
-		const startMatchesMap = new Map<Mapping<Data>, Set<number>>()
 		for (const [startMapping, index] of this.getStorageBasedOnRange(fromRange).findMatchingMappingIndexes(start, filter)) {
 			startMatches.push([startMapping, index])
-			let set = startMatchesMap.get(startMapping)
-			if (!set) {
-				set = new Set()
-				startMatchesMap.set(startMapping, set)
-			}
-			set.add(index)
-		}
-
-		const perfectMatches: [Mapping<Data>, number][] = []
-		const endMatches: [Mapping<Data>, number][] = []
-		for (const endMapping of this.getStorageBasedOnRange(fromRange).findMatchingMappingIndexes(start + length, filter)) {
-			const startMappingIndexes = startMatchesMap.get(endMapping[0])
-			if (startMappingIndexes && startMappingIndexes.has(endMapping[1])) {
-				perfectMatches.push(endMapping)
-			} else if (perfectMatches.length == 0) {
-				endMatches.push(endMapping)
-			}
 		}
 
 		const toRange: CodeRangeKey = fromRange == 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets'
-		if (perfectMatches.length > 0) {
-			// Prefer the shortest mapping ranges
-			perfectMatches.sort((a, b) => getSpanLength(a, fromRange) - getSpanLength(b, fromRange))
 
-			for (const match of perfectMatches) {
-				const fromStartOffset = getStartOffset(match, fromRange)
+		// Prefer the shortest `from` spans
+		startMatches.sort((a, b) =>
+			getSpanLength(a, fromRange) - getSpanLength(b, fromRange))
+
+		// Find if any range, which contains both start an end offset
+		let hadMatch = false
+		for (const match of startMatches) {
+			const fromStartOffset = getStartOffset(match, fromRange)
+			const fromLength = getSpanLength(match, fromRange)
+			if (end <= fromStartOffset + fromLength) {
 				const toStartOffset = getStartOffset(match, toRange)
 				const toLength = getSpanLength(match, toRange)
-				const fromLength = getSpanLength(match, fromRange)
 				if (toLength == fromLength) {
 					// `from` and `to` span mappings have the same length - map range verbatim
 					const startOffset = toStartOffset + start - fromStartOffset
+					hadMatch = true
 					yield [startOffset, startOffset + length, match[0]]
 				} else if (fromStartOffset == start && fromLength == length) {
 					// The whole `from` span is selected - map to the whole `to` span
+					hadMatch = true
 					yield [toStartOffset, toStartOffset + toLength, match[0]]
 				} else {
 					// We would need to do some heuristics here to map the span, and it would make little
@@ -100,23 +92,51 @@ export class SourceMap<Data = unknown> {
 					// Try the next match.
 				}
 			}
-		} else {
-			// Prefer the shortest `from` spans
-			startMatches.sort((a, b) =>
-				getSpanLength(a, fromRange) - getSpanLength(b, fromRange))
-			endMatches.sort((a, b) =>
-				getSpanLength(a, fromRange) - getSpanLength(b, fromRange))
+		}
+		if (hadMatch) {
+			return
+		}
 
+
+		const endMatches: [Mapping<Data>, number][] = []
+		for (const endMapping of this.getStorageBasedOnRange(fromRange).findMatchingMappingIndexes(start + length, filter)) {
+			const fromLength = getSpanLength(endMapping, fromRange)
+			const toLength = getSpanLength(endMapping, toRange)
+			// Use only constant length ranges for heuristic matching
+			if (fromLength == toLength) {
+				endMatches.push(endMapping)
+			}
+		}
+
+		endMatches.sort((a, b) =>
+			getSpanLength(a, fromRange) - getSpanLength(b, fromRange))
+
+		for (let fallback = 0; fallback < 2; fallback++) {
+			// In first iteration, try to match start and end from the same mapping
+			// In second iteration, if fallbackToAnyMatch is true, try to match any start and end
+			if (hadMatch || (fallback && !fallbackToAnyMatch)) {
+				break
+			}
 			for (const startMatch of startMatches) {
 				let mapping = startMatch[0];
+				const fromLength = getSpanLength(startMatch, fromRange)
+				const toLength = getSpanLength(startMatch, toRange)
+				// Use only constant length ranges for heuristic matching
+				if (fromLength != toLength) {
+					continue
+				}
 
 				for (const endMatch of endMatches) {
-					if (endMatch[0] != mapping) {
+					if (!fallback && endMatch[0] != mapping) {
+						// Try to match start end coming from the same mapping first
 						continue
 					}
 					const startOffset = mapOffset(startMatch, start, fromRange, toRange)
 					const endOffset = mapOffset(endMatch, end, fromRange, toRange)
-					yield [startOffset, endOffset, mapping]
+					if (startOffset <= endOffset) {
+						hadMatch = true
+						yield [startOffset, endOffset, mapping]
+					}
 				}
 			}
 		}
