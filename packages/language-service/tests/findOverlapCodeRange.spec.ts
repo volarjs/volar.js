@@ -69,6 +69,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 		expect(findOverlapCodeRange(7, 32, map, () => true)).toEqual({ start: 8, end: 30 });
 		expect(findOverlapCodeRange(5, 30, map, () => true)).toEqual({ start: 7, end: 30 });
 		expect(findOverlapCodeRange(5, 26, map, () => true)).toEqual({ start: 7, end: 27 });
+		expect(findOverlapCodeRange(6, 31, map, () => true)).toEqual({ start: 7, end: 30 });
 	});
 
 	it('mutilple mappings', () => {
