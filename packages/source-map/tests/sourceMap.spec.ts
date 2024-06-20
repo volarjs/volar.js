@@ -159,6 +159,7 @@ describe('sourceMap', () => {
 			],
 		]);
 	});
+
 	test('Angular template with full ranges', () => {
 		const map = new SourceMap([
 			{

@@ -23,7 +23,8 @@ import {
 	getMappingOffset,
 	toGeneratedOffset,
 	toGeneratedOffsets,
-	toGeneratedRange, toGeneratedRanges,
+	toGeneratedRange,
+	toGeneratedRanges,
 	toSourceOffset,
 	transformCallHierarchyItem,
 	transformDiagnostic,
@@ -555,9 +556,9 @@ export function decorateLanguageService(
 				const [_, span] = transformTextSpan(sourceScript, language, serviceScript, {
 					start: result.spans[i],
 					length: result.spans[i + 1]
-				}, isSemanticTokensEnabled) ?? []
+				}, isSemanticTokensEnabled) ?? [];
 				if (span) {
-					spans.push(span.start, span.length, result.spans[i + 2])
+					spans.push(span.start, span.length, result.spans[i + 2]);
 				}
 			}
 			result.spans = spans;
