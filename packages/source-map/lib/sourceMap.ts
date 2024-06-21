@@ -23,19 +23,19 @@ export class SourceMap<Data = unknown> {
 
 	constructor(public readonly mappings: Mapping<Data>[]) { }
 
-	getSourceStartEnd(generatedStart: number, generatedEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) {
+	toSourceRange(generatedStart: number, generatedEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) {
 		return this.findMatchingStartEnd(generatedStart, generatedEnd, fallbackToAnyMatch, 'generatedOffsets', filter);
 	}
 
-	getGeneratedStartEnd(sourceStart: number, sourceEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) {
+	toGeneratedRange(sourceStart: number, sourceEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) {
 		return this.findMatchingStartEnd(sourceStart, sourceEnd, fallbackToAnyMatch, 'sourceOffsets', filter);
 	}
 
-	getSourceOffsets(generatedOffset: number, filter?: (data: Data) => boolean) {
+	toSourceLocation(generatedOffset: number, filter?: (data: Data) => boolean) {
 		return this.findMatchingOffsets(generatedOffset, 'generatedOffsets', filter);
 	}
 
-	getGeneratedOffsets(sourceOffset: number, filter?: (data: Data) => boolean) {
+	toGeneratedLocation(sourceOffset: number, filter?: (data: Data) => boolean) {
 		return this.findMatchingOffsets(sourceOffset, 'sourceOffsets', filter);
 	}
 

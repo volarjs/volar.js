@@ -1,8 +1,19 @@
-import type { Mapping, SourceMap } from '@volar/source-map';
+import type { Mapping } from '@volar/source-map';
 import type * as ts from 'typescript';
 import type { LinkedCodeMap } from './linkedCodeMap';
 
+export interface Mapper {
+	mappings: Mapping<CodeInformation>[];
+	toSourceRange(start: number, end: number, fallbackToAnyMatch: boolean, filter?: (data: CodeInformation) => boolean): Generator<readonly [number, number, Mapping<CodeInformation>, Mapping<CodeInformation>]>;
+	toGeneratedRange(start: number, end: number, fallbackToAnyMatch: boolean, filter?: (data: CodeInformation) => boolean): Generator<readonly [number, number, Mapping<CodeInformation>, Mapping<CodeInformation>]>;
+	toSourceLocation(generatedOffset: number, filter?: (data: CodeInformation) => boolean): Generator<readonly [number, Mapping<CodeInformation>]>;
+	toGeneratedLocation(sourceOffset: number, filter?: (data: CodeInformation) => boolean): Generator<readonly [number, Mapping<CodeInformation>]>;
+}
+
+export type MapperFactory = (mappings: Mapping<CodeInformation>[]) => Mapper;
+
 export interface Language<T = unknown> {
+	mapperFactory: MapperFactory;
 	plugins: LanguagePlugin<T>[];
 	scripts: {
 		get(id: T): SourceScript<T> | undefined;
@@ -11,8 +22,8 @@ export interface Language<T = unknown> {
 		fromVirtualCode(virtualCode: VirtualCode): SourceScript<T>;
 	};
 	maps: {
-		get(virtualCode: VirtualCode, sourceScript: SourceScript<T>): SourceMap<CodeInformation>;
-		forEach(virtualCode: VirtualCode): Generator<[sourceScript: SourceScript<T>, map: SourceMap<CodeInformation>]>;
+		get(virtualCode: VirtualCode, sourceScript: SourceScript<T>): Mapper;
+		forEach(virtualCode: VirtualCode): Generator<[sourceScript: SourceScript<T>, map: Mapper]>;
 	};
 	linkedCodeMaps: {
 		get(virtualCode: VirtualCode): LinkedCodeMap | undefined;

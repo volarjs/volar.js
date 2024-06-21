@@ -1,4 +1,4 @@
-import type { CodeInformation, LinkedCodeMap, SourceMap, SourceScript, VirtualCode } from '@volar/language-core';
+import type { CodeInformation, LinkedCodeMap, Mapper, SourceScript, VirtualCode } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { URI } from 'vscode-uri';
@@ -7,7 +7,7 @@ import type { LanguageServiceContext, LanguageServicePlugin, LanguageServicePlug
 export type DocumentsAndMap = [
 	sourceDocument: TextDocument,
 	embeddedDocument: TextDocument,
-	map: SourceMap<CodeInformation>,
+	map: Mapper,
 ];
 
 export function documentFeatureWorker<T>(
@@ -197,7 +197,7 @@ export function getGeneratedRange(docs: DocumentsAndMap, range: vscode.Range, fi
 }
 
 export function* getSourceRanges([sourceDocument, embeddedDocument, map]: DocumentsAndMap, range: vscode.Range, filter?: (data: CodeInformation) => boolean) {
-	for (const [mappedStart, mappedEnd] of map.getSourceStartEnd(
+	for (const [mappedStart, mappedEnd] of map.toSourceRange(
 		embeddedDocument.offsetAt(range.start),
 		embeddedDocument.offsetAt(range.end),
 		true,
@@ -208,7 +208,7 @@ export function* getSourceRanges([sourceDocument, embeddedDocument, map]: Docume
 }
 
 export function* getGeneratedRanges([sourceDocument, embeddedDocument, map]: DocumentsAndMap, range: vscode.Range, filter?: (data: CodeInformation) => boolean) {
-	for (const [mappedStart, mappedEnd] of map.getGeneratedStartEnd(
+	for (const [mappedStart, mappedEnd] of map.toGeneratedRange(
 		sourceDocument.offsetAt(range.start),
 		sourceDocument.offsetAt(range.end),
 		true,
@@ -219,13 +219,13 @@ export function* getGeneratedRanges([sourceDocument, embeddedDocument, map]: Doc
 }
 
 export function* getSourcePositions([sourceDocument, embeddedDocument, map]: DocumentsAndMap, position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
-	for (const mapped of map.getSourceOffsets(embeddedDocument.offsetAt(position), filter)) {
+	for (const mapped of map.toSourceLocation(embeddedDocument.offsetAt(position), filter)) {
 		yield sourceDocument.positionAt(mapped[0]);
 	}
 }
 
 export function* getGeneratedPositions([sourceDocument, embeddedDocument, map]: DocumentsAndMap, position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
-	for (const mapped of map.getGeneratedOffsets(sourceDocument.offsetAt(position), filter)) {
+	for (const mapped of map.toGeneratedLocation(sourceDocument.offsetAt(position), filter)) {
 		yield embeddedDocument.positionAt(mapped[0]);
 	}
 }

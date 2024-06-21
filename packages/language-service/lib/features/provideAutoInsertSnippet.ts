@@ -15,7 +15,7 @@ export function register(context: LanguageServiceContext) {
 			() => ({ selection, change }),
 			function* (docs) {
 				for (const mappedPosition of getGeneratedPositions(docs, selection, isAutoInsertEnabled)) {
-					for (const mapped of docs[2].getGeneratedOffsets(change.rangeOffset)) {
+					for (const mapped of docs[2].toGeneratedLocation(change.rangeOffset)) {
 						yield {
 							selection: mappedPosition,
 							change: {

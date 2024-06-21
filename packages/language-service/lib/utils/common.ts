@@ -1,23 +1,23 @@
+import type { CodeInformation, Mapper } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { CodeInformation, SourceMap } from '@volar/language-core';
 
 export function findOverlapCodeRange(
 	start: number,
 	end: number,
-	map: SourceMap<CodeInformation>,
+	map: Mapper,
 	filter: (data: CodeInformation) => boolean
 ) {
 	let mappedStart: number | undefined;
 	let mappedEnd: number | undefined;
 
-	for (const [mapped, mapping] of map.getGeneratedOffsets(start)) {
+	for (const [mapped, mapping] of map.toGeneratedLocation(start)) {
 		if (filter(mapping.data)) {
 			mappedStart = mapped;
 			break;
 		}
 	}
-	for (const [mapped, mapping] of map.getGeneratedOffsets(end)) {
+	for (const [mapped, mapping] of map.toGeneratedLocation(end)) {
 		if (filter(mapping.data)) {
 			mappedEnd = mapped;
 			break;

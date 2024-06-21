@@ -92,9 +92,9 @@ export function createProcessor(
 					messagesArr[i] = messagesArr[i].filter(message => {
 						const start = embeddedDocument.offsetAt({ line: message.line - 1, character: message.column - 1 });
 						const end = embeddedDocument.offsetAt({ line: (message.endLine ?? message.line) - 1, character: (message.endColumn ?? message.column) - 1 });
-						for (const [sourceStart, mapping] of map.getSourceOffsets(start)) {
+						for (const [sourceStart, mapping] of map.toSourceLocation(start)) {
 							if (isDiagnosticsEnabled(mapping.data)) {
-								for (const [sourceEnd, mapping] of map.getSourceOffsets(end)) {
+								for (const [sourceEnd, mapping] of map.toSourceLocation(end)) {
 									if (isDiagnosticsEnabled(mapping.data)) {
 										const sourcePosition = sourceDocument.positionAt(sourceStart);
 										const sourceEndPosition = sourceDocument.positionAt(sourceEnd);

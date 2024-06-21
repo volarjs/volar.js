@@ -1,4 +1,4 @@
-import { SourceMap, SourceScript, VirtualCode, forEachEmbeddedCode, isFormattingEnabled } from '@volar/language-core';
+import { SourceScript, VirtualCode, forEachEmbeddedCode, isFormattingEnabled } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -250,7 +250,6 @@ export function register(context: LanguageServiceContext) {
 	};
 
 	function createDocMap(virtualCode: VirtualCode, documentUri: URI, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot): DocumentsAndMap {
-		const map = new SourceMap(virtualCode.mappings);
 		const version = fakeVersion++;
 		return [
 			TextDocument.create(
@@ -265,7 +264,7 @@ export function register(context: LanguageServiceContext) {
 				version,
 				virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength())
 			),
-			map,
+			context.language.mapperFactory(virtualCode.mappings),
 		];
 	}
 }

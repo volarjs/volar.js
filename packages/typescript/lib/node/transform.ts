@@ -245,7 +245,7 @@ export function* toSourceRanges(
 ): Generator<[fileName: string, start: number, end: number]> {
 	if (sourceScript) {
 		const map = language.maps.get(serviceScript.code, sourceScript);
-		for (const [sourceStart, sourceEnd] of map.getSourceStartEnd(
+		for (const [sourceStart, sourceEnd] of map.toSourceRange(
 			start - getMappingOffset(language, serviceScript),
 			end - getMappingOffset(language, serviceScript),
 			true,
@@ -256,7 +256,7 @@ export function* toSourceRanges(
 	}
 	else {
 		for (const [sourceScript, map] of language.maps.forEach(serviceScript.code)) {
-			for (const [sourceStart, sourceEnd] of map.getSourceStartEnd(
+			for (const [sourceStart, sourceEnd] of map.toSourceRange(
 				start - getMappingOffset(language, serviceScript),
 				end - getMappingOffset(language, serviceScript),
 				true,
@@ -277,7 +277,7 @@ export function* toSourceOffsets(
 ): Generator<[fileName: string, offset: number]> {
 	if (sourceScript) {
 		const map = language.maps.get(serviceScript.code, sourceScript);
-		for (const [sourceOffset, mapping] of map.getSourceOffsets(position - getMappingOffset(language, serviceScript))) {
+		for (const [sourceOffset, mapping] of map.toSourceLocation(position - getMappingOffset(language, serviceScript))) {
 			if (filter(mapping.data)) {
 				yield [sourceScript.id, sourceOffset];
 			}
@@ -285,7 +285,7 @@ export function* toSourceOffsets(
 	}
 	else {
 		for (const [sourceScript, map] of language.maps.forEach(serviceScript.code)) {
-			for (const [sourceOffset, mapping] of map.getSourceOffsets(position - getMappingOffset(language, serviceScript))) {
+			for (const [sourceOffset, mapping] of map.toSourceLocation(position - getMappingOffset(language, serviceScript))) {
 				if (filter(mapping.data)) {
 					yield [sourceScript.id, sourceOffset];
 				}
@@ -303,7 +303,7 @@ export function* toGeneratedRanges(
 	filter: (data: CodeInformation) => boolean
 ) {
 	const map = language.maps.get(serviceScript.code, sourceScript);
-	for (const [generateStart, generateEnd] of map.getGeneratedStartEnd(start, end, true, filter)) {
+	for (const [generateStart, generateEnd] of map.toGeneratedRange(start, end, true, filter)) {
 		yield [
 			generateStart + getMappingOffset(language, serviceScript),
 			generateEnd + getMappingOffset(language, serviceScript),
@@ -331,7 +331,7 @@ export function* toGeneratedOffsets(
 	filter: (data: CodeInformation) => boolean
 ) {
 	const map = language.maps.get(serviceScript.code, sourceScript);
-	for (const [generateOffset, mapping] of map.getGeneratedOffsets(position)) {
+	for (const [generateOffset, mapping] of map.toGeneratedLocation(position)) {
 		if (filter(mapping.data)) {
 			yield [generateOffset + getMappingOffset(language, serviceScript), mapping] as const;
 		}
