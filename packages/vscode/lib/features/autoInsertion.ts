@@ -43,11 +43,10 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 			// https://github.com/vuejs/language-tools/issues/4457
 			return;
 		}
-		const lastCharacter = lastChange.text[lastChange.text.length - 1];
-		doAutoInsert(document, lastCharacter);
+		doAutoInsert(document, lastChange, lastChange.text[lastChange.text.length - 1]);
 	}
 
-	function doAutoInsert(document: vscode.TextDocument, lastCharacter: string) {
+	function doAutoInsert(document: vscode.TextDocument, lastChange: vscode.TextDocumentContentChangeEvent, lastCharacter: string) {
 		if (timeout) {
 			clearTimeout(timeout);
 			timeout = undefined;
