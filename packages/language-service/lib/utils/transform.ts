@@ -3,7 +3,6 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { LanguageServiceContext } from '../types';
-import { notEmpty } from './common';
 
 export function transformDocumentLinkTarget(_target: string, context: LanguageServiceContext) {
 	let target = URI.parse(_target);
@@ -78,7 +77,7 @@ export function transformCompletionItem<T extends vscode.CompletionItem>(
 		...item,
 		additionalTextEdits: item.additionalTextEdits
 			?.map(edit => transformTextEdit(edit, getOtherRange, document))
-			.filter(notEmpty),
+			.filter(edit => !!edit),
 		textEdit: item.textEdit
 			? transformTextEdit(item.textEdit, getOtherRange, document)
 			: undefined,
@@ -130,7 +129,7 @@ export function transformDocumentSymbol(symbol: vscode.DocumentSymbol, getOtherR
 		selectionRange,
 		children: symbol.children
 			?.map(child => transformDocumentSymbol(child, getOtherRange))
-			.filter(notEmpty),
+			.filter(child => !!child),
 	};
 }
 
@@ -192,7 +191,7 @@ export function transformLocation<T extends { range: vscode.Range; }>(location: 
 export function transformLocations<T extends { range: vscode.Range; }>(locations: T[], getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T[] {
 	return locations
 		.map(location => transformLocation(location, getOtherRange))
-		.filter(notEmpty);
+		.filter(location => !!location);
 }
 
 export function transformSelectionRange<T extends vscode.SelectionRange>(location: T, getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T | undefined {
@@ -213,7 +212,7 @@ export function transformSelectionRange<T extends vscode.SelectionRange>(locatio
 export function transformSelectionRanges<T extends vscode.SelectionRange>(locations: T[], getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T[] {
 	return locations
 		.map(location => transformSelectionRange(location, getOtherRange))
-		.filter(notEmpty);
+		.filter(location => !!location);
 }
 
 export function transformTextEdit<T extends vscode.TextEdit | vscode.InsertReplaceEdit>(

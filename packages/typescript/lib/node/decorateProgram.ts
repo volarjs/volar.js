@@ -1,7 +1,7 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { fillSourceFileText, transformDiagnostic } from './transform';
-import { getServiceScript, notEmpty } from './utils';
+import { getServiceScript } from './utils';
 
 export function decorateProgram(language: Language<string>, program: ts.Program) {
 
@@ -23,21 +23,21 @@ export function decorateProgram(language: Language<string>, program: ts.Program)
 			...result,
 			diagnostics: result.diagnostics
 				.map(d => transformDiagnostic(language, d, program, true))
-				.filter(notEmpty),
+				.filter(d => !!d),
 		};
 	};
 	program.getSyntacticDiagnostics = (sourceFile, cancellationToken) => {
 		if (!sourceFile) {
 			return getSyntacticDiagnostics(undefined, cancellationToken)
 				.map(d => transformDiagnostic(language, d, program, true))
-				.filter(notEmpty);
+				.filter(d => !!d);
 		}
 		else {
 			const [serviceScript, targetScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 			const actualSourceFile = targetScript ? program.getSourceFile(targetScript.id) : sourceFile;
 			return getSyntacticDiagnostics(actualSourceFile, cancellationToken)
 				.map(d => transformDiagnostic(language, d, program, true))
-				.filter(notEmpty)
+				.filter(d => !!d)
 				.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 		}
 	};
@@ -45,35 +45,35 @@ export function decorateProgram(language: Language<string>, program: ts.Program)
 		if (!sourceFile) {
 			return getSemanticDiagnostics(undefined, cancellationToken)
 				.map(d => transformDiagnostic(language, d, program, true))
-				.filter(notEmpty);
+				.filter(d => !!d);
 		}
 		else {
 			const [serviceScript, targetScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 			const actualSourceFile = targetScript ? program.getSourceFile(targetScript.id) : sourceFile;
 			return getSemanticDiagnostics(actualSourceFile, cancellationToken)
 				.map(d => transformDiagnostic(language, d, program, true))
-				.filter(notEmpty)
+				.filter(d => !!d)
 				.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 		}
 	};
 	program.getGlobalDiagnostics = cancellationToken => {
 		return getGlobalDiagnostics(cancellationToken)
 			.map(d => transformDiagnostic(language, d, program, true))
-			.filter(notEmpty);
+			.filter(d => !!d);
 	};
 	// @ts-ignore
 	program.getBindAndCheckDiagnostics = (sourceFile, cancellationToken) => {
 		if (!sourceFile) {
 			return (getBindAndCheckDiagnostics as typeof getSyntacticDiagnostics)(undefined, cancellationToken)
 				.map(d => transformDiagnostic(language, d, program, true))
-				.filter(notEmpty);
+				.filter(d => !!d);
 		}
 		else {
 			const [serviceScript, targetScript, sourceScript] = getServiceScript(language, sourceFile.fileName);
 			const actualSourceFile = targetScript ? program.getSourceFile(targetScript.id) : sourceFile;
 			return (getBindAndCheckDiagnostics as typeof getSyntacticDiagnostics)(actualSourceFile, cancellationToken)
 				.map(d => transformDiagnostic(language, d, program, true))
-				.filter(notEmpty)
+				.filter(d => !!d)
 				.filter(d => !serviceScript || language.scripts.get(d.file.fileName) === sourceScript);
 		}
 	};

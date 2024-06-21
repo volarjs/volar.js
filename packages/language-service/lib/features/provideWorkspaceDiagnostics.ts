@@ -1,6 +1,5 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServiceContext } from '../types';
-import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { URI } from 'vscode-uri';
 import { transformDiagnostic } from './provideDiagnostics';
@@ -45,7 +44,7 @@ export function register(context: LanguageServiceContext) {
 								...item,
 								items: item.items
 									.map(error => transformDiagnostic(context, error, map, shouldReportDiagnostics))
-									.filter(notEmpty)
+									.filter(error => !!error)
 							};
 						}
 					}
@@ -57,7 +56,7 @@ export function register(context: LanguageServiceContext) {
 							...item,
 							items: item.items
 								.map(error => transformDiagnostic(context, error, undefined, shouldReportDiagnostics))
-								.filter(notEmpty)
+								.filter(error => !!error)
 						};
 					}
 				});

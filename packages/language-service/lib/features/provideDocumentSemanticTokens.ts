@@ -4,7 +4,7 @@ import type { URI } from 'vscode-uri';
 import type { SemanticToken, LanguageServiceContext } from '../types';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { findOverlapCodeRange, notEmpty } from '../utils/common';
+import { findOverlapCodeRange } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
@@ -74,7 +74,7 @@ export function register(context: LanguageServiceContext) {
 							return [range.start.line, range.start.character, range.end.character - range.start.character, _token[3], _token[4]];
 						}
 					})
-					.filter(notEmpty);
+					.filter(token => !!token);
 			},
 			tokens => tokens.flat()
 			// tokens => reportProgress?.(buildTokens(tokens)), // TODO: this has no effect with LSP

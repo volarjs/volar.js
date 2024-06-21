@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { isInsideRange, notEmpty } from '../utils/common';
+import { isInsideRange } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import { transformDocumentSymbol } from '../utils/transform';
 
@@ -30,7 +30,7 @@ export function register(context: LanguageServiceContext) {
 						symbol,
 						range => map.getSourceRange(range, isSymbolsEnabled)
 					))
-					.filter(notEmpty);
+					.filter(symbol => !!symbol);
 			},
 			results => {
 				for (let i = 0; i < results.length; i++) {

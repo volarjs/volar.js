@@ -2,7 +2,6 @@ import { isCallHierarchyEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { URI } from 'vscode-uri';
@@ -48,7 +47,7 @@ export function register(context: LanguageServiceContext) {
 					}
 					return data
 						.map(item => transformCallHierarchyItem(item, [])?.[0])
-						.filter(notEmpty);
+						.filter(item => !!item);
 				},
 				arr => dedupe.withLocations(arr.flat())
 			);
@@ -202,7 +201,7 @@ export function register(context: LanguageServiceContext) {
 				continue;
 			}
 
-			const vueRanges = tsRanges.map(tsRange => map.getSourceRange(tsRange)).filter(notEmpty);
+			const vueRanges = tsRanges.map(tsRange => map.getSourceRange(tsRange)).filter(range => !!range);
 			const vueItem: vscode.CallHierarchyItem = {
 				...tsItem,
 				name: tsItem.name === map.embeddedDocument.uri.substring(map.embeddedDocument.uri.lastIndexOf('/') + 1)

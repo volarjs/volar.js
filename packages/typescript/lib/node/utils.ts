@@ -1,9 +1,5 @@
 import type { Language, SourceScript, TypeScriptServiceScript } from '@volar/language-core';
 
-export function notEmpty<T>(value: T | null | undefined): value is T {
-	return value !== null && value !== undefined;
-}
-
 export function getServiceScript(language: Language<string>, fileName: string)
 	: [serviceScript: TypeScriptServiceScript, targetScript: SourceScript<string>, sourceScript: SourceScript<string>]
 	| [serviceScript: undefined, sourceScript: SourceScript<string>, sourceScript: SourceScript<string>]

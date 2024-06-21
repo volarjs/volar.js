@@ -95,7 +95,9 @@ export function createAsyncLanguageServicePlugin(
 						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 						setup?.(language);
 
-						info.project.markAsDirty();
+						if ('markAsDirty' in info.project && typeof info.project.markAsDirty === 'function') {
+							info.project.markAsDirty();
+						}
 						initialized = true;
 					});
 				}
