@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { isEqualRange, isInsideRange, notEmpty } from '../utils/common';
+import { isEqualRange, isInsideRange } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformSelectionRanges } from '../utils/transform';
 
@@ -22,7 +22,7 @@ export function register(context: LanguageServiceContext) {
 							return mappedPosition;
 						}
 					})
-					.filter(notEmpty);
+					.filter(position => !!position);
 				if (result.length) {
 					yield result;
 				}

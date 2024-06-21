@@ -1,6 +1,5 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServiceContext } from '../types';
-import { notEmpty } from '../utils/common';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { transformWorkspaceSymbol } from '../utils/transform';
 import { URI } from 'vscode-uri';
@@ -25,24 +24,26 @@ export function register(context: LanguageServiceContext) {
 			if (!embeddedSymbols) {
 				continue;
 			}
-			const symbols = embeddedSymbols.map(symbol => transformWorkspaceSymbol(symbol, loc => {
+			const symbols = embeddedSymbols
+				.map(symbol => transformWorkspaceSymbol(symbol, loc => {
 
-				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(loc.uri));
-				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
-				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
+					const decoded = context.decodeEmbeddedDocumentUri(URI.parse(loc.uri));
+					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
-				if (virtualCode) {
-					for (const map of context.documents.getMaps(virtualCode)) {
-						const range = map.getSourceRange(loc.range);
-						if (range) {
-							return { uri: map.sourceDocument.uri, range };
+					if (virtualCode) {
+						for (const map of context.documents.getMaps(virtualCode)) {
+							const range = map.getSourceRange(loc.range);
+							if (range) {
+								return { uri: map.sourceDocument.uri, range };
+							}
 						}
 					}
-				}
-				else {
-					return loc;
-				}
-			})).filter(notEmpty);
+					else {
+						return loc;
+					}
+				}))
+				.filter(symbol => !!symbol);
 
 			symbolsList.push(symbols);
 		}

@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { findOverlapCodeRange, notEmpty } from '../utils/common';
+import { findOverlapCodeRange } from '../utils/common';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 import { transformTextEdit } from '../utils/transform';
 
@@ -64,7 +64,7 @@ export function register(context: LanguageServiceContext) {
 					.map((_inlayHint): vscode.InlayHint | undefined => {
 						const edits = _inlayHint.textEdits
 							?.map(textEdit => transformTextEdit(textEdit, range => map.getSourceRange(range), map.embeddedDocument))
-							.filter(notEmpty);
+							.filter(textEdit => !!textEdit);
 
 						for (const position of map.getSourcePositions(_inlayHint.position, isInlayHintsEnabled)) {
 							return {
@@ -74,7 +74,7 @@ export function register(context: LanguageServiceContext) {
 							};
 						}
 					})
-					.filter(notEmpty);
+					.filter(hint => !!hint);
 			},
 			arr => arr.flat()
 		);

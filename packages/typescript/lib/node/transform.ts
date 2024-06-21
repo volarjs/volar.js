@@ -2,7 +2,7 @@ import type { CodeInformation, Mapping, SourceScript, TypeScriptServiceScript } 
 import { Language, shouldReportDiagnostics } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type { TextChange } from 'typescript';
-import { getServiceScript, notEmpty } from './utils';
+import { getServiceScript } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
 const transformedSourceFile = new WeakSet<ts.SourceFile>();
@@ -35,7 +35,7 @@ export function transformDiagnostic<T extends ts.Diagnostic>(
 		if (relatedInformation) {
 			diagnostic.relatedInformation = relatedInformation
 				.map(d => transformDiagnostic(language, d, program, isTsc))
-				.filter(notEmpty);
+				.filter(d => !!d);
 		}
 
 		if (

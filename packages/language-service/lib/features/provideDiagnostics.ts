@@ -6,7 +6,7 @@ import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { notEmpty, sleep } from '../utils/common';
+import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import { createUriMap } from '../utils/uriMap';
@@ -266,7 +266,7 @@ export function register(context: LanguageServiceContext) {
 				(errors, map) => {
 					return errors
 						.map(error => transformDiagnostic(context, error, map, shouldReportDiagnostics))
-						.filter(notEmpty);
+						.filter(error => !!error);
 				},
 				arr => dedupe.withDiagnostics(arr.flat())
 			);

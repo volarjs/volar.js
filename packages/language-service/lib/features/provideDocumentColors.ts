@@ -3,7 +3,6 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
@@ -34,7 +33,7 @@ export function register(context: LanguageServiceContext) {
 							};
 						}
 					})
-					.filter(notEmpty);
+					.filter(color => !!color);
 			},
 			arr => arr.flat()
 		);

@@ -5,7 +5,6 @@ import { URI } from 'vscode-uri';
 import type { SourceMapWithDocuments } from '../documents';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { notEmpty } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { languageFeatureWorker } from '../utils/featureWorkers';
 
@@ -151,7 +150,7 @@ export function register(
 				}
 
 				return link;
-			}).filter(notEmpty),
+			}).filter(link => !!link),
 			arr => dedupe.withLocationLinks(arr.flat())
 		);
 	};

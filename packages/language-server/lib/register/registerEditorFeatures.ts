@@ -121,6 +121,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 					}
 				}
 				else {
+					const uri = languageService.context.language.typescript.asScriptId(fileName);
 					const sourceScript = languageService.context.language.scripts.get(uri);
 					if (sourceScript?.generated) {
 						const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);

@@ -34,7 +34,7 @@ import {
 	transformTextChange,
 	transformTextSpan,
 } from './transform';
-import { getServiceScript, notEmpty } from './utils';
+import { getServiceScript } from './utils';
 
 const windowsPathReg = /\\/g;
 
@@ -123,7 +123,7 @@ export function decorateLanguageService(
 			const edits = getFormattingEditsForDocument(targetScript.id, options);
 			return edits
 				.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
-				.filter(notEmpty);
+				.filter(edit => !!edit);
 		}
 		else {
 			return getFormattingEditsForDocument(fileName, options);
@@ -141,7 +141,7 @@ export function decorateLanguageService(
 				const edits = getFormattingEditsForRange(targetScript.id, generatedRange.pos, generatedRange.end, options);
 				return edits
 					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
-					.filter(notEmpty);
+					.filter(edit => !!edit);
 			}
 			return [];
 		}
@@ -161,7 +161,7 @@ export function decorateLanguageService(
 				const edits = getFormattingEditsAfterKeystroke(targetScript.id, generatePosition, key, options);
 				return edits
 					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
-					.filter(notEmpty);
+					.filter(edit => !!edit);
 			}
 			return [];
 		}
@@ -187,7 +187,7 @@ export function decorateLanguageService(
 					return {
 						ranges: info.ranges
 							.map(span => transformTextSpan(sourceScript, language, serviceScript, span, isLinkedEditingEnabled)?.[1])
-							.filter(notEmpty),
+							.filter(span => !!span),
 						wordPattern: info.wordPattern,
 					};
 				}
@@ -240,7 +240,7 @@ export function decorateLanguageService(
 				const from = transformCallHierarchyItem(language, call.from, isCallHierarchyEnabled);
 				const fromSpans = call.fromSpans
 					.map(span => transformSpan(language, call.from.file, span, isCallHierarchyEnabled)?.textSpan)
-					.filter(notEmpty);
+					.filter(span => !!span);
 				return {
 					from,
 					fromSpans,
@@ -271,7 +271,7 @@ export function decorateLanguageService(
 						? transformTextSpan(sourceScript, language, serviceScript, span, isCallHierarchyEnabled)?.[1]
 						: span
 					)
-					.filter(notEmpty);
+					.filter(span => !!span);
 				return {
 					to,
 					fromSpans,
@@ -401,7 +401,7 @@ export function decorateLanguageService(
 								};
 							}
 						})
-						.filter(notEmpty),
+						.filter(span => !!span),
 				};
 			});
 		return resolved;
@@ -576,7 +576,7 @@ export function decorateLanguageService(
 		}
 		return getSyntacticDiagnostics(targetScript?.id ?? fileName)
 			.map(d => transformDiagnostic(language, d, languageService.getProgram(), false))
-			.filter(notEmpty)
+			.filter(d => !!d)
 			.filter(d => !serviceScript || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 	languageService.getSemanticDiagnostics = filePath => {
@@ -587,7 +587,7 @@ export function decorateLanguageService(
 		}
 		return getSemanticDiagnostics(targetScript?.id ?? fileName)
 			.map(d => transformDiagnostic(language, d, languageService.getProgram(), false))
-			.filter(notEmpty)
+			.filter(d => !!d)
 			.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 	languageService.getSuggestionDiagnostics = filePath => {
@@ -598,7 +598,7 @@ export function decorateLanguageService(
 		}
 		return getSuggestionDiagnostics(targetScript?.id ?? fileName)
 			.map(d => transformDiagnostic(language, d, languageService.getProgram(), false))
-			.filter(notEmpty)
+			.filter(d => !!d)
 			.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 	languageService.getDefinitionAndBoundSpan = (filePath, position) => {
@@ -616,16 +616,16 @@ export function decorateLanguageService(
 		);
 		const textSpan = unresolved
 			.map(s => transformSpan(language, fileName, s.textSpan, isDefinitionEnabled)?.textSpan)
-			.filter(notEmpty)[0];
+			.filter(s => !!s)[0];
 		if (!textSpan) {
 			return;
 		}
 		const definitions = unresolved
 			.map(s => s.definitions
 				?.map(s => transformDocumentSpan(language, s, isDefinitionEnabled, s.fileName !== fileName))
-				.filter(notEmpty)
+				.filter(s => !!s)
+				?? []
 			)
-			.filter(notEmpty)
 			.flat();
 		return {
 			textSpan,
@@ -655,7 +655,7 @@ export function decorateLanguageService(
 					definition,
 					references: symbol.references
 						.map(r => transformDocumentSpan(language, r, isReferencesEnabled))
-						.filter(notEmpty),
+						.filter(r => !!r),
 				};
 			});
 		return resolved;
@@ -676,7 +676,7 @@ export function decorateLanguageService(
 		const resolved = unresolved
 			.flat()
 			.map(s => transformDocumentSpan(language, s, isDefinitionEnabled, s.fileName !== fileName))
-			.filter(notEmpty);
+			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
 	languageService.getTypeDefinitionAtPosition = (filePath, position) => {
@@ -695,7 +695,7 @@ export function decorateLanguageService(
 		const resolved = unresolved
 			.flat()
 			.map(s => transformDocumentSpan(language, s, isTypeDefinitionEnabled))
-			.filter(notEmpty);
+			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
 	languageService.getImplementationAtPosition = (filePath, position) => {
@@ -714,7 +714,7 @@ export function decorateLanguageService(
 		const resolved = unresolved
 			.flat()
 			.map(s => transformDocumentSpan(language, s, isImplementationEnabled))
-			.filter(notEmpty);
+			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
 	languageService.findRenameLocations = (filePath, position, findInStrings, findInComments, preferences) => {
@@ -733,7 +733,7 @@ export function decorateLanguageService(
 		const resolved = unresolved
 			.flat()
 			.map(s => transformDocumentSpan(language, s, isRenameEnabled))
-			.filter(notEmpty);
+			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
 	languageService.getReferencesAtPosition = (filePath, position) => {
@@ -752,7 +752,7 @@ export function decorateLanguageService(
 		const resolved = unresolved
 			.flat()
 			.map(s => transformDocumentSpan(language, s, isReferencesEnabled))
-			.filter(notEmpty);
+			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
 	languageService.getCompletionsAtPosition = (filePath, position, options, formattingSettings) => {
@@ -871,7 +871,7 @@ export function decorateLanguageService(
 		const unresolved = getFileReferences(fileName);
 		const resolved = unresolved
 			.map(s => transformDocumentSpan(language, s, isReferencesEnabled))
-			.filter(notEmpty);
+			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
 

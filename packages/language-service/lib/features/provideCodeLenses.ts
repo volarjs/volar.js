@@ -3,7 +3,6 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 
 export interface ServiceCodeLensData {
@@ -81,7 +80,7 @@ export function register(context: LanguageServiceContext) {
 							};
 						}
 					})
-					.filter(notEmpty);
+					.filter(codeLens => !!codeLens);
 			},
 			arr => arr.flat()
 		) ?? [];

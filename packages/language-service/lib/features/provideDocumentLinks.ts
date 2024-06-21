@@ -3,7 +3,6 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { notEmpty } from '../utils/common';
 import { documentFeatureWorker } from '../utils/featureWorkers';
 import { transformDocumentLinkTarget } from '../utils/transform';
 
@@ -60,7 +59,7 @@ export function register(context: LanguageServiceContext) {
 						}
 						return link;
 					})
-					.filter(notEmpty);
+					.filter(link => !!link);
 			},
 			arr => arr.flat()
 		) ?? [];

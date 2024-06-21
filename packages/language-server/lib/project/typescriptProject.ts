@@ -289,12 +289,29 @@ export function createUriConverter() {
 	function asUri(fileName: string) {
 		for (const [encoded, uri] of encodeds) {
 			const prefix = `/${encoded}`;
-			if (fileName.startsWith(prefix)) {
+			if (fileName === prefix) {
 				return URI.from({
 					scheme: uri.scheme,
 					authority: uri.authority,
-					path: fileName.substring(prefix.length),
 				});
+			}
+			if (uri.authority) {
+				if (fileName.startsWith(prefix + '/')) {
+					return URI.from({
+						scheme: uri.scheme,
+						authority: uri.authority,
+						path: fileName.substring(prefix.length),
+					});
+				}
+			}
+			else {
+				if (fileName.startsWith(prefix)) {
+					return URI.from({
+						scheme: uri.scheme,
+						authority: uri.authority,
+						path: fileName.substring(prefix.length),
+					});
+				}
 			}
 		}
 		return URI.file(fileName);
