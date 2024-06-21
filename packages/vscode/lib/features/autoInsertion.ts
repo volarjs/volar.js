@@ -39,16 +39,20 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 			return;
 		}
 		const lastChange = contentChanges[contentChanges.length - 1];
-		doAutoInsert(document, lastChange);
+		if (lastChange.text.length === 0) {
+			// https://github.com/vuejs/language-tools/issues/4457
+			return;
+		}
+		const lastCharacter = lastChange.text[lastChange.text.length - 1];
+		doAutoInsert(document, lastCharacter);
 	}
 
-	function doAutoInsert(document: vscode.TextDocument, lastChange: vscode.TextDocumentContentChangeEvent) {
+	function doAutoInsert(document: vscode.TextDocument, lastCharacter: string) {
 		if (timeout) {
 			clearTimeout(timeout);
 			timeout = undefined;
 		}
 		const version = document.version;
-		const lastCharacter = lastChange.text[lastChange.text.length - 1];
 		const isCancel = () => {
 			if (document !== vscode.window.activeTextEditor?.document) {
 				return true;
