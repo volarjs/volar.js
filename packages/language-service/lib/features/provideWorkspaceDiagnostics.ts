@@ -1,9 +1,10 @@
+import { shouldReportDiagnostics } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
+import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { URI } from 'vscode-uri';
+import { DocumentsAndMap } from '../utils/featureWorkers';
 import { transformDiagnostic } from './provideDiagnostics';
-import { shouldReportDiagnostics } from '@volar/language-core';
 
 export function register(context: LanguageServiceContext) {
 
@@ -39,11 +40,20 @@ export function register(context: LanguageServiceContext) {
 							};
 						}
 						else {
-							const map = context.documents.getMap(virtualCode, sourceScript);
+							const map = context.language.maps.get(virtualCode, sourceScript);
+							const docs: DocumentsAndMap = [
+								context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot),
+								context.documents.get(
+									context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+									virtualCode.languageId,
+									virtualCode.snapshot
+								),
+								map,
+							];
 							return {
 								...item,
 								items: item.items
-									.map(error => transformDiagnostic(context, error, map, shouldReportDiagnostics))
+									.map(error => transformDiagnostic(context, error, docs, shouldReportDiagnostics))
 									.filter(error => !!error)
 							};
 						}

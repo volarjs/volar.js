@@ -2,7 +2,7 @@ import { isFoldingRangesEnabled } from '@volar/language-core';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { documentFeatureWorker } from '../utils/featureWorkers';
+import { documentFeatureWorker, getSourceRange } from '../utils/featureWorkers';
 import { transformFoldingRanges } from '../utils/transform';
 
 import type * as _ from 'vscode-languageserver-protocol';
@@ -14,20 +14,20 @@ export function register(context: LanguageServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.mappings.some(mapping => isFoldingRangesEnabled(mapping.data)),
+			docs => docs[2].mappings.some(mapping => isFoldingRangesEnabled(mapping.data)),
 			(plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
 				return plugin[1].provideFoldingRanges?.(document, token);
 			},
-			(data, map) => {
-				if (!map) {
+			(data, docs) => {
+				if (!docs) {
 					return data;
 				}
 				return transformFoldingRanges(
 					data,
-					range => map.getSourceRange(range, isFoldingRangesEnabled)
+					range => getSourceRange(docs, range, isFoldingRangesEnabled)
 				);
 			},
 			arr => arr.flat()

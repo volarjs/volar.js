@@ -2,7 +2,6 @@ import type { Language, SourceScript, VirtualCode } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type * as ts from 'typescript';
-import type { LinkedCodeMapWithDocument, SourceMapWithDocuments } from './documents';
 import type { LanguageService } from './languageService';
 import type { URI } from 'vscode-uri';
 import type { UriMap } from './utils/uriMap';
@@ -60,9 +59,6 @@ export interface LanguageServiceContext {
 	};
 	documents: {
 		get(uri: URI, languageId: string, snapshot: ts.IScriptSnapshot): TextDocument;
-		getMap(virtualCode: VirtualCode, sourceScript: SourceScript<URI>): SourceMapWithDocuments;
-		getMaps(virtualCode: VirtualCode): Generator<SourceMapWithDocuments>;
-		getLinkedCodeMap(virtualCode: VirtualCode, documentUri: URI): LinkedCodeMapWithDocument | undefined;
 	};
 	plugins: [LanguageServicePlugin, LanguageServicePluginInstance][];
 	disabledEmbeddedDocumentUris: UriMap<boolean>;

@@ -4,7 +4,7 @@ import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isInsideRange } from '../utils/common';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 import { transformMarkdown } from '../utils/transform';
 import { errorMarkups } from './provideDiagnostics';
 
@@ -16,18 +16,18 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.getGeneratedPositions(position, isHoverEnabled),
+			docs => getGeneratedPositions(docs, position, isHoverEnabled),
 			(plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
 				return plugin[1].provideHover?.(document, position, token);
 			},
-			(item, map) => {
-				if (!map || !item.range) {
+			(item, docs) => {
+				if (!docs || !item.range) {
 					return item;
 				}
-				item.range = map.getSourceRange(item.range, isHoverEnabled);
+				item.range = getSourceRange(docs, item.range, isHoverEnabled);
 				return item;
 			},
 			(hovers): vscode.Hover => ({

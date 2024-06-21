@@ -4,7 +4,7 @@ import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange } from '../utils/common';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getSourcePositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 import { transformTextEdit } from '../utils/transform';
 
 export interface InlayHintData {
@@ -25,17 +25,17 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => range,
-			function* (map) {
+			function* (docs) {
 				const mapped = findOverlapCodeRange(
-					map.sourceDocument.offsetAt(range.start),
-					map.sourceDocument.offsetAt(range.end),
-					map.map,
+					docs[0].offsetAt(range.start),
+					docs[0].offsetAt(range.end),
+					docs[2],
 					isInlayHintsEnabled
 				);
 				if (mapped) {
 					yield {
-						start: map.embeddedDocument.positionAt(mapped.start),
-						end: map.embeddedDocument.positionAt(mapped.end),
+						start: docs[1].positionAt(mapped.start),
+						end: docs[1].positionAt(mapped.end),
 					};
 				}
 			},
@@ -56,17 +56,17 @@ export function register(context: LanguageServiceContext) {
 
 				return hints;
 			},
-			(inlayHints, map) => {
-				if (!map) {
+			(inlayHints, docs) => {
+				if (!docs) {
 					return inlayHints;
 				}
 				return inlayHints
 					.map((_inlayHint): vscode.InlayHint | undefined => {
 						const edits = _inlayHint.textEdits
-							?.map(textEdit => transformTextEdit(textEdit, range => map.getSourceRange(range), map.embeddedDocument))
+							?.map(textEdit => transformTextEdit(textEdit, range => getSourceRange(docs, range), docs[1]))
 							.filter(textEdit => !!textEdit);
 
-						for (const position of map.getSourcePositions(_inlayHint.position, isInlayHintsEnabled)) {
+						for (const position of getSourcePositions(docs, _inlayHint.position, isInlayHintsEnabled)) {
 							return {
 								..._inlayHint,
 								position,

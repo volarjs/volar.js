@@ -1,11 +1,11 @@
 import { isSemanticTokensEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
-import type { SemanticToken, LanguageServiceContext } from '../types';
+import type { LanguageServiceContext, SemanticToken } from '../types';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange } from '../utils/common';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
@@ -33,17 +33,17 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => range,
-			function* (map) {
+			function* (docs) {
 				const mapped = findOverlapCodeRange(
-					map.sourceDocument.offsetAt(range.start),
-					map.sourceDocument.offsetAt(range.end),
-					map.map,
+					docs[0].offsetAt(range.start),
+					docs[0].offsetAt(range.end),
+					docs[2],
 					isSemanticTokensEnabled
 				);
 				if (mapped) {
 					yield {
-						start: map.embeddedDocument.positionAt(mapped.start),
-						end: map.embeddedDocument.positionAt(mapped.end),
+						start: docs[1].positionAt(mapped.start),
+						end: docs[1].positionAt(mapped.end),
 					};
 				}
 			},
@@ -60,13 +60,13 @@ export function register(context: LanguageServiceContext) {
 					token
 				);
 			},
-			(tokens, map) => {
-				if (!map) {
+			(tokens, docs) => {
+				if (!docs) {
 					return tokens;
 				}
 				return tokens
 					.map<SemanticToken | undefined>(_token => {
-						const range = map.getSourceRange({
+						const range = getSourceRange(docs, {
 							start: { line: _token[0], character: _token[1] },
 							end: { line: _token[0], character: _token[1] + _token[2] },
 						}, isSemanticTokensEnabled);

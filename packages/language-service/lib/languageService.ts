@@ -1,10 +1,8 @@
-import type { CodeInformation, LinkedCodeMap, SourceMap } from '@volar/language-core';
 import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { LinkedCodeMapWithDocument, SourceMapWithDocuments } from './documents';
 import * as autoInsert from './features/provideAutoInsertSnippet';
 import * as callHierarchy from './features/provideCallHierarchyItems';
 import * as codeActions from './features/provideCodeActions';
@@ -13,7 +11,6 @@ import * as colorPresentations from './features/provideColorPresentations';
 import * as completions from './features/provideCompletionItems';
 import * as definition from './features/provideDefinition';
 import * as diagnostics from './features/provideDiagnostics';
-import * as workspaceDiagnostics from './features/provideWorkspaceDiagnostics';
 import * as documentColors from './features/provideDocumentColors';
 import * as documentDrop from './features/provideDocumentDropEdits';
 import * as format from './features/provideDocumentFormattingEdits';
@@ -32,13 +29,14 @@ import * as rename from './features/provideRenameEdits';
 import * as renamePrepare from './features/provideRenameRange';
 import * as selectionRanges from './features/provideSelectionRanges';
 import * as signatureHelp from './features/provideSignatureHelp';
+import * as workspaceDiagnostics from './features/provideWorkspaceDiagnostics';
 import * as workspaceSymbol from './features/provideWorkspaceSymbols';
 import * as codeActionResolve from './features/resolveCodeAction';
 import * as codeLensResolve from './features/resolveCodeLens';
 import * as completionResolve from './features/resolveCompletionItem';
 import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
-import type { LanguageServicePlugin, LanguageServiceContext, LanguageServiceEnvironment } from './types';
+import type { LanguageServiceContext, LanguageServiceEnvironment, LanguageServicePlugin } from './types';
 import { UriMap, createUriMap } from './utils/uriMap';
 
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
@@ -49,8 +47,6 @@ export function createLanguageService(
 	env: LanguageServiceEnvironment
 ) {
 	const documentVersions = createUriMap<number>();
-	const map2DocMap = new WeakMap<SourceMap<CodeInformation>, SourceMapWithDocuments>();
-	const mirrorMap2DocMirrorMap = new WeakMap<LinkedCodeMap, LinkedCodeMapWithDocument>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, UriMap<TextDocument>>();
 	const embeddedContentScheme = 'volar-embedded-content';
 	const context: LanguageServiceContext = {
@@ -73,47 +69,6 @@ export function createLanguageService(
 					));
 				}
 				return map.get(uri)!;
-			},
-			getMap(virtualCode, sourceScript) {
-				const map = context.language.maps.get(virtualCode, sourceScript);
-				if (!map2DocMap.has(map)) {
-					const embeddedUri = context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id);
-					map2DocMap.set(map, new SourceMapWithDocuments(
-						this.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot),
-						this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
-						map,
-						virtualCode,
-					));
-				}
-				return map2DocMap.get(map)!;
-			},
-			*getMaps(virtualCode) {
-				for (const [uri, snapshot, map] of context.language.maps.forEach(virtualCode)) {
-					if (!map2DocMap.has(map)) {
-						const embeddedUri = context.encodeEmbeddedDocumentUri(uri, virtualCode.id);
-						map2DocMap.set(map, new SourceMapWithDocuments(
-							this.get(uri, context.language.scripts.get(uri)!.languageId, snapshot),
-							this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
-							map,
-							virtualCode,
-						));
-					}
-					yield map2DocMap.get(map)!;
-				}
-			},
-			getLinkedCodeMap(virtualCode, documentUri) {
-				const map = context.language.linkedCodeMaps.get(virtualCode);
-				if (map) {
-					if (!mirrorMap2DocMirrorMap.has(map)) {
-						const embeddedUri = context.encodeEmbeddedDocumentUri(documentUri, virtualCode.id);
-						mirrorMap2DocMirrorMap.set(map, new LinkedCodeMapWithDocument(
-							this.get(embeddedUri, virtualCode.languageId, virtualCode.snapshot),
-							map,
-							virtualCode,
-						));
-					}
-					return mirrorMap2DocMirrorMap.get(map)!;
-				}
 			},
 		},
 		env,

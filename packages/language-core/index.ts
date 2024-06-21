@@ -162,8 +162,7 @@ export function createLanguage<T>(
 			*forEach(virtualCode) {
 				const sourceScript = virtualCodeToSourceScriptMap.get(virtualCode)!;
 				yield [
-					sourceScript.id,
-					sourceScript.snapshot,
+					sourceScript,
 					this.get(virtualCode, sourceScript),
 				];
 				if (virtualCode.associatedScriptMappings) {
@@ -171,8 +170,7 @@ export function createLanguage<T>(
 						const relatedSourceScript = scriptRegistry.get(relatedScriptId as T);
 						if (relatedSourceScript) {
 							yield [
-								relatedSourceScript.id,
-								relatedSourceScript.snapshot,
+								relatedSourceScript,
 								this.get(virtualCode, relatedSourceScript),
 							];
 						}

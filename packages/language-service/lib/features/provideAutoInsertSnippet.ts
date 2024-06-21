@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
@@ -13,9 +13,9 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => ({ selection, change }),
-			function* (map) {
-				for (const mappedPosition of map.getGeneratedPositions(selection, isAutoInsertEnabled)) {
-					for (const mapped of map.map.getGeneratedOffsets(change.rangeOffset)) {
+			function* (docs) {
+				for (const mappedPosition of getGeneratedPositions(docs, selection, isAutoInsertEnabled)) {
+					for (const mapped of docs[2].getGeneratedOffsets(change.rangeOffset)) {
 						yield {
 							selection: mappedPosition,
 							change: {

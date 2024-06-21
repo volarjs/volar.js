@@ -12,7 +12,7 @@ export interface Language<T = unknown> {
 	};
 	maps: {
 		get(virtualCode: VirtualCode, sourceScript: SourceScript<T>): SourceMap<CodeInformation>;
-		forEach(virtualCode: VirtualCode): Generator<[id: T, snapshot: ts.IScriptSnapshot, map: SourceMap<CodeInformation>]>;
+		forEach(virtualCode: VirtualCode): Generator<[sourceScript: SourceScript<T>, map: SourceMap<CodeInformation>]>;
 	};
 	linkedCodeMaps: {
 		get(virtualCode: VirtualCode): LinkedCodeMap | undefined;

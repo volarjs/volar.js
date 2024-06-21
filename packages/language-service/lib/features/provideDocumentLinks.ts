@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { documentFeatureWorker } from '../utils/featureWorkers';
+import { documentFeatureWorker, getSourceRange } from '../utils/featureWorkers';
 import { transformDocumentLinkTarget } from '../utils/transform';
 
 export interface DocumentLinkData {
@@ -19,7 +19,7 @@ export function register(context: LanguageServiceContext) {
 		return await documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.mappings.some(mapping => isDocumentLinkEnabled(mapping.data)),
+			docs => docs[2].mappings.some(mapping => isDocumentLinkEnabled(mapping.data)),
 			async (plugin, document) => {
 
 				if (token.isCancellationRequested) {
@@ -40,13 +40,13 @@ export function register(context: LanguageServiceContext) {
 
 				return links;
 			},
-			(links, map) => {
-				if (!map) {
+			(links, docs) => {
+				if (!docs) {
 					return links;
 				}
 				return links
 					.map(link => {
-						const range = map.getSourceRange(link.range, isDocumentLinkEnabled);
+						const range = getSourceRange(docs, link.range, isDocumentLinkEnabled);
 						if (!range) {
 							return;
 						}

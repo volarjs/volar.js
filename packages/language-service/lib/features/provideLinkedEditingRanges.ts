@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
@@ -13,8 +13,8 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			function* (map) {
-				for (const pos of map.getGeneratedPositions(position, isLinkedEditingEnabled)) {
+			function* (docs) {
+				for (const pos of getGeneratedPositions(docs, position, isLinkedEditingEnabled)) {
 					yield pos;
 				}
 			},
@@ -26,14 +26,14 @@ export function register(context: LanguageServiceContext) {
 
 				return plugin[1].provideLinkedEditingRanges?.(document, position, token);
 			},
-			(ranges, map) => {
-				if (!map) {
+			(ranges, docs) => {
+				if (!docs) {
 					return ranges;
 				}
 				return {
 					wordPattern: ranges.wordPattern,
 					ranges: ranges.ranges
-						.map(range => map.getSourceRange(range, isLinkedEditingEnabled))
+						.map(range => getSourceRange(docs, range, isLinkedEditingEnabled))
 						.filter(range => !!range),
 				};
 			}

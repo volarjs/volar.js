@@ -1,15 +1,21 @@
-import type { VirtualCode } from '@volar/language-core';
+import type { CodeInformation, LinkedCodeMap, SourceMap, SourceScript, VirtualCode } from '@volar/language-core';
+import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { URI } from 'vscode-uri';
-import type { SourceMapWithDocuments } from '../documents';
-import type { LanguageServicePlugin, LanguageServicePluginInstance, LanguageServiceContext } from '../types';
+import type { LanguageServiceContext, LanguageServicePlugin, LanguageServicePluginInstance } from '../types';
+
+export type DocumentsAndMap = [
+	sourceDocument: TextDocument,
+	embeddedDocument: TextDocument,
+	map: SourceMap<CodeInformation>,
+];
 
 export function documentFeatureWorker<T>(
 	context: LanguageServiceContext,
 	uri: URI,
-	valid: (map: SourceMapWithDocuments) => boolean,
+	valid: (info: DocumentsAndMap) => boolean,
 	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument) => Thenable<T | null | undefined> | T | null | undefined,
-	transformResult: (result: T, map?: SourceMapWithDocuments) => T | undefined,
+	transformResult: (result: T, map?: DocumentsAndMap) => T | undefined,
 	combineResult?: (results: T[]) => T
 ) {
 	return languageFeatureWorker(
@@ -31,9 +37,9 @@ export async function languageFeatureWorker<T, K>(
 	context: LanguageServiceContext,
 	uri: URI,
 	getRealDocParams: () => K,
-	eachVirtualDocParams: (map: SourceMapWithDocuments) => Generator<K>,
-	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: SourceMapWithDocuments) => Thenable<T | null | undefined> | T | null | undefined,
-	transformResult: (result: T, map?: SourceMapWithDocuments) => T | undefined,
+	eachVirtualDocParams: (map: DocumentsAndMap) => Generator<K>,
+	worker: (plugin: [LanguageServicePlugin, LanguageServicePluginInstance], document: TextDocument, params: K, map?: DocumentsAndMap) => Thenable<T | null | undefined> | T | null | undefined,
+	transformResult: (result: T, map?: DocumentsAndMap) => T | undefined,
 	combineResult?: (results: T[]) => T
 ) {
 	const sourceScript = context.language.scripts.get(uri);
@@ -45,13 +51,13 @@ export async function languageFeatureWorker<T, K>(
 
 	if (sourceScript.generated) {
 
-		for (const map of forEachEmbeddedDocument(context, sourceScript.id, sourceScript.generated.root)) {
+		for (const docs of forEachEmbeddedDocument(context, sourceScript, sourceScript.generated.root)) {
 
 			if (results.length && !combineResult) {
 				continue;
 			}
 
-			for (const mappedArg of eachVirtualDocParams(map)) {
+			for (const mappedArg of eachVirtualDocParams(docs)) {
 
 				if (results.length && !combineResult) {
 					continue;
@@ -67,13 +73,13 @@ export async function languageFeatureWorker<T, K>(
 					}
 
 					const rawResult = await safeCall(
-						() => worker(plugin, map.embeddedDocument, mappedArg, map),
-						`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${map.embeddedDocument.uri}.`
+						() => worker(plugin, docs[1], mappedArg, docs),
+						`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${docs[1].uri}.`
 					);
 					if (!rawResult) {
 						continue;
 					}
-					const mappedResult = transformResult(rawResult, map);
+					const mappedResult = transformResult(rawResult, docs);
 					if (!mappedResult) {
 						continue;
 					}
@@ -134,23 +140,21 @@ export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) 
 
 export function* forEachEmbeddedDocument(
 	context: LanguageServiceContext,
-	sourceScriptId: URI,
+	sourceScript: SourceScript<URI>,
 	current: VirtualCode
-): Generator<SourceMapWithDocuments> {
-
+): Generator<DocumentsAndMap> {
 	if (current.embeddedCodes) {
 		for (const embeddedCode of current.embeddedCodes) {
-			yield* forEachEmbeddedDocument(context, sourceScriptId, embeddedCode);
+			yield* forEachEmbeddedDocument(context, sourceScript, embeddedCode);
 		}
 	}
-
-	for (const map of context.documents.getMaps(current)) {
-		if (
-			sourceScriptId.toString() === map.sourceDocument.uri
-			&& !context.disabledEmbeddedDocumentUris.get(context.encodeEmbeddedDocumentUri(sourceScriptId, current.id))
-		) {
-			yield map;
-		}
+	const embeddedDocumentUri = context.encodeEmbeddedDocumentUri(sourceScript.id, current.id);
+	if (!context.disabledEmbeddedDocumentUris.get(embeddedDocumentUri)) {
+		yield [
+			context.documents.get(sourceScript.id, current.languageId, current.snapshot),
+			context.documents.get(embeddedDocumentUri, current.languageId, current.snapshot),
+			context.language.maps.get(current, sourceScript),
+		];
 	}
 }
 
@@ -177,5 +181,57 @@ export function getEmbeddedFilesByLevel(context: LanguageServiceContext, sourceF
 		}
 
 		embeddedFilesByLevel.push(nextLevel);
+	}
+}
+
+export function getSourceRange(docs: DocumentsAndMap, range: vscode.Range, filter?: (data: CodeInformation) => boolean) {
+	for (const result of getSourceRanges(docs, range, filter)) {
+		return result;
+	}
+}
+
+export function getGeneratedRange(docs: DocumentsAndMap, range: vscode.Range, filter?: (data: CodeInformation) => boolean) {
+	for (const result of getGeneratedRanges(docs, range, filter)) {
+		return result;
+	}
+}
+
+export function* getSourceRanges([sourceDocument, embeddedDocument, map]: DocumentsAndMap, range: vscode.Range, filter?: (data: CodeInformation) => boolean) {
+	for (const [mappedStart, mappedEnd] of map.getSourceStartEnd(
+		embeddedDocument.offsetAt(range.start),
+		embeddedDocument.offsetAt(range.end),
+		true,
+		filter
+	)) {
+		yield { start: sourceDocument.positionAt(mappedStart), end: sourceDocument.positionAt(mappedEnd) };
+	}
+}
+
+export function* getGeneratedRanges([sourceDocument, embeddedDocument, map]: DocumentsAndMap, range: vscode.Range, filter?: (data: CodeInformation) => boolean) {
+	for (const [mappedStart, mappedEnd] of map.getGeneratedStartEnd(
+		sourceDocument.offsetAt(range.start),
+		sourceDocument.offsetAt(range.end),
+		true,
+		filter
+	)) {
+		yield { start: embeddedDocument.positionAt(mappedStart), end: embeddedDocument.positionAt(mappedEnd) };
+	}
+}
+
+export function* getSourcePositions([sourceDocument, embeddedDocument, map]: DocumentsAndMap, position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
+	for (const mapped of map.getSourceOffsets(embeddedDocument.offsetAt(position), filter)) {
+		yield sourceDocument.positionAt(mapped[0]);
+	}
+}
+
+export function* getGeneratedPositions([sourceDocument, embeddedDocument, map]: DocumentsAndMap, position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
+	for (const mapped of map.getGeneratedOffsets(sourceDocument.offsetAt(position), filter)) {
+		yield embeddedDocument.positionAt(mapped[0]);
+	}
+}
+
+export function* getLinkedCodePositions(document: TextDocument, linkedMap: LinkedCodeMap, posotion: vscode.Position) {
+	for (const linkedPosition of linkedMap.getLinkedOffsets(document.offsetAt(posotion))) {
+		yield document.positionAt(linkedPosition);
 	}
 }

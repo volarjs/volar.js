@@ -2,11 +2,10 @@ import type { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import type { SourceMapWithDocuments } from '../documents';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { DocumentsAndMap, getGeneratedPositions, getLinkedCodePositions, getSourceRange, getSourceRanges, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(
 	context: LanguageServiceContext,
@@ -20,7 +19,7 @@ export function register(
 			context,
 			uri,
 			() => position,
-			map => map.getGeneratedPositions(position, isValidPosition),
+			docs => getGeneratedPositions(docs, position, isValidPosition),
 			async (plugin, document, position) => {
 
 				if (token.isCancellationRequested) {
@@ -59,20 +58,24 @@ export function register(
 						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 						const linkedCodeMap = virtualCode && sourceScript
-							? context.documents.getLinkedCodeMap(virtualCode, sourceScript.id)
+							? context.language.linkedCodeMaps.get(virtualCode)
 							: undefined;
 
-						if (linkedCodeMap) {
+						if (sourceScript && virtualCode && linkedCodeMap) {
+							const embeddedDocument = context.documents.get(
+								context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+								virtualCode.languageId,
+								virtualCode.snapshot
+							);
+							for (const linkedPos of getLinkedCodePositions(embeddedDocument, linkedCodeMap, definition.targetSelectionRange.start)) {
 
-							for (const linkedPos of linkedCodeMap.getLinkedCodePositions(definition.targetSelectionRange.start)) {
-
-								if (recursiveChecker.has({ uri: linkedCodeMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
+								if (recursiveChecker.has({ uri: embeddedDocument.uri, range: { start: linkedPos, end: linkedPos } })) {
 									continue;
 								}
 
 								foundMirrorPosition = true;
 
-								await withLinkedCode(linkedCodeMap.document, linkedPos, originDefinition ?? definition);
+								await withLinkedCode(embeddedDocument, linkedPos, originDefinition ?? definition);
 							}
 						}
 
@@ -109,31 +112,37 @@ export function register(
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const targetVirtualFile = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
-				if (targetVirtualFile) {
+				if (sourceScript && targetVirtualFile) {
+					const embeddedDocument = context.documents.get(
+						context.encodeEmbeddedDocumentUri(sourceScript.id, targetVirtualFile.id),
+						targetVirtualFile.languageId,
+						targetVirtualFile.snapshot
+					);
+					for (const [targetScript, targetSourceMap] of context.language.maps.forEach(targetVirtualFile)) {
+						const sourceDocument = context.documents.get(targetScript.id, targetScript.languageId, targetScript.snapshot);
+						const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, targetSourceMap];
 
-					for (const targetSourceMap of context.documents.getMaps(targetVirtualFile)) {
-
-						const targetSelectionRange = targetSourceMap.getSourceRange(link.targetSelectionRange);
+						const targetSelectionRange = getSourceRange(docs, link.targetSelectionRange);
 						if (!targetSelectionRange) {
 							continue;
 						}
 
 						foundTargetSelectionRange = true;
 
-						let targetRange = targetSourceMap.getSourceRange(link.targetRange);
+						let targetRange = getSourceRange(docs, link.targetRange);
 
-						link.targetUri = targetSourceMap.sourceDocument.uri;
+						link.targetUri = sourceDocument.uri;
 						// loose range mapping to for template slots, slot properties
 						link.targetRange = targetRange ?? targetSelectionRange;
 						link.targetSelectionRange = targetSelectionRange;
 					}
 
 					if (apiName === 'provideDefinition' && !foundTargetSelectionRange) {
-						for (const targetMap of context.documents.getMaps(targetVirtualFile)) {
-							if (targetMap && targetMap.sourceDocument.uri !== uri.toString()) {
+						for (const [targetScript] of context.language.maps.forEach(targetVirtualFile)) {
+							if (targetScript.id.toString() !== uri.toString()) {
 								return {
 									...link,
-									targetUri: targetMap.sourceDocument.uri,
+									targetUri: targetScript.id.toString(),
 									targetRange: {
 										start: { line: 0, character: 0 },
 										end: { line: 0, character: 0 },
@@ -156,11 +165,11 @@ export function register(
 	};
 }
 
-function toSourcePositionPreferSurroundedPosition(map: SourceMapWithDocuments, mappedRange: vscode.Range, position: vscode.Position) {
+function toSourcePositionPreferSurroundedPosition(docs: DocumentsAndMap, mappedRange: vscode.Range, position: vscode.Position) {
 
 	let result: vscode.Range | undefined;
 
-	for (const range of map.getSourceRanges(mappedRange)) {
+	for (const range of getSourceRanges(docs, mappedRange)) {
 		if (!result) {
 			result = range;
 		}

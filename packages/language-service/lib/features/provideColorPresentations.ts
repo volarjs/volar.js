@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedRanges, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
@@ -13,8 +13,8 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => range,
-			function* (map) {
-				for (const mappedRange of map.getGeneratedRanges(range, isColorEnabled)) {
+			function* (docs) {
+				for (const mappedRange of getGeneratedRanges(docs, range, isColorEnabled)) {
 					yield mappedRange;
 				}
 			},
@@ -24,14 +24,14 @@ export function register(context: LanguageServiceContext) {
 				}
 				return plugin[1].provideColorPresentations?.(document, color, range, token);
 			},
-			(data, map) => {
-				if (!map) {
+			(data, docs) => {
+				if (!docs) {
 					return data;
 				}
 				return data
 					.map(colorPresentation => {
 						if (colorPresentation.textEdit) {
-							const range = map.getSourceRange(colorPresentation.textEdit.range);
+							const range = getSourceRange(docs, colorPresentation.textEdit.range);
 							if (!range) {
 								return undefined;
 							}
@@ -39,7 +39,7 @@ export function register(context: LanguageServiceContext) {
 						}
 						if (colorPresentation.additionalTextEdits) {
 							for (const textEdit of colorPresentation.additionalTextEdits) {
-								const range = map.getSourceRange(textEdit.range);
+								const range = getSourceRange(docs, textEdit.range);
 								if (!range) {
 									return undefined;
 								}

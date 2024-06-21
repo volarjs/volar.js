@@ -1,10 +1,10 @@
 import { isReferencesEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
-import type { NullableProviderResult, LanguageServiceContext } from '../types';
+import type { LanguageServiceContext, NullableProviderResult } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { documentFeatureWorker } from '../utils/featureWorkers';
+import { documentFeatureWorker, DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
@@ -27,14 +27,21 @@ export function register(context: LanguageServiceContext) {
 					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
-					if (!virtualCode) {
+					if (!sourceScript || !virtualCode) {
 						return reference;
 					}
 
-					for (const map of context.documents.getMaps(virtualCode)) {
-						const range = map.getSourceRange(reference.range, isReferencesEnabled);
+					const embeddedDocument = context.documents.get(
+						context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+						virtualCode.languageId,
+						virtualCode.snapshot
+					);
+					for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
+						const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
+						const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
+						const range = getSourceRange(docs, reference.range, isReferencesEnabled);
 						if (range) {
-							reference.uri = map.sourceDocument.uri;
+							reference.uri = sourceDocument.uri;
 							reference.range = range;
 							return reference;
 						}

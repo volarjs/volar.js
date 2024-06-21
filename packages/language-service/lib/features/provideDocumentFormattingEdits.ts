@@ -3,11 +3,10 @@ import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { SourceMapWithDocuments } from '../documents';
 import type { EmbeddedCodeFormattingOptions, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange, stringToSnapshot } from '../utils/common';
-import { getEmbeddedFilesByLevel as getEmbeddedCodesByLevel } from '../utils/featureWorkers';
+import { DocumentsAndMap, getEmbeddedFilesByLevel as getEmbeddedCodesByLevel, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
@@ -88,8 +87,8 @@ export function register(context: LanguageServiceContext) {
 						continue;
 					}
 
-					const docMap = createDocMap(code, uri, sourceScript.languageId, tempSourceSnapshot);
-					if (!docMap) {
+					const docs = createDocMap(code, uri, sourceScript.languageId, tempSourceSnapshot);
+					if (!docs) {
 						continue;
 					}
 
@@ -98,10 +97,10 @@ export function register(context: LanguageServiceContext) {
 
 					if (onTypeParams) {
 
-						for (const embeddedPosition of docMap.getGeneratedPositions(onTypeParams.position)) {
+						for (const embeddedPosition of getGeneratedPositions(docs, onTypeParams.position)) {
 							embeddedCodeResult = await tryFormat(
-								docMap.sourceDocument,
-								docMap.embeddedDocument,
+								docs[0],
+								docs[1],
 								sourceScript,
 								code,
 								level,
@@ -113,14 +112,14 @@ export function register(context: LanguageServiceContext) {
 					}
 					else if (embeddedRange) {
 						embeddedCodeResult = await tryFormat(
-							docMap.sourceDocument,
-							docMap.embeddedDocument,
+							docs[0],
+							docs[1],
 							sourceScript,
 							code,
 							level,
 							{
-								start: docMap.embeddedDocument.positionAt(embeddedRange.start),
-								end: docMap.embeddedDocument.positionAt(embeddedRange.end),
+								start: docs[1].positionAt(embeddedRange.start),
+								end: docs[1].positionAt(embeddedRange.end),
 							}
 						);
 					}
@@ -130,7 +129,7 @@ export function register(context: LanguageServiceContext) {
 					}
 
 					for (const textEdit of embeddedCodeResult.edits) {
-						const range = docMap.getSourceRange(textEdit.range);
+						const range = getSourceRange(docs, textEdit.range);
 						if (range) {
 							edits.push({
 								newText: textEdit.newText,
@@ -250,10 +249,10 @@ export function register(context: LanguageServiceContext) {
 		}
 	};
 
-	function createDocMap(virtualCode: VirtualCode, documentUri: URI, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot) {
+	function createDocMap(virtualCode: VirtualCode, documentUri: URI, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot): DocumentsAndMap {
 		const map = new SourceMap(virtualCode.mappings);
 		const version = fakeVersion++;
-		return new SourceMapWithDocuments(
+		return [
 			TextDocument.create(
 				documentUri.toString(),
 				sourceLanguageId,
@@ -267,8 +266,7 @@ export function register(context: LanguageServiceContext) {
 				virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength())
 			),
 			map,
-			virtualCode,
-		);
+		];
 	}
 }
 

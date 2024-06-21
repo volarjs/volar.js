@@ -2,10 +2,9 @@ import { isCompletionEnabled, type CodeInformation } from '@volar/language-core'
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import type { SourceMapWithDocuments } from '../documents';
 import type { LanguageServicePluginInstance, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { forEachEmbeddedDocument } from '../utils/featureWorkers';
+import { DocumentsAndMap, forEachEmbeddedDocument, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
 import { transformCompletionList } from '../utils/transform';
 
 export interface ServiceCompletionData {
@@ -59,19 +58,26 @@ export function register(context: LanguageServiceContext) {
 					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
-					if (!virtualCode) {
+					if (!sourceScript || !virtualCode) {
 						continue;
 					}
 
-					for (const map of context.documents.getMaps(virtualCode)) {
+					const embeddedDocument = context.documents.get(
+						context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+						virtualCode.languageId,
+						virtualCode.snapshot
+					);
+					for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
+						const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
+						const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
 
-						for (const mapped of map.getGeneratedPositions(position, data => isCompletionEnabled(data))) {
+						for (const mapped of getGeneratedPositions(docs, position, data => isCompletionEnabled(data))) {
 
 							if (!cacheData.plugin.provideCompletionItems) {
 								continue;
 							}
 
-							cacheData.list = await cacheData.plugin.provideCompletionItems(map.embeddedDocument, mapped, completionContext, token);
+							cacheData.list = await cacheData.plugin.provideCompletionItems(embeddedDocument, mapped, completionContext, token);
 
 							if (!cacheData.list) {
 								continue;
@@ -86,14 +92,14 @@ export function register(context: LanguageServiceContext) {
 										data: item.data,
 									},
 									pluginIndex: pluginIndex,
-									embeddedDocumentUri: map.embeddedDocument.uri,
+									embeddedDocumentUri: embeddedDocument.uri,
 								} satisfies ServiceCompletionData;
 							}
 
 							cacheData.list = transformCompletionList(
 								cacheData.list,
-								range => map.getSourceRange(range),
-								map.embeddedDocument,
+								range => getSourceRange(docs, range),
+								embeddedDocument,
 								context
 							);
 						}
@@ -145,7 +151,7 @@ export function register(context: LanguageServiceContext) {
 			const worker = async (
 				document: TextDocument,
 				position: vscode.Position,
-				map?: SourceMapWithDocuments,
+				docs?: DocumentsAndMap,
 				codeInfo?: CodeInformation | undefined
 			) => {
 
@@ -203,21 +209,21 @@ export function register(context: LanguageServiceContext) {
 								data: item.data,
 							},
 							pluginIndex,
-							embeddedDocumentUri: map ? document.uri : undefined,
+							embeddedDocumentUri: docs ? document.uri : undefined,
 						} satisfies ServiceCompletionData;
 					}
 
-					if (map) {
+					if (docs) {
 						completionList = transformCompletionList(
 							completionList,
-							range => map.getSourceRange(range, isCompletionEnabled),
+							range => getSourceRange(docs, range, isCompletionEnabled),
 							document,
 							context
 						);
 					}
 
 					lastResult?.results.push({
-						embeddedDocumentUri: map ? URI.parse(document.uri) : undefined,
+						embeddedDocumentUri: docs ? URI.parse(document.uri) : undefined,
 						plugin: plugin[1],
 						list: completionList,
 					});
@@ -228,15 +234,15 @@ export function register(context: LanguageServiceContext) {
 
 			if (sourceScript.generated) {
 
-				for (const map of forEachEmbeddedDocument(context, sourceScript.id, sourceScript.generated.root)) {
+				for (const docs of forEachEmbeddedDocument(context, sourceScript, sourceScript.generated.root)) {
 
 					let _data: CodeInformation | undefined;
 
-					for (const mappedPosition of map.getGeneratedPositions(position, data => {
+					for (const mappedPosition of getGeneratedPositions(docs, position, data => {
 						_data = data;
 						return isCompletionEnabled(data);
 					})) {
-						await worker(map.embeddedDocument, mappedPosition, map, _data);
+						await worker(docs[1], mappedPosition, docs, _data);
 					}
 				}
 			}

@@ -255,14 +255,14 @@ export function* toSourceRanges(
 		}
 	}
 	else {
-		for (const [fileName, _snapshot, map] of language.maps.forEach(serviceScript.code)) {
+		for (const [sourceScript, map] of language.maps.forEach(serviceScript.code)) {
 			for (const [sourceStart, sourceEnd] of map.getSourceStartEnd(
 				start - getMappingOffset(language, serviceScript),
 				end - getMappingOffset(language, serviceScript),
 				true,
 				filter
 			)) {
-				yield [fileName, sourceStart, sourceEnd];
+				yield [sourceScript.id, sourceStart, sourceEnd];
 			}
 		}
 	}
@@ -284,10 +284,10 @@ export function* toSourceOffsets(
 		}
 	}
 	else {
-		for (const [fileName, _snapshot, map] of language.maps.forEach(serviceScript.code)) {
+		for (const [sourceScript, map] of language.maps.forEach(serviceScript.code)) {
 			for (const [sourceOffset, mapping] of map.getSourceOffsets(position - getMappingOffset(language, serviceScript))) {
 				if (filter(mapping.data)) {
-					yield [fileName, sourceOffset];
+					yield [sourceScript.id, sourceOffset];
 				}
 			}
 		}

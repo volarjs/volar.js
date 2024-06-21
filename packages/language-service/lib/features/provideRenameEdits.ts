@@ -5,7 +5,7 @@ import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedPositions, getLinkedCodePositions, languageFeatureWorker } from '../utils/featureWorkers';
 import { pushEditToDocumentChanges, transformWorkspaceEdit } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
@@ -16,9 +16,9 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => ({ position, newName }),
-			function* (map) {
+			function* (docs) {
 				let _data!: CodeInformation;
-				for (const mappedPosition of map.getGeneratedPositions(position, data => {
+				for (const mappedPosition of getGeneratedPositions(docs, position, data => {
 					_data = data;
 					return isRenameEnabled(data);
 				})) {
@@ -79,20 +79,24 @@ export function register(context: LanguageServiceContext) {
 								const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 								const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 								const linkedCodeMap = virtualCode && sourceScript
-									? context.documents.getLinkedCodeMap(virtualCode, sourceScript.id)
+									? context.language.linkedCodeMaps.get(virtualCode)
 									: undefined;
 
-								if (linkedCodeMap) {
+								if (sourceScript && virtualCode && linkedCodeMap) {
+									const embeddedDocument = context.documents.get(
+										context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+										virtualCode.languageId,
+										virtualCode.snapshot
+									);
+									for (const linkedPos of getLinkedCodePositions(embeddedDocument, linkedCodeMap, textEdit.range.start)) {
 
-									for (const linkedPos of linkedCodeMap.getLinkedCodePositions(textEdit.range.start)) {
-
-										if (recursiveChecker.has({ uri: linkedCodeMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
+										if (recursiveChecker.has({ uri: embeddedDocument.uri, range: { start: linkedPos, end: linkedPos } })) {
 											continue;
 										}
 
 										foundMirrorPosition = true;
 
-										await withLinkedCode(linkedCodeMap.document, linkedPos, newName);
+										await withLinkedCode(embeddedDocument, linkedPos, newName);
 									}
 								}
 

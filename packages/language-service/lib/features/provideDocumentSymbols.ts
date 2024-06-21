@@ -4,7 +4,7 @@ import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isInsideRange } from '../utils/common';
-import { documentFeatureWorker } from '../utils/featureWorkers';
+import { documentFeatureWorker, getSourceRange } from '../utils/featureWorkers';
 import { transformDocumentSymbol } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
@@ -14,21 +14,21 @@ export function register(context: LanguageServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			map => map.map.mappings.some(mapping => isSymbolsEnabled(mapping.data)),
+			docs => docs[2].mappings.some(mapping => isSymbolsEnabled(mapping.data)),
 			(plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
 				return plugin[1].provideDocumentSymbols?.(document, token);
 			},
-			(data, map) => {
-				if (!map) {
+			(data, docs) => {
+				if (!docs) {
 					return data;
 				}
 				return data
 					.map(symbol => transformDocumentSymbol(
 						symbol,
-						range => map.getSourceRange(range, isSymbolsEnabled)
+						range => getSourceRange(docs, range, isSymbolsEnabled)
 					))
 					.filter(symbol => !!symbol);
 			},

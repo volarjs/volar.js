@@ -2,7 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { DataTransferItem, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWorkers';
 import { transformWorkspaceEdit } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
@@ -13,8 +13,8 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			function* (map) {
-				for (const mappedPosition of map.getGeneratedPositions(position)) {
+			function* (docs) {
+				for (const mappedPosition of getGeneratedPositions(docs, position)) {
 					yield mappedPosition;
 				}
 			},

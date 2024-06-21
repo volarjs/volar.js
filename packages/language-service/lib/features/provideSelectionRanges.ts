@@ -4,7 +4,7 @@ import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isEqualRange, isInsideRange } from '../utils/common';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 import { transformSelectionRanges } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
@@ -15,10 +15,10 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => positions,
-			function* (map) {
+			function* (docs) {
 				const result = positions
 					.map(position => {
-						for (const mappedPosition of map.getGeneratedPositions(position, isSelectionRangesEnabled)) {
+						for (const mappedPosition of getGeneratedPositions(docs, position, isSelectionRangesEnabled)) {
 							return mappedPosition;
 						}
 					})
@@ -35,13 +35,13 @@ export function register(context: LanguageServiceContext) {
 
 				return plugin[1].provideSelectionRanges?.(document, positions, token);
 			},
-			(data, map) => {
-				if (!map) {
+			(data, docs) => {
+				if (!docs) {
 					return data;
 				}
 				return transformSelectionRanges(
 					data,
-					range => map.getSourceRange(range, isSelectionRangesEnabled)
+					range => getSourceRange(docs, range, isSelectionRangesEnabled)
 				);
 			},
 			results => {

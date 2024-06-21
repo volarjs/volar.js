@@ -3,12 +3,11 @@ import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import type { SourceMapWithDocuments } from '../documents';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
-import { documentFeatureWorker } from '../utils/featureWorkers';
+import { documentFeatureWorker, DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
 import { createUriMap } from '../utils/uriMap';
 
 export function updateRange(
@@ -218,7 +217,7 @@ export function register(context: LanguageServiceContext) {
 			const result = await documentFeatureWorker(
 				context,
 				uri,
-				map => map.map.mappings.some(mapping => isDiagnosticsEnabled(mapping.data)),
+				docs => docs[2].mappings.some(mapping => isDiagnosticsEnabled(mapping.data)),
 				async (plugin, document) => {
 
 					if (token) {
@@ -281,14 +280,14 @@ export function register(context: LanguageServiceContext) {
 export function transformDiagnostic(
 	context: LanguageServiceContext,
 	error: vscode.Diagnostic,
-	map: SourceMapWithDocuments | undefined,
+	docs: DocumentsAndMap | undefined,
 	filter: (data: CodeInformation) => boolean
 ) {
 	// clone it to avoid modify cache
 	let _error: vscode.Diagnostic = { ...error };
 
-	if (map) {
-		const range = map.getSourceRange(error.range, filter);
+	if (docs) {
+		const range = getSourceRange(docs, error.range, filter);
 		if (!range) {
 			return;
 		}
@@ -305,13 +304,20 @@ export function transformDiagnostic(
 			const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 			const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
-			if (virtualCode) {
-				for (const map of context.documents.getMaps(virtualCode)) {
-					const range = map.getSourceRange(info.location.range, filter);
+			if (sourceScript && virtualCode) {
+				const embeddedDocument = context.documents.get(
+					context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+					virtualCode.languageId,
+					virtualCode.snapshot
+				);
+				for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
+					const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
+					const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
+					const range = getSourceRange(docs, info.location.range, filter);
 					if (range) {
 						relatedInfos.push({
 							location: {
-								uri: map.sourceDocument.uri,
+								uri: sourceDocument.uri,
 								range,
 							},
 							message: info.message,

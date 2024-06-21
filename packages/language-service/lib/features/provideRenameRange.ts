@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
@@ -13,19 +13,19 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.getGeneratedPositions(position, isRenameEnabled),
+			docs => getGeneratedPositions(docs, position, isRenameEnabled),
 			(plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
 				}
 				return plugin[1].provideRenameRange?.(document, position, token);
 			},
-			(item, map) => {
-				if (!map) {
+			(item, docs) => {
+				if (!docs) {
 					return item;
 				}
 				if ('start' in item && 'end' in item) {
-					return map.getSourceRange(item);
+					return getSourceRange(docs, item);
 				}
 				return item;
 			},

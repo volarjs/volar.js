@@ -5,7 +5,7 @@ import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedPositions, getLinkedCodePositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
@@ -15,7 +15,7 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.getGeneratedPositions(position, isHighlightEnabled),
+			docs => getGeneratedPositions(docs, position, isHighlightEnabled),
 			async (plugin, document, position) => {
 
 				if (token.isCancellationRequested) {
@@ -53,20 +53,24 @@ export function register(context: LanguageServiceContext) {
 						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 						const linkedCodeMap = virtualCode && sourceScript
-							? context.documents.getLinkedCodeMap(virtualCode, sourceScript.id)
+							? context.language.linkedCodeMaps.get(virtualCode)
 							: undefined;
 
-						if (linkedCodeMap) {
+						if (sourceScript && virtualCode && linkedCodeMap) {
+							const embeddedDocument = context.documents.get(
+								context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+								virtualCode.languageId,
+								virtualCode.snapshot
+							);
+							for (const linkedPos of getLinkedCodePositions(embeddedDocument, linkedCodeMap, reference.range.start)) {
 
-							for (const linkedPos of linkedCodeMap.getLinkedCodePositions(reference.range.start)) {
-
-								if (recursiveChecker.has({ uri: linkedCodeMap.document.uri, range: { start: linkedPos, end: linkedPos } })) {
+								if (recursiveChecker.has({ uri: embeddedDocument.uri, range: { start: linkedPos, end: linkedPos } })) {
 									continue;
 								}
 
 								foundMirrorPosition = true;
 
-								await withLinkedCode(linkedCodeMap.document, linkedPos);
+								await withLinkedCode(embeddedDocument, linkedPos);
 							}
 						}
 
@@ -76,14 +80,12 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 			},
-			(data, map) => data
+			(data, docs) => data
 				.map(highlight => {
-
-					if (!map) {
+					if (!docs) {
 						return highlight;
 					}
-
-					const range = map.getSourceRange(highlight.range, isHighlightEnabled);
+					const range = getSourceRange(docs, highlight.range, isHighlightEnabled);
 					if (range) {
 						return {
 							...highlight,

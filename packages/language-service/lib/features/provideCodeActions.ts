@@ -5,7 +5,7 @@ import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedRange, languageFeatureWorker } from '../utils/featureWorkers';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';
 import type { ServiceDiagnosticData } from './provideDiagnostics';
 
@@ -30,25 +30,25 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => ({ range, codeActionContext }),
-			function* (map) {
+			function* (docs) {
 				const _codeActionContext: vscode.CodeActionContext = {
 					diagnostics: transformLocations(
 						codeActionContext.diagnostics,
-						range => map.getGeneratedRange(range)
+						range => getGeneratedRange(docs, range)
 					),
 					only: codeActionContext.only,
 				};
 				const mapped = findOverlapCodeRange(
-					map.sourceDocument.offsetAt(range.start),
-					map.sourceDocument.offsetAt(range.end),
-					map.map,
+					docs[0].offsetAt(range.start),
+					docs[0].offsetAt(range.end),
+					docs[2],
 					isCodeActionsEnabled
 				);
 				if (mapped) {
 					yield {
 						range: {
-							start: map.embeddedDocument.positionAt(mapped.start),
-							end: map.embeddedDocument.positionAt(mapped.end),
+							start: docs[1].positionAt(mapped.start),
+							end: docs[1].positionAt(mapped.end),
 						},
 						codeActionContext: _codeActionContext,
 					};

@@ -1,10 +1,10 @@
 import { isCallHierarchyEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
+import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { languageFeatureWorker } from '../utils/featureWorkers';
-import { URI } from 'vscode-uri';
+import { DocumentsAndMap, getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export interface PluginCallHierarchyData {
 	uri: string;
@@ -23,7 +23,7 @@ export function register(context: LanguageServiceContext) {
 				context,
 				uri,
 				() => position,
-				map => map.getGeneratedPositions(position, data => isCallHierarchyEnabled(data)),
+				docs => getGeneratedPositions(docs, position, isCallHierarchyEnabled),
 				async (plugin, document, position, map) => {
 					if (token.isCancellationRequested) {
 						return;
@@ -36,7 +36,7 @@ export function register(context: LanguageServiceContext) {
 								data: item.data,
 							},
 							pluginIndex: context.plugins.indexOf(plugin),
-							embeddedDocumentUri: map?.embeddedDocument.uri,
+							embeddedDocumentUri: map?.[1].uri,
 						} satisfies PluginCallHierarchyData;
 					});
 					return items;
@@ -181,33 +181,40 @@ export function register(context: LanguageServiceContext) {
 		const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsItem.uri));
 		const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 		const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
-		if (!virtualCode) {
+		if (!sourceScript || !virtualCode) {
 			return [tsItem, tsRanges];
 		}
 
-		for (const map of context.documents.getMaps(virtualCode)) {
+		const embeddedDocument = context.documents.get(
+			context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+			virtualCode.languageId,
+			virtualCode.snapshot
+		);
+		for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
+			const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
+			const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
 
-			let range = map.getSourceRange(tsItem.range);
+			let range = getSourceRange(docs, tsItem.range);
 			if (!range) {
 				// TODO: <script> range
 				range = {
-					start: map.sourceDocument.positionAt(0),
-					end: map.sourceDocument.positionAt(map.sourceDocument.getText().length),
+					start: sourceDocument.positionAt(0),
+					end: sourceDocument.positionAt(sourceDocument.getText().length),
 				};
 			}
 
-			const selectionRange = map.getSourceRange(tsItem.selectionRange);
+			const selectionRange = getSourceRange(docs, tsItem.selectionRange);
 			if (!selectionRange) {
 				continue;
 			}
 
-			const vueRanges = tsRanges.map(tsRange => map.getSourceRange(tsRange)).filter(range => !!range);
+			const vueRanges = tsRanges.map(tsRange => getSourceRange(docs, tsRange)).filter(range => !!range);
 			const vueItem: vscode.CallHierarchyItem = {
 				...tsItem,
-				name: tsItem.name === map.embeddedDocument.uri.substring(map.embeddedDocument.uri.lastIndexOf('/') + 1)
-					? map.sourceDocument.uri.substring(map.sourceDocument.uri.lastIndexOf('/') + 1)
+				name: tsItem.name === embeddedDocument.uri.substring(embeddedDocument.uri.lastIndexOf('/') + 1)
+					? sourceDocument.uri.substring(sourceDocument.uri.lastIndexOf('/') + 1)
 					: tsItem.name,
-				uri: map.sourceDocument.uri,
+				uri: sourceDocument.uri,
 				// TS Bug: `range: range` not works
 				range: {
 					start: range.start,

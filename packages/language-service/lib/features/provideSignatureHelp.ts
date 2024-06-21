@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { languageFeatureWorker } from '../utils/featureWorkers';
+import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
@@ -21,7 +21,7 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			map => map.getGeneratedPositions(position, isSignatureHelpEnabled),
+			docs => getGeneratedPositions(docs, position, isSignatureHelpEnabled),
 			(plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
