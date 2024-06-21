@@ -110,7 +110,8 @@ describe('sourceMap', () => {
 
 		expect([...map.getGeneratedStartEnd(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
-			`{{data|?.icon?.toString()}}`.indexOf('|')
+			`{{data|?.icon?.toString()}}`.indexOf('|'),
+			false
 		)].map(mapped => mapped.slice(0, 2))).toEqual([
 			[
 				`(null as any ? ((null as any ? ((null as any ? (this.|data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
@@ -122,12 +123,14 @@ describe('sourceMap', () => {
 
 		expect([...map.getGeneratedStartEnd(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
-			`{{data?.ic|on?.toString()}}`.indexOf('|')
+			`{{data?.ic|on?.toString()}}`.indexOf('|'),
+			false
 		)].map(mapped => mapped.slice(0, 2))).toEqual([]);
 
 		expect([...map.getGeneratedStartEnd(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
-			`{{data?.icon|?.toString()}}`.indexOf('|')
+			`{{data?.icon|?.toString()}}`.indexOf('|'),
+			false
 		)].map(mapped => mapped.slice(0, 2))).toEqual([
 			[
 				`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
@@ -139,7 +142,8 @@ describe('sourceMap', () => {
 
 		expect([...map.getGeneratedStartEnd(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
-			`{{data?.icon?.toString|()}}`.indexOf('|')
+			`{{data?.icon?.toString|()}}`.indexOf('|'),
+			false
 		)].map(mapped => mapped.slice(0, 2))).toEqual([
 			[
 				`(null as any ? (|(null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
@@ -151,11 +155,60 @@ describe('sourceMap', () => {
 
 		expect([...map.getGeneratedStartEnd(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
-			`{{data?.icon?.toString()|}}`.indexOf('|')
+			`{{data?.icon?.toString()|}}`.indexOf('|'),
+			false
 		)].map(mapped => mapped.slice(0, 2))).toEqual([
 			[
 				0,
 				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.length,
+			],
+		]);
+	});
+
+	test('Angular template - fallbackToAnyMatch', () => {
+		const map = new SourceMap([
+			{
+				sourceOffsets: [
+					`{{|data?.icon?.toString()}}`.indexOf('|'),
+					// ^
+				],
+				generatedOffsets: [
+					`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					//                               ^
+				],
+				lengths: [0, 0],
+				data: {},
+			},
+			{
+				sourceOffsets: [
+					`{{data?.icon|?.toString()}}`.indexOf('|'),
+					//           ^
+				],
+				generatedOffsets: [
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`.indexOf('|'),
+					//                                                                            ^
+				],
+				lengths: [0, 0],
+				data: {},
+			},
+		]);
+
+		expect([...map.getGeneratedStartEnd(
+			`{{|data?.icon?.toString()}}`.indexOf('|'),
+			`{{data?.icon|?.toString()}}`.indexOf('|'),
+			false
+		)].map(mapped => mapped.slice(0, 2))).toEqual([]);
+
+		expect([...map.getGeneratedStartEnd(
+			`{{|data?.icon?.toString()}}`.indexOf('|'),
+			`{{data?.icon|?.toString()}}`.indexOf('|'),
+			true
+		)].map(mapped => mapped.slice(0, 2))).toEqual([
+			[
+				`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				//                               ^
+				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`.indexOf('|'),
+				//                                                                            ^
 			],
 		]);
 	});

@@ -1,4 +1,4 @@
-import { CodeInformation, CodeRangeKey, LinkedCodeMap, Mapping, SourceMap, VirtualCode, translateOffset } from '@volar/language-core';
+import { CodeInformation, LinkedCodeMap, SourceMap, VirtualCode } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -26,77 +26,36 @@ export class SourceMapWithDocuments {
 	}
 
 	public * getSourceRanges(range: vscode.Range, filter: (data: CodeInformation) => boolean = () => true) {
-		for (const result of this.findRanges(range, filter, this.embeddedDocument, this.sourceDocument, 'getSourceStartEnd', 'getSourcePositions')) {
-			yield result;
+		for (const [mappedStart, mappedEnd] of this.map.getSourceStartEnd(
+			this.embeddedDocument.offsetAt(range.start),
+			this.embeddedDocument.offsetAt(range.end),
+			true,
+			filter
+		)) {
+			yield { start: this.sourceDocument.positionAt(mappedStart), end: this.sourceDocument.positionAt(mappedEnd) };
 		}
 	}
 
 	public * getGeneratedRanges(range: vscode.Range, filter: (data: CodeInformation) => boolean = () => true) {
-		for (const result of this.findRanges(range, filter, this.sourceDocument, this.embeddedDocument, 'getGeneratedStartEnd', 'getGeneratedPositions')) {
-			yield result;
-		}
-	}
-
-	protected * findRanges(
-		range: vscode.Range,
-		filter: (data: CodeInformation) => boolean,
-		fromDoc: TextDocument,
-		toDoc: TextDocument,
-		api: 'getSourceStartEnd' | 'getGeneratedStartEnd',
-		api2: 'getSourcePositions' | 'getGeneratedPositions'
-	) {
-		for (const [mappedStart, mappedEnd, mapping] of this.map[api](fromDoc.offsetAt(range.start), fromDoc.offsetAt(range.end))) {
-			if (!filter(mapping.data)) {
-				continue;
-			}
-			yield { start: toDoc.positionAt(mappedStart), end: toDoc.positionAt(mappedEnd) };
-		}
-		for (const mappedStart of this[api2](range.start, filter)) {
-			for (const mappedEnd of this[api2](range.end, filter)) {
-				yield { start: mappedStart, end: mappedEnd };
-				break;
-			}
+		for (const [mappedStart, mappedEnd] of this.map.getGeneratedStartEnd(
+			this.sourceDocument.offsetAt(range.start),
+			this.sourceDocument.offsetAt(range.end),
+			true,
+			filter
+		)) {
+			yield { start: this.embeddedDocument.positionAt(mappedStart), end: this.embeddedDocument.positionAt(mappedEnd) };
 		}
 	}
 
 	public * getSourcePositions(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
-		for (const mapped of this.findPositions(position, filter, this.embeddedDocument, this.sourceDocument, 'generatedOffsets')) {
-			yield mapped[0];
+		for (const mapped of this.map.getSourceOffsets(this.embeddedDocument.offsetAt(position), filter)) {
+			yield this.sourceDocument.positionAt(mapped[0]);
 		}
 	}
 
 	public * getGeneratedPositions(position: vscode.Position, filter: (data: CodeInformation) => boolean = () => true) {
-		for (const mapped of this.findPositions(position, filter, this.sourceDocument, this.embeddedDocument, 'sourceOffsets')) {
-			yield mapped[0];
-		}
-	}
-
-	protected * findPositions(
-		position: vscode.Position,
-		filter: (data: CodeInformation) => boolean,
-		fromDoc: TextDocument,
-		toDoc: TextDocument,
-		from: CodeRangeKey
-	) {
-		for (const mapped of this.map.findMatchingOffsets(fromDoc.offsetAt(position), from)) {
-			if (!filter(mapped[1].data)) {
-				continue;
-			}
-			yield [toDoc.positionAt(mapped[0]), mapped[1]] as const;
-		}
-	}
-
-	protected matchSourcePosition(position: vscode.Position, mapping: Mapping) {
-		let offset = translateOffset(this.embeddedDocument.offsetAt(position), mapping.generatedOffsets, mapping.sourceOffsets, mapping.generatedLengths ?? mapping.lengths, mapping.lengths);
-		if (offset !== undefined) {
-			return this.sourceDocument.positionAt(offset);
-		}
-	}
-
-	protected matchGeneratedPosition(position: vscode.Position, mapping: Mapping) {
-		let offset = translateOffset(this.sourceDocument.offsetAt(position), mapping.sourceOffsets, mapping.generatedOffsets, mapping.lengths, mapping.generatedLengths ?? mapping.lengths);
-		if (offset !== undefined) {
-			return this.embeddedDocument.positionAt(offset);
+		for (const mapped of this.map.getGeneratedOffsets(this.sourceDocument.offsetAt(position), filter)) {
+			yield this.embeddedDocument.positionAt(mapped[0]);
 		}
 	}
 }

@@ -245,34 +245,24 @@ export function* toSourceRanges(
 ): Generator<[fileName: string, start: number, end: number]> {
 	if (sourceScript) {
 		const map = language.maps.get(serviceScript.code, sourceScript);
-		let mapped = false;
-		for (const [sourceStart, sourceEnd, mapping] of map.getSourceStartEnd(start - getMappingOffset(language, serviceScript), end - getMappingOffset(language, serviceScript))) {
-			if (filter(mapping.data)) {
-				mapped = true;
-				yield [sourceScript.id, sourceStart, sourceEnd];
-			}
-		}
-		if (!mapped) {
-			// fallback
-			for (const sourceStart of toSourceOffsets(sourceScript, language, serviceScript, start, filter)) {
-				for (const sourceEnd of toSourceOffsets(sourceScript, language, serviceScript, end, filter)) {
-					if (
-						sourceStart[0] === sourceEnd[0]
-						&& sourceEnd[1] >= sourceStart[1]
-					) {
-						yield [sourceStart[0], sourceStart[1], sourceEnd[1]];
-						break;
-					}
-				}
-			}
+		for (const [sourceStart, sourceEnd] of map.getSourceStartEnd(
+			start - getMappingOffset(language, serviceScript),
+			end - getMappingOffset(language, serviceScript),
+			true,
+			filter
+		)) {
+			yield [sourceScript.id, sourceStart, sourceEnd];
 		}
 	}
 	else {
 		for (const [fileName, _snapshot, map] of language.maps.forEach(serviceScript.code)) {
-			for (const [sourceStart, sourceEnd, mapping] of map.getSourceStartEnd(start - getMappingOffset(language, serviceScript), end - getMappingOffset(language, serviceScript))) {
-				if (filter(mapping.data)) {
-					yield [fileName, sourceStart, sourceEnd];
-				}
+			for (const [sourceStart, sourceEnd] of map.getSourceStartEnd(
+				start - getMappingOffset(language, serviceScript),
+				end - getMappingOffset(language, serviceScript),
+				true,
+				filter
+			)) {
+				yield [fileName, sourceStart, sourceEnd];
 			}
 		}
 	}
@@ -313,26 +303,11 @@ export function* toGeneratedRanges(
 	filter: (data: CodeInformation) => boolean
 ) {
 	const map = language.maps.get(serviceScript.code, sourceScript);
-	let mapped = false;
-	for (const [generateStart, generateEnd, mapping] of map.getGeneratedStartEnd(start, end)) {
-		if (filter(mapping.data)) {
-			mapped = true;
-			yield [
-				generateStart + getMappingOffset(language, serviceScript),
-				generateEnd + getMappingOffset(language, serviceScript),
-			] as const;
-		}
-	}
-	if (!mapped) {
-		// fallback
-		for (const [generatedStart] of toGeneratedOffsets(language, serviceScript, sourceScript, start, filter)) {
-			for (const [generatedEnd] of toGeneratedOffsets(language, serviceScript, sourceScript, end, filter)) {
-				if (generatedEnd >= generatedStart) {
-					yield [generatedStart, generatedEnd] as const;
-					break;
-				}
-			}
-		}
+	for (const [generateStart, generateEnd] of map.getGeneratedStartEnd(start, end, true, filter)) {
+		yield [
+			generateStart + getMappingOffset(language, serviceScript),
+			generateEnd + getMappingOffset(language, serviceScript),
+		] as const;
 	}
 }
 

@@ -1,7 +1,7 @@
 import { binarySearch } from './binarySearch';
 import { translateOffset } from './translateOffset';
 
-export type CodeRangeKey = 'sourceOffsets' | 'generatedOffsets';
+type CodeRangeKey = 'sourceOffsets' | 'generatedOffsets';
 
 export interface Mapping<Data = unknown> {
 	sourceOffsets: number[];
@@ -11,35 +11,35 @@ export interface Mapping<Data = unknown> {
 	data: Data;
 }
 
-interface MappingMemo {
+interface MappingMemo<Data> {
 	offsets: number[];
-	mappings: Set<Mapping>[];
+	mappings: Set<Mapping<Data>>[];
 }
 
 export class SourceMap<Data = unknown> {
 
-	private sourceCodeOffsetsMemo: MappingMemo | undefined;
-	private generatedCodeOffsetsMemo: MappingMemo | undefined;
+	private sourceCodeOffsetsMemo: MappingMemo<Data> | undefined;
+	private generatedCodeOffsetsMemo: MappingMemo<Data> | undefined;
 
 	constructor(public readonly mappings: Mapping<Data>[]) { }
 
-	getSourceStartEnd(generatedStart: number, generatedEnd: number) {
-		return this.findMatchingStartEnd(generatedStart, generatedEnd, 'generatedOffsets');
+	getSourceStartEnd(generatedStart: number, generatedEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) {
+		return this.findMatchingStartEnd(generatedStart, generatedEnd, fallbackToAnyMatch, 'generatedOffsets', filter);
 	}
 
-	getGeneratedStartEnd(sourceStart: number, sourceEnd: number) {
-		return this.findMatchingStartEnd(sourceStart, sourceEnd, 'sourceOffsets');
+	getGeneratedStartEnd(sourceStart: number, sourceEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) {
+		return this.findMatchingStartEnd(sourceStart, sourceEnd, fallbackToAnyMatch, 'sourceOffsets', filter);
 	}
 
-	getSourceOffsets(generatedOffset: number) {
-		return this.findMatchingOffsets(generatedOffset, 'generatedOffsets');
+	getSourceOffsets(generatedOffset: number, filter?: (data: Data) => boolean) {
+		return this.findMatchingOffsets(generatedOffset, 'generatedOffsets', filter);
 	}
 
-	getGeneratedOffsets(sourceOffset: number) {
-		return this.findMatchingOffsets(sourceOffset, 'sourceOffsets');
+	getGeneratedOffsets(sourceOffset: number, filter?: (data: Data) => boolean) {
+		return this.findMatchingOffsets(sourceOffset, 'sourceOffsets', filter);
 	}
 
-	* findMatchingOffsets(offset: number, fromRange: CodeRangeKey) {
+	* findMatchingOffsets(offset: number, fromRange: CodeRangeKey, filter?: (data: Data) => boolean) {
 		const memo = this.getMemoBasedOnRange(fromRange);
 		if (memo.offsets.length === 0) {
 			return;
@@ -56,6 +56,10 @@ export class SourceMap<Data = unknown> {
 				}
 				skip.add(mapping);
 
+				if (filter && !filter(mapping.data)) {
+					continue;
+				}
+
 				const mapped = translateOffset(offset, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
 				if (mapped !== undefined) {
 					yield [mapped, mapping as Mapping<Data>] as const;
@@ -64,14 +68,38 @@ export class SourceMap<Data = unknown> {
 		}
 	}
 
-	* findMatchingStartEnd(start: number, end: number, fromRange: CodeRangeKey) {
+	* findMatchingStartEnd(
+		start: number,
+		end: number,
+		fallbackToAnyMatch: boolean,
+		fromRange: CodeRangeKey,
+		filter?: (data: Data) => boolean
+	): Generator<[mappedStart: number, mappedEnd: number, startMapping: Mapping<Data>, endMapping: Mapping<Data>]> {
 		const toRange: CodeRangeKey = fromRange == 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
+		const mappedStarts: [number, Mapping<Data>][] = [];
+		let hadMatch = false;
 		for (const [mappedStart, mapping] of this.findMatchingOffsets(start, fromRange)) {
+			if (filter && !filter(mapping.data)) {
+				continue;
+			}
+			mappedStarts.push([mappedStart, mapping]);
 			const mappedEnd = translateOffset(end, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
 			if (mappedEnd !== undefined) {
-				yield [mappedStart, mappedEnd, mapping] as const;
+				hadMatch = true;
+				yield [mappedStart, mappedEnd, mapping, mapping] as const;
 			}
-		};
+		}
+		if (!hadMatch && fallbackToAnyMatch) {
+			for (const [mappedStart, mappingStart] of mappedStarts) {
+				for (const [mappedEnd, mappingEnd] of this.findMatchingOffsets(end, fromRange)) {
+					if (filter && !filter(mappingEnd.data) || mappedEnd < mappedStart) {
+						continue;
+					}
+					yield [mappedStart, mappedEnd, mappingStart, mappingEnd] as const;
+					break;
+				};
+			}
+		}
 	}
 
 	private getMemoBasedOnRange(fromRange: CodeRangeKey) {
@@ -80,7 +108,7 @@ export class SourceMap<Data = unknown> {
 			: this.generatedCodeOffsetsMemo ??= this.createMemo('generatedOffsets');
 	}
 
-	private createMemo(key: CodeRangeKey): MappingMemo {
+	private createMemo(key: CodeRangeKey): MappingMemo<Data> {
 		const offsetsSet = new Set<number>();
 		for (const mapping of this.mappings) {
 			for (let i = 0; i < mapping[key].length; i++) {
