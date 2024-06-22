@@ -155,8 +155,7 @@ export function register(context: LanguageServiceContext) {
 
 		const decoded = context.decodeEmbeddedDocumentUri(uri);
 		if (decoded) {
-			const sourceScript = context.language.scripts.get(decoded[0]);
-			langaugeIdAndSnapshot = sourceScript?.generated?.embeddedCodes.get(decoded[1]);
+			langaugeIdAndSnapshot = context.language.scripts.get(decoded[0])?.generated?.embeddedCodes.get(decoded[1]);
 		}
 		else {
 			langaugeIdAndSnapshot = context.language.scripts.get(uri);

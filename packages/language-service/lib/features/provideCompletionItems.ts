@@ -43,7 +43,10 @@ export function register(context: LanguageServiceContext) {
 			langaugeIdAndSnapshot = sourceScript;
 		}
 		if (!langaugeIdAndSnapshot) {
-			return [];
+			return {
+				isIncomplete: false,
+				items: [],
+			};
 		}
 
 		if (
