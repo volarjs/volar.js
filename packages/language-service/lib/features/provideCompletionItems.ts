@@ -1,4 +1,4 @@
-import { isCompletionEnabled, type CodeInformation } from '@volar/language-core';
+import { isCompletionEnabled, SourceScript, VirtualCode, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -31,8 +31,18 @@ export function register(context: LanguageServiceContext) {
 		completionContext: vscode.CompletionContext = { triggerKind: 1 satisfies typeof vscode.CompletionTriggerKind.Invoked, },
 		token = NoneCancellationToken
 	) => {
-		const sourceScript = context.language.scripts.get(uri);
-		if (!sourceScript) {
+		let langaugeIdAndSnapshot: SourceScript<URI> | VirtualCode | undefined;
+		let sourceScript: SourceScript<URI> | undefined;
+
+		const decoded = context.decodeEmbeddedDocumentUri(uri);
+		if (decoded) {
+			langaugeIdAndSnapshot = context.language.scripts.get(decoded[0])?.generated?.embeddedCodes.get(decoded[1]);
+		}
+		else {
+			sourceScript = context.language.scripts.get(uri);
+			langaugeIdAndSnapshot = sourceScript;
+		}
+		if (!langaugeIdAndSnapshot) {
 			return {
 				isIncomplete: false,
 				items: [],
@@ -111,7 +121,7 @@ export function register(context: LanguageServiceContext) {
 						continue;
 					}
 
-					const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
+					const document = context.documents.get(uri, langaugeIdAndSnapshot.languageId, langaugeIdAndSnapshot.snapshot);
 					cacheData.list = await cacheData.plugin.provideCompletionItems(document, position, completionContext, token);
 
 					if (!cacheData.list) {
@@ -232,7 +242,7 @@ export function register(context: LanguageServiceContext) {
 				isFirstMapping = false;
 			};
 
-			if (sourceScript.generated) {
+			if (sourceScript?.generated) {
 
 				for (const docs of forEachEmbeddedDocument(context, sourceScript, sourceScript.generated.root)) {
 
@@ -248,7 +258,7 @@ export function register(context: LanguageServiceContext) {
 			}
 			else {
 
-				const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
+				const document = context.documents.get(uri, langaugeIdAndSnapshot.languageId, langaugeIdAndSnapshot.snapshot);
 
 				await worker(document, position);
 			}

@@ -2,6 +2,8 @@ import type { CodeMapping } from '@volar/language-core';
 import type { FileStat, FileType, DocumentDropEdit } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver-protocol';
 
+export * from 'vscode-languageserver-protocol';
+
 /**
  * Server request client
  */

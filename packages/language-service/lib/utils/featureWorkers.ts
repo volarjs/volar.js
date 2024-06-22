@@ -42,51 +42,38 @@ export async function languageFeatureWorker<T, K>(
 	transformResult: (result: T, map?: DocumentsAndMap) => T | undefined,
 	combineResult?: (results: T[]) => T
 ) {
-	const sourceScript = context.language.scripts.get(uri);
+	let sourceScript: SourceScript<URI> | undefined;
+	const decoded = context.decodeEmbeddedDocumentUri(uri);
+	if (decoded) {
+		sourceScript = context.language.scripts.get(decoded[0]);
+	}
+	else {
+		sourceScript = context.language.scripts.get(uri);
+	}
 	if (!sourceScript) {
 		return;
 	}
 
 	let results: T[] = [];
 
-	if (sourceScript.generated) {
+	if (decoded) {
+		const virtualCode = sourceScript.generated?.embeddedCodes.get(decoded[1]);
+		if (virtualCode) {
+			const docs: DocumentsAndMap = [
+				context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot),
+				context.documents.get(uri, virtualCode.languageId, virtualCode.snapshot),
+				context.language.maps.get(virtualCode, sourceScript),
+			];
+			await docsWorker(docs, false);
+		}
+	}
+	else if (sourceScript.generated) {
 
 		for (const docs of forEachEmbeddedDocument(context, sourceScript, sourceScript.generated.root)) {
-
 			if (results.length && !combineResult) {
 				continue;
 			}
-
-			for (const mappedArg of eachVirtualDocParams(docs)) {
-
-				if (results.length && !combineResult) {
-					continue;
-				}
-
-				for (const [pluginIndex, plugin] of Object.entries(context.plugins)) {
-					if (context.disabledServicePlugins.has(plugin[1])) {
-						continue;
-					}
-
-					if (results.length && !combineResult) {
-						continue;
-					}
-
-					const rawResult = await safeCall(
-						() => worker(plugin, docs[1], mappedArg, docs),
-						`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${docs[1].uri}.`
-					);
-					if (!rawResult) {
-						continue;
-					}
-					const mappedResult = transformResult(rawResult, docs);
-					if (!mappedResult) {
-						continue;
-					}
-
-					results.push(mappedResult);
-				}
-			}
+			await docsWorker(docs, true);
 		}
 	}
 	else {
@@ -127,6 +114,42 @@ export async function languageFeatureWorker<T, K>(
 	else if (results.length > 0) {
 		return results[0];
 	}
+
+	async function docsWorker(docs: DocumentsAndMap, transform: boolean) {
+		for (const mappedArg of eachVirtualDocParams(docs)) {
+
+			if (results.length && !combineResult) {
+				continue;
+			}
+
+			for (const [pluginIndex, plugin] of Object.entries(context.plugins)) {
+				if (context.disabledServicePlugins.has(plugin[1])) {
+					continue;
+				}
+
+				if (results.length && !combineResult) {
+					continue;
+				}
+
+				const embeddedResult = await safeCall(
+					() => worker(plugin, docs[1], mappedArg, docs),
+					`Language service plugin "${plugin[0].name}" (${pluginIndex}) failed to provide document feature for ${docs[1].uri}.`
+				);
+				if (!embeddedResult) {
+					continue;
+				}
+				if (transform) {
+					const mappedResult = transformResult(embeddedResult, docs);
+					if (mappedResult) {
+						results.push(mappedResult);
+					}
+				}
+				else {
+					results.push(embeddedResult);
+				}
+			}
+		}
+	}
 }
 
 export async function safeCall<T>(cb: () => Thenable<T> | T, errorMsg?: string) {
@@ -151,7 +174,7 @@ export function* forEachEmbeddedDocument(
 	const embeddedDocumentUri = context.encodeEmbeddedDocumentUri(sourceScript.id, current.id);
 	if (!context.disabledEmbeddedDocumentUris.get(embeddedDocumentUri)) {
 		yield [
-			context.documents.get(sourceScript.id, current.languageId, current.snapshot),
+			context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot),
 			context.documents.get(embeddedDocumentUri, current.languageId, current.snapshot),
 			context.language.maps.get(current, sourceScript),
 		];

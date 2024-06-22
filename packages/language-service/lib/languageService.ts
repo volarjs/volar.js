@@ -41,6 +41,8 @@ import { UriMap, createUriMap } from './utils/uriMap';
 
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
+export const embeddedContentScheme = 'volar-embedded-content';
+
 export function createLanguageService(
 	language: Language<URI>,
 	plugins: LanguageServicePlugin[],
@@ -48,7 +50,6 @@ export function createLanguageService(
 ) {
 	const documentVersions = createUriMap<number>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, UriMap<TextDocument>>();
-	const embeddedContentScheme = 'volar-embedded-content';
 	const context: LanguageServiceContext = {
 		language,
 		getLanguageService: () => langaugeService,
@@ -138,29 +139,36 @@ export function createLanguageService(
 		},
 		disabledEmbeddedDocumentUris: createUriMap(),
 		disabledServicePlugins: new WeakSet(),
-		decodeEmbeddedDocumentUri(maybeEmbeddedContentUri: URI) {
-			if (maybeEmbeddedContentUri.scheme === embeddedContentScheme) {
-				const embeddedCodeId = decodeURIComponent(maybeEmbeddedContentUri.authority);
-				const documentUri = decodeURIComponent(maybeEmbeddedContentUri.path.substring(1));
-				return [
-					URI.parse(documentUri),
-					embeddedCodeId,
-				];
-			}
-		},
-		encodeEmbeddedDocumentUri(documentUri: URI, embeddedContentId: string) {
-			return URI.from({
-				scheme: embeddedContentScheme,
-				authority: encodeURIComponent(embeddedContentId),
-				path: '/' + encodeURIComponent(documentUri.toString()),
-			});
-		},
+		decodeEmbeddedDocumentUri,
+		encodeEmbeddedDocumentUri,
 	};
 	for (const plugin of plugins) {
 		context.plugins.push([plugin, plugin.create(context)]);
 	}
 	const langaugeService = createLanguageServiceBase(plugins, context);
 	return langaugeService;
+}
+
+export function decodeEmbeddedDocumentUri(maybeEmbeddedContentUri: URI): [
+	documentUri: URI,
+	embeddedCodeId: string,
+] | undefined {
+	if (maybeEmbeddedContentUri.scheme === embeddedContentScheme) {
+		const embeddedCodeId = decodeURIComponent(maybeEmbeddedContentUri.authority);
+		const documentUri = decodeURIComponent(maybeEmbeddedContentUri.path.substring(1));
+		return [
+			URI.parse(documentUri),
+			embeddedCodeId,
+		];
+	}
+}
+
+export function encodeEmbeddedDocumentUri(documentUri: URI, embeddedContentId: string): URI {
+	return URI.from({
+		scheme: embeddedContentScheme,
+		authority: encodeURIComponent(embeddedContentId),
+		path: '/' + encodeURIComponent(documentUri.toString()),
+	});
 }
 
 function createLanguageServiceBase(
