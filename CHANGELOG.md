@@ -1,5 +1,34 @@
 # Changelog
 
+## [2.3.1](https://github.com/volarjs/volar.js/compare/v2.3.0...v2.3.1) (2024-06-22)
+
+### Features
+
+- **labs:** improving the capabilities of the virtual code editor ([#208](https://github.com/volarjs/volar.js/issues/208))
+
+### Bug Fixes
+
+- **labs:** language client ID should not be case sensitive
+- **language-server:** fix URI conversion for file names with similar embedded code ID
+- **language-server:** write virtual file command broken
+- **vscode:** error tolerant to `contentChanges` length ([vuejs/language-tools#4457](https://github.com/vuejs/language-tools/issues/4457))
+
+### Performance
+
+- **source-map:** use binary search for `translateOffset`
+
+### Refactors
+
+- **source-map:** decoupling from `muggle-string`
+- **source-map:** improve range mapping accuracy ([#204](https://github.com/volarjs/volar.js/issues/204))
+- **source-map:** API refactoring ([Part of #206](https://github.com/volarjs/volar.js/issues/206)) - Thanks @piotrtomiak
+- **language-service:** delete `SourceMapWithDocuments`, `LinkedCodeMapWithDocument`
+- **language-core:** pluginized source map factory function ([#207](https://github.com/volarjs/volar.js/issues/207))
+
+### Other Changes
+
+- **language-service:** fix SourceMapWithDocuments virtualCode typo ([#190](https://github.com/volarjs/volar.js/issues/190)) - Thanks @machty
+
 ## [2.3.0](https://github.com/volarjs/volar.js/compare/v2.2.5...v2.3.0) (2024-06-09)
 
 ### Features
