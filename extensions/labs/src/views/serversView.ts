@@ -284,6 +284,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function isValidVersion(version: string | number) {
-	return version === lsp.currentLabsVersion
-		|| (lsp.currentLabsVersion === 2 && version === '2.0.0-alpha.14'); // TODO: remove this line after v2.1
+	return version === lsp.currentLabsVersion;
 }

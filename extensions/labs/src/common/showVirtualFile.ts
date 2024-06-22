@@ -108,7 +108,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 				}[] = [];
 
 				for (const [sourceUri, _, map] of maps) {
-					for (const source of map.getSourceOffsets(document.offsetAt(position))) {
+					for (const source of map.toSourceLocation(document.offsetAt(position))) {
 						data.push({
 							uri: sourceUri,
 							mapping: source,
@@ -264,8 +264,8 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 
 							if (vscode.window.activeTextEditor === sourceEditor) {
 
-								const mappedStarts = [...map.getGeneratedOffsets(startOffset)];
-								const mappedEnds = [...map.getGeneratedOffsets(endOffset)];
+								const mappedStarts = [...map.toGeneratedLocation(startOffset)];
+								const mappedEnds = [...map.toGeneratedLocation(endOffset)];
 
 								sourceEditor.setDecorations(
 									mappingSelectionDecorationType,
@@ -298,8 +298,8 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 							}
 							else if (vscode.window.activeTextEditor === virtualEditor) {
 
-								const mappedStarts = [...map.getSourceOffsets(startOffset)];
-								const mappedEnds = [...map.getSourceOffsets(endOffset)];
+								const mappedStarts = [...map.toSourceLocation(startOffset)];
+								const mappedEnds = [...map.toSourceLocation(endOffset)];
 
 								const sourceRanges2 = mappedStarts
 									.map(([_, mapping]) => mapping.sourceOffsets.map((offset, i) => new vscode.Range(
