@@ -108,7 +108,7 @@ describe('sourceMap', () => {
 			},
 		]);
 
-		expect([...map.getGeneratedStartEnd(
+		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data|?.icon?.toString()}}`.indexOf('|'),
 			false
@@ -121,13 +121,13 @@ describe('sourceMap', () => {
 			],
 		]);
 
-		expect([...map.getGeneratedStartEnd(
+		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.ic|on?.toString()}}`.indexOf('|'),
 			false
 		)].map(mapped => mapped.slice(0, 2))).toEqual([]);
 
-		expect([...map.getGeneratedStartEnd(
+		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon|?.toString()}}`.indexOf('|'),
 			false
@@ -140,7 +140,7 @@ describe('sourceMap', () => {
 			],
 		]);
 
-		expect([...map.getGeneratedStartEnd(
+		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon?.toString|()}}`.indexOf('|'),
 			false
@@ -153,7 +153,7 @@ describe('sourceMap', () => {
 			],
 		]);
 
-		expect([...map.getGeneratedStartEnd(
+		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon?.toString()|}}`.indexOf('|'),
 			false
@@ -193,13 +193,13 @@ describe('sourceMap', () => {
 			},
 		]);
 
-		expect([...map.getGeneratedStartEnd(
+		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon|?.toString()}}`.indexOf('|'),
 			false
 		)].map(mapped => mapped.slice(0, 2))).toEqual([]);
 
-		expect([...map.getGeneratedStartEnd(
+		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon|?.toString()}}`.indexOf('|'),
 			true

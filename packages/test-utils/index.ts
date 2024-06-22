@@ -1,10 +1,10 @@
+import { defaultMapperFactory, forEachEmbeddedCode } from '@volar/language-core';
 import * as _ from '@volar/language-server/node';
 import * as assert from 'assert';
 import * as cp from 'child_process';
 import * as fs from 'fs';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { SourceMap, forEachEmbeddedCode } from '@volar/language-core';
 
 export type LanguageServerHandle = ReturnType<typeof startLanguageServer>;
 
@@ -449,7 +449,7 @@ export function* printSnapshot(
 
 	let lineOffset = 0;
 
-	const map = new SourceMap(file.mappings);
+	const map = defaultMapperFactory(file.mappings);
 
 	for (let i = 0; i < virtualCodeLines.length; i++) {
 		const line = virtualCodeLines[i];
@@ -464,7 +464,7 @@ export function* printSnapshot(
 			length: number;
 		}[] = [];
 		for (let offset = 0; offset < line.length; offset++) {
-			for (const [sourceOffset, mapping] of map.getSourceOffsets(lineOffset + offset)) {
+			for (const [sourceOffset, mapping] of map.toSourceLocation(lineOffset + offset)) {
 				let log = logs.find(log => log.mapping === mapping && log.lineOffset + log.length + 1 === offset);
 				if (log) {
 					log.length++;

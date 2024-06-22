@@ -1,4 +1,4 @@
-export * from '@volar/source-map';
+export { Mapping } from '@volar/source-map';
 export * from './lib/editorFeatures';
 export * from './lib/linkedCodeMap';
 export * from './lib/types';
@@ -8,24 +8,27 @@ import { SourceMap } from '@volar/source-map';
 import type * as ts from 'typescript';
 import { LinkedCodeMap } from './lib/linkedCodeMap';
 import type {
-	CodeInformation,
 	CodegenContext,
 	Language,
 	LanguagePlugin,
+	Mapper,
+	MapperFactory,
 	SourceScript,
-	VirtualCode,
+	VirtualCode
 } from './lib/types';
+
+export const defaultMapperFactory: MapperFactory = mappings => new SourceMap(mappings);
 
 export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],
 	scriptRegistry: Map<T, SourceScript<T>>,
 	sync: (id: T) => void
-): Language<T> {
+) {
 	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode, SourceScript<T>>();
-	const virtualCodeToSourceMap = new WeakMap<ts.IScriptSnapshot, WeakMap<ts.IScriptSnapshot, SourceMap<CodeInformation>>>();
+	const virtualCodeToSourceMap = new WeakMap<ts.IScriptSnapshot, WeakMap<ts.IScriptSnapshot, Mapper>>();
 	const virtualCodeToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, [ts.IScriptSnapshot, LinkedCodeMap | undefined]>();
-
-	return {
+	const language: Language<T> = {
+		mapperFactory: defaultMapperFactory,
 		plugins,
 		scripts: {
 			fromVirtualCode(virtualCode) {
@@ -154,7 +157,7 @@ export function createLanguage<T>(
 					const mappings = virtualCode.associatedScriptMappings?.get(sourceScript.id) ?? virtualCode.mappings;
 					mapCache.set(
 						sourceScript.snapshot,
-						new SourceMap(mappings)
+						language.mapperFactory(mappings)
 					);
 				}
 				return mapCache.get(sourceScript.snapshot)!;
@@ -197,6 +200,8 @@ export function createLanguage<T>(
 			},
 		},
 	};
+
+	return language;
 
 	function triggerTargetsDirty(sourceScript: SourceScript<T>) {
 		sourceScript.targetIds.forEach(id => {

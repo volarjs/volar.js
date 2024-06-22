@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { findOverlapCodeRange } from '../lib/utils/common';
-import { CodeInformation, Mapping, SourceMap } from '@volar/language-core';
+import { CodeInformation, Mapping, defaultMapperFactory } from '@volar/language-core';
 
 // test code: <html><body><p>Hello</p></body></html>
 
@@ -15,7 +15,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 				data: {},
 			},
 		];
-		const map = new SourceMap(mappings);
+		const map = defaultMapperFactory(mappings);
 
 		expect(findOverlapCodeRange(0, 38, map, () => true)).toEqual({ start: 0, end: 38 });
 		expect(findOverlapCodeRange(6, 31, map, () => true)).toEqual({ start: 6, end: 31 });
@@ -30,7 +30,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 				data: {},
 			},
 		];
-		const map = new SourceMap(mappings);
+		const map = defaultMapperFactory(mappings);
 
 		expect(findOverlapCodeRange(5, 32, map, () => true)).toEqual({ start: 6, end: 31 });
 		expect(findOverlapCodeRange(7, 32, map, () => true)).toEqual({ start: 7, end: 31 });
@@ -46,7 +46,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 				data: {},
 			},
 		];
-		const map = new SourceMap(mappings);
+		const map = defaultMapperFactory(mappings);
 
 		expect(findOverlapCodeRange(5, 32, map, () => true)).toEqual({ start: 7, end: 32 });
 		expect(findOverlapCodeRange(7, 32, map, () => true)).toEqual({ start: 8, end: 32 });
@@ -63,7 +63,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 				data: {},
 			},
 		];
-		const map = new SourceMap(mappings);
+		const map = defaultMapperFactory(mappings);
 
 		expect(findOverlapCodeRange(5, 32, map, () => true)).toEqual({ start: 7, end: 30 });
 		expect(findOverlapCodeRange(7, 32, map, () => true)).toEqual({ start: 8, end: 30 });
@@ -87,7 +87,7 @@ describe(`Test findOverlapCodeRange()`, () => {
 				data: {},
 			},
 		];
-		const map = new SourceMap(mappings);
+		const map = defaultMapperFactory(mappings);
 
 		expect(findOverlapCodeRange(0, 38, map, () => true)).toEqual({ start: 6, end: 33 });
 	});
