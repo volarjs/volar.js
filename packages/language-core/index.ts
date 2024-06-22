@@ -1,4 +1,4 @@
-export { Mapping } from '@volar/source-map';
+export { Mapping, SourceMap } from '@volar/source-map';
 export * from './lib/editorFeatures';
 export * from './lib/linkedCodeMap';
 export * from './lib/types';
