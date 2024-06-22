@@ -1,4 +1,4 @@
-import { isDiagnosticsEnabled, shouldReportDiagnostics, type CodeInformation } from '@volar/language-core';
+import { isDiagnosticsEnabled, shouldReportDiagnostics, SourceScript, VirtualCode, type CodeInformation } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
@@ -151,12 +151,21 @@ export function register(context: LanguageServiceContext) {
 		token = NoneCancellationToken,
 		response?: (result: vscode.Diagnostic[]) => void
 	) => {
-		const sourceScript = context.language.scripts.get(uri);
-		if (!sourceScript) {
+		let langaugeIdAndSnapshot: SourceScript<URI> | VirtualCode | undefined;
+
+		const decoded = context.decodeEmbeddedDocumentUri(uri);
+		if (decoded) {
+			const sourceScript = context.language.scripts.get(decoded[0]);
+			langaugeIdAndSnapshot = sourceScript?.generated?.embeddedCodes.get(decoded[1]);
+		}
+		else {
+			langaugeIdAndSnapshot = context.language.scripts.get(uri);
+		}
+		if (!langaugeIdAndSnapshot) {
 			return [];
 		}
 
-		const document = context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
+		const document = context.documents.get(uri, langaugeIdAndSnapshot.languageId, langaugeIdAndSnapshot.snapshot);
 		const lastResponse = lastResponses.get(uri) ?? lastResponses.set(uri, {
 			semantic: { errors: [] },
 			syntactic: { errors: [] },
@@ -170,9 +179,9 @@ export function register(context: LanguageServiceContext) {
 
 			const oldSnapshot = cache.snapshot;
 			const oldDocument = cache.document;
-			const change = oldSnapshot ? sourceScript.snapshot.getChangeRange(oldSnapshot) : undefined;
+			const change = oldSnapshot ? langaugeIdAndSnapshot.snapshot.getChangeRange(oldSnapshot) : undefined;
 
-			cache.snapshot = sourceScript.snapshot;
+			cache.snapshot = langaugeIdAndSnapshot.snapshot;
 			cache.document = document;
 
 			if (!updateCacheRangeFailed && oldDocument && change) {
@@ -196,11 +205,11 @@ export function register(context: LanguageServiceContext) {
 		await doResponse();
 		await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
 
-		return await collectErrors();
+		return collectErrors();
 
-		async function doResponse() {
+		function doResponse() {
 			if (errorsUpdated && !updateCacheRangeFailed) {
-				response?.(await collectErrors());
+				response?.(collectErrors());
 				errorsUpdated = false;
 			}
 		}
@@ -219,15 +228,12 @@ export function register(context: LanguageServiceContext) {
 				uri,
 				docs => docs[2].mappings.some(mapping => isDiagnosticsEnabled(mapping.data)),
 				async (plugin, document) => {
-
-					if (token) {
-						if (Date.now() - lastCheckCancelAt >= 5) {
-							await sleep(5); // waiting LSP event polling
-							lastCheckCancelAt = Date.now();
-						}
-						if (token.isCancellationRequested) {
-							return;
-						}
+					if (Date.now() - lastCheckCancelAt >= 10) {
+						await sleep(10); // waiting LSP event polling
+						lastCheckCancelAt = Date.now();
+					}
+					if (token.isCancellationRequested) {
+						return;
 					}
 
 					const pluginIndex = context.plugins.indexOf(plugin);
@@ -271,7 +277,7 @@ export function register(context: LanguageServiceContext) {
 			);
 			if (result) {
 				cache.errors = result;
-				cache.snapshot = sourceScript?.snapshot;
+				cache.snapshot = langaugeIdAndSnapshot?.snapshot;
 			}
 		}
 	};

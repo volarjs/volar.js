@@ -1,4 +1,4 @@
-import * as embedded from '@volar/language-service';
+import { decodeEmbeddedDocumentUri, LanguageService, mergeWorkspaceEdits } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { AutoInsertRequest, FindFileReferenceRequest } from '../../protocol';
@@ -6,12 +6,12 @@ import type { LanguageServer } from '../types';
 
 export function registerLanguageFeatures(server: LanguageServer) {
 	let lastCompleteUri: string;
-	let lastCompleteLs: embedded.LanguageService | undefined;
-	let lastCodeLensLs: embedded.LanguageService | undefined;
-	let lastCodeActionLs: embedded.LanguageService | undefined;
-	let lastCallHierarchyLs: embedded.LanguageService | undefined;
-	let lastDocumentLinkLs: embedded.LanguageService | undefined;
-	let lastInlayHintLs: embedded.LanguageService | undefined;
+	let lastCompleteLs: LanguageService | undefined;
+	let lastCodeLensLs: LanguageService | undefined;
+	let lastCodeActionLs: LanguageService | undefined;
+	let lastCallHierarchyLs: LanguageService | undefined;
+	let lastDocumentLinkLs: LanguageService | undefined;
+	let lastInlayHintLs: LanguageService | undefined;
 
 	server.connection.onDocumentFormatting(async (params, token) => {
 		const uri = URI.parse(params.textDocument.uri);
@@ -271,7 +271,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 		};
 	});
 	server.connection.languages.diagnostics.onWorkspace(async (_params, token) => {
-		const items: embedded.WorkspaceDocumentDiagnosticReport[] = [];
+		const items: vscode.WorkspaceDocumentDiagnosticReport[] = [];
 		for (const languageService of await server.project.getExistingLanguageServices()) {
 			if (token.isCancellationRequested) {
 				break;
@@ -301,7 +301,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 		}));
 		const edits = _edits.filter((edit): edit is NonNullable<typeof edit> => !!edit);
 		if (edits.length) {
-			embedded.mergeWorkspaceEdits(edits[0], ...edits.slice(1));
+			mergeWorkspaceEdits(edits[0], ...edits.slice(1));
 			return edits[0];
 		}
 		return null;
@@ -313,7 +313,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 		});
 	});
 
-	function worker<T>(uri: URI, token: embedded.CancellationToken, cb: (languageService: embedded.LanguageService) => T) {
+	function worker<T>(uri: URI, token: vscode.CancellationToken, cb: (languageService: LanguageService) => T) {
 		return new Promise<T | undefined>(resolve => {
 			const timeout = setTimeout(async () => {
 				clearTimeout(timeout);
@@ -321,7 +321,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 					resolve(undefined);
 					return;
 				}
-				const languageService = (await server.project.getLanguageService(uri));
+				const languageService = (await server.project.getLanguageService(decodeEmbeddedDocumentUri(uri)?.[0] ?? uri));
 				const result = await cb(languageService);
 				if (token.isCancellationRequested) {
 					resolve(undefined);

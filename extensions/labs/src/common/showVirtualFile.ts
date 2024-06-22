@@ -1,6 +1,6 @@
-import type { CodeInformation } from '@volar/language-server';
+import type { CodeInformation, HoverParams, SelectionRangeParams } from '@volar/language-server';
 import { SourceMap } from '@volar/source-map';
-import { LabsInfo, TextDocument } from '@volar/vscode';
+import { DocumentDiagnosticParams, LabsInfo, TextDocument } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { VOLAR_VIRTUAL_CODE_SCHEME } from '../views/virtualFilesView';
 
@@ -30,6 +30,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 	const docChangeEvent = new vscode.EventEmitter<vscode.Uri>();
 	const virtualUriToSourceMap = new Map<string, [string, number, SourceMap<CodeInformation>][]>();
 	const virtualDocuments = new Map<string, TextDocument>();
+	const diagnosticCollection = vscode.languages.createDiagnosticCollection('volar-labs');
 
 	let updateVirtualDocument: ReturnType<typeof setTimeout> | undefined;
 	let updateDecorationsTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -48,6 +49,50 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 					});
 				}, 100);
 			}
+		}),
+		vscode.languages.registerHoverProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME }, {
+			async provideHover(document, position) {
+				const clientId = document.uri.authority;
+				const info = extensions.find(extension => extension.exports.volarLabs.languageClients.some(client =>
+					// @ts-expect-error
+					client._id.toLowerCase() === clientId.toLowerCase()
+				))?.exports;
+				if (info) {
+					for (const client of info.volarLabs.languageClients) {
+						const result = await client.sendRequest(info.volarLabs.languageServerProtocol.HoverRequest.type, {
+							textDocument: {
+								uri: client.code2ProtocolConverter.asUri(getEmbeddedDocumentUri(document.uri)),
+							},
+							position: client.code2ProtocolConverter.asPosition(position),
+						} satisfies HoverParams);
+						if (result) {
+							return client.protocol2CodeConverter.asHover(result);
+						}
+					}
+				}
+			},
+		}),
+		vscode.languages.registerSelectionRangeProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME }, {
+			async provideSelectionRanges(document, positions) {
+				const clientId = document.uri.authority;
+				const info = extensions.find(extension => extension.exports.volarLabs.languageClients.some(client =>
+					// @ts-expect-error
+					client._id.toLowerCase() === clientId.toLowerCase()
+				))?.exports;
+				if (info) {
+					for (const client of info.volarLabs.languageClients) {
+						const result = await client.sendRequest(info.volarLabs.languageServerProtocol.SelectionRangeRequest.type, {
+							textDocument: {
+								uri: client.code2ProtocolConverter.asUri(getEmbeddedDocumentUri(document.uri)),
+							},
+							positions: await client.code2ProtocolConverter.asPositions(positions),
+						} satisfies SelectionRangeParams);
+						if (result) {
+							return client.protocol2CodeConverter.asSelectionRanges(result);
+						}
+					}
+				}
+			},
 		}),
 		vscode.languages.registerHoverProvider({ scheme: VOLAR_VIRTUAL_CODE_SCHEME }, {
 			provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken) {
@@ -134,7 +179,10 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 					virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualCode.content));
 
 					clearTimeout(updateDecorationsTimeout);
-					updateDecorationsTimeout = setTimeout(updateDecorations, 100);
+					updateDecorationsTimeout = setTimeout(() => {
+						updateDecorations();
+						updateDiagnostic(uri, info);
+					}, 100);
 
 					return virtualCode.content;
 				}
@@ -143,6 +191,29 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 	);
 
 	return vscode.Disposable.from(...subscriptions);
+
+	async function updateDiagnostic(uri: vscode.Uri, info: LabsInfo) {
+		const embeddedUri = getEmbeddedDocumentUri(uri);
+		for (const client of info.volarLabs.languageClients) {
+			const diagnostics = await client.sendRequest(info.volarLabs.languageServerProtocol.DocumentDiagnosticRequest.type, {
+				textDocument: {
+					uri: client.code2ProtocolConverter.asUri(embeddedUri),
+				},
+			} satisfies DocumentDiagnosticParams);
+			if (diagnostics.kind === 'full') {
+				diagnosticCollection.set(uri, await client.protocol2CodeConverter.asDiagnostics(diagnostics.items));
+			}
+		}
+	}
+
+	function getEmbeddedDocumentUri(uri: vscode.Uri) {
+		const sourceDocumentUri = virtualDocUriToSourceDocUri.get(uri.toString())!;
+		return vscode.Uri.from({
+			scheme: 'volar-embedded-content',
+			authority: encodeURIComponent(sourceDocumentUri.virtualCodeId),
+			path: '/' + encodeURIComponent(sourceDocumentUri.fileUri),
+		});
+	}
 
 	function updateDecorations() {
 		for (const [_, sources] of virtualUriToSourceMap) {
