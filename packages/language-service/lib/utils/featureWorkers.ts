@@ -181,32 +181,6 @@ export function* forEachEmbeddedDocument(
 	}
 }
 
-export function getEmbeddedFilesByLevel(context: LanguageServiceContext, sourceFileUri: URI, rootFile: VirtualCode, level: number) {
-
-	const embeddedFilesByLevel: VirtualCode[][] = [[rootFile]];
-
-	while (true) {
-
-		if (embeddedFilesByLevel.length > level) {
-			return embeddedFilesByLevel[level];
-		}
-
-		const nextLevel: VirtualCode[] = [];
-
-		for (const file of embeddedFilesByLevel[embeddedFilesByLevel.length - 1]) {
-			if (file.embeddedCodes) {
-				for (const embedded of file.embeddedCodes) {
-					if (!context.disabledEmbeddedDocumentUris.get(context.encodeEmbeddedDocumentUri(sourceFileUri, embedded.id))) {
-						nextLevel.push(embedded);
-					}
-				}
-			}
-		}
-
-		embeddedFilesByLevel.push(nextLevel);
-	}
-}
-
 export function getSourceRange(docs: DocumentsAndMap, range: vscode.Range, filter?: (data: CodeInformation) => boolean) {
 	for (const result of getSourceRanges(docs, range, filter)) {
 		return result;

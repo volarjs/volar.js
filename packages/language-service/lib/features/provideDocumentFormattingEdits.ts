@@ -1,16 +1,13 @@
 import { SourceScript, VirtualCode, forEachEmbeddedCode, isFormattingEnabled } from '@volar/language-core';
-import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import type { EmbeddedCodeFormattingOptions, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange, stringToSnapshot } from '../utils/common';
-import { DocumentsAndMap, getEmbeddedFilesByLevel as getEmbeddedCodesByLevel, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
+import { DocumentsAndMap, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
-	let fakeVersion = 0;
 
 	return async (
 		uri: URI,
@@ -40,7 +37,7 @@ export function register(context: LanguageServiceContext) {
 				: (await tryFormat(document, document, sourceScript, undefined, 0, range, undefined))?.edits;
 		}
 
-		const embeddedRanges = new Map<string, { start: number, end: number; }>();
+		const embeddedRanges = new Map<string, { start: number, end: number; }>(); // TODO: Formatting of upper-level virtual code may cause offset of lower-level selection range
 		const startOffset = document.offsetAt(range.start);
 		const endOffset = document.offsetAt(range.end);
 
@@ -70,65 +67,79 @@ export function register(context: LanguageServiceContext) {
 				return;
 			}
 
-			let level = 0;
+			let currentCodes: VirtualCode[] = [];
 
-			while (true) {
-
-				const embeddedCodes = getEmbeddedCodesByLevel(context, sourceScript.id, tempVirtualFile, level++);
-				if (embeddedCodes.length === 0) {
-					break;
-				}
+			for (let depth = 0; (currentCodes = getNestedEmbeddedFiles(context, sourceScript.id, tempVirtualFile, depth)).length > 0; depth++) {
 
 				let edits: vscode.TextEdit[] = [];
 
-				for (const code of embeddedCodes) {
+				for (const code of currentCodes) {
 
 					if (!code.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
 						continue;
 					}
 
-					const docs = createDocMap(code, uri, sourceScript.languageId, tempSourceSnapshot);
-					if (!docs) {
+					const currentRange = embeddedRanges.get(code.id);
+					if (!currentRange) {
 						continue;
 					}
 
-					let embeddedCodeResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
-					let embeddedRange = embeddedRanges.get(code.id);
+					const isChildRange = [...forEachEmbeddedCode(code)].some(child => {
+						if (child === code) {
+							return false;
+						}
+						const childRange = embeddedRanges.get(child.id);
+						return childRange && childRange.end - childRange.start >= currentRange.end - currentRange.start;
+					});
+					if (isChildRange) {
+						continue;
+					}
+
+					const docs: DocumentsAndMap = [
+						context.documents.get(uri, sourceScript.languageId, tempSourceSnapshot),
+						context.documents.get(
+							context.encodeEmbeddedDocumentUri(uri, code.id),
+							code.languageId,
+							code.snapshot
+						),
+						context.language.mapperFactory(code.mappings),
+					];
+
+					let embeddedResult: Awaited<ReturnType<typeof tryFormat>> | undefined;
 
 					if (onTypeParams) {
-
 						for (const embeddedPosition of getGeneratedPositions(docs, onTypeParams.position)) {
-							embeddedCodeResult = await tryFormat(
+							embeddedResult = await tryFormat(
 								docs[0],
 								docs[1],
 								sourceScript,
 								code,
-								level,
+								depth,
 								embeddedPosition,
 								onTypeParams.ch
 							);
 							break;
 						}
 					}
-					else if (embeddedRange) {
-						embeddedCodeResult = await tryFormat(
+					else if (currentRange) {
+						embeddedResult = await tryFormat(
 							docs[0],
 							docs[1],
 							sourceScript,
 							code,
-							level,
+							depth,
 							{
-								start: docs[1].positionAt(embeddedRange.start),
-								end: docs[1].positionAt(embeddedRange.end),
+								start: docs[1].positionAt(currentRange.start),
+								end: docs[1].positionAt(currentRange.end),
 							}
 						);
 					}
 
-					if (!embeddedCodeResult) {
+					if (!embeddedResult) {
 						continue;
 					}
 
-					for (const textEdit of embeddedCodeResult.edits) {
+					for (const textEdit of embeddedResult.edits) {
 						const range = getSourceRange(docs, textEdit.range);
 						if (range) {
 							edits.push({
@@ -248,24 +259,25 @@ export function register(context: LanguageServiceContext) {
 			}
 		}
 	};
+}
 
-	function createDocMap(virtualCode: VirtualCode, documentUri: URI, sourceLanguageId: string, _sourceSnapshot: ts.IScriptSnapshot): DocumentsAndMap {
-		const version = fakeVersion++;
-		return [
-			TextDocument.create(
-				documentUri.toString(),
-				sourceLanguageId,
-				version,
-				_sourceSnapshot.getText(0, _sourceSnapshot.getLength())
-			),
-			TextDocument.create(
-				context.encodeEmbeddedDocumentUri(documentUri, virtualCode.id).toString(),
-				virtualCode.languageId,
-				version,
-				virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength())
-			),
-			context.language.mapperFactory(virtualCode.mappings),
-		];
+function getNestedEmbeddedFiles(context: LanguageServiceContext, uri: URI, rootCode: VirtualCode, depth: number) {
+	const nestedCodesByLevel: VirtualCode[][] = [[rootCode]];
+	while (true) {
+		if (nestedCodesByLevel.length > depth) {
+			return nestedCodesByLevel[depth];
+		}
+		const nestedCodes: VirtualCode[] = [];
+		for (const code of nestedCodesByLevel[nestedCodesByLevel.length - 1]) {
+			if (code.embeddedCodes) {
+				for (const embedded of code.embeddedCodes) {
+					if (!context.disabledEmbeddedDocumentUris.get(context.encodeEmbeddedDocumentUri(uri, embedded.id))) {
+						nestedCodes.push(embedded);
+					}
+				}
+			}
+		}
+		nestedCodesByLevel.push(nestedCodes);
 	}
 }
 
