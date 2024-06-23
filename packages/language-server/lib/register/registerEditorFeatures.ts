@@ -102,9 +102,9 @@ export function registerEditorFeatures(server: LanguageServer) {
 		}
 	});
 	server.connection.onNotification(WriteVirtualFilesNotification.type, async params => {
-
-		const fsModeName = 'fs'; // avoid bundle
-		const fs: typeof import('fs') = await import(fsModeName);
+		// webpack compatibility
+		const _require: NodeRequire = eval('require');
+		const fs = _require('fs');
 		const uri = URI.parse(params.uri);
 		const languageService = (await server.project.getLanguageService(uri));
 
