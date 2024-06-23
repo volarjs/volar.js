@@ -400,14 +400,14 @@ export function createServerBase(
 		}
 	}
 
-	function activateServerPushDiagnostics(projects: LanguageServerProject) {
+	function activateServerPushDiagnostics(project: LanguageServerProject) {
 		documents.onDidChangeContent(({ document }) => {
-			pushAllDiagnostics(projects, document.uri);
+			pushAllDiagnostics(project, document.uri);
 		});
 		documents.onDidClose(({ document }) => {
 			connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 		});
-		onDidChangeConfiguration(() => refresh(projects));
+		onDidChangeConfiguration(() => refresh(project));
 	}
 
 	function clearPushDiagnostics() {
@@ -418,12 +418,12 @@ export function createServerBase(
 		}
 	}
 
-	async function refresh(projects: LanguageServerProject) {
+	async function refresh(project: LanguageServerProject) {
 
 		const req = ++semanticTokensReq;
 
 		if (!status.pullModelDiagnostics) {
-			await pushAllDiagnostics(projects);
+			await pushAllDiagnostics(project);
 		}
 
 		const delay = 250;
@@ -442,7 +442,7 @@ export function createServerBase(
 		}
 	}
 
-	async function pushAllDiagnostics(projects: LanguageServerProject, docUri?: string) {
+	async function pushAllDiagnostics(project: LanguageServerProject, docUri?: string) {
 		const req = ++documentUpdatedReq;
 		const delay = 250;
 		const token: vscode.CancellationToken = {
@@ -459,7 +459,7 @@ export function createServerBase(
 			if (token.isCancellationRequested) {
 				return;
 			}
-			await pushDiagnostics(projects, changeDoc.uri, changeDoc.version, token);
+			await pushDiagnostics(project, changeDoc.uri, changeDoc.version, token);
 		}
 
 		for (const doc of otherDocs) {
@@ -467,13 +467,13 @@ export function createServerBase(
 			if (token.isCancellationRequested) {
 				break;
 			}
-			await pushDiagnostics(projects, doc.uri, doc.version, token);
+			await pushDiagnostics(project, doc.uri, doc.version, token);
 		}
 	}
 
-	async function pushDiagnostics(projects: LanguageServerProject, uriStr: string, version: number, cancel: vscode.CancellationToken) {
+	async function pushDiagnostics(project: LanguageServerProject, uriStr: string, version: number, cancel: vscode.CancellationToken) {
 		const uri = URI.parse(uriStr);
-		const languageService = (await projects.getLanguageService(uri));
+		const languageService = await project.getLanguageService(uri);
 		const errors = await languageService.getDiagnostics(uri, cancel, result => {
 			connection.sendDiagnostics({ uri: uriStr, diagnostics: result, version });
 		});

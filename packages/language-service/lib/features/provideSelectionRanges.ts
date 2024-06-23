@@ -27,13 +27,19 @@ export function register(context: LanguageServiceContext) {
 					yield result;
 				}
 			},
-			(plugin, document, positions) => {
+			async (plugin, document, positions) => {
 
 				if (token.isCancellationRequested) {
 					return;
 				}
 
-				return plugin[1].provideSelectionRanges?.(document, positions, token);
+				const selectionRanges = await plugin[1].provideSelectionRanges?.(document, positions, token);
+				if (selectionRanges && selectionRanges.length !== positions.length) {
+					console.error('Selection ranges count should be equal to positions count:', plugin[0].name, selectionRanges.length, positions.length);
+					return;
+				}
+
+				return selectionRanges;
 			},
 			(data, docs) => {
 				if (!docs) {
