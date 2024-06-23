@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.3.2](https://github.com/volarjs/volar.js/compare/v2.3.1...v2.3.2) (2024-06-24)
+
+### Bug Fixes
+
+- **language-core:** re-export `SourceMap` ([#210](https://github.com/volarjs/volar.js/issues/210)) - Thanks @KermanX
+- **language-service:** make sure provideSelectionRanges array length is valid
+- **language-service:** don't format parent virtual code if formatting range inside embedded code
+- **language-core:** assert virtual code ID must be lowercase
+- **language-server:** fix Webpack compatibility
+
 ## [2.3.1](https://github.com/volarjs/volar.js/compare/v2.3.0...v2.3.1) (2024-06-22)
 
 ### Features
