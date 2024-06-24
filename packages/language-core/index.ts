@@ -82,7 +82,6 @@ export function createLanguage<T>(
 								? updateVirtualCode(id, sourceScript.generated.root, snapshot, codegenCtx)
 								: createVirtualCode?.(id, languageId, snapshot, codegenCtx);
 							if (newVirtualCode) {
-								verifyVirtualCode(newVirtualCode);
 								sourceScript.generated.root = newVirtualCode;
 								sourceScript.generated.embeddedCodes.clear();
 								for (const code of forEachEmbeddedCode(sourceScript.generated.root)) {
@@ -120,7 +119,6 @@ export function createLanguage<T>(
 					for (const languagePlugin of _plugins) {
 						const virtualCode = languagePlugin.createVirtualCode?.(id, languageId, snapshot, prepareCreateVirtualCode(sourceScript));
 						if (virtualCode) {
-							verifyVirtualCode(virtualCode);
 							sourceScript.generated = {
 								root: virtualCode,
 								languagePlugin,
@@ -231,14 +229,6 @@ export function createLanguage<T>(
 				return relatedSourceScript;
 			},
 		};
-	}
-}
-
-function verifyVirtualCode(virtualCode: VirtualCode) {
-	for (const code of forEachEmbeddedCode(virtualCode)) {
-		if (code.id !== code.id.toLowerCase()) {
-			throw new Error(`VirtualCode id must be lowercase: ${code.id}`);
-		}
 	}
 }
 

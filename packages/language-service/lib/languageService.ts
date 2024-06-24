@@ -164,6 +164,9 @@ export function decodeEmbeddedDocumentUri(maybeEmbeddedContentUri: URI): [
 }
 
 export function encodeEmbeddedDocumentUri(documentUri: URI, embeddedContentId: string): URI {
+	if (embeddedContentId !== embeddedContentId.toLowerCase()) {
+		console.error(`embeddedContentId must be lowercase: ${embeddedContentId}`);
+	}
 	return URI.from({
 		scheme: embeddedContentScheme,
 		authority: encodeURIComponent(embeddedContentId),
