@@ -48,14 +48,13 @@ export async function createTypeScriptLS(
 	let parsedCommandLine: ts.ParsedCommandLine;
 	let projectVersion = 0;
 
-	const sys = createSys(ts.sys, serviceEnv, workspaceFolder, {
+	const getCurrentDirectory = () => asFileName(workspaceFolder);
+	const sys = createSys(ts.sys, serviceEnv, getCurrentDirectory, {
 		asFileName,
 		asUri,
 	});
 	const projectHost: TypeScriptProjectHost = {
-		getCurrentDirectory() {
-			return asFileName(workspaceFolder);
-		},
+		getCurrentDirectory,
 		getProjectVersion() {
 			return projectVersion.toString();
 		},

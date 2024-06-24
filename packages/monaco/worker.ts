@@ -87,7 +87,17 @@ export function createTypeScriptWorkerService<T = {}>({
 
 	const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 	const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
-	const sys = createSys(ts.sys, env, env.workspaceFolders.length ? env.workspaceFolders[0] : undefined, uriConverter);
+	const sys = createSys(
+		ts.sys,
+		env,
+		() => {
+			if (env.workspaceFolders.length) {
+				return uriConverter.asFileName(env.workspaceFolders[0]);
+			}
+			return '';
+		},
+		uriConverter
+	);
 	const language = createLanguage<URI>(
 		[
 			...languagePlugins,
