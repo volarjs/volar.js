@@ -202,7 +202,7 @@ export function register(context: LanguageServiceContext) {
 
 			if (virtualCode) {
 				codeOptions = {
-					level: embeddedLevel - 1,
+					level: embeddedLevel,
 					initialIndentLevel: 0,
 				};
 				if (virtualCode.mappings.length) {
