@@ -39,7 +39,7 @@ export function register(context: LanguageServiceContext) {
 							continue;
 						}
 						results[i] = results[i].filter(child => {
-							for (const parent of results[j]) {
+							for (const parent of forEachSymbol(results[j])) {
 								if (isInsideRange(parent.range, child.range)) {
 									parent.children ??= [];
 									parent.children.push(child);
@@ -54,4 +54,13 @@ export function register(context: LanguageServiceContext) {
 			}
 		);
 	};
+}
+
+function* forEachSymbol(symbols: vscode.DocumentSymbol[]): Generator<vscode.DocumentSymbol> {
+	for (const symbol of symbols) {
+		if (symbol.children) {
+			yield* forEachSymbol(symbol.children);
+		}
+		yield symbol;
+	}
 }
