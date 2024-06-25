@@ -1,4 +1,4 @@
-import { FileSystem, LanguageServicePlugin, createUriMap } from '@volar/language-service';
+import { createUriMap, Disposable, FileSystem, LanguageServicePlugin } from '@volar/language-service';
 import { SnapshotDocument } from '@volar/snapshot-document';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
@@ -364,26 +364,34 @@ export function createServerBase(
 		}
 	}
 
-	function watchFiles(patterns: string[]) {
+	async function watchFiles(patterns: string[]): Promise<Disposable> {
+		const disposables: Disposable[] = [];
 		const didChangeWatchedFiles = status.initializeParams?.capabilities.workspace?.didChangeWatchedFiles;
 		const fileOperations = status.initializeParams?.capabilities.workspace?.fileOperations;
 		if (didChangeWatchedFiles) {
-			connection.onDidChangeWatchedFiles(e => {
-				for (const cb of didChangeWatchedFilesCallbacks) {
-					cb(e);
-				}
-			});
+			disposables.push(
+				connection.onDidChangeWatchedFiles(e => {
+					for (const cb of didChangeWatchedFilesCallbacks) {
+						cb(e);
+					}
+				})
+			);
 			if (didChangeWatchedFiles.dynamicRegistration) {
-				connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
-					watchers: patterns.map(pattern => ({ globPattern: pattern })),
-				});
+				disposables.push(
+					await connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
+						watchers: patterns.map(pattern => ({ globPattern: pattern })),
+					})
+				);
 			}
 		}
 		if (fileOperations?.dynamicRegistration && fileOperations.willRename) {
-			connection.client.register(vscode.WillRenameFilesRequest.type, {
-				filters: patterns.map(pattern => ({ pattern: { glob: pattern } })),
-			});
+			disposables.push(
+				await connection.client.register(vscode.WillRenameFilesRequest.type, {
+					filters: patterns.map(pattern => ({ pattern: { glob: pattern } })),
+				})
+			);
 		}
+		return fromDisposables(disposables);
 	}
 
 	function registerWorkspaceFoldersWatcher() {
@@ -484,4 +492,14 @@ export function createServerBase(
 
 function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function fromDisposables(disposables: Disposable[]): Disposable {
+	return {
+		dispose() {
+			for (const disposable of disposables) {
+				disposable.dispose();
+			}
+		},
+	};
 }
