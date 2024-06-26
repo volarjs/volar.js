@@ -1,8 +1,9 @@
-import type { CodeInformation, SourceScript, TypeScriptServiceScript } from '@volar/language-core';
+import type { CodeInformation, SourceScript } from '@volar/language-core';
 import { Language, shouldReportDiagnostics } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { getServiceScript } from './utils';
 import type { TextChange } from "typescript";
+import type { TypeScriptServiceScript } from '../..';
+import { getServiceScript } from './utils';
 
 const transformedDiagnostics = new WeakMap<ts.Diagnostic, ts.Diagnostic | undefined>();
 const transformedSourceFile = new WeakSet<ts.SourceFile>();

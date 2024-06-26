@@ -1,4 +1,5 @@
-import type { Language, SourceScript, TypeScriptServiceScript } from '@volar/language-core';
+import type { Language, SourceScript } from '@volar/language-core';
+import type { TypeScriptServiceScript } from '../..';
 
 export function getServiceScript(language: Language<string>, fileName: string)
 	: [serviceScript: TypeScriptServiceScript, targetScript: SourceScript<string>, sourceScript: SourceScript<string>]

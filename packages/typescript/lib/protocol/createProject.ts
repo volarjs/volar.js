@@ -1,6 +1,7 @@
-import { FileMap, Language, TypeScriptExtraServiceScript, forEachEmbeddedCode } from '@volar/language-core';
+import { FileMap, Language, forEachEmbeddedCode } from '@volar/language-core';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
+import type { TypeScriptExtraServiceScript } from '../..';
 import { createResolveModuleName } from '../resolveModuleName';
 import type { createSys } from './createSys';
 
