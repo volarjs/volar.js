@@ -38,6 +38,7 @@ import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
 import * as workspaceSymbolResolve from './features/resolveWorkspaceSymbol';
 import type { LanguageServiceContext, LanguageServiceEnvironment, LanguageServicePlugin } from './types';
+import { NoneCancellationToken } from './utils/cancellation';
 import { UriMap, createUriMap } from './utils/uriMap';
 
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
@@ -188,10 +189,23 @@ function createLanguageServiceBase(
 				tokenTypes: [...new Set(tokenTypes)],
 			};
 		},
+		getCommands: () => plugins.map(plugin => plugin.capabilities.executeCommandProvider?.commands ?? []).flat(),
 		getTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.completionProvider?.triggerCharacters ?? []).flat(),
 		getAutoFormatTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat(),
 		getSignatureHelpTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat(),
 		getSignatureHelpRetriggerCharacters: () => plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat(),
+
+		executeCommand(command: string, args: any[], token = NoneCancellationToken) {
+			for (const plugin of context.plugins) {
+				if (context.disabledServicePlugins.has(plugin[1])) {
+					continue;
+				}
+				if (!plugin[1].executeCommand || !plugin[0].capabilities.executeCommandProvider?.commands.includes(command)) {
+					continue;
+				}
+				return plugin[1].executeCommand(command, args, token);
+			}
+		},
 
 		getDocumentFormattingEdits: format.register(context),
 		getFoldingRanges: foldingRanges.register(context),
