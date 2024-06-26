@@ -15,6 +15,8 @@ export function createServerBase(
 ) {
 	let semanticTokensReq = 0;
 	let documentUpdatedReq = 0;
+	let watchFilesDisposableCounter = 0;
+	let watchFilesDisposable: Disposable | undefined;
 
 	const syncedDocumentParsedUriToUri = new Map<string, string>();
 	const didChangeWatchedFilesCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeWatchedFilesParams>>();
@@ -369,20 +371,31 @@ export function createServerBase(
 		const didChangeWatchedFiles = status.initializeParams?.capabilities.workspace?.didChangeWatchedFiles;
 		const fileOperations = status.initializeParams?.capabilities.workspace?.fileOperations;
 		if (didChangeWatchedFiles) {
-			disposables.push(
-				connection.onDidChangeWatchedFiles(e => {
+			if (watchFilesDisposableCounter === 0) {
+				watchFilesDisposable = connection.onDidChangeWatchedFiles(e => {
 					for (const cb of didChangeWatchedFilesCallbacks) {
 						cb(e);
 					}
+				});
+			}
+			watchFilesDisposableCounter++;
+			disposables.push(
+				{
+					dispose() {
+						watchFilesDisposableCounter--;
+						if (watchFilesDisposableCounter === 0) {
+							watchFilesDisposable?.dispose();
+						}
+					}
+				}
+			);
+		}
+		if (didChangeWatchedFiles?.dynamicRegistration) {
+			disposables.push(
+				await connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
+					watchers: patterns.map(pattern => ({ globPattern: pattern })),
 				})
 			);
-			if (didChangeWatchedFiles.dynamicRegistration) {
-				disposables.push(
-					await connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
-						watchers: patterns.map(pattern => ({ globPattern: pattern })),
-					})
-				);
-			}
 		}
 		if (fileOperations?.dynamicRegistration && fileOperations.willRename) {
 			disposables.push(
