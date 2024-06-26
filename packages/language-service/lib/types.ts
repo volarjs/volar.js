@@ -83,6 +83,9 @@ export type SemanticToken = [
 export interface LanguageServicePlugin<P = any> {
 	name?: string;
 	capabilities: {
+		executeCommandProvider?: {
+			commands: string[];
+		};
 		selectionRangeProvider?: boolean;
 		foldingRangeProvider?: boolean;
 		linkedEditingRangeProvider?: boolean;
@@ -133,8 +136,8 @@ export interface LanguageServicePlugin<P = any> {
 			codeActionKinds?: string[];
 			resolveProvider?: boolean;
 		};
-		// TODO: interFileDependencies
 		diagnosticProvider?: {
+			// TODO: interFileDependencies
 			workspaceDiagnostics?: boolean;
 		};
 		fileReferencesProvider?: boolean;
@@ -151,6 +154,7 @@ export interface EmbeddedCodeFormattingOptions {
 export interface LanguageServicePluginInstance<P = any> {
 	provide?: P;
 	isAdditionalCompletion?: boolean; // volar specific
+	executeCommand?(command: string, args: any[], token: vscode.CancellationToken): ProviderResult<any>;
 	provideHover?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.Hover>;
 	provideDocumentSymbols?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.DocumentSymbol[]>;
 	provideDocumentHighlights?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.DocumentHighlight[]>;

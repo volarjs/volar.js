@@ -31,6 +31,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 		semanticTokensProvider,
 		diagnosticProvider,
 		inlayHintProvider,
+		executeCommandProvider,
 		experimental,
 	} = server.initializeResult.capabilities;
 
@@ -399,6 +400,17 @@ export function registerLanguageFeatures(server: LanguageServer) {
 				lastInlayHintLs = languageService;
 				return languageService.getInlayHints(uri, params.range, token);
 			});
+		});
+	}
+	if (executeCommandProvider) {
+		server.connection.onExecuteCommand(async (params, token) => {
+			for (const languageService of await server.project.getExistingLanguageServices()) {
+				if (languageService.executeCommand && languageService.getCommands().includes(params.command)) {
+					try {
+						return await languageService.executeCommand(params.command, params.arguments ?? [], token);
+					} catch { }
+				}
+			}
 		});
 	}
 	if (typeof inlayHintProvider === 'object' && inlayHintProvider.resolveProvider) {

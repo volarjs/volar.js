@@ -186,6 +186,11 @@ export function createServerBase(
 					moreTriggerCharacter: [...new Set(capabilitiesArr.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
 				}
 				: undefined,
+			executeCommandProvider: capabilitiesArr.some(data => data.executeCommandProvider)
+				? {
+					commands: [...new Set(capabilitiesArr.map(data => data.executeCommandProvider?.commands ?? []).flat())],
+				}
+				: undefined,
 		};
 
 		if (!status.pullModelDiagnostics && status.initializeResult.capabilities.diagnosticProvider) {
