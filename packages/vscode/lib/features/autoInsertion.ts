@@ -43,10 +43,28 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 			// https://github.com/vuejs/language-tools/issues/4457
 			return;
 		}
-		doAutoInsert(document, lastChange, lastChange.text[lastChange.text.length - 1]);
+		const lastCharacter = lastChange.text[lastChange.text.length - 1];
+		const initializeResult: VolarInitializeResult | undefined = client.initializeResult;
+		if (initializeResult?.capabilities.experimental?.autoInsertionProvider) {
+			const { triggerCharacters, configurationSections } = initializeResult.capabilities.experimental.autoInsertionProvider;
+			for (let i = 0; i < triggerCharacters.length; i++) {
+				const char = triggerCharacters[i];
+				const sections = configurationSections?.[i];
+				if (
+					lastCharacter.match(new RegExp(char))
+					&& (
+						!sections
+						|| sections.some(section => vscode.workspace.getConfiguration().get<boolean>(section))
+					)
+				) {
+					doAutoInsert(document, lastChange);
+					return;
+				}
+			}
+		}
 	}
 
-	function doAutoInsert(document: vscode.TextDocument, lastChange: vscode.TextDocumentContentChangeEvent, lastCharacter: string) {
+	function doAutoInsert(document: vscode.TextDocument, lastChange: vscode.TextDocumentContentChangeEvent) {
 		if (timeout) {
 			clearTimeout(timeout);
 			timeout = undefined;
@@ -59,21 +77,7 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 			if (vscode.window.activeTextEditor?.document.version !== version) {
 				return true;
 			}
-			const initializeResult: VolarInitializeResult | undefined = client.initializeResult;
-			if (initializeResult?.autoInsertion) {
-				for (let i = 0; i < initializeResult.autoInsertion.triggerCharacters.length; i++) {
-					const char = initializeResult.autoInsertion.triggerCharacters[i];
-					if (!lastCharacter.match(new RegExp(char))) {
-						continue;
-					}
-					const configurationSection = initializeResult.autoInsertion.configurationSections[i];
-					if (configurationSection && !vscode.workspace.getConfiguration().get<boolean>(configurationSection)) {
-						continue;
-					}
-					return false;
-				}
-			}
-			return true;
+			return false;
 		};
 
 		timeout = setTimeout(async () => {
