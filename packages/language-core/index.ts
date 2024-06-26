@@ -5,10 +5,10 @@ export * from './lib/types';
 export * from './lib/utils';
 
 import { SourceMap } from '@volar/source-map';
-import type * as ts from 'typescript';
 import { LinkedCodeMap } from './lib/linkedCodeMap';
 import type {
 	CodegenContext,
+	IScriptSnapshot,
 	Language,
 	LanguagePlugin,
 	Mapper,
@@ -25,8 +25,8 @@ export function createLanguage<T>(
 	sync: (id: T) => void
 ) {
 	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode, SourceScript<T>>();
-	const virtualCodeToSourceMap = new WeakMap<ts.IScriptSnapshot, WeakMap<ts.IScriptSnapshot, Mapper>>();
-	const virtualCodeToLinkedCodeMap = new WeakMap<ts.IScriptSnapshot, [ts.IScriptSnapshot, LinkedCodeMap | undefined]>();
+	const virtualCodeToSourceMap = new WeakMap<IScriptSnapshot, WeakMap<IScriptSnapshot, Mapper>>();
+	const virtualCodeToLinkedCodeMap = new WeakMap<IScriptSnapshot, [IScriptSnapshot, LinkedCodeMap | undefined]>();
 	const language: Language<T> = {
 		mapperFactory: defaultMapperFactory,
 		plugins,

@@ -1,5 +1,4 @@
 import type { Mapping } from '@volar/source-map';
-import type * as ts from 'typescript';
 import type { LinkedCodeMap } from './linkedCodeMap';
 
 export interface Mapper {
@@ -17,7 +16,7 @@ export interface Language<T = unknown> {
 	plugins: LanguagePlugin<T>[];
 	scripts: {
 		get(id: T): SourceScript<T> | undefined;
-		set(id: T, snapshot: ts.IScriptSnapshot, languageId?: string, plugins?: LanguagePlugin<T>[]): SourceScript<T> | undefined;
+		set(id: T, snapshot: IScriptSnapshot, languageId?: string, plugins?: LanguagePlugin<T>[]): SourceScript<T> | undefined;
 		delete(id: T): void;
 		fromVirtualCode(virtualCode: VirtualCode): SourceScript<T>;
 	};
@@ -28,23 +27,12 @@ export interface Language<T = unknown> {
 	linkedCodeMaps: {
 		get(virtualCode: VirtualCode): LinkedCodeMap | undefined;
 	};
-	typescript?: {
-		configFileName: string | undefined;
-		sys: ts.System & {
-			version?: number;
-			sync?(): Promise<number>;
-		};
-		languageServiceHost: ts.LanguageServiceHost;
-		getExtraServiceScript(fileName: string): TypeScriptExtraServiceScript | undefined;
-		asScriptId(fileName: string): T;
-		asFileName(scriptId: T): string;
-	};
 }
 
 export interface SourceScript<T = unknown> {
 	id: T;
 	languageId: string;
-	snapshot: ts.IScriptSnapshot;
+	snapshot: IScriptSnapshot;
 	targetIds: Set<T>;
 	associatedIds: Set<T>;
 	associatedOnly: boolean;
@@ -61,7 +49,7 @@ export type CodeMapping = Mapping<CodeInformation>;
 export interface VirtualCode {
 	id: string;
 	languageId: string;
-	snapshot: ts.IScriptSnapshot;
+	snapshot: IScriptSnapshot;
 	mappings: CodeMapping[];
 	associatedScriptMappings?: Map<unknown, CodeMapping[]>;
 	embeddedCodes?: VirtualCode[];
@@ -94,18 +82,6 @@ export interface CodeInformation {
 	format?: boolean;
 }
 
-export interface TypeScriptServiceScript {
-	code: VirtualCode;
-	extension: '.ts' | '.js' | '.mts' | '.mjs' | '.cjs' | '.cts' | '.d.ts' | string;
-	scriptKind: ts.ScriptKind;
-	/** See #188 */
-	preventLeadingOffset?: boolean;
-}
-
-export interface TypeScriptExtraServiceScript extends TypeScriptServiceScript {
-	fileName: string;
-}
-
 export interface LanguagePlugin<T = unknown, K extends VirtualCode = VirtualCode> {
 	/**
 	 * For files that are not opened in the IDE, the language ID will not be synchronized to the language server, so a hook is needed to parse the language ID of files that are known extension but not opened in the IDE.
@@ -114,11 +90,11 @@ export interface LanguagePlugin<T = unknown, K extends VirtualCode = VirtualCode
 	/**
 	 * Generate a virtual code.
 	 */
-	createVirtualCode?(scriptId: T, languageId: string, snapshot: ts.IScriptSnapshot, ctx: CodegenContext<T>): K | undefined;
+	createVirtualCode?(scriptId: T, languageId: string, snapshot: IScriptSnapshot, ctx: CodegenContext<T>): K | undefined;
 	/**
 	 * Incremental update a virtual code. If not provide, call createVirtualCode again.
 	 */
-	updateVirtualCode?(scriptId: T, virtualCode: K, newSnapshot: ts.IScriptSnapshot, ctx: CodegenContext<T>): K | undefined;
+	updateVirtualCode?(scriptId: T, virtualCode: K, newSnapshot: IScriptSnapshot, ctx: CodegenContext<T>): K | undefined;
 	/**
 	 * Cleanup a virtual code.
 	 */
@@ -130,26 +106,35 @@ export interface LanguagePlugin<T = unknown, K extends VirtualCode = VirtualCode
 	 * This functionality is required only in TS plugin mode.
 	 */
 	isAssociatedFileOnly?(scriptId: T, languageId: string): boolean;
-	typescript?: TypeScriptGenericOptions<K> & TypeScriptNonTSPluginOptions<K>;
 }
 
 export interface CodegenContext<T = unknown> {
 	getAssociatedScript(scriptId: T): SourceScript<T> | undefined;
 }
 
-/**
- * The following options available to all situations.
- */
-interface TypeScriptGenericOptions<K> {
-	extraFileExtensions: ts.FileExtensionInfo[];
-	resolveHiddenExtensions?: boolean;
-	getServiceScript(root: K): TypeScriptServiceScript | undefined;
+export interface IScriptSnapshot {
+	/** Gets a portion of the script snapshot specified by [start, end). */
+	getText(start: number, end: number): string;
+	/** Gets the length of this script snapshot. */
+	getLength(): number;
+	/**
+	 * Gets the TextChangeRange that describe how the text changed between this text and
+	 * an older version.  This information is used by the incremental parser to determine
+	 * what sections of the script need to be re-parsed.  'undefined' can be returned if the
+	 * change range cannot be determined.  However, in that case, incremental parsing will
+	 * not happen and the entire document will be re - parsed.
+	 */
+	getChangeRange(oldSnapshot: IScriptSnapshot): TextChangeRange | undefined;
+	/** Releases all resources held by this script snapshot */
+	dispose?(): void;
 }
 
-/**
- * The following options will not be available in TS plugin.
- */
-interface TypeScriptNonTSPluginOptions<K> {
-	getExtraServiceScripts?(fileName: string, rootVirtualCode: K): TypeScriptExtraServiceScript[];
-	resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
+export interface TextChangeRange {
+	span: TextSpan;
+	newLength: number;
+}
+
+export interface TextSpan {
+	start: number;
+	length: number;
 }
