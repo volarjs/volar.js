@@ -129,7 +129,9 @@ export function createServerBase(
 			callHierarchyProvider: capabilitiesArr.some(data => data.callHierarchyProvider) || undefined,
 			hoverProvider: capabilitiesArr.some(data => data.hoverProvider) || undefined,
 			documentHighlightProvider: capabilitiesArr.some(data => data.documentHighlightProvider) || undefined,
-			workspaceSymbolProvider: capabilitiesArr.some(data => data.workspaceSymbolProvider) || undefined,
+			workspaceSymbolProvider: capabilitiesArr.some(data => data.workspaceSymbolProvider)
+				? { resolveProvider: capabilitiesArr.some(data => data.workspaceSymbolProvider?.resolveProvider) || undefined }
+				: undefined,
 			renameProvider: capabilitiesArr.some(data => data.renameProvider)
 				? { prepareProvider: capabilitiesArr.some(data => data.renameProvider?.prepareProvider) || undefined }
 				: undefined,
@@ -144,7 +146,6 @@ export function createServerBase(
 				: undefined,
 			signatureHelpProvider: capabilitiesArr.some(data => data.signatureHelpProvider)
 				? {
-
 					triggerCharacters: [...new Set(capabilitiesArr.map(data => data.signatureHelpProvider?.triggerCharacters ?? []).flat())],
 					retriggerCharacters: [...new Set(capabilitiesArr.map(data => data.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
 				}

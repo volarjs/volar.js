@@ -36,6 +36,7 @@ import * as codeLensResolve from './features/resolveCodeLens';
 import * as completionResolve from './features/resolveCompletionItem';
 import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
+import * as workspaceSymbolResolve from './features/resolveWorkspaceSymbol';
 import type { LanguageServiceContext, LanguageServiceEnvironment, LanguageServicePlugin } from './types';
 import { UriMap, createUriMap } from './utils/uriMap';
 
@@ -227,6 +228,7 @@ function createLanguageServiceBase(
 		resolveCodeLens: codeLensResolve.register(context),
 		resolveDocumentLink: documentLinkResolve.register(context),
 		resolveInlayHint: inlayHintResolve.register(context),
+		resolveWorkspaceSymbol: workspaceSymbolResolve.register(context),
 
 		...callHierarchy.register(context),
 
