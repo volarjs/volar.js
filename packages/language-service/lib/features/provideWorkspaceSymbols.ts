@@ -5,6 +5,11 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
 import { transformWorkspaceSymbol } from '../utils/transform';
 
+export interface WorkspaceSymbolData {
+	original: Pick<vscode.WorkspaceSymbol, 'data'>;
+	pluginIndex: number;
+}
+
 export function register(context: LanguageServiceContext) {
 
 	return async (query: string, token = NoneCancellationToken) => {
@@ -52,6 +57,15 @@ export function register(context: LanguageServiceContext) {
 					}
 				}))
 				.filter(symbol => !!symbol);
+
+			symbols?.forEach(symbol => {
+				symbol.data = {
+					original: {
+						data: symbol.data,
+					},
+					pluginIndex: context.plugins.indexOf(plugin),
+				} satisfies WorkspaceSymbolData;
+			});
 
 			symbolsList.push(symbols);
 		}

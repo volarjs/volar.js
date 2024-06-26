@@ -96,7 +96,9 @@ export interface LanguageServicePlugin<P = any> {
 		callHierarchyProvider?: boolean;
 		hoverProvider?: boolean;
 		documentHighlightProvider?: boolean;
-		workspaceSymbolProvider?: boolean;
+		workspaceSymbolProvider?: {
+			resolveProvider?: boolean;
+		};
 		renameProvider?: {
 			prepareProvider?: boolean;
 		};
@@ -189,6 +191,7 @@ export interface LanguageServicePluginInstance<P = any> {
 	resolveCompletionItem?(item: vscode.CompletionItem, token: vscode.CancellationToken): ProviderResult<vscode.CompletionItem>;
 	resolveDocumentLink?(link: vscode.DocumentLink, token: vscode.CancellationToken): ProviderResult<vscode.DocumentLink>;
 	resolveInlayHint?(inlayHint: vscode.InlayHint, token: vscode.CancellationToken): ProviderResult<vscode.InlayHint>;
+	resolveWorkspaceSymbol?(symbol: vscode.WorkspaceSymbol, token: vscode.CancellationToken): ProviderResult<vscode.WorkspaceSymbol>;
 	resolveEmbeddedCodeFormattingOptions?(sourceScript: SourceScript<URI>, embeddedCode: VirtualCode, options: EmbeddedCodeFormattingOptions, token: vscode.CancellationToken): NullableProviderResult<EmbeddedCodeFormattingOptions>; // volar specific
 	transformCompletionItem?(item: vscode.CompletionItem): vscode.CompletionItem | undefined; // volar specific
 	transformCodeAction?(item: vscode.CodeAction): vscode.CodeAction | undefined; // volar specific

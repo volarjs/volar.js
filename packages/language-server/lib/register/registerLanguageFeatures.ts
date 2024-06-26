@@ -41,6 +41,10 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	let lastCallHierarchyLs: LanguageService | undefined;
 	let lastDocumentLinkLs: LanguageService | undefined;
 	let lastInlayHintLs: LanguageService | undefined;
+	let languageServiceToId = new WeakMap<LanguageService, number>();
+	let currentLanguageServiceId = 0;
+
+	const idToLanguageService = new Map<number, WeakRef<LanguageService>>();
 
 	if (documentFormattingProvider) {
 		server.connection.onDocumentFormatting(async (params, token) => {
@@ -272,18 +276,39 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	}
 	if (workspaceSymbolProvider) {
 		server.connection.onWorkspaceSymbol(async (params, token) => {
-			let results: vscode.WorkspaceSymbol[] = [];
+			const symbols: vscode.WorkspaceSymbol[] = [];
 			for (const languageService of await server.project.getExistingLanguageServices()) {
 				if (token.isCancellationRequested) {
 					return;
 				}
-				results = results.concat(await languageService.getWorkspaceSymbols(params.query, token));
+				let languageServiceId = languageServiceToId.get(languageService);
+				if (languageServiceId === undefined) {
+					languageServiceId = currentLanguageServiceId;
+					languageServiceToId.set(languageService, languageServiceId);
+					idToLanguageService.set(languageServiceId, new WeakRef(languageService));
+				}
+				const languageServiceResult = await languageService.getWorkspaceSymbols(params.query, token);
+				for (const symbol of languageServiceResult) {
+					symbol.data = {
+						languageServiceId,
+						originalData: symbol.data,
+					};
+				}
+				symbols.push(...await languageService.getWorkspaceSymbols(params.query, token));
 			}
-			return results;
+			return symbols;
 		});
 	}
 	if (typeof workspaceSymbolProvider === 'object' && workspaceSymbolProvider.resolveProvider) {
-		// TODO: onWorkspaceSymbolResolve
+		server.connection.onWorkspaceSymbolResolve(async (symbol, token) => {
+			const languageServiceId = (symbol.data as any)?.languageServiceId;
+			const languageService = idToLanguageService.get(languageServiceId)?.deref();
+			if (!languageService) {
+				return symbol;
+			}
+			symbol.data = (symbol.data as any)?.originalData;
+			return await languageService.resolveWorkspaceSymbol?.(symbol, token);
+		});
 	}
 	if (callHierarchyProvider) {
 		server.connection.languages.callHierarchy.onPrepare(async (params, token) => {
