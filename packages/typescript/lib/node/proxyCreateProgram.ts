@@ -32,7 +32,10 @@ const objectEqual = (a: any, b: any) => {
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
 	original: typeof ts['createProgram'],
-	getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin<string>[]
+	create: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin<string>[] | {
+		languagePlugins: LanguagePlugin<string>[];
+		setup?(language: Language<string>): void;
+	}
 ) {
 	const sourceFileSnapshots = new FileMap<[ts.SourceFile | undefined, ts.IScriptSnapshot | undefined]>(ts.sys.useCaseSensitiveFileNames);
 	const parsedSourceFiles = new WeakMap<ts.SourceFile, ts.SourceFile | undefined>();
@@ -57,7 +60,13 @@ export function proxyCreateProgram(
 			) {
 				moduleResolutionCache = ts.createModuleResolutionCache(options.host.getCurrentDirectory(), options.host.getCanonicalFileName, options.options);
 				lastOptions = options;
-				languagePlugins = getLanguagePlugins(ts, options);
+				const created = create(ts, options);
+				if (Array.isArray(created)) {
+					languagePlugins = created;
+				}
+				else {
+					languagePlugins = created.languagePlugins;
+				}
 				language = createLanguage<string>(
 					[
 						...languagePlugins,
@@ -93,6 +102,9 @@ export function proxyCreateProgram(
 						}
 					}
 				);
+				if ('setup' in created) {
+					created.setup?.(language);
+				}
 			}
 
 			const originalHost = options.host;

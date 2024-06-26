@@ -1,8 +1,11 @@
 import * as fs from 'fs';
 import type * as ts from 'typescript';
-import type { LanguagePlugin } from '@volar/language-core';
+import type { Language, LanguagePlugin } from '@volar/language-core';
 
-export let getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin<string>[] = () => [];
+export let getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin<string>[] | {
+	plugins: LanguagePlugin<string>[],
+	setup?(language: Language<string>): void,
+} = () => [];
 
 export function runTsc(
 	tscPath: string,
