@@ -11,9 +11,11 @@ export interface LanguageServerProject {
 
 export type LanguageServer = ReturnType<typeof createServerBase>;
 
-export interface VolarInitializeResult extends InitializeResult {
-	autoInsertion?: {
+export interface VolarInitializeResult extends InitializeResult<{
+	fileReferencesProvider?: boolean;
+	fileRenameProvider?: boolean;
+	autoInsertionProvider?: {
 		triggerCharacters: string[];
-		configurationSections: (string | null)[];
+		configurationSections?: (string[] | null)[];
 	};
-};
+}> { }

@@ -135,6 +135,8 @@ export interface LanguageServicePlugin<P = any> {
 		diagnosticProvider?: {
 			workspaceDiagnostics?: boolean;
 		};
+		fileReferencesProvider?: boolean;
+		fileRenameProvider?: boolean;
 	};
 	create(context: LanguageServiceContext): LanguageServicePluginInstance<P>;
 }

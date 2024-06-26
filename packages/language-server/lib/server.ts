@@ -221,22 +221,31 @@ export function createServerBase(
 					}
 				}
 			}
-			status.initializeResult.autoInsertion = {
+			status.initializeResult.capabilities.experimental ??= {};
+			status.initializeResult.capabilities.experimental.autoInsertionProvider = {
 				triggerCharacters: [],
 				configurationSections: [],
 			};
 			for (const [char, sections] of triggerCharacterToConfigurationSections) {
 				if (sections.size) {
-					for (const section of sections) {
-						status.initializeResult.autoInsertion.triggerCharacters.push(char);
-						status.initializeResult.autoInsertion.configurationSections.push(section);
-					}
+					status.initializeResult.capabilities.experimental.autoInsertionProvider.triggerCharacters.push(char);
+					status.initializeResult.capabilities.experimental.autoInsertionProvider.configurationSections!.push([...sections]);
 				}
 				else {
-					status.initializeResult.autoInsertion.triggerCharacters.push(char);
-					status.initializeResult.autoInsertion.configurationSections.push(null);
+					status.initializeResult.autoInsertionProvider.triggerCharacters.push(char);
+					status.initializeResult.autoInsertionProvider.configurationSections.push(null);
 				}
 			}
+		}
+
+		if (capabilitiesArr.some(data => data.fileRenameProvider)) {
+			status.initializeResult.capabilities.experimental ??= {};
+			status.initializeResult.capabilities.experimental.fileRenameProvider = true;
+		}
+
+		if (capabilitiesArr.some(data => data.fileReferencesProvider)) {
+			status.initializeResult.capabilities.experimental ??= {};
+			status.initializeResult.capabilities.experimental.fileReferencesProvider = true;
 		}
 
 		return status.initializeResult;
