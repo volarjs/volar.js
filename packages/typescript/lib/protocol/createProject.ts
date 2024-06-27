@@ -20,7 +20,7 @@ export function createLanguageServiceHost<T>(
 	ts: typeof import('typescript'),
 	sys: ReturnType<typeof createSys> | ts.System,
 	language: Language<T>,
-	asScrpitId: (fileName: string) => T,
+	asScriptId: (fileName: string) => T,
 	projectHost: TypeScriptProjectHost
 ) {
 	const scriptVersions = new FileMap<{ lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>(sys.useCaseSensitiveFileNames);
@@ -103,7 +103,7 @@ export function createLanguageServiceHost<T>(
 				return extraScriptRegistry.get(fileName)!.scriptKind;
 			}
 
-			const sourceScript = language.scripts.get(asScrpitId(fileName));
+			const sourceScript = language.scripts.get(asScriptId(fileName));
 			if (sourceScript?.generated) {
 				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
 				if (serviceScript) {
@@ -147,7 +147,7 @@ export function createLanguageServiceHost<T>(
 			languageServiceHost.useCaseSensitiveFileNames?.() ? s => s : s => s.toLowerCase(),
 			languageServiceHost.getCompilationSettings()
 		);
-		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(asScrpitId(fileName)));
+		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(asScriptId(fileName)));
 
 		let lastSysVersion = 'version' in sys ? sys.version : undefined;
 
@@ -209,7 +209,7 @@ export function createLanguageServiceHost<T>(
 		const tsFileNamesSet = new Set<string>();
 
 		for (const fileName of projectHost.getScriptFileNames()) {
-			const sourceScript = language.scripts.get(asScrpitId(fileName));
+			const sourceScript = language.scripts.get(asScriptId(fileName));
 			if (sourceScript?.generated) {
 				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
 				if (serviceScript) {
@@ -255,7 +255,7 @@ export function createLanguageServiceHost<T>(
 			return extraScriptRegistry.get(fileName)!.code.snapshot;
 		}
 
-		const sourceScript = language.scripts.get(asScrpitId(fileName));
+		const sourceScript = language.scripts.get(asScriptId(fileName));
 
 		if (sourceScript?.generated) {
 			const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
@@ -286,7 +286,7 @@ export function createLanguageServiceHost<T>(
 			return version.map.get(snapshot)!.toString();
 		}
 
-		const sourceScript = language.scripts.get(asScrpitId(fileName));
+		const sourceScript = language.scripts.get(asScriptId(fileName));
 
 		if (sourceScript?.generated) {
 			const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
@@ -301,7 +301,7 @@ export function createLanguageServiceHost<T>(
 		const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
 
 		if (isOpenedFile) {
-			const sourceScript = language.scripts.get(asScrpitId(fileName));
+			const sourceScript = language.scripts.get(asScriptId(fileName));
 			if (sourceScript && !sourceScript.generated) {
 				if (!version.map.has(sourceScript.snapshot)) {
 					version.map.set(sourceScript.snapshot, version.lastVersion++);
