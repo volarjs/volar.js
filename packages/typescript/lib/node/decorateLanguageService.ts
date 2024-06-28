@@ -39,29 +39,12 @@ import { getServiceScript } from './utils';
 const windowsPathReg = /\\/g;
 
 export class LanguageServiceProxy extends Proxy<ts.LanguageService> {
-	constructor(
-		languageService: ts.LanguageService,
-		language: Language<string>
-	) {
-		const proxyCache = new Map<string | symbol, Function | undefined>();
+	getProxyMethod?: (target: ts.LanguageService, p: string | symbol) => Function | undefined;
 
-		super(languageService, {
-			get(target, p, receiver) {
-				if (!proxyCache.has(p)) {
-					proxyCache.set(p, getProxyMethod(target, p));
-				}
-				const proxyMethod = proxyCache.get(p);
-				if (proxyMethod) {
-					return proxyMethod;
-				}
-				return Reflect.get(target, p, receiver);
-			},
-			set(target, p, value, receiver) {
-				return Reflect.set(target, p, value, receiver);
-			},
-		});
+	setup(language: Language<string>) {
+		const languageService = this.languageService;
 
-		function getProxyMethod(target: ts.LanguageService, p: string | symbol) {
+		this.getProxyMethod = (target, p) => {
 			switch (p) {
 				case 'getNavigationTree': return getNavigationTree(target[p]);
 				case 'getOutliningSpans': return getOutliningSpans(target[p]);
@@ -97,7 +80,7 @@ export class LanguageServiceProxy extends Proxy<ts.LanguageService> {
 				case 'provideInlayHints': return provideInlayHints(target[p]);
 				case 'getFileReferences': return getFileReferences(target[p]);
 			}
-		}
+		};
 
 		// ignored methods
 
@@ -1013,6 +996,28 @@ export class LanguageServiceProxy extends Proxy<ts.LanguageService> {
 				}
 			}
 		}
+	}
+
+	constructor(private languageService: ts.LanguageService) {
+		super(languageService, {
+			get(target, p, receiver) {
+				if (self.getProxyMethod) {
+					if (!proxyCache.has(p)) {
+						proxyCache.set(p, self.getProxyMethod(target, p));
+					}
+					const proxyMethod = proxyCache.get(p);
+					if (proxyMethod) {
+						return proxyMethod;
+					}
+				}
+				return Reflect.get(target, p, receiver);
+			},
+			set(target, p, value, receiver) {
+				return Reflect.set(target, p, value, receiver);
+			},
+		});
+		const proxyCache = new Map<string | symbol, Function | undefined>();
+		const self = this;
 	}
 }
 

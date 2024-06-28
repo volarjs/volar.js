@@ -64,6 +64,8 @@ export function createAsyncLanguageServicePlugin(
 						};
 					}
 
+					const languageServiceProxy = new LanguageServiceProxy(info.languageService);
+
 					create(ts, info).then(({ languagePlugins, setup }) => {
 						const syncedScriptVersions = new FileMap<string>(ts.sys.useCaseSensitiveFileNames);
 						const language = createLanguage<string>(
@@ -91,7 +93,7 @@ export function createAsyncLanguageServicePlugin(
 							}
 						);
 
-						info.languageService = new LanguageServiceProxy(info.languageService, language);
+						languageServiceProxy.setup(language);
 						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 						setup?.(language);
 
@@ -100,6 +102,8 @@ export function createAsyncLanguageServicePlugin(
 						}
 						initialized = true;
 					});
+
+					return languageServiceProxy;
 				}
 
 				return info.languageService;

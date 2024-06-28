@@ -60,9 +60,12 @@ export function createLanguageServicePlugin(
 						}
 					);
 
-					info.languageService = new LanguageServiceProxy(info.languageService, language);
+					const languageServiceProxy = new LanguageServiceProxy(info.languageService);
+					languageServiceProxy.setup(language);
 					decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 					setup?.(language);
+
+					return languageServiceProxy;
 				}
 
 				return info.languageService;
