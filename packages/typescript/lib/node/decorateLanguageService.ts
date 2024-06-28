@@ -38,15 +38,19 @@ import { getServiceScript } from './utils';
 
 const windowsPathReg = /\\/g;
 
-export class LanguageServiceProxy extends Proxy<ts.LanguageService> {
-	getProxyMethod?: ReturnType<typeof createGetProxyMethod>;
+export function createLanguageServiceProxy(languageService: ts.LanguageService) {
+	const proxyCache = new Map<string | symbol, Function | undefined>();
+	let getProxyMethod: ReturnType<typeof createGetProxyMethod> | undefined;
 
-	constructor(private languageService: ts.LanguageService) {
-		super(languageService, {
+	return {
+		setup(language: Language<string>) {
+			getProxyMethod = createGetProxyMethod(language, languageService);
+		},
+		proxy: new Proxy(languageService, {
 			get(target, p, receiver) {
-				if (self.getProxyMethod) {
+				if (getProxyMethod) {
 					if (!proxyCache.has(p)) {
-						proxyCache.set(p, self.getProxyMethod(target, p));
+						proxyCache.set(p, getProxyMethod(target, p));
 					}
 					const proxyMethod = proxyCache.get(p);
 					if (proxyMethod) {
@@ -58,14 +62,8 @@ export class LanguageServiceProxy extends Proxy<ts.LanguageService> {
 			set(target, p, value, receiver) {
 				return Reflect.set(target, p, value, receiver);
 			},
-		});
-		const proxyCache = new Map<string | symbol, Function | undefined>();
-		const self = this;
-	}
-
-	setup(language: Language<string>) {
-		this.getProxyMethod = createGetProxyMethod(language, this.languageService);
-	}
+		}),
+	};
 }
 
 function createGetProxyMethod(language: Language<string>, languageService: ts.LanguageService) {
