@@ -38,7 +38,7 @@ import { getServiceScript } from './utils';
 
 const windowsPathReg = /\\/g;
 
-export function createLanguageServiceProxy(languageService: ts.LanguageService) {
+export function createProxyLanguageService(languageService: ts.LanguageService) {
 	const proxyCache = new Map<string | symbol, Function | undefined>();
 	let getProxyMethod: ReturnType<typeof createGetProxyMethod> | undefined;
 
