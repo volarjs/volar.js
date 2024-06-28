@@ -61,7 +61,7 @@ export function createLanguageServicePlugin(
 					);
 
 					const languageServiceProxy = createProxyLanguageService(info.languageService);
-					languageServiceProxy.setup(language);
+					languageServiceProxy.initialize(language);
 					decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 					setup?.(language);
 

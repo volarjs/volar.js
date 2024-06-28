@@ -43,7 +43,7 @@ export function createProxyLanguageService(languageService: ts.LanguageService) 
 	let getProxyMethod: ReturnType<typeof createGetProxyMethod> | undefined;
 
 	return {
-		setup(language: Language<string>) {
+		initialize(language: Language<string>) {
 			getProxyMethod = createGetProxyMethod(language, languageService);
 		},
 		proxy: new Proxy(languageService, {

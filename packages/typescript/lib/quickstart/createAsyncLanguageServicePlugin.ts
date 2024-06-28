@@ -93,7 +93,7 @@ export function createAsyncLanguageServicePlugin(
 							}
 						);
 
-						languageServiceProxy.setup(language);
+						languageServiceProxy.initialize(language);
 						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 						setup?.(language);
 
