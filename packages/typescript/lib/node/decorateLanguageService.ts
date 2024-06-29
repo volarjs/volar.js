@@ -44,7 +44,7 @@ export function createProxyLanguageService(languageService: ts.LanguageService) 
 
 	return {
 		initialize(language: Language<string>) {
-			getProxyMethod = (target: ts.LanguageService, p: string | symbol) => {
+			getProxyMethod = (target, p) => {
 				switch (p) {
 					case 'getNavigationTree': return getNavigationTree(language, target[p]);
 					case 'getOutliningSpans': return getOutliningSpans(language, target[p]);
