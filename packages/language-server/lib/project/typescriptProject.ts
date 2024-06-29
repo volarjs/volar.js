@@ -1,4 +1,4 @@
-import { FileType, Language, LanguagePlugin, ProviderResult, UriMap, createUriMap } from '@volar/language-service';
+import { FileType, Language, LanguagePlugin, ProjectContext, ProviderResult, UriMap, createUriMap } from '@volar/language-service';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
@@ -15,7 +15,10 @@ export function createTypeScriptProject(
 	tsLocalized: ts.MapLike<string> | undefined,
 	create: (projectContext: ProjectExposeContext) => ProviderResult<{
 		languagePlugins: LanguagePlugin<URI>[];
-		setup(language: Language): void;
+		setup(options: {
+			language: Language;
+			project: ProjectContext;
+		}): void;
 	}>
 ) {
 	let server: LanguageServer;

@@ -25,12 +25,17 @@ export function createSimpleWorkerService<T = {}>({
 	languagePlugins = [],
 	servicePlugins = [],
 	extraApis = {} as T,
+	setup,
 }: {
 	env: LanguageServiceEnvironment;
 	workerContext: monaco.worker.IWorkerContext<any>;
 	languagePlugins?: LanguagePlugin<URI>[];
 	servicePlugins?: LanguageServicePlugin[];
 	extraApis?: T;
+	setup?(options: {
+		language: Language<URI>;
+		project: ProjectContext;
+	}): void,
 }) {
 	const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
 	const language = createLanguage<URI>(
@@ -57,8 +62,10 @@ export function createSimpleWorkerService<T = {}>({
 			}
 		}
 	);
+	const project: ProjectContext = {};
+	setup?.({ language, project });
 
-	return createWorkerService(language, servicePlugins, env, {}, extraApis);
+	return createWorkerService(language, servicePlugins, env, project, extraApis);
 }
 
 export function createTypeScriptWorkerService<T = {}>({
@@ -70,6 +77,7 @@ export function createTypeScriptWorkerService<T = {}>({
 	languagePlugins = [],
 	servicePlugins = [],
 	extraApis = {} as T,
+	setup,
 }: {
 	typescript: typeof import('typescript'),
 	compilerOptions: ts.CompilerOptions,
@@ -82,6 +90,10 @@ export function createTypeScriptWorkerService<T = {}>({
 	languagePlugins?: LanguagePlugin<URI>[];
 	servicePlugins?: LanguageServicePlugin[];
 	extraApis?: T;
+	setup?(options: {
+		language: Language<URI>;
+		project: ProjectContext;
+	}): void,
 }) {
 
 	let projectVersion = 0;
@@ -134,54 +146,56 @@ export function createTypeScriptWorkerService<T = {}>({
 			}
 		}
 	);
+	const project: ProjectContext = {
+		typescript: {
+			configFileName: undefined,
+			sys,
+			asFileName: uriConverter.asFileName,
+			asUri: uriConverter.asUri,
+			...createLanguageServiceHost(
+				ts,
+				sys,
+				language,
+				uriConverter.asUri,
+				{
+					getCurrentDirectory() {
+						return sys.getCurrentDirectory();
+					},
+					getScriptFileNames() {
+						return workerContext.getMirrorModels().map(model => uriConverter.asFileName(model.uri as URI));
+					},
+					getProjectVersion() {
+						const models = workerContext.getMirrorModels();
+						if (modelVersions.size === workerContext.getMirrorModels().length) {
+							if (models.every(model => modelVersions.get(model) === model.version)) {
+								return projectVersion.toString();
+							}
+						}
+						modelVersions.clear();
+						for (const model of workerContext.getMirrorModels()) {
+							modelVersions.set(model, model.version);
+						}
+						projectVersion++;
+						return projectVersion.toString();
+					},
+					getScriptSnapshot(fileName) {
+						const uri = uriConverter.asUri(fileName);
+						return getModelSnapshot(uri);
+					},
+					getCompilationSettings() {
+						return compilerOptions;
+					},
+				}
+			),
+		},
+	};
+	setup?.({ language, project });
 
 	return createWorkerService(
 		language,
 		servicePlugins,
 		env,
-		{
-			typescript: {
-				configFileName: undefined,
-				sys,
-				asFileName: uriConverter.asFileName,
-				asUri: uriConverter.asUri,
-				...createLanguageServiceHost(
-					ts,
-					sys,
-					language,
-					uriConverter.asUri,
-					{
-						getCurrentDirectory() {
-							return sys.getCurrentDirectory();
-						},
-						getScriptFileNames() {
-							return workerContext.getMirrorModels().map(model => uriConverter.asFileName(model.uri as URI));
-						},
-						getProjectVersion() {
-							const models = workerContext.getMirrorModels();
-							if (modelVersions.size === workerContext.getMirrorModels().length) {
-								if (models.every(model => modelVersions.get(model) === model.version)) {
-									return projectVersion.toString();
-								}
-							}
-							modelVersions.clear();
-							for (const model of workerContext.getMirrorModels()) {
-								modelVersions.set(model, model.version);
-							}
-							projectVersion++;
-							return projectVersion.toString();
-						},
-						getScriptSnapshot(fileName) {
-							const uri = uriConverter.asUri(fileName);
-							return getModelSnapshot(uri);
-						},
-						getCompilationSettings() {
-							return compilerOptions;
-						},
-					}
-				),
-			},
-		},
+		project,
 		extraApis
 	);
 

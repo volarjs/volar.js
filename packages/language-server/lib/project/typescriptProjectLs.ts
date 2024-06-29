@@ -1,4 +1,4 @@
-import { Language, LanguagePlugin, LanguageService, LanguageServiceEnvironment, ProviderResult, UriMap, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
+import { Language, LanguagePlugin, LanguageService, LanguageServiceEnvironment, ProjectContext, ProviderResult, UriMap, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
 import type { SnapshotDocument } from '@volar/snapshot-document';
 import { TypeScriptProjectHost, createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
 import * as path from 'path-browserify';
@@ -38,7 +38,10 @@ export async function createTypeScriptLS(
 	},
 	create: (projectContext: ProjectExposeContext) => ProviderResult<{
 		languagePlugins: LanguagePlugin<URI>[];
-		setup(language: Language): void;
+		setup(options: {
+			language: Language;
+			project: ProjectContext;
+		}): void;
 	}>
 ): Promise<TypeScriptProjectLS> {
 
@@ -134,26 +137,27 @@ export async function createTypeScriptLS(
 			}
 		}
 	);
-	setup(language);
+	const project: ProjectContext = {
+		typescript: {
+			configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
+			sys,
+			asUri,
+			asFileName,
+			...createLanguageServiceHost(
+				ts,
+				sys,
+				language,
+				asUri,
+				projectHost
+			),
+		},
+	};
+	setup({ language, project });
 	const languageService = createLanguageService(
 		language,
 		server.languageServicePlugins,
 		serviceEnv,
-		{
-			typescript: {
-				configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
-				sys,
-				asUri,
-				asFileName,
-				...createLanguageServiceHost(
-					ts,
-					sys,
-					language,
-					asUri,
-					projectHost
-				),
-			}
-		}
+		project
 	);
 
 	return {

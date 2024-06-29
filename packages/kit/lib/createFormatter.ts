@@ -13,12 +13,7 @@ export function createFormatter(
 	const fakeUri = URI.parse('file:///dummy.txt');
 	const env = createServiceEnvironment(() => settings);
 	const language = createLanguage(languages, createUriMap(false), () => { });
-	const languageService = createLanguageService(
-		language,
-		services,
-		env,
-		{}
-	);
+	const languageService = createLanguageService(language, services, env, {});
 
 	return {
 		env,
