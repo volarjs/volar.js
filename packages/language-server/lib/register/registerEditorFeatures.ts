@@ -53,9 +53,10 @@ export function registerEditorFeatures(server: LanguageServer) {
 	server.connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 		const uri = URI.parse(params.uri);
 		const languageService = (await server.project.getLanguageService(uri));
-		if (languageService.context.language.typescript?.configFileName) {
-			const { configFileName, asScriptId } = languageService.context.language.typescript;
-			return { uri: asScriptId(configFileName).toString() };
+		const tsProject = languageService.context.project.typescript;
+		if (tsProject?.configFileName) {
+			const { configFileName, asUri } = tsProject;
+			return { uri: asUri(configFileName).toString() };
 		}
 	});
 	server.connection.onRequest(GetVirtualFileRequest.type, async document => {
@@ -107,10 +108,11 @@ export function registerEditorFeatures(server: LanguageServer) {
 		const fs = _require('fs');
 		const uri = URI.parse(params.uri);
 		const languageService = (await server.project.getLanguageService(uri));
+		const tsProject = languageService.context.project.typescript;
 
-		if (languageService.context.language.typescript) {
+		if (tsProject) {
 
-			const { languageServiceHost } = languageService.context.language.typescript;
+			const { languageServiceHost } = tsProject;
 
 			for (const fileName of languageServiceHost.getScriptFileNames()) {
 				if (!fs.existsSync(fileName)) {
@@ -121,7 +123,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 					}
 				}
 				else {
-					const uri = languageService.context.language.typescript.asScriptId(fileName);
+					const uri = tsProject.asUri(fileName);
 					const sourceScript = languageService.context.language.scripts.get(uri);
 					if (sourceScript?.generated) {
 						const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
@@ -150,8 +152,9 @@ export function registerEditorFeatures(server: LanguageServer) {
 		for (const languageService of await server.project.getExistingLanguageServices()) {
 			const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
 			const program = tsLanguageService?.getProgram();
-			if (program && languageService.context.language.typescript) {
-				const { languageServiceHost, configFileName } = languageService.context.language.typescript;
+			const tsProject = languageService.context.project.typescript;
+			if (program && tsProject) {
+				const { languageServiceHost, configFileName } = tsProject;
 				const projectName = configFileName ?? (languageServiceHost.getCurrentDirectory() + '(inferred)');
 				const sourceFiles = program.getSourceFiles() ?? [];
 				for (const sourceFile of sourceFiles) {

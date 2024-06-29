@@ -8,9 +8,10 @@ export * from './lib/protocol/createSys';
 
 import type { VirtualCode } from '@volar/language-core';
 import type * as ts from 'typescript';
+import { URI } from 'vscode-uri';
 
-declare module '@volar/language-core' {
-	export interface Language<T> {
+declare module '@volar/language-service' {
+	export interface ProjectContext {
 		typescript?: {
 			configFileName: string | undefined;
 			sys: ts.System & {
@@ -19,11 +20,13 @@ declare module '@volar/language-core' {
 			};
 			languageServiceHost: ts.LanguageServiceHost;
 			getExtraServiceScript(fileName: string): TypeScriptExtraServiceScript | undefined;
-			asScriptId(fileName: string): T;
-			asFileName(scriptId: T): string;
+			asUri(fileName: string): URI;
+			asFileName(uri: URI): string;
 		};
 	}
+}
 
+declare module '@volar/language-core' {
 	export interface LanguagePlugin<T = unknown, K extends VirtualCode = VirtualCode> {
 		typescript?: TypeScriptGenericOptions<K> & TypeScriptNonTSPluginOptions<K>;
 	}

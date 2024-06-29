@@ -30,7 +30,8 @@ export function createSimpleProject(languagePlugins: LanguagePlugin<URI>[]): Lan
 			languageService = createLanguageService(
 				language,
 				server.languageServicePlugins,
-				createLanguageServiceEnvironment(server, [...server.workspaceFolders.keys()])
+				createLanguageServiceEnvironment(server, [...server.workspaceFolders.keys()]),
+				{}
 			);
 		},
 		getLanguageService() {

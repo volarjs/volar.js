@@ -1,6 +1,7 @@
 import { FileMap, Language, forEachEmbeddedCode } from '@volar/language-core';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
+import { URI } from 'vscode-uri';
 import type { TypeScriptExtraServiceScript } from '../..';
 import { createResolveModuleName } from '../resolveModuleName';
 import type { createSys } from './createSys';
@@ -16,11 +17,11 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getScriptSnapshot'
 > { }
 
-export function createLanguageServiceHost<T>(
+export function createLanguageServiceHost(
 	ts: typeof import('typescript'),
 	sys: ReturnType<typeof createSys> | ts.System,
-	language: Language<T>,
-	asScriptId: (fileName: string) => T,
+	language: Language<URI>,
+	asUri: (fileName: string) => URI,
 	projectHost: TypeScriptProjectHost
 ) {
 	const scriptVersions = new FileMap<{ lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>(sys.useCaseSensitiveFileNames);
@@ -103,7 +104,7 @@ export function createLanguageServiceHost<T>(
 				return extraScriptRegistry.get(fileName)!.scriptKind;
 			}
 
-			const sourceScript = language.scripts.get(asScriptId(fileName));
+			const sourceScript = language.scripts.get(asUri(fileName));
 			if (sourceScript?.generated) {
 				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
 				if (serviceScript) {
@@ -139,7 +140,7 @@ export function createLanguageServiceHost<T>(
 		}
 	}
 
-	if (language.plugins.some(language => language.typescript?.extraFileExtensions.length)) {
+	if (language.plugins.some(plugin => plugin.typescript?.extraFileExtensions.length)) {
 
 		// TODO: can this share between monorepo packages?
 		const moduleCache = ts.createModuleResolutionCache(
@@ -147,7 +148,7 @@ export function createLanguageServiceHost<T>(
 			languageServiceHost.useCaseSensitiveFileNames?.() ? s => s : s => s.toLowerCase(),
 			languageServiceHost.getCompilationSettings()
 		);
-		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(asScriptId(fileName)));
+		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(asUri(fileName)));
 
 		let lastSysVersion = 'version' in sys ? sys.version : undefined;
 
@@ -209,7 +210,7 @@ export function createLanguageServiceHost<T>(
 		const tsFileNamesSet = new Set<string>();
 
 		for (const fileName of projectHost.getScriptFileNames()) {
-			const sourceScript = language.scripts.get(asScriptId(fileName));
+			const sourceScript = language.scripts.get(asUri(fileName));
 			if (sourceScript?.generated) {
 				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
 				if (serviceScript) {
@@ -255,7 +256,7 @@ export function createLanguageServiceHost<T>(
 			return extraScriptRegistry.get(fileName)!.code.snapshot;
 		}
 
-		const sourceScript = language.scripts.get(asScriptId(fileName));
+		const sourceScript = language.scripts.get(asUri(fileName));
 
 		if (sourceScript?.generated) {
 			const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
@@ -286,7 +287,7 @@ export function createLanguageServiceHost<T>(
 			return version.map.get(snapshot)!.toString();
 		}
 
-		const sourceScript = language.scripts.get(asScriptId(fileName));
+		const sourceScript = language.scripts.get(asUri(fileName));
 
 		if (sourceScript?.generated) {
 			const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
@@ -301,7 +302,7 @@ export function createLanguageServiceHost<T>(
 		const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
 
 		if (isOpenedFile) {
-			const sourceScript = language.scripts.get(asScriptId(fileName));
+			const sourceScript = language.scripts.get(asUri(fileName));
 			if (sourceScript && !sourceScript.generated) {
 				if (!version.map.has(sourceScript.snapshot)) {
 					version.map.set(sourceScript.snapshot, version.lastVersion++);

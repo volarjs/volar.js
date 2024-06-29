@@ -16,7 +16,8 @@ export function createFormatter(
 	const languageService = createLanguageService(
 		language,
 		services,
-		env
+		env,
+		{}
 	);
 
 	return {

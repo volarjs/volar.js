@@ -44,11 +44,14 @@ export interface LanguageServiceCommand<T extends any[]> {
 	is(value: vscode.Command): boolean;
 }
 
+export interface ProjectContext { }
+
 export interface LanguageServiceContext {
 	language: Language<URI>;
+	project: ProjectContext;
 	getLanguageService(): LanguageService;
 	env: LanguageServiceEnvironment;
-	inject<Provide, K extends keyof Provide = keyof Provide>(
+	inject<Provide = any, K extends keyof Provide = keyof Provide>(
 		key: K,
 		...args: Provide[K] extends (...args: any) => any ? Parameters<Provide[K]> : never
 	): ReturnType<Provide[K] extends (...args: any) => any ? Provide[K] : never> | undefined;

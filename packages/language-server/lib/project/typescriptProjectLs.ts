@@ -134,24 +134,26 @@ export async function createTypeScriptLS(
 			}
 		}
 	);
-	language.typescript = {
-		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
-		sys,
-		asScriptId: asUri,
-		asFileName: asFileName,
-		...createLanguageServiceHost(
-			ts,
-			sys,
-			language,
-			asUri,
-			projectHost
-		),
-	};
 	setup(language);
 	const languageService = createLanguageService(
 		language,
 		server.languageServicePlugins,
-		serviceEnv
+		serviceEnv,
+		{
+			typescript: {
+				configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
+				sys,
+				asUri,
+				asFileName,
+				...createLanguageServiceHost(
+					ts,
+					sys,
+					language,
+					asUri,
+					projectHost
+				),
+			}
+		}
 	);
 
 	return {

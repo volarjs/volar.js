@@ -37,7 +37,7 @@ import * as completionResolve from './features/resolveCompletionItem';
 import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
 import * as workspaceSymbolResolve from './features/resolveWorkspaceSymbol';
-import type { LanguageServiceContext, LanguageServiceEnvironment, LanguageServicePlugin } from './types';
+import type { LanguageServiceContext, LanguageServiceEnvironment, LanguageServicePlugin, ProjectContext } from './types';
 import { NoneCancellationToken } from './utils/cancellation';
 import { UriMap, createUriMap } from './utils/uriMap';
 
@@ -48,12 +48,14 @@ export const embeddedContentScheme = 'volar-embedded-content';
 export function createLanguageService(
 	language: Language<URI>,
 	plugins: LanguageServicePlugin[],
-	env: LanguageServiceEnvironment
+	env: LanguageServiceEnvironment,
+	project: ProjectContext
 ) {
 	const documentVersions = createUriMap<number>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, UriMap<TextDocument>>();
 	const context: LanguageServiceContext = {
 		language,
+		project,
 		getLanguageService: () => langaugeService,
 		documents: {
 			get(uri, languageId, snapshot) {

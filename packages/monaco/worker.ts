@@ -2,6 +2,7 @@ import {
 	Language,
 	LanguagePlugin,
 	LanguageServicePlugin,
+	ProjectContext,
 	createLanguageService as _createLanguageService,
 	createLanguage,
 	createUriMap,
@@ -57,7 +58,7 @@ export function createSimpleWorkerService<T = {}>({
 		}
 	);
 
-	return createWorkerService(language, servicePlugins, env, extraApis);
+	return createWorkerService(language, servicePlugins, env, {}, extraApis);
 }
 
 export function createTypeScriptWorkerService<T = {}>({
@@ -133,49 +134,56 @@ export function createTypeScriptWorkerService<T = {}>({
 			}
 		}
 	);
-	language.typescript = {
-		configFileName: undefined,
-		sys,
-		asFileName: uriConverter.asFileName,
-		asScriptId: uriConverter.asUri,
-		...createLanguageServiceHost(
-			ts,
-			sys,
-			language,
-			uriConverter.asUri,
-			{
-				getCurrentDirectory() {
-					return sys.getCurrentDirectory();
-				},
-				getScriptFileNames() {
-					return workerContext.getMirrorModels().map(model => uriConverter.asFileName(model.uri as URI));
-				},
-				getProjectVersion() {
-					const models = workerContext.getMirrorModels();
-					if (modelVersions.size === workerContext.getMirrorModels().length) {
-						if (models.every(model => modelVersions.get(model) === model.version)) {
-							return projectVersion.toString();
-						}
-					}
-					modelVersions.clear();
-					for (const model of workerContext.getMirrorModels()) {
-						modelVersions.set(model, model.version);
-					}
-					projectVersion++;
-					return projectVersion.toString();
-				},
-				getScriptSnapshot(fileName) {
-					const uri = uriConverter.asUri(fileName);
-					return getModelSnapshot(uri);
-				},
-				getCompilationSettings() {
-					return compilerOptions;
-				},
-			}
-		),
-	};
 
-	return createWorkerService(language, servicePlugins, env, extraApis);
+	return createWorkerService(
+		language,
+		servicePlugins,
+		env,
+		{
+			typescript: {
+				configFileName: undefined,
+				sys,
+				asFileName: uriConverter.asFileName,
+				asUri: uriConverter.asUri,
+				...createLanguageServiceHost(
+					ts,
+					sys,
+					language,
+					uriConverter.asUri,
+					{
+						getCurrentDirectory() {
+							return sys.getCurrentDirectory();
+						},
+						getScriptFileNames() {
+							return workerContext.getMirrorModels().map(model => uriConverter.asFileName(model.uri as URI));
+						},
+						getProjectVersion() {
+							const models = workerContext.getMirrorModels();
+							if (modelVersions.size === workerContext.getMirrorModels().length) {
+								if (models.every(model => modelVersions.get(model) === model.version)) {
+									return projectVersion.toString();
+								}
+							}
+							modelVersions.clear();
+							for (const model of workerContext.getMirrorModels()) {
+								modelVersions.set(model, model.version);
+							}
+							projectVersion++;
+							return projectVersion.toString();
+						},
+						getScriptSnapshot(fileName) {
+							const uri = uriConverter.asUri(fileName);
+							return getModelSnapshot(uri);
+						},
+						getCompilationSettings() {
+							return compilerOptions;
+						},
+					}
+				),
+			},
+		},
+		extraApis
+	);
 
 	function getModelSnapshot(uri: URI) {
 		const model = workerContext.getMirrorModels().find(model => model.uri.toString() === uri.toString());
@@ -199,10 +207,16 @@ function createWorkerService<T = {}>(
 	language: Language<URI>,
 	servicePlugins: LanguageServicePlugin[],
 	env: LanguageServiceEnvironment,
+	projectContext: ProjectContext,
 	extraApis: T = {} as any
 ): LanguageService & T {
 
-	const languageService = _createLanguageService(language, servicePlugins, env);
+	const languageService = _createLanguageService(
+		language,
+		servicePlugins,
+		env,
+		projectContext
+	);
 
 	class WorkerService { };
 
