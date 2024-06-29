@@ -1,7 +1,7 @@
 import { FileMap, Language, LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { resolveFileLanguageId } from '../common';
-import { decorateLanguageService } from '../node/decorateLanguageService';
+import { createProxyLanguageService } from '../node/proxyLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 
 export const externalFiles = new WeakMap<ts.server.Project, string[]>();
@@ -60,7 +60,9 @@ export function createLanguageServicePlugin(
 						}
 					);
 
-					decorateLanguageService(language, info.languageService);
+					const { proxy, initialize } = createProxyLanguageService(info.languageService);
+					info.languageService = proxy;
+					initialize(language);
 					decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 					setup?.(language);
 				}
