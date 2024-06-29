@@ -15,6 +15,6 @@ export function asPosix(path: string) {
 	return path.replace(/\\/g, '/') as path.PosixPath;
 }
 
-export const uriToFileName = (uri: URI) => uri.fsPath.replace(/\\/g, '/');
+export const asFileName = (uri: URI) => uri.fsPath.replace(/\\/g, '/');
 
-export const fileNameToUri = (fileName: string) => URI.file(fileName);
+export const asUri = (fileName: string) => URI.file(fileName);

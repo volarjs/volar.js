@@ -3,7 +3,7 @@ import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createServiceEnvironment } from './createServiceEnvironment';
-import { asPosix, defaultCompilerOptions, fileNameToUri, uriToFileName } from './utils';
+import { asPosix, defaultCompilerOptions, asUri, asFileName } from './utils';
 import { URI } from 'vscode-uri';
 import { TypeScriptProjectHost, createLanguageServiceHost, resolveFileLanguageId } from '@volar/typescript';
 
@@ -82,7 +82,7 @@ function createTypeScriptCheckerWorker(
 		uri => {
 			// fs files
 			const cache = fsFileSnapshots.get(uri);
-			const fileName = uriToFileName(uri);
+			const fileName = asFileName(uri);
 			const modifiedTime = ts.sys.getModifiedTime?.(fileName)?.valueOf();
 			if (!cache || cache[0] !== modifiedTime) {
 				if (ts.sys.fileExists(fileName)) {
@@ -104,23 +104,25 @@ function createTypeScriptCheckerWorker(
 		}
 	);
 	const projectHost = getProjectHost(env);
-	language.typescript = {
-		configFileName,
-		sys: ts.sys,
-		asFileName: uriToFileName,
-		asScriptId: fileNameToUri,
-		...createLanguageServiceHost(
-			ts,
-			ts.sys,
-			language,
-			fileNameToUri,
-			projectHost
-		),
-	};
 	const languageService = createLanguageService(
 		language,
 		languageServicePlugins,
-		env
+		env,
+		{
+			typescript: {
+				configFileName,
+				sys: ts.sys,
+				asFileName,
+				asUri,
+				...createLanguageServiceHost(
+					ts,
+					ts.sys,
+					language,
+					asUri,
+					projectHost
+				),
+			},
+		}
 	);
 
 	return {
@@ -154,19 +156,19 @@ function createTypeScriptCheckerWorker(
 	function fileEvent(fileName: string, type: FileChangeType) {
 		fileName = asPosix(fileName);
 		for (const cb of didChangeWatchedFilesCallbacks) {
-			cb({ changes: [{ uri: fileNameToUri(fileName).toString(), type }] });
+			cb({ changes: [{ uri: asUri(fileName).toString(), type }] });
 		}
 	}
 
 	function check(fileName: string) {
 		fileName = asPosix(fileName);
-		const uri = fileNameToUri(fileName);
+		const uri = asUri(fileName);
 		return languageService.getDiagnostics(uri);
 	}
 
 	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
 		fileName = asPosix(fileName);
-		const uri = fileNameToUri(fileName);
+		const uri = asUri(fileName);
 		const sourceScript = languageService.context.language.scripts.get(uri);
 		if (sourceScript) {
 			const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
@@ -188,7 +190,7 @@ function createTypeScriptCheckerWorker(
 							if (editFile) {
 								const editDocument = languageService.context.documents.get(parsedUri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, edits);
-								await writeFile(uriToFileName(parsedUri), newString);
+								await writeFile(asFileName(parsedUri), newString);
 							}
 						}
 					}
@@ -199,7 +201,7 @@ function createTypeScriptCheckerWorker(
 							if (editFile) {
 								const editDocument = languageService.context.documents.get(changeUri, editFile.languageId, editFile.snapshot);
 								const newString = TextDocument.applyEdits(editDocument, change.edits);
-								await writeFile(uriToFileName(changeUri), newString);
+								await writeFile(asFileName(changeUri), newString);
 							}
 						}
 						// TODO: CreateFile | RenameFile | DeleteFile
@@ -219,7 +221,7 @@ function createTypeScriptCheckerWorker(
 
 	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath: string) {
 		fileName = asPosix(fileName);
-		const uri = fileNameToUri(fileName);
+		const uri = asUri(fileName);
 		const sourceScript = languageService.context.language.scripts.get(uri)!;
 		const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
@@ -250,7 +252,7 @@ function createTypeScriptProjectHost(
 
 	const host: TypeScriptProjectHost = {
 		getCurrentDirectory: () => env.workspaceFolders.length
-			? uriToFileName(env.workspaceFolders[0])
+			? asFileName(env.workspaceFolders[0])
 			: process.cwd(),
 		getCompilationSettings: () => {
 			return parsedCommandLine.options;
@@ -280,7 +282,7 @@ function createTypeScriptProjectHost(
 	env.onDidChangeWatchedFiles?.(({ changes }) => {
 		for (const change of changes) {
 			const changeUri = URI.parse(change.uri);
-			const fileName = uriToFileName(changeUri);
+			const fileName = asFileName(changeUri);
 			if (change.type === 2 satisfies typeof FileChangeType.Changed) {
 				if (scriptSnapshotsCache.has(fileName)) {
 					projectVersion++;
