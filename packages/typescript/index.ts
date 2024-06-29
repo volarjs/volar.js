@@ -27,25 +27,25 @@ declare module '@volar/language-service' {
 }
 
 declare module '@volar/language-core' {
-	export interface LanguagePlugin<T = unknown, K extends VirtualCode = VirtualCode> {
-		typescript?: TypeScriptGenericOptions<K> & TypeScriptNonTSPluginOptions<K>;
+	export interface LanguagePlugin {
+		typescript?: TypeScriptGenericOptions & TypeScriptNonTSPluginOptions;
 	}
 }
 
 /**
  * The following options available to all situations.
  */
-interface TypeScriptGenericOptions<K> {
+interface TypeScriptGenericOptions {
 	extraFileExtensions: ts.FileExtensionInfo[];
 	resolveHiddenExtensions?: boolean;
-	getServiceScript(root: K): TypeScriptServiceScript | undefined;
+	getServiceScript(root: VirtualCode): TypeScriptServiceScript | undefined;
 }
 
 /**
  * The following options will not be available in TS plugin.
  */
-interface TypeScriptNonTSPluginOptions<K> {
-	getExtraServiceScripts?(fileName: string, rootVirtualCode: K): TypeScriptExtraServiceScript[];
+interface TypeScriptNonTSPluginOptions {
+	getExtraServiceScripts?(fileName: string, root: VirtualCode): TypeScriptExtraServiceScript[];
 	resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
 }
 
