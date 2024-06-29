@@ -1,7 +1,7 @@
 import { FileMap, Language, LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { resolveFileLanguageId } from '../common';
-import { createProxyLanguageService } from '../node/decorateLanguageService';
+import { createProxyLanguageService } from '../node/proxyLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 import { arrayItemsEqual, decoratedLanguageServiceHosts, decoratedLanguageServices, externalFiles } from './createLanguageServicePlugin';
 
@@ -64,7 +64,8 @@ export function createAsyncLanguageServicePlugin(
 						};
 					}
 
-					const languageServiceProxy = createProxyLanguageService(info.languageService);
+					const { proxy, initialize } = createProxyLanguageService(info.languageService);
+					info.languageService = proxy;
 
 					create(ts, info).then(({ languagePlugins, setup }) => {
 						const syncedScriptVersions = new FileMap<string>(ts.sys.useCaseSensitiveFileNames);
@@ -93,7 +94,7 @@ export function createAsyncLanguageServicePlugin(
 							}
 						);
 
-						languageServiceProxy.initialize(language);
+						initialize(language);
 						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 						setup?.(language);
 
@@ -102,8 +103,6 @@ export function createAsyncLanguageServicePlugin(
 						}
 						initialized = true;
 					});
-
-					return languageServiceProxy.proxy;
 				}
 
 				return info.languageService;

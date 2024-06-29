@@ -1,5 +1,5 @@
 export * from './lib/common';
-export * from './lib/node/decorateLanguageService';
+export * from './lib/node/proxyLanguageService';
 export * from './lib/node/decorateLanguageServiceHost';
 export * from './lib/node/decorateProgram';
 export * from './lib/node/proxyCreateProgram';
