@@ -5,9 +5,16 @@ const textCache = new Map<string, Promise<string | undefined>>();
 const jsonCache = new Map<string, Promise<any>>();
 
 export function createJsDelivrNpmFileSystem(
-	getCdnPath: (uri: URI) => string | undefined,
-	resolvePackageName: (pkgName: string) => string,
-	onFetch?: (paht: string, content: string) => void
+	getCdnPath = (uri: URI): string | undefined => {
+		if (uri.path === '/node_modules') {
+			return '';
+		}
+		else if (uri.path.startsWith('/node_modules/')) {
+			return uri.path.slice('/node_modules'.length);
+		}
+	},
+	getPackageVersion?: (pkgName: string) => string | undefined,
+	onFetch?: (path: string, content: string) => void
 ): FileSystem {
 	const fetchResults = new Map<string, Promise<string | undefined>>();
 	const flatResults = new Map<string, Promise<{
@@ -22,6 +29,14 @@ export function createJsDelivrNpmFileSystem(
 			const path = getCdnPath(uri);
 			if (path === undefined) {
 				return;
+			}
+			if (path === '') {
+				return {
+					type: 2 satisfies FileType.Directory,
+					size: -1,
+					ctime: -1,
+					mtime: -1,
+				};
 			}
 			return await _stat(path);
 		},
@@ -43,17 +58,17 @@ export function createJsDelivrNpmFileSystem(
 
 	async function _stat(path: string) {
 
-		const pkgName = getPackageName(path);
-		if (!pkgName || !await isValidPackageName(pkgName)) {
+		const resolved = resolvePackageName(path);
+		if (!resolved || !await isValidPackageName(resolved[1])) {
 			return;
 		}
 
-		if (!flatResults.has(pkgName)) {
-			flatResults.set(pkgName, flat(pkgName));
+		if (!flatResults.has(resolved[0])) {
+			flatResults.set(resolved[0], flat(resolved[1], resolved[2]));
 		}
 
-		const flatResult = await flatResults.get(pkgName)!;
-		const filePath = path.slice(pkgName.length);
+		const flatResult = await flatResults.get(resolved[0])!;
+		const filePath = path.slice(resolved[0].length);
 		const file = flatResult.find(file => file.name === filePath);
 		if (file) {
 			return {
@@ -75,17 +90,17 @@ export function createJsDelivrNpmFileSystem(
 
 	async function _readDirectory(path: string): Promise<[string, FileType][]> {
 
-		const pkgName = getPackageName(path);
-		if (!pkgName || !await isValidPackageName(pkgName)) {
+		const resolved = resolvePackageName(path);
+		if (!resolved || !await isValidPackageName(resolved[1])) {
 			return [];
 		}
 
-		if (!flatResults.has(pkgName)) {
-			flatResults.set(pkgName, flat(pkgName));
+		if (!flatResults.has(resolved[0])) {
+			flatResults.set(resolved[0], flat(resolved[1], resolved[2]));
 		}
 
-		const flatResult = await flatResults.get(pkgName)!;
-		const dirPath = path.slice(pkgName.length);
+		const flatResult = await flatResults.get(resolved[0])!;
+		const dirPath = path.slice(resolved[0].length);
 		const files = flatResult
 			.filter(f => f.name.substring(0, f.name.lastIndexOf('/')) === dirPath)
 			.map(f => f.name.slice(dirPath.length + 1));
@@ -101,8 +116,8 @@ export function createJsDelivrNpmFileSystem(
 
 	async function _readFile(path: string): Promise<string | undefined> {
 
-		const pkgName = getPackageName(path);
-		if (!pkgName || !await isValidPackageName(pkgName)) {
+		const resolved = resolvePackageName(path);
+		if (!resolved || !await isValidPackageName(resolved[1])) {
 			return;
 		}
 
@@ -122,16 +137,7 @@ export function createJsDelivrNpmFileSystem(
 		return await fetchResults.get(path)!;
 	}
 
-	async function flat(pkgNameWithVersion: string) {
-
-		let pkgName = pkgNameWithVersion;
-		let version: string | undefined;
-
-		if (pkgNameWithVersion.substring(1).includes('@')) {
-			pkgName = pkgNameWithVersion.substring(0, pkgNameWithVersion.lastIndexOf('@'));
-			version = pkgNameWithVersion.substring(pkgNameWithVersion.lastIndexOf('@') + 1);
-		}
-
+	async function flat(pkgName: string, version: string | undefined) {
 		version ??= 'latest';
 
 		// resolve latest tag
@@ -159,10 +165,6 @@ export function createJsDelivrNpmFileSystem(
 	}
 
 	async function isValidPackageName(pkgName: string) {
-		// @aaa/bbb@latest -> @aaa/bbb
-		if (pkgName.lastIndexOf('@') >= 1) {
-			pkgName = pkgName.substring(0, pkgName.lastIndexOf('@'));
-		}
 		// ignore @aaa/node_modules
 		if (pkgName.endsWith('/node_modules')) {
 			return false;
@@ -198,19 +200,29 @@ export function createJsDelivrNpmFileSystem(
 	 * "@a/b/c" -> "@a/b"
 	 * "@a/b@1.2.3/c" -> "@a/b@1.2.3"
 	 */
-	function getPackageName(path: string) {
+	function resolvePackageName(path: string): [
+		modName: string,
+		pkgName: string,
+		version: string | undefined,
+	] | undefined {
 		const parts = path.split('/');
-		let pkgName = parts[0];
-		if (pkgName.startsWith('@')) {
+		let modName = parts[0];
+		if (modName.startsWith('@')) {
 			if (!parts[1]) {
-				return undefined;
+				return;
 			}
-			pkgName += '/' + parts[1];
+			modName += '/' + parts[1];
 		}
-		if (resolvePackageName) {
-			pkgName = resolvePackageName(pkgName);
+		let pkgName = modName;
+		let version: string | undefined;
+		if (modName.lastIndexOf('@') >= 1) {
+			pkgName = modName.substring(0, modName.lastIndexOf('@'));
+			version = modName.substring(modName.lastIndexOf('@') + 1);
 		}
-		return pkgName;
+		if (!version && getPackageVersion) {
+			getPackageVersion?.(pkgName);
+		}
+		return [modName, pkgName, version];
 	}
 }
 
