@@ -1,7 +1,7 @@
 import { isSymbolsEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { URI } from 'vscode-uri';
-import type { LanguageServiceContext } from '../types';
+import { URI } from 'vscode-uri';
+import type { LanguageServiceContext, UriComponents } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isInsideRange } from '../utils/common';
 import { documentFeatureWorker, getSourceRange } from '../utils/featureWorkers';
@@ -9,7 +9,8 @@ import { transformDocumentSymbol } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
 
-	return (uri: URI, token = NoneCancellationToken): Promise<vscode.DocumentSymbol[] | undefined> => {
+	return (_uri: URI | UriComponents, token = NoneCancellationToken): Promise<vscode.DocumentSymbol[] | undefined> => {
+		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 
 		return documentFeatureWorker(
 			context,

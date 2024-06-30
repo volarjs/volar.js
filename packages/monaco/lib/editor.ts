@@ -1,7 +1,6 @@
 import type { LanguageService } from '@volar/language-service';
 import { fromPosition, toMarkerData, toTextEdit } from 'monaco-languageserver-types';
 import type { editor, IDisposable, MonacoEditor, Uri } from 'monaco-types';
-import type { URI } from 'vscode-uri';
 import { markers } from './markers.js';
 
 interface IInternalEditorModel extends editor.IModel {
@@ -93,7 +92,7 @@ export function activateMarkers(
 
 		const version = model.getVersionId();
 		const languageService = await worker.withSyncedResources(getSyncUris());
-		const diagnostics = await languageService.getDiagnostics(model.uri as URI);
+		const diagnostics = await languageService.getDiagnostics(model.uri);
 		if (model.getVersionId() !== version) {
 			return;
 		}
@@ -184,7 +183,7 @@ export function activateAutoInsertion(
 				}
 				const languageService = await worker.withSyncedResources(getSyncUris());
 				const edit = await languageService.getAutoInsertSnippet(
-					model.uri as URI,
+					model.uri,
 					fromPosition({
 						lineNumber: lastChange.range.startLineNumber,
 						column: lastChange.range.startColumn + lastChange.text.length,

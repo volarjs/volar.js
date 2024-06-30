@@ -12,7 +12,7 @@ import {
 import { createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
 import type * as monaco from 'monaco-types';
 import type * as ts from 'typescript';
-import type { URI } from 'vscode-uri';
+import { URI } from 'vscode-uri';
 
 export * from '@volar/language-service';
 export * from './lib/ata.js';
@@ -162,7 +162,7 @@ export function createTypeScriptWorkerService<T = {}>({
 						return sys.getCurrentDirectory();
 					},
 					getScriptFileNames() {
-						return workerContext.getMirrorModels().map(model => uriConverter.asFileName(model.uri as URI));
+						return workerContext.getMirrorModels().map(model => uriConverter.asFileName(URI.from(model.uri)));
 					},
 					getProjectVersion() {
 						const models = workerContext.getMirrorModels();

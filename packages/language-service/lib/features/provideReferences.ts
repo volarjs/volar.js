@@ -2,14 +2,15 @@ import { isReferencesEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import type { LanguageServiceContext } from '../types';
+import type { LanguageServiceContext, UriComponents } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
 import { DocumentsAndMap, getGeneratedPositions, getLinkedCodePositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
-	return (uri: URI, position: vscode.Position, referenceContext: vscode.ReferenceContext, token = NoneCancellationToken) => {
+	return (_uri: URI | UriComponents, position: vscode.Position, referenceContext: vscode.ReferenceContext, token = NoneCancellationToken) => {
+		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 
 		return languageFeatureWorker(
 			context,

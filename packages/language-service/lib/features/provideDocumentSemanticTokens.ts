@@ -1,7 +1,7 @@
 import { isSemanticTokensEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { URI } from 'vscode-uri';
-import type { LanguageServiceContext, SemanticToken } from '../types';
+import { URI } from 'vscode-uri';
+import type { LanguageServiceContext, SemanticToken, UriComponents } from '../types';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange } from '../utils/common';
@@ -10,12 +10,13 @@ import { getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 export function register(context: LanguageServiceContext) {
 
 	return async (
-		uri: URI,
+		_uri: URI | UriComponents,
 		range: vscode.Range | undefined,
 		legend: vscode.SemanticTokensLegend,
 		token = NoneCancellationToken,
 		_reportProgress?: (tokens: vscode.SemanticTokens) => void // TODO
 	): Promise<vscode.SemanticTokens | undefined> => {
+		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return;
