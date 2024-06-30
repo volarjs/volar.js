@@ -23,14 +23,6 @@ export function createJsDelivrNpmFileSystem(
 			if (path === undefined) {
 				return;
 			}
-			if (path === '') {
-				return {
-					type: 2 satisfies FileType.Directory,
-					size: -1,
-					ctime: -1,
-					mtime: -1,
-				};
-			}
 			return await _stat(path);
 		},
 		async readFile(uri) {
