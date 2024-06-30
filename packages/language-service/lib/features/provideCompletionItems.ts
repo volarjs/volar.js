@@ -2,7 +2,7 @@ import { isCompletionEnabled, SourceScript, VirtualCode, type CodeInformation } 
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import type { LanguageServicePluginInstance, LanguageServiceContext } from '../types';
+import type { LanguageServiceContext, LanguageServicePluginInstance, UriComponents } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { DocumentsAndMap, forEachEmbeddedDocument, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
 import { transformCompletionList } from '../utils/transform';
@@ -26,11 +26,12 @@ export function register(context: LanguageServiceContext) {
 	} | undefined;
 
 	return async (
-		uri: URI,
+		_uri: URI | UriComponents,
 		position: vscode.Position,
 		completionContext: vscode.CompletionContext = { triggerKind: 1 satisfies typeof vscode.CompletionTriggerKind.Invoked, },
 		token = NoneCancellationToken
 	) => {
+		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 		let langaugeIdAndSnapshot: SourceScript<URI> | VirtualCode | undefined;
 		let sourceScript: SourceScript<URI> | undefined;
 

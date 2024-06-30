@@ -1,7 +1,7 @@
 import { isHoverEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { URI } from 'vscode-uri';
-import type { LanguageServiceContext } from '../types';
+import { URI } from 'vscode-uri';
+import type { LanguageServiceContext, UriComponents } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { isInsideRange } from '../utils/common';
 import { getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
@@ -10,7 +10,8 @@ import { errorMarkups } from './provideDiagnostics';
 
 export function register(context: LanguageServiceContext) {
 
-	return async (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
+	return async (_uri: URI | UriComponents, position: vscode.Position, token = NoneCancellationToken) => {
+		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 
 		let hover = await languageFeatureWorker(
 			context,

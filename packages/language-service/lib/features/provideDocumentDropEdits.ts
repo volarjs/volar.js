@@ -1,13 +1,14 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { URI } from 'vscode-uri';
-import type { DataTransferItem, LanguageServiceContext } from '../types';
+import { URI } from 'vscode-uri';
+import type { DataTransferItem, LanguageServiceContext, UriComponents } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWorkers';
 import { transformWorkspaceEdit } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
 
-	return (uri: URI, position: vscode.Position, dataTransfer: Map<string, DataTransferItem>, token = NoneCancellationToken) => {
+	return (_uri: URI | UriComponents, position: vscode.Position, dataTransfer: Map<string, DataTransferItem>, token = NoneCancellationToken) => {
+		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 
 		return languageFeatureWorker(
 			context,

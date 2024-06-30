@@ -2,7 +2,7 @@ import { SourceScript, VirtualCode, forEachEmbeddedCode, isFormattingEnabled } f
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import type { EmbeddedCodeFormattingOptions, LanguageServiceContext } from '../types';
+import type { EmbeddedCodeFormattingOptions, LanguageServiceContext, UriComponents } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange, stringToSnapshot } from '../utils/common';
 import { DocumentsAndMap, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
@@ -10,7 +10,7 @@ import { DocumentsAndMap, getGeneratedPositions, getSourceRange } from '../utils
 export function register(context: LanguageServiceContext) {
 
 	return async (
-		uri: URI,
+		_uri: URI | UriComponents,
 		options: vscode.FormattingOptions,
 		range: vscode.Range | undefined,
 		onTypeParams: {
@@ -19,6 +19,7 @@ export function register(context: LanguageServiceContext) {
 		} | undefined,
 		token = NoneCancellationToken
 	) => {
+		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return;

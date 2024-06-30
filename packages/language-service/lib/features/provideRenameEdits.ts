@@ -2,7 +2,7 @@ import { isRenameEnabled, resolveRenameNewName, type CodeInformation } from '@vo
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import type { LanguageServiceContext } from '../types';
+import type { LanguageServiceContext, UriComponents } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
 import { getGeneratedPositions, getLinkedCodePositions, languageFeatureWorker } from '../utils/featureWorkers';
@@ -10,7 +10,8 @@ import { pushEditToDocumentChanges, transformWorkspaceEdit } from '../utils/tran
 
 export function register(context: LanguageServiceContext) {
 
-	return (uri: URI, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
+	return (_uri: URI | UriComponents, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
+		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 
 		return languageFeatureWorker(
 			context,

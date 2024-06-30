@@ -1,14 +1,14 @@
 import { isSignatureHelpEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import type { URI } from 'vscode-uri';
-import type { LanguageServiceContext } from '../types';
+import { URI } from 'vscode-uri';
+import type { LanguageServiceContext, UriComponents } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
 	return (
-		uri: URI,
+		_uri: URI | UriComponents,
 		position: vscode.Position,
 		signatureHelpContext: vscode.SignatureHelpContext = {
 			triggerKind: 1 satisfies typeof vscode.SignatureHelpTriggerKind.Invoked,
@@ -16,6 +16,7 @@ export function register(context: LanguageServiceContext) {
 		},
 		token = NoneCancellationToken
 	) => {
+		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 
 		return languageFeatureWorker(
 			context,
