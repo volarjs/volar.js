@@ -1,236 +1,195 @@
-import type { FileSystem, FileType, LanguageServiceEnvironment } from '@volar/language-service';
+import type { FileSystem, FileType } from '@volar/language-service';
 import type { URI } from 'vscode-uri';
 
-export function activateAutomaticTypeAcquisition(
-	env: LanguageServiceEnvironment,
-	uriConverter: {
-		asFileName(uri: URI): string;
-	},
-	onFetch?: (path: string, content: string) => void
-) {
-	const textCache = new Map<string, Promise<string | undefined>>();
-	const jsonCache = new Map<string, Promise<any>>();
-	const npmFs = createJsDelivrNpmFileSystem();
-	const _fs = env.fs;
+const textCache = new Map<string, Promise<string | undefined>>();
+const jsonCache = new Map<string, Promise<any>>();
 
-	env.fs = {
+export function createJsDelivrNpmFileSystem(
+	getCdnPath: (uri: URI) => string | undefined,
+	resolvePackageName: (pkgName: string) => string,
+	onFetch?: (paht: string, content: string) => void
+): FileSystem {
+	const fetchResults = new Map<string, Promise<string | undefined>>();
+	const flatResults = new Map<string, Promise<{
+		name: string;
+		size: number;
+		time: string;
+		hash: string;
+	}[]>>();
+
+	return {
 		async stat(uri) {
-			return await npmFs.stat(uri) ?? await _fs?.stat(uri);
-		},
-		async readDirectory(uri) {
-			return [
-				...await npmFs.readDirectory(uri),
-				...await _fs?.readDirectory(uri) ?? [],
-			];
+			const path = getCdnPath(uri);
+			if (path === undefined) {
+				return;
+			}
+			return await _stat(path);
 		},
 		async readFile(uri) {
-			return await npmFs.readFile(uri) ?? await _fs?.readFile(uri);
+			const path = getCdnPath(uri);
+			if (path === undefined) {
+				return;
+			}
+			return await _readFile(path);
+		},
+		readDirectory(uri) {
+			const path = getCdnPath(uri);
+			if (path === undefined) {
+				return [];
+			}
+			return _readDirectory(path);
 		},
 	};
 
-	function createJsDelivrNpmFileSystem(): FileSystem {
+	async function _stat(path: string) {
 
-		const fetchResults = new Map<string, Promise<string | undefined>>();
-		const flatResults = new Map<string, Promise<{
-			name: string;
-			size: number;
-			time: string;
-			hash: string;
-		}[]>>();
-
-		return {
-			async stat(uri) {
-
-				const fileName = uriConverter.asFileName(uri);
-
-				if (fileName === '/node_modules') {
-					return {
-						type: 2 satisfies FileType.Directory,
-						size: -1,
-						ctime: -1,
-						mtime: -1,
-					};
-				}
-
-				if (fileName.startsWith('/node_modules/')) {
-					const path = fileName.substring('/node_modules/'.length);
-					return await _stat(path);
-				}
-			},
-			async readFile(uri) {
-
-				const fileName = uriConverter.asFileName(uri);
-
-				if (fileName.startsWith('/node_modules/')) {
-
-					const path = fileName.substring('/node_modules/'.length);
-
-					return await _readFile(path);
-				}
-			},
-			readDirectory(uri) {
-
-				const fileName = uriConverter.asFileName(uri);
-
-				if (fileName.startsWith('/node_modules/')) {
-
-					const path = fileName.substring('/node_modules/'.length);
-
-					return _readDirectory(path);
-				}
-
-				return [];
-			},
-		};
-
-		async function _stat(path: string) {
-
-			const pkgName = getPackageName(path);
-			if (!pkgName || !await isValidPackageName(pkgName)) {
-				return;
-			}
-
-			if (!flatResults.has(pkgName)) {
-				flatResults.set(pkgName, flat(pkgName));
-			}
-
-			const flatResult = await flatResults.get(pkgName)!;
-			const filePath = path.slice(pkgName.length);
-			const file = flatResult.find(file => file.name === filePath);
-			if (file) {
-				return {
-					type: 1 satisfies FileType.File,
-					ctime: new Date(file.time).valueOf(),
-					mtime: new Date(file.time).valueOf(),
-					size: file.size,
-				};
-			}
-			else if (flatResult.some(file => file.name.startsWith(filePath + '/'))) {
-				return {
-					type: 2 satisfies FileType.Directory,
-					ctime: -1,
-					mtime: -1,
-					size: -1,
-				};
-			}
+		const pkgName = getPackageName(path);
+		if (!pkgName || !await isValidPackageName(pkgName)) {
+			return;
 		}
 
-		async function _readDirectory(path: string): Promise<[string, FileType][]> {
-
-			const pkgName = getPackageName(path);
-			if (!pkgName || !await isValidPackageName(pkgName)) {
-				return [];
-			}
-
-			if (!flatResults.has(pkgName)) {
-				flatResults.set(pkgName, flat(pkgName));
-			}
-
-			const flatResult = await flatResults.get(pkgName)!;
-			const dirPath = path.slice(pkgName.length);
-			const files = flatResult
-				.filter(f => f.name.substring(0, f.name.lastIndexOf('/')) === dirPath)
-				.map(f => f.name.slice(dirPath.length + 1));
-			const dirs = flatResult
-				.filter(f => f.name.startsWith(dirPath + '/') && f.name.substring(dirPath.length + 1).split('/').length >= 2)
-				.map(f => f.name.slice(dirPath.length + 1).split('/')[0]);
-
-			return [
-				...files.map<[string, FileType]>(f => [f, 1 satisfies FileType.File]),
-				...[...new Set(dirs)].map<[string, FileType]>(f => [f, 2 satisfies FileType.Directory]),
-			];
+		if (!flatResults.has(pkgName)) {
+			flatResults.set(pkgName, flat(pkgName));
 		}
 
-		async function _readFile(path: string): Promise<string | undefined> {
+		const flatResult = await flatResults.get(pkgName)!;
+		const filePath = path.slice(pkgName.length);
+		const file = flatResult.find(file => file.name === filePath);
+		if (file) {
+			return {
+				type: 1 satisfies FileType.File,
+				ctime: new Date(file.time).valueOf(),
+				mtime: new Date(file.time).valueOf(),
+				size: file.size,
+			};
+		}
+		else if (flatResult.some(file => file.name.startsWith(filePath + '/'))) {
+			return {
+				type: 2 satisfies FileType.Directory,
+				ctime: -1,
+				mtime: -1,
+				size: -1,
+			};
+		}
+	}
 
-			const pkgName = getPackageName(path);
-			if (!pkgName || !await isValidPackageName(pkgName)) {
-				return;
-			}
+	async function _readDirectory(path: string): Promise<[string, FileType][]> {
 
-			if (!fetchResults.has(path)) {
-				fetchResults.set(path, (async () => {
-					if ((await _stat(path))?.type !== 1 satisfies FileType.File) {
-						return;
-					}
-					const text = await fetchText(`https://cdn.jsdelivr.net/npm/${path}`);
-					if (text !== undefined) {
-						onFetch?.(path, text);
-					}
-					return text;
-				})());
-			}
-
-			return await fetchResults.get(path)!;
+		const pkgName = getPackageName(path);
+		if (!pkgName || !await isValidPackageName(pkgName)) {
+			return [];
 		}
 
-		async function flat(pkgNameWithVersion: string) {
+		if (!flatResults.has(pkgName)) {
+			flatResults.set(pkgName, flat(pkgName));
+		}
 
-			let pkgName = pkgNameWithVersion;
-			let version = 'latest';
+		const flatResult = await flatResults.get(pkgName)!;
+		const dirPath = path.slice(pkgName.length);
+		const files = flatResult
+			.filter(f => f.name.substring(0, f.name.lastIndexOf('/')) === dirPath)
+			.map(f => f.name.slice(dirPath.length + 1));
+		const dirs = flatResult
+			.filter(f => f.name.startsWith(dirPath + '/') && f.name.substring(dirPath.length + 1).split('/').length >= 2)
+			.map(f => f.name.slice(dirPath.length + 1).split('/')[0]);
 
-			if (pkgNameWithVersion.substring(1).includes('@')) {
-				pkgName = pkgNameWithVersion.substring(0, pkgNameWithVersion.lastIndexOf('@'));
-				version = pkgNameWithVersion.substring(pkgNameWithVersion.lastIndexOf('@') + 1);
-			}
+		return [
+			...files.map<[string, FileType]>(f => [f, 1 satisfies FileType.File]),
+			...[...new Set(dirs)].map<[string, FileType]>(f => [f, 2 satisfies FileType.Directory]),
+		];
+	}
 
-			// resolve tag version
-			if (version === 'latest') {
-				const data = await fetchJson<{ version: string | null; }>(`https://data.jsdelivr.com/v1/package/resolve/npm/${pkgName}@latest`);
-				if (!data?.version) {
-					return [];
+	async function _readFile(path: string): Promise<string | undefined> {
+
+		const pkgName = getPackageName(path);
+		if (!pkgName || !await isValidPackageName(pkgName)) {
+			return;
+		}
+
+		if (!fetchResults.has(path)) {
+			fetchResults.set(path, (async () => {
+				if ((await _stat(path))?.type !== 1 satisfies FileType.File) {
+					return;
 				}
-				version = data.version;
-			}
+				const text = await fetchText(`https://cdn.jsdelivr.net/npm/${path}`);
+				if (text !== undefined) {
+					onFetch?.(path, text);
+				}
+				return text;
+			})());
+		}
 
-			const flat = await fetchJson<{
-				files: {
-					name: string;
-					size: number;
-					time: string;
-					hash: string;
-				}[];
-			}>(`https://data.jsdelivr.com/v1/package/npm/${pkgName}@${version}/flat`);
-			if (!flat) {
+		return await fetchResults.get(path)!;
+	}
+
+	async function flat(pkgNameWithVersion: string) {
+
+		let pkgName = pkgNameWithVersion;
+		let version: string | undefined;
+
+		if (pkgNameWithVersion.substring(1).includes('@')) {
+			pkgName = pkgNameWithVersion.substring(0, pkgNameWithVersion.lastIndexOf('@'));
+			version = pkgNameWithVersion.substring(pkgNameWithVersion.lastIndexOf('@') + 1);
+		}
+
+		version ??= 'latest';
+
+		// resolve latest tag
+		if (version === 'latest') {
+			const data = await fetchJson<{ version: string | null; }>(`https://data.jsdelivr.com/v1/package/resolve/npm/${pkgName}@${version}`);
+			if (!data?.version) {
 				return [];
 			}
-
-			return flat.files;
+			version = data.version;
 		}
 
-		async function isValidPackageName(pkgName: string) {
-			// @aaa/bbb@latest -> @aaa/bbb
-			if (pkgName.substring(1).includes('@')) {
-				pkgName = pkgName.substring(0, pkgName.lastIndexOf('@'));
-			}
-			// ignore @aaa/node_modules
-			if (pkgName.endsWith('/node_modules')) {
-				return false;
-			}
-			// hard code for known invalid package
-			if (pkgName.startsWith('@typescript/') || pkgName.startsWith('@types/typescript__')) {
-				return false;
-			}
-			// don't check @types if original package already having types
-			if (pkgName.startsWith('@types/')) {
-				let originalPkgName = pkgName.slice('@types/'.length);
-				if (originalPkgName.indexOf('__') >= 0) {
-					originalPkgName = '@' + originalPkgName.replace('__', '/');
-				}
-				const packageJson = await _readFile(`${originalPkgName}/package.json`);
-				if (packageJson) {
-					const packageJsonObj = JSON.parse(packageJson);
-					if (packageJsonObj.types || packageJsonObj.typings) {
-						return false;
-					}
-					const indexDts = await _stat(`${originalPkgName}/index.d.ts`);
-					if (indexDts?.type === 1 satisfies FileType.File) {
-						return false;
-					}
-				}
-			}
-			return true;
+		const flat = await fetchJson<{
+			files: {
+				name: string;
+				size: number;
+				time: string;
+				hash: string;
+			}[];
+		}>(`https://data.jsdelivr.com/v1/package/npm/${pkgName}@${version}/flat`);
+		if (!flat) {
+			return [];
 		}
+
+		return flat.files;
+	}
+
+	async function isValidPackageName(pkgName: string) {
+		// @aaa/bbb@latest -> @aaa/bbb
+		if (pkgName.lastIndexOf('@') >= 1) {
+			pkgName = pkgName.substring(0, pkgName.lastIndexOf('@'));
+		}
+		// ignore @aaa/node_modules
+		if (pkgName.endsWith('/node_modules')) {
+			return false;
+		}
+		// hard code for known invalid package
+		if (pkgName.startsWith('@typescript/') || pkgName.startsWith('@types/typescript__')) {
+			return false;
+		}
+		// don't check @types if original package already having types
+		if (pkgName.startsWith('@types/')) {
+			let originalPkgName = pkgName.slice('@types/'.length);
+			if (originalPkgName.indexOf('__') >= 0) {
+				originalPkgName = '@' + originalPkgName.replace('__', '/');
+			}
+			const packageJson = await _readFile(`${originalPkgName}/package.json`);
+			if (packageJson) {
+				const packageJsonObj = JSON.parse(packageJson);
+				if (packageJsonObj.types || packageJsonObj.typings) {
+					return false;
+				}
+				const indexDts = await _stat(`${originalPkgName}/index.d.ts`);
+				if (indexDts?.type === 1 satisfies FileType.File) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -248,38 +207,41 @@ export function activateAutomaticTypeAcquisition(
 			}
 			pkgName += '/' + parts[1];
 		}
+		if (resolvePackageName) {
+			pkgName = resolvePackageName(pkgName);
+		}
 		return pkgName;
 	}
+}
 
-	async function fetchText(url: string) {
-		if (!textCache.has(url)) {
-			textCache.set(url, (async () => {
-				try {
-					const res = await fetch(url);
-					if (res.status === 200) {
-						return await res.text();
-					}
-				} catch {
-					// ignore
+async function fetchText(url: string) {
+	if (!textCache.has(url)) {
+		textCache.set(url, (async () => {
+			try {
+				const res = await fetch(url);
+				if (res.status === 200) {
+					return await res.text();
 				}
-			})());
-		}
-		return await textCache.get(url)!;
+			} catch {
+				// ignore
+			}
+		})());
 	}
+	return await textCache.get(url)!;
+}
 
-	async function fetchJson<T>(url: string) {
-		if (!jsonCache.has(url)) {
-			jsonCache.set(url, (async () => {
-				try {
-					const res = await fetch(url);
-					if (res.status === 200) {
-						return await res.json();
-					}
-				} catch {
-					// ignore
+async function fetchJson<T>(url: string) {
+	if (!jsonCache.has(url)) {
+		jsonCache.set(url, (async () => {
+			try {
+				const res = await fetch(url);
+				if (res.status === 200) {
+					return await res.json();
 				}
-			})());
-		}
-		return await jsonCache.get(url)! as T;
+			} catch {
+				// ignore
+			}
+		})());
 	}
+	return await jsonCache.get(url)! as T;
 }
