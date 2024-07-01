@@ -58,12 +58,25 @@ export function createJsDelivrNpmFileSystem(
 
 	async function _stat(path: string) {
 
-		const resolved = resolvePackageName(path);
-		if (!resolved || !await isValidPackageName(resolved[1])) {
+		const [modName, pkgName, pkgVersion, pkgFilePath] = resolvePackageName(path);
+		if (!pkgName) {
+			if (modName.startsWith('@')) {
+				return {
+					type: 2 satisfies FileType.Directory,
+					ctime: -1,
+					mtime: -1,
+					size: -1,
+				};
+			}
+			else {
+				return;
+			}
+		}
+		if (!await isValidPackageName(pkgName)) {
 			return;
 		}
 
-		if (!resolved[3]) {
+		if (!pkgFilePath) {
 			// perf: skip flat request
 			return {
 				type: 2 satisfies FileType.Directory,
@@ -73,12 +86,12 @@ export function createJsDelivrNpmFileSystem(
 			};
 		}
 
-		if (!flatResults.has(resolved[0])) {
-			flatResults.set(resolved[0], flat(resolved[1], resolved[2]));
+		if (!flatResults.has(modName)) {
+			flatResults.set(modName, flat(pkgName, pkgVersion));
 		}
 
-		const flatResult = await flatResults.get(resolved[0])!;
-		const filePath = path.slice(resolved[0].length);
+		const flatResult = await flatResults.get(modName)!;
+		const filePath = path.slice(modName.length);
 		const file = flatResult.find(file => file.name === filePath);
 		if (file) {
 			return {
@@ -100,17 +113,17 @@ export function createJsDelivrNpmFileSystem(
 
 	async function _readDirectory(path: string): Promise<[string, FileType][]> {
 
-		const resolved = resolvePackageName(path);
-		if (!resolved || !await isValidPackageName(resolved[1])) {
+		const [modName, pkgName, pkgVersion] = resolvePackageName(path);
+		if (!pkgName || !await isValidPackageName(pkgName)) {
 			return [];
 		}
 
-		if (!flatResults.has(resolved[0])) {
-			flatResults.set(resolved[0], flat(resolved[1], resolved[2]));
+		if (!flatResults.has(modName)) {
+			flatResults.set(modName, flat(pkgName, pkgVersion));
 		}
 
-		const flatResult = await flatResults.get(resolved[0])!;
-		const dirPath = path.slice(resolved[0].length);
+		const flatResult = await flatResults.get(modName)!;
+		const dirPath = path.slice(modName.length);
 		const files = flatResult
 			.filter(f => f.name.substring(0, f.name.lastIndexOf('/')) === dirPath)
 			.map(f => f.name.slice(dirPath.length + 1));
@@ -126,8 +139,8 @@ export function createJsDelivrNpmFileSystem(
 
 	async function _readFile(path: string): Promise<string | undefined> {
 
-		const resolved = resolvePackageName(path);
-		if (!resolved || !await isValidPackageName(resolved[1])) {
+		const [_modName, pkgName] = resolvePackageName(path);
+		if (!pkgName || !await isValidPackageName(pkgName)) {
 			return;
 		}
 
@@ -207,21 +220,22 @@ export function createJsDelivrNpmFileSystem(
 	/**
 	 * @example
 	 * "a/b/c" -> ["a", "a", undefined, "b/c"]
+	 * "@a" -> ["@a", undefined, undefined, ""]
 	 * "@a/b/c" -> ["@a/b", "@a/b", undefined, "c"]
 	 * "@a/b@1.2.3/c" -> ["@a/b@1.2.3", "@a/b", "1.2.3", "c"]
 	 */
 	function resolvePackageName(input: string): [
 		modName: string,
-		pkgName: string,
+		pkgName: string | undefined,
 		version: string | undefined,
 		path: string,
-	] | undefined {
+	] {
 		const parts = input.split('/');
 		let modName = parts[0];
 		let path: string;
 		if (modName.startsWith('@')) {
 			if (!parts[1]) {
-				return;
+				return [modName, undefined, undefined, ''];
 			}
 			modName += '/' + parts[1];
 			path = parts.slice(2).join('/');
