@@ -49,27 +49,25 @@ self.onmessage = () => {
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
 -import { createSimpleWorkerService, ServiceEnvironment } from '@volar/monaco/worker';
-+import {
-+	createTypeScriptWorkerService,
-+	ServiceEnvironment,
-+} from '@volar/monaco/worker';
++import { createTypeScriptWorkerService, ServiceEnvironment } from '@volar/monaco/worker';
 +import * as ts from 'typescript';
-+import { create as createTypeScriptService } from 'volar-service-typescript';
++import { create as createTypeScriptPlugins } from 'volar-service-typescript';
++import { URI } from 'vscode-uri';
 
 self.onmessage = () => {
 	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
 		const env: ServiceEnvironment = {
 			workspaceFolder: 'file:///',
-+			typescript: {
-+				uriToFileName: uri => uri.substring('file://'.length),
-+				fileNameToUri: fileName => 'file://' + fileName,
-+			},
 		};
 -		return createSimpleWorkerService({
 +		return createTypeScriptWorkerService({
 +			typescript: ts,
 +			compilerOptions: {
 +				// ...
++			},
++			uriConverter: {
++				asFileName: uri => uri.fsPath,
++				asUri: fileName => URI.file(fileName),
 +			},
 			workerContext: ctx,
 			env,
@@ -78,7 +76,7 @@ self.onmessage = () => {
 			],
 			languageServicePlugins: [
 				// ...
-+				createTypeScriptService(ts),
++				...createTypeScriptPlugins(ts),
 			],
 		});
 	});
@@ -90,11 +88,8 @@ self.onmessage = () => {
 ```diff
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
-import {
-	createTypeScriptWorkerService,
-	ServiceEnvironment,
-+	createJsDelivrNpmFileSystem,
-} from '@volar/monaco/worker';
+import { createTypeScriptWorkerService, ServiceEnvironment } from '@volar/monaco/worker';
++import { createNpmFileSystem } from '@volar/jsdelivr';
 import * as ts from 'typescript';
 import { create as createTypeScriptService } from 'volar-service-typescript';
 
@@ -107,7 +102,7 @@ self.onmessage = () => {
 				fileNameToUri: fileName => 'file://' + fileName,
 			},
 		};
-+		env.fs = createJsDelivrNpmFileSystem();
++		env.fs = createNpmFileSystem();
 		return createTypeScriptWorkerService({
 			typescript: ts,
 			compilerOptions: {

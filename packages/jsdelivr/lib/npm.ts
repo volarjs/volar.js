@@ -4,7 +4,7 @@ import type { URI } from 'vscode-uri';
 const textCache = new Map<string, Promise<string | undefined>>();
 const jsonCache = new Map<string, Promise<any>>();
 
-export function createJsDelivrNpmFileSystem(
+export function createNpmFileSystem(
 	getCdnPath = (uri: URI): string | undefined => {
 		if (uri.path === '/node_modules') {
 			return '';

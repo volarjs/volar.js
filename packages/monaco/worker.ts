@@ -15,7 +15,6 @@ import type * as ts from 'typescript';
 import { URI } from 'vscode-uri';
 
 export * from '@volar/language-service';
-export * from './lib/ata.js';
 
 const fsFileSnapshots = createUriMap<[number | undefined, ts.IScriptSnapshot | undefined]>();
 
