@@ -22,15 +22,15 @@ const fsFileSnapshots = createUriMap<[number | undefined, ts.IScriptSnapshot | u
 export function createSimpleWorkerService<T = {}>({
 	env,
 	workerContext,
-	languagePlugins = [],
-	servicePlugins = [],
+	languagePlugins,
+	languageServicePlugins,
 	extraApis = {} as T,
 	setup,
 }: {
 	env: LanguageServiceEnvironment;
 	workerContext: monaco.worker.IWorkerContext<any>;
-	languagePlugins?: LanguagePlugin<URI>[];
-	servicePlugins?: LanguageServicePlugin[];
+	languagePlugins: LanguagePlugin<URI>[];
+	languageServicePlugins: LanguageServicePlugin[];
 	extraApis?: T;
 	setup?(options: {
 		language: Language<URI>;
@@ -65,7 +65,7 @@ export function createSimpleWorkerService<T = {}>({
 	const project: ProjectContext = {};
 	setup?.({ language, project });
 
-	return createWorkerService(language, servicePlugins, env, project, extraApis);
+	return createWorkerService(language, languageServicePlugins, env, project, extraApis);
 }
 
 export function createTypeScriptWorkerService<T = {}>({
@@ -74,8 +74,8 @@ export function createTypeScriptWorkerService<T = {}>({
 	env,
 	uriConverter,
 	workerContext,
-	languagePlugins = [],
-	servicePlugins = [],
+	languagePlugins,
+	languageServicePlugins,
 	extraApis = {} as T,
 	setup,
 }: {
@@ -87,8 +87,8 @@ export function createTypeScriptWorkerService<T = {}>({
 		asFileName(uri: URI): string;
 	};
 	workerContext: monaco.worker.IWorkerContext<any>;
-	languagePlugins?: LanguagePlugin<URI>[];
-	servicePlugins?: LanguageServicePlugin[];
+	languagePlugins: LanguagePlugin<URI>[];
+	languageServicePlugins: LanguageServicePlugin[];
 	extraApis?: T;
 	setup?(options: {
 		language: Language<URI>;
@@ -193,7 +193,7 @@ export function createTypeScriptWorkerService<T = {}>({
 
 	return createWorkerService(
 		language,
-		servicePlugins,
+		languageServicePlugins,
 		env,
 		project,
 		extraApis
