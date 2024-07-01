@@ -10,7 +10,7 @@ export function createNpmFileSystem(
 			return '';
 		}
 		else if (uri.path.startsWith('/node_modules/')) {
-			return uri.path.slice('/node_modules'.length);
+			return uri.path.slice('/node_modules/'.length);
 		}
 	},
 	getPackageVersion?: (pkgName: string) => string | undefined,
