@@ -16,6 +16,7 @@ export interface TypeScriptProjectLS {
 }
 
 export interface ProjectExposeContext {
+	env: LanguageServiceEnvironment;
 	configFileName: string | undefined;
 	projectHost: TypeScriptProjectHost;
 	sys: ReturnType<typeof createSys>;
@@ -79,6 +80,7 @@ export async function createTypeScriptLS(
 		},
 	};
 	const { languagePlugins, setup } = await create({
+		env: serviceEnv,
 		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
 		projectHost,
 		sys,
