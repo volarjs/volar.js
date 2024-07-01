@@ -63,6 +63,16 @@ export function createJsDelivrNpmFileSystem(
 			return;
 		}
 
+		if (!resolved[3]) {
+			// perf: skip flat request
+			return {
+				type: 2 satisfies FileType.Directory,
+				ctime: -1,
+				mtime: -1,
+				size: -1,
+			};
+		}
+
 		if (!flatResults.has(resolved[0])) {
 			flatResults.set(resolved[0], flat(resolved[1], resolved[2]));
 		}
@@ -196,22 +206,28 @@ export function createJsDelivrNpmFileSystem(
 
 	/**
 	 * @example
-	 * "a/b/c" -> "a"
-	 * "@a/b/c" -> "@a/b"
-	 * "@a/b@1.2.3/c" -> "@a/b@1.2.3"
+	 * "a/b/c" -> ["a", "a", undefined, "b/c"]
+	 * "@a/b/c" -> ["@a/b", "@a/b", undefined, "c"]
+	 * "@a/b@1.2.3/c" -> ["@a/b@1.2.3", "@a/b", "1.2.3", "c"]
 	 */
-	function resolvePackageName(path: string): [
+	function resolvePackageName(input: string): [
 		modName: string,
 		pkgName: string,
 		version: string | undefined,
+		path: string,
 	] | undefined {
-		const parts = path.split('/');
+		const parts = input.split('/');
 		let modName = parts[0];
+		let path: string;
 		if (modName.startsWith('@')) {
 			if (!parts[1]) {
 				return;
 			}
 			modName += '/' + parts[1];
+			path = parts.slice(2).join('/');
+		}
+		else {
+			path = parts.slice(1).join('/');
 		}
 		let pkgName = modName;
 		let version: string | undefined;
@@ -222,7 +238,7 @@ export function createJsDelivrNpmFileSystem(
 		if (!version && getPackageVersion) {
 			getPackageVersion?.(pkgName);
 		}
-		return [modName, pkgName, version];
+		return [modName, pkgName, version, path];
 	}
 }
 
