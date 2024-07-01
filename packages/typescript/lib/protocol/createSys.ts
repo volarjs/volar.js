@@ -24,7 +24,7 @@ let currentCwd = '';
 
 export function createSys(
 	sys: ts.System | undefined,
-	{ fs, onDidChangeWatchedFiles }: LanguageServiceEnvironment,
+	env: LanguageServiceEnvironment,
 	getCurrentDirectory: () => string,
 	uriConverter: {
 		asUri(fileName: string): URI;
@@ -44,7 +44,7 @@ export function createSys(
 		requestedRead: false,
 	};
 	const promises = new Set<Thenable<any>>();
-	const fileWatcher = onDidChangeWatchedFiles?.(({ changes }) => {
+	const fileWatcher = env.onDidChangeWatchedFiles?.(({ changes }) => {
 		version++;
 		for (const change of changes) {
 			const changeUri = URI.parse(change.uri);
@@ -144,7 +144,7 @@ export function createSys(
 		const dir = getDir(dirName);
 		if (dir.exists === undefined) {
 			dir.exists = false;
-			const result = fs?.stat(uriConverter.asUri(dirName));
+			const result = env.fs?.stat(uriConverter.asUri(dirName));
 			if (typeof result === 'object' && 'then' in result) {
 				const promise = result;
 				promises.add(promise);
@@ -188,7 +188,7 @@ export function createSys(
 	}
 
 	function handleStat(fileName: string, file: File) {
-		const result = fs?.stat(uriConverter.asUri(fileName));
+		const result = env.fs?.stat(uriConverter.asUri(fileName));
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
 			promises.add(promise);
@@ -290,7 +290,7 @@ export function createSys(
 		file.requestedText = true;
 
 		const uri = uriConverter.asUri(fileName);
-		const result = fs?.readFile(uri, encoding);
+		const result = env.fs?.readFile(uri, encoding);
 
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
@@ -319,7 +319,7 @@ export function createSys(
 		}
 		dir.requestedRead = true;
 
-		const result = fs?.readDirectory(uriConverter.asUri(dirName || '.'));
+		const result = env.fs?.readDirectory(uriConverter.asUri(dirName || '.'));
 
 		if (typeof result === 'object' && 'then' in result) {
 			const promise = result;
@@ -345,7 +345,7 @@ export function createSys(
 		for (const [name, _fileType] of result) {
 			let fileType = _fileType;
 			if (fileType === 64 satisfies FileType.SymbolicLink) {
-				const stat = fs?.stat(uriConverter.asUri(dirName + '/' + name));
+				const stat = env.fs?.stat(uriConverter.asUri(dirName + '/' + name));
 				if (typeof stat === 'object' && 'then' in stat) {
 					const promise = stat;
 					promises.add(promise);
