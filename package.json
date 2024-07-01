@@ -7,7 +7,7 @@
 		"watch:labs": "cd extensions/labs && npm run watch",
 		"prerelease": "npm run build && npm run test",
 		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
-		"release:next": "npm run release -- --dist-tag next",
+		"release:next": "npm run release -- --dist-tag next --no-push",
 		"test": "vitest run",
 		"lint": "tsslint --projects '**/tsconfig.json'",
 		"lint:fix": "npm run lint -- --fix"
