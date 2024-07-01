@@ -93,7 +93,7 @@ import type * as monaco from 'monaco-editor-core';
 import {
 	createTypeScriptWorkerService,
 	ServiceEnvironment,
-+	activateAutomaticTypeAcquisition,
++	createJsDelivrNpmFileSystem,
 } from '@volar/monaco/worker';
 import * as ts from 'typescript';
 import { create as createTypeScriptService } from 'volar-service-typescript';
@@ -107,7 +107,7 @@ self.onmessage = () => {
 				fileNameToUri: fileName => 'file://' + fileName,
 			},
 		};
-+		activateAutomaticTypeAcquisition(env);
++		env.fs = createJsDelivrNpmFileSystem();
 		return createTypeScriptWorkerService({
 			typescript: ts,
 			compilerOptions: {
