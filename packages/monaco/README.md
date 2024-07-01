@@ -35,7 +35,7 @@ self.onmessage = () => {
 			languagePlugins: [
 				// ...
 			],
-			servicePlugins: [
+			languageServicePlugins: [
 				// ...
 			],
 		});
@@ -76,7 +76,7 @@ self.onmessage = () => {
 			languagePlugins: [
 				// ...
 			],
-			servicePlugins: [
+			languageServicePlugins: [
 				// ...
 +				createTypeScriptService(ts),
 			],
@@ -118,7 +118,7 @@ self.onmessage = () => {
 			languagePlugins: [
 				// ...
 			],
-			servicePlugins: [
+			languageServicePlugins: [
 				// ...
 				createTypeScriptService(ts),
 			],
