@@ -178,7 +178,7 @@ export function proxyCreateProgram(
 			if (extensions.length) {
 				options.options.allowArbitraryExtensions = true;
 
-				const resolveModuleName = createResolveModuleName(ts, originalHost, language.plugins, fileName => language!.scripts.get(fileName));
+				const resolveModuleName = createResolveModuleName(ts, ts.sys.getFileSize, originalHost, language.plugins, fileName => language!.scripts.get(fileName));
 				const resolveModuleNameLiterals = originalHost.resolveModuleNameLiterals;
 				const resolveModuleNames = originalHost.resolveModuleNames;
 

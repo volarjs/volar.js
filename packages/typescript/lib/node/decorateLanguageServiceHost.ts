@@ -41,7 +41,7 @@ export function decorateLanguageServiceHost(
 
 	if (pluginExtensions.length) {
 
-		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(fileName));
+		const resolveModuleName = createResolveModuleName(ts, ts.sys.getFileSize, languageServiceHost, language.plugins, fileName => language.scripts.get(fileName));
 		const getCanonicalFileName = languageServiceHost.useCaseSensitiveFileNames?.()
 			? (fileName: string) => fileName
 			: (fileName: string) => fileName.toLowerCase();

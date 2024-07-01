@@ -3,6 +3,7 @@ import type * as ts from 'typescript';
 
 export function createResolveModuleName<T>(
 	ts: typeof import('typescript'),
+	getFileSize: ((fileName: string) => number) | undefined,
 	host: ts.ModuleResolutionHost,
 	languagePlugins: LanguagePlugin<any>[],
 	getSourceScript: (fileName: string) => SourceScript<T> | undefined
@@ -105,7 +106,7 @@ export function createResolveModuleName<T>(
 	// fix https://github.com/vuejs/language-tools/issues/3332
 	function fileExists(fileName: string) {
 		if (host.fileExists(fileName)) {
-			const fileSize = ts.sys.getFileSize?.(fileName) ?? host.readFile(fileName)?.length ?? 0;
+			const fileSize = getFileSize?.(fileName) ?? host.readFile(fileName)?.length ?? 0;
 			return fileSize < 4 * 1024 * 1024;
 		}
 		return false;
