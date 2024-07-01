@@ -75,6 +75,15 @@ importers:
         specifier: ^1.0.11
         version: 1.0.11
 
+  packages/jsdelivr:
+    devDependencies:
+      '@volar/language-service':
+        specifier: 2.4.0-alpha.0
+        version: link:../language-service
+      vscode-uri:
+        specifier: ^3.0.8
+        version: 3.0.8
+
   packages/kit:
     dependencies:
       '@volar/language-service':
