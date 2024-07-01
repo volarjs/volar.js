@@ -28,6 +28,7 @@ export function createLanguageServiceHost<T>(
 	let lastProjectVersion: number | string | undefined;
 	let tsProjectVersion = 0;
 	let tsFileRegistry = new FileMap<boolean>(sys.useCaseSensitiveFileNames);
+	let tsFileDirRegistry = new FileMap<boolean>(sys.useCaseSensitiveFileNames);
 	let extraScriptRegistry = new FileMap<TypeScriptExtraServiceScript>(sys.useCaseSensitiveFileNames);
 	let lastTsVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
 	let lastOtherVirtualFileSnapshots = new Set<ts.IScriptSnapshot>();
@@ -83,6 +84,13 @@ export function createLanguageServiceHost<T>(
 			if (snapshot) {
 				return snapshot.getText(0, snapshot.getLength());
 			}
+		},
+		directoryExists(directoryName) {
+			sync();
+			if (tsFileDirRegistry.has(directoryName)) {
+				return true;
+			}
+			return sys.directoryExists(directoryName);
 		},
 		fileExists(fileName) {
 			return getScriptVersion(fileName) !== '';
@@ -147,7 +155,7 @@ export function createLanguageServiceHost<T>(
 			languageServiceHost.useCaseSensitiveFileNames?.() ? s => s : s => s.toLowerCase(),
 			languageServiceHost.getCompilationSettings()
 		);
-		const resolveModuleName = createResolveModuleName(ts, languageServiceHost, language.plugins, fileName => language.scripts.get(asScriptId(fileName)));
+		const resolveModuleName = createResolveModuleName(ts, sys.getFileSize, languageServiceHost, language.plugins, fileName => language.scripts.get(asScriptId(fileName)));
 
 		let lastSysVersion = 'version' in sys ? sys.version : undefined;
 
@@ -241,9 +249,15 @@ export function createLanguageServiceHost<T>(
 		lastTsVirtualFileSnapshots = newTsVirtualFileSnapshots;
 		lastOtherVirtualFileSnapshots = newOtherVirtualFileSnapshots;
 		tsFileRegistry.clear();
+		tsFileDirRegistry.clear();
 
 		for (const fileName of tsFileNamesSet) {
 			tsFileRegistry.set(fileName, true);
+			const parts = fileName.split('/');
+			for (let i = 1; i < parts.length; i++) {
+				const dirName = parts.slice(0, i).join('/');
+				tsFileDirRegistry.set(dirName, true);
+			}
 		}
 	}
 
