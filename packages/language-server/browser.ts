@@ -53,6 +53,7 @@ export function createServer(connection: vscode.Connection) {
 }
 
 export async function loadTsdkByUrl(tsdkUrl: string, locale: string | undefined) {
+	locale = locale?.toLowerCase();
 
 	return {
 		typescript: await loadLib(),
@@ -71,6 +72,9 @@ export async function loadTsdkByUrl(tsdkUrl: string, locale: string | undefined)
 	}
 
 	async function loadLocalizedDiagnosticMessages(): Promise<import('typescript').MapLike<string> | undefined> {
+		if (locale === 'en') {
+			return;
+		}
 		try {
 			const json = await httpSchemaRequestHandler(URI.parse(`${tsdkUrl}/${locale}/diagnosticMessages.generated.json`));
 			if (json) {

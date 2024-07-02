@@ -73,6 +73,7 @@ export const fs: FileSystem = {
 };
 
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
+	locale = locale?.toLowerCase();
 
 	// webpack compatibility
 	const _require: NodeRequire = eval('require');
@@ -98,6 +99,9 @@ export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 	}
 
 	function loadLocalizedDiagnosticMessages(): import('typescript').MapLike<string> | undefined {
+		if (locale === 'en') {
+			return;
+		}
 		try {
 			const path = _require.resolve(`./${locale}/diagnosticMessages.generated.json`, { paths: [tsdk] });
 			return _require(path);
