@@ -139,8 +139,8 @@ export function createNpmFileSystem(
 
 	async function _readFile(path: string): Promise<string | undefined> {
 
-		const [_modName, pkgName] = resolvePackageName(path);
-		if (!pkgName || !await isValidPackageName(pkgName)) {
+		const [_modName, pkgName, _version, pkgFilePath] = resolvePackageName(path);
+		if (!pkgName || !pkgFilePath || !await isValidPackageName(pkgName)) {
 			return;
 		}
 
