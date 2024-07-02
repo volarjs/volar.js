@@ -55,8 +55,8 @@ export function registerEditorFeatures(server: LanguageServer) {
 		const languageService = (await server.project.getLanguageService(uri));
 		const tsProject = languageService.context.project.typescript;
 		if (tsProject?.configFileName) {
-			const { configFileName, asUri } = tsProject;
-			return { uri: asUri(configFileName).toString() };
+			const { configFileName, uriConverter } = tsProject;
+			return { uri: uriConverter.asUri(configFileName).toString() };
 		}
 	});
 	server.connection.onRequest(GetVirtualFileRequest.type, async document => {
@@ -123,7 +123,7 @@ export function registerEditorFeatures(server: LanguageServer) {
 					}
 				}
 				else {
-					const uri = tsProject.asUri(fileName);
+					const uri = tsProject.uriConverter.asUri(fileName);
 					const sourceScript = languageService.context.language.scripts.get(uri);
 					if (sourceScript?.generated) {
 						const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);

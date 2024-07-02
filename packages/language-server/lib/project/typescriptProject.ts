@@ -238,7 +238,7 @@ export function createTypeScriptProject(
 				server,
 				serviceEnv,
 				workspaceFolder,
-				{ asUri: uriConverter.asUri, asFileName: uriConverter.asFileName },
+				uriConverter,
 				create
 			);
 			configProjects.set(tsconfigUri, projectPromise);
@@ -259,7 +259,7 @@ export function createTypeScriptProject(
 					server,
 					serviceEnv,
 					workspaceFolder,
-					{ asUri: uriConverter.asUri, asFileName: uriConverter.asFileName },
+					uriConverter,
 					create
 				);
 			})());

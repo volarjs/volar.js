@@ -20,8 +20,10 @@ export interface ProjectExposeContext {
 	configFileName: string | undefined;
 	projectHost: TypeScriptProjectHost;
 	sys: ReturnType<typeof createSys>;
-	asUri(fileName: string): URI;
-	asFileName(scriptId: URI): string;
+	uriConverter: {
+		asUri(fileName: string): URI;
+		asFileName(uri: URI): string;
+	};
 }
 
 const fsFileSnapshots = createUriMap<[number | undefined, ts.IScriptSnapshot | undefined]>();
@@ -33,7 +35,7 @@ export async function createTypeScriptLS(
 	server: LanguageServer,
 	serviceEnv: LanguageServiceEnvironment,
 	workspaceFolder: URI,
-	{ asUri, asFileName }: {
+	uriConverter: {
 		asUri(fileName: string): URI;
 		asFileName(uri: URI): string;
 	},
@@ -45,15 +47,11 @@ export async function createTypeScriptLS(
 		}): void;
 	}>
 ): Promise<TypeScriptProjectLS> {
-
 	let parsedCommandLine: ts.ParsedCommandLine;
 	let projectVersion = 0;
 
-	const getCurrentDirectory = () => asFileName(workspaceFolder);
-	const sys = createSys(ts.sys, serviceEnv, getCurrentDirectory, {
-		asFileName,
-		asUri,
-	});
+	const getCurrentDirectory = () => uriConverter.asFileName(workspaceFolder);
+	const sys = createSys(ts.sys, serviceEnv, getCurrentDirectory, uriConverter);
 	const projectHost: TypeScriptProjectHost = {
 		getCurrentDirectory,
 		getProjectVersion() {
@@ -63,7 +61,7 @@ export async function createTypeScriptLS(
 			return rootFiles;
 		},
 		getScriptSnapshot(fileName) {
-			const uri = asUri(fileName);
+			const uri = uriConverter.asUri(fileName);
 			const documentKey = server.getSyncedDocumentKey(uri) ?? uri.toString();
 			const document = server.documents.get(documentKey);
 			askedFiles.set(uri, true);
@@ -84,8 +82,7 @@ export async function createTypeScriptLS(
 		configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
 		projectHost,
 		sys,
-		asFileName,
-		asUri,
+		uriConverter,
 	});
 	const askedFiles = createUriMap<boolean>();
 	const docOpenWatcher = server.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document));
@@ -116,7 +113,7 @@ export async function createTypeScriptLS(
 			else {
 				// fs files
 				const cache = fsFileSnapshots.get(uri);
-				const fileName = asFileName(uri);
+				const fileName = uriConverter.asFileName(uri);
 				const modifiedTime = sys.getModifiedTime?.(fileName)?.valueOf();
 				if (!cache || cache[0] !== modifiedTime) {
 					if (sys.fileExists(fileName)) {
@@ -143,13 +140,12 @@ export async function createTypeScriptLS(
 		typescript: {
 			configFileName: typeof tsconfig === 'string' ? tsconfig : undefined,
 			sys,
-			asUri,
-			asFileName,
+			uriConverter,
 			...createLanguageServiceHost(
 				ts,
 				sys,
 				language,
-				asUri,
+				s => uriConverter.asUri(s),
 				projectHost
 			),
 		},
@@ -184,7 +180,7 @@ export async function createTypeScriptLS(
 
 	function updateFsCacheFromSyncedDocument(document: SnapshotDocument) {
 		const uri = URI.parse(document.uri);
-		const fileName = asFileName(uri);
+		const fileName = uriConverter.asFileName(uri);
 		if (fsFileSnapshots.has(uri) || sys.fileExists(fileName)) {
 			const modifiedTime = sys.getModifiedTime?.(fileName);
 			fsFileSnapshots.set(uri, [modifiedTime?.valueOf(), document.getSnapshot()]);
@@ -195,7 +191,7 @@ export async function createTypeScriptLS(
 		parsedCommandLine = await createParsedCommandLine(
 			ts,
 			sys,
-			asFileName(workspaceFolder),
+			uriConverter.asFileName(workspaceFolder),
 			tsconfig,
 			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat()
 		);

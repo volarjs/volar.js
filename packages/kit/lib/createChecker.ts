@@ -112,8 +112,10 @@ function createTypeScriptCheckerWorker(
 			typescript: {
 				configFileName,
 				sys: ts.sys,
-				asFileName,
-				asUri,
+				uriConverter: {
+					asFileName,
+					asUri,
+				},
 				...createLanguageServiceHost(
 					ts,
 					ts.sys,

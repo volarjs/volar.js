@@ -149,13 +149,12 @@ export function createTypeScriptWorkerService<T = {}>({
 		typescript: {
 			configFileName: undefined,
 			sys,
-			asFileName: uriConverter.asFileName,
-			asUri: uriConverter.asUri,
+			uriConverter,
 			...createLanguageServiceHost(
 				ts,
 				sys,
 				language,
-				uriConverter.asUri,
+				s => uriConverter.asUri(s),
 				{
 					getCurrentDirectory() {
 						return sys.getCurrentDirectory();

@@ -20,8 +20,10 @@ declare module '@volar/language-service' {
 			};
 			languageServiceHost: ts.LanguageServiceHost;
 			getExtraServiceScript(fileName: string): TypeScriptExtraServiceScript | undefined;
-			asUri(fileName: string): URI;
-			asFileName(uri: URI): string;
+			uriConverter: {
+				asUri(fileName: string): URI;
+				asFileName(uri: URI): string;
+			};
 		};
 	}
 }
