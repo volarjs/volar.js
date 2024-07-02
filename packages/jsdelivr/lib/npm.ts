@@ -203,15 +203,16 @@ export function createNpmFileSystem(
 				originalPkgName = '@' + originalPkgName.replace('__', '/');
 			}
 			const packageJson = await _readFile(`${originalPkgName}/package.json`);
-			if (packageJson) {
-				const packageJsonObj = JSON.parse(packageJson);
-				if (packageJsonObj.types || packageJsonObj.typings) {
-					return false;
-				}
-				const indexDts = await _stat(`${originalPkgName}/index.d.ts`);
-				if (indexDts?.type === 1 satisfies FileType.File) {
-					return false;
-				}
+			if (!packageJson) {
+				return false;
+			}
+			const packageJsonObj = JSON.parse(packageJson);
+			if (packageJsonObj.types || packageJsonObj.typings) {
+				return false;
+			}
+			const indexDts = await _stat(`${originalPkgName}/index.d.ts`);
+			if (indexDts?.type === 1 satisfies FileType.File) {
+				return false;
 			}
 		}
 		return true;
