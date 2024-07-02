@@ -22,21 +22,22 @@ export function createTypeScriptProject(
 	}>
 ) {
 	let server: LanguageServer;
+	let uriConverter: ReturnType<typeof createUriConverter>;
 
-	const { asFileName, asUri } = createUriConverter();
 	const configProjects = createUriMap<Promise<TypeScriptProjectLS>>();
 	const inferredProjects = createUriMap<Promise<TypeScriptProjectLS>>();
 	const rootTsConfigs = new Set<string>();
 	const searchedDirs = new Set<string>();
 	const projects: LanguageServerProject = {
 		setup(_server) {
+			uriConverter = createUriConverter([..._server.workspaceFolders.keys()]);
 			server = _server;
 			server.onDidChangeWatchedFiles(({ changes }) => {
 				const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
 
 				for (const change of tsConfigChanges) {
 					const changeUri = URI.parse(change.uri);
-					const changeFileName = asFileName(changeUri);
+					const changeFileName = uriConverter.asFileName(changeUri);
 					if (change.type === vscode.FileChangeType.Created) {
 						rootTsConfigs.add(changeFileName);
 					}
@@ -88,7 +89,7 @@ export function createTypeScriptProject(
 
 	async function findMatchTSConfig(server: LanguageServer, uri: URI) {
 
-		const fileName = asFileName(uri);
+		const fileName = uriConverter.asFileName(uri);
 
 		let dir = path.dirname(fileName);
 
@@ -99,7 +100,7 @@ export function createTypeScriptProject(
 			searchedDirs.add(dir);
 			for (const tsConfigName of rootTsConfigNames) {
 				const tsconfigPath = path.join(dir, tsConfigName);
-				if ((await server.fs.stat?.(asUri(tsconfigPath)))?.type === FileType.File) {
+				if ((await server.fs.stat?.(uriConverter.asUri(tsconfigPath)))?.type === FileType.File) {
 					rootTsConfigs.add(tsconfigPath);
 				}
 			}
@@ -128,7 +129,7 @@ export function createTypeScriptProject(
 		}
 		function findIndirectReferenceTsconfig() {
 			return findTSConfig(async tsconfig => {
-				const tsconfigUri = asUri(tsconfig);
+				const tsconfigUri = uriConverter.asUri(tsconfig);
 				const project = await configProjects.get(tsconfigUri);
 				return project?.askedFiles.has(uri) ?? false;
 			});
@@ -138,7 +139,7 @@ export function createTypeScriptProject(
 				const map = createUriMap<boolean>();
 				const parsedCommandLine = await getParsedCommandLine(tsconfig);
 				for (const fileName of parsedCommandLine?.fileNames ?? []) {
-					const uri = asUri(fileName);
+					const uri = uriConverter.asUri(fileName);
 					map.set(uri, true);
 				}
 				return map.has(uri);
@@ -149,7 +150,7 @@ export function createTypeScriptProject(
 			const checked = new Set<string>();
 
 			for (const rootTsConfig of [...rootTsConfigs].sort((a, b) => sortTSConfigs(fileName, a, b))) {
-				const tsconfigUri = asUri(rootTsConfig);
+				const tsconfigUri = uriConverter.asUri(rootTsConfig);
 				const project = await configProjects.get(tsconfigUri);
 				if (project) {
 
@@ -186,13 +187,13 @@ export function createTypeScriptProject(
 					let tsConfigPath = projectReference.path.replace(/\\/g, '/');
 
 					// fix https://github.com/johnsoncodehk/volar/issues/712
-					if ((await server.fs.stat?.(asUri(tsConfigPath)))?.type === FileType.File) {
+					if ((await server.fs.stat?.(uriConverter.asUri(tsConfigPath)))?.type === FileType.File) {
 						const newTsConfigPath = path.join(tsConfigPath, 'tsconfig.json');
 						const newJsConfigPath = path.join(tsConfigPath, 'jsconfig.json');
-						if ((await server.fs.stat?.(asUri(newTsConfigPath)))?.type === FileType.File) {
+						if ((await server.fs.stat?.(uriConverter.asUri(newTsConfigPath)))?.type === FileType.File) {
 							tsConfigPath = newTsConfigPath;
 						}
-						else if ((await server.fs.stat?.(asUri(newJsConfigPath)))?.type === FileType.File) {
+						else if ((await server.fs.stat?.(uriConverter.asUri(newJsConfigPath)))?.type === FileType.File) {
 							tsConfigPath = newJsConfigPath;
 						}
 					}
@@ -225,7 +226,7 @@ export function createTypeScriptProject(
 
 	function getOrCreateConfiguredProject(server: LanguageServer, tsconfig: string) {
 		tsconfig = tsconfig.replace(/\\/g, '/');
-		const tsconfigUri = asUri(tsconfig);
+		const tsconfigUri = uriConverter.asUri(tsconfig);
 		let projectPromise = configProjects.get(tsconfigUri);
 		if (!projectPromise) {
 			const workspaceFolder = getWorkspaceFolder(tsconfigUri, server.workspaceFolders);
@@ -237,7 +238,7 @@ export function createTypeScriptProject(
 				server,
 				serviceEnv,
 				workspaceFolder,
-				{ asUri, asFileName },
+				{ asUri: uriConverter.asUri, asFileName: uriConverter.asFileName },
 				create
 			);
 			configProjects.set(tsconfigUri, projectPromise);
@@ -258,7 +259,7 @@ export function createTypeScriptProject(
 					server,
 					serviceEnv,
 					workspaceFolder,
-					{ asUri, asFileName },
+					{ asUri: uriConverter.asUri, asFileName: uriConverter.asFileName },
 					create
 				);
 			})());
@@ -266,14 +267,15 @@ export function createTypeScriptProject(
 
 		const project = await inferredProjects.get(workspaceFolder)!;
 
-		project.tryAddFile(asFileName(uri));
+		project.tryAddFile(uriConverter.asFileName(uri));
 
 		return project;
 	}
 }
 
-export function createUriConverter() {
+export function createUriConverter(rootFolders: URI[]) {
 	const encodeds = new Map<string, URI>();
+	const isFileScheme = rootFolders.every(folder => folder.scheme === 'file');
 
 	return {
 		asFileName,
@@ -281,8 +283,13 @@ export function createUriConverter() {
 	};
 
 	function asFileName(parsed: URI) {
-		if (parsed.scheme === 'file') {
-			return parsed.fsPath.replace(/\\/g, '/');
+		if (rootFolders.every(folder => folder.scheme === parsed.scheme && folder.authority === parsed.authority)) {
+			if (isFileScheme) {
+				return parsed.fsPath.replace(/\\/g, '/');
+			}
+			else {
+				return parsed.path;
+			}
 		}
 		const encoded = encodeURIComponent(`${parsed.scheme}://${parsed.authority}`);
 		encodeds.set(encoded, parsed);
@@ -315,6 +322,11 @@ export function createUriConverter() {
 						path: fileName.substring(prefix.length),
 					});
 				}
+			}
+		}
+		if (!isFileScheme) {
+			for (const folder of rootFolders) {
+				return URI.parse(`${folder.scheme}://${folder.authority}${fileName}`);
 			}
 		}
 		return URI.file(fileName);
