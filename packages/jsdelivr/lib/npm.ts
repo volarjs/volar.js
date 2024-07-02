@@ -192,8 +192,8 @@ export function createNpmFileSystem(
 		if (pkgName.endsWith('/node_modules')) {
 			return false;
 		}
-		// hard code for known invalid package
-		if (pkgName.startsWith('@typescript/') || pkgName.startsWith('@types/typescript__')) {
+		// hard code to skip known invalid package
+		if (pkgName.endsWith('.d.ts') || pkgName.startsWith('@typescript/') || pkgName.startsWith('@types/typescript__')) {
 			return false;
 		}
 		// don't check @types if original package already having types
