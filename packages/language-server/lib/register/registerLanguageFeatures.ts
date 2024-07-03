@@ -334,8 +334,8 @@ export function registerLanguageFeatures(server: LanguageServer) {
 					uri,
 					undefined,
 					server.initializeResult.capabilities.semanticTokensProvider!.legend,
-					token,
-					tokens => resultProgress?.report(tokens)
+					tokens => resultProgress?.report(tokens),
+					token
 				);
 			}) ?? { data: [] };
 		});
@@ -348,8 +348,8 @@ export function registerLanguageFeatures(server: LanguageServer) {
 					uri,
 					params.range,
 					server.initializeResult.capabilities.semanticTokensProvider!.legend,
-					token,
-					tokens => resultProgress?.report(tokens)
+					tokens => resultProgress?.report(tokens),
+					token
 				);
 			}) ?? { data: [] };
 		});
@@ -360,7 +360,6 @@ export function registerLanguageFeatures(server: LanguageServer) {
 			const result = await worker(uri, token, languageService => {
 				return languageService.getDiagnostics(
 					uri,
-					token,
 					errors => {
 						// resultProgressReporter is undefined in vscode
 						resultProgressReporter?.report({
@@ -371,7 +370,8 @@ export function registerLanguageFeatures(server: LanguageServer) {
 								},
 							},
 						});
-					}
+					},
+					token
 				);
 			});
 			return {

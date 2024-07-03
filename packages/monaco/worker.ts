@@ -1,9 +1,10 @@
 import {
+	CancellationToken,
 	Language,
 	LanguagePlugin,
 	LanguageServicePlugin,
 	ProjectContext,
-	createLanguageService as _createLanguageService,
+	ProviderResult,
 	createLanguage,
 	createLanguageService,
 	createUriMap,
@@ -241,6 +242,8 @@ export interface UriComponents {
 }
 
 export class WorkerLanguageService {
+	pendingRequests = new Map<number, undefined | Set<(e: any) => any>>();
+
 	constructor(
 		private languageService: LanguageService
 	) { }
@@ -263,126 +266,161 @@ export class WorkerLanguageService {
 	getSignatureHelpRetriggerCharacters() {
 		return this.languageService.signatureHelpRetriggerCharacters;
 	}
-	executeCommand(...args: Parameters<LanguageService['executeCommand']>) {
-		return this.languageService.executeCommand(...args);
+	executeCommand(requestId: number, ...args: TrimToken<LanguageService['executeCommand']>) {
+		return this.withToken(requestId, token => this.languageService.executeCommand(...args, token));
 	}
-	getDocumentFormattingEdits(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentFormattingEdits']>) {
-		return this.languageService.getDocumentFormattingEdits(URI.from(uri), ...restArgs);
+	getDocumentFormattingEdits(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getDocumentFormattingEdits']>) {
+		return this.withToken(requestId, token => this.languageService.getDocumentFormattingEdits(URI.from(uri), ...restArgs, token));
 	}
-	getFoldingRanges(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getFoldingRanges']>) {
-		return this.languageService.getFoldingRanges(URI.from(uri), ...restArgs);
+	getFoldingRanges(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getFoldingRanges']>) {
+		return this.withToken(requestId, token => this.languageService.getFoldingRanges(URI.from(uri), ...restArgs, token));
 	}
-	getSelectionRanges(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getSelectionRanges']>) {
-		return this.languageService.getSelectionRanges(URI.from(uri), ...restArgs);
+	getSelectionRanges(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getSelectionRanges']>) {
+		return this.withToken(requestId, token => this.languageService.getSelectionRanges(URI.from(uri), ...restArgs, token));
 	}
-	getLinkedEditingRanges(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getLinkedEditingRanges']>) {
-		return this.languageService.getLinkedEditingRanges(URI.from(uri), ...restArgs);
+	getLinkedEditingRanges(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getLinkedEditingRanges']>) {
+		return this.withToken(requestId, token => this.languageService.getLinkedEditingRanges(URI.from(uri), ...restArgs, token));
 	}
-	getDocumentSymbols(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentSymbols']>) {
-		return this.languageService.getDocumentSymbols(URI.from(uri), ...restArgs);
+	getDocumentSymbols(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getDocumentSymbols']>) {
+		return this.withToken(requestId, token => this.languageService.getDocumentSymbols(URI.from(uri), ...restArgs, token));
 	}
-	getDocumentColors(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentColors']>) {
-		return this.languageService.getDocumentColors(URI.from(uri), ...restArgs);
+	getDocumentColors(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getDocumentColors']>) {
+		return this.withToken(requestId, token => this.languageService.getDocumentColors(URI.from(uri), ...restArgs, token));
 	}
-	getColorPresentations(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getColorPresentations']>) {
-		return this.languageService.getColorPresentations(URI.from(uri), ...restArgs);
+	getColorPresentations(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getColorPresentations']>) {
+		return this.withToken(requestId, token => this.languageService.getColorPresentations(URI.from(uri), ...restArgs, token));
 	}
-	getDiagnostics(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDiagnostics']>) {
-		return this.languageService.getDiagnostics(URI.from(uri), ...restArgs);
+	getDiagnostics(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getDiagnostics']>) {
+		return this.withToken(requestId, token => this.languageService.getDiagnostics(URI.from(uri), ...restArgs, token));
 	}
-	getWorkspaceDiagnostics(...args: Parameters<LanguageService['getWorkspaceDiagnostics']>) {
-		return this.languageService.getWorkspaceDiagnostics(...args);
+	getWorkspaceDiagnostics(requestId: number) {
+		return this.withToken(requestId, token => this.languageService.getWorkspaceDiagnostics(token));
 	}
-	getReferences(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getReferences']>) {
-		return this.languageService.getReferences(URI.from(uri), ...restArgs);
+	getReferences(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getReferences']>) {
+		return this.withToken(requestId, token => this.languageService.getReferences(URI.from(uri), ...restArgs, token));
 	}
-	getFileReferences(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getFileReferences']>) {
-		return this.languageService.getFileReferences(URI.from(uri), ...restArgs);
+	getFileReferences(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getFileReferences']>) {
+		return this.withToken(requestId, token => this.languageService.getFileReferences(URI.from(uri), ...restArgs, token));
 	}
-	getDefinition(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDefinition']>) {
-		return this.languageService.getDefinition(URI.from(uri), ...restArgs);
+	getDefinition(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getDefinition']>) {
+		return this.withToken(requestId, token => this.languageService.getDefinition(URI.from(uri), ...restArgs, token));
 	}
-	getTypeDefinition(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getTypeDefinition']>) {
-		return this.languageService.getTypeDefinition(URI.from(uri), ...restArgs);
+	getTypeDefinition(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getTypeDefinition']>) {
+		return this.withToken(requestId, token => this.languageService.getTypeDefinition(URI.from(uri), ...restArgs, token));
 	}
-	getImplementations(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getImplementations']>) {
-		return this.languageService.getImplementations(URI.from(uri), ...restArgs);
+	getImplementations(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getImplementations']>) {
+		return this.withToken(requestId, token => this.languageService.getImplementations(URI.from(uri), ...restArgs, token));
 	}
-	getRenameRange(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getRenameRange']>) {
-		return this.languageService.getRenameRange(URI.from(uri), ...restArgs);
+	getRenameRange(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getRenameRange']>) {
+		return this.withToken(requestId, token => this.languageService.getRenameRange(URI.from(uri), ...restArgs, token));
 	}
-	getRenameEdits(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getRenameEdits']>) {
-		return this.languageService.getRenameEdits(URI.from(uri), ...restArgs);
+	getRenameEdits(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getRenameEdits']>) {
+		return this.withToken(requestId, token => this.languageService.getRenameEdits(URI.from(uri), ...restArgs, token));
 	}
-	getFileRenameEdits(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getFileRenameEdits']>) {
-		return this.languageService.getFileRenameEdits(URI.from(uri), ...restArgs);
+	getFileRenameEdits(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getFileRenameEdits']>) {
+		return this.withToken(requestId, token => this.languageService.getFileRenameEdits(URI.from(uri), ...restArgs, token));
 	}
-	getSemanticTokens(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getSemanticTokens']>) {
-		return this.languageService.getSemanticTokens(URI.from(uri), ...restArgs);
+	getSemanticTokens(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getSemanticTokens']>) {
+		return this.withToken(requestId, token => this.languageService.getSemanticTokens(URI.from(uri), ...restArgs, token));
 	}
-	getHover(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getHover']>) {
-		return this.languageService.getHover(URI.from(uri), ...restArgs);
+	getHover(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getHover']>) {
+		return this.withToken(requestId, token => this.languageService.getHover(URI.from(uri), ...restArgs, token));
 	}
-	getCompletionItems(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getCompletionItems']>) {
-		return this.languageService.getCompletionItems(URI.from(uri), ...restArgs);
+	getCompletionItems(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getCompletionItems']>) {
+		return this.withToken(requestId, token => this.languageService.getCompletionItems(URI.from(uri), ...restArgs, token));
 	}
-	getCodeActions(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getCodeActions']>) {
-		return this.languageService.getCodeActions(URI.from(uri), ...restArgs);
+	getCodeActions(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getCodeActions']>) {
+		return this.withToken(requestId, token => this.languageService.getCodeActions(URI.from(uri), ...restArgs, token));
 	}
-	getSignatureHelp(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getSignatureHelp']>) {
-		return this.languageService.getSignatureHelp(URI.from(uri), ...restArgs);
+	getSignatureHelp(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getSignatureHelp']>) {
+		return this.withToken(requestId, token => this.languageService.getSignatureHelp(URI.from(uri), ...restArgs, token));
 	}
-	getCodeLenses(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getCodeLenses']>) {
-		return this.languageService.getCodeLenses(URI.from(uri), ...restArgs);
+	getCodeLenses(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getCodeLenses']>) {
+		return this.withToken(requestId, token => this.languageService.getCodeLenses(URI.from(uri), ...restArgs, token));
 	}
-	getDocumentHighlights(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentHighlights']>) {
-		return this.languageService.getDocumentHighlights(URI.from(uri), ...restArgs);
+	getDocumentHighlights(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getDocumentHighlights']>) {
+		return this.withToken(requestId, token => this.languageService.getDocumentHighlights(URI.from(uri), ...restArgs, token));
 	}
-	getDocumentLinks(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentLinks']>) {
-		return this.languageService.getDocumentLinks(URI.from(uri), ...restArgs);
+	getDocumentLinks(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getDocumentLinks']>) {
+		return this.withToken(requestId, token => this.languageService.getDocumentLinks(URI.from(uri), ...restArgs, token));
 	}
-	getWorkspaceSymbols(...args: Parameters<LanguageService['getWorkspaceSymbols']>) {
-		return this.languageService.getWorkspaceSymbols(...args);
+	getWorkspaceSymbols(requestId: number, ...args: TrimToken<LanguageService['getWorkspaceSymbols']>) {
+		return this.withToken(requestId, token => this.languageService.getWorkspaceSymbols(...args, token));
 	}
-	getAutoInsertSnippet(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getAutoInsertSnippet']>) {
-		return this.languageService.getAutoInsertSnippet(URI.from(uri), ...restArgs);
+	getAutoInsertSnippet(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getAutoInsertSnippet']>) {
+		return this.withToken(requestId, token => this.languageService.getAutoInsertSnippet(URI.from(uri), ...restArgs, token));
 	}
-	getDocumentDropEdits(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentDropEdits']>) {
-		return this.languageService.getDocumentDropEdits(URI.from(uri), ...restArgs);
+	getDocumentDropEdits(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getDocumentDropEdits']>) {
+		return this.withToken(requestId, token => this.languageService.getDocumentDropEdits(URI.from(uri), ...restArgs, token));
 	}
-	getInlayHints(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getInlayHints']>) {
-		return this.languageService.getInlayHints(URI.from(uri), ...restArgs);
+	getInlayHints(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getInlayHints']>) {
+		return this.withToken(requestId, token => this.languageService.getInlayHints(URI.from(uri), ...restArgs, token));
 	}
-	resolveCodeAction(...args: Parameters<LanguageService['resolveCodeAction']>) {
-		return this.languageService.resolveCodeAction(...args);
+	resolveCodeAction(requestId: number, ...args: TrimToken<LanguageService['resolveCodeAction']>) {
+		return this.withToken(requestId, token => this.languageService.resolveCodeAction(...args, token));
 	}
-	resolveCompletionItem(...args: Parameters<LanguageService['resolveCompletionItem']>) {
-		return this.languageService.resolveCompletionItem(...args);
+	resolveCompletionItem(requestId: number, ...args: TrimToken<LanguageService['resolveCompletionItem']>) {
+		return this.withToken(requestId, token => this.languageService.resolveCompletionItem(...args, token));
 	}
-	resolveCodeLens(...args: Parameters<LanguageService['resolveCodeLens']>) {
-		return this.languageService.resolveCodeLens(...args);
+	resolveCodeLens(requestId: number, ...args: TrimToken<LanguageService['resolveCodeLens']>) {
+		return this.withToken(requestId, token => this.languageService.resolveCodeLens(...args, token));
 	}
-	resolveDocumentLink(...args: Parameters<LanguageService['resolveDocumentLink']>) {
-		return this.languageService.resolveDocumentLink(...args);
+	resolveDocumentLink(requestId: number, ...args: TrimToken<LanguageService['resolveDocumentLink']>) {
+		return this.withToken(requestId, token => this.languageService.resolveDocumentLink(...args, token));
 	}
-	resolveInlayHint(...args: Parameters<LanguageService['resolveInlayHint']>) {
-		return this.languageService.resolveInlayHint(...args);
+	resolveInlayHint(requestId: number, ...args: TrimToken<LanguageService['resolveInlayHint']>) {
+		return this.withToken(requestId, token => this.languageService.resolveInlayHint(...args, token));
 	}
-	resolveWorkspaceSymbol(...args: Parameters<LanguageService['resolveWorkspaceSymbol']>) {
-		return this.languageService.resolveWorkspaceSymbol(...args);
+	resolveWorkspaceSymbol(requestId: number, ...args: TrimToken<LanguageService['resolveWorkspaceSymbol']>) {
+		return this.withToken(requestId, token => this.languageService.resolveWorkspaceSymbol(...args, token));
 	}
-	getCallHierarchyItems(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getCallHierarchyItems']>) {
-		return this.languageService.getCallHierarchyItems(URI.from(uri), ...restArgs);
+	getCallHierarchyItems(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getCallHierarchyItems']>) {
+		return this.withToken(requestId, token => this.languageService.getCallHierarchyItems(URI.from(uri), ...restArgs, token));
 	}
-	getCallHierarchyIncomingCalls(...args: Parameters<LanguageService['getCallHierarchyIncomingCalls']>) {
-		return this.languageService.getCallHierarchyIncomingCalls(...args);
+	getCallHierarchyIncomingCalls(requestId: number, ...args: TrimToken<LanguageService['getCallHierarchyIncomingCalls']>) {
+		return this.withToken(requestId, token => this.languageService.getCallHierarchyIncomingCalls(...args, token));
 	}
-	getCallHierarchyOutgoingCalls(...args: Parameters<LanguageService['getCallHierarchyOutgoingCalls']>) {
-		return this.languageService.getCallHierarchyOutgoingCalls(...args);
+	getCallHierarchyOutgoingCalls(requestId: number, ...args: TrimToken<LanguageService['getCallHierarchyOutgoingCalls']>) {
+		return this.withToken(requestId, token => this.languageService.getCallHierarchyOutgoingCalls(...args, token));
 	}
 	dispose() {
 		this.languageService.dispose();
 	}
+
+	cancelRequest(requestId: number) {
+		this.pendingRequests.delete(requestId);
+	}
+
+	private async withToken<T>(requestId: number, fn: (token: CancellationToken) => ProviderResult<T>) {
+		const { pendingRequests } = this;
+		const token: CancellationToken = {
+			get isCancellationRequested() {
+				return !!pendingRequests.has(requestId);
+			},
+			onCancellationRequested(cb) {
+				let callbacks = pendingRequests.get(requestId);
+				if (!callbacks) {
+					callbacks = new Set();
+					pendingRequests.set(requestId, callbacks);
+				}
+				callbacks.add(cb);
+				return {
+					dispose() {
+						callbacks.delete(cb);
+					},
+				};
+			},
+		};
+		this.pendingRequests.set(requestId, undefined);
+		try {
+			return await fn(token);
+		}
+		finally {
+			this.pendingRequests.delete(requestId);
+		}
+	}
 }
 
-type TrimParams<T> = T extends ((...args: [uri: any, ...infer U, token: any]) => any) ? U : never;
+type TrimURIAndToken<T> = T extends ((...args: [uri: URI, ...infer U, token: CancellationToken]) => any) ? [...U] : never;
+
+type TrimToken<T> = T extends ((...args: [...infer U, token: CancellationToken]) => any) ? [...U] : never;
