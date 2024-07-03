@@ -290,8 +290,8 @@ export class WorkerLanguageService {
 	getDiagnostics(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDiagnostics']>) {
 		return this.languageService.getDiagnostics(URI.from(uri), ...restArgs);
 	}
-	getWorkspaceDiagnostics(...restArgs: TrimParams<LanguageService['getWorkspaceDiagnostics']>) {
-		return this.languageService.getWorkspaceDiagnostics(...restArgs);
+	getWorkspaceDiagnostics(...args: Parameters<LanguageService['getWorkspaceDiagnostics']>) {
+		return this.languageService.getWorkspaceDiagnostics(...args);
 	}
 	getReferences(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getReferences']>) {
 		return this.languageService.getReferences(URI.from(uri), ...restArgs);
@@ -385,4 +385,4 @@ export class WorkerLanguageService {
 	}
 }
 
-type TrimParams<T> = T extends ((...args: [any, ...infer U]) => any) ? U : never;
+type TrimParams<T> = T extends ((...args: [uri: any, ...infer U, token: any]) => any) ? U : never;
