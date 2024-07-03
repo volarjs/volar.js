@@ -18,7 +18,7 @@ export function register(context: LanguageServiceContext) {
 	return {
 
 		getCallHierarchyItems(uri: URI, position: vscode.Position, token = NoneCancellationToken) {
-	
+
 			return languageFeatureWorker(
 				context,
 				uri,
