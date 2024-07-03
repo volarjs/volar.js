@@ -5,6 +5,7 @@ import {
 	ProjectContext,
 	createLanguageService as _createLanguageService,
 	createLanguage,
+	createLanguageService,
 	createUriMap,
 	type LanguageService,
 	type LanguageServiceEnvironment,
@@ -18,19 +19,29 @@ export * from '@volar/language-service';
 
 const fsFileSnapshots = createUriMap<[number | undefined, ts.IScriptSnapshot | undefined]>();
 
-export function createSimpleWorkerService<T = {}>({
+/**
+ * @deprecated
+ * Use `createSimpleWorkerLanguageService` instead.
+ */
+export const createSimpleWorkerService = createSimpleWorkerLanguageService;
+
+/**
+ * @deprecated
+ * Use `createTypeScriptWorkerLanguageService` instead.
+ */
+export const createTypeScriptWorkerService = createTypeScriptWorkerLanguageService;
+
+export function createSimpleWorkerLanguageService({
 	env,
 	workerContext,
 	languagePlugins,
 	languageServicePlugins,
-	extraApis = {} as T,
 	setup,
 }: {
 	env: LanguageServiceEnvironment;
 	workerContext: monaco.worker.IWorkerContext<any>;
 	languagePlugins: LanguagePlugin<URI>[];
 	languageServicePlugins: LanguageServicePlugin[];
-	extraApis?: T;
 	setup?(options: {
 		language: Language<URI>;
 		project: ProjectContext;
@@ -64,10 +75,17 @@ export function createSimpleWorkerService<T = {}>({
 	const project: ProjectContext = {};
 	setup?.({ language, project });
 
-	return createWorkerService(language, languageServicePlugins, env, project, extraApis);
+	return new WorkerLanguageService(
+		createLanguageService(
+			language,
+			languageServicePlugins,
+			env,
+			project
+		)
+	);
 }
 
-export function createTypeScriptWorkerService<T = {}>({
+export function createTypeScriptWorkerLanguageService({
 	typescript: ts,
 	compilerOptions,
 	env,
@@ -75,7 +93,6 @@ export function createTypeScriptWorkerService<T = {}>({
 	workerContext,
 	languagePlugins,
 	languageServicePlugins,
-	extraApis = {} as T,
 	setup,
 }: {
 	typescript: typeof import('typescript'),
@@ -88,7 +105,6 @@ export function createTypeScriptWorkerService<T = {}>({
 	workerContext: monaco.worker.IWorkerContext<any>;
 	languagePlugins: LanguagePlugin<URI>[];
 	languageServicePlugins: LanguageServicePlugin[];
-	extraApis?: T;
 	setup?(options: {
 		language: Language<URI>;
 		project: ProjectContext;
@@ -189,12 +205,13 @@ export function createTypeScriptWorkerService<T = {}>({
 	};
 	setup?.({ language, project });
 
-	return createWorkerService(
-		language,
-		languageServicePlugins,
-		env,
-		project,
-		extraApis
+	return new WorkerLanguageService(
+		createLanguageService(
+			language,
+			languageServicePlugins,
+			env,
+			project
+		)
 	);
 
 	function getModelSnapshot(uri: URI) {
@@ -215,36 +232,157 @@ export function createTypeScriptWorkerService<T = {}>({
 	}
 }
 
-function createWorkerService<T = {}>(
-	language: Language<URI>,
-	servicePlugins: LanguageServicePlugin[],
-	env: LanguageServiceEnvironment,
-	projectContext: ProjectContext,
-	extraApis: T = {} as any
-): LanguageService & T {
-
-	const languageService = _createLanguageService(
-		language,
-		servicePlugins,
-		env,
-		projectContext
-	);
-
-	class WorkerService { };
-
-	for (const api in languageService) {
-		const isFunction = typeof (languageService as any)[api] === 'function';
-		if (isFunction) {
-			(WorkerService.prototype as any)[api] = (languageService as any)[api];
-		}
-	}
-
-	for (const api in extraApis) {
-		const isFunction = typeof (extraApis as any)[api] === 'function';
-		if (isFunction) {
-			(WorkerService.prototype as any)[api] = (extraApis as any)[api];
-		}
-	}
-
-	return new WorkerService() as any;
+export interface UriComponents {
+	scheme: string;
+	authority: string;
+	path: string;
+	query: string;
+	fragment: string;
 }
+
+export class WorkerLanguageService {
+	constructor(
+		private languageService: LanguageService
+	) { }
+
+	getSemanticTokenLegend() {
+		return this.languageService.semanticTokenLegend;
+	}
+	getCommands() {
+		return this.languageService.commands;
+	}
+	getTriggerCharacters() {
+		return this.languageService.triggerCharacters;
+	}
+	getAutoFormatTriggerCharacters() {
+		return this.languageService.autoFormatTriggerCharacters;
+	}
+	getSignatureHelpTriggerCharacters() {
+		return this.languageService.signatureHelpTriggerCharacters;
+	}
+	getSignatureHelpRetriggerCharacters() {
+		return this.languageService.signatureHelpRetriggerCharacters;
+	}
+	executeCommand(...args: Parameters<LanguageService['executeCommand']>) {
+		return this.languageService.executeCommand(...args);
+	}
+	getDocumentFormattingEdits(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentFormattingEdits']>) {
+		return this.languageService.getDocumentFormattingEdits(URI.from(uri), ...restArgs);
+	}
+	getFoldingRanges(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getFoldingRanges']>) {
+		return this.languageService.getFoldingRanges(URI.from(uri), ...restArgs);
+	}
+	getSelectionRanges(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getSelectionRanges']>) {
+		return this.languageService.getSelectionRanges(URI.from(uri), ...restArgs);
+	}
+	getLinkedEditingRanges(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getLinkedEditingRanges']>) {
+		return this.languageService.getLinkedEditingRanges(URI.from(uri), ...restArgs);
+	}
+	getDocumentSymbols(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentSymbols']>) {
+		return this.languageService.getDocumentSymbols(URI.from(uri), ...restArgs);
+	}
+	getDocumentColors(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentColors']>) {
+		return this.languageService.getDocumentColors(URI.from(uri), ...restArgs);
+	}
+	getColorPresentations(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getColorPresentations']>) {
+		return this.languageService.getColorPresentations(URI.from(uri), ...restArgs);
+	}
+	getDiagnostics(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDiagnostics']>) {
+		return this.languageService.getDiagnostics(URI.from(uri), ...restArgs);
+	}
+	getWorkspaceDiagnostics(...restArgs: TrimParams<LanguageService['getWorkspaceDiagnostics']>) {
+		return this.languageService.getWorkspaceDiagnostics(...restArgs);
+	}
+	getReferences(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getReferences']>) {
+		return this.languageService.getReferences(URI.from(uri), ...restArgs);
+	}
+	getFileReferences(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getFileReferences']>) {
+		return this.languageService.getFileReferences(URI.from(uri), ...restArgs);
+	}
+	getDefinition(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDefinition']>) {
+		return this.languageService.getDefinition(URI.from(uri), ...restArgs);
+	}
+	getTypeDefinition(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getTypeDefinition']>) {
+		return this.languageService.getTypeDefinition(URI.from(uri), ...restArgs);
+	}
+	getImplementations(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getImplementations']>) {
+		return this.languageService.getImplementations(URI.from(uri), ...restArgs);
+	}
+	getRenameRange(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getRenameRange']>) {
+		return this.languageService.getRenameRange(URI.from(uri), ...restArgs);
+	}
+	getRenameEdits(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getRenameEdits']>) {
+		return this.languageService.getRenameEdits(URI.from(uri), ...restArgs);
+	}
+	getFileRenameEdits(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getFileRenameEdits']>) {
+		return this.languageService.getFileRenameEdits(URI.from(uri), ...restArgs);
+	}
+	getSemanticTokens(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getSemanticTokens']>) {
+		return this.languageService.getSemanticTokens(URI.from(uri), ...restArgs);
+	}
+	getHover(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getHover']>) {
+		return this.languageService.getHover(URI.from(uri), ...restArgs);
+	}
+	getCompletionItems(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getCompletionItems']>) {
+		return this.languageService.getCompletionItems(URI.from(uri), ...restArgs);
+	}
+	getCodeActions(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getCodeActions']>) {
+		return this.languageService.getCodeActions(URI.from(uri), ...restArgs);
+	}
+	getSignatureHelp(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getSignatureHelp']>) {
+		return this.languageService.getSignatureHelp(URI.from(uri), ...restArgs);
+	}
+	getCodeLenses(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getCodeLenses']>) {
+		return this.languageService.getCodeLenses(URI.from(uri), ...restArgs);
+	}
+	getDocumentHighlights(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentHighlights']>) {
+		return this.languageService.getDocumentHighlights(URI.from(uri), ...restArgs);
+	}
+	getDocumentLinks(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentLinks']>) {
+		return this.languageService.getDocumentLinks(URI.from(uri), ...restArgs);
+	}
+	getWorkspaceSymbols(...args: Parameters<LanguageService['getWorkspaceSymbols']>) {
+		return this.languageService.getWorkspaceSymbols(...args);
+	}
+	getAutoInsertSnippet(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getAutoInsertSnippet']>) {
+		return this.languageService.getAutoInsertSnippet(URI.from(uri), ...restArgs);
+	}
+	getDocumentDropEdits(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getDocumentDropEdits']>) {
+		return this.languageService.getDocumentDropEdits(URI.from(uri), ...restArgs);
+	}
+	getInlayHints(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getInlayHints']>) {
+		return this.languageService.getInlayHints(URI.from(uri), ...restArgs);
+	}
+	resolveCodeAction(...args: Parameters<LanguageService['resolveCodeAction']>) {
+		return this.languageService.resolveCodeAction(...args);
+	}
+	resolveCompletionItem(...args: Parameters<LanguageService['resolveCompletionItem']>) {
+		return this.languageService.resolveCompletionItem(...args);
+	}
+	resolveCodeLens(...args: Parameters<LanguageService['resolveCodeLens']>) {
+		return this.languageService.resolveCodeLens(...args);
+	}
+	resolveDocumentLink(...args: Parameters<LanguageService['resolveDocumentLink']>) {
+		return this.languageService.resolveDocumentLink(...args);
+	}
+	resolveInlayHint(...args: Parameters<LanguageService['resolveInlayHint']>) {
+		return this.languageService.resolveInlayHint(...args);
+	}
+	resolveWorkspaceSymbol(...args: Parameters<LanguageService['resolveWorkspaceSymbol']>) {
+		return this.languageService.resolveWorkspaceSymbol(...args);
+	}
+	getCallHierarchyItems(uri: UriComponents, ...restArgs: TrimParams<LanguageService['getCallHierarchyItems']>) {
+		return this.languageService.getCallHierarchyItems(URI.from(uri), ...restArgs);
+	}
+	getCallHierarchyIncomingCalls(...args: Parameters<LanguageService['getCallHierarchyIncomingCalls']>) {
+		return this.languageService.getCallHierarchyIncomingCalls(...args);
+	}
+	getCallHierarchyOutgoingCalls(...args: Parameters<LanguageService['getCallHierarchyOutgoingCalls']>) {
+		return this.languageService.getCallHierarchyOutgoingCalls(...args);
+	}
+	dispose() {
+		this.languageService.dispose();
+	}
+}
+
+type TrimParams<T> = T extends ((...args: [any, ...infer U]) => any) ? U : never;

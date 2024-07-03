@@ -182,20 +182,18 @@ function createLanguageServiceBase(
 	plugins: LanguageServicePlugin[],
 	context: LanguageServiceContext
 ) {
+	const tokenModifiers = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat();
+	const tokenTypes = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat();
 	return {
-		getSemanticTokenLegend: () => {
-			const tokenModifiers = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat();
-			const tokenTypes = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat();
-			return {
-				tokenModifiers: [...new Set(tokenModifiers)],
-				tokenTypes: [...new Set(tokenTypes)],
-			};
+		semanticTokenLegend: {
+			tokenModifiers: [...new Set(tokenModifiers)],
+			tokenTypes: [...new Set(tokenTypes)],
 		},
-		getCommands: () => plugins.map(plugin => plugin.capabilities.executeCommandProvider?.commands ?? []).flat(),
-		getTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.completionProvider?.triggerCharacters ?? []).flat(),
-		getAutoFormatTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat(),
-		getSignatureHelpTriggerCharacters: () => plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat(),
-		getSignatureHelpRetriggerCharacters: () => plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat(),
+		commands: plugins.map(plugin => plugin.capabilities.executeCommandProvider?.commands ?? []).flat(),
+		triggerCharacters: plugins.map(plugin => plugin.capabilities.completionProvider?.triggerCharacters ?? []).flat(),
+		autoFormatTriggerCharacters: plugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat(),
+		signatureHelpTriggerCharacters: plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat(),
+		signatureHelpRetriggerCharacters: plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat(),
 
 		executeCommand(command: string, args: any[], token = NoneCancellationToken) {
 			for (const plugin of context.plugins) {

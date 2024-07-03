@@ -405,7 +405,7 @@ export function registerLanguageFeatures(server: LanguageServer) {
 	if (executeCommandProvider) {
 		server.connection.onExecuteCommand(async (params, token) => {
 			for (const languageService of await server.project.getExistingLanguageServices()) {
-				if (languageService.executeCommand && languageService.getCommands().includes(params.command)) {
+				if (languageService.executeCommand && languageService.commands.includes(params.command)) {
 					try {
 						return await languageService.executeCommand(params.command, params.arguments ?? [], token);
 					} catch { }

@@ -1,6 +1,6 @@
-import type { LanguageService } from '@volar/language-service';
 import { fromPosition, toMarkerData, toTextEdit } from 'monaco-languageserver-types';
 import type { editor, IDisposable, MonacoEditor, Uri } from 'monaco-types';
+import { WorkerLanguageService } from '../worker.js';
 import { markers } from './markers.js';
 
 interface IInternalEditorModel extends editor.IModel {
@@ -9,7 +9,7 @@ interface IInternalEditorModel extends editor.IModel {
 }
 
 export function activateMarkers(
-	worker: editor.MonacoWebWorker<LanguageService>,
+	worker: editor.MonacoWebWorker<WorkerLanguageService>,
 	languages: string[],
 	markersOwn: string,
 	getSyncUris: () => Uri[],
@@ -107,7 +107,7 @@ export function activateMarkers(
 }
 
 export function activateAutoInsertion(
-	worker: editor.MonacoWebWorker<LanguageService>,
+	worker: editor.MonacoWebWorker<WorkerLanguageService>,
 	languages: string[],
 	getSyncUris: () => Uri[],
 	editor: MonacoEditor['editor']

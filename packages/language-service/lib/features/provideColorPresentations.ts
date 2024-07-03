@@ -1,14 +1,13 @@
 import { isColorEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
-import type { LanguageServiceContext, UriComponents } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedRanges, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 
-	return (_uri: URI | UriComponents, color: vscode.Color, range: vscode.Range, token = NoneCancellationToken) => {
-		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
+	return (uri: URI, color: vscode.Color, range: vscode.Range, token = NoneCancellationToken) => {
 
 		return languageFeatureWorker(
 			context,
