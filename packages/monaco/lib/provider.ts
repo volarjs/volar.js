@@ -6,7 +6,6 @@ import type {
 	Diagnostic,
 	DocumentLink,
 	InlayHint,
-	LanguageService,
 } from '@volar/language-service';
 import {
 	fromCompletionContext,
@@ -36,10 +35,11 @@ import {
 	toWorkspaceEdit,
 } from 'monaco-languageserver-types';
 import type { Uri, editor, languages } from 'monaco-types';
+import { WorkerLanguageService } from '../worker.js';
 import { markers } from './markers.js';
 
 export async function createLanguageFeaturesProvider(
-	worker: editor.MonacoWebWorker<LanguageService>,
+	worker: editor.MonacoWebWorker<WorkerLanguageService>,
 	getSyncUris: () => Uri[]
 ): Promise<
 	languages.HoverProvider &

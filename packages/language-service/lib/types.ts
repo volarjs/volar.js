@@ -8,14 +8,6 @@ import type { UriMap } from './utils/uriMap';
 
 export type * from 'vscode-languageserver-protocol';
 
-export interface UriComponents {
-	scheme: string;
-	authority: string;
-	path: string;
-	query: string;
-	fragment: string;
-}
-
 export interface LanguageServiceEnvironment {
 	workspaceFolders: URI[];
 	locale?: string;

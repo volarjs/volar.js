@@ -1,4 +1,3 @@
-import type { LanguageService } from '@volar/language-service';
 import type {
 	IDisposable,
 	MonacoEditor,
@@ -6,10 +5,11 @@ import type {
 	editor,
 	languages,
 } from 'monaco-types';
+import { WorkerLanguageService } from '../worker.js';
 import { createLanguageFeaturesProvider } from './provider.js';
 
 export async function registerProviders(
-	worker: editor.MonacoWebWorker<LanguageService>,
+	worker: editor.MonacoWebWorker<WorkerLanguageService>,
 	language: languages.LanguageSelector,
 	getSyncUris: () => Uri[],
 	languages: MonacoEditor['languages']

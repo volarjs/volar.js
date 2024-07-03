@@ -1,5 +1,5 @@
 import { URI } from 'vscode-uri';
-import type { LanguageServiceContext, UriComponents } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
 import { transformWorkspaceEdit } from '../utils/transform';
@@ -8,9 +8,7 @@ import type * as _ from 'vscode-languageserver-protocol';
 
 export function register(context: LanguageServiceContext) {
 
-	return async (_oldUri: URI | UriComponents, _newUri: URI | UriComponents, token = NoneCancellationToken) => {
-		const oldUri = _oldUri instanceof URI ? _oldUri : URI.from(_oldUri);
-		const newUri = _newUri instanceof URI ? _newUri : URI.from(_newUri);
+	return async (oldUri: URI, newUri: URI, token = NoneCancellationToken) => {
 
 		for (const plugin of context.plugins) {
 			if (context.disabledServicePlugins.has(plugin[1])) {

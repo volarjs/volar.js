@@ -1,7 +1,7 @@
 import { isCodeActionsEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
-import type { LanguageServiceContext, UriComponents } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { findOverlapCodeRange } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
@@ -18,8 +18,7 @@ export interface ServiceCodeActionData {
 
 export function register(context: LanguageServiceContext) {
 
-	return async (_uri: URI | UriComponents, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = NoneCancellationToken) => {
-		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
+	return async (uri: URI, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = NoneCancellationToken) => {
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return;

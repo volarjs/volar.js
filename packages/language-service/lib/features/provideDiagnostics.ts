@@ -3,7 +3,7 @@ import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import type { LanguageServiceContext, UriComponents } from '../types';
+import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
@@ -147,11 +147,10 @@ export function register(context: LanguageServiceContext) {
 	});
 
 	return async (
-		_uri: URI | UriComponents,
+		uri: URI,
 		token = NoneCancellationToken,
 		response?: (result: vscode.Diagnostic[]) => void
 	) => {
-		const uri = _uri instanceof URI ? _uri : URI.from(_uri);
 
 		let langaugeIdAndSnapshot: SourceScript<URI> | VirtualCode | undefined;
 
