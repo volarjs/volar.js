@@ -510,9 +510,9 @@ export function createServerBase(
 	async function pushDiagnostics(project: LanguageServerProject, uriStr: string, version: number, cancel: vscode.CancellationToken) {
 		const uri = URI.parse(uriStr);
 		const languageService = await project.getLanguageService(uri);
-		const errors = await languageService.getDiagnostics(uri, cancel, result => {
+		const errors = await languageService.getDiagnostics(uri, result => {
 			connection.sendDiagnostics({ uri: uriStr, diagnostics: result, version });
-		});
+		}, cancel);
 
 		connection.sendDiagnostics({ uri: uriStr, diagnostics: errors, version });
 	}

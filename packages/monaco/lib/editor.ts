@@ -1,7 +1,8 @@
 import { fromPosition, toMarkerData, toTextEdit } from 'monaco-languageserver-types';
-import type { editor, IDisposable, MonacoEditor, Uri } from 'monaco-types';
+import type { CancellationToken, editor, IDisposable, MonacoEditor, Uri } from 'monaco-types';
 import { WorkerLanguageService } from '../worker.js';
 import { markers } from './markers.js';
+import { getRequestId } from './requestId.js';
 
 interface IInternalEditorModel extends editor.IModel {
 	onDidChangeAttached(listener: () => void): IDisposable;
@@ -90,10 +91,14 @@ export function activateMarkers(
 			return;
 		}
 
-		const version = model.getVersionId();
 		const languageService = await worker.withSyncedResources(getSyncUris());
-		const diagnostics = await languageService.getDiagnostics(model.uri);
-		if (model.getVersionId() !== version) {
+		const token = createTokenForModelChange(model);
+		const diagnostics = await languageService.getDiagnostics(
+			getRequestId(token.token, languageService),
+			model.uri
+		);
+		token.dispose();
+		if (token.token.isCancellationRequested) {
 			return;
 		}
 		const result = diagnostics.map(error => {
@@ -182,7 +187,9 @@ export function activateAutoInsertion(
 					return;
 				}
 				const languageService = await worker.withSyncedResources(getSyncUris());
+				const token = createTokenForModelChange(model);
 				const edit = await languageService.getAutoInsertSnippet(
+					getRequestId(token.token, languageService),
 					model.uri,
 					fromPosition({
 						lineNumber: lastChange.range.startLineNumber,
@@ -194,7 +201,8 @@ export function activateAutoInsertion(
 						rangeLength: lastChange.rangeLength,
 					}
 				);
-				if (model.getVersionId() !== version) {
+				token.dispose();
+				if (token.token.isCancellationRequested) {
 					return;
 				}
 				const codeEditor = editor.getEditors().find(e => e.getModel() === model);
@@ -210,4 +218,40 @@ export function activateAutoInsertion(
 			timeout = undefined;
 		}, 100);
 	}
+}
+
+function createTokenForModelChange(model: editor.ITextModel) {
+	const lastVersionId = model.getVersionId();
+	let callbacks: Set<IDisposable> | undefined;
+	const token: CancellationToken = {
+		get isCancellationRequested() {
+			return model.getVersionId() !== lastVersionId;
+		},
+		onCancellationRequested(cb) {
+			const disposable = model.onDidChangeContent(() => {
+				cb(undefined);
+				disposable.dispose();
+				callbacks?.delete(disposable);
+			});
+			callbacks ??= new Set();
+			callbacks.add(disposable);
+			return {
+				dispose() {
+					disposable.dispose();
+					callbacks?.delete(disposable);
+				},
+			};
+		},
+	};
+	return {
+		token,
+		dispose() {
+			if (callbacks) {
+				for (const disposable of callbacks) {
+					disposable.dispose();
+				}
+				callbacks.clear();
+			}
+		},
+	};
 }

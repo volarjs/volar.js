@@ -148,8 +148,8 @@ export function register(context: LanguageServiceContext) {
 
 	return async (
 		uri: URI,
-		token = NoneCancellationToken,
-		response?: (result: vscode.Diagnostic[]) => void
+		response?: (result: vscode.Diagnostic[]) => void,
+		token = NoneCancellationToken
 	) => {
 
 		let langaugeIdAndSnapshot: SourceScript<URI> | VirtualCode | undefined;
