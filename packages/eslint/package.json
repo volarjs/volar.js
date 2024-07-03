@@ -1,6 +1,6 @@
 {
 	"name": "@volar/eslint",
-	"version": "2.4.0-alpha.12",
+	"version": "2.4.0-alpha.13",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
@@ -13,7 +13,7 @@
 	},
 	"dependencies": {
 		"@types/eslint": "^8.56.10",
-		"@volar/language-core": "2.4.0-alpha.12",
+		"@volar/language-core": "2.4.0-alpha.13",
 		"vscode-languageserver-textdocument": "^1.0.11"
 	}
 }
