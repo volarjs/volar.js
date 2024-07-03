@@ -9,25 +9,10 @@ export let getLanguagePlugins: (ts: typeof import('typescript'), options: ts.Cre
 
 export function runTsc(
 	tscPath: string,
-	extraExtensions: string[],
-	_getLanguagePlugins: typeof getLanguagePlugins
-) {
-	return runTscBase(tscPath, extraExtensions, [], _getLanguagePlugins);
-}
-
-export function runTscWithRemoveExtensions(
-	tscPath: string,
-	extraExtensions: string[],
-	extensionsToRemove: string[],
-	_getLanguagePlugins: typeof getLanguagePlugins
-) {
-	return runTscBase(tscPath, extraExtensions, extensionsToRemove, _getLanguagePlugins);
-}
-
-function runTscBase(
-	tscPath: string,
-	extraExtensions: string[],
-	extensionsToRemove: string[],
+	extensionsOrOptions: string[] | {
+		supportedExtensions: string[];
+		extensionsToRemove: string[];
+	},
 	_getLanguagePlugins: typeof getLanguagePlugins
 ) {
 
@@ -40,9 +25,12 @@ function runTscBase(
 		if (args[0] === tscPath) {
 			let tsc = (readFileSync as any)(...args) as string;
 
+			const supportedExtensions = Array.isArray(extensionsOrOptions) ? extensionsOrOptions : extensionsOrOptions.supportedExtensions;
+			const extensionsToRemove = Array.isArray(extensionsOrOptions) ? [] : extensionsOrOptions.extensionsToRemove;
+
 			// add allow extensions
-			if (extraExtensions.length) {
-				const extsText = extraExtensions.map(ext => `"${ext}"`).join(', ');
+			if (supportedExtensions.length) {
+				const extsText = supportedExtensions.map(ext => `"${ext}"`).join(', ');
 				tsc = replace(tsc, /supportedTSExtensions = .*(?=;)/, s => s + `.concat([[${extsText}]])`);
 				tsc = replace(tsc, /supportedJSExtensions = .*(?=;)/, s => s + `.concat([[${extsText}]])`);
 				tsc = replace(tsc, /allSupportedExtensions = .*(?=;)/, s => s + `.concat([[${extsText}]])`);
