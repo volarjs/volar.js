@@ -9,9 +9,9 @@ export let getLanguagePlugins: (ts: typeof import('typescript'), options: ts.Cre
 
 export function runTsc(
 	tscPath: string,
-	extensionsOrOptions: string[] | {
-		supportedExtensions: string[];
-		extensionsToRemove: string[];
+	options: string[] | {
+		extraSupportedExtensions: string[];
+		extraExtensionsToRemove: string[];
 	},
 	_getLanguagePlugins: typeof getLanguagePlugins
 ) {
@@ -25,19 +25,37 @@ export function runTsc(
 		if (args[0] === tscPath) {
 			let tsc = (readFileSync as any)(...args) as string;
 
-			const supportedExtensions = Array.isArray(extensionsOrOptions) ? extensionsOrOptions : extensionsOrOptions.supportedExtensions;
-			const extensionsToRemove = Array.isArray(extensionsOrOptions) ? [] : extensionsOrOptions.extensionsToRemove;
+			let extraSupportedExtensions: string[];
+			let extraExtensionsToRemove: string[];
+			if (Array.isArray(options)) {
+				extraSupportedExtensions = options;
+				extraExtensionsToRemove = [];
+			}
+			else {
+				extraSupportedExtensions = options.extraSupportedExtensions;
+				extraExtensionsToRemove = options.extraExtensionsToRemove;
+			}
+			const needPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
 
 			// add allow extensions
-			if (supportedExtensions.length) {
-				const extsText = supportedExtensions.map(ext => `"${ext}"`).join(', ');
-				tsc = replace(tsc, /supportedTSExtensions = .*(?=;)/, s => s + `.concat([[${extsText}]])`);
-				tsc = replace(tsc, /supportedJSExtensions = .*(?=;)/, s => s + `.concat([[${extsText}]])`);
-				tsc = replace(tsc, /allSupportedExtensions = .*(?=;)/, s => s + `.concat([[${extsText}]])`);
+			if (extraSupportedExtensions.length) {
+				const extsText = extraSupportedExtensions.map(ext => `"${ext}"`).join(', ');
+				tsc = replace(tsc, /supportedTSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
+				tsc = replace(tsc, /supportedJSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
+				tsc = replace(tsc, /allSupportedExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
+
 			}
-			if (extensionsToRemove.length) {
-				const extsText = extensionsToRemove.map(ext => `"${ext}"`).join(', ');
+			if (extraExtensionsToRemove.length) {
+				const extsText = extraExtensionsToRemove.map(ext => `"${ext}"`).join(', ');
 				tsc = replace(tsc, /extensionsToRemove = .*(?=;)/, s => s + `.concat([${extsText}])`);
+			}
+			if (needPatchExtenstions.length) {
+				const extsText = needPatchExtenstions.map(ext => `"${ext}"`).join(', ');
+				tsc = replace(tsc, /function changeExtension\(/, s => `function changeExtension(path, newExtension) {
+					return [${extsText}].some(ext => path.endsWith(ext))
+						? path + newExtension
+						: _changeExtension(path, newExtension)
+					}\n` + s.replace('changeExtension', '_changeExtension'));
 			}
 
 			// proxy createProgram
