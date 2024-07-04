@@ -37,17 +37,19 @@ export function runTsc(
 			}
 			const needPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
 
-			// add allow extensions
+			// Add allow extensions
 			if (extraSupportedExtensions.length) {
 				const extsText = extraSupportedExtensions.map(ext => `"${ext}"`).join(', ');
 				tsc = replace(tsc, /supportedTSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
 				tsc = replace(tsc, /supportedJSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
 				tsc = replace(tsc, /allSupportedExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
 			}
+			// Use to emit basename.xxx to basename.d.ts instead of basename.xxx.d.ts
 			if (extraExtensionsToRemove.length) {
 				const extsText = extraExtensionsToRemove.map(ext => `"${ext}"`).join(', ');
 				tsc = replace(tsc, /extensionsToRemove = .*(?=;)/, s => s + `.concat([${extsText}])`);
 			}
+			// Support for basename.xxx to basename.xxx.d.ts
 			if (needPatchExtenstions.length) {
 				const extsText = needPatchExtenstions.map(ext => `"${ext}"`).join(', ');
 				tsc = replace(tsc, /function changeExtension\(/, s => `function changeExtension(path, newExtension) {
