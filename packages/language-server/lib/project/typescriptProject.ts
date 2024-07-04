@@ -131,7 +131,8 @@ export function createTypeScriptProject(
 			return findTSConfig(async tsconfig => {
 				const tsconfigUri = uriConverter.asUri(tsconfig);
 				const project = await configProjects.get(tsconfigUri);
-				return project?.askedFiles.has(uri) ?? false;
+				const languageService: ts.LanguageService | undefined = project?.languageService.context.inject('typescript/languageService');
+				return !!languageService?.getProgram()?.getSourceFile(fileName);
 			});
 		}
 		function findDirectIncludeTsconfig() {

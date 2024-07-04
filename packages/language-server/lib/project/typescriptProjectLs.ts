@@ -1,4 +1,4 @@
-import { Language, LanguagePlugin, LanguageService, LanguageServiceEnvironment, ProjectContext, ProviderResult, UriMap, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
+import { Language, LanguagePlugin, LanguageService, LanguageServiceEnvironment, ProjectContext, ProviderResult, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
 import type { SnapshotDocument } from '@volar/snapshot-document';
 import { TypeScriptProjectHost, createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
 import * as path from 'path-browserify';
@@ -8,7 +8,6 @@ import { URI } from 'vscode-uri';
 import type { LanguageServer } from '../types';
 
 export interface TypeScriptProjectLS {
-	askedFiles: UriMap<boolean>;
 	tryAddFile(fileName: string): void;
 	getParsedCommandLine(): ts.ParsedCommandLine;
 	languageService: LanguageService;
@@ -64,7 +63,6 @@ export async function createTypeScriptLS(
 			const uri = uriConverter.asUri(fileName);
 			const documentKey = server.getSyncedDocumentKey(uri) ?? uri.toString();
 			const document = server.documents.get(documentKey);
-			askedFiles.set(uri, true);
 			if (document) {
 				return document.getSnapshot();
 			}
@@ -84,7 +82,6 @@ export async function createTypeScriptLS(
 		sys,
 		uriConverter,
 	});
-	const askedFiles = createUriMap<boolean>();
 	const docOpenWatcher = server.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document));
 	const docSaveWatcher = server.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document));
 	const docChangeWatcher = server.documents.onDidChangeContent(() => projectVersion++);
@@ -100,8 +97,6 @@ export async function createTypeScriptLS(
 		],
 		createUriMap(sys.useCaseSensitiveFileNames),
 		uri => {
-			askedFiles.set(uri, true);
-
 			const documentUri = server.getSyncedDocumentKey(uri);
 			const syncedDocument = documentUri ? server.documents.get(documentUri) : undefined;
 
@@ -159,7 +154,6 @@ export async function createTypeScriptLS(
 	);
 
 	return {
-		askedFiles,
 		languageService,
 		tryAddFile(fileName: string) {
 			if (!rootFiles.includes(fileName)) {
