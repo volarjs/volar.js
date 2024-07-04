@@ -1,7 +1,22 @@
+let warned = false;
+
 export function translateOffset(start: number, fromOffsets: number[], toOffsets: number[], fromLengths: number[], toLengths: number[] = fromLengths): number | undefined {
 	const isSorted = fromOffsets.every((value, index) => index === 0 || fromOffsets[index - 1] <= value);
 	if (!isSorted) {
-		throw new Error('fromOffsets must be sorted in ascending order');
+		for (let i = 0; i < fromOffsets.length; i++) {
+			const fromOffset = fromOffsets[i];
+			const fromLength = fromLengths[i];
+			if (start >= fromOffset && start <= fromOffset + fromLength) {
+				const toLength = toLengths[i];
+				const toOffset = toOffsets[i];
+				let rangeOffset = Math.min(start - fromOffset, toLength);
+				return toOffset + rangeOffset;
+			}
+		}
+		if (!warned) {
+			warned = true;
+			console.warn('fromOffsets should be sorted in ascending order');
+		}
 	}
 
 	let low = 0;
