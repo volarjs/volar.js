@@ -15,7 +15,7 @@ export function createTypeScriptProject(
 	tsLocalized: ts.MapLike<string> | undefined,
 	create: (projectContext: ProjectExposeContext) => ProviderResult<{
 		languagePlugins: LanguagePlugin<URI>[];
-		setup(options: {
+		setup?(options: {
 			language: Language;
 			project: ProjectContext;
 		}): void;

@@ -40,7 +40,7 @@ export async function createTypeScriptLS(
 	},
 	create: (projectContext: ProjectExposeContext) => ProviderResult<{
 		languagePlugins: LanguagePlugin<URI>[];
-		setup(options: {
+		setup?(options: {
 			language: Language;
 			project: ProjectContext;
 		}): void;
@@ -145,7 +145,7 @@ export async function createTypeScriptLS(
 			),
 		},
 	};
-	setup({ language, project });
+	setup?.({ language, project });
 	const languageService = createLanguageService(
 		language,
 		server.languageServicePlugins,
