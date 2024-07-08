@@ -12,7 +12,7 @@ export function replaceTscContent(
 	proxyApiPath: string,
 	extraSupportedExtensions: string[],
 	extraExtensionsToRemove: string[],
-	getLanguagePluginsFile?: string,
+	getLanguagePluginsFile = __filename,
 ) {
 	
 	const needPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
@@ -45,7 +45,7 @@ export function replaceTscContent(
 		+ [
 			`new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )`,
 			`_createProgram`,
-			`require(${JSON.stringify(getLanguagePluginsFile ?? __filename)}).getLanguagePlugins`,
+			`require(${JSON.stringify(getLanguagePluginsFile)}).getLanguagePlugins`,
 		].join(', ')
 		+ `);\n`
 		+ s.replace('createProgram', '_createProgram')
