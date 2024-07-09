@@ -158,11 +158,12 @@ export function activate(context: vscode.ExtensionContext) {
 					collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
 				};
 			}
+			const { version } = element.extension.exports.volarLabs;
 			return {
 				iconPath: new vscode.ThemeIcon('error'),
 				label: element.extension.packageJSON.displayName,
 				collapsibleState: vscode.TreeItemCollapsibleState.None,
-				description: `This extension is not compatible with the current version of Volar Labs (volarLabs.version != ${JSON.stringify(lsp.currentLabsVersion)}).`,
+				description: `Extension incompatible: The version is ${JSON.stringify(version)}, required is ${JSON.stringify(lsp.currentLabsVersion)}.`,
 			};
 		},
 	};
