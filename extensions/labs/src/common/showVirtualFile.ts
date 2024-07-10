@@ -28,7 +28,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 
 	const subscriptions: vscode.Disposable[] = [];
 	const docChangeEvent = new vscode.EventEmitter<vscode.Uri>();
-	const virtualUriToSourceMap = new Map<string, [string, number, SourceMap<CodeInformation>][]>();
+	const virtualUriToSourceMap = new Map<string, [string, SourceMap<CodeInformation>][]>();
 	const virtualDocuments = new Map<string, TextDocument>();
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection('volar-labs');
 
@@ -107,7 +107,7 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 					mapping: any,
 				}[] = [];
 
-				for (const [sourceUri, _, map] of maps) {
+				for (const [sourceUri, map] of maps) {
 					for (const source of map.toSourceLocation(document.offsetAt(position))) {
 						data.push({
 							uri: sourceUri,
@@ -163,18 +163,14 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 					);
 
 					Object.entries(virtualCode.mappings).forEach(([sourceUri, mappings]) => {
-						const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
-						if (sourceEditor) {
-							virtualUriToSourceMap.get(uri.toString())?.push([
-								sourceEditor.document.uri.toString(),
-								sourceEditor.document.version,
-								new SourceMap(mappings),
-							]);
-							if (!sourceDocUriToVirtualDocUris.has(sourceUri)) {
-								sourceDocUriToVirtualDocUris.set(sourceUri, new Set());
-							}
-							sourceDocUriToVirtualDocUris.get(sourceUri)?.add(uri.toString());
+						virtualUriToSourceMap.get(uri.toString())?.push([
+							sourceUri,
+							new SourceMap(mappings),
+						]);
+						if (!sourceDocUriToVirtualDocUris.has(sourceUri)) {
+							sourceDocUriToVirtualDocUris.set(sourceUri, new Set());
 						}
+						sourceDocUriToVirtualDocUris.get(sourceUri)?.add(uri.toString());
 					});
 					virtualDocuments.set(uri.toString(), TextDocument.create('', '', 0, virtualCode.content));
 
@@ -234,9 +230,9 @@ export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
 			let virtualRanges3: vscode.Range[] = [];
 
 			if (virtualEditor) {
-				for (const [sourceUri, sourceVersion, map] of sources) {
+				for (const [sourceUri, map] of sources) {
 					const sourceEditor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === sourceUri);
-					if (sourceEditor && sourceEditor.document.version === sourceVersion) {
+					if (sourceEditor) {
 						const mappingDecorationRanges = map.mappings
 							.map(mapping => mapping.sourceOffsets.map((offset, i) => new vscode.Range(
 								sourceEditor.document.positionAt(offset),
