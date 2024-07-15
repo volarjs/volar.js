@@ -7,7 +7,7 @@ import { arrayItemsEqual, decoratedLanguageServiceHosts, decoratedLanguageServic
 
 export function createAsyncLanguageServicePlugin(
 	extensions: string[],
-	scriptKind: ts.ScriptKind,
+	getScriptKindForExtraExtensions: ts.ScriptKind | ((fileName: string) => ts.ScriptKind),
 	create: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
@@ -50,7 +50,13 @@ export function createAsyncLanguageServicePlugin(
 					if (getScriptKind) {
 						info.languageServiceHost.getScriptKind = fileName => {
 							if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-								return scriptKind; // TODO: bypass upstream bug
+								// TODO: bypass upstream bug
+								if (typeof getScriptKindForExtraExtensions === 'function') {
+									return getScriptKindForExtraExtensions(fileName);
+								}
+								else {
+									return getScriptKindForExtraExtensions;
+								}
 							}
 							return getScriptKind(fileName);
 						};
