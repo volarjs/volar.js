@@ -50,7 +50,8 @@ export function createAsyncLanguageServicePlugin(
 					if (getScriptKind) {
 						info.languageServiceHost.getScriptKind = fileName => {
 							if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-								// TODO: bypass upstream bug
+								// bypass upstream bug https://github.com/microsoft/TypeScript/issues/57631
+								// TODO: check if the bug is fixed in 5.5
 								if (typeof getScriptKindForExtraExtensions === 'function') {
 									return getScriptKindForExtraExtensions(fileName);
 								}
