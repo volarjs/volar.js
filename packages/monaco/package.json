@@ -15,7 +15,7 @@
 	"dependencies": {
 		"@volar/language-service": "2.4.0-alpha.16",
 		"@volar/typescript": "2.4.0-alpha.16",
-		"monaco-languageserver-types": "^0.3.4",
+		"monaco-languageserver-types": "^0.4.0",
 		"monaco-types": "^0.1.0",
 		"vscode-uri": "^3.0.8"
 	},

@@ -231,7 +231,7 @@ export async function createLanguageFeaturesProvider(
 			);
 
 			if (codeResult) {
-				const monacoResult = codeResult.map(codeAction => toCodeAction(codeAction));
+				const monacoResult = codeResult.map(toCodeAction);
 				for (let i = 0; i < monacoResult.length; i++) {
 					codeActions.set(monacoResult[i], codeResult[i]);
 				}
