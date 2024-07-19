@@ -75,7 +75,6 @@ export function createAsyncLanguageServicePlugin(
 					info.languageService = proxy;
 
 					create(ts, info).then(({ languagePlugins, setup }) => {
-						const syncedScriptVersions = new FileMap<string>(ts.sys.useCaseSensitiveFileNames);
 						const language = createLanguage<string>(
 							[
 								...languagePlugins,
@@ -83,19 +82,11 @@ export function createAsyncLanguageServicePlugin(
 							],
 							new FileMap(ts.sys.useCaseSensitiveFileNames),
 							fileName => {
-								const version = getScriptVersion(fileName);
-								if (syncedScriptVersions.get(fileName) === version) {
-									return;
-								}
-								syncedScriptVersions.set(fileName, version);
-
-								const snapshot = getScriptSnapshot(fileName);
+								const snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
 								if (snapshot) {
-									language.scripts.set(
-										fileName,
-										snapshot
-									);
-								} else {
+									language.scripts.set(fileName, snapshot);
+								}
+								else {
 									language.scripts.delete(fileName);
 								}
 							}
