@@ -62,6 +62,7 @@ export function createProxyLanguageService(languageService: ts.LanguageService) 
 					case 'getDocumentHighlights': return getDocumentHighlights(language, target[p]);
 					case 'getApplicableRefactors': return getApplicableRefactors(language, target[p]);
 					case 'getEditsForRefactor': return getEditsForRefactor(language, target[p]);
+					case 'getCombinedCodeFix': return getCombinedCodeFix(language, target[p]);
 					case 'getRenameInfo': return getRenameInfo(language, target[p]);
 					case 'getCodeFixesAtPosition': return getCodeFixesAtPosition(language, target[p]);
 					case 'getEncodedSemanticClassifications': return getEncodedSemanticClassifications(language, target[p]);
@@ -511,6 +512,13 @@ function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts
 			edits.edits = transformFileTextChanges(language, edits.edits, isCodeActionsEnabled);
 			return edits;
 		}
+	};
+}
+function getCombinedCodeFix(language: Language<string>, getCombinedCodeFix: ts.LanguageService['getCombinedCodeFix']): ts.LanguageService['getCombinedCodeFix'] {
+	return (...args) => {
+		const codeActions = getCombinedCodeFix(...args);
+		codeActions.changes = transformFileTextChanges(language, codeActions.changes, isCodeActionsEnabled);
+		return codeActions;
 	};
 }
 function getRenameInfo(language: Language<string>, getRenameInfo: ts.LanguageService['getRenameInfo']): ts.LanguageService['getRenameInfo'] {
