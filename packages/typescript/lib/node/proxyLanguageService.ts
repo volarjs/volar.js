@@ -79,6 +79,7 @@ export function createProxyLanguageService(languageService: ts.LanguageService) 
 					case 'getCompletionEntryDetails': return getCompletionEntryDetails(language, target[p]);
 					case 'provideInlayHints': return provideInlayHints(language, target[p]);
 					case 'getFileReferences': return getFileReferences(language, target[p]);
+					case 'getNavigateToItems': return getNavigateToItems(language, target[p]);
 				}
 			};
 		},
@@ -965,6 +966,15 @@ function getFileReferences(language: Language<string>, getFileReferences: ts.Lan
 	return filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = getFileReferences(fileName);
+		const resolved = unresolved
+			.map(s => transformDocumentSpan(language, s, isReferencesEnabled))
+			.filter(s => !!s);
+		return dedupeDocumentSpans(resolved);
+	};
+}
+function getNavigateToItems(language: Language<string>, getNavigateToItems: ts.LanguageService['getNavigateToItems']): ts.LanguageService['getNavigateToItems'] {
+	return (...args) => {
+		const unresolved = getNavigateToItems(...args);
 		const resolved = unresolved
 			.map(s => transformDocumentSpan(language, s, isReferencesEnabled))
 			.filter(s => !!s);
