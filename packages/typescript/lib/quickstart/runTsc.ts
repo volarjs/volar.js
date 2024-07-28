@@ -7,6 +7,16 @@ export let getLanguagePlugins: (ts: typeof import('typescript'), options: ts.Cre
 	setup?(language: Language<string>): void,
 } = () => [];
 
+/**
+ * Replaces the code of typescript to add support for additional extensions and language plugins.
+ * 
+ * @param tsc - The original code of typescript.
+ * @param proxyApiPath - The path to the proxy API.
+ * @param extraSupportedExtensions - An array of additional supported extensions.
+ * @param extraExtensionsToRemove - An array of extensions to remove.
+ * @param getLanguagePluginsFile - The file to get language plugins from.
+ * @returns The modified typescript code.
+ */
 export function replaceTscContent(
 	tsc: string,
 	proxyApiPath: string,
@@ -14,7 +24,7 @@ export function replaceTscContent(
 	extraExtensionsToRemove: string[],
 	getLanguagePluginsFile = __filename,
 ) {
-	
+
 	const needPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
 
 	// Add allow extensions
