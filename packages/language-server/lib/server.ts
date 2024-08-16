@@ -13,8 +13,8 @@ export function createServerBase(
 	connection: vscode.Connection,
 	fs: FileSystem
 ) {
-	let semanticTokensReq = 0;
-	let documentUpdatedReq = 0;
+	let refreshReq = 0;
+	let updateDiagnosticsBatchReq = 0;
 	let watchFilesDisposableCounter = 0;
 	let watchFilesDisposable: Disposable | undefined;
 
@@ -50,7 +50,7 @@ export function createServerBase(
 
 	const state = {
 		connection,
-		fs: createFsWithCache(fs),
+		fs: createCachedFileSystem(fs),
 		initializeParams: undefined! as vscode.InitializeParams,
 		initializeResult: undefined! as VolarInitializeResult,
 		languageServicePlugins: [] as LanguageServicePlugin[],
@@ -320,7 +320,7 @@ export function createServerBase(
 		};
 	}
 
-	function createFsWithCache(fs: FileSystem): FileSystem {
+	function createCachedFileSystem(fs: FileSystem): FileSystem {
 
 		const readFileCache = createUriMap<ReturnType<FileSystem['readFile']>>();
 		const statCache = createUriMap<ReturnType<FileSystem['stat']>>();
@@ -446,7 +446,7 @@ export function createServerBase(
 	}
 
 	async function refresh(project: LanguageServerProject, clearDiagnostics: boolean) {
-		const req = ++semanticTokensReq;
+		const req = ++refreshReq;
 		const supportsDiagnosticPull = !!state.initializeParams.capabilities.workspace?.diagnostics;
 
 		if (!supportsDiagnosticPull) {
@@ -461,7 +461,7 @@ export function createServerBase(
 		const delay = 250;
 		await sleep(delay);
 
-		if (req !== semanticTokensReq) {
+		if (req !== refreshReq) {
 			return;
 		}
 
@@ -492,11 +492,11 @@ export function createServerBase(
 	}
 
 	async function updateDiagnosticsBatch(project: LanguageServerProject, documents: SnapshotDocument[]) {
-		const req = ++documentUpdatedReq;
+		const req = ++updateDiagnosticsBatchReq;
 		const delay = 250;
 		const token: vscode.CancellationToken = {
 			get isCancellationRequested() {
-				return req !== documentUpdatedReq;
+				return req !== updateDiagnosticsBatchReq;
 			},
 			onCancellationRequested: vscode.Event.None,
 		};
