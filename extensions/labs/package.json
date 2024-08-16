@@ -70,9 +70,9 @@
 		"@volar/language-server": "2.4.0-alpha.18",
 		"@volar/source-map": "2.4.0-alpha.18",
 		"@volar/vscode": "2.4.0-alpha.18",
+		"@vscode/vsce": "latest",
 		"esbuild": "latest",
 		"esbuild-plugin-copy": "latest",
-		"esbuild-visualizer": "latest",
-		"vsce": "latest"
+		"esbuild-visualizer": "latest"
 	}
 }

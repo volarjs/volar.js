@@ -17,6 +17,7 @@
 		"@lerna-lite/publish": "latest",
 		"@tsslint/cli": "latest",
 		"@tsslint/config": "latest",
+		"pkg-pr-new": "latest",
 		"typescript": "latest",
 		"vite": "latest",
 		"vitest": "latest"
