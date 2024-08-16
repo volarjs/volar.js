@@ -178,14 +178,14 @@ export function createServerBase(
 		};
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider)) {
-			state.initializeResult.capabilities.diagnosticProvider = {
-				// Unreliable, see https://github.com/microsoft/vscode-languageserver-node/issues/848#issuecomment-2189521060
-				interFileDependencies: false,
-				workspaceDiagnostics: languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.workspaceDiagnostics),
-			};
 			const supportsDiagnosticPull = !!params.capabilities.workspace?.diagnostics;
 			const interFileDependencies = state.languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.interFileDependencies);
 			if (supportsDiagnosticPull && !interFileDependencies) {
+				state.initializeResult.capabilities.diagnosticProvider = {
+					// Unreliable, see https://github.com/microsoft/vscode-languageserver-node/issues/848#issuecomment-2189521060
+					interFileDependencies: false,
+					workspaceDiagnostics: languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.workspaceDiagnostics),
+				};
 				registerDiagnosticsSupport(project, 'pull', false);
 			}
 			else {
@@ -453,11 +453,6 @@ export function createServerBase(
 				connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 			});
 			onDidChangeConfiguration(() => refresh(project, false));
-		}
-		if (mode === 'pull' && interFileDependencies) {
-			documents.onDidChangeContent(() => {
-				refresh(project, false);
-			});
 		}
 
 		return { refresh };
