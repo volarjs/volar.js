@@ -185,8 +185,8 @@ export function createServerBase(
 			};
 			const supportsDiagnosticPull = !!params.capabilities.workspace?.diagnostics;
 			const interFileDependencies = state.languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.interFileDependencies);
-			if (supportsDiagnosticPull) {
-				registerDiagnosticsSupport(project, 'pull', interFileDependencies);
+			if (supportsDiagnosticPull && !interFileDependencies) {
+				registerDiagnosticsSupport(project, 'pull', false);
 			}
 			else {
 				registerDiagnosticsSupport(project, 'push', interFileDependencies);
