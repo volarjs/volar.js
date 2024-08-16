@@ -140,8 +140,8 @@ export interface LanguageServicePlugin<P = any> {
 			resolveProvider?: boolean;
 		};
 		diagnosticProvider?: {
-			// TODO: interFileDependencies
-			workspaceDiagnostics?: boolean;
+			interFileDependencies: boolean;
+			workspaceDiagnostics: boolean;
 		};
 		fileReferencesProvider?: boolean;
 		fileRenameProvider?: boolean;
@@ -186,7 +186,6 @@ export interface LanguageServicePluginInstance<P = any> {
 	provideDocumentSemanticTokens?(document: TextDocument, range: vscode.Range, legend: vscode.SemanticTokensLegend, token: vscode.CancellationToken): NullableProviderResult<SemanticToken[]>;
 	provideWorkspaceSymbols?(query: string, token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceSymbol[]>;
 	provideDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Diagnostic[]>;
-	provideSemanticDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Diagnostic[]>;
 	provideWorkspaceDiagnostics?(token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceDocumentDiagnosticReport[]>;
 	provideFileReferences?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Location[]>; // volar specific
 	provideReferencesCodeLensRanges?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Range[]>; // volar specific

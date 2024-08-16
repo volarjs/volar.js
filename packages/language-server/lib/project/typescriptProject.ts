@@ -51,10 +51,7 @@ export function createTypeScriptProject(
 					}
 				}
 
-				if (tsConfigChanges.length) {
-					server.clearPushDiagnostics();
-				}
-				server.refresh(projects);
+				server.refresh(projects, !!tsConfigChanges.length);
 			});
 		},
 		async getLanguageService(uri) {

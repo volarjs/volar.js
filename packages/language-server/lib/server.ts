@@ -48,14 +48,13 @@ export function createServerBase(
 		syncedDocumentParsedUriToUri.delete(URI.parse(e.document.uri).toString());
 	});
 
-	const status = {
+	const state = {
 		connection,
 		fs: createFsWithCache(fs),
 		initializeParams: undefined! as vscode.InitializeParams,
 		initializeResult: undefined! as VolarInitializeResult,
 		languageServicePlugins: [] as LanguageServicePlugin[],
 		project: undefined! as LanguageServerProject,
-		pullModelDiagnostics: false,
 		documents,
 		workspaceFolders: createUriMap<boolean>(),
 		getSyncedDocumentKey,
@@ -66,10 +65,9 @@ export function createServerBase(
 		getConfiguration,
 		onDidChangeConfiguration,
 		onDidChangeWatchedFiles,
-		clearPushDiagnostics,
 		refresh,
 	};
-	return status;
+	return state;
 
 	function getSyncedDocumentKey(uri: URI) {
 		const originalUri = syncedDocumentParsedUriToUri.get(uri.toString());
@@ -79,34 +77,30 @@ export function createServerBase(
 	}
 
 	function initialize(
-		initializeParams: vscode.InitializeParams,
+		params: vscode.InitializeParams,
 		project: LanguageServerProject,
-		languageServicePlugins: LanguageServicePlugin[],
-		options?: {
-			pullModelDiagnostics?: boolean;
-		}
+		languageServicePlugins: LanguageServicePlugin[]
 	) {
-		status.initializeParams = initializeParams;
-		status.project = project;
-		status.languageServicePlugins = languageServicePlugins;
-		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
+		state.initializeParams = params;
+		state.project = project;
+		state.languageServicePlugins = languageServicePlugins;
 
-		if (initializeParams.workspaceFolders?.length) {
-			for (const folder of initializeParams.workspaceFolders) {
-				status.workspaceFolders.set(URI.parse(folder.uri), true);
+		if (params.workspaceFolders?.length) {
+			for (const folder of params.workspaceFolders) {
+				state.workspaceFolders.set(URI.parse(folder.uri), true);
 			}
 		}
-		else if (initializeParams.rootUri) {
-			status.workspaceFolders.set(URI.parse(initializeParams.rootUri), true);
+		else if (params.rootUri) {
+			state.workspaceFolders.set(URI.parse(params.rootUri), true);
 		}
-		else if (initializeParams.rootPath) {
-			status.workspaceFolders.set(URI.file(initializeParams.rootPath), true);
+		else if (params.rootPath) {
+			state.workspaceFolders.set(URI.file(params.rootPath), true);
 		}
 
-		const capabilitiesArr = status.languageServicePlugins.map(plugin => plugin.capabilities);
+		const pluginCapabilities = state.languageServicePlugins.map(plugin => plugin.capabilities);
 
-		status.initializeResult = { capabilities: {} };
-		status.initializeResult.capabilities = {
+		state.initializeResult = { capabilities: {} };
+		state.initializeResult.capabilities = {
 			textDocumentSync: vscode.TextDocumentSyncKind.Incremental,
 			workspace: {
 				// #18
@@ -115,90 +109,97 @@ export function createServerBase(
 					changeNotifications: true,
 				},
 			},
-			selectionRangeProvider: capabilitiesArr.some(data => data.selectionRangeProvider) || undefined,
-			foldingRangeProvider: capabilitiesArr.some(data => data.foldingRangeProvider) || undefined,
-			linkedEditingRangeProvider: capabilitiesArr.some(data => data.linkedEditingRangeProvider) || undefined,
-			colorProvider: capabilitiesArr.some(data => data.colorProvider) || undefined,
-			documentSymbolProvider: capabilitiesArr.some(data => data.documentSymbolProvider) || undefined,
-			documentFormattingProvider: capabilitiesArr.some(data => data.documentFormattingProvider) || undefined,
-			documentRangeFormattingProvider: capabilitiesArr.some(data => data.documentFormattingProvider) || undefined,
-			referencesProvider: capabilitiesArr.some(data => data.referencesProvider) || undefined,
-			implementationProvider: capabilitiesArr.some(data => data.implementationProvider) || undefined,
-			definitionProvider: capabilitiesArr.some(data => data.definitionProvider) || undefined,
-			typeDefinitionProvider: capabilitiesArr.some(data => data.typeDefinitionProvider) || undefined,
-			callHierarchyProvider: capabilitiesArr.some(data => data.callHierarchyProvider) || undefined,
-			hoverProvider: capabilitiesArr.some(data => data.hoverProvider) || undefined,
-			documentHighlightProvider: capabilitiesArr.some(data => data.documentHighlightProvider) || undefined,
-			workspaceSymbolProvider: capabilitiesArr.some(data => data.workspaceSymbolProvider)
-				? { resolveProvider: capabilitiesArr.some(data => data.workspaceSymbolProvider?.resolveProvider) || undefined }
+			selectionRangeProvider: pluginCapabilities.some(data => data.selectionRangeProvider) || undefined,
+			foldingRangeProvider: pluginCapabilities.some(data => data.foldingRangeProvider) || undefined,
+			linkedEditingRangeProvider: pluginCapabilities.some(data => data.linkedEditingRangeProvider) || undefined,
+			colorProvider: pluginCapabilities.some(data => data.colorProvider) || undefined,
+			documentSymbolProvider: pluginCapabilities.some(data => data.documentSymbolProvider) || undefined,
+			documentFormattingProvider: pluginCapabilities.some(data => data.documentFormattingProvider) || undefined,
+			documentRangeFormattingProvider: pluginCapabilities.some(data => data.documentFormattingProvider) || undefined,
+			referencesProvider: pluginCapabilities.some(data => data.referencesProvider) || undefined,
+			implementationProvider: pluginCapabilities.some(data => data.implementationProvider) || undefined,
+			definitionProvider: pluginCapabilities.some(data => data.definitionProvider) || undefined,
+			typeDefinitionProvider: pluginCapabilities.some(data => data.typeDefinitionProvider) || undefined,
+			callHierarchyProvider: pluginCapabilities.some(data => data.callHierarchyProvider) || undefined,
+			hoverProvider: pluginCapabilities.some(data => data.hoverProvider) || undefined,
+			documentHighlightProvider: pluginCapabilities.some(data => data.documentHighlightProvider) || undefined,
+			workspaceSymbolProvider: pluginCapabilities.some(data => data.workspaceSymbolProvider)
+				? { resolveProvider: pluginCapabilities.some(data => data.workspaceSymbolProvider?.resolveProvider) || undefined }
 				: undefined,
-			renameProvider: capabilitiesArr.some(data => data.renameProvider)
-				? { prepareProvider: capabilitiesArr.some(data => data.renameProvider?.prepareProvider) || undefined }
+			renameProvider: pluginCapabilities.some(data => data.renameProvider)
+				? { prepareProvider: pluginCapabilities.some(data => data.renameProvider?.prepareProvider) || undefined }
 				: undefined,
-			documentLinkProvider: capabilitiesArr.some(data => data.documentLinkProvider)
-				? { resolveProvider: capabilitiesArr.some(data => data.documentLinkProvider?.resolveProvider) || undefined }
+			documentLinkProvider: pluginCapabilities.some(data => data.documentLinkProvider)
+				? { resolveProvider: pluginCapabilities.some(data => data.documentLinkProvider?.resolveProvider) || undefined }
 				: undefined,
-			codeLensProvider: capabilitiesArr.some(data => data.codeLensProvider)
-				? { resolveProvider: capabilitiesArr.some(data => data.codeLensProvider?.resolveProvider) || undefined }
+			codeLensProvider: pluginCapabilities.some(data => data.codeLensProvider)
+				? { resolveProvider: pluginCapabilities.some(data => data.codeLensProvider?.resolveProvider) || undefined }
 				: undefined,
-			inlayHintProvider: capabilitiesArr.some(data => data.inlayHintProvider)
-				? { resolveProvider: capabilitiesArr.some(data => data.inlayHintProvider?.resolveProvider) || undefined }
+			inlayHintProvider: pluginCapabilities.some(data => data.inlayHintProvider)
+				? { resolveProvider: pluginCapabilities.some(data => data.inlayHintProvider?.resolveProvider) || undefined }
 				: undefined,
-			signatureHelpProvider: capabilitiesArr.some(data => data.signatureHelpProvider)
+			signatureHelpProvider: pluginCapabilities.some(data => data.signatureHelpProvider)
 				? {
-					triggerCharacters: [...new Set(capabilitiesArr.map(data => data.signatureHelpProvider?.triggerCharacters ?? []).flat())],
-					retriggerCharacters: [...new Set(capabilitiesArr.map(data => data.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
+					triggerCharacters: [...new Set(pluginCapabilities.map(data => data.signatureHelpProvider?.triggerCharacters ?? []).flat())],
+					retriggerCharacters: [...new Set(pluginCapabilities.map(data => data.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
 				}
 				: undefined,
-			completionProvider: capabilitiesArr.some(data => data.completionProvider)
+			completionProvider: pluginCapabilities.some(data => data.completionProvider)
 				? {
-					resolveProvider: capabilitiesArr.some(data => data.completionProvider?.resolveProvider) || undefined,
-					triggerCharacters: [...new Set(capabilitiesArr.map(data => data.completionProvider?.triggerCharacters ?? []).flat())],
+					resolveProvider: pluginCapabilities.some(data => data.completionProvider?.resolveProvider) || undefined,
+					triggerCharacters: [...new Set(pluginCapabilities.map(data => data.completionProvider?.triggerCharacters ?? []).flat())],
 				}
 				: undefined,
-			semanticTokensProvider: capabilitiesArr.some(data => data.semanticTokensProvider)
+			semanticTokensProvider: pluginCapabilities.some(data => data.semanticTokensProvider)
 				? {
 					range: true,
 					full: false,
 					legend: {
-						tokenTypes: [...new Set(capabilitiesArr.map(data => data.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
-						tokenModifiers: [...new Set(capabilitiesArr.map(data => data.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
+						tokenTypes: [...new Set(pluginCapabilities.map(data => data.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
+						tokenModifiers: [...new Set(pluginCapabilities.map(data => data.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
 					},
 				}
 				: undefined,
-			codeActionProvider: capabilitiesArr.some(data => data.codeActionProvider)
+			codeActionProvider: pluginCapabilities.some(data => data.codeActionProvider)
 				? {
-					resolveProvider: capabilitiesArr.some(data => data.codeActionProvider?.resolveProvider) || undefined,
-					codeActionKinds: capabilitiesArr.some(data => data.codeActionProvider?.codeActionKinds)
-						? [...new Set(capabilitiesArr.map(data => data.codeActionProvider?.codeActionKinds ?? []).flat())]
+					resolveProvider: pluginCapabilities.some(data => data.codeActionProvider?.resolveProvider) || undefined,
+					codeActionKinds: pluginCapabilities.some(data => data.codeActionProvider?.codeActionKinds)
+						? [...new Set(pluginCapabilities.map(data => data.codeActionProvider?.codeActionKinds ?? []).flat())]
 						: undefined,
 				}
 				: undefined,
-			diagnosticProvider: capabilitiesArr.some(data => data.diagnosticProvider)
+			documentOnTypeFormattingProvider: pluginCapabilities.some(data => data.documentOnTypeFormattingProvider)
 				? {
-					interFileDependencies: true,
-					workspaceDiagnostics: capabilitiesArr.some(data => data.diagnosticProvider?.workspaceDiagnostics),
+					firstTriggerCharacter: [...new Set(pluginCapabilities.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
+					moreTriggerCharacter: [...new Set(pluginCapabilities.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
 				}
 				: undefined,
-			documentOnTypeFormattingProvider: capabilitiesArr.some(data => data.documentOnTypeFormattingProvider)
+			executeCommandProvider: pluginCapabilities.some(data => data.executeCommandProvider)
 				? {
-					firstTriggerCharacter: [...new Set(capabilitiesArr.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
-					moreTriggerCharacter: [...new Set(capabilitiesArr.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
-				}
-				: undefined,
-			executeCommandProvider: capabilitiesArr.some(data => data.executeCommandProvider)
-				? {
-					commands: [...new Set(capabilitiesArr.map(data => data.executeCommandProvider?.commands ?? []).flat())],
+					commands: [...new Set(pluginCapabilities.map(data => data.executeCommandProvider?.commands ?? []).flat())],
 				}
 				: undefined,
 		};
 
-		if (!status.pullModelDiagnostics && status.initializeResult.capabilities.diagnosticProvider) {
-			status.initializeResult.capabilities.diagnosticProvider = undefined;
-			activateServerPushDiagnostics(project);
+		if (pluginCapabilities.some(data => data.diagnosticProvider)) {
+			state.initializeResult.capabilities.diagnosticProvider = {
+				// Unreliable, see https://github.com/microsoft/vscode-languageserver-node/issues/848#issuecomment-2189521060
+				interFileDependencies: false,
+				workspaceDiagnostics: pluginCapabilities.some(data => data.diagnosticProvider?.workspaceDiagnostics),
+			};
+			const supportsDiagnosticPull = !!params.capabilities.workspace?.diagnostics;
+			if (!supportsDiagnosticPull) {
+				documents.onDidChangeContent(({ document }) => {
+					updateAllDiagnostics(project, document.uri);
+				});
+				documents.onDidClose(({ document }) => {
+					connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+				});
+			}
+			onDidChangeConfiguration(() => refresh(project, false));
 		}
 
-		if (capabilitiesArr.some(data => data.autoInsertionProvider)) {
+		if (pluginCapabilities.some(data => data.autoInsertionProvider)) {
 			const triggerCharacterToConfigurationSections = new Map<string, Set<string>>();
 			const tryAdd = (char: string, section?: string) => {
 				let sectionSet = triggerCharacterToConfigurationSections.get(char);
@@ -209,7 +210,7 @@ export function createServerBase(
 					sectionSet.add(section);
 				}
 			};
-			for (const data of capabilitiesArr) {
+			for (const data of pluginCapabilities) {
 				if (data.autoInsertionProvider) {
 					const { triggerCharacters, configurationSections } = data.autoInsertionProvider;
 					if (configurationSections) {
@@ -227,40 +228,40 @@ export function createServerBase(
 					}
 				}
 			}
-			status.initializeResult.capabilities.experimental ??= {};
-			status.initializeResult.capabilities.experimental.autoInsertionProvider = {
+			state.initializeResult.capabilities.experimental ??= {};
+			state.initializeResult.capabilities.experimental.autoInsertionProvider = {
 				triggerCharacters: [],
 				configurationSections: [],
 			};
 			for (const [char, sections] of triggerCharacterToConfigurationSections) {
 				if (sections.size) {
-					status.initializeResult.capabilities.experimental.autoInsertionProvider.triggerCharacters.push(char);
-					status.initializeResult.capabilities.experimental.autoInsertionProvider.configurationSections!.push([...sections]);
+					state.initializeResult.capabilities.experimental.autoInsertionProvider.triggerCharacters.push(char);
+					state.initializeResult.capabilities.experimental.autoInsertionProvider.configurationSections!.push([...sections]);
 				}
 				else {
-					status.initializeResult.autoInsertionProvider.triggerCharacters.push(char);
-					status.initializeResult.autoInsertionProvider.configurationSections.push(null);
+					state.initializeResult.autoInsertionProvider.triggerCharacters.push(char);
+					state.initializeResult.autoInsertionProvider.configurationSections.push(null);
 				}
 			}
 		}
 
-		if (capabilitiesArr.some(data => data.fileRenameProvider)) {
-			status.initializeResult.capabilities.experimental ??= {};
-			status.initializeResult.capabilities.experimental.fileRenameProvider = true;
+		if (pluginCapabilities.some(data => data.fileRenameProvider)) {
+			state.initializeResult.capabilities.experimental ??= {};
+			state.initializeResult.capabilities.experimental.fileRenameProvider = true;
 		}
 
-		if (capabilitiesArr.some(data => data.fileReferencesProvider)) {
-			status.initializeResult.capabilities.experimental ??= {};
-			status.initializeResult.capabilities.experimental.fileReferencesProvider = true;
+		if (pluginCapabilities.some(data => data.fileReferencesProvider)) {
+			state.initializeResult.capabilities.experimental ??= {};
+			state.initializeResult.capabilities.experimental.fileReferencesProvider = true;
 		}
 
-		return status.initializeResult;
+		return state.initializeResult;
 	}
 
 	function initialized() {
-		status.project.setup(status);
-		registerEditorFeatures(status);
-		registerLanguageFeatures(status);
+		state.project.setup(state);
+		registerEditorFeatures(state);
+		registerLanguageFeatures(state);
 		registerWorkspaceFoldersWatcher();
 		registerConfigurationWatcher();
 		updateHttpSettings();
@@ -268,7 +269,7 @@ export function createServerBase(
 	}
 
 	function shutdown() {
-		status.project.reload();
+		state.project.reload();
 	}
 
 	async function updateHttpSettings() {
@@ -277,10 +278,10 @@ export function createServerBase(
 	}
 
 	function getConfiguration<T>(section: string, scopeUri?: string): Promise<T | undefined> {
-		if (!status.initializeParams?.capabilities.workspace?.configuration) {
+		if (!state.initializeParams?.capabilities.workspace?.configuration) {
 			return Promise.resolve(undefined);
 		}
-		if (!scopeUri && status.initializeParams.capabilities.workspace?.didChangeConfiguration) {
+		if (!scopeUri && state.initializeParams.capabilities.workspace?.didChangeConfiguration) {
 			if (!configurations.has(section)) {
 				configurations.set(section, getConfigurationWorker(section, scopeUri));
 			}
@@ -367,7 +368,7 @@ export function createServerBase(
 	}
 
 	function registerConfigurationWatcher() {
-		const didChangeConfiguration = status.initializeParams?.capabilities.workspace?.didChangeConfiguration;
+		const didChangeConfiguration = state.initializeParams?.capabilities.workspace?.didChangeConfiguration;
 		if (didChangeConfiguration) {
 			connection.onDidChangeConfiguration(params => {
 				configurations.clear();
@@ -383,8 +384,8 @@ export function createServerBase(
 
 	async function watchFiles(patterns: string[]): Promise<Disposable> {
 		const disposables: Disposable[] = [];
-		const didChangeWatchedFiles = status.initializeParams?.capabilities.workspace?.didChangeWatchedFiles;
-		const fileOperations = status.initializeParams?.capabilities.workspace?.fileOperations;
+		const didChangeWatchedFiles = state.initializeParams?.capabilities.workspace?.didChangeWatchedFiles;
+		const fileOperations = state.initializeParams?.capabilities.workspace?.fileOperations;
 		if (didChangeWatchedFiles) {
 			if (watchFilesDisposableCounter === 0) {
 				watchFilesDisposable = connection.onDidChangeWatchedFiles(e => {
@@ -423,62 +424,57 @@ export function createServerBase(
 	}
 
 	function registerWorkspaceFoldersWatcher() {
-		if (status.initializeParams?.capabilities.workspace?.workspaceFolders) {
+		if (state.initializeParams?.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 				for (const folder of e.added) {
-					status.workspaceFolders.set(URI.parse(folder.uri), true);
+					state.workspaceFolders.set(URI.parse(folder.uri), true);
 				}
 				for (const folder of e.removed) {
-					status.workspaceFolders.delete(URI.parse(folder.uri));
+					state.workspaceFolders.delete(URI.parse(folder.uri));
 				}
-				status.project.reload();
+				state.project.reload();
 			});
 		}
 	}
 
-	function activateServerPushDiagnostics(project: LanguageServerProject) {
-		documents.onDidChangeContent(({ document }) => {
-			pushAllDiagnostics(project, document.uri);
-		});
-		documents.onDidClose(({ document }) => {
-			connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
-		});
-		onDidChangeConfiguration(() => refresh(project));
-	}
-
-	function clearPushDiagnostics() {
-		if (!status.pullModelDiagnostics) {
-			for (const document of documents.all()) {
-				connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
-			}
-		}
-	}
-
-	async function refresh(project: LanguageServerProject) {
-
+	async function refresh(project: LanguageServerProject, clearDiagnostics: boolean) {
 		const req = ++semanticTokensReq;
 
-		if (!status.pullModelDiagnostics) {
-			await pushAllDiagnostics(project);
+		if (!state.initializeResult.capabilities.diagnosticProvider) {
+			if (clearDiagnostics) {
+				for (const document of documents.all()) {
+					connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+				}
+			}
+			await updateAllDiagnostics(project);
 		}
 
 		const delay = 250;
 		await sleep(delay);
 
 		if (req === semanticTokensReq) {
-			if (status.initializeParams?.capabilities.workspace?.semanticTokens?.refreshSupport) {
+			if (
+				state.initializeResult.capabilities.semanticTokensProvider
+				&& state.initializeParams?.capabilities.workspace?.semanticTokens?.refreshSupport
+			) {
 				connection.languages.semanticTokens.refresh();
 			}
-			if (status.initializeParams?.capabilities.workspace?.inlayHint?.refreshSupport) {
+			if (
+				state.initializeResult.capabilities.inlayHintProvider
+				&& state.initializeParams?.capabilities.workspace?.inlayHint?.refreshSupport
+			) {
 				connection.languages.inlayHint.refresh();
 			}
-			if (status.pullModelDiagnostics && status.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport) {
+			if (
+				state.initializeResult.capabilities.diagnosticProvider
+				&& state.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport
+			) {
 				connection.languages.diagnostics.refresh();
 			}
 		}
 	}
 
-	async function pushAllDiagnostics(project: LanguageServerProject, docUri?: string) {
+	async function updateAllDiagnostics(project: LanguageServerProject, changeDocUri?: string) {
 		const req = ++documentUpdatedReq;
 		const delay = 250;
 		const token: vscode.CancellationToken = {
@@ -487,34 +483,29 @@ export function createServerBase(
 			},
 			onCancellationRequested: vscode.Event.None,
 		};
-		const changeDoc = docUri ? documents.get(docUri) : undefined;
-		const otherDocs = [...documents.all()].filter(doc => doc !== changeDoc);
+		const changedDocument = changeDocUri ? documents.get(changeDocUri) : undefined;
+		const remainingDocuments = [...documents.all()].filter(doc => doc !== changedDocument);
 
-		if (changeDoc) {
-			await sleep(delay);
-			if (token.isCancellationRequested) {
-				return;
-			}
-			await pushDiagnostics(project, changeDoc.uri, changeDoc.version, token);
-		}
-
-		for (const doc of otherDocs) {
+		for (const doc of [changedDocument, ...remainingDocuments].filter(doc => !!doc)) {
 			await sleep(delay);
 			if (token.isCancellationRequested) {
 				break;
 			}
-			await pushDiagnostics(project, doc.uri, doc.version, token);
+			await updateDiagnostics(project, doc.uri, doc.version, token);
 		}
 	}
 
-	async function pushDiagnostics(project: LanguageServerProject, uriStr: string, version: number, cancel: vscode.CancellationToken) {
+	async function updateDiagnostics(project: LanguageServerProject, uriStr: string, version: number, token: vscode.CancellationToken) {
 		const uri = URI.parse(uriStr);
 		const languageService = await project.getLanguageService(uri);
-		const errors = await languageService.getDiagnostics(uri, result => {
-			connection.sendDiagnostics({ uri: uriStr, diagnostics: result, version });
-		}, cancel);
-
-		connection.sendDiagnostics({ uri: uriStr, diagnostics: errors, version });
+		const diagnostics = await languageService.getDiagnostics(
+			uri,
+			diagnostics => connection.sendDiagnostics({ uri: uriStr, diagnostics, version }),
+			token
+		);
+		if (!token.isCancellationRequested) {
+			connection.sendDiagnostics({ uri: uriStr, diagnostics, version });
+		}
 	}
 }
 
