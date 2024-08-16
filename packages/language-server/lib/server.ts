@@ -186,10 +186,10 @@ export function createServerBase(
 					interFileDependencies: false,
 					workspaceDiagnostics: languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.workspaceDiagnostics),
 				};
-				registerDiagnosticsSupport(project, 'pull', false);
+				state.diagnosticsSupport = registerDiagnosticsSupport(project, 'pull', false);
 			}
 			else {
-				registerDiagnosticsSupport(project, 'push', interFileDependencies);
+				state.diagnosticsSupport = registerDiagnosticsSupport(project, 'push', interFileDependencies);
 			}
 		}
 
