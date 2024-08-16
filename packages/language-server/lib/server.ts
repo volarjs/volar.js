@@ -1,13 +1,11 @@
 import { createUriMap, Disposable, FileSystem, LanguageServicePlugin } from '@volar/language-service';
-import { SnapshotDocument } from '@volar/snapshot-document';
+import { SnapshotDocument } from './utils/snapshotDocument';
 import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { registerEditorFeatures } from './register/registerEditorFeatures.js';
 import { registerLanguageFeatures } from './register/registerLanguageFeatures.js';
 import type { LanguageServerProject, VolarInitializeResult } from './types.js';
-
-export * from '@volar/snapshot-document';
 
 export function createServerBase(
 	connection: vscode.Connection,

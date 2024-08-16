@@ -14,7 +14,6 @@
 	"dependencies": {
 		"@volar/language-core": "2.4.0-alpha.18",
 		"@volar/language-service": "2.4.0-alpha.18",
-		"@volar/snapshot-document": "2.4.0-alpha.18",
 		"@volar/typescript": "2.4.0-alpha.18",
 		"path-browserify": "^1.0.1",
 		"request-light": "^0.7.0",

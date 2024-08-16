@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { SnapshotDocument } from '../lib/snapshotDocument';
+import { SnapshotDocument } from '../lib/utils/snapshotDocument';
 
 describe('SnapshotDocument', () => {
 	let snapshotDocument: SnapshotDocument;

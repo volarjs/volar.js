@@ -1,5 +1,5 @@
 import { Language, LanguagePlugin, LanguageService, LanguageServiceEnvironment, ProjectContext, ProviderResult, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
-import type { SnapshotDocument } from '@volar/snapshot-document';
+import type { SnapshotDocument } from '../utils/snapshotDocument';
 import { TypeScriptProjectHost, createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
