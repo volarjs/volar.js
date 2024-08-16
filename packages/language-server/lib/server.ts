@@ -447,8 +447,9 @@ export function createServerBase(
 
 	async function refresh(project: LanguageServerProject, clearDiagnostics: boolean) {
 		const req = ++semanticTokensReq;
+		const supportsDiagnosticPull = !!state.initializeParams.capabilities.workspace?.diagnostics;
 
-		if (!state.initializeResult.capabilities.diagnosticProvider) {
+		if (!supportsDiagnosticPull) {
 			if (clearDiagnostics) {
 				for (const document of documents.all()) {
 					connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
@@ -460,24 +461,32 @@ export function createServerBase(
 		const delay = 250;
 		await sleep(delay);
 
-		if (req === semanticTokensReq) {
-			if (
-				state.initializeResult.capabilities.semanticTokensProvider
-				&& state.initializeParams?.capabilities.workspace?.semanticTokens?.refreshSupport
-			) {
+		if (req !== semanticTokensReq) {
+			return;
+		}
+
+		if (state.initializeResult.capabilities.semanticTokensProvider) {
+			if (state.initializeParams?.capabilities.workspace?.semanticTokens?.refreshSupport) {
 				connection.languages.semanticTokens.refresh();
 			}
-			if (
-				state.initializeResult.capabilities.inlayHintProvider
-				&& state.initializeParams?.capabilities.workspace?.inlayHint?.refreshSupport
-			) {
+			else {
+				console.warn('Semantic tokens refresh is not supported by the client.');
+			}
+		}
+		if (state.initializeResult.capabilities.inlayHintProvider) {
+			if (state.initializeParams?.capabilities.workspace?.inlayHint?.refreshSupport) {
 				connection.languages.inlayHint.refresh();
 			}
-			if (
-				state.initializeResult.capabilities.diagnosticProvider
-				&& state.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport
-			) {
+			else {
+				console.warn('Inlay hint refresh is not supported by the client.');
+			}
+		}
+		if (state.initializeResult.capabilities.diagnosticProvider) {
+			if (state.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport) {
 				connection.languages.diagnostics.refresh();
+			}
+			else {
+				console.warn('Diagnostics refresh is not supported by the client.');
 			}
 		}
 	}
