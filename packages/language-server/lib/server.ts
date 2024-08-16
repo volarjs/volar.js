@@ -97,8 +97,6 @@ export function createServerBase(
 			state.workspaceFolders.set(URI.file(params.rootPath), true);
 		}
 
-		const pluginCapabilities = state.languageServicePlugins.map(plugin => plugin.capabilities);
-
 		state.initializeResult = { capabilities: {} };
 		state.initializeResult.capabilities = {
 			textDocumentSync: vscode.TextDocumentSyncKind.Incremental,
@@ -109,88 +107,98 @@ export function createServerBase(
 					changeNotifications: true,
 				},
 			},
-			selectionRangeProvider: pluginCapabilities.some(data => data.selectionRangeProvider) || undefined,
-			foldingRangeProvider: pluginCapabilities.some(data => data.foldingRangeProvider) || undefined,
-			linkedEditingRangeProvider: pluginCapabilities.some(data => data.linkedEditingRangeProvider) || undefined,
-			colorProvider: pluginCapabilities.some(data => data.colorProvider) || undefined,
-			documentSymbolProvider: pluginCapabilities.some(data => data.documentSymbolProvider) || undefined,
-			documentFormattingProvider: pluginCapabilities.some(data => data.documentFormattingProvider) || undefined,
-			documentRangeFormattingProvider: pluginCapabilities.some(data => data.documentFormattingProvider) || undefined,
-			referencesProvider: pluginCapabilities.some(data => data.referencesProvider) || undefined,
-			implementationProvider: pluginCapabilities.some(data => data.implementationProvider) || undefined,
-			definitionProvider: pluginCapabilities.some(data => data.definitionProvider) || undefined,
-			typeDefinitionProvider: pluginCapabilities.some(data => data.typeDefinitionProvider) || undefined,
-			callHierarchyProvider: pluginCapabilities.some(data => data.callHierarchyProvider) || undefined,
-			hoverProvider: pluginCapabilities.some(data => data.hoverProvider) || undefined,
-			documentHighlightProvider: pluginCapabilities.some(data => data.documentHighlightProvider) || undefined,
-			workspaceSymbolProvider: pluginCapabilities.some(data => data.workspaceSymbolProvider)
-				? { resolveProvider: pluginCapabilities.some(data => data.workspaceSymbolProvider?.resolveProvider) || undefined }
+			selectionRangeProvider: languageServicePlugins.some(({ capabilities }) => capabilities.selectionRangeProvider) || undefined,
+			foldingRangeProvider: languageServicePlugins.some(({ capabilities }) => capabilities.foldingRangeProvider) || undefined,
+			linkedEditingRangeProvider: languageServicePlugins.some(({ capabilities }) => capabilities.linkedEditingRangeProvider) || undefined,
+			colorProvider: languageServicePlugins.some(({ capabilities }) => capabilities.colorProvider) || undefined,
+			documentSymbolProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentSymbolProvider) || undefined,
+			documentFormattingProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentFormattingProvider) || undefined,
+			documentRangeFormattingProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentFormattingProvider) || undefined,
+			referencesProvider: languageServicePlugins.some(({ capabilities }) => capabilities.referencesProvider) || undefined,
+			implementationProvider: languageServicePlugins.some(({ capabilities }) => capabilities.implementationProvider) || undefined,
+			definitionProvider: languageServicePlugins.some(({ capabilities }) => capabilities.definitionProvider) || undefined,
+			typeDefinitionProvider: languageServicePlugins.some(({ capabilities }) => capabilities.typeDefinitionProvider) || undefined,
+			callHierarchyProvider: languageServicePlugins.some(({ capabilities }) => capabilities.callHierarchyProvider) || undefined,
+			hoverProvider: languageServicePlugins.some(({ capabilities }) => capabilities.hoverProvider) || undefined,
+			documentHighlightProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentHighlightProvider) || undefined,
+			workspaceSymbolProvider: languageServicePlugins.some(({ capabilities }) => capabilities.workspaceSymbolProvider)
+				? { resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.workspaceSymbolProvider?.resolveProvider) || undefined }
 				: undefined,
-			renameProvider: pluginCapabilities.some(data => data.renameProvider)
-				? { prepareProvider: pluginCapabilities.some(data => data.renameProvider?.prepareProvider) || undefined }
+			renameProvider: languageServicePlugins.some(({ capabilities }) => capabilities.renameProvider)
+				? { prepareProvider: languageServicePlugins.some(({ capabilities }) => capabilities.renameProvider?.prepareProvider) || undefined }
 				: undefined,
-			documentLinkProvider: pluginCapabilities.some(data => data.documentLinkProvider)
-				? { resolveProvider: pluginCapabilities.some(data => data.documentLinkProvider?.resolveProvider) || undefined }
+			documentLinkProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentLinkProvider)
+				? { resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentLinkProvider?.resolveProvider) || undefined }
 				: undefined,
-			codeLensProvider: pluginCapabilities.some(data => data.codeLensProvider)
-				? { resolveProvider: pluginCapabilities.some(data => data.codeLensProvider?.resolveProvider) || undefined }
+			codeLensProvider: languageServicePlugins.some(({ capabilities }) => capabilities.codeLensProvider)
+				? { resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.codeLensProvider?.resolveProvider) || undefined }
 				: undefined,
-			inlayHintProvider: pluginCapabilities.some(data => data.inlayHintProvider)
-				? { resolveProvider: pluginCapabilities.some(data => data.inlayHintProvider?.resolveProvider) || undefined }
+			inlayHintProvider: languageServicePlugins.some(({ capabilities }) => capabilities.inlayHintProvider)
+				? { resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.inlayHintProvider?.resolveProvider) || undefined }
 				: undefined,
-			signatureHelpProvider: pluginCapabilities.some(data => data.signatureHelpProvider)
+			signatureHelpProvider: languageServicePlugins.some(({ capabilities }) => capabilities.signatureHelpProvider)
 				? {
-					triggerCharacters: [...new Set(pluginCapabilities.map(data => data.signatureHelpProvider?.triggerCharacters ?? []).flat())],
-					retriggerCharacters: [...new Set(pluginCapabilities.map(data => data.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
+					triggerCharacters: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat())],
+					retriggerCharacters: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
 				}
 				: undefined,
-			completionProvider: pluginCapabilities.some(data => data.completionProvider)
+			completionProvider: languageServicePlugins.some(({ capabilities }) => capabilities.completionProvider)
 				? {
-					resolveProvider: pluginCapabilities.some(data => data.completionProvider?.resolveProvider) || undefined,
-					triggerCharacters: [...new Set(pluginCapabilities.map(data => data.completionProvider?.triggerCharacters ?? []).flat())],
+					resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.completionProvider?.resolveProvider) || undefined,
+					triggerCharacters: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.completionProvider?.triggerCharacters ?? []).flat())],
 				}
 				: undefined,
-			semanticTokensProvider: pluginCapabilities.some(data => data.semanticTokensProvider)
+			semanticTokensProvider: languageServicePlugins.some(({ capabilities }) => capabilities.semanticTokensProvider)
 				? {
 					range: true,
 					full: false,
 					legend: {
-						tokenTypes: [...new Set(pluginCapabilities.map(data => data.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
-						tokenModifiers: [...new Set(pluginCapabilities.map(data => data.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
+						tokenTypes: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
+						tokenModifiers: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
 					},
 				}
 				: undefined,
-			codeActionProvider: pluginCapabilities.some(data => data.codeActionProvider)
+			codeActionProvider: languageServicePlugins.some(({ capabilities }) => capabilities.codeActionProvider)
 				? {
-					resolveProvider: pluginCapabilities.some(data => data.codeActionProvider?.resolveProvider) || undefined,
-					codeActionKinds: pluginCapabilities.some(data => data.codeActionProvider?.codeActionKinds)
-						? [...new Set(pluginCapabilities.map(data => data.codeActionProvider?.codeActionKinds ?? []).flat())]
+					resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.codeActionProvider?.resolveProvider) || undefined,
+					codeActionKinds: languageServicePlugins.some(({ capabilities }) => capabilities.codeActionProvider?.codeActionKinds)
+						? [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.codeActionProvider?.codeActionKinds ?? []).flat())]
 						: undefined,
 				}
 				: undefined,
-			documentOnTypeFormattingProvider: pluginCapabilities.some(data => data.documentOnTypeFormattingProvider)
+			documentOnTypeFormattingProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentOnTypeFormattingProvider)
 				? {
-					firstTriggerCharacter: [...new Set(pluginCapabilities.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
-					moreTriggerCharacter: [...new Set(pluginCapabilities.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
+					firstTriggerCharacter: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
+					moreTriggerCharacter: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
 				}
 				: undefined,
-			executeCommandProvider: pluginCapabilities.some(data => data.executeCommandProvider)
+			executeCommandProvider: languageServicePlugins.some(({ capabilities }) => capabilities.executeCommandProvider)
 				? {
-					commands: [...new Set(pluginCapabilities.map(data => data.executeCommandProvider?.commands ?? []).flat())],
+					commands: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.executeCommandProvider?.commands ?? []).flat())],
 				}
 				: undefined,
 		};
 
-		if (pluginCapabilities.some(data => data.diagnosticProvider)) {
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider)) {
 			state.initializeResult.capabilities.diagnosticProvider = {
 				// Unreliable, see https://github.com/microsoft/vscode-languageserver-node/issues/848#issuecomment-2189521060
 				interFileDependencies: false,
-				workspaceDiagnostics: pluginCapabilities.some(data => data.diagnosticProvider?.workspaceDiagnostics),
+				workspaceDiagnostics: languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.workspaceDiagnostics),
 			};
 			const supportsDiagnosticPull = !!params.capabilities.workspace?.diagnostics;
 			if (!supportsDiagnosticPull) {
 				documents.onDidChangeContent(({ document }) => {
-					updateAllDiagnostics(project, document.uri);
+					const changedDocument = documents.get(document.uri);
+					if (!changedDocument) {
+						return;
+					}
+					if (languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.interFileDependencies)) {
+						const remainingDocuments = [...documents.all()].filter(doc => doc !== changedDocument);
+						updateDiagnosticsBatch(project, [changedDocument, ...remainingDocuments]);
+					}
+					else {
+						updateDiagnosticsBatch(project, [changedDocument]);
+					}
 				});
 				documents.onDidClose(({ document }) => {
 					connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
@@ -199,7 +207,7 @@ export function createServerBase(
 			onDidChangeConfiguration(() => refresh(project, false));
 		}
 
-		if (pluginCapabilities.some(data => data.autoInsertionProvider)) {
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.autoInsertionProvider)) {
 			const triggerCharacterToConfigurationSections = new Map<string, Set<string>>();
 			const tryAdd = (char: string, section?: string) => {
 				let sectionSet = triggerCharacterToConfigurationSections.get(char);
@@ -210,9 +218,9 @@ export function createServerBase(
 					sectionSet.add(section);
 				}
 			};
-			for (const data of pluginCapabilities) {
-				if (data.autoInsertionProvider) {
-					const { triggerCharacters, configurationSections } = data.autoInsertionProvider;
+			for (const { capabilities } of languageServicePlugins) {
+				if (capabilities.autoInsertionProvider) {
+					const { triggerCharacters, configurationSections } = capabilities.autoInsertionProvider;
 					if (configurationSections) {
 						if (configurationSections.length !== triggerCharacters.length) {
 							throw new Error('configurationSections.length !== triggerCharacters.length');
@@ -245,12 +253,12 @@ export function createServerBase(
 			}
 		}
 
-		if (pluginCapabilities.some(data => data.fileRenameProvider)) {
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.fileRenameProvider)) {
 			state.initializeResult.capabilities.experimental ??= {};
 			state.initializeResult.capabilities.experimental.fileRenameProvider = true;
 		}
 
-		if (pluginCapabilities.some(data => data.fileReferencesProvider)) {
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.fileReferencesProvider)) {
 			state.initializeResult.capabilities.experimental ??= {};
 			state.initializeResult.capabilities.experimental.fileReferencesProvider = true;
 		}
@@ -446,7 +454,7 @@ export function createServerBase(
 					connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 				}
 			}
-			await updateAllDiagnostics(project);
+			await updateDiagnosticsBatch(project, [...documents.all()]);
 		}
 
 		const delay = 250;
@@ -474,7 +482,7 @@ export function createServerBase(
 		}
 	}
 
-	async function updateAllDiagnostics(project: LanguageServerProject, changeDocUri?: string) {
+	async function updateDiagnosticsBatch(project: LanguageServerProject, documents: SnapshotDocument[]) {
 		const req = ++documentUpdatedReq;
 		const delay = 250;
 		const token: vscode.CancellationToken = {
@@ -483,10 +491,7 @@ export function createServerBase(
 			},
 			onCancellationRequested: vscode.Event.None,
 		};
-		const changedDocument = changeDocUri ? documents.get(changeDocUri) : undefined;
-		const remainingDocuments = [...documents.all()].filter(doc => doc !== changedDocument);
-
-		for (const doc of [changedDocument, ...remainingDocuments].filter(doc => !!doc)) {
+		for (const doc of documents) {
 			await sleep(delay);
 			if (token.isCancellationRequested) {
 				break;
