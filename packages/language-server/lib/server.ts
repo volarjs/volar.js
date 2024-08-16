@@ -13,8 +13,6 @@ export function createServerBase(
 	connection: vscode.Connection,
 	fs: FileSystem
 ) {
-	let refreshReq = 0;
-	let updateDiagnosticsBatchReq = 0;
 	let watchFilesDisposableCounter = 0;
 	let watchFilesDisposable: Disposable | undefined;
 
@@ -55,6 +53,7 @@ export function createServerBase(
 		initializeResult: undefined! as VolarInitializeResult,
 		languageServicePlugins: [] as LanguageServicePlugin[],
 		project: undefined! as LanguageServerProject,
+		diagnosticsSupport: undefined as ReturnType<typeof registerDiagnosticsSupport> | undefined,
 		documents,
 		workspaceFolders: createUriMap<boolean>(),
 		getSyncedDocumentKey,
@@ -65,7 +64,6 @@ export function createServerBase(
 		getConfiguration,
 		onDidChangeConfiguration,
 		onDidChangeWatchedFiles,
-		refresh,
 	};
 	return state;
 
@@ -186,25 +184,13 @@ export function createServerBase(
 				workspaceDiagnostics: languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.workspaceDiagnostics),
 			};
 			const supportsDiagnosticPull = !!params.capabilities.workspace?.diagnostics;
-			if (!supportsDiagnosticPull) {
-				documents.onDidChangeContent(({ document }) => {
-					const changedDocument = documents.get(document.uri);
-					if (!changedDocument) {
-						return;
-					}
-					if (languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.interFileDependencies)) {
-						const remainingDocuments = [...documents.all()].filter(doc => doc !== changedDocument);
-						updateDiagnosticsBatch(project, [changedDocument, ...remainingDocuments]);
-					}
-					else {
-						updateDiagnosticsBatch(project, [changedDocument]);
-					}
-				});
-				documents.onDidClose(({ document }) => {
-					connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
-				});
+			const interFileDependencies = state.languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.interFileDependencies);
+			if (supportsDiagnosticPull) {
+				registerDiagnosticsSupport(project, 'pull', interFileDependencies);
 			}
-			onDidChangeConfiguration(() => refresh(project, false));
+			else {
+				registerDiagnosticsSupport(project, 'push', interFileDependencies);
+			}
 		}
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.autoInsertionProvider)) {
@@ -445,80 +431,107 @@ export function createServerBase(
 		}
 	}
 
-	async function refresh(project: LanguageServerProject, clearDiagnostics: boolean) {
-		const req = ++refreshReq;
-		const supportsDiagnosticPull = !!state.initializeParams.capabilities.workspace?.diagnostics;
+	function registerDiagnosticsSupport(project: LanguageServerProject, mode: 'pull' | 'push', interFileDependencies: boolean) {
+		let refreshReq = 0;
+		let updateDiagnosticsBatchReq = 0;
 
-		if (!supportsDiagnosticPull) {
-			if (clearDiagnostics) {
-				for (const document of documents.all()) {
-					connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+		if (mode === 'push') {
+			documents.onDidChangeContent(({ document }) => {
+				const changedDocument = documents.get(document.uri);
+				if (!changedDocument) {
+					return;
+				}
+				if (interFileDependencies) {
+					const remainingDocuments = [...documents.all()].filter(doc => doc !== changedDocument);
+					updateDiagnosticsBatch(project, [changedDocument, ...remainingDocuments]);
+				}
+				else {
+					updateDiagnosticsBatch(project, [changedDocument]);
+				}
+			});
+			documents.onDidClose(({ document }) => {
+				connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+			});
+			onDidChangeConfiguration(() => refresh(project, false));
+		}
+		if (mode === 'pull' && interFileDependencies) {
+			documents.onDidChangeContent(() => {
+				refresh(project, false);
+			});
+		}
+
+		return { refresh };
+
+		async function refresh(project: LanguageServerProject, clearDiagnostics: boolean) {
+			const req = ++refreshReq;
+			const delay = 250;
+			await sleep(delay);
+			if (req !== refreshReq) {
+				return;
+			}
+
+			if (state.initializeResult.capabilities.semanticTokensProvider) {
+				if (state.initializeParams?.capabilities.workspace?.semanticTokens?.refreshSupport) {
+					connection.languages.semanticTokens.refresh();
+				}
+				else {
+					console.warn('Semantic tokens refresh is not supported by the client.');
 				}
 			}
-			await updateDiagnosticsBatch(project, [...documents.all()]);
+			if (state.initializeResult.capabilities.inlayHintProvider) {
+				if (state.initializeParams?.capabilities.workspace?.inlayHint?.refreshSupport) {
+					connection.languages.inlayHint.refresh();
+				}
+				else {
+					console.warn('Inlay hint refresh is not supported by the client.');
+				}
+			}
+			if (mode === 'push') {
+				if (clearDiagnostics) {
+					for (const document of documents.all()) {
+						connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+					}
+				}
+				await updateDiagnosticsBatch(project, [...documents.all()]);
+			}
+			else if (state.initializeResult.capabilities.diagnosticProvider) {
+				if (state.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport) {
+					connection.languages.diagnostics.refresh();
+				}
+				else {
+					console.warn('Diagnostics refresh is not supported by the client.');
+				}
+			}
 		}
 
-		const delay = 250;
-		await sleep(delay);
+		async function updateDiagnosticsBatch(project: LanguageServerProject, documents: SnapshotDocument[]) {
+			const req = ++updateDiagnosticsBatchReq;
+			const delay = 250;
+			const token: vscode.CancellationToken = {
+				get isCancellationRequested() {
+					return req !== updateDiagnosticsBatchReq;
+				},
+				onCancellationRequested: vscode.Event.None,
+			};
+			for (const doc of documents) {
+				await sleep(delay);
+				if (token.isCancellationRequested) {
+					break;
+				}
+				await updateDiagnostics(project, URI.parse(doc.uri), doc.version, token);
+			}
+		}
 
-		if (req !== refreshReq) {
-			return;
-		}
-
-		if (state.initializeResult.capabilities.semanticTokensProvider) {
-			if (state.initializeParams?.capabilities.workspace?.semanticTokens?.refreshSupport) {
-				connection.languages.semanticTokens.refresh();
+		async function updateDiagnostics(project: LanguageServerProject, uri: URI, version: number, token: vscode.CancellationToken) {
+			const languageService = await project.getLanguageService(uri);
+			const diagnostics = await languageService.getDiagnostics(
+				uri,
+				diagnostics => connection.sendDiagnostics({ uri: uri.toString(), diagnostics, version }),
+				token
+			);
+			if (!token.isCancellationRequested) {
+				connection.sendDiagnostics({ uri: uri.toString(), diagnostics, version });
 			}
-			else {
-				console.warn('Semantic tokens refresh is not supported by the client.');
-			}
-		}
-		if (state.initializeResult.capabilities.inlayHintProvider) {
-			if (state.initializeParams?.capabilities.workspace?.inlayHint?.refreshSupport) {
-				connection.languages.inlayHint.refresh();
-			}
-			else {
-				console.warn('Inlay hint refresh is not supported by the client.');
-			}
-		}
-		if (state.initializeResult.capabilities.diagnosticProvider) {
-			if (state.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport) {
-				connection.languages.diagnostics.refresh();
-			}
-			else {
-				console.warn('Diagnostics refresh is not supported by the client.');
-			}
-		}
-	}
-
-	async function updateDiagnosticsBatch(project: LanguageServerProject, documents: SnapshotDocument[]) {
-		const req = ++updateDiagnosticsBatchReq;
-		const delay = 250;
-		const token: vscode.CancellationToken = {
-			get isCancellationRequested() {
-				return req !== updateDiagnosticsBatchReq;
-			},
-			onCancellationRequested: vscode.Event.None,
-		};
-		for (const doc of documents) {
-			await sleep(delay);
-			if (token.isCancellationRequested) {
-				break;
-			}
-			await updateDiagnostics(project, doc.uri, doc.version, token);
-		}
-	}
-
-	async function updateDiagnostics(project: LanguageServerProject, uriStr: string, version: number, token: vscode.CancellationToken) {
-		const uri = URI.parse(uriStr);
-		const languageService = await project.getLanguageService(uri);
-		const diagnostics = await languageService.getDiagnostics(
-			uri,
-			diagnostics => connection.sendDiagnostics({ uri: uriStr, diagnostics, version }),
-			token
-		);
-		if (!token.isCancellationRequested) {
-			connection.sendDiagnostics({ uri: uriStr, diagnostics, version });
 		}
 	}
 }

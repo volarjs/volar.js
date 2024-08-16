@@ -28,7 +28,7 @@ export function createTypeScriptProject(
 	const inferredProjects = createUriMap<Promise<TypeScriptProjectLS>>();
 	const rootTsConfigs = new Set<string>();
 	const searchedDirs = new Set<string>();
-	const projects: LanguageServerProject = {
+	const project: LanguageServerProject = {
 		setup(_server) {
 			uriConverter = createUriConverter([..._server.workspaceFolders.keys()]);
 			server = _server;
@@ -51,7 +51,7 @@ export function createTypeScriptProject(
 					}
 				}
 
-				server.refresh(projects, !!tsConfigChanges.length);
+				server.diagnosticsSupport?.refresh(project, !!tsConfigChanges.length);
 			});
 		},
 		async getLanguageService(uri) {
@@ -82,7 +82,7 @@ export function createTypeScriptProject(
 			inferredProjects.clear();
 		},
 	};
-	return projects;
+	return project;
 
 	async function findMatchTSConfig(server: LanguageServer, uri: URI) {
 
