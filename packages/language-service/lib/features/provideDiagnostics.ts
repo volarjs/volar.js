@@ -10,92 +10,6 @@ import * as dedupe from '../utils/dedupe';
 import { documentFeatureWorker, DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
 import { createUriMap } from '../utils/uriMap';
 
-export function updateRange(
-	range: vscode.Range,
-	change: {
-		range: vscode.Range,
-		newEnd: vscode.Position;
-	}
-) {
-	if (!updatePosition(range.start, change, false)) {
-		return;
-	}
-	if (!updatePosition(range.end, change, true)) {
-		return;
-	}
-	if (range.end.line === range.start.line && range.end.character <= range.start.character) {
-		range.end.character++;
-	}
-	return range;
-}
-
-function updatePosition(
-	position: vscode.Position,
-	change: {
-		range: vscode.Range,
-		newEnd: vscode.Position;
-	},
-	isEnd: boolean
-) {
-	if (change.range.end.line > position.line) {
-		if (change.newEnd.line > position.line) {
-			// No change
-			return true;
-		}
-		else if (change.newEnd.line === position.line) {
-			position.character = Math.min(position.character, change.newEnd.character);
-			return true;
-		}
-		else if (change.newEnd.line < position.line) {
-			position.line = change.newEnd.line;
-			position.character = change.newEnd.character;
-			return true;
-		}
-	}
-	else if (change.range.end.line === position.line) {
-		const characterDiff = change.newEnd.character - change.range.end.character;
-		if (position.character >= change.range.end.character) {
-			if (change.newEnd.line !== change.range.end.line) {
-				position.line = change.newEnd.line;
-				position.character = change.newEnd.character + position.character - change.range.end.character;
-			}
-			else {
-				if (isEnd ? change.range.end.character < position.character : change.range.end.character <= position.character) {
-					position.character += characterDiff;
-				}
-				else {
-					const offset = change.range.end.character - position.character;
-					if (-characterDiff > offset) {
-						position.character += characterDiff + offset;
-					}
-				}
-			}
-			return true;
-		}
-		else {
-			if (change.newEnd.line === change.range.end.line) {
-				const offset = change.range.end.character - position.character;
-				if (-characterDiff > offset) {
-					position.character += characterDiff + offset;
-				}
-			}
-			else if (change.newEnd.line < change.range.end.line) {
-				position.line = change.newEnd.line;
-				position.character = change.newEnd.character;
-			}
-			else {
-				// No change
-			}
-			return true;
-		}
-	}
-	else if (change.range.end.line < position.line) {
-		position.line += change.newEnd.line - change.range.end.line;
-		return true;
-	}
-	return false;
-}
-
 export interface ServiceDiagnosticData {
 	uri: string;
 	version: number;
@@ -201,13 +115,13 @@ export function register(context: LanguageServiceContext) {
 			}
 		}
 
-		await worker('provideDiagnostics', cacheMaps.syntactic, lastResponse.syntactic);
-		await doResponse();
-		await worker('provideSemanticDiagnostics', cacheMaps.semantic, lastResponse.semantic);
+		await worker('syntactic', cacheMaps.syntactic, lastResponse.syntactic);
+		processResponse();
+		await worker('semantic', cacheMaps.semantic, lastResponse.semantic);
 
 		return collectErrors();
 
-		function doResponse() {
+		function processResponse() {
 			if (errorsUpdated && !updateCacheRangeFailed) {
 				response?.(collectErrors());
 				errorsUpdated = false;
@@ -219,7 +133,7 @@ export function register(context: LanguageServiceContext) {
 		}
 
 		async function worker(
-			api: 'provideDiagnostics' | 'provideSemanticDiagnostics',
+			kind: 'syntactic' | 'semantic',
 			cacheMap: CacheMap,
 			cache: Cache
 		) {
@@ -228,6 +142,11 @@ export function register(context: LanguageServiceContext) {
 				uri,
 				docs => docs[2].mappings.some(mapping => isDiagnosticsEnabled(mapping.data)),
 				async (plugin, document) => {
+					const interFileDependencies = plugin[0].capabilities.diagnosticProvider?.interFileDependencies;
+					if (kind === 'semantic' !== interFileDependencies) {
+						return;
+					}
+
 					if (Date.now() - lastCheckCancelAt >= 10) {
 						await sleep(10); // waiting LSP event polling
 						lastCheckCancelAt = Date.now();
@@ -240,11 +159,11 @@ export function register(context: LanguageServiceContext) {
 					const pluginCache = cacheMap.get(pluginIndex) ?? cacheMap.set(pluginIndex, new Map()).get(pluginIndex)!;
 					const cache = pluginCache.get(document.uri);
 
-					if (api !== 'provideSemanticDiagnostics' && cache && cache.documentVersion === document.version) {
+					if (!interFileDependencies && cache && cache.documentVersion === document.version) {
 						return cache.errors;
 					}
 
-					const errors = await plugin[1][api]?.(document, token) || [];
+					const errors = await plugin[1].provideDiagnostics?.(document, token) || [];
 
 					errors.forEach(error => {
 						error.data = {
@@ -340,4 +259,90 @@ export function transformDiagnostic(
 	}
 
 	return _error;
+}
+
+export function updateRange(
+	range: vscode.Range,
+	change: {
+		range: vscode.Range,
+		newEnd: vscode.Position;
+	}
+) {
+	if (!updatePosition(range.start, change, false)) {
+		return;
+	}
+	if (!updatePosition(range.end, change, true)) {
+		return;
+	}
+	if (range.end.line === range.start.line && range.end.character <= range.start.character) {
+		range.end.character++;
+	}
+	return range;
+}
+
+function updatePosition(
+	position: vscode.Position,
+	change: {
+		range: vscode.Range,
+		newEnd: vscode.Position;
+	},
+	isEnd: boolean
+) {
+	if (change.range.end.line > position.line) {
+		if (change.newEnd.line > position.line) {
+			// No change
+			return true;
+		}
+		else if (change.newEnd.line === position.line) {
+			position.character = Math.min(position.character, change.newEnd.character);
+			return true;
+		}
+		else if (change.newEnd.line < position.line) {
+			position.line = change.newEnd.line;
+			position.character = change.newEnd.character;
+			return true;
+		}
+	}
+	else if (change.range.end.line === position.line) {
+		const characterDiff = change.newEnd.character - change.range.end.character;
+		if (position.character >= change.range.end.character) {
+			if (change.newEnd.line !== change.range.end.line) {
+				position.line = change.newEnd.line;
+				position.character = change.newEnd.character + position.character - change.range.end.character;
+			}
+			else {
+				if (isEnd ? change.range.end.character < position.character : change.range.end.character <= position.character) {
+					position.character += characterDiff;
+				}
+				else {
+					const offset = change.range.end.character - position.character;
+					if (-characterDiff > offset) {
+						position.character += characterDiff + offset;
+					}
+				}
+			}
+			return true;
+		}
+		else {
+			if (change.newEnd.line === change.range.end.line) {
+				const offset = change.range.end.character - position.character;
+				if (-characterDiff > offset) {
+					position.character += characterDiff + offset;
+				}
+			}
+			else if (change.newEnd.line < change.range.end.line) {
+				position.line = change.newEnd.line;
+				position.character = change.newEnd.character;
+			}
+			else {
+				// No change
+			}
+			return true;
+		}
+	}
+	else if (change.range.end.line < position.line) {
+		position.line += change.newEnd.line - change.range.end.line;
+		return true;
+	}
+	return false;
 }

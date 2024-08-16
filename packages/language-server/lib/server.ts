@@ -13,8 +13,6 @@ export function createServerBase(
 	connection: vscode.Connection,
 	fs: FileSystem
 ) {
-	let semanticTokensReq = 0;
-	let documentUpdatedReq = 0;
 	let watchFilesDisposableCounter = 0;
 	let watchFilesDisposable: Disposable | undefined;
 
@@ -48,14 +46,14 @@ export function createServerBase(
 		syncedDocumentParsedUriToUri.delete(URI.parse(e.document.uri).toString());
 	});
 
-	const status = {
+	const state = {
 		connection,
-		fs: createFsWithCache(fs),
+		fs: createCachedFileSystem(fs),
 		initializeParams: undefined! as vscode.InitializeParams,
 		initializeResult: undefined! as VolarInitializeResult,
 		languageServicePlugins: [] as LanguageServicePlugin[],
 		project: undefined! as LanguageServerProject,
-		pullModelDiagnostics: false,
+		diagnosticsSupport: undefined as ReturnType<typeof registerDiagnosticsSupport> | undefined,
 		documents,
 		workspaceFolders: createUriMap<boolean>(),
 		getSyncedDocumentKey,
@@ -66,10 +64,8 @@ export function createServerBase(
 		getConfiguration,
 		onDidChangeConfiguration,
 		onDidChangeWatchedFiles,
-		clearPushDiagnostics,
-		refresh,
 	};
-	return status;
+	return state;
 
 	function getSyncedDocumentKey(uri: URI) {
 		const originalUri = syncedDocumentParsedUriToUri.get(uri.toString());
@@ -79,34 +75,28 @@ export function createServerBase(
 	}
 
 	function initialize(
-		initializeParams: vscode.InitializeParams,
+		params: vscode.InitializeParams,
 		project: LanguageServerProject,
-		languageServicePlugins: LanguageServicePlugin[],
-		options?: {
-			pullModelDiagnostics?: boolean;
-		}
+		languageServicePlugins: LanguageServicePlugin[]
 	) {
-		status.initializeParams = initializeParams;
-		status.project = project;
-		status.languageServicePlugins = languageServicePlugins;
-		status.pullModelDiagnostics = options?.pullModelDiagnostics ?? false;
+		state.initializeParams = params;
+		state.project = project;
+		state.languageServicePlugins = languageServicePlugins;
 
-		if (initializeParams.workspaceFolders?.length) {
-			for (const folder of initializeParams.workspaceFolders) {
-				status.workspaceFolders.set(URI.parse(folder.uri), true);
+		if (params.workspaceFolders?.length) {
+			for (const folder of params.workspaceFolders) {
+				state.workspaceFolders.set(URI.parse(folder.uri), true);
 			}
 		}
-		else if (initializeParams.rootUri) {
-			status.workspaceFolders.set(URI.parse(initializeParams.rootUri), true);
+		else if (params.rootUri) {
+			state.workspaceFolders.set(URI.parse(params.rootUri), true);
 		}
-		else if (initializeParams.rootPath) {
-			status.workspaceFolders.set(URI.file(initializeParams.rootPath), true);
+		else if (params.rootPath) {
+			state.workspaceFolders.set(URI.file(params.rootPath), true);
 		}
 
-		const capabilitiesArr = status.languageServicePlugins.map(plugin => plugin.capabilities);
-
-		status.initializeResult = { capabilities: {} };
-		status.initializeResult.capabilities = {
+		state.initializeResult = { capabilities: {} };
+		state.initializeResult.capabilities = {
 			textDocumentSync: vscode.TextDocumentSyncKind.Incremental,
 			workspace: {
 				// #18
@@ -115,90 +105,95 @@ export function createServerBase(
 					changeNotifications: true,
 				},
 			},
-			selectionRangeProvider: capabilitiesArr.some(data => data.selectionRangeProvider) || undefined,
-			foldingRangeProvider: capabilitiesArr.some(data => data.foldingRangeProvider) || undefined,
-			linkedEditingRangeProvider: capabilitiesArr.some(data => data.linkedEditingRangeProvider) || undefined,
-			colorProvider: capabilitiesArr.some(data => data.colorProvider) || undefined,
-			documentSymbolProvider: capabilitiesArr.some(data => data.documentSymbolProvider) || undefined,
-			documentFormattingProvider: capabilitiesArr.some(data => data.documentFormattingProvider) || undefined,
-			documentRangeFormattingProvider: capabilitiesArr.some(data => data.documentFormattingProvider) || undefined,
-			referencesProvider: capabilitiesArr.some(data => data.referencesProvider) || undefined,
-			implementationProvider: capabilitiesArr.some(data => data.implementationProvider) || undefined,
-			definitionProvider: capabilitiesArr.some(data => data.definitionProvider) || undefined,
-			typeDefinitionProvider: capabilitiesArr.some(data => data.typeDefinitionProvider) || undefined,
-			callHierarchyProvider: capabilitiesArr.some(data => data.callHierarchyProvider) || undefined,
-			hoverProvider: capabilitiesArr.some(data => data.hoverProvider) || undefined,
-			documentHighlightProvider: capabilitiesArr.some(data => data.documentHighlightProvider) || undefined,
-			workspaceSymbolProvider: capabilitiesArr.some(data => data.workspaceSymbolProvider)
-				? { resolveProvider: capabilitiesArr.some(data => data.workspaceSymbolProvider?.resolveProvider) || undefined }
+			selectionRangeProvider: languageServicePlugins.some(({ capabilities }) => capabilities.selectionRangeProvider) || undefined,
+			foldingRangeProvider: languageServicePlugins.some(({ capabilities }) => capabilities.foldingRangeProvider) || undefined,
+			linkedEditingRangeProvider: languageServicePlugins.some(({ capabilities }) => capabilities.linkedEditingRangeProvider) || undefined,
+			colorProvider: languageServicePlugins.some(({ capabilities }) => capabilities.colorProvider) || undefined,
+			documentSymbolProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentSymbolProvider) || undefined,
+			documentFormattingProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentFormattingProvider) || undefined,
+			documentRangeFormattingProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentFormattingProvider) || undefined,
+			referencesProvider: languageServicePlugins.some(({ capabilities }) => capabilities.referencesProvider) || undefined,
+			implementationProvider: languageServicePlugins.some(({ capabilities }) => capabilities.implementationProvider) || undefined,
+			definitionProvider: languageServicePlugins.some(({ capabilities }) => capabilities.definitionProvider) || undefined,
+			typeDefinitionProvider: languageServicePlugins.some(({ capabilities }) => capabilities.typeDefinitionProvider) || undefined,
+			callHierarchyProvider: languageServicePlugins.some(({ capabilities }) => capabilities.callHierarchyProvider) || undefined,
+			hoverProvider: languageServicePlugins.some(({ capabilities }) => capabilities.hoverProvider) || undefined,
+			documentHighlightProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentHighlightProvider) || undefined,
+			workspaceSymbolProvider: languageServicePlugins.some(({ capabilities }) => capabilities.workspaceSymbolProvider)
+				? { resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.workspaceSymbolProvider?.resolveProvider) || undefined }
 				: undefined,
-			renameProvider: capabilitiesArr.some(data => data.renameProvider)
-				? { prepareProvider: capabilitiesArr.some(data => data.renameProvider?.prepareProvider) || undefined }
+			renameProvider: languageServicePlugins.some(({ capabilities }) => capabilities.renameProvider)
+				? { prepareProvider: languageServicePlugins.some(({ capabilities }) => capabilities.renameProvider?.prepareProvider) || undefined }
 				: undefined,
-			documentLinkProvider: capabilitiesArr.some(data => data.documentLinkProvider)
-				? { resolveProvider: capabilitiesArr.some(data => data.documentLinkProvider?.resolveProvider) || undefined }
+			documentLinkProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentLinkProvider)
+				? { resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentLinkProvider?.resolveProvider) || undefined }
 				: undefined,
-			codeLensProvider: capabilitiesArr.some(data => data.codeLensProvider)
-				? { resolveProvider: capabilitiesArr.some(data => data.codeLensProvider?.resolveProvider) || undefined }
+			codeLensProvider: languageServicePlugins.some(({ capabilities }) => capabilities.codeLensProvider)
+				? { resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.codeLensProvider?.resolveProvider) || undefined }
 				: undefined,
-			inlayHintProvider: capabilitiesArr.some(data => data.inlayHintProvider)
-				? { resolveProvider: capabilitiesArr.some(data => data.inlayHintProvider?.resolveProvider) || undefined }
+			inlayHintProvider: languageServicePlugins.some(({ capabilities }) => capabilities.inlayHintProvider)
+				? { resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.inlayHintProvider?.resolveProvider) || undefined }
 				: undefined,
-			signatureHelpProvider: capabilitiesArr.some(data => data.signatureHelpProvider)
+			signatureHelpProvider: languageServicePlugins.some(({ capabilities }) => capabilities.signatureHelpProvider)
 				? {
-					triggerCharacters: [...new Set(capabilitiesArr.map(data => data.signatureHelpProvider?.triggerCharacters ?? []).flat())],
-					retriggerCharacters: [...new Set(capabilitiesArr.map(data => data.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
+					triggerCharacters: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat())],
+					retriggerCharacters: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
 				}
 				: undefined,
-			completionProvider: capabilitiesArr.some(data => data.completionProvider)
+			completionProvider: languageServicePlugins.some(({ capabilities }) => capabilities.completionProvider)
 				? {
-					resolveProvider: capabilitiesArr.some(data => data.completionProvider?.resolveProvider) || undefined,
-					triggerCharacters: [...new Set(capabilitiesArr.map(data => data.completionProvider?.triggerCharacters ?? []).flat())],
+					resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.completionProvider?.resolveProvider) || undefined,
+					triggerCharacters: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.completionProvider?.triggerCharacters ?? []).flat())],
 				}
 				: undefined,
-			semanticTokensProvider: capabilitiesArr.some(data => data.semanticTokensProvider)
+			semanticTokensProvider: languageServicePlugins.some(({ capabilities }) => capabilities.semanticTokensProvider)
 				? {
 					range: true,
 					full: false,
 					legend: {
-						tokenTypes: [...new Set(capabilitiesArr.map(data => data.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
-						tokenModifiers: [...new Set(capabilitiesArr.map(data => data.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
+						tokenTypes: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
+						tokenModifiers: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
 					},
 				}
 				: undefined,
-			codeActionProvider: capabilitiesArr.some(data => data.codeActionProvider)
+			codeActionProvider: languageServicePlugins.some(({ capabilities }) => capabilities.codeActionProvider)
 				? {
-					resolveProvider: capabilitiesArr.some(data => data.codeActionProvider?.resolveProvider) || undefined,
-					codeActionKinds: capabilitiesArr.some(data => data.codeActionProvider?.codeActionKinds)
-						? [...new Set(capabilitiesArr.map(data => data.codeActionProvider?.codeActionKinds ?? []).flat())]
+					resolveProvider: languageServicePlugins.some(({ capabilities }) => capabilities.codeActionProvider?.resolveProvider) || undefined,
+					codeActionKinds: languageServicePlugins.some(({ capabilities }) => capabilities.codeActionProvider?.codeActionKinds)
+						? [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.codeActionProvider?.codeActionKinds ?? []).flat())]
 						: undefined,
 				}
 				: undefined,
-			diagnosticProvider: capabilitiesArr.some(data => data.diagnosticProvider)
+			documentOnTypeFormattingProvider: languageServicePlugins.some(({ capabilities }) => capabilities.documentOnTypeFormattingProvider)
 				? {
-					interFileDependencies: true,
-					workspaceDiagnostics: capabilitiesArr.some(data => data.diagnosticProvider?.workspaceDiagnostics),
+					firstTriggerCharacter: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
+					moreTriggerCharacter: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
 				}
 				: undefined,
-			documentOnTypeFormattingProvider: capabilitiesArr.some(data => data.documentOnTypeFormattingProvider)
+			executeCommandProvider: languageServicePlugins.some(({ capabilities }) => capabilities.executeCommandProvider)
 				? {
-					firstTriggerCharacter: [...new Set(capabilitiesArr.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
-					moreTriggerCharacter: [...new Set(capabilitiesArr.map(data => data.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
-				}
-				: undefined,
-			executeCommandProvider: capabilitiesArr.some(data => data.executeCommandProvider)
-				? {
-					commands: [...new Set(capabilitiesArr.map(data => data.executeCommandProvider?.commands ?? []).flat())],
+					commands: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.executeCommandProvider?.commands ?? []).flat())],
 				}
 				: undefined,
 		};
 
-		if (!status.pullModelDiagnostics && status.initializeResult.capabilities.diagnosticProvider) {
-			status.initializeResult.capabilities.diagnosticProvider = undefined;
-			activateServerPushDiagnostics(project);
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider)) {
+			const supportsDiagnosticPull = !!params.capabilities.workspace?.diagnostics;
+			const interFileDependencies = state.languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.interFileDependencies);
+			if (supportsDiagnosticPull && !interFileDependencies) {
+				state.initializeResult.capabilities.diagnosticProvider = {
+					// Unreliable, see https://github.com/microsoft/vscode-languageserver-node/issues/848#issuecomment-2189521060
+					interFileDependencies: false,
+					workspaceDiagnostics: languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.workspaceDiagnostics),
+				};
+				registerDiagnosticsSupport(project, 'pull', false);
+			}
+			else {
+				registerDiagnosticsSupport(project, 'push', interFileDependencies);
+			}
 		}
 
-		if (capabilitiesArr.some(data => data.autoInsertionProvider)) {
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.autoInsertionProvider)) {
 			const triggerCharacterToConfigurationSections = new Map<string, Set<string>>();
 			const tryAdd = (char: string, section?: string) => {
 				let sectionSet = triggerCharacterToConfigurationSections.get(char);
@@ -209,9 +204,9 @@ export function createServerBase(
 					sectionSet.add(section);
 				}
 			};
-			for (const data of capabilitiesArr) {
-				if (data.autoInsertionProvider) {
-					const { triggerCharacters, configurationSections } = data.autoInsertionProvider;
+			for (const { capabilities } of languageServicePlugins) {
+				if (capabilities.autoInsertionProvider) {
+					const { triggerCharacters, configurationSections } = capabilities.autoInsertionProvider;
 					if (configurationSections) {
 						if (configurationSections.length !== triggerCharacters.length) {
 							throw new Error('configurationSections.length !== triggerCharacters.length');
@@ -227,40 +222,40 @@ export function createServerBase(
 					}
 				}
 			}
-			status.initializeResult.capabilities.experimental ??= {};
-			status.initializeResult.capabilities.experimental.autoInsertionProvider = {
+			state.initializeResult.capabilities.experimental ??= {};
+			state.initializeResult.capabilities.experimental.autoInsertionProvider = {
 				triggerCharacters: [],
 				configurationSections: [],
 			};
 			for (const [char, sections] of triggerCharacterToConfigurationSections) {
 				if (sections.size) {
-					status.initializeResult.capabilities.experimental.autoInsertionProvider.triggerCharacters.push(char);
-					status.initializeResult.capabilities.experimental.autoInsertionProvider.configurationSections!.push([...sections]);
+					state.initializeResult.capabilities.experimental.autoInsertionProvider.triggerCharacters.push(char);
+					state.initializeResult.capabilities.experimental.autoInsertionProvider.configurationSections!.push([...sections]);
 				}
 				else {
-					status.initializeResult.autoInsertionProvider.triggerCharacters.push(char);
-					status.initializeResult.autoInsertionProvider.configurationSections.push(null);
+					state.initializeResult.autoInsertionProvider.triggerCharacters.push(char);
+					state.initializeResult.autoInsertionProvider.configurationSections.push(null);
 				}
 			}
 		}
 
-		if (capabilitiesArr.some(data => data.fileRenameProvider)) {
-			status.initializeResult.capabilities.experimental ??= {};
-			status.initializeResult.capabilities.experimental.fileRenameProvider = true;
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.fileRenameProvider)) {
+			state.initializeResult.capabilities.experimental ??= {};
+			state.initializeResult.capabilities.experimental.fileRenameProvider = true;
 		}
 
-		if (capabilitiesArr.some(data => data.fileReferencesProvider)) {
-			status.initializeResult.capabilities.experimental ??= {};
-			status.initializeResult.capabilities.experimental.fileReferencesProvider = true;
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.fileReferencesProvider)) {
+			state.initializeResult.capabilities.experimental ??= {};
+			state.initializeResult.capabilities.experimental.fileReferencesProvider = true;
 		}
 
-		return status.initializeResult;
+		return state.initializeResult;
 	}
 
 	function initialized() {
-		status.project.setup(status);
-		registerEditorFeatures(status);
-		registerLanguageFeatures(status);
+		state.project.setup(state);
+		registerEditorFeatures(state);
+		registerLanguageFeatures(state);
 		registerWorkspaceFoldersWatcher();
 		registerConfigurationWatcher();
 		updateHttpSettings();
@@ -268,7 +263,7 @@ export function createServerBase(
 	}
 
 	function shutdown() {
-		status.project.reload();
+		state.project.reload();
 	}
 
 	async function updateHttpSettings() {
@@ -277,10 +272,10 @@ export function createServerBase(
 	}
 
 	function getConfiguration<T>(section: string, scopeUri?: string): Promise<T | undefined> {
-		if (!status.initializeParams?.capabilities.workspace?.configuration) {
+		if (!state.initializeParams?.capabilities.workspace?.configuration) {
 			return Promise.resolve(undefined);
 		}
-		if (!scopeUri && status.initializeParams.capabilities.workspace?.didChangeConfiguration) {
+		if (!scopeUri && state.initializeParams.capabilities.workspace?.didChangeConfiguration) {
 			if (!configurations.has(section)) {
 				configurations.set(section, getConfigurationWorker(section, scopeUri));
 			}
@@ -311,7 +306,7 @@ export function createServerBase(
 		};
 	}
 
-	function createFsWithCache(fs: FileSystem): FileSystem {
+	function createCachedFileSystem(fs: FileSystem): FileSystem {
 
 		const readFileCache = createUriMap<ReturnType<FileSystem['readFile']>>();
 		const statCache = createUriMap<ReturnType<FileSystem['stat']>>();
@@ -367,7 +362,7 @@ export function createServerBase(
 	}
 
 	function registerConfigurationWatcher() {
-		const didChangeConfiguration = status.initializeParams?.capabilities.workspace?.didChangeConfiguration;
+		const didChangeConfiguration = state.initializeParams?.capabilities.workspace?.didChangeConfiguration;
 		if (didChangeConfiguration) {
 			connection.onDidChangeConfiguration(params => {
 				configurations.clear();
@@ -383,8 +378,8 @@ export function createServerBase(
 
 	async function watchFiles(patterns: string[]): Promise<Disposable> {
 		const disposables: Disposable[] = [];
-		const didChangeWatchedFiles = status.initializeParams?.capabilities.workspace?.didChangeWatchedFiles;
-		const fileOperations = status.initializeParams?.capabilities.workspace?.fileOperations;
+		const didChangeWatchedFiles = state.initializeParams?.capabilities.workspace?.didChangeWatchedFiles;
+		const fileOperations = state.initializeParams?.capabilities.workspace?.fileOperations;
 		if (didChangeWatchedFiles) {
 			if (watchFilesDisposableCounter === 0) {
 				watchFilesDisposable = connection.onDidChangeWatchedFiles(e => {
@@ -423,98 +418,116 @@ export function createServerBase(
 	}
 
 	function registerWorkspaceFoldersWatcher() {
-		if (status.initializeParams?.capabilities.workspace?.workspaceFolders) {
+		if (state.initializeParams?.capabilities.workspace?.workspaceFolders) {
 			connection.workspace.onDidChangeWorkspaceFolders(e => {
 				for (const folder of e.added) {
-					status.workspaceFolders.set(URI.parse(folder.uri), true);
+					state.workspaceFolders.set(URI.parse(folder.uri), true);
 				}
 				for (const folder of e.removed) {
-					status.workspaceFolders.delete(URI.parse(folder.uri));
+					state.workspaceFolders.delete(URI.parse(folder.uri));
 				}
-				status.project.reload();
+				state.project.reload();
 			});
 		}
 	}
 
-	function activateServerPushDiagnostics(project: LanguageServerProject) {
-		documents.onDidChangeContent(({ document }) => {
-			pushAllDiagnostics(project, document.uri);
-		});
-		documents.onDidClose(({ document }) => {
-			connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
-		});
-		onDidChangeConfiguration(() => refresh(project));
-	}
+	function registerDiagnosticsSupport(project: LanguageServerProject, mode: 'pull' | 'push', interFileDependencies: boolean) {
+		let refreshReq = 0;
+		let updateDiagnosticsBatchReq = 0;
 
-	function clearPushDiagnostics() {
-		if (!status.pullModelDiagnostics) {
-			for (const document of documents.all()) {
+		if (mode === 'push') {
+			documents.onDidChangeContent(({ document }) => {
+				const changedDocument = documents.get(document.uri);
+				if (!changedDocument) {
+					return;
+				}
+				if (interFileDependencies) {
+					const remainingDocuments = [...documents.all()].filter(doc => doc !== changedDocument);
+					updateDiagnosticsBatch(project, [changedDocument, ...remainingDocuments]);
+				}
+				else {
+					updateDiagnosticsBatch(project, [changedDocument]);
+				}
+			});
+			documents.onDidClose(({ document }) => {
 				connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
-			}
-		}
-	}
-
-	async function refresh(project: LanguageServerProject) {
-
-		const req = ++semanticTokensReq;
-
-		if (!status.pullModelDiagnostics) {
-			await pushAllDiagnostics(project);
+			});
+			onDidChangeConfiguration(() => refresh(project, false));
 		}
 
-		const delay = 250;
-		await sleep(delay);
+		return { refresh };
 
-		if (req === semanticTokensReq) {
-			if (status.initializeParams?.capabilities.workspace?.semanticTokens?.refreshSupport) {
-				connection.languages.semanticTokens.refresh();
-			}
-			if (status.initializeParams?.capabilities.workspace?.inlayHint?.refreshSupport) {
-				connection.languages.inlayHint.refresh();
-			}
-			if (status.pullModelDiagnostics && status.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport) {
-				connection.languages.diagnostics.refresh();
-			}
-		}
-	}
-
-	async function pushAllDiagnostics(project: LanguageServerProject, docUri?: string) {
-		const req = ++documentUpdatedReq;
-		const delay = 250;
-		const token: vscode.CancellationToken = {
-			get isCancellationRequested() {
-				return req !== documentUpdatedReq;
-			},
-			onCancellationRequested: vscode.Event.None,
-		};
-		const changeDoc = docUri ? documents.get(docUri) : undefined;
-		const otherDocs = [...documents.all()].filter(doc => doc !== changeDoc);
-
-		if (changeDoc) {
+		async function refresh(project: LanguageServerProject, clearDiagnostics: boolean) {
+			const req = ++refreshReq;
+			const delay = 250;
 			await sleep(delay);
-			if (token.isCancellationRequested) {
+			if (req !== refreshReq) {
 				return;
 			}
-			await pushDiagnostics(project, changeDoc.uri, changeDoc.version, token);
-		}
 
-		for (const doc of otherDocs) {
-			await sleep(delay);
-			if (token.isCancellationRequested) {
-				break;
+			if (state.initializeResult.capabilities.semanticTokensProvider) {
+				if (state.initializeParams?.capabilities.workspace?.semanticTokens?.refreshSupport) {
+					connection.languages.semanticTokens.refresh();
+				}
+				else {
+					console.warn('Semantic tokens refresh is not supported by the client.');
+				}
 			}
-			await pushDiagnostics(project, doc.uri, doc.version, token);
+			if (state.initializeResult.capabilities.inlayHintProvider) {
+				if (state.initializeParams?.capabilities.workspace?.inlayHint?.refreshSupport) {
+					connection.languages.inlayHint.refresh();
+				}
+				else {
+					console.warn('Inlay hint refresh is not supported by the client.');
+				}
+			}
+			if (mode === 'push') {
+				if (clearDiagnostics) {
+					for (const document of documents.all()) {
+						connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+					}
+				}
+				await updateDiagnosticsBatch(project, [...documents.all()]);
+			}
+			else {
+				if (state.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport) {
+					connection.languages.diagnostics.refresh();
+				}
+				else {
+					console.warn('Diagnostics refresh is not supported by the client.');
+				}
+			}
 		}
-	}
 
-	async function pushDiagnostics(project: LanguageServerProject, uriStr: string, version: number, cancel: vscode.CancellationToken) {
-		const uri = URI.parse(uriStr);
-		const languageService = await project.getLanguageService(uri);
-		const errors = await languageService.getDiagnostics(uri, result => {
-			connection.sendDiagnostics({ uri: uriStr, diagnostics: result, version });
-		}, cancel);
+		async function updateDiagnosticsBatch(project: LanguageServerProject, documents: SnapshotDocument[]) {
+			const req = ++updateDiagnosticsBatchReq;
+			const delay = 250;
+			const token: vscode.CancellationToken = {
+				get isCancellationRequested() {
+					return req !== updateDiagnosticsBatchReq;
+				},
+				onCancellationRequested: vscode.Event.None,
+			};
+			for (const doc of documents) {
+				await sleep(delay);
+				if (token.isCancellationRequested) {
+					break;
+				}
+				await updateDiagnostics(project, URI.parse(doc.uri), doc.version, token);
+			}
+		}
 
-		connection.sendDiagnostics({ uri: uriStr, diagnostics: errors, version });
+		async function updateDiagnostics(project: LanguageServerProject, uri: URI, version: number, token: vscode.CancellationToken) {
+			const languageService = await project.getLanguageService(uri);
+			const diagnostics = await languageService.getDiagnostics(
+				uri,
+				diagnostics => connection.sendDiagnostics({ uri: uri.toString(), diagnostics, version }),
+				token
+			);
+			if (!token.isCancellationRequested) {
+				connection.sendDiagnostics({ uri: uri.toString(), diagnostics, version });
+			}
+		}
 	}
 }
 
