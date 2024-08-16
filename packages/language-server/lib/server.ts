@@ -489,7 +489,7 @@ export function createServerBase(
 				}
 				await updateDiagnosticsBatch(project, [...documents.all()]);
 			}
-			else if (state.initializeResult.capabilities.diagnosticProvider) {
+			else {
 				if (state.initializeParams?.capabilities.workspace?.diagnostics?.refreshSupport) {
 					connection.languages.diagnostics.refresh();
 				}
