@@ -20,9 +20,11 @@ export function createConnection() {
 
 export function createServer(connection: vscode.Connection) {
 	const server = createServerBase(connection);
-	server.features.fileSystem.install('http', httpFsProvider);
-	server.features.fileSystem.install('https', httpFsProvider);
-	setServer(server);
+	server.onInitialize(() => {
+		server.features.fileSystem.install('http', httpFsProvider);
+		server.features.fileSystem.install('https', httpFsProvider);
+		setServer(server);
+	});
 	return server;
 }
 

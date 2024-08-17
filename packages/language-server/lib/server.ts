@@ -11,6 +11,8 @@ import type { ExperimentalFeatures, LanguageServerProject } from './types.js';
 
 export function createServerBase(connection: vscode.Connection) {
 	const serverCapabilities: vscode.ServerCapabilities<ExperimentalFeatures> = {};
+	const onInitializeCallbacks: (() => void)[] = [];
+	const onInitializedCallbacks: (() => void)[] = [];
 	const server = {
 		initializeParams: undefined! as vscode.InitializeParams,
 		project: undefined! as LanguageServerProject,
@@ -25,13 +27,21 @@ export function createServerBase(connection: vscode.Connection) {
 			this.project = project;
 			this.languageServicePlugins = languageServicePlugins;
 			this.features = registerFeatures();
+			onInitializeCallbacks.forEach(cb => cb());
 			return { capabilities: serverCapabilities };
 		},
 		initialized() {
+			onInitializedCallbacks.forEach(cb => cb());
 			this.project.setup(this);
 		},
 		shutdown() {
 			this.project.reload();
+		},
+		onInitialize(callback: () => void) {
+			onInitializeCallbacks.push(callback);
+		},
+		onInitialized(callback: () => void) {
+			onInitializedCallbacks.push(callback);
 		},
 	};
 
