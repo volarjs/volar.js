@@ -1,7 +1,7 @@
-import type { VolarInitializeResult } from '@volar/language-server';
+import type { ExperimentalFeatures } from '@volar/language-server';
 import { AutoInsertRequest } from '@volar/language-server/protocol';
 import * as vscode from 'vscode';
-import type { BaseLanguageClient } from 'vscode-languageclient';
+import type { BaseLanguageClient, ServerCapabilities } from 'vscode-languageclient';
 
 export function activate(selector: vscode.DocumentSelector, client: BaseLanguageClient) {
 
@@ -44,9 +44,9 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 			return;
 		}
 		const lastCharacter = lastChange.text[lastChange.text.length - 1];
-		const initializeResult: VolarInitializeResult | undefined = client.initializeResult;
-		if (initializeResult?.capabilities.experimental?.autoInsertionProvider) {
-			const { triggerCharacters, configurationSections } = initializeResult.capabilities.experimental.autoInsertionProvider;
+		const capabilities: ServerCapabilities<ExperimentalFeatures> | undefined = client.initializeResult?.capabilities;
+		if (capabilities?.experimental?.autoInsertionProvider) {
+			const { triggerCharacters, configurationSections } = capabilities.experimental.autoInsertionProvider;
 			for (let i = 0; i < triggerCharacters.length; i++) {
 				const char = triggerCharacters[i];
 				const sections = configurationSections?.[i];

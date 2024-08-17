@@ -144,7 +144,8 @@ export interface LanguageServicePlugin<P = any> {
 			workspaceDiagnostics: boolean;
 		};
 		fileReferencesProvider?: boolean;
-		fileRenameProvider?: boolean;
+		fileRenameEditsProvider?: boolean;
+		documentDropEditsProvider?: boolean;
 	};
 	create(context: LanguageServiceContext): LanguageServicePluginInstance<P>;
 }

@@ -1,4 +1,4 @@
-import type { InitializeResult, LanguageService, ProviderResult } from '@volar/language-service';
+import type { LanguageService, ProviderResult } from '@volar/language-service';
 import type { URI } from 'vscode-uri';
 import type { createServerBase } from './server';
 
@@ -11,11 +11,12 @@ export interface LanguageServerProject {
 
 export type LanguageServer = ReturnType<typeof createServerBase>;
 
-export interface VolarInitializeResult extends InitializeResult<{
+export interface ExperimentalFeatures {
 	fileReferencesProvider?: boolean;
-	fileRenameProvider?: boolean;
+	fileRenameEditsProvider?: boolean;
+	documentDropEditsProvider?: boolean;
 	autoInsertionProvider?: {
 		triggerCharacters: string[];
 		configurationSections?: (string[] | null)[];
 	};
-}> { }
+}

@@ -61,11 +61,7 @@ export async function createTypeScriptLS(
 		},
 		getScriptSnapshot(fileName) {
 			const uri = uriConverter.asUri(fileName);
-			const documentKey = server.getSyncedDocumentKey(uri) ?? uri.toString();
-			const document = server.documents.get(documentKey);
-			if (document) {
-				return document.getSnapshot();
-			}
+			return server.features.documents.get(uri)?.getSnapshot();
 		},
 		getCompilationSettings() {
 			return parsedCommandLine.options;
@@ -82,23 +78,22 @@ export async function createTypeScriptLS(
 		sys,
 		uriConverter,
 	});
-	const docOpenWatcher = server.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document));
-	const docSaveWatcher = server.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document));
-	const docChangeWatcher = server.documents.onDidChangeContent(() => projectVersion++);
+	const docOpenWatcher = server.features.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document));
+	const docSaveWatcher = server.features.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document));
+	const docChangeWatcher = server.features.documents.onDidChangeContent(() => projectVersion++);
 	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => onWorkspaceFilesChanged(params.changes));
 
 	let rootFiles = await getRootFiles(languagePlugins);
 
 	const language = createLanguage<URI>(
 		[
-			{ getLanguageId: uri => server.documents.get(server.getSyncedDocumentKey(uri) ?? uri.toString())?.languageId },
+			{ getLanguageId: uri => server.features.documents.get(uri)?.languageId },
 			...languagePlugins,
 			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
 		],
 		createUriMap(sys.useCaseSensitiveFileNames),
 		uri => {
-			const documentUri = server.getSyncedDocumentKey(uri);
-			const syncedDocument = documentUri ? server.documents.get(documentUri) : undefined;
+			const syncedDocument = server.features.documents.get(uri);
 
 			let snapshot: ts.IScriptSnapshot | undefined;
 

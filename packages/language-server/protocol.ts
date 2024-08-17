@@ -1,24 +1,8 @@
 import type { CodeMapping } from '@volar/language-core';
-import type { FileStat, FileType, DocumentDropEdit } from '@volar/language-service';
+import type { DocumentDropEdit } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver-protocol';
 
 export * from 'vscode-languageserver-protocol';
-
-/**
- * Server request client
- */
-
-export namespace FsReadFileRequest {
-	export const type = new vscode.RequestType<vscode.DocumentUri, string | null | undefined, unknown>('volar/server/fs/readFile');
-}
-
-export namespace FsReadDirectoryRequest {
-	export const type = new vscode.RequestType<vscode.DocumentUri, [string, FileType][], unknown>('volar/server/fs/readDirectory');
-}
-
-export namespace FsStatRequest {
-	export const type = new vscode.RequestType<vscode.DocumentUri, FileStat, unknown>('volar/server/fs/stat');
-}
 
 /**
  * Client request server
