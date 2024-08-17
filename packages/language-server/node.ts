@@ -1,5 +1,5 @@
 import * as vscode from 'vscode-languageserver/node';
-import { provider as httpFsProvider, setServer } from './lib/fileSystemProviders/http';
+import { provider as httpFsProvider, listenEditorSettings } from './lib/fileSystemProviders/http';
 import { provider as nodeFsProvider } from './lib/fileSystemProviders/node';
 import { createServerBase } from './lib/server';
 
@@ -18,7 +18,7 @@ export function createServer(connection: vscode.Connection) {
 	server.fileSystem.install('file', nodeFsProvider);
 	server.fileSystem.install('http', httpFsProvider);
 	server.fileSystem.install('https', httpFsProvider);
-	setServer(server);
+	server.onInitialized(() => listenEditorSettings(server));
 	return server;
 }
 
