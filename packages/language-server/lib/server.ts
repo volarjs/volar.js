@@ -31,8 +31,7 @@ export function createServerBase(connection: vscode.Connection) {
 	const fileWatcher = registerFileWatcher(state);
 	const languageFeatures = registerLanguageFeatures(state, documents, configurations);
 	const fileSystem = registerFileSystemSupport(documents, fileWatcher);
-
-	return {
+	const server = {
 		...state,
 		get initializeParams() {
 			return state.initializeParams;
@@ -57,7 +56,7 @@ export function createServerBase(connection: vscode.Connection) {
 		},
 		initialized() {
 			onInitializedCallbacks.forEach(cb => cb());
-			state.project.setup(this);
+			state.project.setup(server);
 		},
 		shutdown() {
 			state.project.reload();
@@ -70,4 +69,6 @@ export function createServerBase(connection: vscode.Connection) {
 		languageFeatures,
 		fileSystem,
 	};
+
+	return server;
 }
