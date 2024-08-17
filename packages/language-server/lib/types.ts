@@ -1,6 +1,7 @@
-import type { InitializeResult, LanguageService, ProviderResult } from '@volar/language-service';
+import type { InitializeParams, LanguageService, LanguageServicePlugin, ProviderResult, ServerCapabilities } from '@volar/language-service';
+import { Connection } from 'vscode-languageserver';
 import type { URI } from 'vscode-uri';
-import type { createServerBase } from './server';
+import { createServerBase } from './server';
 
 export interface LanguageServerProject {
 	setup(server: LanguageServer): void;
@@ -9,13 +10,23 @@ export interface LanguageServerProject {
 	reload(): void;
 }
 
+export interface LanguageServerState {
+	connection: Connection;
+	initializeParams: InitializeParams;
+	project: LanguageServerProject;
+	languageServicePlugins: LanguageServicePlugin[];
+	onInitialize(callback: (serverCapabilities: ServerCapabilities<ExperimentalFeatures>) => void): void;
+	onInitialized(callback: () => void): void;
+};
+
 export type LanguageServer = ReturnType<typeof createServerBase>;
 
-export interface VolarInitializeResult extends InitializeResult<{
+export interface ExperimentalFeatures {
 	fileReferencesProvider?: boolean;
-	fileRenameProvider?: boolean;
+	fileRenameEditsProvider?: boolean;
+	documentDropEditsProvider?: boolean;
 	autoInsertionProvider?: {
 		triggerCharacters: string[];
 		configurationSections?: (string[] | null)[];
 	};
-}> { }
+}

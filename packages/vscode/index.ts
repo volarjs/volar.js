@@ -6,7 +6,6 @@ export { activate as activateWriteVirtualFiles } from './lib/features/writeVirtu
 export { activate as activateFindFileReferences } from './lib/features/fileReferences';
 export { activate as activateReloadProjects } from './lib/features/reloadProject';
 export { activate as activateTsConfigStatusItem } from './lib/features/tsconfig';
-export { activate as activateServerSys } from './lib/features/serverSys';
 export { activate as activateTsVersionStatusItem, getTsdk } from './lib/features/tsVersion';
 
 export * from 'vscode-languageclient';

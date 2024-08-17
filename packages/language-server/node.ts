@@ -1,7 +1,6 @@
-import { FileSystem, FileType } from '@volar/language-service';
-import * as _fs from 'fs';
 import * as vscode from 'vscode-languageserver/node';
-import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
+import { provider as httpFsProvider, listenEditorSettings } from './lib/fileSystemProviders/http';
+import { provider as nodeFsProvider } from './lib/fileSystemProviders/node';
 import { createServerBase } from './lib/server';
 
 export * from 'vscode-languageserver/node';
@@ -15,62 +14,13 @@ export function createConnection() {
 }
 
 export function createServer(connection: vscode.Connection) {
-	return createServerBase(connection, fs);
+	const server = createServerBase(connection);
+	server.fileSystem.install('file', nodeFsProvider);
+	server.fileSystem.install('http', httpFsProvider);
+	server.fileSystem.install('https', httpFsProvider);
+	server.onInitialized(() => listenEditorSettings(server));
+	return server;
 }
-
-export const fs: FileSystem = {
-	stat(uri) {
-		if (uri.scheme === 'file') {
-			try {
-				const stats = _fs.statSync(uri.fsPath, { throwIfNoEntry: false });
-				if (stats) {
-					return {
-						type: stats.isFile() ? FileType.File
-							: stats.isDirectory() ? FileType.Directory
-								: stats.isSymbolicLink() ? FileType.SymbolicLink
-									: FileType.Unknown,
-						ctime: stats.ctimeMs,
-						mtime: stats.mtimeMs,
-						size: stats.size,
-					};
-				}
-			}
-			catch {
-				return undefined;
-			}
-		}
-	},
-	readFile(uri, encoding) {
-		if (uri.scheme === 'file') {
-			try {
-				return _fs.readFileSync(uri.fsPath, { encoding: encoding as 'utf-8' ?? 'utf-8' });
-			}
-			catch {
-				return undefined;
-			}
-		}
-		if (uri.scheme === 'http' || uri.scheme === 'https') {
-			return httpSchemaRequestHandler(uri);
-		}
-	},
-	readDirectory(uri) {
-		if (uri.scheme === 'file') {
-			try {
-				const files = _fs.readdirSync(uri.fsPath, { withFileTypes: true });
-				return files.map<[string, FileType]>(file => {
-					return [file.name, file.isFile() ? FileType.File
-						: file.isDirectory() ? FileType.Directory
-							: file.isSymbolicLink() ? FileType.SymbolicLink
-								: FileType.Unknown];
-				});
-			}
-			catch {
-				return [];
-			}
-		}
-		return [];
-	},
-};
 
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 	locale = locale?.toLowerCase();
@@ -108,4 +58,3 @@ export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 		} catch { }
 	}
 }
-

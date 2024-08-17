@@ -61,11 +61,7 @@ export async function createTypeScriptLS(
 		},
 		getScriptSnapshot(fileName) {
 			const uri = uriConverter.asUri(fileName);
-			const documentKey = server.getSyncedDocumentKey(uri) ?? uri.toString();
-			const document = server.documents.get(documentKey);
-			if (document) {
-				return document.getSnapshot();
-			}
+			return server.documents.get(uri)?.getSnapshot();
 		},
 		getCompilationSettings() {
 			return parsedCommandLine.options;
@@ -91,14 +87,13 @@ export async function createTypeScriptLS(
 
 	const language = createLanguage<URI>(
 		[
-			{ getLanguageId: uri => server.documents.get(server.getSyncedDocumentKey(uri) ?? uri.toString())?.languageId },
+			{ getLanguageId: uri => server.documents.get(uri)?.languageId },
 			...languagePlugins,
 			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
 		],
 		createUriMap(sys.useCaseSensitiveFileNames),
 		uri => {
-			const documentUri = server.getSyncedDocumentKey(uri);
-			const syncedDocument = documentUri ? server.documents.get(documentUri) : undefined;
+			const syncedDocument = server.documents.get(uri);
 
 			let snapshot: ts.IScriptSnapshot | undefined;
 
