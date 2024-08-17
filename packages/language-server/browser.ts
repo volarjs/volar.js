@@ -2,7 +2,7 @@ import * as vscode from 'vscode-languageserver/browser';
 import { URI } from 'vscode-uri';
 import { handler as httpSchemaRequestHandler } from './lib/fileSystemProviders/http';
 import { createServerBase } from './lib/server';
-import { provider as httpFsProvider } from './lib/fileSystemProviders/http';
+import { provider as httpFsProvider, setServer } from './lib/fileSystemProviders/http';
 
 export * from 'vscode-languageserver/browser';
 export * from './index';
@@ -20,20 +20,9 @@ export function createConnection() {
 
 export function createServer(connection: vscode.Connection) {
 	const server = createServerBase(connection);
-	// TODO
-	// {
-	// 	async stat(uri) {
-	// 		return await connection.sendRequest(FsStatRequest.type, uri.toString());
-	// 	},
-	// 	async readFile(uri) {
-	// 		return await connection.sendRequest(FsReadFileRequest.type, uri.toString()) ?? undefined;
-	// 	},
-	// 	async readDirectory(uri) {
-	// 		return await connection.sendRequest(FsReadDirectoryRequest.type, uri.toString());
-	// 	},
-	// }
 	server.features.fileSystem.install('http', httpFsProvider);
 	server.features.fileSystem.install('https', httpFsProvider);
+	setServer(server);
 	return server;
 }
 

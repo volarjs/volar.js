@@ -1,5 +1,4 @@
 import { LanguageServicePlugin } from '@volar/language-service';
-import { configure as configureHttpRequests } from 'request-light';
 import * as vscode from 'vscode-languageserver';
 import { register as registerConfigurationSupport } from './features/configurations.js';
 import { register as registerEditorFeaturesSupport } from './features/editorFeatures.js';
@@ -30,10 +29,6 @@ export function createServerBase(connection: vscode.Connection) {
 		},
 		initialized() {
 			this.project.setup(this);
-
-			// TODO
-			updateHttpSettings();
-			this.features.configurations.onDidChange(updateHttpSettings);
 		},
 		shutdown() {
 			this.project.reload();
@@ -41,11 +36,6 @@ export function createServerBase(connection: vscode.Connection) {
 	};
 
 	return server;
-
-	async function updateHttpSettings() {
-		const httpSettings = await server.features.configurations.get<{ proxyStrictSSL?: boolean; proxy?: string; }>('http');
-		configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
-	}
 
 	function registerFeatures() {
 		const configurations = registerConfigurationSupport(connection, server.initializeParams);

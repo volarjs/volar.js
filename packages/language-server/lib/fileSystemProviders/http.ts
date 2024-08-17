@@ -1,9 +1,14 @@
 import { FileSystem, FileType } from '@volar/language-service';
-import { xhr, XHRResponse, getErrorStatusDescription } from 'request-light';
+import { configure as configureHttpRequests, getErrorStatusDescription, xhr, XHRResponse } from 'request-light';
 import type { URI } from 'vscode-uri';
+import { LanguageServer } from '../types';
+
+let server: LanguageServer | undefined;
+let initialized = false;
 
 export const provider: FileSystem = {
 	async stat(uri) {
+		await initialize();
 		const text = await this.readFile(uri);
 		if (text !== undefined) {
 			return {
@@ -14,13 +19,32 @@ export const provider: FileSystem = {
 			};
 		}
 	},
-	readFile(uri) {
+	async readFile(uri) {
+		await initialize();
 		return handler(uri);
 	},
 	readDirectory() {
 		return [];
 	},
 };
+
+export function setServer(_server: LanguageServer) {
+	server = _server;
+}
+
+async function initialize() {
+	if (initialized || !server) {
+		return;
+	}
+	initialized = true;
+	server.features.configurations.onDidChange(updateHttpSettings);
+	await updateHttpSettings();
+}
+
+async function updateHttpSettings() {
+	const httpSettings = await server?.features.configurations.get<{ proxyStrictSSL?: boolean; proxy?: string; }>('http');
+	configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
+}
 
 export function handler(uri: URI) {
 	const headers = { 'Accept-Encoding': 'gzip, deflate' };
