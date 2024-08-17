@@ -609,7 +609,7 @@ export function register(
 				documents.onDidClose(({ document }) => {
 					server.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 				});
-				configurations.onDidChange(() => refreshDiagnostics(false));
+				configurations.onDidChange(() => requestRefresh(false));
 
 				refreshHandlers.push(async clearDiagnostics => {
 					if (clearDiagnostics) {
@@ -661,11 +661,9 @@ export function register(
 		}
 	});
 
-	return {
-		refreshDiagnostics,
-	};
+	return { requestRefresh };
 
-	async function refreshDiagnostics(clearDiagnostics: boolean) {
+	async function requestRefresh(clearDiagnostics: boolean) {
 		const req = ++refreshReq;
 		const delay = 250;
 		await sleep(delay);

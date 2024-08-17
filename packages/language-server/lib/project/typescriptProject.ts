@@ -52,7 +52,7 @@ export function createTypeScriptProject(
 					}
 				}
 
-				server.languageFeatures.refreshDiagnostics(!!tsConfigChanges.length);
+				server.languageFeatures.requestRefresh(!!tsConfigChanges.length);
 			});
 		},
 		async getLanguageService(uri) {
