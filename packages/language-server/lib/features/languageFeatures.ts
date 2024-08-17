@@ -583,14 +583,14 @@ export function register(
 					workspaceDiagnostics,
 				};
 
-				refreshHandlers.push(() => {
-					if (initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
+				if (initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
+					refreshHandlers.push(() => {
 						server.connection.languages.diagnostics.refresh();
-					}
-					else {
-						console.warn('Diagnostics refresh is not supported by the client.');
-					}
-				});
+					});
+				}
+				else {
+					console.warn('Diagnostics refresh is not supported by the client.');
+				}
 			}
 			else {
 				documents.onDidChangeContent(({ document }) => {
