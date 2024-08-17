@@ -6,8 +6,8 @@ export async function getInferredCompilerOptions(server: LanguageServer) {
 		implicitProjectConfig_1 = {},
 		implicitProjectConfig_2 = {},
 	] = await Promise.all([
-		server.features.configurations.get<ts.CompilerOptions>('js/ts.implicitProjectConfig'),
-		server.features.configurations.get<ts.CompilerOptions>('javascript.implicitProjectConfig'),
+		server.configurations.get<ts.CompilerOptions>('js/ts.implicitProjectConfig'),
+		server.configurations.get<ts.CompilerOptions>('javascript.implicitProjectConfig'),
 	]);
 	const checkJs = readCheckJs();
 	const experimentalDecorators = readExperimentalDecorators();

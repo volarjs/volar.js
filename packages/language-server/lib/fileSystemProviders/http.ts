@@ -37,12 +37,12 @@ async function initialize() {
 		return;
 	}
 	initialized = true;
-	server.features.configurations.onDidChange(updateHttpSettings);
+	server.configurations.onDidChange(updateHttpSettings);
 	await updateHttpSettings();
 }
 
 async function updateHttpSettings() {
-	const httpSettings = await server?.features.configurations.get<{ proxyStrictSSL?: boolean; proxy?: string; }>('http');
+	const httpSettings = await server?.configurations.get<{ proxyStrictSSL?: boolean; proxy?: string; }>('http');
 	configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
 }
 

@@ -61,7 +61,7 @@ export async function createTypeScriptLS(
 		},
 		getScriptSnapshot(fileName) {
 			const uri = uriConverter.asUri(fileName);
-			return server.features.documents.get(uri)?.getSnapshot();
+			return server.documents.get(uri)?.getSnapshot();
 		},
 		getCompilationSettings() {
 			return parsedCommandLine.options;
@@ -78,22 +78,22 @@ export async function createTypeScriptLS(
 		sys,
 		uriConverter,
 	});
-	const docOpenWatcher = server.features.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document));
-	const docSaveWatcher = server.features.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document));
-	const docChangeWatcher = server.features.documents.onDidChangeContent(() => projectVersion++);
+	const docOpenWatcher = server.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document));
+	const docSaveWatcher = server.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document));
+	const docChangeWatcher = server.documents.onDidChangeContent(() => projectVersion++);
 	const fileWatch = serviceEnv.onDidChangeWatchedFiles?.(params => onWorkspaceFilesChanged(params.changes));
 
 	let rootFiles = await getRootFiles(languagePlugins);
 
 	const language = createLanguage<URI>(
 		[
-			{ getLanguageId: uri => server.features.documents.get(uri)?.languageId },
+			{ getLanguageId: uri => server.documents.get(uri)?.languageId },
 			...languagePlugins,
 			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
 		],
 		createUriMap(sys.useCaseSensitiveFileNames),
 		uri => {
-			const syncedDocument = server.features.documents.get(uri);
+			const syncedDocument = server.documents.get(uri);
 
 			let snapshot: ts.IScriptSnapshot | undefined;
 

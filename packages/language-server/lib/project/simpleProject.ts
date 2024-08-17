@@ -12,12 +12,12 @@ export function createSimpleProject(languagePlugins: LanguagePlugin<URI>[]): Lan
 			server = _server;
 			const language = createLanguage(
 				[
-					{ getLanguageId: uri => server.features.documents.get(uri)?.languageId },
+					{ getLanguageId: uri => server.documents.get(uri)?.languageId },
 					...languagePlugins,
 				],
 				createUriMap(false),
 				uri => {
-					const document = server.features.documents.get(uri);
+					const document = server.documents.get(uri);
 					if (document) {
 						language.scripts.set(uri, document.getSnapshot(), document.languageId);
 					}
@@ -29,7 +29,7 @@ export function createSimpleProject(languagePlugins: LanguagePlugin<URI>[]): Lan
 			languageService = createLanguageService(
 				language,
 				server.languageServicePlugins,
-				createLanguageServiceEnvironment(server, server.features.workspaceFolders.all),
+				createLanguageServiceEnvironment(server, server.workspaceFolders.all),
 				{}
 			);
 		},
@@ -49,11 +49,11 @@ export function createSimpleProject(languagePlugins: LanguagePlugin<URI>[]): Lan
 export function createLanguageServiceEnvironment(server: LanguageServer, workspaceFolders: URI[]): LanguageServiceEnvironment {
 	return {
 		workspaceFolders,
-		fs: server.features.fileSystem,
+		fs: server.fileSystem,
 		locale: server.initializeParams?.locale,
 		clientCapabilities: server.initializeParams?.capabilities,
-		getConfiguration: server.features.configurations.get,
-		onDidChangeConfiguration: server.features.configurations.onDidChange,
-		onDidChangeWatchedFiles: server.features.fileWatcher.onDidChangeWatchedFiles,
+		getConfiguration: server.configurations.get,
+		onDidChangeConfiguration: server.configurations.onDidChange,
+		onDidChangeWatchedFiles: server.fileWatcher.onDidChangeWatchedFiles,
 	};
 }

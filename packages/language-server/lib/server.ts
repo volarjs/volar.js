@@ -7,63 +7,67 @@ import { register as registerFileWatcher } from './features/fileWatcher.js';
 import { register as registerLanguageFeatures } from './features/languageFeatures.js';
 import { register as registerTextDocumentRegistry } from './features/textDocuments.js';
 import { register as registerWorkspaceFolderRegistry } from './features/workspaceFolders.js';
-import type { ExperimentalFeatures, LanguageServerProject } from './types.js';
+import type { ExperimentalFeatures, LanguageServerProject, LanguageServerState } from './types.js';
 
 export function createServerBase(connection: vscode.Connection) {
-	const serverCapabilities: vscode.ServerCapabilities<ExperimentalFeatures> = {};
-	const onInitializeCallbacks: (() => void)[] = [];
+	const onInitializeCallbacks: ((serverCapabilities: vscode.ServerCapabilities<ExperimentalFeatures>) => void)[] = [];
 	const onInitializedCallbacks: (() => void)[] = [];
-	const server = {
+	const state: LanguageServerState = {
+		connection,
 		initializeParams: undefined! as vscode.InitializeParams,
 		project: undefined! as LanguageServerProject,
 		languageServicePlugins: undefined! as LanguageServicePlugin[],
-		features: undefined! as ReturnType<typeof registerFeatures>,
-		initialize(
-			params: vscode.InitializeParams,
-			project: LanguageServerProject,
-			languageServicePlugins: LanguageServicePlugin[]
-		): vscode.InitializeResult<ExperimentalFeatures> {
-			this.initializeParams = params;
-			this.project = project;
-			this.languageServicePlugins = languageServicePlugins;
-			this.features = registerFeatures();
-			onInitializeCallbacks.forEach(cb => cb());
-			return { capabilities: serverCapabilities };
-		},
-		initialized() {
-			onInitializedCallbacks.forEach(cb => cb());
-			this.project.setup(this);
-		},
-		shutdown() {
-			this.project.reload();
-		},
-		onInitialize(callback: () => void) {
+		onInitialize(callback: (serverCapabilities: vscode.ServerCapabilities<ExperimentalFeatures>) => void) {
 			onInitializeCallbacks.push(callback);
 		},
 		onInitialized(callback: () => void) {
 			onInitializedCallbacks.push(callback);
 		},
 	};
+	const configurations = registerConfigurationSupport(state);
+	const editorFeatures = registerEditorFeaturesSupport(state);
+	const documents = registerTextDocumentRegistry(state);
+	const workspaceFolders = registerWorkspaceFolderRegistry(state);
+	const fileWatcher = registerFileWatcher(state);
+	const languageFeatures = registerLanguageFeatures(state, documents, configurations);
+	const fileSystem = registerFileSystemSupport(documents, fileWatcher);
 
-	return server;
-
-	function registerFeatures() {
-		const configurations = registerConfigurationSupport(connection, server.initializeParams);
-		const editorFeatures = registerEditorFeaturesSupport(connection, server.project);
-		const documents = registerTextDocumentRegistry(connection, serverCapabilities);
-		const workspaceFolders = registerWorkspaceFolderRegistry(connection, server.initializeParams, server.project, serverCapabilities);
-		const languageFeatures = registerLanguageFeatures(connection, documents, configurations, server.initializeParams, server.project, server.languageServicePlugins, serverCapabilities);
-		const fileWatcher = registerFileWatcher(connection, server.initializeParams);
-		const fileSystem = registerFileSystemSupport(documents, fileWatcher);
-
-		return {
-			configurations,
-			editorFeatures,
-			documents,
-			workspaceFolders,
-			languageFeatures,
-			fileWatcher,
-			fileSystem,
-		};
-	}
+	return {
+		...state,
+		get initializeParams() {
+			return state.initializeParams;
+		},
+		get project() {
+			return state.project;
+		},
+		get languageServicePlugins() {
+			return state.languageServicePlugins;
+		},
+		initialize(
+			params: vscode.InitializeParams,
+			project: LanguageServerProject,
+			languageServicePlugins: LanguageServicePlugin[]
+		): vscode.InitializeResult<ExperimentalFeatures> {
+			state.initializeParams = params;
+			state.project = project;
+			state.languageServicePlugins = languageServicePlugins;
+			const serverCapabilities: vscode.ServerCapabilities<ExperimentalFeatures> = {};
+			onInitializeCallbacks.forEach(cb => cb(serverCapabilities));
+			return { capabilities: serverCapabilities };
+		},
+		initialized() {
+			onInitializedCallbacks.forEach(cb => cb());
+			state.project.setup(this);
+		},
+		shutdown() {
+			state.project.reload();
+		},
+		configurations,
+		editorFeatures,
+		documents,
+		workspaceFolders,
+		fileWatcher,
+		languageFeatures,
+		fileSystem,
+	};
 }

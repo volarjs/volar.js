@@ -1,18 +1,20 @@
 import * as vscode from 'vscode-languageserver';
+import { LanguageServerState } from '../types';
 
-export function register(
-	connection: vscode.Connection,
-	initializeParams: vscode.InitializeParams
-) {
+export function register(server: LanguageServerState) {
 	const configurations = new Map<string, Promise<any>>();
 	const didChangeCallbacks = new Set<vscode.NotificationHandler<vscode.DidChangeConfigurationParams>>();
 
-	let registered = false;
-
-	connection.onDidChangeConfiguration(params => {
-		configurations.clear(); // TODO: clear only the configurations that changed
-		for (const cb of didChangeCallbacks) {
-			cb(params);
+	server.onInitialized(() => {
+		server.connection.onDidChangeConfiguration(params => {
+			configurations.clear(); // TODO: clear only the configurations that changed
+			for (const cb of didChangeCallbacks) {
+				cb(params);
+			}
+		});
+		const didChangeConfiguration = server.initializeParams.capabilities.workspace?.didChangeConfiguration;
+		if (didChangeConfiguration?.dynamicRegistration) {
+			server.connection.client.register(vscode.DidChangeConfigurationNotification.type);
 		}
 	});
 
@@ -22,16 +24,13 @@ export function register(
 	};
 
 	function get<T>(section: string, scopeUri?: string): Promise<T | undefined> {
-		if (!initializeParams.capabilities.workspace?.configuration) {
+		if (!server.initializeParams.capabilities.workspace?.configuration) {
 			return Promise.resolve(undefined);
 		}
-		const didChangeConfiguration = initializeParams.capabilities.workspace?.didChangeConfiguration;
+		const didChangeConfiguration = server.initializeParams.capabilities.workspace?.didChangeConfiguration;
 		if (!scopeUri && didChangeConfiguration) {
 			if (!configurations.has(section)) {
 				configurations.set(section, getConfigurationWorker(section, scopeUri));
-			}
-			if (!registered && didChangeConfiguration.dynamicRegistration) {
-				connection.client.register(vscode.DidChangeConfigurationNotification.type);
 			}
 			return configurations.get(section)!;
 		}
@@ -48,6 +47,6 @@ export function register(
 	}
 
 	async function getConfigurationWorker(section: string, scopeUri?: string) {
-		return (await connection.workspace.getConfiguration({ scopeUri, section })) ?? undefined /* replace null to undefined */;
+		return (await server.connection.workspace.getConfiguration({ scopeUri, section })) ?? undefined /* replace null to undefined */;
 	}
 }

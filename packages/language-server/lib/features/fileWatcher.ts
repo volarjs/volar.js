@@ -1,10 +1,8 @@
 import { Disposable } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
+import { LanguageServerState } from '../types';
 
-export function register(
-	connection: vscode.Connection,
-	initializeParams: vscode.InitializeParams
-) {
+export function register(server: LanguageServerState) {
 	let watchFilesDisposableCounter = 0;
 	let watchFilesDisposable: Disposable | undefined;
 
@@ -17,11 +15,11 @@ export function register(
 
 	async function watchFiles(patterns: string[]): Promise<Disposable> {
 		const disposables: Disposable[] = [];
-		const didChangeWatchedFiles = initializeParams.capabilities.workspace?.didChangeWatchedFiles;
-		const fileOperations = initializeParams.capabilities.workspace?.fileOperations;
+		const didChangeWatchedFiles = server.initializeParams.capabilities.workspace?.didChangeWatchedFiles;
+		const fileOperations = server.initializeParams.capabilities.workspace?.fileOperations;
 		if (didChangeWatchedFiles) {
 			if (watchFilesDisposableCounter === 0) {
-				watchFilesDisposable = connection.onDidChangeWatchedFiles(e => {
+				watchFilesDisposable = server.connection.onDidChangeWatchedFiles(e => {
 					for (const cb of didChangeWatchedFilesCallbacks) {
 						cb(e);
 					}
@@ -41,14 +39,14 @@ export function register(
 		}
 		if (didChangeWatchedFiles?.dynamicRegistration) {
 			disposables.push(
-				await connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
+				await server.connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
 					watchers: patterns.map(pattern => ({ globPattern: pattern })),
 				})
 			);
 		}
 		if (fileOperations?.dynamicRegistration && fileOperations.willRename) {
 			disposables.push(
-				await connection.client.register(vscode.WillRenameFilesRequest.type, {
+				await server.connection.client.register(vscode.WillRenameFilesRequest.type, {
 					filters: patterns.map(pattern => ({ pattern: { glob: pattern } })),
 				})
 			);

@@ -1,11 +1,9 @@
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
+import { LanguageServerState } from '../types';
 import { SnapshotDocument } from '../utils/snapshotDocument';
 
-export function register(
-	connection: vscode.Connection,
-	serverCapabilities: vscode.ServerCapabilities
-) {
+export function register(server: LanguageServerState) {
 	const syncedDocumentParsedUriToUri = new Map<string, string>();
 	const documentsCache = new Map<string, WeakRef<SnapshotDocument>>();
 	const documents = new vscode.TextDocuments({
@@ -24,7 +22,7 @@ export function register(
 		},
 	});
 
-	documents.listen(connection);
+	documents.listen(server.connection);
 	documents.onDidOpen(({ document }) => {
 		const parsedUri = URI.parse(document.uri);
 		syncedDocumentParsedUriToUri.set(parsedUri.toString(), document.uri);
@@ -34,7 +32,9 @@ export function register(
 		syncedDocumentParsedUriToUri.delete(parsedUri.toString());
 	});
 
-	serverCapabilities.textDocumentSync = vscode.TextDocumentSyncKind.Incremental;
+	server.onInitialize(serverCapabilities => {
+		serverCapabilities.textDocumentSync = vscode.TextDocumentSyncKind.Incremental;
+	});
 
 	return {
 		all: documents.all.bind(documents),

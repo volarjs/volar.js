@@ -31,9 +31,9 @@ export function createTypeScriptProject(
 
 	return {
 		setup(_server) {
-			uriConverter = createUriConverter(_server.features.workspaceFolders.all);
+			uriConverter = createUriConverter(_server.workspaceFolders.all);
 			server = _server;
-			server.features.fileWatcher.onDidChangeWatchedFiles(({ changes }) => {
+			server.fileWatcher.onDidChangeWatchedFiles(({ changes }) => {
 				const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
 
 				for (const change of tsConfigChanges) {
@@ -52,7 +52,7 @@ export function createTypeScriptProject(
 					}
 				}
 
-				server.features.languageFeatures.refreshDiagnostics(!!tsConfigChanges.length);
+				server.languageFeatures.refreshDiagnostics(!!tsConfigChanges.length);
 			});
 		},
 		async getLanguageService(uri) {
@@ -61,7 +61,7 @@ export function createTypeScriptProject(
 				const project = await getOrCreateConfiguredProject(server, tsconfig);
 				return project.languageService;
 			}
-			const workspaceFolder = getWorkspaceFolder(uri, server.features.workspaceFolders);
+			const workspaceFolder = getWorkspaceFolder(uri, server.workspaceFolders);
 			const project = await getOrCreateInferredProject(server, uri, workspaceFolder);
 			return project.languageService;
 		},
@@ -97,7 +97,7 @@ export function createTypeScriptProject(
 			searchedDirs.add(dir);
 			for (const tsConfigName of rootTsConfigNames) {
 				const tsconfigPath = path.join(dir, tsConfigName);
-				if ((await server.features.fileSystem.stat?.(uriConverter.asUri(tsconfigPath)))?.type === FileType.File) {
+				if ((await server.fileSystem.stat?.(uriConverter.asUri(tsconfigPath)))?.type === FileType.File) {
 					rootTsConfigs.add(tsconfigPath);
 				}
 			}
@@ -185,13 +185,13 @@ export function createTypeScriptProject(
 					let tsConfigPath = projectReference.path.replace(/\\/g, '/');
 
 					// fix https://github.com/johnsoncodehk/volar/issues/712
-					if ((await server.features.fileSystem.stat?.(uriConverter.asUri(tsConfigPath)))?.type === FileType.File) {
+					if ((await server.fileSystem.stat?.(uriConverter.asUri(tsConfigPath)))?.type === FileType.File) {
 						const newTsConfigPath = path.join(tsConfigPath, 'tsconfig.json');
 						const newJsConfigPath = path.join(tsConfigPath, 'jsconfig.json');
-						if ((await server.features.fileSystem.stat?.(uriConverter.asUri(newTsConfigPath)))?.type === FileType.File) {
+						if ((await server.fileSystem.stat?.(uriConverter.asUri(newTsConfigPath)))?.type === FileType.File) {
 							tsConfigPath = newTsConfigPath;
 						}
-						else if ((await server.features.fileSystem.stat?.(uriConverter.asUri(newJsConfigPath)))?.type === FileType.File) {
+						else if ((await server.fileSystem.stat?.(uriConverter.asUri(newJsConfigPath)))?.type === FileType.File) {
 							tsConfigPath = newJsConfigPath;
 						}
 					}
@@ -227,7 +227,7 @@ export function createTypeScriptProject(
 		const tsconfigUri = uriConverter.asUri(tsconfig);
 		let projectPromise = configProjects.get(tsconfigUri);
 		if (!projectPromise) {
-			const workspaceFolder = getWorkspaceFolder(tsconfigUri, server.features.workspaceFolders);
+			const workspaceFolder = getWorkspaceFolder(tsconfigUri, server.workspaceFolders);
 			const serviceEnv = createLanguageServiceEnvironment(server, [workspaceFolder]);
 			projectPromise = createTypeScriptLS(
 				ts,
