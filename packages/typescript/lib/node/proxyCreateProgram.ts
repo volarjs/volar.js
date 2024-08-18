@@ -73,8 +73,8 @@ export function proxyCreateProgram(
 						{ getLanguageId: resolveFileLanguageId },
 					],
 					new FileMap(ts.sys.useCaseSensitiveFileNames),
-					fileName => {
-						if (!sourceFileSnapshots.has(fileName)) {
+					(fileName, includeFsFiles) => {
+						if (includeFsFiles && !sourceFileSnapshots.has(fileName)) {
 							const sourceFileText = originalHost.readFile(fileName);
 							if (sourceFileText !== undefined) {
 								sourceFileSnapshots.set(fileName, [undefined, {

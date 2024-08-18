@@ -121,11 +121,24 @@ export function createTypeScriptWorkerLanguageService({
 			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
 		],
 		createUriMap(sys.useCaseSensitiveFileNames),
-		uri => {
-			let snapshot = getModelSnapshot(uri);
+		(uri, includeFsFiles) => {
+			let snapshot: ts.IScriptSnapshot | undefined;
 
-			if (!snapshot) {
-				// fs files
+			const model = workerContext.getMirrorModels().find(model => model.uri.toString() === uri.toString());
+			if (model) {
+				const cache = modelSnapshot.get(model);
+				if (cache && cache[0] === model.version) {
+					return cache[1];
+				}
+				const text = model.getValue();
+				modelSnapshot.set(model, [model.version, {
+					getText: (start, end) => text.substring(start, end),
+					getLength: () => text.length,
+					getChangeRange: () => undefined,
+				}]);
+				snapshot = modelSnapshot.get(model)?.[1];
+			}
+			else if (includeFsFiles) {
 				const cache = fsFileSnapshots.get(uri);
 				const fileName = uriConverter.asFileName(uri);
 				const modifiedTime = sys.getModifiedTime?.(fileName)?.valueOf();
@@ -181,10 +194,6 @@ export function createTypeScriptWorkerLanguageService({
 						projectVersion++;
 						return projectVersion.toString();
 					},
-					getScriptSnapshot(fileName) {
-						const uri = uriConverter.asUri(fileName);
-						return getModelSnapshot(uri);
-					},
 					getCompilationSettings() {
 						return compilerOptions;
 					},
@@ -202,23 +211,6 @@ export function createTypeScriptWorkerLanguageService({
 			project
 		)
 	);
-
-	function getModelSnapshot(uri: URI) {
-		const model = workerContext.getMirrorModels().find(model => model.uri.toString() === uri.toString());
-		if (model) {
-			const cache = modelSnapshot.get(model);
-			if (cache && cache[0] === model.version) {
-				return cache[1];
-			}
-			const text = model.getValue();
-			modelSnapshot.set(model, [model.version, {
-				getText: (start, end) => text.substring(start, end),
-				getLength: () => text.length,
-				getChangeRange: () => undefined,
-			}]);
-			return modelSnapshot.get(model)?.[1];
-		}
-	}
 }
 
 export interface UriComponents {

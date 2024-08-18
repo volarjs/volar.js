@@ -15,7 +15,7 @@ export interface Language<T = unknown> {
 	mapperFactory: MapperFactory;
 	plugins: LanguagePlugin<T>[];
 	scripts: {
-		get(id: T): SourceScript<T> | undefined;
+		get(id: T, includeFsFiles?: boolean): SourceScript<T> | undefined;
 		set(id: T, snapshot: IScriptSnapshot, languageId?: string, plugins?: LanguagePlugin<T>[]): SourceScript<T> | undefined;
 		delete(id: T): void;
 		fromVirtualCode(virtualCode: VirtualCode): SourceScript<T>;
