@@ -22,14 +22,14 @@ We assume you already know:
 // my-lang.worker.ts
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
-import { createSimpleWorkerService, ServiceEnvironment } from '@volar/monaco/worker';
+import { createSimpleWorkerLanguageService, ServiceEnvironment } from '@volar/monaco/worker';
 
 self.onmessage = () => {
 	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
 		const env: ServiceEnvironment = {
 			workspaceFolder: 'file:///',
 		};
-		return createSimpleWorkerService({
+		return createSimpleWorkerLanguageService({
 			workerContext: ctx,
 			env,
 			languagePlugins: [
@@ -48,8 +48,8 @@ self.onmessage = () => {
 ```diff
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
--import { createSimpleWorkerService, ServiceEnvironment } from '@volar/monaco/worker';
-+import { createTypeScriptWorkerService, ServiceEnvironment } from '@volar/monaco/worker';
+-import { createSimpleWorkerLanguageService, ServiceEnvironment } from '@volar/monaco/worker';
++import { createTypeScriptWorkerLanguageService, ServiceEnvironment } from '@volar/monaco/worker';
 +import * as ts from 'typescript';
 +import { create as createTypeScriptPlugins } from 'volar-service-typescript';
 +import { URI } from 'vscode-uri';
@@ -59,8 +59,8 @@ self.onmessage = () => {
 		const env: ServiceEnvironment = {
 			workspaceFolder: 'file:///',
 		};
--		return createSimpleWorkerService({
-+		return createTypeScriptWorkerService({
+-		return createSimpleWorkerLanguageService({
++		return createTypeScriptWorkerLanguageService({
 +			typescript: ts,
 +			compilerOptions: {
 +				// ...
@@ -88,7 +88,7 @@ self.onmessage = () => {
 ```diff
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
-import { createTypeScriptWorkerService, ServiceEnvironment } from '@volar/monaco/worker';
+import { createTypeScriptWorkerLanguageService, ServiceEnvironment } from '@volar/monaco/worker';
 +import { createNpmFileSystem } from '@volar/jsdelivr';
 import * as ts from 'typescript';
 import { create as createTypeScriptService } from 'volar-service-typescript';
@@ -103,7 +103,7 @@ self.onmessage = () => {
 			},
 		};
 +		env.fs = createNpmFileSystem();
-		return createTypeScriptWorkerService({
+		return createTypeScriptWorkerLanguageService({
 			typescript: ts,
 			compilerOptions: {
 				// ...
