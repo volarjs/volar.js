@@ -56,7 +56,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 		process: childProcess,
 		connection,
 		async initialize(
-			rootUri: string,
+			rootUri: string | _.WorkspaceFolder[],
 			initializationOptions: _._InitializeParams['initializationOptions'],
 			capabilities: _.ClientCapabilities = {},
 			locale?: string
@@ -65,16 +65,14 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.InitializeRequest.type,
 				{
 					processId: childProcess.pid ?? null,
-					rootUri,
+					rootUri: typeof rootUri === 'string' ? rootUri : null,
+					workspaceFolders: Array.isArray(rootUri) ? rootUri : null,
 					initializationOptions,
 					capabilities,
 					locale,
 				} satisfies _.InitializeParams
 			);
-			await connection.sendNotification(
-				_.InitializedNotification.type,
-				{} satisfies _.InitializedParams
-			);
+			await connection.sendNotification(_.InitializedNotification.type, {} satisfies _.InitializedParams);
 			running = true;
 			return result;
 		},
