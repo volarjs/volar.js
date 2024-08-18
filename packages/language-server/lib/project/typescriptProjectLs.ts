@@ -59,10 +59,6 @@ export async function createTypeScriptLS(
 		getScriptFileNames() {
 			return rootFiles;
 		},
-		getScriptSnapshot(fileName) {
-			const uri = uriConverter.asUri(fileName);
-			return server.documents.get(uri)?.getSnapshot();
-		},
 		getCompilationSettings() {
 			return parsedCommandLine.options;
 		},
@@ -92,7 +88,7 @@ export async function createTypeScriptLS(
 			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
 		],
 		createUriMap(sys.useCaseSensitiveFileNames),
-		uri => {
+		(uri, includeFsFiles) => {
 			const syncedDocument = server.documents.get(uri);
 
 			let snapshot: ts.IScriptSnapshot | undefined;
@@ -100,8 +96,7 @@ export async function createTypeScriptLS(
 			if (syncedDocument) {
 				snapshot = syncedDocument.getSnapshot();
 			}
-			else {
-				// fs files
+			else if (includeFsFiles) {
 				const cache = fsFileSnapshots.get(uri);
 				const fileName = uriConverter.asFileName(uri);
 				const modifiedTime = sys.getModifiedTime?.(fileName)?.valueOf();
