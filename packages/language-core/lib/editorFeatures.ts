@@ -26,6 +26,10 @@ export function isCallHierarchyEnabled(info: CodeInformation): boolean {
 	return !!info.navigation;
 }
 
+export function isTypeHierarchyEnabled(info: CodeInformation): boolean {
+	return !!info.navigation;
+}
+
 export function isRenameEnabled(info: CodeInformation): boolean {
 	return typeof info.navigation === 'object'
 		? info.navigation.shouldRename?.() ?? true

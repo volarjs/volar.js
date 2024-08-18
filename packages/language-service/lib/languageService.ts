@@ -4,7 +4,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import * as autoInsert from './features/provideAutoInsertSnippet';
-import * as callHierarchy from './features/provideCallHierarchyItems';
+import * as hierarchy from './features/provideCallHierarchyItems';
 import * as codeActions from './features/provideCodeActions';
 import * as codeLens from './features/provideCodeLenses';
 import * as colorPresentations from './features/provideColorPresentations';
@@ -247,7 +247,7 @@ function createLanguageServiceBase(
 		resolveInlayHint: inlayHintResolve.register(context),
 		resolveWorkspaceSymbol: workspaceSymbolResolve.register(context),
 
-		...callHierarchy.register(context),
+		...hierarchy.register(context),
 
 		dispose: () => context.plugins.forEach(plugin => plugin[1].dispose?.()),
 		context,

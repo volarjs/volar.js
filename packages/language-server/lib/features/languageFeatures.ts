@@ -22,6 +22,7 @@ export function register(
 		let lastCodeLensLs: LanguageService | undefined;
 		let lastCodeActionLs: LanguageService | undefined;
 		let lastCallHierarchyLs: LanguageService | undefined;
+		let lastTypeHierarchyLs: LanguageService | undefined;
 		let lastDocumentLinkLs: LanguageService | undefined;
 		let lastInlayHintLs: LanguageService | undefined;
 		let languageServiceToId = new WeakMap<LanguageService, number>();
@@ -171,6 +172,23 @@ export function register(
 			});
 			server.connection.languages.callHierarchy.onOutgoingCalls(async (params, token) => {
 				return await lastCallHierarchyLs?.getCallHierarchyOutgoingCalls(params.item, token) ?? [];
+			});
+		}
+
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.typeHierarchyProvider)) {
+			serverCapabilities.typeHierarchyProvider = true;
+			server.connection.languages.typeHierarchy.onPrepare(async (params, token) => {
+				const uri = URI.parse(params.textDocument.uri);
+				return await worker(uri, token, languageService => {
+					lastTypeHierarchyLs = languageService;
+					return languageService.getTypeHierarchyItems(uri, params.position, token);
+				}) ?? [];
+			});
+			server.connection.languages.typeHierarchy.onSupertypes(async (params, token) => {
+				return await lastTypeHierarchyLs?.getTypeHierarchySupertypes(params.item, token) ?? [];
+			});
+			server.connection.languages.typeHierarchy.onSubtypes(async (params, token) => {
+				return await lastTypeHierarchyLs?.getTypeHierarchySubtypes(params.item, token) ?? [];
 			});
 		}
 

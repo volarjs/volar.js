@@ -101,6 +101,7 @@ export interface LanguageServicePlugin<P = any> {
 		definitionProvider?: boolean;
 		typeDefinitionProvider?: boolean;
 		callHierarchyProvider?: boolean;
+		typeHierarchyProvider?: boolean;
 		hoverProvider?: boolean;
 		documentHighlightProvider?: boolean;
 		monikerProvider?: boolean;
@@ -187,6 +188,9 @@ export interface LanguageServicePluginInstance<P = any> {
 	provideCallHierarchyItems?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.CallHierarchyItem[]>;
 	provideCallHierarchyIncomingCalls?(item: vscode.CallHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.CallHierarchyIncomingCall[]>;
 	provideCallHierarchyOutgoingCalls?(item: vscode.CallHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.CallHierarchyOutgoingCall[]>;
+	provideTypeHierarchyItems?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.TypeHierarchyItem[]>;
+	provideTypeHierarchySupertypes?(item: vscode.TypeHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.TypeHierarchyItem[]>;
+	provideTypeHierarchySubtypes?(item: vscode.TypeHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.TypeHierarchyItem[]>;
 	provideDocumentSemanticTokens?(document: TextDocument, range: vscode.Range, legend: vscode.SemanticTokensLegend, token: vscode.CancellationToken): NullableProviderResult<SemanticToken[]>;
 	provideWorkspaceSymbols?(query: string, token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceSymbol[]>;
 	provideDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Diagnostic[]>;
