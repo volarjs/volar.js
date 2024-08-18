@@ -127,8 +127,9 @@ export function register(
 			serverCapabilities.definitionProvider = true;
 			server.connection.onDefinition(async (params, token) => {
 				const uri = URI.parse(params.textDocument.uri);
-				return await worker(uri, token, languageService => {
-					return languageService.getDefinition(uri, params.position, token);
+				return await worker(uri, token, async languageService => {
+					const definitions = await languageService.getDefinition(uri, params.position, token);
+					return handleDefinitions(initializeParams, 'definition', definitions ?? []);
 				});
 			});
 		}
@@ -137,8 +138,9 @@ export function register(
 			serverCapabilities.typeDefinitionProvider = true;
 			server.connection.onTypeDefinition(async (params, token) => {
 				const uri = URI.parse(params.textDocument.uri);
-				return await worker(uri, token, languageService => {
-					return languageService.getTypeDefinition(uri, params.position, token);
+				return await worker(uri, token, async languageService => {
+					const definitions = await languageService.getTypeDefinition(uri, params.position, token);
+					return handleDefinitions(initializeParams, 'typeDefinition', definitions ?? []);
 				});
 			});
 		}
@@ -330,9 +332,7 @@ export function register(
 						params.context,
 						token
 					);
-					for (const item of list.items) {
-						fixTextEdit(initializeParams, item);
-					}
+					list.items = list.items.map(item => handleCompletionItem(initializeParams, item));
 					return list;
 				});
 			});
@@ -341,7 +341,7 @@ export function register(
 				server.connection.onCompletionResolve(async (item, token) => {
 					if (lastCompleteUri && lastCompleteLs) {
 						item = await lastCompleteLs.resolveCompletionItem(item, token);
-						fixTextEdit(initializeParams, item);
+						item = handleCompletionItem(initializeParams, item);
 					}
 					return item;
 				});
@@ -723,12 +723,26 @@ export function register(
 		});
 	}
 
-	function fixTextEdit(initializeParams: vscode.InitializeParams, item: vscode.CompletionItem) {
+	function handleCompletionItem(initializeParams: vscode.InitializeParams, item: vscode.CompletionItem) {
 		const insertReplaceSupport = initializeParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;
 		if (!insertReplaceSupport) {
 			if (item.textEdit && vscode.InsertReplaceEdit.is(item.textEdit)) {
 				item.textEdit = vscode.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);
 			}
+		}
+		return item;
+	}
+
+	function handleDefinitions(initializeParams: vscode.InitializeParams, type: 'definition' | 'typeDefinition', items: vscode.LocationLink[]) {
+		const linkSupport = initializeParams.capabilities.textDocument?.[type]?.linkSupport ?? false;
+		if (!linkSupport) {
+			return items.map<vscode.Location>(item => ({
+				uri: item.targetUri,
+				range: item.targetRange,
+			}));
+		}
+		else {
+			return items;
 		}
 	}
 }
