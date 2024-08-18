@@ -103,6 +103,7 @@ export interface LanguageServicePlugin<P = any> {
 		callHierarchyProvider?: boolean;
 		hoverProvider?: boolean;
 		documentHighlightProvider?: boolean;
+		monikerProvider?: boolean;
 		workspaceSymbolProvider?: {
 			resolveProvider?: boolean;
 		};
@@ -190,6 +191,7 @@ export interface LanguageServicePluginInstance<P = any> {
 	provideWorkspaceSymbols?(query: string, token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceSymbol[]>;
 	provideDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Diagnostic[]>;
 	provideWorkspaceDiagnostics?(token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceDocumentDiagnosticReport[]>;
+	provideMoniker?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.Moniker[]>;
 	provideFileReferences?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Location[]>; // volar specific
 	provideReferencesCodeLensRanges?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Range[]>; // volar specific
 	provideAutoInsertSnippet?(document: TextDocument, position: vscode.Position, lastChange: { rangeOffset: number; rangeLength: number; text: string; }, token: vscode.CancellationToken): NullableProviderResult<string>; // volar specific

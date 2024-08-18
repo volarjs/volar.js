@@ -465,6 +465,16 @@ export function register(
 			});
 		}
 
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.monikerProvider)) {
+			serverCapabilities.monikerProvider = true;
+			server.connection.languages.moniker.on(async (params, token) => {
+				const uri = URI.parse(params.textDocument.uri);
+				return await worker(uri, token, languageService => {
+					return languageService.getMoniker(uri, params.position, token);
+				}) ?? null;
+			});
+		}
+
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.autoInsertionProvider)) {
 			const triggerCharacterToConfigurationSections = new Map<string, Set<string>>();
 			const tryAdd = (char: string, section?: string) => {
