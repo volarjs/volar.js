@@ -20,18 +20,6 @@ export * from '@volar/language-service';
 
 const fsFileSnapshots = createUriMap<[number | undefined, ts.IScriptSnapshot | undefined]>();
 
-/**
- * @deprecated
- * Use `createSimpleWorkerLanguageService` instead.
- */
-export const createSimpleWorkerService = createSimpleWorkerLanguageService;
-
-/**
- * @deprecated
- * Use `createTypeScriptWorkerLanguageService` instead.
- */
-export const createTypeScriptWorkerService = createTypeScriptWorkerLanguageService;
-
 export function createSimpleWorkerLanguageService({
 	env,
 	workerContext,
