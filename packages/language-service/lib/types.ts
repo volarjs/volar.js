@@ -105,6 +105,7 @@ export interface LanguageServicePlugin<P = any> {
 		hoverProvider?: boolean;
 		documentHighlightProvider?: boolean;
 		monikerProvider?: boolean;
+		inlineValueProvider?: boolean;
 		workspaceSymbolProvider?: {
 			resolveProvider?: boolean;
 		};
@@ -185,6 +186,7 @@ export interface LanguageServicePluginInstance<P = any> {
 	provideReferences?(document: TextDocument, position: vscode.Position, context: vscode.ReferenceContext, token: vscode.CancellationToken): NullableProviderResult<vscode.Location[]>;
 	provideSelectionRanges?(document: TextDocument, positions: vscode.Position[], token: vscode.CancellationToken): NullableProviderResult<vscode.SelectionRange[]>;
 	provideInlayHints?(document: TextDocument, range: vscode.Range, token: vscode.CancellationToken): NullableProviderResult<vscode.InlayHint[]>;
+	provideInlineValues?(document: TextDocument, range: vscode.Range, context: vscode.InlineValueContext, token: vscode.CancellationToken): NullableProviderResult<vscode.InlineValue[]>;
 	provideCallHierarchyItems?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.CallHierarchyItem[]>;
 	provideCallHierarchyIncomingCalls?(item: vscode.CallHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.CallHierarchyIncomingCall[]>;
 	provideCallHierarchyOutgoingCalls?(item: vscode.CallHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.CallHierarchyOutgoingCall[]>;

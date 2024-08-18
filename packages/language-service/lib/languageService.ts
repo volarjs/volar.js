@@ -24,6 +24,7 @@ import * as foldingRanges from './features/provideFoldingRanges';
 import * as hover from './features/provideHover';
 import * as inlayHints from './features/provideInlayHints';
 import * as moniker from './features/provideMoniker';
+import * as inlineValue from './features/provideInlineValue';
 import * as linkedEditing from './features/provideLinkedEditingRanges';
 import * as references from './features/provideReferences';
 import * as rename from './features/provideRenameEdits';
@@ -239,6 +240,7 @@ function createLanguageServiceBase(
 		getDocumentDropEdits: documentDrop.register(context),
 		getInlayHints: inlayHints.register(context),
 		getMoniker: moniker.register(context),
+		getInlineValue: inlineValue.register(context),
 
 		resolveCodeAction: codeActionResolve.register(context),
 		resolveCompletionItem: completionResolve.register(context),

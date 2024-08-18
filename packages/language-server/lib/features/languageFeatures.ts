@@ -493,6 +493,24 @@ export function register(
 			});
 		}
 
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.inlineValueProvider)) {
+			serverCapabilities.inlineValueProvider = true;
+			server.connection.languages.inlineValue.on(async (params, token) => {
+				const uri = URI.parse(params.textDocument.uri);
+				return await worker(uri, token, languageService => {
+					return languageService.getInlineValue(uri, params.range, params.context, token);
+				});
+			});
+			if (initializeParams.capabilities.workspace?.inlineValue?.refreshSupport) {
+				refreshHandlers.push(() => {
+					server.connection.languages.inlineValue.refresh();
+				});
+			}
+			else {
+				console.warn('Inline value refresh is not supported by the client.');
+			}
+		}
+
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.autoInsertionProvider)) {
 			const triggerCharacterToConfigurationSections = new Map<string, Set<string>>();
 			const tryAdd = (char: string, section?: string) => {

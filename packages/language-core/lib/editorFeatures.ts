@@ -16,6 +16,10 @@ export function isMonikerEnabled(info: CodeInformation): boolean {
 	return !!info.semantic;
 }
 
+export function isInlineValueEnabled(info: CodeInformation): boolean {
+	return !!info.semantic;
+}
+
 export function isSemanticTokensEnabled(info: CodeInformation): boolean {
 	return typeof info.semantic === 'object'
 		? info.semantic.shouldHighlight?.() ?? true
