@@ -97,6 +97,7 @@ export interface LanguageServicePlugin<P = any> {
 		documentFormattingProvider?: boolean;
 		referencesProvider?: boolean;
 		implementationProvider?: boolean;
+		declarationProvider?: boolean;
 		definitionProvider?: boolean;
 		typeDefinitionProvider?: boolean;
 		callHierarchyProvider?: boolean;
@@ -163,6 +164,7 @@ export interface LanguageServicePluginInstance<P = any> {
 	provideDocumentSymbols?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.DocumentSymbol[]>;
 	provideDocumentHighlights?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.DocumentHighlight[]>;
 	provideLinkedEditingRanges?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.LinkedEditingRanges>;
+	provideDeclaration?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.DeclarationLink[]>;
 	provideDefinition?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.LocationLink[]>;
 	provideTypeDefinition?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.LocationLink[]>;
 	provideImplementation?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.LocationLink[]>;

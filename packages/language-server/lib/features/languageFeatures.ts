@@ -117,8 +117,20 @@ export function register(
 			serverCapabilities.implementationProvider = true;
 			server.connection.onImplementation(async (params, token) => {
 				const uri = URI.parse(params.textDocument.uri);
-				return await worker(uri, token, languageService => {
-					return languageService.getImplementations(uri, params.position, token);
+				return await worker(uri, token, async languageService => {
+					const definitions = await languageService.getImplementations(uri, params.position, token);
+					return handleDefinitions(initializeParams, 'implementation', definitions ?? []);
+				});
+			});
+		}
+
+		if (languageServicePlugins.some(({ capabilities }) => capabilities.declarationProvider)) {
+			serverCapabilities.declarationProvider = true;
+			server.connection.onDeclaration(async (params, token) => {
+				const uri = URI.parse(params.textDocument.uri);
+				return await worker(uri, token, async languageService => {
+					const definitions = await languageService.getDeclaration(uri, params.position, token);
+					return handleDefinitions(initializeParams, 'declaration', definitions ?? []);
 				});
 			});
 		}
@@ -733,7 +745,7 @@ export function register(
 		return item;
 	}
 
-	function handleDefinitions(initializeParams: vscode.InitializeParams, type: 'definition' | 'typeDefinition', items: vscode.LocationLink[]) {
+	function handleDefinitions(initializeParams: vscode.InitializeParams, type: 'declaration' | 'definition' | 'typeDefinition' | 'implementation', items: vscode.LocationLink[]) {
 		const linkSupport = initializeParams.capabilities.textDocument?.[type]?.linkSupport ?? false;
 		if (!linkSupport) {
 			return items.map<vscode.Location>(item => ({

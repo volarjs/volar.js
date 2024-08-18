@@ -9,7 +9,7 @@ import { DocumentsAndMap, getGeneratedPositions, getLinkedCodePositions, getSour
 
 export function register(
 	context: LanguageServiceContext,
-	apiName: 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
+	apiName: 'provideDeclaration' | 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
 	isValidPosition: (data: CodeInformation) => boolean
 ) {
 

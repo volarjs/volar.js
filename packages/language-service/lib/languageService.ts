@@ -218,6 +218,7 @@ function createLanguageServiceBase(
 		getWorkspaceDiagnostics: workspaceDiagnostics.register(context),
 		getReferences: references.register(context),
 		getFileReferences: fileReferences.register(context),
+		getDeclaration: definition.register(context, 'provideDeclaration', isDefinitionEnabled),
 		getDefinition: definition.register(context, 'provideDefinition', isDefinitionEnabled),
 		getTypeDefinition: definition.register(context, 'provideTypeDefinition', isTypeDefinitionEnabled),
 		getImplementations: definition.register(context, 'provideImplementation', isImplementationEnabled),
