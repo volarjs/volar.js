@@ -1,9 +1,11 @@
 import { createUriMap } from '@volar/language-service';
+import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { LanguageServerState } from '../types';
 
 export function register(server: LanguageServerState) {
 	const folders = createUriMap<boolean>();
+	const didChangeCallbacks = new Set<vscode.NotificationHandler<vscode.WorkspaceFoldersChangeEvent>>();
 
 	server.onInitialize(serverCapabilities => {
 		const { initializeParams } = server;
@@ -37,6 +39,9 @@ export function register(server: LanguageServerState) {
 					folders.delete(URI.parse(folder.uri));
 				}
 				server.project.reload();
+				for (const cb of didChangeCallbacks) {
+					cb(e);
+				}
 			});
 		}
 	});
@@ -48,5 +53,15 @@ export function register(server: LanguageServerState) {
 		has(uri: URI) {
 			return folders.has(uri);
 		},
+		onDidChange,
 	};
+
+	function onDidChange(cb: vscode.NotificationHandler<vscode.WorkspaceFoldersChangeEvent>) {
+		didChangeCallbacks.add(cb);
+		return {
+			dispose() {
+				didChangeCallbacks.delete(cb);
+			},
+		};
+	}
 }
