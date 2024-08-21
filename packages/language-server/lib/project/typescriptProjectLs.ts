@@ -9,7 +9,7 @@ import type { LanguageServer } from '../types';
 
 export interface TypeScriptProjectLS {
 	tryAddFile(fileName: string): void;
-	getParsedCommandLine(): ts.ParsedCommandLine;
+	getCommandLine(): ts.ParsedCommandLine;
 	languageService: LanguageService;
 	dispose(): void;
 }
@@ -159,7 +159,7 @@ export async function createTypeScriptLS(
 			docSaveWatcher.dispose();
 			docChangeWatcher.dispose();
 		},
-		getParsedCommandLine: () => parsedCommandLine,
+		getCommandLine: () => parsedCommandLine,
 	};
 
 	function updateFsCacheFromSyncedDocument(document: SnapshotDocument) {

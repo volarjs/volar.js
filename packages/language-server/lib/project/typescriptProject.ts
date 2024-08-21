@@ -104,11 +104,11 @@ export function createTypeScriptProject(
 			dir = path.dirname(dir);
 		}
 
-		await prepareClosestootParsedCommandLine();
+		await prepareClosestootCommandLine();
 
 		return await findDirectIncludeTsconfig() ?? await findIndirectReferenceTsconfig();
 
-		async function prepareClosestootParsedCommandLine() {
+		async function prepareClosestootCommandLine() {
 
 			let matches: string[] = [];
 
@@ -121,7 +121,7 @@ export function createTypeScriptProject(
 			matches = matches.sort((a, b) => sortTSConfigs(fileName, a, b));
 
 			if (matches.length) {
-				await getParsedCommandLine(matches[0]);
+				await getCommandLine(matches[0]);
 			}
 		}
 		function findIndirectReferenceTsconfig() {
@@ -135,8 +135,8 @@ export function createTypeScriptProject(
 		function findDirectIncludeTsconfig() {
 			return findTSConfig(async tsconfig => {
 				const map = createUriMap<boolean>();
-				const parsedCommandLine = await getParsedCommandLine(tsconfig);
-				for (const fileName of parsedCommandLine?.fileNames ?? []) {
+				const commandLine = await getCommandLine(tsconfig);
+				for (const fileName of commandLine?.fileNames ?? []) {
 					const uri = uriConverter.asUri(fileName);
 					map.set(uri, true);
 				}
@@ -152,7 +152,7 @@ export function createTypeScriptProject(
 				const project = await configProjects.get(tsconfigUri);
 				if (project) {
 
-					let chains = await getReferencesChains(project.getParsedCommandLine(), rootTsConfig, []);
+					let chains = await getReferencesChains(project.getCommandLine(), rootTsConfig, []);
 
 					// This is to be consistent with tsserver behavior
 					chains = chains.reverse();
@@ -174,13 +174,13 @@ export function createTypeScriptProject(
 				}
 			}
 		}
-		async function getReferencesChains(parsedCommandLine: ts.ParsedCommandLine, tsConfig: string, before: string[]) {
+		async function getReferencesChains(commandLine: ts.ParsedCommandLine, tsConfig: string, before: string[]) {
 
-			if (parsedCommandLine.projectReferences?.length) {
+			if (commandLine.projectReferences?.length) {
 
 				const newChains: string[][] = [];
 
-				for (const projectReference of parsedCommandLine.projectReferences) {
+				for (const projectReference of commandLine.projectReferences) {
 
 					let tsConfigPath = projectReference.path.replace(/\\/g, '/');
 
@@ -201,9 +201,9 @@ export function createTypeScriptProject(
 						newChains.push(before.slice(0, Math.max(beforeIndex, 1)));
 					}
 					else {
-						const referenceParsedCommandLine = await getParsedCommandLine(tsConfigPath);
-						if (referenceParsedCommandLine) {
-							for (const chain of await getReferencesChains(referenceParsedCommandLine, tsConfigPath, [...before, tsConfig])) {
+						const referenceCommandLine = await getCommandLine(tsConfigPath);
+						if (referenceCommandLine) {
+							for (const chain of await getReferencesChains(referenceCommandLine, tsConfigPath, [...before, tsConfig])) {
 								newChains.push(chain);
 							}
 						}
@@ -216,9 +216,9 @@ export function createTypeScriptProject(
 				return [[...before, tsConfig]];
 			}
 		}
-		async function getParsedCommandLine(tsConfig: string) {
+		async function getCommandLine(tsConfig: string) {
 			const project = await getOrCreateConfiguredProject(server, tsConfig);
-			return project?.getParsedCommandLine();
+			return project?.getCommandLine();
 		}
 	}
 
