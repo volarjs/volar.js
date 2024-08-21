@@ -1,5 +1,57 @@
 # Changelog
 
+## [2.4.0](https://github.com/volarjs/volar.js/compare/v2.3.4...v2.4.0) (2024-08-18)
+
+### Features
+
+- **language-service, language-server:** add support for LSP [`workspaceSymbol/resolve`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_symbolResolve) request ([#213](https://github.com/volarjs/volar.js/issues/213))
+- **language-service, language-server:** add support for LSP [`workspace/executeCommand`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand) request ([#214](https://github.com/volarjs/volar.js/issues/214))
+- **language-service, language-server:** add support for LSP [`textDocument/declaration`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_declaration) request
+- **language-service, language-server:** add support for LSP [`textDocument/moniker`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_moniker) request
+- **language-service, language-server:** add support for LSP [`textDocument/prepareTypeHierarchy`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_prepareTypeHierarchy) [`typeHierarchy/supertypes`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#typeHierarchy_supertypes) [`typeHierarchy/subtypes`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#typeHierarchy_subtypes) requests
+- **language-service, language-server:** add support for LSP [`textDocument/inlineValue`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlineValue) request
+- **monaco:** implement CancellationToken for workers ([#221](https://github.com/volarjs/volar.js/issues/221))
+- **typescript:** export `replaceTscContent` for downstream usage ([#223](https://github.com/volarjs/volar.js/issues/223)) - Thanks @so1ve
+- **kit:** add support for checking project references files ([#232](https://github.com/volarjs/volar.js/issues/232))
+
+### Bug Fixes
+
+- **language-service:** multi-level DocumentSymbol results from different virtual code are not merged accurately
+- **typescript:** use Proxy instead of modifying LanguageService instance ([#216](https://github.com/volarjs/volar.js/issues/216))
+- **typescript:** implement `directoryExists` for language service host
+- **typescript:** improve accuracy of `runTsc` extensions parameter behavior ([#222](https://github.com/volarjs/volar.js/issues/222))
+- **typescript:** synchronize script snapshots in a side-effect-free manner ([#226](https://github.com/volarjs/volar.js/issues/226))
+- **typescript:** add missing workspace symbols support for TS plugin ([vuejs/language-tools#4595](https://github.com/vuejs/language-tools/issues/4595))
+- **typescript:** add missing code actions support for TS plugin ([vuejs/language-tools#4586](https://github.com/vuejs/language-tools/issues/4586))
+- **monaco:** can't recognize the package with type definitions in `@types/xxx` ([#81](https://github.com/volarjs/volar.js/issues/81))
+- **language-server:** simplify `asFileName` result if possible ([volarjs/vscode-typescript-web#4497](https://github.com/volarjs/vscode-typescript-web/issues/3))
+- **language-server:** avoid loading diagnosticMessages for en language
+- **language-server:** use `Program.getSourceFile` instead of `askedFiles` to more accurately determine indirect reference files
+- **language-server:** respect client `linkSupport` property for declaration, definition, typeDefinition, implementation requests
+- **jsdelivr:** avoid sending read file request if `pkgFilePath` is empty
+- **jsdelivr:** avoid sending flat request for `xxx.ts`, `xxx.d.ts` module names
+- **jsdelivr:** avoid sending flat request for `@types/xxx` if package `xxx` do not exist
+- **source-map:** don't throw when `fromOffsets` is not sorted
+- **labs:** associated script mappings are not visible
+
+### Refactors
+
+- **language-server:** update `watchFiles` API to return Disposable
+- **language-server:** only register event handlers when the language server does support a certain language feature
+- **language-server:** add `setup` hook for `createTypeScriptProject` function
+- **langauge-server:** improve LSP diagnostic integration ([#230](https://github.com/volarjs/volar.js/issues/230))
+- **language-server:** split code based on logical concerns ([#231](https://github.com/volarjs/volar.js/issues/231))
+- **typescript:** add `setup` hook for `runTsc` function
+- **typescript:** add `extraExtensionsToRemove` option for `runTsc` function for glint emit support
+- **typescript:** `createAsyncLanguageServicePlugin`'s `scriptKind` param allows pass a getter
+- **monaco:** add `setup` hook for `createSimpleWorkerLanguageService`, `createTypeScriptWorkerService` functions
+- **monaco:** replace `activateAutomaticTypeAcquisition` with `createNpmFileSystem` from the new `@volar/jsdelivr` package ([#218](https://github.com/volarjs/volar.js/issues/218)) ([#219](https://github.com/volarjs/volar.js/issues/219))
+- **monaco:** rename `servicePlugins` option to `languageServicePlugins`
+- **monaco:** update to `monaco-languageserver-types` 0.4 ([#225](https://github.com/volarjs/volar.js/issues/225)) - Thanks @remcohaszing
+- **language-core:** no longer coupled to the TypeScript context, TypeScript properties are defined via interface merging in `@volar/typescript` ([#215](https://github.com/volarjs/volar.js/issues/215))
+- **language-service:** move project context from `Language` to language service option ([#217](https://github.com/volarjs/volar.js/issues/217))
+- **test-utils:** update `startLanguageServer` function to accept multiple workspace folders ([#229](https://github.com/volarjs/volar.js/issues/229))
+
 ## [2.3.4](https://github.com/volarjs/volar.js/compare/v2.3.3...v2.3.4) (2024-06-25)
 
 ### Bug Fixes
