@@ -316,7 +316,7 @@
 - **language-service** fix caching of semantic diagnostics  [#141](https://github.com/volarjs/volar.js/issues/141)
 - **test-utils:** invalidate cache when calling `openInMemoryDocument()`
 - **monaco:** `insertText` and `range` properties of completion item not converted correctly
-- **typescript:**: ts plugin incorrectly resolve module name
+- **typescript:** ts plugin incorrectly resolve module name
 
 ## [2.0.4](https://github.com/volarjs/volar.js/compare/v2.0.3...v2.0.4) (2024-02-13)
 

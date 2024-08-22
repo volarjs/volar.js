@@ -110,9 +110,9 @@ export function isSignatureHelpEnabled(info: CodeInformation): boolean {
 
 // should...
 
-export function shouldReportDiagnostics(info: CodeInformation): boolean {
+export function shouldReportDiagnostics(info: CodeInformation, source: string | undefined, code: string | number | undefined): boolean {
 	return typeof info.verification === 'object'
-		? info.verification.shouldReport?.() ?? true
+		? info.verification.shouldReport?.(source, code) ?? true
 		: !!info.verification;
 }
 

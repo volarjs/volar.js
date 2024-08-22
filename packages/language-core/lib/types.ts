@@ -59,7 +59,7 @@ export interface VirtualCode {
 export interface CodeInformation {
 	/** virtual code is expected to support verification */
 	verification?: boolean | {
-		shouldReport?(): boolean;
+		shouldReport?(source: string | undefined, code: string | number | undefined): boolean;
 	};
 	/** virtual code is expected to support assisted completion */
 	completion?: boolean | {

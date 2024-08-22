@@ -1,4 +1,4 @@
-import { isDiagnosticsEnabled, shouldReportDiagnostics, SourceScript, VirtualCode, type CodeInformation } from '@volar/language-core';
+import { isDiagnosticsEnabled, shouldReportDiagnostics, SourceScript, VirtualCode } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
@@ -189,7 +189,7 @@ export function register(context: LanguageServiceContext) {
 				},
 				(errors, map) => {
 					return errors
-						.map(error => transformDiagnostic(context, error, map, shouldReportDiagnostics))
+						.map(error => transformDiagnostic(context, error, map))
 						.filter(error => !!error);
 				},
 				arr => dedupe.withDiagnostics(arr.flat())
@@ -205,14 +205,13 @@ export function register(context: LanguageServiceContext) {
 export function transformDiagnostic(
 	context: LanguageServiceContext,
 	error: vscode.Diagnostic,
-	docs: DocumentsAndMap | undefined,
-	filter: (data: CodeInformation) => boolean
+	docs: DocumentsAndMap | undefined
 ) {
 	// clone it to avoid modify cache
 	let _error: vscode.Diagnostic = { ...error };
 
 	if (docs) {
-		const range = getSourceRange(docs, error.range, filter);
+		const range = getSourceRange(docs, error.range, data => shouldReportDiagnostics(data, error.source, error.code));
 		if (!range) {
 			return;
 		}
@@ -238,7 +237,7 @@ export function transformDiagnostic(
 				for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
 					const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
 					const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
-					const range = getSourceRange(docs, info.location.range, filter);
+					const range = getSourceRange(docs, info.location.range, data => shouldReportDiagnostics(data, undefined, undefined));
 					if (range) {
 						relatedInfos.push({
 							location: {

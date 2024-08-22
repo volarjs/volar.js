@@ -46,10 +46,16 @@ export function transformDiagnostic<T extends ts.Diagnostic>(
 		) {
 			const [serviceScript] = getServiceScript(language, diagnostic.file.fileName);
 			if (serviceScript) {
-				const [sourceSpanFileName, sourceSpan] = transformTextSpan(undefined, language, serviceScript, {
-					start: diagnostic.start,
-					length: diagnostic.length
-				}, shouldReportDiagnostics) ?? [];
+				const [sourceSpanFileName, sourceSpan] = transformTextSpan(
+					undefined,
+					language,
+					serviceScript,
+					{
+						start: diagnostic.start,
+						length: diagnostic.length
+					},
+					data => shouldReportDiagnostics(data, String(diagnostic.source), String(diagnostic.code))
+				) ?? [];
 				const actualDiagnosticFile = sourceSpanFileName
 					? diagnostic.file.fileName === sourceSpanFileName
 						? diagnostic.file
