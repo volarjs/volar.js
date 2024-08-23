@@ -41,7 +41,12 @@ export function createLanguageServicePlugin(
 						],
 						new FileMap(ts.sys.useCaseSensitiveFileNames),
 						fileName => {
-							const snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+							let snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+							if (!snapshot) {
+								// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
+								info.project.getScriptVersion(fileName);
+								snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+							}
 							if (snapshot) {
 								language.scripts.set(fileName, snapshot);
 							}
