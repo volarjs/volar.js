@@ -32,15 +32,19 @@ export function register(server: LanguageServerState) {
 	server.onInitialized(() => {
 		if (server.initializeParams.capabilities.workspace?.workspaceFolders) {
 			server.connection.workspace.onDidChangeWorkspaceFolders(e => {
-				for (const folder of e.added) {
-					folders.set(URI.parse(folder.uri), true);
-				}
-				for (const folder of e.removed) {
-					folders.delete(URI.parse(folder.uri));
-				}
-				server.project.reload();
-				for (const cb of didChangeCallbacks) {
-					cb(e);
+				e.added = e.added.filter(folder => !folders.has(URI.parse(folder.uri)));
+				e.removed = e.removed.filter(folder => folders.has(URI.parse(folder.uri)));
+				if (e.added.length || e.removed.length) {
+					for (const folder of e.added) {
+						folders.set(URI.parse(folder.uri), true);
+					}
+					for (const folder of e.removed) {
+						folders.delete(URI.parse(folder.uri));
+					}
+					server.project.reload();
+					for (const cb of didChangeCallbacks) {
+						cb(e);
+					}
 				}
 			});
 		}
