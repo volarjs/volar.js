@@ -75,6 +75,7 @@ export async function createTypeScriptLS(
 		sys,
 		uriConverter,
 	});
+	const unsavedRootFileUris = createUriMap();
 	const disposables = [
 		server.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document)),
 		server.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document)),
@@ -95,18 +96,17 @@ export async function createTypeScriptLS(
 			const stat = await serviceEnv.fs?.stat(uri);
 			const isUnsaved = stat?.type !== 1;
 			if (isUnsaved) {
+				const lastProjectVersion = projectVersion;
 				await updateCommandLine();
+				if (lastProjectVersion !== projectVersion) {
+					unsavedRootFileUris.set(uri, true);
+				}
 			}
 		}),
 		server.documents.onDidClose(async ({ document }) => {
 			const uri = URI.parse(document.uri);
-			const isWorkspaceFile = workspaceFolder.scheme === uri.scheme;
-			if (!isWorkspaceFile) {
-				return;
-			}
-			const stat = await serviceEnv.fs?.stat(uri);
-			const isUnsaved = stat?.type !== 1;
-			if (isUnsaved) {
+			if (unsavedRootFileUris.has(uri)) {
+				unsavedRootFileUris.delete(uri);
 				await updateCommandLine();
 			}
 		}),
