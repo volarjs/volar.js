@@ -88,7 +88,7 @@ export async function createTypeScriptLS(
 		}),
 		server.documents.onDidOpen(async ({ document }) => {
 			const uri = URI.parse(document.uri);
-			const isWorkspaceFile = serviceEnv.workspaceFolders.some(folder => uri.scheme === folder.scheme);
+			const isWorkspaceFile = workspaceFolder.scheme === uri.scheme;
 			if (!isWorkspaceFile) {
 				return;
 			}
@@ -100,7 +100,7 @@ export async function createTypeScriptLS(
 		}),
 		server.documents.onDidClose(async ({ document }) => {
 			const uri = URI.parse(document.uri);
-			const isWorkspaceFile = serviceEnv.workspaceFolders.some(folder => uri.scheme === folder.scheme);
+			const isWorkspaceFile = workspaceFolder.scheme === uri.scheme;
 			if (!isWorkspaceFile) {
 				return;
 			}
@@ -255,7 +255,10 @@ export async function createTypeScriptLS(
 			fileNames: [],
 			options: {},
 		};
-		const maybeUnsavedFileNames = server.documents.all().map(document => uriConverter.asFileName(URI.parse(document.uri)));
+		const maybeUnsavedFileNames = server.documents.all()
+			.map(document => URI.parse(document.uri))
+			.filter(uri => uri.scheme === workspaceFolder.scheme)
+			.map(uri => uriConverter.asFileName(uri));
 		const host: ts.ParseConfigHost = {
 			..._host,
 			readDirectory(rootDir, extensions, excludes, includes, depth) {
