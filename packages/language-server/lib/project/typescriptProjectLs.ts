@@ -79,19 +79,35 @@ export async function createTypeScriptLS(
 		server.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document)),
 		server.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document)),
 		server.documents.onDidChangeContent(() => projectVersion++),
-		serviceEnv.onDidChangeWatchedFiles?.(params => onWorkspaceFilesChanged(params.changes)),
+		serviceEnv.onDidChangeWatchedFiles?.(async ({ changes }) => {
+			const createdOrDeleted = changes.some(change => change.type !== vscode.FileChangeType.Changed);
+			if (createdOrDeleted) {
+				await updateCommandLine();
+			}
+			projectVersion++;
+		}),
 		server.documents.onDidOpen(async ({ document }) => {
-			const stat = await serviceEnv.fs?.stat(URI.parse(document.uri));
+			const uri = URI.parse(document.uri);
+			const isWorkspaceFile = serviceEnv.workspaceFolders.some(folder => uri.scheme === folder.scheme);
+			if (!isWorkspaceFile) {
+				return;
+			}
+			const stat = await serviceEnv.fs?.stat(uri);
 			const isUnsaved = stat?.type !== 1;
 			if (isUnsaved) {
-				onWorkspaceFilesChanged([{ type: vscode.FileChangeType.Created, uri: document.uri }]);
+				await updateCommandLine();
 			}
 		}),
 		server.documents.onDidClose(async ({ document }) => {
-			const stat = await serviceEnv.fs?.stat(URI.parse(document.uri));
+			const uri = URI.parse(document.uri);
+			const isWorkspaceFile = serviceEnv.workspaceFolders.some(folder => uri.scheme === folder.scheme);
+			if (!isWorkspaceFile) {
+				return;
+			}
+			const stat = await serviceEnv.fs?.stat(uri);
 			const isUnsaved = stat?.type !== 1;
 			if (isUnsaved) {
-				onWorkspaceFilesChanged([{ type: vscode.FileChangeType.Deleted, uri: document.uri }]);
+				await updateCommandLine();
 			}
 		}),
 	].filter(d => !!d);
@@ -186,18 +202,8 @@ export async function createTypeScriptLS(
 		}
 	}
 
-	async function onWorkspaceFilesChanged(changes: vscode.FileEvent[]) {
-		const isWorkspaceFilesCreatedOrDeleted = changes.some(change =>
-			serviceEnv.workspaceFolders.some(folder => change.uri.startsWith(folder.scheme + '://'))
-			&& change.type !== vscode.FileChangeType.Changed
-		);
-		if (isWorkspaceFilesCreatedOrDeleted) {
-			await updateCommandLine();
-		}
-		projectVersion++;
-	}
-
 	async function updateCommandLine() {
+		const oldFileNames = new Set(commandLine?.fileNames ?? []);
 		commandLine = await parseConfig(
 			ts,
 			sys,
@@ -205,6 +211,10 @@ export async function createTypeScriptLS(
 			tsconfig,
 			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat()
 		);
+		const newFileNames = new Set(commandLine.fileNames);
+		if (oldFileNames.size !== newFileNames.size || [...oldFileNames].some(fileName => !newFileNames.has(fileName))) {
+			projectVersion++;
+		}
 	}
 
 	async function parseConfig(
