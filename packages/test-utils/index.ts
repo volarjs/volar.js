@@ -409,6 +409,21 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				link satisfies _.DocumentLink
 			);
 		},
+		sendInlayHintRequest(uri: string, range: _.Range) {
+			return connection.sendRequest(
+				_.InlayHintRequest.type,
+				{
+					textDocument: { uri },
+					range,
+				} satisfies _.InlayHintParams
+			);
+		},
+		sendInlayHintResolveRequest(hint: _.InlayHint) {
+			return connection.sendRequest(
+				_.InlayHintResolveRequest.type,
+				hint satisfies _.InlayHint
+			);
+		},
 	};
 
 	function getConfiguration(section: string) {
