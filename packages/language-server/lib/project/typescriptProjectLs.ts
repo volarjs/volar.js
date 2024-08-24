@@ -58,7 +58,7 @@ export async function createTypeScriptLS(
 			return projectVersion.toString();
 		},
 		getScriptFileNames() {
-			return rootFiles;
+			return commandLine.fileNames;
 		},
 		getCompilationSettings() {
 			return commandLine.options;
@@ -96,7 +96,7 @@ export async function createTypeScriptLS(
 		}),
 	].filter(d => !!d);
 
-	let rootFiles = await getRootFiles(languagePlugins);
+	await updateCommandLine();
 
 	const language = createLanguage<URI>(
 		[
@@ -163,8 +163,8 @@ export async function createTypeScriptLS(
 	return {
 		languageService,
 		tryAddFile(fileName: string) {
-			if (!rootFiles.includes(fileName)) {
-				rootFiles.push(fileName);
+			if (!commandLine.fileNames.includes(fileName)) {
+				commandLine.fileNames.push(fileName);
 				projectVersion++;
 			}
 		},
@@ -187,17 +187,17 @@ export async function createTypeScriptLS(
 	}
 
 	async function onWorkspaceFilesChanged(changes: vscode.FileEvent[]) {
-
-		const createsAndDeletes = changes.filter(change => change.type !== vscode.FileChangeType.Changed);
-
-		if (createsAndDeletes.length) {
-			rootFiles = await getRootFiles(languagePlugins);
+		const isWorkspaceFilesCreatedOrDeleted = changes.some(change =>
+			serviceEnv.workspaceFolders.some(folder => change.uri.startsWith(folder.scheme + '://'))
+			&& change.type !== vscode.FileChangeType.Changed
+		);
+		if (isWorkspaceFilesCreatedOrDeleted) {
+			await updateCommandLine();
 		}
-
 		projectVersion++;
 	}
 
-	async function getRootFiles(languagePlugins: LanguagePlugin<URI>[]) {
+	async function updateCommandLine() {
 		commandLine = await parseConfig(
 			ts,
 			sys,
@@ -205,7 +205,6 @@ export async function createTypeScriptLS(
 			tsconfig,
 			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat()
 		);
-		return commandLine.fileNames;
 	}
 
 	async function parseConfig(
