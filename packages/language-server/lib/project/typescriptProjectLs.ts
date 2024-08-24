@@ -1,11 +1,12 @@
 import { Language, LanguagePlugin, LanguageService, LanguageServiceEnvironment, ProjectContext, ProviderResult, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
-import type { SnapshotDocument } from '../utils/snapshotDocument';
 import { TypeScriptProjectHost, createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
+import { matchFiles } from '@volar/typescript/lib/typescript/utilities';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import type { LanguageServer } from '../types';
+import type { SnapshotDocument } from '../utils/snapshotDocument';
 
 export interface TypeScriptProjectLS {
 	tryAddFile(fileName: string): void;
@@ -74,10 +75,26 @@ export async function createTypeScriptLS(
 		sys,
 		uriConverter,
 	});
-	const docOpenWatcher = server.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document));
-	const docSaveWatcher = server.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document));
-	const docChangeWatcher = server.documents.onDidChangeContent(() => projectVersion++);
-	const fileChangeWatcher = serviceEnv.onDidChangeWatchedFiles?.(params => onWorkspaceFilesChanged(params.changes));
+	const disposables = [
+		server.documents.onDidOpen(({ document }) => updateFsCacheFromSyncedDocument(document)),
+		server.documents.onDidSave(({ document }) => updateFsCacheFromSyncedDocument(document)),
+		server.documents.onDidChangeContent(() => projectVersion++),
+		serviceEnv.onDidChangeWatchedFiles?.(params => onWorkspaceFilesChanged(params.changes)),
+		server.documents.onDidOpen(async ({ document }) => {
+			const stat = await serviceEnv.fs?.stat(URI.parse(document.uri));
+			const isUnsaved = stat?.type !== 1;
+			if (isUnsaved) {
+				onWorkspaceFilesChanged([{ type: vscode.FileChangeType.Created, uri: document.uri }]);
+			}
+		}),
+		server.documents.onDidClose(async ({ document }) => {
+			const stat = await serviceEnv.fs?.stat(URI.parse(document.uri));
+			const isUnsaved = stat?.type !== 1;
+			if (isUnsaved) {
+				onWorkspaceFilesChanged([{ type: vscode.FileChangeType.Deleted, uri: document.uri }]);
+			}
+		}),
+	].filter(d => !!d);
 
 	let rootFiles = await getRootFiles(languagePlugins);
 
@@ -154,10 +171,8 @@ export async function createTypeScriptLS(
 		dispose: () => {
 			sys.dispose();
 			languageService?.dispose();
-			fileChangeWatcher?.dispose();
-			docOpenWatcher.dispose();
-			docSaveWatcher.dispose();
-			docChangeWatcher.dispose();
+			disposables.forEach(({ dispose }) => dispose());
+			disposables.length = 0;
 		},
 		getCommandLine: () => commandLine,
 	};
@@ -192,57 +207,104 @@ export async function createTypeScriptLS(
 		);
 		return commandLine.fileNames;
 	}
-}
 
-async function parseConfig(
-	ts: typeof import('typescript'),
-	sys: ReturnType<typeof createSys>,
-	workspacePath: string,
-	tsconfig: string | ts.CompilerOptions,
-	extraFileExtensions: ts.FileExtensionInfo[]
-) {
-	let commandLine: ts.ParsedCommandLine = {
-		errors: [],
-		fileNames: [],
-		options: {},
-	};
-	let sysVersion: number | undefined;
-	let newSysVersion = await sys.sync();
-	while (sysVersion !== newSysVersion) {
-		sysVersion = newSysVersion;
-		try {
-			commandLine = await parseConfigWorker(ts, sys, workspacePath, tsconfig, extraFileExtensions);
-		} catch {
-			// will be failed if web fs host first result not ready
+	async function parseConfig(
+		ts: typeof import('typescript'),
+		sys: ReturnType<typeof createSys>,
+		workspacePath: string,
+		tsconfig: string | ts.CompilerOptions,
+		extraFileExtensions: ts.FileExtensionInfo[]
+	) {
+		let commandLine: ts.ParsedCommandLine = {
+			errors: [],
+			fileNames: [],
+			options: {},
+		};
+		let sysVersion: number | undefined;
+		let newSysVersion = await sys.sync();
+		while (sysVersion !== newSysVersion) {
+			sysVersion = newSysVersion;
+			try {
+				commandLine = await parseConfigWorker(ts, sys, workspacePath, tsconfig, extraFileExtensions);
+			} catch {
+				// will be failed if web fs host first result not ready
+			}
+			newSysVersion = await sys.sync();
 		}
-		newSysVersion = await sys.sync();
+		return commandLine;
 	}
-	return commandLine;
-}
 
-function parseConfigWorker(
-	ts: typeof import('typescript'),
-	host: ts.ParseConfigHost,
-	workspacePath: string,
-	tsconfig: string | ts.CompilerOptions,
-	extraFileExtensions: ts.FileExtensionInfo[]
-) {
-	let content: ts.ParsedCommandLine = {
-		errors: [],
-		fileNames: [],
-		options: {},
-	};
-	if (typeof tsconfig === 'string') {
-		const config = ts.readJsonConfigFile(tsconfig, host.readFile);
-		content = ts.parseJsonSourceFileConfigFileContent(config, host, path.dirname(tsconfig), {}, tsconfig, undefined, extraFileExtensions);
+	function parseConfigWorker(
+		ts: typeof import('typescript'),
+		_host: ts.ParseConfigHost,
+		workspacePath: string,
+		tsconfig: string | ts.CompilerOptions,
+		extraFileExtensions: ts.FileExtensionInfo[]
+	) {
+		let content: ts.ParsedCommandLine = {
+			errors: [],
+			fileNames: [],
+			options: {},
+		};
+		const maybeUnsavedFileNames = server.documents.all().map(document => uriConverter.asFileName(URI.parse(document.uri)));
+		const host: ts.ParseConfigHost = {
+			..._host,
+			readDirectory(rootDir, extensions, excludes, includes, depth) {
+				const fsFiles = _host.readDirectory(rootDir, extensions, excludes, includes, depth);
+				const unsavedFiles = matchFiles(
+					rootDir,
+					extensions,
+					excludes,
+					includes,
+					sys.useCaseSensitiveFileNames,
+					getCurrentDirectory(),
+					depth,
+					dirPath => {
+						dirPath = dirPath.replace(/\\/g, '/');
+						const files: string[] = [];
+						const dirs: string[] = [];
+						for (const fileName of maybeUnsavedFileNames) {
+							const match = sys.useCaseSensitiveFileNames
+								? fileName.startsWith(dirPath + '/')
+								: fileName.toLowerCase().startsWith(dirPath.toLowerCase() + '/');
+							if (match) {
+								const name = fileName.slice(dirPath.length + 1);
+								if (name.includes('/')) {
+									const dir = name.split('/')[0];
+									if (!dirs.includes(dir)) {
+										dirs.push(dir);
+									}
+								}
+								else {
+									files.push(name);
+								}
+							}
+						}
+						return {
+							files,
+							directories: dirs,
+						};
+					},
+					path => path
+				);
+				if (!unsavedFiles.length) {
+					return fsFiles;
+				}
+				return [...new Set([...fsFiles, ...unsavedFiles])];
+			},
+		};
+		if (typeof tsconfig === 'string') {
+			const config = ts.readJsonConfigFile(tsconfig, host.readFile);
+			content = ts.parseJsonSourceFileConfigFileContent(config, host, path.dirname(tsconfig), {}, tsconfig, undefined, extraFileExtensions);
+		}
+		else {
+			content = ts.parseJsonConfigFileContent({ files: [] }, host, workspacePath, tsconfig, workspacePath + '/jsconfig.json', undefined, extraFileExtensions);
+		}
+		// fix https://github.com/johnsoncodehk/volar/issues/1786
+		// https://github.com/microsoft/TypeScript/issues/30457
+		// patching ts server broke with outDir + rootDir + composite/incremental
+		content.options.outDir = undefined;
+		content.fileNames = content.fileNames.map(fileName => fileName.replace(/\\/g, '/'));
+		return content;
 	}
-	else {
-		content = ts.parseJsonConfigFileContent({ files: [] }, host, workspacePath, tsconfig, workspacePath + '/jsconfig.json', undefined, extraFileExtensions);
-	}
-	// fix https://github.com/johnsoncodehk/volar/issues/1786
-	// https://github.com/microsoft/TypeScript/issues/30457
-	// patching ts server broke with outDir + rootDir + composite/incremental
-	content.options.outDir = undefined;
-	content.fileNames = content.fileNames.map(fileName => fileName.replace(/\\/g, '/'));
-	return content;
 }
