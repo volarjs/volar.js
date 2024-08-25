@@ -29,13 +29,18 @@ export function register(context: LanguageServiceContext) {
 				const links = await plugin[1].provideDocumentLinks?.(document, token);
 
 				for (const link of links ?? []) {
-					link.data = {
-						uri: uri.toString(),
-						original: {
-							data: link.data,
-						},
-						pluginIndex: context.plugins.indexOf(plugin),
-					} satisfies DocumentLinkData;
+					if (plugin[1].resolveDocumentLink) {
+						link.data = {
+							uri: uri.toString(),
+							original: {
+								data: link.data,
+							},
+							pluginIndex: context.plugins.indexOf(plugin),
+						} satisfies DocumentLinkData;
+					}
+					else {
+						delete link.data;
+					}
 				}
 
 				return links;

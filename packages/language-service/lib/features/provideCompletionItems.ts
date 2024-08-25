@@ -94,16 +94,21 @@ export function register(context: LanguageServiceContext) {
 							}
 
 							for (const item of cacheData.list.items) {
-								item.data = {
-									uri: uri.toString(),
-									original: {
-										additionalTextEdits: item.additionalTextEdits,
-										textEdit: item.textEdit,
-										data: item.data,
-									},
-									pluginIndex: pluginIndex,
-									embeddedDocumentUri: embeddedDocument.uri,
-								} satisfies ServiceCompletionData;
+								if (cacheData.plugin.resolveCompletionItem) {
+									item.data = {
+										uri: uri.toString(),
+										original: {
+											additionalTextEdits: item.additionalTextEdits,
+											textEdit: item.textEdit,
+											data: item.data,
+										},
+										pluginIndex: pluginIndex,
+										embeddedDocumentUri: embeddedDocument.uri,
+									} satisfies ServiceCompletionData;
+								}
+								else {
+									delete item.data;
+								}
 							}
 
 							cacheData.list = transformCompletionList(
@@ -129,16 +134,21 @@ export function register(context: LanguageServiceContext) {
 					}
 
 					for (const item of cacheData.list.items) {
-						item.data = {
-							uri: uri.toString(),
-							original: {
-								additionalTextEdits: item.additionalTextEdits,
-								textEdit: item.textEdit,
-								data: item.data,
-							},
-							pluginIndex: pluginIndex,
-							embeddedDocumentUri: undefined,
-						} satisfies ServiceCompletionData;
+						if (cacheData.plugin.resolveCompletionItem) {
+							item.data = {
+								uri: uri.toString(),
+								original: {
+									additionalTextEdits: item.additionalTextEdits,
+									textEdit: item.textEdit,
+									data: item.data,
+								},
+								pluginIndex: pluginIndex,
+								embeddedDocumentUri: undefined,
+							} satisfies ServiceCompletionData;
+						}
+						else {
+							delete item.data;
+						}
 					}
 				}
 			}
@@ -211,16 +221,21 @@ export function register(context: LanguageServiceContext) {
 					const pluginIndex = context.plugins.indexOf(plugin);
 
 					for (const item of completionList.items) {
-						item.data = {
-							uri: uri.toString(),
-							original: {
-								additionalTextEdits: item.additionalTextEdits,
-								textEdit: item.textEdit,
-								data: item.data,
-							},
-							pluginIndex,
-							embeddedDocumentUri: docs ? document.uri : undefined,
-						} satisfies ServiceCompletionData;
+						if (plugin[1].resolveCompletionItem) {
+							item.data = {
+								uri: uri.toString(),
+								original: {
+									additionalTextEdits: item.additionalTextEdits,
+									textEdit: item.textEdit,
+									data: item.data,
+								},
+								pluginIndex,
+								embeddedDocumentUri: docs ? document.uri : undefined,
+							} satisfies ServiceCompletionData;
+						}
+						else {
+							delete item.data;
+						}
 					}
 
 					if (docs) {
