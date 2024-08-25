@@ -79,15 +79,20 @@ export function register(context: LanguageServiceContext) {
 				}, token);
 
 				codeActions?.forEach(codeAction => {
-					codeAction.data = {
-						uri: uri.toString(),
-						version: document.version,
-						original: {
-							data: codeAction.data,
-							edit: codeAction.edit,
-						},
-						pluginIndex: context.plugins.indexOf(plugin),
-					} satisfies ServiceCodeActionData;
+					if (plugin[1].resolveCodeAction) {
+						codeAction.data = {
+							uri: uri.toString(),
+							version: document.version,
+							original: {
+								data: codeAction.data,
+								edit: codeAction.edit,
+							},
+							pluginIndex: context.plugins.indexOf(plugin),
+						} satisfies ServiceCodeActionData;
+					}
+					else {
+						delete codeAction.data;
+					}
 				});
 
 				if (codeActions && plugin[1].transformCodeAction) {

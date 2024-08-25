@@ -59,12 +59,17 @@ export function register(context: LanguageServiceContext) {
 				.filter(symbol => !!symbol);
 
 			symbols?.forEach(symbol => {
-				symbol.data = {
-					original: {
-						data: symbol.data,
-					},
-					pluginIndex: context.plugins.indexOf(plugin),
-				} satisfies WorkspaceSymbolData;
+				if (plugin[1].resolveWorkspaceSymbol) {
+					symbol.data = {
+						original: {
+							data: symbol.data,
+						},
+						pluginIndex: context.plugins.indexOf(plugin),
+					} satisfies WorkspaceSymbolData;
+				}
+				else {
+					delete symbol.data;
+				}
 			});
 
 			symbolsList.push(symbols);
