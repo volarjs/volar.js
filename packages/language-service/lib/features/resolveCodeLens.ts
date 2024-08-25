@@ -12,6 +12,7 @@ export function register(context: LanguageServiceContext) {
 	return async (item: vscode.CodeLens, token = NoneCancellationToken) => {
 
 		const data: ServiceCodeLensData | ServiceReferencesCodeLensData | undefined = item.data;
+		delete item.data;
 
 		if (data?.kind === 'normal') {
 

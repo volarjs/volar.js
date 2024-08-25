@@ -11,6 +11,7 @@ export function register(context: LanguageServiceContext) {
 	return async (item: vscode.CompletionItem, token = NoneCancellationToken) => {
 
 		const data: ServiceCompletionData | undefined = item.data;
+		delete item.data;
 
 		if (data) {
 

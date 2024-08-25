@@ -8,6 +8,8 @@ export function register(context: LanguageServiceContext) {
 	return async (item: vscode.InlayHint, token = NoneCancellationToken) => {
 
 		const data: InlayHintData | undefined = item.data;
+		delete item.data;
+
 		if (data) {
 			const plugin = context.plugins[data.pluginIndex];
 			if (!plugin[1].resolveInlayHint) {
