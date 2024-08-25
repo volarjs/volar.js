@@ -8,11 +8,10 @@ export function register(context: LanguageServiceContext) {
 	return async (item: vscode.WorkspaceSymbol, token = NoneCancellationToken) => {
 
 		const data: WorkspaceSymbolData | undefined = item.data;
-		delete item.data;
-
 		if (data) {
 			const plugin = context.plugins[data.pluginIndex];
 			if (!plugin[1].resolveWorkspaceSymbol) {
+				delete item.data;
 				return item;
 			}
 
@@ -20,6 +19,7 @@ export function register(context: LanguageServiceContext) {
 			item = await plugin[1].resolveWorkspaceSymbol(item, token);
 		}
 
+		delete item.data;
 		return item;
 	};
 }
