@@ -37,14 +37,19 @@ export function register(context: LanguageServiceContext) {
 				const pluginIndex = context.plugins.indexOf(plugin);
 
 				codeLens?.forEach(codeLens => {
-					codeLens.data = {
-						kind: 'normal',
-						uri: uri.toString(),
-						original: {
-							data: codeLens.data,
-						},
-						pluginIndex,
-					} satisfies ServiceCodeLensData;
+					if (plugin[1].resolveCodeLens) {
+						codeLens.data = {
+							kind: 'normal',
+							uri: uri.toString(),
+							original: {
+								data: codeLens.data,
+							},
+							pluginIndex,
+						} satisfies ServiceCodeLensData;
+					}
+					else {
+						delete codeLens.data;
+					}
 				});
 
 				const ranges = await plugin[1].provideReferencesCodeLensRanges?.(document, token);

@@ -45,13 +45,18 @@ export function register(context: LanguageServiceContext) {
 				}
 				const hints = await plugin[1].provideInlayHints?.(document, arg, token);
 				hints?.forEach(link => {
-					link.data = {
-						uri: uri.toString(),
-						original: {
-							data: link.data,
-						},
-						pluginIndex: context.plugins.indexOf(plugin),
-					} satisfies InlayHintData;
+					if (plugin[1].resolveInlayHint) {
+						link.data = {
+							uri: uri.toString(),
+							original: {
+								data: link.data,
+							},
+							pluginIndex: context.plugins.indexOf(plugin),
+						} satisfies InlayHintData;
+					}
+					else {
+						delete link.data;
+					}
 				});
 
 				return hints;
