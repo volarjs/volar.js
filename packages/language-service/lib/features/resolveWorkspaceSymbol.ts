@@ -5,19 +5,21 @@ import { NoneCancellationToken } from '../utils/cancellation';
 
 export function register(context: LanguageServiceContext) {
 
-	return async (symbol: vscode.WorkspaceSymbol, token = NoneCancellationToken) => {
+	return async (item: vscode.WorkspaceSymbol, token = NoneCancellationToken) => {
 
-		const data: WorkspaceSymbolData | undefined = symbol.data;
+		const data: WorkspaceSymbolData | undefined = item.data;
+		delete item.data;
+
 		if (data) {
 			const plugin = context.plugins[data.pluginIndex];
 			if (!plugin[1].resolveWorkspaceSymbol) {
-				return symbol;
+				return item;
 			}
 
-			Object.assign(symbol, data.original);
-			symbol = await plugin[1].resolveWorkspaceSymbol(symbol, token);
+			Object.assign(item, data.original);
+			item = await plugin[1].resolveWorkspaceSymbol(item, token);
 		}
 
-		return symbol;
+		return item;
 	};
 }

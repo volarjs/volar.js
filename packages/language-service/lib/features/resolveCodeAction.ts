@@ -9,6 +9,7 @@ export function register(context: LanguageServiceContext) {
 	return async (item: vscode.CodeAction, token = NoneCancellationToken) => {
 
 		const data: ServiceCodeActionData | undefined = item.data;
+		delete item.data;
 
 		if (data) {
 
