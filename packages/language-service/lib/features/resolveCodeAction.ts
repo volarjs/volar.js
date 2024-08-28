@@ -9,12 +9,11 @@ export function register(context: LanguageServiceContext) {
 	return async (item: vscode.CodeAction, token = NoneCancellationToken) => {
 
 		const data: ServiceCodeActionData | undefined = item.data;
-		delete item.data;
-
 		if (data) {
 
 			const plugin = context.plugins[data.pluginIndex];
 			if (!plugin[1].resolveCodeAction) {
+				delete item.data;
 				return item;
 			}
 
@@ -37,6 +36,7 @@ export function register(context: LanguageServiceContext) {
 				);
 		}
 
+		delete item.data;
 		return item;
 	};
 }

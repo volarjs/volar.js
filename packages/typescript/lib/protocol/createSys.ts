@@ -24,7 +24,7 @@ let currentCwd = '';
 
 export function createSys(
 	sys: ts.System | undefined,
-	env: LanguageServiceEnvironment,
+	env: Pick<LanguageServiceEnvironment, 'onDidChangeWatchedFiles' | 'fs'>,
 	getCurrentDirectory: () => string,
 	uriConverter: {
 		asUri(fileName: string): URI;
@@ -252,7 +252,6 @@ export function createSys(
 			currentDirectory,
 			depth,
 			dirPath => {
-
 				dirPath = resolvePath(dirPath);
 				readDirectoryWorker(dirPath);
 				const dir = getDir(dirPath);
