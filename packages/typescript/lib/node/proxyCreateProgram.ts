@@ -151,17 +151,21 @@ export function proxyCreateProgram(
 					if (sourceScript.generated?.languagePlugin.typescript) {
 						const { getServiceScript, getExtraServiceScripts } = sourceScript.generated.languagePlugin.typescript;
 						const serviceScript = getServiceScript(sourceScript.generated.root);
-						if (serviceScript && !serviceScript.preventLeadingOffset) {
-							let patchedText = originalSourceFile.text.split('\n').map(line => ' '.repeat(line.length)).join('\n');
-							let scriptKind = ts.ScriptKind.TS;
-							scriptKind = serviceScript.scriptKind;
-							patchedText += serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
+						if (serviceScript) {
+							let virtualContents: string;
+							if (!serviceScript.preventLeadingOffset) {
+								virtualContents = originalSourceFile.text.split('\n').map(line => ' '.repeat(line.length)).join('\n')
+									+ serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
+							}
+							else {
+								virtualContents = serviceScript.code.snapshot.getText(0, serviceScript.code.snapshot.getLength());
+							}
 							const parsedSourceFile = ts.createSourceFile(
 								fileName,
-								patchedText,
+								virtualContents,
 								languageVersionOrOptions,
 								undefined,
-								scriptKind
+								serviceScript.scriptKind
 							);
 							// @ts-expect-error
 							parsedSourceFile.version = originalSourceFile.version;
