@@ -19,7 +19,13 @@ export function createConnection() {
 }
 
 export function createServer(connection: vscode.Connection) {
-	const server = createServerBase(connection);
+	const server = createServerBase(connection, {
+		timer: {
+			setImmediate: (callback: (...args: any[]) => void, ...args: any[]) => {
+				setTimeout(callback, 0, ...args);
+			},
+		},
+	});
 	server.fileSystem.install('http', httpFsProvider);
 	server.fileSystem.install('https', httpFsProvider);
 	server.onInitialized(() => listenEditorSettings(server));

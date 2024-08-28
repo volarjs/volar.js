@@ -7,12 +7,13 @@ import { register as registerFileWatcher } from './features/fileWatcher.js';
 import { register as registerLanguageFeatures } from './features/languageFeatures.js';
 import { register as registerTextDocumentRegistry } from './features/textDocuments.js';
 import { register as registerWorkspaceFolderRegistry } from './features/workspaceFolders.js';
-import type { ExperimentalFeatures, LanguageServerProject, LanguageServerState } from './types.js';
+import type { ExperimentalFeatures, LanguageServerEnvironment, LanguageServerProject, LanguageServerState } from './types.js';
 
-export function createServerBase(connection: vscode.Connection) {
+export function createServerBase(connection: vscode.Connection, env: LanguageServerEnvironment) {
 	const onInitializeCallbacks: ((serverCapabilities: vscode.ServerCapabilities<ExperimentalFeatures>) => void)[] = [];
 	const onInitializedCallbacks: (() => void)[] = [];
 	const state: LanguageServerState = {
+		env,
 		connection,
 		initializeParams: undefined! as vscode.InitializeParams,
 		project: undefined! as LanguageServerProject,
