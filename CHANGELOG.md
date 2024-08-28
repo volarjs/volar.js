@@ -14,7 +14,7 @@
 - **language-service:** don't set item data if LanguageServicePlugin does not provide resolve hook ([#233](https://github.com/volarjs/volar.js/issues/233))
 - **test-utils:** correct `openUntitledDocument` params order
 - **typescript:** `runTsc` does not recognize service script with `preventLeadingOffset` enabled
-- **language-server:** replace `setTimeout` with `setImmediate` ([#234](https://github.com/volarjs/volar.js/issues/234)) - Thanks to nieyuyao!
+- **language-server:** replace `setTimeout` with `setImmediate` ([#234](https://github.com/volarjs/volar.js/issues/234)) - Thanks to @nieyuyao!
 
 ### Refactors
 
