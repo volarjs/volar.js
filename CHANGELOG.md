@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.4.1](https://github.com/volarjs/volar.js/compare/v2.4.0...v2.4.1) (2024-08-29)
+
+### Features
+
+- **language-server:** support files that do not exist in FS but are open in the editor for TS project ([#235](https://github.com/volarjs/volar.js/issues/235))
+
+### Bug Fixes
+
+- **typescript:** ensure unopened files are synced to project ([vuejs/language-tools#4711](https://github.com/vuejs/language-tools/issues/4711)) ([vuejs/language-tools#4632](https://github.com/vuejs/language-tools/issues/4632)) - Thanks to @davidmatter!
+- **language-server:** avoid project initialized twice
+- **language-service:** don't set item data if item has been resolved
+- **language-service:** don't set item data if LanguageServicePlugin does not provide resolve hook ([#233](https://github.com/volarjs/volar.js/issues/233))
+- **test-utils:** correct `openUntitledDocument` params order
+- **typescript:** `runTsc` does not recognize service script with `preventLeadingOffset` enabled
+- **language-server:** replace `setTimeout` with `setImmediate` ([#234](https://github.com/volarjs/volar.js/issues/234)) - Thanks to nieyuyao!
+
+### Refactors
+
+- **language-server:** add `onDidChange` API for `LanguageServer.workspaceFolders`
+- **language-core:** add `error`, `source` params for `verification.shouldReport` hook
+
 ## [2.4.0](https://github.com/volarjs/volar.js/compare/v2.3.4...v2.4.0) (2024-08-18)
 
 ### Features
