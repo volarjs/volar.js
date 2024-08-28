@@ -14,7 +14,11 @@ export function createConnection() {
 }
 
 export function createServer(connection: vscode.Connection) {
-	const server = createServerBase(connection);
+	const server = createServerBase(connection, {
+		timer: {
+			setImmediate: setImmediate,
+		},
+	});
 	server.fileSystem.install('file', nodeFsProvider);
 	server.fileSystem.install('http', httpFsProvider);
 	server.fileSystem.install('https', httpFsProvider);

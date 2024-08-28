@@ -765,7 +765,7 @@ export function register(
 
 	function worker<T>(uri: URI, token: vscode.CancellationToken, cb: (languageService: LanguageService) => T) {
 		return new Promise<T | undefined>(resolve => {
-			setImmediate(async () => {
+			server.env.timer.setImmediate(async () => {
 				if (token.isCancellationRequested) {
 					resolve(undefined);
 					return;
