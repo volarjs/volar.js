@@ -936,14 +936,29 @@ function provideInlayHints(language: Language<string>, provideInlayHints: ts.Lan
 		if (serviceScript) {
 			let start: number | undefined;
 			let end: number | undefined;
-			const map = language.maps.get(serviceScript.code, targetScript);
+			const map = language.maps.get(serviceScript.code, sourceScript);
 			for (const mapping of map.mappings) {
-				if (isInlayHintsEnabled(mapping.data) && mapping.sourceOffsets[0] >= span.start && mapping.sourceOffsets[0] <= span.start + span.length) {
-					start ??= mapping.generatedOffsets[0];
-					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1];
-					start = Math.min(start, mapping.generatedOffsets[0]);
-					end = Math.max(end, mapping.generatedOffsets[mapping.generatedOffsets.length - 1]);
+				if (!isInlayHintsEnabled(mapping.data)) {
+					continue;
 				}
+				let mappingStart = mapping.sourceOffsets[0];
+				let genStart: number | undefined;
+				let genEnd: number | undefined;
+				if (mappingStart >= span.start && mappingStart <= span.start + span.length) {
+					genStart = mapping.generatedOffsets[0];
+					genEnd = mapping.generatedOffsets[mapping.generatedOffsets.length - 1]
+						+ (mapping.generatedLengths ?? mapping.lengths)[mapping.generatedOffsets.length - 1];
+				} else if (mappingStart < span.start && span.start < mappingStart + mapping.lengths[0]
+					&& mapping.sourceOffsets.length == 1
+					&& (!mapping.generatedLengths || mapping.generatedLengths[0] === mapping.lengths[0])
+				) {
+					genStart = mapping.generatedOffsets[0] + span.start - mappingStart
+					genEnd = Math.min(genStart + span.length, mapping.generatedOffsets[0] + mapping.lengths[0])
+				} else {
+					continue;
+				}
+				start = Math.min(start ?? genStart, genStart);
+				end = Math.max(end ?? genEnd, genEnd);
 			}
 			if (start === undefined || end === undefined) {
 				start = 0;
