@@ -215,8 +215,15 @@ export function register(
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.workspaceSymbolProvider)) {
 			serverCapabilities.workspaceSymbolProvider = {};
 			server.connection.onWorkspaceSymbol(async (params, token) => {
+				let languageServices = await project.getExistingLanguageServices();
+				if (!languageServices.length) {
+					for (const document of documents.all()) {
+						await project.getLanguageService(URI.parse(document.uri));
+					}
+					languageServices = await project.getExistingLanguageServices();
+				}
 				const symbols: vscode.WorkspaceSymbol[] = [];
-				for (const languageService of await project.getExistingLanguageServices()) {
+				for (const languageService of languageServices) {
 					if (token.isCancellationRequested) {
 						return;
 					}
@@ -473,7 +480,14 @@ export function register(
 				commands: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.executeCommandProvider?.commands ?? []).flat())],
 			};
 			server.connection.onExecuteCommand(async (params, token) => {
-				for (const languageService of await project.getExistingLanguageServices()) {
+				let languageServices = await project.getExistingLanguageServices();
+				if (!languageServices.length) {
+					for (const document of documents.all()) {
+						await project.getLanguageService(URI.parse(document.uri));
+					}
+					languageServices = await project.getExistingLanguageServices();
+				}
+				for (const languageService of languageServices) {
 					if (languageService.executeCommand && languageService.commands.includes(params.command)) {
 						try {
 							return await languageService.executeCommand(params.command, params.arguments ?? [], token);
@@ -706,8 +720,15 @@ export function register(
 
 		if (workspaceDiagnostics) {
 			server.connection.languages.diagnostics.onWorkspace(async (_params, token) => {
+				let languageServices = await project.getExistingLanguageServices();
+				if (!languageServices.length) {
+					for (const document of documents.all()) {
+						await project.getLanguageService(URI.parse(document.uri));
+					}
+					languageServices = await project.getExistingLanguageServices();
+				}
 				const items: vscode.WorkspaceDocumentDiagnosticReport[] = [];
-				for (const languageService of await project.getExistingLanguageServices()) {
+				for (const languageService of languageServices) {
 					if (token.isCancellationRequested) {
 						break;
 					}
