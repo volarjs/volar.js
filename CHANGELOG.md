@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.2](https://github.com/volarjs/volar.js/compare/v2.4.1...v2.4.2) (2024-09-04)
+
+### Bug Fixes
+
+- **language-server:** prepare language service for synchronized documents
+- **typescript:** fix inlay hints mapping for large chunks of source code mapped verbatim to generated code (#236) - Thanks to @piotrtomiak!
+
 ## [2.4.1](https://github.com/volarjs/volar.js/compare/v2.4.0...v2.4.1) (2024-08-29)
 
 ### Features
