@@ -809,7 +809,16 @@ export function register(
 	}
 
 	function handleCompletionItem(initializeParams: vscode.InitializeParams, item: vscode.CompletionItem) {
+		const snippetSupport = initializeParams.capabilities.textDocument?.completion?.completionItem?.snippetSupport ?? false;
 		const insertReplaceSupport = initializeParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;
+		if (!snippetSupport && item.insertTextFormat === vscode.InsertTextFormat.Snippet) {
+			item.insertTextFormat = vscode.InsertTextFormat.PlainText;
+			if (item.insertText) {
+				item.insertText = item.insertText.replace(/\$\d+/g, '');
+				item.insertText = item.insertText.replace(/\${\d+:([^}]*)}/g, '');
+			}
+			wranCapabilitiesNotSupported('textDocument.completion.completionItem.snippetSupport');
+		}
 		if (!insertReplaceSupport && item.textEdit && vscode.InsertReplaceEdit.is(item.textEdit)) {
 			item.textEdit = vscode.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);
 			wranCapabilitiesNotSupported('textDocument.completion.completionItem.insertReplaceSupport');
