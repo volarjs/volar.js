@@ -5,6 +5,8 @@ import { AutoInsertRequest, DocumentDrop_DataTransferItemAsStringRequest, Docume
 import type { LanguageServerProject, LanguageServerState } from '../types.js';
 import { SnapshotDocument } from '../utils/snapshotDocument';
 
+const reportedCapabilities = new Set<string>();
+
 export function register(
 	server: LanguageServerState,
 	documents: ReturnType<typeof import('./textDocuments')['register']>,
@@ -331,14 +333,14 @@ export function register(
 				});
 			}
 
-			if (initializeParams.capabilities.workspace?.inlayHint?.refreshSupport) {
-				refreshHandlers.push(() => {
+			refreshHandlers.push(() => {
+				if (initializeParams.capabilities.workspace?.inlayHint?.refreshSupport) {
 					server.connection.languages.inlayHint.refresh();
-				});
-			}
-			else {
-				console.warn('Inlay hint refresh is not supported by the client.');
-			}
+				}
+				else {
+					wranCapabilitiesNotSupported('workspace.inlayHint.refreshSupport');
+				}
+			});
 		}
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.signatureHelpProvider)) {
@@ -419,14 +421,14 @@ export function register(
 				}) ?? { data: [] };
 			});
 
-			if (initializeParams.capabilities.workspace?.semanticTokens?.refreshSupport) {
-				refreshHandlers.push(() => {
+			refreshHandlers.push(() => {
+				if (initializeParams.capabilities.workspace?.semanticTokens?.refreshSupport) {
 					server.connection.languages.semanticTokens.refresh();
-				});
-			}
-			else {
-				console.warn('Semantic tokens refresh is not supported by the client.');
-			}
+				}
+				else {
+					wranCapabilitiesNotSupported('workspace.semanticTokens.refreshSupport');
+				}
+			});
 		}
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.codeActionProvider)) {
@@ -448,8 +450,12 @@ export function register(
 							codeAction.data = { uri: params.textDocument.uri };
 						}
 					}
-					if (!initializeParams.capabilities.textDocument?.codeAction?.disabledSupport) {
+					if (
+						!initializeParams.capabilities.textDocument?.codeAction?.disabledSupport
+						&& codeActions.some(codeAction => !codeAction.disabled)
+					) {
 						codeActions = codeActions.filter(codeAction => !codeAction.disabled);
+						wranCapabilitiesNotSupported('textDocument.codeAction.disabledSupport');
 					}
 					return codeActions;
 				});
@@ -515,14 +521,14 @@ export function register(
 					return languageService.getInlineValue(uri, params.range, params.context, token);
 				});
 			});
-			if (initializeParams.capabilities.workspace?.inlineValue?.refreshSupport) {
-				refreshHandlers.push(() => {
+			refreshHandlers.push(() => {
+				if (initializeParams.capabilities.workspace?.inlineValue?.refreshSupport) {
 					server.connection.languages.inlineValue.refresh();
-				});
-			}
-			else {
-				console.warn('Inline value refresh is not supported by the client.');
-			}
+				}
+				else {
+					wranCapabilitiesNotSupported('workspace.inlineValue.refreshSupport');
+				}
+			});
 		}
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.autoInsertionProvider)) {
@@ -655,14 +661,14 @@ export function register(
 					workspaceDiagnostics,
 				};
 
-				if (initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
-					refreshHandlers.push(() => {
+				refreshHandlers.push(() => {
+					if (initializeParams.capabilities.workspace?.diagnostics?.refreshSupport) {
 						server.connection.languages.diagnostics.refresh();
-					});
-				}
-				else {
-					console.warn('Diagnostics refresh is not supported by the client.');
-				}
+					}
+					else {
+						wranCapabilitiesNotSupported('workspace.diagnostics.refreshSupport');
+					}
+				});
 			}
 			else {
 				documents.onDidChangeContent(({ document }) => {
@@ -804,10 +810,9 @@ export function register(
 
 	function handleCompletionItem(initializeParams: vscode.InitializeParams, item: vscode.CompletionItem) {
 		const insertReplaceSupport = initializeParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;
-		if (!insertReplaceSupport) {
-			if (item.textEdit && vscode.InsertReplaceEdit.is(item.textEdit)) {
-				item.textEdit = vscode.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);
-			}
+		if (!insertReplaceSupport && item.textEdit && vscode.InsertReplaceEdit.is(item.textEdit)) {
+			item.textEdit = vscode.TextEdit.replace(item.textEdit.insert, item.textEdit.newText);
+			wranCapabilitiesNotSupported('textDocument.completion.completionItem.insertReplaceSupport');
 		}
 		return item;
 	}
@@ -815,15 +820,22 @@ export function register(
 	function handleDefinitions(initializeParams: vscode.InitializeParams, type: 'declaration' | 'definition' | 'typeDefinition' | 'implementation', items: vscode.LocationLink[]) {
 		const linkSupport = initializeParams.capabilities.textDocument?.[type]?.linkSupport ?? false;
 		if (!linkSupport) {
+			wranCapabilitiesNotSupported(`textDocument.${type}.linkSupport`);
 			return items.map<vscode.Location>(item => ({
 				uri: item.targetUri,
 				range: item.targetRange,
 			}));
 		}
-		else {
-			return items;
-		}
+		return items;
 	}
+}
+
+function wranCapabilitiesNotSupported(path: string) {
+	if (reportedCapabilities.has(path)) {
+		return;
+	}
+	reportedCapabilities.add(path);
+	console.warn(`${path} is not supported by the client but could be used by the server.`);
 }
 
 function sleep(ms: number) {
