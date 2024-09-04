@@ -13,10 +13,10 @@ importers:
     devDependencies:
       '@lerna-lite/cli':
         specifier: latest
-        version: 3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(@lerna-lite/version@3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
+        version: 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
       '@lerna-lite/publish':
         specifier: latest
-        version: 3.8.0(typescript@5.5.4)
+        version: 3.9.0(typescript@5.5.4)
       '@tsslint/cli':
         specifier: latest
         version: 1.0.17(typescript@5.5.4)
@@ -28,27 +28,27 @@ importers:
         version: 5.5.4
       vite:
         specifier: latest
-        version: 5.4.2(@types/node@22.5.1)
+        version: 5.4.3(@types/node@22.5.3)
       vitest:
         specifier: latest
-        version: 2.0.5(@types/node@22.5.1)
+        version: 2.0.5(@types/node@22.5.3)
 
   extensions/labs:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.1
+        version: 22.5.3
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.92.0
       '@volar/language-server':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../../packages/vscode
       '@vscode/vsce':
         specifier: latest
@@ -69,7 +69,7 @@ importers:
         specifier: ^8.56.10
         version: 8.56.11
       '@volar/language-core':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-core
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -78,7 +78,7 @@ importers:
   packages/jsdelivr:
     devDependencies:
       '@volar/language-service':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.8
@@ -87,10 +87,10 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -107,24 +107,24 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.1
+        version: 22.5.3
 
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../typescript
       path-browserify:
         specifier: ^1.0.1
@@ -152,7 +152,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-core
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -167,10 +167,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.4.0
@@ -191,10 +191,10 @@ importers:
   packages/test-utils:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-core
       '@volar/language-server':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-server
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -205,12 +205,12 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.1
+        version: 22.5.3
 
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-core
       path-browserify:
         specifier: ^1.0.1
@@ -221,18 +221,18 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.1
+        version: 22.5.3
       '@types/path-browserify':
         specifier: latest
         version: 1.0.3
       '@volar/language-service':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 2.4.1
+        specifier: 2.4.2
         version: link:../language-server
       path-browserify:
         specifier: ^1.0.1
@@ -246,7 +246,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.1
+        version: 22.5.3
       '@types/path-browserify':
         specifier: latest
         version: 1.0.3
@@ -663,8 +663,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@lerna-lite/cli@3.8.0':
-    resolution: {integrity: sha512-Flv2ITNfS4dTXG8I44P3R2kuY8x6i5rN9uGxkLY0lnNzjlMy0FU0CXchUrGlzfmP+e7bzhDRmvV7dQMeYoZ1mg==}
+  '@lerna-lite/cli@3.9.0':
+    resolution: {integrity: sha512-sw7vVf9YDDjlLJVjcHyWkUSXF7cnwYNSFHaVjagmXyEoeeK5RtDBTEgCDkO17GP5mff1lRHoahrt/SCDV7KBxg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -688,24 +688,24 @@ packages:
       '@lerna-lite/watch':
         optional: true
 
-  '@lerna-lite/core@3.8.0':
-    resolution: {integrity: sha512-0ObizEznKsABbEFGKnt6wyfB1+IGFShMF4nmUfLsYHFw9OXZ0J3HZPPScS/kLBCzti3QfP79OWh+X0FrxacAGA==}
+  '@lerna-lite/core@3.9.0':
+    resolution: {integrity: sha512-gpQ8TYB5HE1R31zmaNsSuutm8QBPIw7Fyxd0/xbY3VZ76tEt0PtpU0BIcoPlFx1ZvRAWWUCr/Obq8rvpyF622Q==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
-  '@lerna-lite/init@3.8.0':
-    resolution: {integrity: sha512-TPOitzDHXlrzfKLo4ZdvMdCHsupb4DsqgniVioq+09mduGW1lIh+BYp9C2TyXEWBqnaMQkf4uIZ3oFwye/rDiA==}
+  '@lerna-lite/init@3.9.0':
+    resolution: {integrity: sha512-OwKpywZAllU/gLdH+abESjp5+mvuoCyNaokhyaF/aeu6qVkEK0NONgU+5fnJwQrbMWYNLiujKtP0HQzmIW8YyA==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
   '@lerna-lite/npmlog@3.8.0':
     resolution: {integrity: sha512-ny8vueqyhWZtNRsoOVUybdOK6KcGDpLzFD01Ae4k/NjEw1ap3v6sUS0k7h/U2/HmZgiR0bU+XRJShuoUZf6E/g==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
-  '@lerna-lite/publish@3.8.0':
-    resolution: {integrity: sha512-JyC65BfVa0dtGBJeCcIIDLCJT8nWP1vh/FEeXmSmAjrYLuja2FWoFuemVW301bk3JZiejMD+nW8nauXUJbal6w==}
+  '@lerna-lite/publish@3.9.0':
+    resolution: {integrity: sha512-D5YVwTtMFjZa1sMQ4mQ/TiaFD1b/S9N+XL4L5/hsy8JiTPE8S8O1SyyqJQ5iyaGAdi/sLXT+xyF5Z9aAeIvwhw==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
-  '@lerna-lite/version@3.8.0':
-    resolution: {integrity: sha512-G395hZQQdzUHeIeGrYet8FuvZofahmukbhrKadlMal1Xz25kpzYG0yNPSXu2VKKjwip2KZixfmIDB35vRyFcHQ==}
+  '@lerna-lite/version@3.9.0':
+    resolution: {integrity: sha512-tVtZL4c7+9lTOxIVWlztJGjGxQvJxG7gojApHcoCJ2MAq0mtIPAOIts2JJWjPxKXOzqKq1S5N3Ke+e74/zx/4g==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -983,8 +983,8 @@ packages:
   '@types/mute-stream@0.0.4':
     resolution: {integrity: sha512-CPM9nzrCPPJHQNA9keH9CVkVI+WR5kMa+7XEs5jcGQ0VoAGnLv242w8lIVgwAEfmE4oufJRaTc9PNLQl0ioAow==}
 
-  '@types/node@22.5.1':
-    resolution: {integrity: sha512-KkHsxej0j9IW1KKOOAA/XBA0z08UFSrRQHErzEfA3Vgq57eXIMYboIlHJuYIfd+lwCQjtKqUu3UnmKbtUc9yRw==}
+  '@types/node@22.5.3':
+    resolution: {integrity: sha512-njripolh85IA9SQGTAqbmnNZTdxv7X/4OYGPz8tgy5JDr8MP+uDBa921GpYEoDDnwm0Hmn5ZPeJgiiSTPoOzkQ==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -1676,8 +1676,8 @@ packages:
   git-up@7.0.0:
     resolution: {integrity: sha512-ONdIrbBCFusq1Oy0sC71F5azx8bVkvtZtMJAsv+a6lz5YAmbNnLD6HAB4gptHZVLPR8S2/kVN6Gab7lryq5+lQ==}
 
-  git-url-parse@14.1.0:
-    resolution: {integrity: sha512-8xg65dTxGHST3+zGpycMMFZcoTzAdZ2dOtu4vmgIfkTFnVHBxHMzBC2L1k8To7EmrSiHesT8JgPLT91VKw1B5g==}
+  git-url-parse@15.0.0:
+    resolution: {integrity: sha512-5reeBufLi+i4QD3ZFftcJs9jC26aULFLBU23FeKM/b1rI0K6ofIeAblmDVO7Ht22zTDE9+CkJ3ZVb0CgJmz3UQ==}
 
   github-from-package@0.0.0:
     resolution: {integrity: sha512-SyHy3T1v2NUXn29OsWdxmK6RwHD+vkj3v8en8AOBZ1wBQ/hCAQ5bAQTD02kW4W9tUp/3Qh6J8r9EvntiyCmOOw==}
@@ -2438,8 +2438,8 @@ packages:
     resolution: {integrity: sha512-Q8qQfPiZ+THO/3ZrOrO0cJJKfpYCagtMUkXbnEfmgUjwXg6z/WBeOyS9APBBPCTSiDV+s4SwQGu8yFsiMRIudg==}
     engines: {node: '>=4'}
 
-  postcss@8.4.41:
-    resolution: {integrity: sha512-TesUflQ0WKZqAvg52PWL6kHgLKP6xB6heTOdoYM0Wt2UHyxNa4K25EZZMgKns3BH1RLVbZCREPpLY0rhnNoHVQ==}
+  postcss@8.4.45:
+    resolution: {integrity: sha512-7KTLTdzdZZYscUc65XmjFiB73vBhBfbPztCYdUNvlaso9PrzjzcmjqBPR0lNGkcVlcO4BjiO5rK/qNz+XAen1Q==}
     engines: {node: ^10 || ^12 || >=14}
 
   prebuild-install@7.1.2:
@@ -2889,8 +2889,8 @@ packages:
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
 
-  vite@5.4.2:
-    resolution: {integrity: sha512-dDrQTRHp5C1fTFzcSaMxjk6vdpKvT+2/mIdE07Gw2ykehT49O0z/VHS3zZ8iV/Gh8BJJKHWOe5RjaNrW5xf/GA==}
+  vite@5.4.3:
+    resolution: {integrity: sha512-IH+nl64eq9lJjFqU+/yrRnrHPVTlgy42/+IzbOdaFDVlyLgI/wDlf+FCobXLX1cT0X5+7LMyH1mIy2xJdLfo8Q==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -3338,7 +3338,7 @@ snapshots:
       '@inquirer/figures': 1.0.5
       '@inquirer/type': 1.5.2
       '@types/mute-stream': 0.0.4
-      '@types/node': 22.5.1
+      '@types/node': 22.5.3
       '@types/wrap-ansi': 3.0.0
       ansi-escapes: 4.3.2
       cli-spinners: 2.9.2
@@ -3402,10 +3402,10 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@lerna-lite/cli@3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(@lerna-lite/version@3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)':
+  '@lerna-lite/cli@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)':
     dependencies:
-      '@lerna-lite/core': 3.8.0(typescript@5.5.4)
-      '@lerna-lite/init': 3.8.0(typescript@5.5.4)
+      '@lerna-lite/core': 3.9.0(typescript@5.5.4)
+      '@lerna-lite/init': 3.9.0(typescript@5.5.4)
       '@lerna-lite/npmlog': 3.8.0
       dedent: 1.5.3
       dotenv: 16.4.5
@@ -3413,15 +3413,15 @@ snapshots:
       load-json-file: 7.0.1
       yargs: 17.7.2
     optionalDependencies:
-      '@lerna-lite/publish': 3.8.0(typescript@5.5.4)
-      '@lerna-lite/version': 3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(typescript@5.5.4)
+      '@lerna-lite/publish': 3.9.0(typescript@5.5.4)
+      '@lerna-lite/version': 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4)
     transitivePeerDependencies:
       - babel-plugin-macros
       - bluebird
       - supports-color
       - typescript
 
-  '@lerna-lite/core@3.8.0(typescript@5.5.4)':
+  '@lerna-lite/core@3.9.0(typescript@5.5.4)':
     dependencies:
       '@inquirer/expand': 2.1.22
       '@inquirer/input': 2.2.9
@@ -3457,9 +3457,9 @@ snapshots:
       - supports-color
       - typescript
 
-  '@lerna-lite/init@3.8.0(typescript@5.5.4)':
+  '@lerna-lite/init@3.9.0(typescript@5.5.4)':
     dependencies:
-      '@lerna-lite/core': 3.8.0(typescript@5.5.4)
+      '@lerna-lite/core': 3.9.0(typescript@5.5.4)
       fs-extra: 11.2.0
       p-map: 7.0.2
       write-json-file: 6.0.0
@@ -3481,12 +3481,12 @@ snapshots:
       strip-ansi: 7.1.0
       wide-align: 1.1.5
 
-  '@lerna-lite/publish@3.8.0(typescript@5.5.4)':
+  '@lerna-lite/publish@3.9.0(typescript@5.5.4)':
     dependencies:
-      '@lerna-lite/cli': 3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(@lerna-lite/version@3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
-      '@lerna-lite/core': 3.8.0(typescript@5.5.4)
+      '@lerna-lite/cli': 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
+      '@lerna-lite/core': 3.9.0(typescript@5.5.4)
       '@lerna-lite/npmlog': 3.8.0
-      '@lerna-lite/version': 3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(typescript@5.5.4)
+      '@lerna-lite/version': 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4)
       '@npmcli/arborist': 7.5.4
       '@npmcli/package-json': 5.2.0
       byte-size: 9.0.0
@@ -3518,10 +3518,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@lerna-lite/version@3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(typescript@5.5.4)':
+  '@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4)':
     dependencies:
-      '@lerna-lite/cli': 3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(@lerna-lite/version@3.8.0(@lerna-lite/publish@3.8.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
-      '@lerna-lite/core': 3.8.0(typescript@5.5.4)
+      '@lerna-lite/cli': 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
+      '@lerna-lite/core': 3.9.0(typescript@5.5.4)
       '@lerna-lite/npmlog': 3.8.0
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 21.0.2
@@ -3534,7 +3534,7 @@ snapshots:
       dedent: 1.5.3
       fs-extra: 11.2.0
       get-stream: 9.0.1
-      git-url-parse: 14.1.0
+      git-url-parse: 15.0.0
       graceful-fs: 4.2.11
       is-stream: 4.0.1
       load-json-file: 7.0.1
@@ -3896,9 +3896,9 @@ snapshots:
 
   '@types/mute-stream@0.0.4':
     dependencies:
-      '@types/node': 22.5.1
+      '@types/node': 22.5.3
 
-  '@types/node@22.5.1':
+  '@types/node@22.5.3':
     dependencies:
       undici-types: 6.19.6
 
@@ -4688,7 +4688,7 @@ snapshots:
       is-ssh: 1.4.0
       parse-url: 8.1.0
 
-  git-url-parse@14.1.0:
+  git-url-parse@15.0.0:
     dependencies:
       git-up: 7.0.0
 
@@ -5475,7 +5475,7 @@ snapshots:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
 
-  postcss@8.4.41:
+  postcss@8.4.45:
     dependencies:
       nanoid: 3.3.7
       picocolors: 1.0.1
@@ -5921,13 +5921,13 @@ snapshots:
 
   validate-npm-package-name@5.0.1: {}
 
-  vite-node@2.0.5(@types/node@22.5.1):
+  vite-node@2.0.5(@types/node@22.5.3):
     dependencies:
       cac: 6.7.14
       debug: 4.3.6
       pathe: 1.1.2
       tinyrainbow: 1.2.0
-      vite: 5.4.2(@types/node@22.5.1)
+      vite: 5.4.3(@types/node@22.5.3)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5939,16 +5939,16 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.4.2(@types/node@22.5.1):
+  vite@5.4.3(@types/node@22.5.3):
     dependencies:
       esbuild: 0.21.5
-      postcss: 8.4.41
+      postcss: 8.4.45
       rollup: 4.21.0
     optionalDependencies:
-      '@types/node': 22.5.1
+      '@types/node': 22.5.3
       fsevents: 2.3.3
 
-  vitest@2.0.5(@types/node@22.5.1):
+  vitest@2.0.5(@types/node@22.5.3):
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@vitest/expect': 2.0.5
@@ -5966,11 +5966,11 @@ snapshots:
       tinybench: 2.9.0
       tinypool: 1.0.0
       tinyrainbow: 1.2.0
-      vite: 5.4.2(@types/node@22.5.1)
-      vite-node: 2.0.5(@types/node@22.5.1)
+      vite: 5.4.3(@types/node@22.5.3)
+      vite-node: 2.0.5(@types/node@22.5.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 22.5.1
+      '@types/node': 22.5.3
     transitivePeerDependencies:
       - less
       - lightningcss

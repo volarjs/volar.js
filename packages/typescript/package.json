@@ -1,6 +1,6 @@
 {
 	"name": "@volar/typescript",
-	"version": "2.4.1",
+	"version": "2.4.2",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
@@ -12,13 +12,13 @@
 		"directory": "packages/typescript"
 	},
 	"dependencies": {
-		"@volar/language-core": "2.4.1",
+		"@volar/language-core": "2.4.2",
 		"path-browserify": "^1.0.1",
 		"vscode-uri": "^3.0.8"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
 		"@types/path-browserify": "latest",
-		"@volar/language-service": "2.4.1"
+		"@volar/language-service": "2.4.2"
 	}
 }
