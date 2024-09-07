@@ -270,8 +270,8 @@ export class WorkerLanguageService {
 	getColorPresentations(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getColorPresentations']>) {
 		return this.withToken(requestId, token => this.languageService.getColorPresentations(URI.from(uri), ...restArgs, token));
 	}
-	getDiagnostics(requestId: number, uri: UriComponents, ...restArgs: TrimURIAndToken<LanguageService['getDiagnostics']>) {
-		return this.withToken(requestId, token => this.languageService.getDiagnostics(URI.from(uri), ...restArgs, token));
+	getDiagnostics(requestId: number, uri: UriComponents) {
+		return this.withToken(requestId, token => this.languageService.getDiagnostics(URI.from(uri), undefined, token));
 	}
 	getWorkspaceDiagnostics(requestId: number) {
 		return this.withToken(requestId, token => this.languageService.getWorkspaceDiagnostics(token));
