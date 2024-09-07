@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.4.4](https://github.com/volarjs/volar.js/compare/v2.4.3...v2.4.4) (2024-09-08)
+
+- **monaco:** requests always cancel
+
 ## [2.4.3](https://github.com/volarjs/volar.js/compare/v2.4.2...v2.4.3) (2024-09-08)
 
 ### Bug Fixes
