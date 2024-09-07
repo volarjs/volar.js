@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.4.3](https://github.com/volarjs/volar.js/compare/v2.4.2...v2.4.3) (2024-09-08)
+
+### Bug Fixes
+
+- **language-server:** handle completion item snippet unsupported ([withastro/language-tools#948](https://github.com/withastro/language-tools/issues/948))
+- **monaco:** getDiagnostics throws "TypeError: response is not a function"
+
+### Refactors
+
+- **language-server:** improve error handling for unsupported capabilities
+
 ## [2.4.2](https://github.com/volarjs/volar.js/compare/v2.4.1...v2.4.2) (2024-09-04)
 
 ### Bug Fixes
