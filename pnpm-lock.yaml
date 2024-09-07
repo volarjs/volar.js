@@ -10,10 +10,10 @@ importers:
     devDependencies:
       '@lerna-lite/cli':
         specifier: latest
-        version: 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
+        version: 3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(@lerna-lite/version@3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
       '@lerna-lite/publish':
         specifier: latest
-        version: 3.9.0(typescript@5.5.4)
+        version: 3.9.1(typescript@5.5.4)
       '@tsslint/cli':
         specifier: latest
         version: 1.0.17(typescript@5.5.4)
@@ -25,31 +25,31 @@ importers:
         version: 5.5.4
       vite:
         specifier: latest
-        version: 5.4.3(@types/node@22.5.3)
+        version: 5.4.3(@types/node@22.5.4)
       vitest:
         specifier: latest
-        version: 2.0.5(@types/node@22.5.3)
+        version: 2.0.5(@types/node@22.5.4)
 
   extensions/labs:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.3
+        version: 22.5.4
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.92.0
       '@volar/language-server':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../../packages/vscode
       '@vscode/vsce':
         specifier: latest
-        version: 3.0.0
+        version: 3.1.0
       esbuild:
         specifier: latest
         version: 0.23.1
@@ -66,7 +66,7 @@ importers:
         specifier: ^8.56.10
         version: 8.56.11
       '@volar/language-core':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-core
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -75,7 +75,7 @@ importers:
   packages/jsdelivr:
     devDependencies:
       '@volar/language-service':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.8
@@ -84,10 +84,10 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -104,24 +104,24 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.3
+        version: 22.5.4
 
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../typescript
       path-browserify:
         specifier: ^1.0.1
@@ -149,7 +149,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-core
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -164,10 +164,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.4.0
@@ -188,10 +188,10 @@ importers:
   packages/test-utils:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-core
       '@volar/language-server':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-server
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -202,12 +202,12 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.3
+        version: 22.5.4
 
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-core
       path-browserify:
         specifier: ^1.0.1
@@ -218,18 +218,18 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.3
+        version: 22.5.4
       '@types/path-browserify':
         specifier: latest
         version: 1.0.3
       '@volar/language-service':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-service
 
   packages/vscode:
     dependencies:
       '@volar/language-server':
-        specifier: 2.4.2
+        specifier: 2.4.3
         version: link:../language-server
       path-browserify:
         specifier: ^1.0.1
@@ -243,7 +243,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 22.5.3
+        version: 22.5.4
       '@types/path-browserify':
         specifier: latest
         version: 1.0.3
@@ -611,28 +611,28 @@ packages:
     resolution: {integrity: sha512-e5+YUKENATs1JgYHMzTr2MW/NDcXGfYFAuOQU8gJgF/kEh4EqKgfGrfLI67bMD4tbhZVlkigz/9YYwWcbOFthg==}
     engines: {node: '>=10.13.0'}
 
-  '@inquirer/core@9.0.10':
-    resolution: {integrity: sha512-TdESOKSVwf6+YWDz8GhS6nKscwzkIyakEzCLJ5Vh6O3Co2ClhCJ0A4MG909MUWfaWdpJm7DE45ii51/2Kat9tA==}
+  '@inquirer/core@9.1.0':
+    resolution: {integrity: sha512-RZVfH//2ytTjmaBIzeKT1zefcQZzuruwkpTwwbe/i2jTl4o9M+iML5ChULzz6iw1Ok8iUBBsRCjY2IEbD8Ft4w==}
     engines: {node: '>=18'}
 
-  '@inquirer/expand@2.1.22':
-    resolution: {integrity: sha512-wTZOBkzH+ItPuZ3ZPa9lynBsdMp6kQ9zbjVPYEtSBG7UulGjg2kQiAnUjgyG4SlntpTce5bOmXAPvE4sguXjpA==}
+  '@inquirer/expand@2.3.0':
+    resolution: {integrity: sha512-qnJsUcOGCSG1e5DTOErmv2BPQqrtT6uzqn1vI/aYGiPKq+FgslGZmtdnXbhuI7IlT7OByDoEEqdnhUnVR2hhLw==}
     engines: {node: '>=18'}
 
   '@inquirer/figures@1.0.5':
     resolution: {integrity: sha512-79hP/VWdZ2UVc9bFGJnoQ/lQMpL74mGgzSYX1xUqCVk7/v73vJCMw1VuyWN1jGkZ9B3z7THAbySqGbCNefcjfA==}
     engines: {node: '>=18'}
 
-  '@inquirer/input@2.2.9':
-    resolution: {integrity: sha512-7Z6N+uzkWM7+xsE+3rJdhdG/+mQgejOVqspoW+w0AbSZnL6nq5tGMEVASaYVWbkoSzecABWwmludO2evU3d31g==}
+  '@inquirer/input@2.3.0':
+    resolution: {integrity: sha512-XfnpCStx2xgh1LIRqPXrTNEEByqQWoxsWYzNRSEUxJ5c6EQlhMogJ3vHKu8aXuTacebtaZzMAHwEL0kAflKOBw==}
     engines: {node: '>=18'}
 
-  '@inquirer/select@2.4.7':
-    resolution: {integrity: sha512-JH7XqPEkBpNWp3gPCqWqY8ECbyMoFcCZANlL6pV9hf59qK6dGmkOlx1ydyhY+KZ0c5X74+W6Mtp+nm2QX0/MAQ==}
+  '@inquirer/select@2.5.0':
+    resolution: {integrity: sha512-YmDobTItPP3WcEI86GvPo+T2sRHkxxOq/kXmsBjHS5BVXUgvgZ5AfJjkvQvZr03T81NnI3KrrRuMzeuYUQRFOA==}
     engines: {node: '>=18'}
 
-  '@inquirer/type@1.5.2':
-    resolution: {integrity: sha512-w9qFkumYDCNyDZmNQjf/n6qQuvQ4dMC3BJesY4oF+yr0CxR5vxujflAVeIcS6U336uzi9GM0kAfZlLrZ9UTkpA==}
+  '@inquirer/type@1.5.3':
+    resolution: {integrity: sha512-xUQ14WQGR/HK5ei+2CvgcwoH9fQ4PgPGmVFSN0pc1+fVyDL3MREhyAY7nxEErSu6CkllBM3D7e3e+kOvtu+eIg==}
     engines: {node: '>=18'}
 
   '@isaacs/cliui@8.0.2':
@@ -660,8 +660,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@lerna-lite/cli@3.9.0':
-    resolution: {integrity: sha512-sw7vVf9YDDjlLJVjcHyWkUSXF7cnwYNSFHaVjagmXyEoeeK5RtDBTEgCDkO17GP5mff1lRHoahrt/SCDV7KBxg==}
+  '@lerna-lite/cli@3.9.1':
+    resolution: {integrity: sha512-WAqBZZbXJsRZRRLUwIUCI21croYF9AiOQI86nXV75u0booqZJhUQyp7bnj54Eb23+Y0PEjN1qxMiIhiAPRPYOQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -685,24 +685,24 @@ packages:
       '@lerna-lite/watch':
         optional: true
 
-  '@lerna-lite/core@3.9.0':
-    resolution: {integrity: sha512-gpQ8TYB5HE1R31zmaNsSuutm8QBPIw7Fyxd0/xbY3VZ76tEt0PtpU0BIcoPlFx1ZvRAWWUCr/Obq8rvpyF622Q==}
+  '@lerna-lite/core@3.9.1':
+    resolution: {integrity: sha512-xIJcHu6be937nNNtkHaaj37pdc+GtwdiO60iURGqHZJNPaN2lq00bqcSQ3OVuszpBQXGaMI3DuvDTdxoZR7clg==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
-  '@lerna-lite/init@3.9.0':
-    resolution: {integrity: sha512-OwKpywZAllU/gLdH+abESjp5+mvuoCyNaokhyaF/aeu6qVkEK0NONgU+5fnJwQrbMWYNLiujKtP0HQzmIW8YyA==}
+  '@lerna-lite/init@3.9.1':
+    resolution: {integrity: sha512-2QwvKiMOLOpBxXxZxMo28LF/M6JTfjdyah7nWgWUaJDbr2ew6ZL23fLIq/irtWaOn4LTViwWzEdY4zGGQKrNmg==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
   '@lerna-lite/npmlog@3.8.0':
     resolution: {integrity: sha512-ny8vueqyhWZtNRsoOVUybdOK6KcGDpLzFD01Ae4k/NjEw1ap3v6sUS0k7h/U2/HmZgiR0bU+XRJShuoUZf6E/g==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
-  '@lerna-lite/publish@3.9.0':
-    resolution: {integrity: sha512-D5YVwTtMFjZa1sMQ4mQ/TiaFD1b/S9N+XL4L5/hsy8JiTPE8S8O1SyyqJQ5iyaGAdi/sLXT+xyF5Z9aAeIvwhw==}
+  '@lerna-lite/publish@3.9.1':
+    resolution: {integrity: sha512-j85gQZ4B+S/e13lwoQhzlJ3YQHBuR80xvCqMf+oFrCxsyfOHXtZB1kdAsOQFCR9j1jcAiCnz+6V2xr06visJ8Q==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
-  '@lerna-lite/version@3.9.0':
-    resolution: {integrity: sha512-tVtZL4c7+9lTOxIVWlztJGjGxQvJxG7gojApHcoCJ2MAq0mtIPAOIts2JJWjPxKXOzqKq1S5N3Ke+e74/zx/4g==}
+  '@lerna-lite/version@3.9.1':
+    resolution: {integrity: sha512-gljKw4HvmL+YSOYqMEXV2BhcrVrh+k5fO3ecVo8NxC0t43DTCLgKWvY6BAp9XJuxD/achTaw2nr1QbIsfpsylQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -980,8 +980,8 @@ packages:
   '@types/mute-stream@0.0.4':
     resolution: {integrity: sha512-CPM9nzrCPPJHQNA9keH9CVkVI+WR5kMa+7XEs5jcGQ0VoAGnLv242w8lIVgwAEfmE4oufJRaTc9PNLQl0ioAow==}
 
-  '@types/node@22.5.3':
-    resolution: {integrity: sha512-njripolh85IA9SQGTAqbmnNZTdxv7X/4OYGPz8tgy5JDr8MP+uDBa921GpYEoDDnwm0Hmn5ZPeJgiiSTPoOzkQ==}
+  '@types/node@22.5.4':
+    resolution: {integrity: sha512-FDuKUJQm/ju9fT/SeX/6+gBzoPzlVCzfzmGkwKvRHQVxi4BntVbyIwf6a4Xn62mrvndLiml6z/UBXIdEVjQLXg==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -1061,8 +1061,8 @@ packages:
   '@vscode/vsce-sign@2.0.4':
     resolution: {integrity: sha512-0uL32egStKYfy60IqnynAChMTbL0oqpqk0Ew0YHiIb+fayuGZWADuIPHWUcY1GCnAA+VgchOPDMxnc2R3XGWEA==}
 
-  '@vscode/vsce@3.0.0':
-    resolution: {integrity: sha512-UKYcC7fcSw6AUK6nlfm8A8WSOA41H3DRAwafCMp9CQpg3K9COAQKkrgQ+dKPhwkFTP7SPZNEiulDpPLwvr5QQQ==}
+  '@vscode/vsce@3.1.0':
+    resolution: {integrity: sha512-fwdfp1Ol+bZtlSGkpcd/nztfo6+SVsTOMWjZ/+a88lVtUn7gXNbSu7dbniecl5mz4vINl+oaVDVtVdGbJDApmw==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -1494,9 +1494,6 @@ packages:
 
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
-
-  entities@2.1.0:
-    resolution: {integrity: sha512-hCx1oky9PFrJ611mf0ifBLBRW8lUUVRlFolb5gWRfIELabBlbp9xZvrqZLZAs+NxFnbfQoeGd8wDkygjg7U85w==}
 
   entities@4.5.0:
     resolution: {integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==}
@@ -1987,8 +1984,8 @@ packages:
     resolution: {integrity: sha512-wM1+Z03eypVAVUCE7QdSqpVIvelbOakn1M0bPDoA4SGWPx3sNDVUiMo3L6To6WWGClB7VyXnhQ4Sn7gxiJbE6A==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  linkify-it@3.0.3:
-    resolution: {integrity: sha512-ynTsyrFSdE5oZ/O9GEf00kPngmOfVwazR5GKDq6EYfhlpFug3J2zybX56a2PRRpc9P+FuSoGNAwjlbDs9jJBPQ==}
+  linkify-it@5.0.0:
+    resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
 
   load-json-file@7.0.1:
     resolution: {integrity: sha512-Gnxj3ev3mB5TkVBGad0JM6dmLiQL+o0t23JPBZ9sd+yvSLk05mFoqKBw5N8gbbkU4TNXyqCgIrl/VM17OgUIgQ==}
@@ -2048,12 +2045,12 @@ packages:
     resolution: {integrity: sha512-cKTUFc/rbKUd/9meOvgrpJ2WrNzymt6jfRDdwg5UCnVzv9dTpEj9JS5m3wtziXVCjluIXyL8pcaukYqezIzZQA==}
     engines: {node: ^16.14.0 || >=18.0.0}
 
-  markdown-it@12.3.2:
-    resolution: {integrity: sha512-TchMembfxfNVpHkbtriWltGWc+m3xszaRD0CZup7GFFhzIgQqxIfn3eGj1yZpfuflzPvfkt611B2Q/Bsk1YnGg==}
+  markdown-it@14.1.0:
+    resolution: {integrity: sha512-a54IwgWPaeBCAAsv13YgmALOF1elABB08FxO9i+r4VFk5Vl4pKokRPeX8u5TCgSsPi6ec1otfLjdOpVcgbpshg==}
     hasBin: true
 
-  mdurl@1.0.1:
-    resolution: {integrity: sha512-/sKlQJCBYVY9Ers9hqzKou4H6V5UWc/M59TH2dvkt+84itfnq7uFOMLpOiOS4ujvHP4etln18fmIxA5R5fll0g==}
+  mdurl@2.0.0:
+    resolution: {integrity: sha512-Lf+9+2r+Tdp5wXDXC4PcIBjTDtq4UKjCPMQhKIuzpJNW0b96kVqSwW0bT7FhRSfmAiFYgP+SCRvdrDozfh0U5w==}
 
   meow@12.1.1:
     resolution: {integrity: sha512-BhXM0Au22RwUneMPwSCnyhTOizdWoIEPU9sp0Aqa1PnDMR5Wv2FGXYDjuzJEIX+Eo2Rb8xuYe5jrnm5QowQFkw==}
@@ -2479,6 +2476,10 @@ packages:
   pump@3.0.0:
     resolution: {integrity: sha512-LwZy+p3SFs1Pytd/jYct4wpv49HiYCqd9Rlc5ZVdk0V+8Yzv6jR5Blk3TRmPL1ft69TxP0IMZGJ+WPFU2BFhww==}
 
+  punycode.js@2.3.1:
+    resolution: {integrity: sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==}
+    engines: {node: '>=6'}
+
   qs@6.13.0:
     resolution: {integrity: sha512-+38qI9SOr8tfZ4QmJNplMUxqjbe7LKvvZgWdExBOmd+egZTtjLB67Gu0HRX3u/XOq7UU2Nx6nsjvS16Z9uwfpg==}
     engines: {node: '>=0.6'}
@@ -2676,6 +2677,10 @@ packages:
     resolution: {integrity: sha512-MGrFH9Z4NP9Iyhqn16sDtBpRRNJ0Y2hNa6D65h736fVSaPCHr4DM4sWUNvVaSuC+0OBGhwsrydQwmgfg5LncqQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
+  ssri@11.0.0:
+    resolution: {integrity: sha512-aZpUoMN/Jj2MqA4vMCeiKGnc/8SuSyHbGSBdgFbZxP8OJGF/lFkIuElzPxsN0q8TQQ+prw3P4EDfB3TBHHgfXw==}
+    engines: {node: ^16.14.0 || >=18.0.0}
+
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
@@ -2823,8 +2828,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  uc.micro@1.0.6:
-    resolution: {integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==}
+  uc.micro@2.1.0:
+    resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
   uglify-js@3.19.2:
     resolution: {integrity: sha512-S8KA6DDI47nQXJSi2ctQ629YzwOVs+bQML6DAtvy0wgNdpi+0ySpQK0g2pxBq2xfF2z3YCscu7NNA8nXT9PlIQ==}
@@ -3330,12 +3335,12 @@ snapshots:
 
   '@hutson/parse-repository-url@5.0.0': {}
 
-  '@inquirer/core@9.0.10':
+  '@inquirer/core@9.1.0':
     dependencies:
       '@inquirer/figures': 1.0.5
-      '@inquirer/type': 1.5.2
+      '@inquirer/type': 1.5.3
       '@types/mute-stream': 0.0.4
-      '@types/node': 22.5.3
+      '@types/node': 22.5.4
       '@types/wrap-ansi': 3.0.0
       ansi-escapes: 4.3.2
       cli-spinners: 2.9.2
@@ -3346,28 +3351,28 @@ snapshots:
       wrap-ansi: 6.2.0
       yoctocolors-cjs: 2.1.2
 
-  '@inquirer/expand@2.1.22':
+  '@inquirer/expand@2.3.0':
     dependencies:
-      '@inquirer/core': 9.0.10
-      '@inquirer/type': 1.5.2
+      '@inquirer/core': 9.1.0
+      '@inquirer/type': 1.5.3
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/figures@1.0.5': {}
 
-  '@inquirer/input@2.2.9':
+  '@inquirer/input@2.3.0':
     dependencies:
-      '@inquirer/core': 9.0.10
-      '@inquirer/type': 1.5.2
+      '@inquirer/core': 9.1.0
+      '@inquirer/type': 1.5.3
 
-  '@inquirer/select@2.4.7':
+  '@inquirer/select@2.5.0':
     dependencies:
-      '@inquirer/core': 9.0.10
+      '@inquirer/core': 9.1.0
       '@inquirer/figures': 1.0.5
-      '@inquirer/type': 1.5.2
+      '@inquirer/type': 1.5.3
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
-  '@inquirer/type@1.5.2':
+  '@inquirer/type@1.5.3':
     dependencies:
       mute-stream: 1.0.0
 
@@ -3399,10 +3404,10 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@lerna-lite/cli@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)':
+  '@lerna-lite/cli@3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(@lerna-lite/version@3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)':
     dependencies:
-      '@lerna-lite/core': 3.9.0(typescript@5.5.4)
-      '@lerna-lite/init': 3.9.0(typescript@5.5.4)
+      '@lerna-lite/core': 3.9.1(typescript@5.5.4)
+      '@lerna-lite/init': 3.9.1(typescript@5.5.4)
       '@lerna-lite/npmlog': 3.8.0
       dedent: 1.5.3
       dotenv: 16.4.5
@@ -3410,19 +3415,19 @@ snapshots:
       load-json-file: 7.0.1
       yargs: 17.7.2
     optionalDependencies:
-      '@lerna-lite/publish': 3.9.0(typescript@5.5.4)
-      '@lerna-lite/version': 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4)
+      '@lerna-lite/publish': 3.9.1(typescript@5.5.4)
+      '@lerna-lite/version': 3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(typescript@5.5.4)
     transitivePeerDependencies:
       - babel-plugin-macros
       - bluebird
       - supports-color
       - typescript
 
-  '@lerna-lite/core@3.9.0(typescript@5.5.4)':
+  '@lerna-lite/core@3.9.1(typescript@5.5.4)':
     dependencies:
-      '@inquirer/expand': 2.1.22
-      '@inquirer/input': 2.2.9
-      '@inquirer/select': 2.4.7
+      '@inquirer/expand': 2.3.0
+      '@inquirer/input': 2.3.0
+      '@inquirer/select': 2.5.0
       '@lerna-lite/npmlog': 3.8.0
       '@npmcli/run-script': 8.1.0
       chalk: 5.3.0
@@ -3454,9 +3459,9 @@ snapshots:
       - supports-color
       - typescript
 
-  '@lerna-lite/init@3.9.0(typescript@5.5.4)':
+  '@lerna-lite/init@3.9.1(typescript@5.5.4)':
     dependencies:
-      '@lerna-lite/core': 3.9.0(typescript@5.5.4)
+      '@lerna-lite/core': 3.9.1(typescript@5.5.4)
       fs-extra: 11.2.0
       p-map: 7.0.2
       write-json-file: 6.0.0
@@ -3478,12 +3483,12 @@ snapshots:
       strip-ansi: 7.1.0
       wide-align: 1.1.5
 
-  '@lerna-lite/publish@3.9.0(typescript@5.5.4)':
+  '@lerna-lite/publish@3.9.1(typescript@5.5.4)':
     dependencies:
-      '@lerna-lite/cli': 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
-      '@lerna-lite/core': 3.9.0(typescript@5.5.4)
+      '@lerna-lite/cli': 3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(@lerna-lite/version@3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
+      '@lerna-lite/core': 3.9.1(typescript@5.5.4)
       '@lerna-lite/npmlog': 3.8.0
-      '@lerna-lite/version': 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4)
+      '@lerna-lite/version': 3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(typescript@5.5.4)
       '@npmcli/arborist': 7.5.4
       '@npmcli/package-json': 5.2.0
       byte-size: 9.0.0
@@ -3502,7 +3507,7 @@ snapshots:
       p-pipe: 4.0.0
       pacote: 18.0.6
       semver: 7.6.3
-      ssri: 10.0.6
+      ssri: 11.0.0
       tar: 6.2.1
       temp-dir: 3.0.0
     transitivePeerDependencies:
@@ -3515,10 +3520,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4)':
+  '@lerna-lite/version@3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(typescript@5.5.4)':
     dependencies:
-      '@lerna-lite/cli': 3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(@lerna-lite/version@3.9.0(@lerna-lite/publish@3.9.0(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
-      '@lerna-lite/core': 3.9.0(typescript@5.5.4)
+      '@lerna-lite/cli': 3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(@lerna-lite/version@3.9.1(@lerna-lite/publish@3.9.1(typescript@5.5.4))(typescript@5.5.4))(typescript@5.5.4)
+      '@lerna-lite/core': 3.9.1(typescript@5.5.4)
       '@lerna-lite/npmlog': 3.8.0
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 21.0.2
@@ -3893,9 +3898,9 @@ snapshots:
 
   '@types/mute-stream@0.0.4':
     dependencies:
-      '@types/node': 22.5.3
+      '@types/node': 22.5.4
 
-  '@types/node@22.5.3':
+  '@types/node@22.5.4':
     dependencies:
       undici-types: 6.19.6
 
@@ -3979,7 +3984,7 @@ snapshots:
       '@vscode/vsce-sign-win32-arm64': 2.0.2
       '@vscode/vsce-sign-win32-x64': 2.0.2
 
-  '@vscode/vsce@3.0.0':
+  '@vscode/vsce@3.1.0':
     dependencies:
       '@azure/identity': 4.4.1
       '@vscode/vsce-sign': 2.0.4
@@ -3993,7 +3998,7 @@ snapshots:
       hosted-git-info: 4.1.0
       jsonc-parser: 3.3.1
       leven: 3.1.0
-      markdown-it: 12.3.2
+      markdown-it: 14.1.0
       mime: 1.6.0
       minimatch: 3.1.2
       parse-semver: 1.1.1
@@ -4451,8 +4456,6 @@ snapshots:
     dependencies:
       once: 1.4.0
     optional: true
-
-  entities@2.1.0: {}
 
   entities@4.5.0: {}
 
@@ -5010,9 +5013,9 @@ snapshots:
 
   lines-and-columns@2.0.4: {}
 
-  linkify-it@3.0.3:
+  linkify-it@5.0.0:
     dependencies:
-      uc.micro: 1.0.6
+      uc.micro: 2.1.0
 
   load-json-file@7.0.1: {}
 
@@ -5073,15 +5076,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  markdown-it@12.3.2:
+  markdown-it@14.1.0:
     dependencies:
       argparse: 2.0.1
-      entities: 2.1.0
-      linkify-it: 3.0.3
-      mdurl: 1.0.1
-      uc.micro: 1.0.6
+      entities: 4.5.0
+      linkify-it: 5.0.0
+      mdurl: 2.0.0
+      punycode.js: 2.3.1
+      uc.micro: 2.1.0
 
-  mdurl@1.0.1: {}
+  mdurl@2.0.0: {}
 
   meow@12.1.1: {}
 
@@ -5519,6 +5523,8 @@ snapshots:
       once: 1.4.0
     optional: true
 
+  punycode.js@2.3.1: {}
+
   qs@6.13.0:
     dependencies:
       side-channel: 1.0.6
@@ -5737,6 +5743,10 @@ snapshots:
     dependencies:
       minipass: 7.1.2
 
+  ssri@11.0.0:
+    dependencies:
+      minipass: 7.1.2
+
   stackback@0.0.2: {}
 
   stackframe@1.3.4: {}
@@ -5878,7 +5888,7 @@ snapshots:
 
   typescript@5.5.4: {}
 
-  uc.micro@1.0.6: {}
+  uc.micro@2.1.0: {}
 
   uglify-js@3.19.2:
     optional: true
@@ -5918,13 +5928,13 @@ snapshots:
 
   validate-npm-package-name@5.0.1: {}
 
-  vite-node@2.0.5(@types/node@22.5.3):
+  vite-node@2.0.5(@types/node@22.5.4):
     dependencies:
       cac: 6.7.14
       debug: 4.3.6
       pathe: 1.1.2
       tinyrainbow: 1.2.0
-      vite: 5.4.3(@types/node@22.5.3)
+      vite: 5.4.3(@types/node@22.5.4)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5936,16 +5946,16 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.4.3(@types/node@22.5.3):
+  vite@5.4.3(@types/node@22.5.4):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.4.45
       rollup: 4.21.0
     optionalDependencies:
-      '@types/node': 22.5.3
+      '@types/node': 22.5.4
       fsevents: 2.3.3
 
-  vitest@2.0.5(@types/node@22.5.3):
+  vitest@2.0.5(@types/node@22.5.4):
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@vitest/expect': 2.0.5
@@ -5963,11 +5973,11 @@ snapshots:
       tinybench: 2.9.0
       tinypool: 1.0.0
       tinyrainbow: 1.2.0
-      vite: 5.4.3(@types/node@22.5.3)
-      vite-node: 2.0.5(@types/node@22.5.3)
+      vite: 5.4.3(@types/node@22.5.4)
+      vite-node: 2.0.5(@types/node@22.5.4)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 22.5.3
+      '@types/node': 22.5.4
     transitivePeerDependencies:
       - less
       - lightningcss
