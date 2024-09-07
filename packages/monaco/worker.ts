@@ -375,7 +375,7 @@ export class WorkerLanguageService {
 		const { pendingRequests } = this;
 		const token: CancellationToken = {
 			get isCancellationRequested() {
-				return !!pendingRequests.has(requestId);
+				return !pendingRequests.has(requestId);
 			},
 			onCancellationRequested(cb) {
 				let callbacks = pendingRequests.get(requestId);
