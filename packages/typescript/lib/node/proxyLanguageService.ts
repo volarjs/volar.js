@@ -861,8 +861,14 @@ function getCompletionsAtPosition(language: Language<string>, getCompletionsAtPo
 			return undefined;
 		}
 		if (serviceScript) {
-			const results: ts.CompletionInfo[] = [];
+			let mainResult: ts.CompletionInfo | undefined;
+			const additionalResults: ts.CompletionInfo[] = [];
+
 			for (const [generatedOffset, mapping] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isCompletionEnabled)) {
+				const isAdditional = typeof mapping.data.completion === 'object' && mapping.data.completion.isAdditional;
+				if (!isAdditional && mainResult?.entries.length) {
+					continue;
+				}
 				const result = getCompletionsAtPosition(targetScript.id, generatedOffset, options, formattingSettings);
 				if (!result) {
 					continue;
@@ -875,13 +881,16 @@ function getCompletionsAtPosition(language: Language<string>, getCompletionsAtPo
 				}
 				result.optionalReplacementSpan = result.optionalReplacementSpan
 					&& transformTextSpan(sourceScript, language, serviceScript, result.optionalReplacementSpan, isCompletionEnabled)?.[1];
-				const isAdditional = typeof mapping.data.completion === 'object' && mapping.data.completion.isAdditional;
 				if (isAdditional) {
-					results.push(result);
+					additionalResults.push(result);
 				}
 				else {
-					results.unshift(result);
+					mainResult = result;
 				}
+			}
+			const results = additionalResults;
+			if (mainResult) {
+				results.unshift(mainResult);
 			}
 			if (results.length) {
 				return {
@@ -952,8 +961,8 @@ function provideInlayHints(language: Language<string>, provideInlayHints: ts.Lan
 					&& mapping.sourceOffsets.length == 1
 					&& (!mapping.generatedLengths || mapping.generatedLengths[0] === mapping.lengths[0])
 				) {
-					genStart = mapping.generatedOffsets[0] + span.start - mappingStart
-					genEnd = Math.min(genStart + span.length, mapping.generatedOffsets[0] + mapping.lengths[0])
+					genStart = mapping.generatedOffsets[0] + span.start - mappingStart;
+					genEnd = Math.min(genStart + span.length, mapping.generatedOffsets[0] + mapping.lengths[0]);
 				} else {
 					continue;
 				}
