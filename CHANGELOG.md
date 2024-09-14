@@ -1,6 +1,19 @@
 # Changelog
 
+## [2.4.5](https://github.com/volarjs/volar.js/compare/v2.4.4...v2.4.5) (2024-09-14)
+
+### Bug Fixes
+
+- **typescript:** avoid duplicate completion items in plugin mode
+
+### Refactors
+
+- **typescript:** deprecated resolveLanguageServiceHost
+- **kit:** add setup hook for create checker functions
+
 ## [2.4.4](https://github.com/volarjs/volar.js/compare/v2.4.3...v2.4.4) (2024-09-08)
+
+### Bug Fixes
 
 - **monaco:** requests always cancel
 
