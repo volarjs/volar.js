@@ -47,6 +47,58 @@ describe('SnapshotDocument', () => {
 		expect(changeRange).toEqual({ span: { start: 5, length: 0 }, newLength: 5 });
 	});
 
+	it('returns correct change range with multiple edits', () => {
+		snapshotDocument.update([{
+			range: { start: snapshotDocument.positionAt(0), end: snapshotDocument.positionAt(0) },
+			text: 'HelloXXWorld',
+		}], 1);
+		const snapshot1 = snapshotDocument.getSnapshot();
+
+		snapshotDocument.update([
+			// -> HelloXWorld
+			{
+				range: { start: snapshotDocument.positionAt(5), end: snapshotDocument.positionAt(6) },
+				text: '',
+			},
+			// -> HelloWorld
+			{
+				range: { start: snapshotDocument.positionAt(5), end: snapshotDocument.positionAt(6) },
+				text: '',
+			},
+		], 2);
+		const snapshot2 = snapshotDocument.getSnapshot();
+
+		expect(snapshot2.getText(0, snapshot2.getLength())).toEqual('HelloWorld');
+		const changeRange = snapshot2.getChangeRange(snapshot1);
+		expect(changeRange).toEqual({ span: { start: 5, length: 2 }, newLength: 0 });
+	});
+
+	it('returns correct change range with multiple overlapping edits', () => {
+		snapshotDocument.update([{
+			range: { start: snapshotDocument.positionAt(0), end: snapshotDocument.positionAt(0) },
+			text: 'HelloXYYXWorld',
+		}], 1);
+		const snapshot1 = snapshotDocument.getSnapshot();
+
+		snapshotDocument.update([
+			// -> HelloXXWorld
+			{
+				range: { start: snapshotDocument.positionAt(6), end: snapshotDocument.positionAt(8) },
+				text: '',
+			},
+			// -> HelloWorld
+			{
+				range: { start: snapshotDocument.positionAt(5), end: snapshotDocument.positionAt(7) },
+				text: '',
+			},
+		], 2);
+		const snapshot2 = snapshotDocument.getSnapshot();
+
+		expect(snapshot2.getText(0, snapshot2.getLength())).toEqual('HelloWorld');
+		const changeRange = snapshot2.getChangeRange(snapshot1);
+		expect(changeRange).toEqual({ span: { start: 5, length: 4 }, newLength: 0 });
+	});
+
 	it('allows GC of unreferenced snapshots', () => {
 		const _WeakRef = globalThis.WeakRef;
 
