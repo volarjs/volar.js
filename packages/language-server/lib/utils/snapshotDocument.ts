@@ -65,7 +65,7 @@ export class SnapshotDocument implements TextDocument {
 				const start = this.offsetAt(contentChange.range.start);
 				const length = contentChange.rangeLength ?? this.offsetAt(contentChange.range.end) - start;
 				changeRanges.push({
-					span: {start, length},
+					span: { start, length },
 					newLength: contentChange.text.length
 				});
 				TextDocument.update(this.document, [contentChange], version);
