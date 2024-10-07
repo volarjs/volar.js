@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.6](https://github.com/volarjs/volar.js/compare/v2.4.5...v2.4.6) (2024-10-07)
+
+### Bug Fixes
+
+- **language-server:** correctly calculate coalesced document change ([#240](https://github.com/volarjs/volar.js/issues/240)) - Thanks to @rchl!
+
 ## [2.4.5](https://github.com/volarjs/volar.js/compare/v2.4.4...v2.4.5) (2024-09-14)
 
 ### Bug Fixes
