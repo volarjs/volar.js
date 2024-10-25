@@ -15,6 +15,15 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getProjectVersion'
 > { }
 
+declare module 'typescript' {
+	interface LanguageServiceHost {
+		/**
+		 * @internal
+		 */
+		getModuleResolutionCache?(): ts.ModuleResolutionCache;
+	}
+}
+
 export function createLanguageServiceHost<T>(
 	ts: typeof import('typescript'),
 	sys: ReturnType<typeof createSys> | ts.System,
@@ -188,6 +197,8 @@ export function createLanguageServiceHost<T>(
 				return resolveModuleName(moduleName, containingFile, options, moduleCache, redirectedReference).resolvedModule;
 			});
 		};
+
+		languageServiceHost.getModuleResolutionCache = () => moduleCache;
 	}
 
 	return {
