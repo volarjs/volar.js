@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.7](https://github.com/volarjs/volar.js/compare/v2.4.6...v2.4.7) (2024-10-25)
+
+### Bug Fixes
+
+- **typescript:** set module resolution cache ([#242](https://github.com/volarjs/volar.js/issues/242)) - Thanks to @Princesseuh!
+
 ## [2.4.6](https://github.com/volarjs/volar.js/compare/v2.4.5...v2.4.6) (2024-10-07)
 
 ### Bug Fixes
