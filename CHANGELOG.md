@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.8](https://github.com/volarjs/volar.js/compare/v2.4.7...v2.4.8) (2024-10-26)
+
+### Bug Fixes
+
+- **typescript:** content-sensitive features are only allowed to return results in contiguous mapped ranges ([#243](https://github.com/volarjs/volar.js/issues/243))
+
 ## [2.4.7](https://github.com/volarjs/volar.js/compare/v2.4.6...v2.4.7) (2024-10-25)
 
 ### Bug Fixes
