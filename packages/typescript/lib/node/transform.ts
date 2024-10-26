@@ -11,10 +11,11 @@ const transformedSourceFile = new WeakSet<ts.SourceFile>();
 export function transformCallHierarchyItem(
 	language: Language<string>,
 	item: ts.CallHierarchyItem,
+	fallbackToAnyMatch: boolean,
 	filter: (data: CodeInformation) => boolean
 ): ts.CallHierarchyItem {
-	const span = transformSpan(language, item.file, item.span, false, filter);
-	const selectionSpan = transformSpan(language, item.file, item.selectionSpan, false, filter);
+	const span = transformSpan(language, item.file, item.span, fallbackToAnyMatch, filter);
+	const selectionSpan = transformSpan(language, item.file, item.selectionSpan, fallbackToAnyMatch, filter);
 	return {
 		...item,
 		file: span?.fileName ?? item.file,

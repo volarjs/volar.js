@@ -246,10 +246,10 @@ function prepareCallHierarchy(language: Language<string>, prepareCallHierarchy: 
 			if (generatePosition !== undefined) {
 				const item = prepareCallHierarchy(targetScript.id, generatePosition);
 				if (Array.isArray(item)) {
-					return item.map(item => transformCallHierarchyItem(language, item, isCallHierarchyEnabled));
+					return item.map(item => transformCallHierarchyItem(language, item, false, isCallHierarchyEnabled));
 				}
 				else if (item) {
-					return transformCallHierarchyItem(language, item, isCallHierarchyEnabled);
+					return transformCallHierarchyItem(language, item, false, isCallHierarchyEnabled);
 				}
 			}
 		}
@@ -277,7 +277,7 @@ function provideCallHierarchyIncomingCalls(language: Language<string>, provideCa
 		}
 		return calls
 			.map(call => {
-				const from = transformCallHierarchyItem(language, call.from, isCallHierarchyEnabled);
+				const from = transformCallHierarchyItem(language, call.from, false, isCallHierarchyEnabled);
 				const fromSpans = call.fromSpans
 					.map(span => transformSpan(language, call.from.file, span, false, isCallHierarchyEnabled)?.textSpan)
 					.filter(span => !!span);
@@ -307,7 +307,7 @@ function provideCallHierarchyOutgoingCalls(language: Language<string>, provideCa
 		}
 		return calls
 			.map(call => {
-				const to = transformCallHierarchyItem(language, call.to, isCallHierarchyEnabled);
+				const to = transformCallHierarchyItem(language, call.to, false, isCallHierarchyEnabled);
 				const fromSpans = call.fromSpans
 					.map(span => serviceScript
 						? transformTextSpan(sourceScript, language, serviceScript, span, false, isCallHierarchyEnabled)?.[1]
