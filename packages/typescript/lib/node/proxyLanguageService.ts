@@ -149,7 +149,7 @@ function getFormattingEditsForDocument(language: Language<string>, getFormatting
 			}
 			const edits = getFormattingEditsForDocument(targetScript.id, options);
 			return edits
-				.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
+				.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1])
 				.filter(edit => !!edit);
 		}
 		else {
@@ -170,7 +170,7 @@ function getFormattingEditsForRange(language: Language<string>, getFormattingEdi
 			if (generateStart !== undefined && generateEnd !== undefined) {
 				const edits = getFormattingEditsForRange(targetScript.id, generateStart, generateEnd, options);
 				return edits
-					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
+					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1])
 					.filter(edit => !!edit);
 			}
 			return [];
@@ -192,7 +192,7 @@ function getFormattingEditsAfterKeystroke(language: Language<string>, getFormatt
 			if (generatePosition !== undefined) {
 				const edits = getFormattingEditsAfterKeystroke(targetScript.id, generatePosition, key, options);
 				return edits
-					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
+					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1])
 					.filter(edit => !!edit);
 			}
 			return [];
@@ -205,7 +205,7 @@ function getFormattingEditsAfterKeystroke(language: Language<string>, getFormatt
 function getEditsForFileRename(language: Language<string>, getEditsForFileRename: ts.LanguageService['getEditsForFileRename']): ts.LanguageService['getEditsForFileRename'] {
 	return (oldFilePath, newFilePath, formatOptions, preferences) => {
 		const edits = getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences);
-		return transformFileTextChanges(language, edits, isRenameEnabled);
+		return transformFileTextChanges(language, edits, false, isRenameEnabled);
 	};
 }
 function getLinkedEditingRangeAtPosition(language: Language<string>, getLinkedEditingRangeAtPosition: ts.LanguageService['getLinkedEditingRangeAtPosition']): ts.LanguageService['getLinkedEditingRangeAtPosition'] {
@@ -222,7 +222,7 @@ function getLinkedEditingRangeAtPosition(language: Language<string>, getLinkedEd
 				if (info) {
 					return {
 						ranges: info.ranges
-							.map(span => transformTextSpan(sourceScript, language, serviceScript, span, isLinkedEditingEnabled)?.[1])
+							.map(span => transformTextSpan(sourceScript, language, serviceScript, span, false, isLinkedEditingEnabled)?.[1])
 							.filter(span => !!span),
 						wordPattern: info.wordPattern,
 					};
@@ -279,7 +279,7 @@ function provideCallHierarchyIncomingCalls(language: Language<string>, provideCa
 			.map(call => {
 				const from = transformCallHierarchyItem(language, call.from, isCallHierarchyEnabled);
 				const fromSpans = call.fromSpans
-					.map(span => transformSpan(language, call.from.file, span, isCallHierarchyEnabled)?.textSpan)
+					.map(span => transformSpan(language, call.from.file, span, false, isCallHierarchyEnabled)?.textSpan)
 					.filter(span => !!span);
 				return {
 					from,
@@ -310,7 +310,7 @@ function provideCallHierarchyOutgoingCalls(language: Language<string>, provideCa
 				const to = transformCallHierarchyItem(language, call.to, isCallHierarchyEnabled);
 				const fromSpans = call.fromSpans
 					.map(span => serviceScript
-						? transformTextSpan(sourceScript, language, serviceScript, span, isCallHierarchyEnabled)?.[1]
+						? transformTextSpan(sourceScript, language, serviceScript, span, false, isCallHierarchyEnabled)?.[1]
 						: span
 					)
 					.filter(span => !!span);
@@ -324,7 +324,7 @@ function provideCallHierarchyOutgoingCalls(language: Language<string>, provideCa
 function organizeImports(language: Language<string>, organizeImports: ts.LanguageService['organizeImports']): ts.LanguageService['organizeImports'] {
 	return (args, formatOptions, preferences) => {
 		const unresolved = organizeImports(args, formatOptions, preferences);
-		return transformFileTextChanges(language, unresolved, isCodeActionsEnabled);
+		return transformFileTextChanges(language, unresolved, false, isCodeActionsEnabled);
 	};
 }
 function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPosition: ts.LanguageService['getQuickInfoAtPosition']): ts.LanguageService['getQuickInfoAtPosition'] {
@@ -339,7 +339,7 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 			for (const [generatePosition] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isHoverEnabled)) {
 				const info = getQuickInfoAtPosition(targetScript.id, generatePosition);
 				if (info) {
-					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, isHoverEnabled)?.[1];
+					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, true, isHoverEnabled)?.[1];
 					if (textSpan) {
 						infos.push({
 							...info,
@@ -404,7 +404,7 @@ function getSignatureHelpItems(language: Language<string>, getSignatureHelpItems
 			if (generatePosition !== undefined) {
 				const result = getSignatureHelpItems(targetScript.id, generatePosition, options);
 				if (result) {
-					const applicableSpan = transformTextSpan(sourceScript, language, serviceScript, result.applicableSpan, isSignatureHelpEnabled)?.[1];
+					const applicableSpan = transformTextSpan(sourceScript, language, serviceScript, result.applicableSpan, true, isSignatureHelpEnabled)?.[1];
 					if (applicableSpan) {
 						return {
 							...result,
@@ -443,11 +443,11 @@ function getDocumentHighlights(language: Language<string>, getDocumentHighlights
 					...highlights,
 					highlightSpans: highlights.highlightSpans
 						.map(span => {
-							const { textSpan } = transformSpan(language, span.fileName ?? highlights.fileName, span.textSpan, isHighlightEnabled) ?? {};
+							const { textSpan } = transformSpan(language, span.fileName ?? highlights.fileName, span.textSpan, false, isHighlightEnabled) ?? {};
 							if (textSpan) {
 								return {
 									...span,
-									contextSpan: transformSpan(language, span.fileName ?? highlights.fileName, span.contextSpan, isHighlightEnabled)?.textSpan,
+									contextSpan: transformSpan(language, span.fileName ?? highlights.fileName, span.contextSpan, false, isHighlightEnabled)?.textSpan,
 									textSpan,
 								};
 							}
@@ -509,7 +509,7 @@ function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts
 			edits = getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences);
 		}
 		if (edits) {
-			edits.edits = transformFileTextChanges(language, edits.edits, isCodeActionsEnabled);
+			edits.edits = transformFileTextChanges(language, edits.edits, false, isCodeActionsEnabled);
 			return edits;
 		}
 	};
@@ -517,7 +517,7 @@ function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts
 function getCombinedCodeFix(language: Language<string>, getCombinedCodeFix: ts.LanguageService['getCombinedCodeFix']): ts.LanguageService['getCombinedCodeFix'] {
 	return (...args) => {
 		const codeActions = getCombinedCodeFix(...args);
-		codeActions.changes = transformFileTextChanges(language, codeActions.changes, isCodeActionsEnabled);
+		codeActions.changes = transformFileTextChanges(language, codeActions.changes, false, isCodeActionsEnabled);
 		return codeActions;
 	};
 }
@@ -536,7 +536,7 @@ function getRenameInfo(language: Language<string>, getRenameInfo: ts.LanguageSer
 			for (const [generateOffset] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isRenameEnabled)) {
 				const info = getRenameInfo(targetScript.id, generateOffset, options);
 				if (info.canRename) {
-					const span = transformTextSpan(sourceScript, language, serviceScript, info.triggerSpan, isRenameEnabled)?.[1];
+					const span = transformTextSpan(sourceScript, language, serviceScript, info.triggerSpan, false, isRenameEnabled)?.[1];
 					if (span) {
 						info.triggerSpan = span;
 						return info;
@@ -585,7 +585,7 @@ function getCodeFixesAtPosition(language: Language<string>, getCodeFixesAtPositi
 			fixes = getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences);
 		}
 		fixes = fixes.map(fix => {
-			fix.changes = transformFileTextChanges(language, fix.changes, isCodeActionsEnabled);
+			fix.changes = transformFileTextChanges(language, fix.changes, false, isCodeActionsEnabled);
 			return fix;
 		});
 		return fixes;
@@ -622,7 +622,7 @@ function getEncodedSemanticClassifications(language: Language<string>, getEncode
 			const result = getEncodedSemanticClassifications(targetScript.id, { start, length: end - start }, format);
 			const spans: number[] = [];
 			for (let i = 0; i < result.spans.length; i += 3) {
-				for (const [_, sourceStart, sourceEnd] of toSourceRanges(sourceScript, language, serviceScript, result.spans[i], result.spans[i] + result.spans[i + 1], isSemanticTokensEnabled)) {
+				for (const [_, sourceStart, sourceEnd] of toSourceRanges(sourceScript, language, serviceScript, result.spans[i], result.spans[i] + result.spans[i + 1], false, isSemanticTokensEnabled)) {
 					spans.push(
 						sourceStart,
 						sourceEnd - sourceStart,
@@ -694,14 +694,14 @@ function getDefinitionAndBoundSpan(language: Language<string>, getDefinitionAndB
 			}
 		);
 		const textSpan = unresolved
-			.map(s => transformSpan(language, fileName, s.textSpan, isDefinitionEnabled)?.textSpan)
+			.map(s => transformSpan(language, fileName, s.textSpan, true, isDefinitionEnabled)?.textSpan)
 			.filter(s => !!s)[0];
 		if (!textSpan) {
 			return;
 		}
 		const definitions = unresolved
 			.map(s => s.definitions
-				?.map(s => transformDocumentSpan(language, s, isDefinitionEnabled, s.fileName !== fileName))
+				?.map(s => transformDocumentSpan(language, s, true, isDefinitionEnabled, s.fileName !== fileName))
 				.filter(s => !!s)
 				?? []
 			)
@@ -732,11 +732,11 @@ function findReferences(language: Language<string>, findReferences: ts.LanguageS
 		const resolved: ts.ReferencedSymbol[] = unresolved
 			.flat()
 			.map(symbol => {
-				const definition = transformDocumentSpan(language, symbol.definition, isDefinitionEnabled, true)!;
+				const definition = transformDocumentSpan(language, symbol.definition, true, isDefinitionEnabled, true)!;
 				return {
 					definition,
 					references: symbol.references
-						.map(r => transformDocumentSpan(language, r, isReferencesEnabled))
+						.map(r => transformDocumentSpan(language, r, true, isReferencesEnabled))
 						.filter(r => !!r),
 				};
 			});
@@ -760,7 +760,7 @@ function getDefinitionAtPosition(language: Language<string>, getDefinitionAtPosi
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isDefinitionEnabled, s.fileName !== fileName))
+			.map(s => transformDocumentSpan(language, s, true, isDefinitionEnabled, s.fileName !== fileName))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -782,7 +782,7 @@ function getTypeDefinitionAtPosition(language: Language<string>, getTypeDefiniti
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isTypeDefinitionEnabled))
+			.map(s => transformDocumentSpan(language, s, true, isTypeDefinitionEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -804,7 +804,7 @@ function getImplementationAtPosition(language: Language<string>, getImplementati
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isImplementationEnabled))
+			.map(s => transformDocumentSpan(language, s, true, isImplementationEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -826,7 +826,7 @@ function findRenameLocations(language: Language<string>, findRenameLocations: ts
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isRenameEnabled))
+			.map(s => transformDocumentSpan(language, s, false, isRenameEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -848,7 +848,7 @@ function getReferencesAtPosition(language: Language<string>, getReferencesAtPosi
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isReferencesEnabled))
+			.map(s => transformDocumentSpan(language, s, true, isReferencesEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -877,10 +877,10 @@ function getCompletionsAtPosition(language: Language<string>, getCompletionsAtPo
 					result.entries = result.entries.filter(entry => !!entry.sourceDisplay);
 				}
 				for (const entry of result.entries) {
-					entry.replacementSpan = entry.replacementSpan && transformTextSpan(sourceScript, language, serviceScript, entry.replacementSpan, isCompletionEnabled)?.[1];
+					entry.replacementSpan = entry.replacementSpan && transformTextSpan(sourceScript, language, serviceScript, entry.replacementSpan, false, isCompletionEnabled)?.[1];
 				}
 				result.optionalReplacementSpan = result.optionalReplacementSpan
-					&& transformTextSpan(sourceScript, language, serviceScript, result.optionalReplacementSpan, isCompletionEnabled)?.[1];
+					&& transformTextSpan(sourceScript, language, serviceScript, result.optionalReplacementSpan, false, isCompletionEnabled)?.[1];
 				if (isAdditional) {
 					additionalResults.push(result);
 				}
@@ -928,7 +928,7 @@ function getCompletionEntryDetails(language: Language<string>, getCompletionEntr
 
 		if (details?.codeActions) {
 			for (const codeAction of details.codeActions) {
-				codeAction.changes = transformFileTextChanges(language, codeAction.changes, isCompletionEnabled);
+				codeAction.changes = transformFileTextChanges(language, codeAction.changes, false, isCompletionEnabled);
 			}
 		}
 
@@ -999,7 +999,7 @@ function getFileReferences(language: Language<string>, getFileReferences: ts.Lan
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = getFileReferences(fileName);
 		const resolved = unresolved
-			.map(s => transformDocumentSpan(language, s, isReferencesEnabled))
+			.map(s => transformDocumentSpan(language, s, true, isReferencesEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -1008,7 +1008,7 @@ function getNavigateToItems(language: Language<string>, getNavigateToItems: ts.L
 	return (...args) => {
 		const unresolved = getNavigateToItems(...args);
 		const resolved = unresolved
-			.map(s => transformDocumentSpan(language, s, isReferencesEnabled))
+			.map(s => transformDocumentSpan(language, s, true, isReferencesEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
