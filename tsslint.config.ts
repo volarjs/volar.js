@@ -1,11 +1,11 @@
-import { Rules, defineConfig } from '@tsslint/config';
+import type { Rules } from '@tsslint/config';
 import type * as ts from 'typescript';
 // @ts-ignore
 import * as path from 'node:path';
 
-export default defineConfig({
+export default {
 	rules: getDefaultRules(),
-});
+};
 
 export function getDefaultRules(): Rules {
 	return {
