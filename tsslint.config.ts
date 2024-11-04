@@ -18,7 +18,7 @@ export function getDefaultRules(): Rules {
 		 * }
 		 * ```
 		 */
-		'interface-property-semicolon'({ typescript: ts, sourceFile, reportWarning }) {
+		'format/interface-property-semicolon'({ typescript: ts, sourceFile, reportWarning }) {
 			const { text } = sourceFile;
 			ts.forEachChild(sourceFile, function visit(node) {
 				if (ts.isInterfaceDeclaration(node)) {
@@ -56,7 +56,7 @@ export function getDefaultRules(): Rules {
 		 * + }
 		 * ```
 		 */
-		'braces-around-statements'({ typescript: ts, sourceFile, reportWarning }) {
+		'format/braces-around-statements'({ typescript: ts, sourceFile, reportWarning }) {
 			ts.forEachChild(sourceFile, function visit(node) {
 				if (ts.isIfStatement(node)) {
 					if (!ts.isBlock(node.thenStatement)) {
@@ -115,52 +115,6 @@ export function getDefaultRules(): Rules {
 					=== ts.getLineAndCharacterOfPosition(sourceFile, node.parent.getEnd()).line;
 			}
 		},
-		'missing-dependency'({ typescript: ts, sourceFile, reportError, languageServiceHost }) {
-			const { noEmit } = languageServiceHost.getCompilationSettings();
-			if (noEmit) {
-				return;
-			}
-			const packageJsonPath = ts.findConfigFile(sourceFile.fileName, ts.sys.fileExists, 'package.json');
-			if (!packageJsonPath) {
-				return;
-			}
-			const packageJson = JSON.parse(ts.sys.readFile(packageJsonPath) ?? '');
-			const parentPackageJsonPath = ts.findConfigFile(path.dirname(path.dirname(packageJsonPath)), ts.sys.fileExists, 'package.json');
-			const parentPackageJson = !!parentPackageJsonPath && parentPackageJsonPath !== packageJsonPath
-				? JSON.parse(ts.sys.readFile(parentPackageJsonPath) ?? '')
-				: {};
-			ts.forEachChild(sourceFile, function visit(node) {
-				if (
-					ts.isImportDeclaration(node)
-					&& !node.importClause?.isTypeOnly
-					&& ts.isStringLiteral(node.moduleSpecifier)
-					&& !node.moduleSpecifier.text.startsWith('./')
-					&& !node.moduleSpecifier.text.startsWith('../')
-				) {
-					let moduleName = node.moduleSpecifier.text.split('/')[0];
-					if (moduleName.startsWith('@')) {
-						moduleName += '/' + node.moduleSpecifier.text.split('/')[1];
-					}
-					if (
-						(
-							packageJson.devDependencies?.[moduleName]
-							|| parentPackageJson.dependencies?.[moduleName]
-							|| parentPackageJson.devDependencies?.[moduleName]
-							|| parentPackageJson.peerDependencies?.[moduleName]
-						)
-						&& !packageJson.dependencies?.[moduleName]
-						&& !packageJson.peerDependencies?.[moduleName]
-					) {
-						reportError(
-							`Module '${moduleName}' should be in the dependencies.`,
-							node.getStart(sourceFile),
-							node.getEnd()
-						);
-					}
-				}
-				ts.forEachChild(node, visit);
-			});
-		},
 		/**
 		 * @example
 		 * ```diff
@@ -168,7 +122,7 @@ export function getDefaultRules(): Rules {
 		 * + const foo = bar => {};
 		 * ```
 		 */
-		'arrow-parens'({ typescript: ts, sourceFile, reportWarning }) {
+		'format/arrow-parens'({ typescript: ts, sourceFile, reportWarning }) {
 			ts.forEachChild(sourceFile, function visit(node) {
 				if (
 					ts.isArrowFunction(node)
@@ -215,7 +169,7 @@ export function getDefaultRules(): Rules {
 				ts.forEachChild(node, visit);
 			});
 		},
-		'need-format'({ typescript: ts, sourceFile, languageService, reportWarning }) {
+		'format/need-format'({ typescript: ts, sourceFile, languageService, reportWarning }) {
 			const textChanges = languageService.getFormattingEditsForDocument(sourceFile.fileName, {
 				...ts.getDefaultFormatCodeSettings(),
 				convertTabsToSpaces: false,
@@ -257,6 +211,109 @@ export function getDefaultRules(): Rules {
 					);
 				}
 			}
+		},
+		'format/no-trailing-comma-in-function'({ typescript: ts, sourceFile, reportWarning }) {
+			const { text } = sourceFile;
+			ts.forEachChild(sourceFile, function visit(node) {
+				if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node)) {
+					const parameters = node.parameters;
+					if (parameters.length > 0) {
+						const lastParameter = parameters[parameters.length - 1];
+						const nextCharIndex = lastParameter.end;
+						if (text[nextCharIndex] === ',') {
+							reportWarning(
+								`The last parameter of a function should not have a trailing comma.`,
+								lastParameter.getStart(sourceFile),
+								lastParameter.getEnd()
+							).withFix(
+								'Remove trailing comma',
+								() => [{
+									fileName: sourceFile.fileName,
+									textChanges: [{
+										span: { start: nextCharIndex, length: 1 },
+										newText: ''
+									}]
+								}]
+							);
+						}
+					}
+				}
+				ts.forEachChild(node, visit);
+			});
+		},
+		'format/no-trailing-comma-in-function-call'({ typescript: ts, sourceFile, reportWarning }) {
+			const { text } = sourceFile;
+			ts.forEachChild(sourceFile, function visit(node) {
+				if (ts.isCallExpression(node)) {
+					if (node.arguments.length > 0) {
+						const lastArgument = node.arguments[node.arguments.length - 1];
+						const nextCharIndex = lastArgument.end;
+						if (text[nextCharIndex] === ',') {
+							reportWarning(
+								`The last argument of a function call should not have a trailing comma.`,
+								lastArgument.getStart(sourceFile),
+								lastArgument.getEnd()
+							).withFix(
+								'Remove trailing comma',
+								() => [{
+									fileName: sourceFile.fileName,
+									textChanges: [{
+										span: { start: nextCharIndex, length: 1 },
+										newText: ''
+									}]
+								}]
+							);
+						}
+					}
+				}
+				ts.forEachChild(node, visit);
+			});
+		},
+		'missing-dependency'({ typescript: ts, sourceFile, reportError, languageServiceHost }) {
+			const { noEmit } = languageServiceHost.getCompilationSettings();
+			if (noEmit) {
+				return;
+			}
+			const packageJsonPath = ts.findConfigFile(sourceFile.fileName, ts.sys.fileExists, 'package.json');
+			if (!packageJsonPath) {
+				return;
+			}
+			const packageJson = JSON.parse(ts.sys.readFile(packageJsonPath) ?? '');
+			const parentPackageJsonPath = ts.findConfigFile(path.dirname(path.dirname(packageJsonPath)), ts.sys.fileExists, 'package.json');
+			const parentPackageJson = !!parentPackageJsonPath && parentPackageJsonPath !== packageJsonPath
+				? JSON.parse(ts.sys.readFile(parentPackageJsonPath) ?? '')
+				: {};
+			ts.forEachChild(sourceFile, function visit(node) {
+				if (
+					ts.isImportDeclaration(node)
+					&& !node.importClause?.isTypeOnly
+					&& ts.isStringLiteral(node.moduleSpecifier)
+					&& !node.moduleSpecifier.text.startsWith('./')
+					&& !node.moduleSpecifier.text.startsWith('../')
+				) {
+					let moduleName = node.moduleSpecifier.text.split('/')[0];
+					if (moduleName.startsWith('@')) {
+						moduleName += '/' + node.moduleSpecifier.text.split('/')[1];
+					}
+					if (
+						(
+							packageJson.devDependencies?.[moduleName]
+							|| parentPackageJson.dependencies?.[moduleName]
+							|| parentPackageJson.devDependencies?.[moduleName]
+							|| parentPackageJson.peerDependencies?.[moduleName]
+						)
+						&& !packageJson.dependencies?.[moduleName]
+						&& !packageJson.peerDependencies?.[moduleName]
+					) {
+						reportError(
+							`Module '${moduleName}' should be in the dependencies.`,
+							node.getStart(sourceFile),
+							node.getEnd()
+						);
+					}
+				}
+				ts.forEachChild(node, visit);
+			});
 		},
 		/**
 		 * TODO: fix the case
@@ -357,63 +414,6 @@ export function getDefaultRules(): Rules {
 								],
 							}]
 						);
-					}
-				}
-				ts.forEachChild(node, visit);
-			});
-		},
-		'no-trailing-comma-in-function'({ typescript: ts, sourceFile, reportWarning }) {
-			const { text } = sourceFile;
-			ts.forEachChild(sourceFile, function visit(node) {
-				if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node)) {
-					const parameters = node.parameters;
-					if (parameters.length > 0) {
-						const lastParameter = parameters[parameters.length - 1];
-						const nextCharIndex = lastParameter.end;
-						if (text[nextCharIndex] === ',') {
-							reportWarning(
-								`The last parameter of a function should not have a trailing comma.`,
-								lastParameter.getStart(sourceFile),
-								lastParameter.getEnd()
-							).withFix(
-								'Remove trailing comma',
-								() => [{
-									fileName: sourceFile.fileName,
-									textChanges: [{
-										span: { start: nextCharIndex, length: 1 },
-										newText: ''
-									}]
-								}]
-							);
-						}
-					}
-				}
-				ts.forEachChild(node, visit);
-			});
-		},
-		'no-trailing-comma-in-function-call'({ typescript: ts, sourceFile, reportWarning }) {
-			const { text } = sourceFile;
-			ts.forEachChild(sourceFile, function visit(node) {
-				if (ts.isCallExpression(node)) {
-					if (node.arguments.length > 0) {
-						const lastArgument = node.arguments[node.arguments.length - 1];
-						const nextCharIndex = lastArgument.end;
-						if (text[nextCharIndex] === ',') {
-							reportWarning(
-								`The last argument of a function call should not have a trailing comma.`,
-								lastArgument.getStart(sourceFile),
-								lastArgument.getEnd()
-							).withFix(
-								'Remove trailing comma',
-								() => [{
-									fileName: sourceFile.fileName,
-									textChanges: [{
-										span: { start: nextCharIndex, length: 1 },
-										newText: ''
-									}]
-								}]
-							);
-						}
 					}
 				}
 				ts.forEachChild(node, visit);
