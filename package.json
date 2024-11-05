@@ -16,7 +16,6 @@
 		"@lerna-lite/cli": "latest",
 		"@lerna-lite/publish": "latest",
 		"@tsslint/cli": "latest",
-		"@tsslint/config": "latest",
 		"typescript": "latest",
 		"vite": "latest",
 		"vitest": "latest"
