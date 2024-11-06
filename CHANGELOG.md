@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.9](https://github.com/volarjs/volar.js/compare/v2.4.8...v2.4.9) (2024-11-07)
+
+### Bug Fixes
+
+- **typescript:** avoid crash when converting relatedInformation from overly large files
+
 ## [2.4.8](https://github.com/volarjs/volar.js/compare/v2.4.7...v2.4.8) (2024-10-26)
 
 ### Bug Fixes
