@@ -41,18 +41,20 @@ export function createLanguageServicePlugin(
 						],
 						new FileMap(ts.sys.useCaseSensitiveFileNames),
 						fileName => {
-							let snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
-							if (!snapshot) {
-								// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
-								info.project.getScriptVersion(fileName);
-								snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
-							}
-							if (snapshot) {
-								language.scripts.set(fileName, snapshot);
-							}
-							else {
-								language.scripts.delete(fileName);
-							}
+							try { // getSnapshot could be crashed if the file is too large
+								let snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+								if (!snapshot) {
+									// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
+									info.project.getScriptVersion(fileName);
+									snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+								}
+								if (snapshot) {
+									language.scripts.set(fileName, snapshot);
+								}
+								else {
+									language.scripts.delete(fileName);
+								}
+							} catch { }
 						}
 					);
 
