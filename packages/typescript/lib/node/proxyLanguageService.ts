@@ -485,7 +485,7 @@ function getApplicableRefactors(language: Language<string>, getApplicableRefacto
 	};
 }
 function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts.LanguageService['getEditsForRefactor']): ts.LanguageService['getEditsForRefactor'] {
-	return (filePath, formatOptions, positionOrRange, refactorName, actionName, preferences) => {
+	return (filePath, formatOptions, positionOrRange, refactorName, actionName, preferences, interactiveRefactorArguments) => {
 		let edits: ts.RefactorEditInfo | undefined;
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -496,17 +496,17 @@ function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts
 			if (typeof positionOrRange === 'number') {
 				const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, positionOrRange, isCodeActionsEnabled);
 				if (generatePosition !== undefined) {
-					edits = getEditsForRefactor(targetScript.id, formatOptions, generatePosition, refactorName, actionName, preferences);
+					edits = getEditsForRefactor(targetScript.id, formatOptions, generatePosition, refactorName, actionName, preferences, interactiveRefactorArguments);
 				}
 			}
 			else {
 				for (const [generatedStart, generatedEnd] of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange.pos, positionOrRange.end, isCodeActionsEnabled)) {
-					edits = getEditsForRefactor(targetScript.id, formatOptions, { pos: generatedStart, end: generatedEnd }, refactorName, actionName, preferences);
+					edits = getEditsForRefactor(targetScript.id, formatOptions, { pos: generatedStart, end: generatedEnd }, refactorName, actionName, preferences, interactiveRefactorArguments);
 				}
 			}
 		}
 		else {
-			edits = getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences);
+			edits = getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences, interactiveRefactorArguments);
 		}
 		if (edits) {
 			edits.edits = transformFileTextChanges(language, edits.edits, false, isCodeActionsEnabled);
