@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.10](https://github.com/volarjs/volar.js/compare/v2.4.9...v2.4.10) (2024-11-08)
+
+### Bug Fixes
+
+- **typescript:** fix interactive refactors ([#244](https://github.com/volarjs/volar.js/issues/244)) - Thanks to @andrewbranch!
+
 ## [2.4.9](https://github.com/volarjs/volar.js/compare/v2.4.8...v2.4.9) (2024-11-07)
 
 ### Bug Fixes
