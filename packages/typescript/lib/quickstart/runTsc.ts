@@ -12,7 +12,7 @@ export function runTsc(
 	options: string[] | {
 		extraSupportedExtensions: string[];
 		extraExtensionsToRemove: string[];
-		proxyTypescript: boolean;
+		proxyTypescript?: boolean;
 	},
 	_getLanguagePlugins: typeof getLanguagePlugins
 ) {
@@ -27,7 +27,7 @@ export function runTsc(
 
 			let extraSupportedExtensions: string[];
 			let extraExtensionsToRemove: string[];
-			let proxyTypescript!: boolean;
+			let proxyTypescript: boolean | undefined;
 			if (Array.isArray(options)) {
 				extraSupportedExtensions = options;
 				extraExtensionsToRemove = [];
