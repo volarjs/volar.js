@@ -34,9 +34,6 @@ export function createLanguageServicePlugin(
 						.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 						.flat();
 					projectExternalFileExtensions.set(info.project, extensions);
-					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
-					const getScriptVersion = info.languageServiceHost.getScriptVersion.bind(info.languageServiceHost);
-					const syncedScriptVersions = new FileMap<string>(ts.sys.useCaseSensitiveFileNames);
 					const language = createLanguage<string>(
 						[
 							...languagePlugins,
@@ -44,19 +41,20 @@ export function createLanguageServicePlugin(
 						],
 						new FileMap(ts.sys.useCaseSensitiveFileNames),
 						fileName => {
-							const version = getScriptVersion(fileName);
-							if (syncedScriptVersions.get(fileName) === version) {
-								return;
-							}
-							syncedScriptVersions.set(fileName, version);
-
-							const snapshot = getScriptSnapshot(fileName);
-							if (snapshot) {
-								language.scripts.set(fileName, snapshot);
-							}
-							else {
-								language.scripts.delete(fileName);
-							}
+							try { // getSnapshot could be crashed if the file is too large
+								let snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+								if (!snapshot) {
+									// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
+									info.project.getScriptVersion(fileName);
+									snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+								}
+								if (snapshot) {
+									language.scripts.set(fileName, snapshot);
+								}
+								else {
+									language.scripts.delete(fileName);
+								}
+							} catch { }
 						}
 					);
 

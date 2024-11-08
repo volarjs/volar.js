@@ -1,7 +1,7 @@
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { Range, TextDocument } from 'vscode-languageserver-textdocument';
-import { combineChangeRanges } from './combine';
+import { combineChangeRanges } from './combineChangeRanges';
 
 export class SnapshotDocument implements TextDocument {
 
@@ -57,16 +57,21 @@ export class SnapshotDocument implements TextDocument {
 	 */
 	update(contentChanges: vscode.TextDocumentContentChangeEvent[], version: number) {
 		if (contentChanges.every(change => 'range' in change)) {
-			const { minStart, oldLength, lengthDiff } = this.calculateChangeRange(contentChanges);
-			TextDocument.update(this.document, contentChanges, version);
+			let changeRanges: ts.TextChangeRange[] = [];
+			for (const contentChange of contentChanges) {
+				if (!('range' in contentChange)) {
+					continue;
+				}
+				const start = this.offsetAt(contentChange.range.start);
+				const length = contentChange.rangeLength ?? this.offsetAt(contentChange.range.end) - start;
+				changeRanges.push({
+					span: { start, length },
+					newLength: contentChange.text.length
+				});
+				TextDocument.update(this.document, [contentChange], version);
+			}
 			this.snapshots.push({
-				changeRange: {
-					span: {
-						start: minStart,
-						length: oldLength,
-					},
-					newLength: oldLength + lengthDiff,
-				},
+				changeRange: combineChangeRanges(...changeRanges),
 				version,
 				ref: undefined,
 			});
@@ -127,30 +132,6 @@ export class SnapshotDocument implements TextDocument {
 				ref: undefined,
 			}
 		];
-	}
-
-	/**
-	 * Calculate the change range from the given content changes.
-	 */
-	private calculateChangeRange(contentChanges: vscode.TextDocumentContentChangeEvent[]) {
-		let lengthDiff = 0;
-		const starts: number[] = [];
-		const ends: number[] = [];
-		for (const contentChange of contentChanges) {
-			if (!('range' in contentChange)) {
-				continue;
-			}
-			const start = this.offsetAt(contentChange.range.start);
-			const length = contentChange.rangeLength ?? this.offsetAt(contentChange.range.end) - start;
-			const end = start + length;
-			starts.push(start);
-			ends.push(end);
-			lengthDiff += contentChange.text.length - length;
-		}
-		const minStart = Math.min(...starts);
-		const maxEnd = Math.max(...ends);
-		const oldLength = maxEnd - minStart;
-		return { minStart, oldLength, lengthDiff };
 	}
 
 	private clearUnreferencedVersions() {

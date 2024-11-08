@@ -48,6 +48,9 @@ interface TypeScriptGenericOptions {
  */
 interface TypeScriptNonTSPluginOptions {
 	getExtraServiceScripts?(fileName: string, root: VirtualCode): TypeScriptExtraServiceScript[];
+	/**
+	 * @deprecated Remove in 2.5.0
+	 */
 	resolveLanguageServiceHost?(host: ts.LanguageServiceHost): ts.LanguageServiceHost;
 }
 

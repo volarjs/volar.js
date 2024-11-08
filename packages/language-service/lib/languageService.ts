@@ -4,7 +4,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import * as autoInsert from './features/provideAutoInsertSnippet';
-import * as callHierarchy from './features/provideCallHierarchyItems';
+import * as hierarchy from './features/provideCallHierarchyItems';
 import * as codeActions from './features/provideCodeActions';
 import * as codeLens from './features/provideCodeLenses';
 import * as colorPresentations from './features/provideColorPresentations';
@@ -23,6 +23,8 @@ import * as fileRename from './features/provideFileRenameEdits';
 import * as foldingRanges from './features/provideFoldingRanges';
 import * as hover from './features/provideHover';
 import * as inlayHints from './features/provideInlayHints';
+import * as moniker from './features/provideMoniker';
+import * as inlineValue from './features/provideInlineValue';
 import * as linkedEditing from './features/provideLinkedEditingRanges';
 import * as references from './features/provideReferences';
 import * as rename from './features/provideRenameEdits';
@@ -218,6 +220,7 @@ function createLanguageServiceBase(
 		getWorkspaceDiagnostics: workspaceDiagnostics.register(context),
 		getReferences: references.register(context),
 		getFileReferences: fileReferences.register(context),
+		getDeclaration: definition.register(context, 'provideDeclaration', isDefinitionEnabled),
 		getDefinition: definition.register(context, 'provideDefinition', isDefinitionEnabled),
 		getTypeDefinition: definition.register(context, 'provideTypeDefinition', isTypeDefinitionEnabled),
 		getImplementations: definition.register(context, 'provideImplementation', isImplementationEnabled),
@@ -236,6 +239,8 @@ function createLanguageServiceBase(
 		getAutoInsertSnippet: autoInsert.register(context),
 		getDocumentDropEdits: documentDrop.register(context),
 		getInlayHints: inlayHints.register(context),
+		getMoniker: moniker.register(context),
+		getInlineValue: inlineValue.register(context),
 
 		resolveCodeAction: codeActionResolve.register(context),
 		resolveCompletionItem: completionResolve.register(context),
@@ -244,7 +249,7 @@ function createLanguageServiceBase(
 		resolveInlayHint: inlayHintResolve.register(context),
 		resolveWorkspaceSymbol: workspaceSymbolResolve.register(context),
 
-		...callHierarchy.register(context),
+		...hierarchy.register(context),
 
 		dispose: () => context.plugins.forEach(plugin => plugin[1].dispose?.()),
 		context,

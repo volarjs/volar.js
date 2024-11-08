@@ -29,11 +29,13 @@ export function createUriMap<T>(caseSensitive = false): Map<URI, T> {
 			for (const normalizedUri of map.keys()) {
 				yield normalizedUriToRawUri.get(normalizedUri)!;
 			}
+			return undefined;
 		},
 		*entries() {
 			for (const [normalizedUri, item] of map.entries()) {
 				yield [normalizedUriToRawUri.get(normalizedUri)!, item] as const;
 			}
+			return undefined;
 		},
 		forEach(callbackfn, thisArg) {
 			for (const [uri, item] of this.entries()) {

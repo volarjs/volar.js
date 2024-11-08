@@ -18,7 +18,7 @@ The returned server handle provides several methods to interact with the languag
 
 - `initialize(rootUri: string, initializationOptions: InitializationOptions)`: Initializes the language server.
 - `openTextDocument(fileName: string, languageId: string)`: Opens a text document.
-- `openUntitledDocument(content: string, languageId: string)`: Opens an untitled text document.
+- `openUntitledDocument(languageId: string, content: string)`: Opens an untitled text document.
 - `closeTextDocument(uri: string)`: Closes a text document.
 - Various `send*Request` methods: Send language-related requests to the server.
 

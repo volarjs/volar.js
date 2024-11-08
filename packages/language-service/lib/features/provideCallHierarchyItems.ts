@@ -1,4 +1,4 @@
-import { isCallHierarchyEnabled } from '@volar/language-core';
+import { isCallHierarchyEnabled, isTypeHierarchyEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -17,8 +17,11 @@ export function register(context: LanguageServiceContext) {
 
 	return {
 
-		getCallHierarchyItems(uri: URI, position: vscode.Position, token = NoneCancellationToken) {
-
+		getCallHierarchyItems(
+			uri: URI,
+			position: vscode.Position,
+			token = NoneCancellationToken
+		) {
 			return languageFeatureWorker(
 				context,
 				uri,
@@ -46,7 +49,46 @@ export function register(context: LanguageServiceContext) {
 						return data;
 					}
 					return data
-						.map(item => transformCallHierarchyItem(item, [])?.[0])
+						.map(item => transformHierarchyItem(item, [])?.[0])
+						.filter(item => !!item);
+				},
+				arr => dedupe.withLocations(arr.flat())
+			);
+		},
+
+		getTypeHierarchyItems(
+			uri: URI,
+			position: vscode.Position,
+			token = NoneCancellationToken
+		) {
+			return languageFeatureWorker(
+				context,
+				uri,
+				() => position,
+				docs => getGeneratedPositions(docs, position, isTypeHierarchyEnabled),
+				async (plugin, document, position, map) => {
+					if (token.isCancellationRequested) {
+						return;
+					}
+					const items = await plugin[1].provideTypeHierarchyItems?.(document, position, token);
+					items?.forEach(item => {
+						item.data = {
+							uri: uri.toString(),
+							original: {
+								data: item.data,
+							},
+							pluginIndex: context.plugins.indexOf(plugin),
+							embeddedDocumentUri: map?.[1].uri,
+						} satisfies PluginCallHierarchyData;
+					});
+					return items;
+				},
+				(data, map) => {
+					if (!map) {
+						return data;
+					}
+					return data
+						.map(item => transformHierarchyItem(item, [])?.[0])
 						.filter(item => !!item);
 				},
 				arr => dedupe.withLocations(arr.flat())
@@ -78,7 +120,7 @@ export function register(context: LanguageServiceContext) {
 
 						for (const _call of _calls) {
 
-							const calls = transformCallHierarchyItem(_call.from, _call.fromRanges);
+							const calls = transformHierarchyItem(_call.from, _call.fromRanges);
 
 							if (!calls) {
 								continue;
@@ -97,7 +139,7 @@ export function register(context: LanguageServiceContext) {
 
 					for (const _call of _calls) {
 
-						const calls = transformCallHierarchyItem(_call.from, _call.fromRanges);
+						const calls = transformHierarchyItem(_call.from, _call.fromRanges);
 
 						if (!calls) {
 							continue;
@@ -139,7 +181,7 @@ export function register(context: LanguageServiceContext) {
 
 						for (const call of _calls) {
 
-							const calls = transformCallHierarchyItem(call.to, call.fromRanges);
+							const calls = transformHierarchyItem(call.to, call.fromRanges);
 
 							if (!calls) {
 								continue;
@@ -158,7 +200,7 @@ export function register(context: LanguageServiceContext) {
 
 					for (const call of _calls) {
 
-						const calls = transformCallHierarchyItem(call.to, call.fromRanges);
+						const calls = transformHierarchyItem(call.to, call.fromRanges);
 
 						if (!calls) {
 							continue;
@@ -174,9 +216,85 @@ export function register(context: LanguageServiceContext) {
 
 			return dedupe.withCallHierarchyOutgoingCalls(items);
 		},
+
+		async getTypeHierarchySupertypes(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
+
+			const data: PluginCallHierarchyData | undefined = item.data;
+
+			if (data) {
+
+				const plugin = context.plugins[data.pluginIndex];
+
+				if (!plugin[1].provideTypeHierarchySupertypes) {
+					return [];
+				}
+
+				Object.assign(item, data.original);
+
+				if (data.embeddedDocumentUri) {
+
+					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(URI.parse(data.embeddedDocumentUri));
+
+					if (isEmbeddedContent) {
+
+						const items = await plugin[1].provideTypeHierarchySupertypes(item, token);
+
+						return items
+							.map(item => transformHierarchyItem(item, [])?.[0])
+							.filter(item => !!item);
+					}
+				}
+				else {
+
+					const items = await plugin[1].provideTypeHierarchySupertypes(item, token);
+
+					return items
+						.map(item => transformHierarchyItem(item, [])?.[0])
+						.filter(item => !!item);
+				}
+			}
+		},
+
+		async getTypeHierarchySubtypes(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
+
+			const data: PluginCallHierarchyData | undefined = item.data;
+
+			if (data) {
+
+				const plugin = context.plugins[data.pluginIndex];
+
+				if (!plugin[1].provideTypeHierarchySubtypes) {
+					return [];
+				}
+
+				Object.assign(item, data.original);
+
+				if (data.embeddedDocumentUri) {
+
+					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(URI.parse(data.embeddedDocumentUri));
+
+					if (isEmbeddedContent) {
+
+						const items = await plugin[1].provideTypeHierarchySubtypes(item, token);
+
+						return items
+							.map(item => transformHierarchyItem(item, [])?.[0])
+							.filter(item => !!item);
+					}
+				}
+				else {
+
+					const items = await plugin[1].provideTypeHierarchySubtypes(item, token);
+
+					return items
+						.map(item => transformHierarchyItem(item, [])?.[0])
+						.filter(item => !!item);
+				}
+			}
+		},
 	};
 
-	function transformCallHierarchyItem(tsItem: vscode.CallHierarchyItem, tsRanges: vscode.Range[]): [vscode.CallHierarchyItem, vscode.Range[]] | undefined {
+	function transformHierarchyItem<T extends vscode.CallHierarchyItem | vscode.TypeHierarchyItem>(tsItem: T, tsRanges: vscode.Range[]): [T, vscode.Range[]] | undefined {
 
 		const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsItem.uri));
 		const sourceScript = decoded && context.language.scripts.get(decoded[0]);
@@ -209,7 +327,7 @@ export function register(context: LanguageServiceContext) {
 			}
 
 			const vueRanges = tsRanges.map(tsRange => getSourceRange(docs, tsRange)).filter(range => !!range);
-			const vueItem: vscode.CallHierarchyItem = {
+			const vueItem: T = {
 				...tsItem,
 				name: tsItem.name === embeddedDocument.uri.substring(embeddedDocument.uri.lastIndexOf('/') + 1)
 					? sourceDocument.uri.substring(sourceDocument.uri.lastIndexOf('/') + 1)

@@ -12,6 +12,14 @@ export function isCodeLensEnabled(info: CodeInformation): boolean {
 	return !!info.semantic;
 }
 
+export function isMonikerEnabled(info: CodeInformation): boolean {
+	return !!info.semantic;
+}
+
+export function isInlineValueEnabled(info: CodeInformation): boolean {
+	return !!info.semantic;
+}
+
 export function isSemanticTokensEnabled(info: CodeInformation): boolean {
 	return typeof info.semantic === 'object'
 		? info.semantic.shouldHighlight?.() ?? true
@@ -19,6 +27,10 @@ export function isSemanticTokensEnabled(info: CodeInformation): boolean {
 }
 
 export function isCallHierarchyEnabled(info: CodeInformation): boolean {
+	return !!info.navigation;
+}
+
+export function isTypeHierarchyEnabled(info: CodeInformation): boolean {
 	return !!info.navigation;
 }
 
@@ -98,9 +110,9 @@ export function isSignatureHelpEnabled(info: CodeInformation): boolean {
 
 // should...
 
-export function shouldReportDiagnostics(info: CodeInformation): boolean {
+export function shouldReportDiagnostics(info: CodeInformation, source: string | undefined, code: string | number | undefined): boolean {
 	return typeof info.verification === 'object'
-		? info.verification.shouldReport?.() ?? true
+		? info.verification.shouldReport?.(source, code) ?? true
 		: !!info.verification;
 }
 

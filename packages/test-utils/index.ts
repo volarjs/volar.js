@@ -24,6 +24,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 		childProcess.stdout!,
 		childProcess.stdin!
 	);
+	const documentVersions = new Map<string, number>();
 	const openedDocuments = new Map<string, TextDocument>();
 	const settings: any = {};
 
@@ -56,7 +57,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 		process: childProcess,
 		connection,
 		async initialize(
-			rootUri: string,
+			rootUri: string | _.WorkspaceFolder[],
 			initializationOptions: _._InitializeParams['initializationOptions'],
 			capabilities: _.ClientCapabilities = {},
 			locale?: string
@@ -65,16 +66,14 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.InitializeRequest.type,
 				{
 					processId: childProcess.pid ?? null,
-					rootUri,
+					rootUri: typeof rootUri === 'string' ? rootUri : null,
+					workspaceFolders: Array.isArray(rootUri) ? rootUri : null,
 					initializationOptions,
 					capabilities,
 					locale,
 				} satisfies _.InitializeParams
 			);
-			await connection.sendNotification(
-				_.InitializedNotification.type,
-				{} satisfies _.InitializedParams
-			);
+			await connection.sendNotification(_.InitializedNotification.type, {} satisfies _.InitializedParams);
 			running = true;
 			return result;
 		},
@@ -86,7 +85,13 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 		async openTextDocument(fileName: string, languageId: string) {
 			const uri = URI.file(fileName).toString();
 			if (!openedDocuments.has(uri)) {
-				const document = TextDocument.create(uri, languageId, 0, fs.readFileSync(fileName, 'utf-8'));
+				const document = TextDocument.create(
+					uri,
+					languageId,
+					(documentVersions.get(uri) ?? 0) + 1,
+					fs.readFileSync(fileName, 'utf-8')
+				);
+				documentVersions.set(uri, document.version);
 				openedDocuments.set(uri, document);
 				await connection.sendNotification(
 					_.DidOpenTextDocumentNotification.type,
@@ -102,9 +107,15 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			}
 			return openedDocuments.get(uri)!;
 		},
-		async openUntitledDocument(content: string, languageId: string) {
+		async openUntitledDocument(languageId: string, content: string) {
 			const uri = URI.from({ scheme: 'untitled', path: `Untitled-${untitledCounter++}` }).toString();
-			const document = TextDocument.create(uri, languageId, 0, content);
+			const document = TextDocument.create(
+				uri,
+				languageId,
+				(documentVersions.get(uri) ?? 0) + 1,
+				content
+			);
+			documentVersions.set(uri, document.version);
 			openedDocuments.set(uri, document);
 			await connection.sendNotification(
 				_.DidOpenTextDocumentNotification.type,
@@ -124,7 +135,13 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			if (oldDocument) {
 				await this.closeTextDocument(uri);
 			}
-			const document = TextDocument.create(uri, languageId, (oldDocument?.version ?? 0) + 1, content);
+			const document = TextDocument.create(
+				uri,
+				languageId,
+				(documentVersions.get(uri) ?? 0) + 1,
+				content
+			);
+			documentVersions.set(uri, document.version);
 			openedDocuments.set(uri, document);
 			await connection.sendNotification(
 				_.DidOpenTextDocumentNotification.type,
@@ -154,6 +171,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			assert(document);
 			const newText = TextDocument.applyEdits(document, edits);
 			document = TextDocument.create(uri, document.languageId, document.version + 1, newText);
+			documentVersions.set(uri, document.version);
 			openedDocuments.set(uri, document);
 			await connection.sendNotification(
 				_.DidChangeTextDocumentNotification.type,
@@ -389,6 +407,21 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			return connection.sendRequest(
 				_.DocumentLinkResolveRequest.type,
 				link satisfies _.DocumentLink
+			);
+		},
+		sendInlayHintRequest(uri: string, range: _.Range) {
+			return connection.sendRequest(
+				_.InlayHintRequest.type,
+				{
+					textDocument: { uri },
+					range,
+				} satisfies _.InlayHintParams
+			);
+		},
+		sendInlayHintResolveRequest(hint: _.InlayHint) {
+			return connection.sendRequest(
+				_.InlayHintResolveRequest.type,
+				hint satisfies _.InlayHint
 			);
 		},
 	};

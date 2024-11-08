@@ -12,11 +12,11 @@ export function register(context: LanguageServiceContext) {
 	return async (item: vscode.CodeLens, token = NoneCancellationToken) => {
 
 		const data: ServiceCodeLensData | ServiceReferencesCodeLensData | undefined = item.data;
-
 		if (data?.kind === 'normal') {
 
 			const plugin = context.plugins[data.pluginIndex];
 			if (!plugin[1].resolveCodeLens) {
+				delete item.data;
 				return item;
 			}
 
@@ -25,14 +25,14 @@ export function register(context: LanguageServiceContext) {
 
 			// item.range already transformed in codeLens request
 		}
-
-		if (data?.kind === 'references') {
+		else if (data?.kind === 'references') {
 
 			const references = await findReferences(URI.parse(data.sourceFileUri), item.range.start, { includeDeclaration: false }, token) ?? [];
 
 			item.command = context.commands.showReferences.create(data.sourceFileUri, item.range.start, references);
 		}
 
+		delete item.data;
 		return item;
 	};
 }

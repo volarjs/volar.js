@@ -7,7 +7,7 @@ import { arrayItemsEqual, decoratedLanguageServiceHosts, decoratedLanguageServic
 
 export function createAsyncLanguageServicePlugin(
 	extensions: string[],
-	scriptKind: ts.ScriptKind,
+	getScriptKindForExtraExtensions: ts.ScriptKind | ((fileName: string) => ts.ScriptKind),
 	create: (
 		ts: typeof import('typescript'),
 		info: ts.server.PluginCreateInfo
@@ -50,7 +50,14 @@ export function createAsyncLanguageServicePlugin(
 					if (getScriptKind) {
 						info.languageServiceHost.getScriptKind = fileName => {
 							if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-								return scriptKind; // TODO: bypass upstream bug
+								// bypass upstream bug https://github.com/microsoft/TypeScript/issues/57631
+								// TODO: check if the bug is fixed in 5.5
+								if (typeof getScriptKindForExtraExtensions === 'function') {
+									return getScriptKindForExtraExtensions(fileName);
+								}
+								else {
+									return getScriptKindForExtraExtensions;
+								}
 							}
 							return getScriptKind(fileName);
 						};
@@ -68,7 +75,6 @@ export function createAsyncLanguageServicePlugin(
 					info.languageService = proxy;
 
 					create(ts, info).then(({ languagePlugins, setup }) => {
-						const syncedScriptVersions = new FileMap<string>(ts.sys.useCaseSensitiveFileNames);
 						const language = createLanguage<string>(
 							[
 								...languagePlugins,
@@ -76,21 +82,20 @@ export function createAsyncLanguageServicePlugin(
 							],
 							new FileMap(ts.sys.useCaseSensitiveFileNames),
 							fileName => {
-								const version = getScriptVersion(fileName);
-								if (syncedScriptVersions.get(fileName) === version) {
-									return;
-								}
-								syncedScriptVersions.set(fileName, version);
-
-								const snapshot = getScriptSnapshot(fileName);
-								if (snapshot) {
-									language.scripts.set(
-										fileName,
-										snapshot
-									);
-								} else {
-									language.scripts.delete(fileName);
-								}
+								try { // getSnapshot could be crashed if the file is too large
+									let snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+									if (!snapshot) {
+										// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
+										info.project.getScriptVersion(fileName);
+										snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+									}
+									if (snapshot) {
+										language.scripts.set(fileName, snapshot);
+									}
+									else {
+										language.scripts.delete(fileName);
+									}
+								} catch { }
 							}
 						);
 

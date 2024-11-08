@@ -13,8 +13,16 @@ export interface TypeScriptProjectHost extends Pick<
 	| 'getProjectReferences'
 	| 'getScriptFileNames'
 	| 'getProjectVersion'
-	| 'getScriptSnapshot'
 > { }
+
+declare module 'typescript' {
+	interface LanguageServiceHost {
+		/**
+		 * @internal
+		 */
+		getModuleResolutionCache?(): ts.ModuleResolutionCache;
+	}
+}
 
 export function createLanguageServiceHost<T>(
 	ts: typeof import('typescript'),
@@ -189,6 +197,8 @@ export function createLanguageServiceHost<T>(
 				return resolveModuleName(moduleName, containingFile, options, moduleCache, redirectedReference).resolvedModule;
 			});
 		};
+
+		languageServiceHost.getModuleResolutionCache = () => moduleCache;
 	}
 
 	return {
@@ -312,16 +322,13 @@ export function createLanguageServiceHost<T>(
 			}
 		}
 
-		const isOpenedFile = !!projectHost.getScriptSnapshot(fileName);
+		const openedFile = language.scripts.get(asScriptId(fileName), false);
 
-		if (isOpenedFile) {
-			const sourceScript = language.scripts.get(asScriptId(fileName));
-			if (sourceScript && !sourceScript.generated) {
-				if (!version.map.has(sourceScript.snapshot)) {
-					version.map.set(sourceScript.snapshot, version.lastVersion++);
-				}
-				return version.map.get(sourceScript.snapshot)!.toString();
+		if (openedFile && !openedFile.generated) {
+			if (!version.map.has(openedFile.snapshot)) {
+				version.map.set(openedFile.snapshot, version.lastVersion++);
 			}
+			return version.map.get(openedFile.snapshot)!.toString();
 		}
 
 		if (sys.fileExists(fileName)) {

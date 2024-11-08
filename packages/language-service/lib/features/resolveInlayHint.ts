@@ -11,6 +11,7 @@ export function register(context: LanguageServiceContext) {
 		if (data) {
 			const plugin = context.plugins[data.pluginIndex];
 			if (!plugin[1].resolveInlayHint) {
+				delete item.data;
 				return item;
 			}
 
@@ -18,6 +19,7 @@ export function register(context: LanguageServiceContext) {
 			item = await plugin[1].resolveInlayHint(item, token);
 		}
 
+		delete item.data;
 		return item;
 	};
 }

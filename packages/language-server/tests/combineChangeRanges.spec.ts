@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { combineChangeRanges } from '../lib/combine';
+import { combineChangeRanges } from '../lib/utils/combineChangeRanges';
 
 describe(`combine change ranges`, () => {
 

@@ -62,6 +62,7 @@ export function createProxyLanguageService(languageService: ts.LanguageService) 
 					case 'getDocumentHighlights': return getDocumentHighlights(language, target[p]);
 					case 'getApplicableRefactors': return getApplicableRefactors(language, target[p]);
 					case 'getEditsForRefactor': return getEditsForRefactor(language, target[p]);
+					case 'getCombinedCodeFix': return getCombinedCodeFix(language, target[p]);
 					case 'getRenameInfo': return getRenameInfo(language, target[p]);
 					case 'getCodeFixesAtPosition': return getCodeFixesAtPosition(language, target[p]);
 					case 'getEncodedSemanticClassifications': return getEncodedSemanticClassifications(language, target[p]);
@@ -79,6 +80,7 @@ export function createProxyLanguageService(languageService: ts.LanguageService) 
 					case 'getCompletionEntryDetails': return getCompletionEntryDetails(language, target[p]);
 					case 'provideInlayHints': return provideInlayHints(language, target[p]);
 					case 'getFileReferences': return getFileReferences(language, target[p]);
+					case 'getNavigateToItems': return getNavigateToItems(language, target[p]);
 				}
 			};
 		},
@@ -147,7 +149,7 @@ function getFormattingEditsForDocument(language: Language<string>, getFormatting
 			}
 			const edits = getFormattingEditsForDocument(targetScript.id, options);
 			return edits
-				.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
+				.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1])
 				.filter(edit => !!edit);
 		}
 		else {
@@ -168,7 +170,7 @@ function getFormattingEditsForRange(language: Language<string>, getFormattingEdi
 			if (generateStart !== undefined && generateEnd !== undefined) {
 				const edits = getFormattingEditsForRange(targetScript.id, generateStart, generateEnd, options);
 				return edits
-					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
+					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1])
 					.filter(edit => !!edit);
 			}
 			return [];
@@ -190,7 +192,7 @@ function getFormattingEditsAfterKeystroke(language: Language<string>, getFormatt
 			if (generatePosition !== undefined) {
 				const edits = getFormattingEditsAfterKeystroke(targetScript.id, generatePosition, key, options);
 				return edits
-					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, isFormattingEnabled)?.[1])
+					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1])
 					.filter(edit => !!edit);
 			}
 			return [];
@@ -203,7 +205,7 @@ function getFormattingEditsAfterKeystroke(language: Language<string>, getFormatt
 function getEditsForFileRename(language: Language<string>, getEditsForFileRename: ts.LanguageService['getEditsForFileRename']): ts.LanguageService['getEditsForFileRename'] {
 	return (oldFilePath, newFilePath, formatOptions, preferences) => {
 		const edits = getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences);
-		return transformFileTextChanges(language, edits, isRenameEnabled);
+		return transformFileTextChanges(language, edits, false, isRenameEnabled);
 	};
 }
 function getLinkedEditingRangeAtPosition(language: Language<string>, getLinkedEditingRangeAtPosition: ts.LanguageService['getLinkedEditingRangeAtPosition']): ts.LanguageService['getLinkedEditingRangeAtPosition'] {
@@ -220,7 +222,7 @@ function getLinkedEditingRangeAtPosition(language: Language<string>, getLinkedEd
 				if (info) {
 					return {
 						ranges: info.ranges
-							.map(span => transformTextSpan(sourceScript, language, serviceScript, span, isLinkedEditingEnabled)?.[1])
+							.map(span => transformTextSpan(sourceScript, language, serviceScript, span, false, isLinkedEditingEnabled)?.[1])
 							.filter(span => !!span),
 						wordPattern: info.wordPattern,
 					};
@@ -244,10 +246,10 @@ function prepareCallHierarchy(language: Language<string>, prepareCallHierarchy: 
 			if (generatePosition !== undefined) {
 				const item = prepareCallHierarchy(targetScript.id, generatePosition);
 				if (Array.isArray(item)) {
-					return item.map(item => transformCallHierarchyItem(language, item, isCallHierarchyEnabled));
+					return item.map(item => transformCallHierarchyItem(language, item, true, isCallHierarchyEnabled));
 				}
 				else if (item) {
-					return transformCallHierarchyItem(language, item, isCallHierarchyEnabled);
+					return transformCallHierarchyItem(language, item, true, isCallHierarchyEnabled);
 				}
 			}
 		}
@@ -275,9 +277,9 @@ function provideCallHierarchyIncomingCalls(language: Language<string>, provideCa
 		}
 		return calls
 			.map(call => {
-				const from = transformCallHierarchyItem(language, call.from, isCallHierarchyEnabled);
+				const from = transformCallHierarchyItem(language, call.from, true, isCallHierarchyEnabled);
 				const fromSpans = call.fromSpans
-					.map(span => transformSpan(language, call.from.file, span, isCallHierarchyEnabled)?.textSpan)
+					.map(span => transformSpan(language, call.from.file, span, true, isCallHierarchyEnabled)?.textSpan)
 					.filter(span => !!span);
 				return {
 					from,
@@ -305,10 +307,10 @@ function provideCallHierarchyOutgoingCalls(language: Language<string>, provideCa
 		}
 		return calls
 			.map(call => {
-				const to = transformCallHierarchyItem(language, call.to, isCallHierarchyEnabled);
+				const to = transformCallHierarchyItem(language, call.to, true, isCallHierarchyEnabled);
 				const fromSpans = call.fromSpans
 					.map(span => serviceScript
-						? transformTextSpan(sourceScript, language, serviceScript, span, isCallHierarchyEnabled)?.[1]
+						? transformTextSpan(sourceScript, language, serviceScript, span, true, isCallHierarchyEnabled)?.[1]
 						: span
 					)
 					.filter(span => !!span);
@@ -322,7 +324,7 @@ function provideCallHierarchyOutgoingCalls(language: Language<string>, provideCa
 function organizeImports(language: Language<string>, organizeImports: ts.LanguageService['organizeImports']): ts.LanguageService['organizeImports'] {
 	return (args, formatOptions, preferences) => {
 		const unresolved = organizeImports(args, formatOptions, preferences);
-		return transformFileTextChanges(language, unresolved, isCodeActionsEnabled);
+		return transformFileTextChanges(language, unresolved, false, isCodeActionsEnabled);
 	};
 }
 function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPosition: ts.LanguageService['getQuickInfoAtPosition']): ts.LanguageService['getQuickInfoAtPosition'] {
@@ -337,7 +339,7 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 			for (const [generatePosition] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isHoverEnabled)) {
 				const info = getQuickInfoAtPosition(targetScript.id, generatePosition);
 				if (info) {
-					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, isHoverEnabled)?.[1];
+					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, true, isHoverEnabled)?.[1];
 					if (textSpan) {
 						infos.push({
 							...info,
@@ -402,7 +404,7 @@ function getSignatureHelpItems(language: Language<string>, getSignatureHelpItems
 			if (generatePosition !== undefined) {
 				const result = getSignatureHelpItems(targetScript.id, generatePosition, options);
 				if (result) {
-					const applicableSpan = transformTextSpan(sourceScript, language, serviceScript, result.applicableSpan, isSignatureHelpEnabled)?.[1];
+					const applicableSpan = transformTextSpan(sourceScript, language, serviceScript, result.applicableSpan, true, isSignatureHelpEnabled)?.[1];
 					if (applicableSpan) {
 						return {
 							...result,
@@ -441,11 +443,11 @@ function getDocumentHighlights(language: Language<string>, getDocumentHighlights
 					...highlights,
 					highlightSpans: highlights.highlightSpans
 						.map(span => {
-							const { textSpan } = transformSpan(language, span.fileName ?? highlights.fileName, span.textSpan, isHighlightEnabled) ?? {};
+							const { textSpan } = transformSpan(language, span.fileName ?? highlights.fileName, span.textSpan, false, isHighlightEnabled) ?? {};
 							if (textSpan) {
 								return {
 									...span,
-									contextSpan: transformSpan(language, span.fileName ?? highlights.fileName, span.contextSpan, isHighlightEnabled)?.textSpan,
+									contextSpan: transformSpan(language, span.fileName ?? highlights.fileName, span.contextSpan, false, isHighlightEnabled)?.textSpan,
 									textSpan,
 								};
 							}
@@ -483,7 +485,7 @@ function getApplicableRefactors(language: Language<string>, getApplicableRefacto
 	};
 }
 function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts.LanguageService['getEditsForRefactor']): ts.LanguageService['getEditsForRefactor'] {
-	return (filePath, formatOptions, positionOrRange, refactorName, actionName, preferences) => {
+	return (filePath, formatOptions, positionOrRange, refactorName, actionName, preferences, interactiveRefactorArguments) => {
 		let edits: ts.RefactorEditInfo | undefined;
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -494,22 +496,29 @@ function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts
 			if (typeof positionOrRange === 'number') {
 				const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, positionOrRange, isCodeActionsEnabled);
 				if (generatePosition !== undefined) {
-					edits = getEditsForRefactor(targetScript.id, formatOptions, generatePosition, refactorName, actionName, preferences);
+					edits = getEditsForRefactor(targetScript.id, formatOptions, generatePosition, refactorName, actionName, preferences, interactiveRefactorArguments);
 				}
 			}
 			else {
 				for (const [generatedStart, generatedEnd] of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange.pos, positionOrRange.end, isCodeActionsEnabled)) {
-					edits = getEditsForRefactor(targetScript.id, formatOptions, { pos: generatedStart, end: generatedEnd }, refactorName, actionName, preferences);
+					edits = getEditsForRefactor(targetScript.id, formatOptions, { pos: generatedStart, end: generatedEnd }, refactorName, actionName, preferences, interactiveRefactorArguments);
 				}
 			}
 		}
 		else {
-			edits = getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences);
+			edits = getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences, interactiveRefactorArguments);
 		}
 		if (edits) {
-			edits.edits = transformFileTextChanges(language, edits.edits, isCodeActionsEnabled);
+			edits.edits = transformFileTextChanges(language, edits.edits, false, isCodeActionsEnabled);
 			return edits;
 		}
+	};
+}
+function getCombinedCodeFix(language: Language<string>, getCombinedCodeFix: ts.LanguageService['getCombinedCodeFix']): ts.LanguageService['getCombinedCodeFix'] {
+	return (...args) => {
+		const codeActions = getCombinedCodeFix(...args);
+		codeActions.changes = transformFileTextChanges(language, codeActions.changes, false, isCodeActionsEnabled);
+		return codeActions;
 	};
 }
 function getRenameInfo(language: Language<string>, getRenameInfo: ts.LanguageService['getRenameInfo']): ts.LanguageService['getRenameInfo'] {
@@ -527,7 +536,7 @@ function getRenameInfo(language: Language<string>, getRenameInfo: ts.LanguageSer
 			for (const [generateOffset] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isRenameEnabled)) {
 				const info = getRenameInfo(targetScript.id, generateOffset, options);
 				if (info.canRename) {
-					const span = transformTextSpan(sourceScript, language, serviceScript, info.triggerSpan, isRenameEnabled)?.[1];
+					const span = transformTextSpan(sourceScript, language, serviceScript, info.triggerSpan, false, isRenameEnabled)?.[1];
 					if (span) {
 						info.triggerSpan = span;
 						return info;
@@ -576,7 +585,7 @@ function getCodeFixesAtPosition(language: Language<string>, getCodeFixesAtPositi
 			fixes = getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences);
 		}
 		fixes = fixes.map(fix => {
-			fix.changes = transformFileTextChanges(language, fix.changes, isCodeActionsEnabled);
+			fix.changes = transformFileTextChanges(language, fix.changes, false, isCodeActionsEnabled);
 			return fix;
 		});
 		return fixes;
@@ -613,7 +622,7 @@ function getEncodedSemanticClassifications(language: Language<string>, getEncode
 			const result = getEncodedSemanticClassifications(targetScript.id, { start, length: end - start }, format);
 			const spans: number[] = [];
 			for (let i = 0; i < result.spans.length; i += 3) {
-				for (const [_, sourceStart, sourceEnd] of toSourceRanges(sourceScript, language, serviceScript, result.spans[i], result.spans[i] + result.spans[i + 1], isSemanticTokensEnabled)) {
+				for (const [_, sourceStart, sourceEnd] of toSourceRanges(sourceScript, language, serviceScript, result.spans[i], result.spans[i] + result.spans[i + 1], false, isSemanticTokensEnabled)) {
 					spans.push(
 						sourceStart,
 						sourceEnd - sourceStart,
@@ -685,14 +694,14 @@ function getDefinitionAndBoundSpan(language: Language<string>, getDefinitionAndB
 			}
 		);
 		const textSpan = unresolved
-			.map(s => transformSpan(language, fileName, s.textSpan, isDefinitionEnabled)?.textSpan)
+			.map(s => transformSpan(language, fileName, s.textSpan, true, isDefinitionEnabled)?.textSpan)
 			.filter(s => !!s)[0];
 		if (!textSpan) {
 			return;
 		}
 		const definitions = unresolved
 			.map(s => s.definitions
-				?.map(s => transformDocumentSpan(language, s, isDefinitionEnabled, s.fileName !== fileName))
+				?.map(s => transformDocumentSpan(language, s, true, isDefinitionEnabled, s.fileName !== fileName))
 				.filter(s => !!s)
 				?? []
 			)
@@ -723,11 +732,11 @@ function findReferences(language: Language<string>, findReferences: ts.LanguageS
 		const resolved: ts.ReferencedSymbol[] = unresolved
 			.flat()
 			.map(symbol => {
-				const definition = transformDocumentSpan(language, symbol.definition, isDefinitionEnabled, true)!;
+				const definition = transformDocumentSpan(language, symbol.definition, true, isDefinitionEnabled, true)!;
 				return {
 					definition,
 					references: symbol.references
-						.map(r => transformDocumentSpan(language, r, isReferencesEnabled))
+						.map(r => transformDocumentSpan(language, r, true, isReferencesEnabled))
 						.filter(r => !!r),
 				};
 			});
@@ -751,7 +760,7 @@ function getDefinitionAtPosition(language: Language<string>, getDefinitionAtPosi
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isDefinitionEnabled, s.fileName !== fileName))
+			.map(s => transformDocumentSpan(language, s, true, isDefinitionEnabled, s.fileName !== fileName))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -773,7 +782,7 @@ function getTypeDefinitionAtPosition(language: Language<string>, getTypeDefiniti
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isTypeDefinitionEnabled))
+			.map(s => transformDocumentSpan(language, s, true, isTypeDefinitionEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -795,7 +804,7 @@ function getImplementationAtPosition(language: Language<string>, getImplementati
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isImplementationEnabled))
+			.map(s => transformDocumentSpan(language, s, true, isImplementationEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -817,7 +826,7 @@ function findRenameLocations(language: Language<string>, findRenameLocations: ts
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isRenameEnabled))
+			.map(s => transformDocumentSpan(language, s, false, isRenameEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -839,7 +848,7 @@ function getReferencesAtPosition(language: Language<string>, getReferencesAtPosi
 		);
 		const resolved = unresolved
 			.flat()
-			.map(s => transformDocumentSpan(language, s, isReferencesEnabled))
+			.map(s => transformDocumentSpan(language, s, true, isReferencesEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};
@@ -852,8 +861,14 @@ function getCompletionsAtPosition(language: Language<string>, getCompletionsAtPo
 			return undefined;
 		}
 		if (serviceScript) {
-			const results: ts.CompletionInfo[] = [];
+			let mainResult: ts.CompletionInfo | undefined;
+			const additionalResults: ts.CompletionInfo[] = [];
+
 			for (const [generatedOffset, mapping] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isCompletionEnabled)) {
+				const isAdditional = typeof mapping.data.completion === 'object' && mapping.data.completion.isAdditional;
+				if (!isAdditional && mainResult?.entries.length) {
+					continue;
+				}
 				const result = getCompletionsAtPosition(targetScript.id, generatedOffset, options, formattingSettings);
 				if (!result) {
 					continue;
@@ -862,17 +877,20 @@ function getCompletionsAtPosition(language: Language<string>, getCompletionsAtPo
 					result.entries = result.entries.filter(entry => !!entry.sourceDisplay);
 				}
 				for (const entry of result.entries) {
-					entry.replacementSpan = entry.replacementSpan && transformTextSpan(sourceScript, language, serviceScript, entry.replacementSpan, isCompletionEnabled)?.[1];
+					entry.replacementSpan = entry.replacementSpan && transformTextSpan(sourceScript, language, serviceScript, entry.replacementSpan, false, isCompletionEnabled)?.[1];
 				}
 				result.optionalReplacementSpan = result.optionalReplacementSpan
-					&& transformTextSpan(sourceScript, language, serviceScript, result.optionalReplacementSpan, isCompletionEnabled)?.[1];
-				const isAdditional = typeof mapping.data.completion === 'object' && mapping.data.completion.isAdditional;
+					&& transformTextSpan(sourceScript, language, serviceScript, result.optionalReplacementSpan, false, isCompletionEnabled)?.[1];
 				if (isAdditional) {
-					results.push(result);
+					additionalResults.push(result);
 				}
 				else {
-					results.unshift(result);
+					mainResult = result;
 				}
+			}
+			const results = additionalResults;
+			if (mainResult) {
+				results.unshift(mainResult);
 			}
 			if (results.length) {
 				return {
@@ -910,7 +928,7 @@ function getCompletionEntryDetails(language: Language<string>, getCompletionEntr
 
 		if (details?.codeActions) {
 			for (const codeAction of details.codeActions) {
-				codeAction.changes = transformFileTextChanges(language, codeAction.changes, isCompletionEnabled);
+				codeAction.changes = transformFileTextChanges(language, codeAction.changes, false, isCompletionEnabled);
 			}
 		}
 
@@ -927,14 +945,29 @@ function provideInlayHints(language: Language<string>, provideInlayHints: ts.Lan
 		if (serviceScript) {
 			let start: number | undefined;
 			let end: number | undefined;
-			const map = language.maps.get(serviceScript.code, targetScript);
+			const map = language.maps.get(serviceScript.code, sourceScript);
 			for (const mapping of map.mappings) {
-				if (isInlayHintsEnabled(mapping.data) && mapping.sourceOffsets[0] >= span.start && mapping.sourceOffsets[0] <= span.start + span.length) {
-					start ??= mapping.generatedOffsets[0];
-					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1];
-					start = Math.min(start, mapping.generatedOffsets[0]);
-					end = Math.max(end, mapping.generatedOffsets[mapping.generatedOffsets.length - 1]);
+				if (!isInlayHintsEnabled(mapping.data)) {
+					continue;
 				}
+				let mappingStart = mapping.sourceOffsets[0];
+				let genStart: number | undefined;
+				let genEnd: number | undefined;
+				if (mappingStart >= span.start && mappingStart <= span.start + span.length) {
+					genStart = mapping.generatedOffsets[0];
+					genEnd = mapping.generatedOffsets[mapping.generatedOffsets.length - 1]
+						+ (mapping.generatedLengths ?? mapping.lengths)[mapping.generatedOffsets.length - 1];
+				} else if (mappingStart < span.start && span.start < mappingStart + mapping.lengths[0]
+					&& mapping.sourceOffsets.length == 1
+					&& (!mapping.generatedLengths || mapping.generatedLengths[0] === mapping.lengths[0])
+				) {
+					genStart = mapping.generatedOffsets[0] + span.start - mappingStart;
+					genEnd = Math.min(genStart + span.length, mapping.generatedOffsets[0] + mapping.lengths[0]);
+				} else {
+					continue;
+				}
+				start = Math.min(start ?? genStart, genStart);
+				end = Math.max(end ?? genEnd, genEnd);
 			}
 			if (start === undefined || end === undefined) {
 				start = 0;
@@ -966,7 +999,16 @@ function getFileReferences(language: Language<string>, getFileReferences: ts.Lan
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = getFileReferences(fileName);
 		const resolved = unresolved
-			.map(s => transformDocumentSpan(language, s, isReferencesEnabled))
+			.map(s => transformDocumentSpan(language, s, true, isReferencesEnabled))
+			.filter(s => !!s);
+		return dedupeDocumentSpans(resolved);
+	};
+}
+function getNavigateToItems(language: Language<string>, getNavigateToItems: ts.LanguageService['getNavigateToItems']): ts.LanguageService['getNavigateToItems'] {
+	return (...args) => {
+		const unresolved = getNavigateToItems(...args);
+		const resolved = unresolved
+			.map(s => transformDocumentSpan(language, s, true, isReferencesEnabled))
 			.filter(s => !!s);
 		return dedupeDocumentSpans(resolved);
 	};

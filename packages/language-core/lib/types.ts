@@ -15,7 +15,7 @@ export interface Language<T = unknown> {
 	mapperFactory: MapperFactory;
 	plugins: LanguagePlugin<T>[];
 	scripts: {
-		get(id: T): SourceScript<T> | undefined;
+		get(id: T, includeFsFiles?: boolean): SourceScript<T> | undefined;
 		set(id: T, snapshot: IScriptSnapshot, languageId?: string, plugins?: LanguagePlugin<T>[]): SourceScript<T> | undefined;
 		delete(id: T): void;
 		fromVirtualCode(virtualCode: VirtualCode): SourceScript<T>;
@@ -59,7 +59,7 @@ export interface VirtualCode {
 export interface CodeInformation {
 	/** virtual code is expected to support verification */
 	verification?: boolean | {
-		shouldReport?(): boolean;
+		shouldReport?(source: string | undefined, code: string | number | undefined): boolean;
 	};
 	/** virtual code is expected to support assisted completion */
 	completion?: boolean | {

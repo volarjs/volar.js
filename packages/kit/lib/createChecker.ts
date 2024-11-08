@@ -1,53 +1,53 @@
-import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, LanguagePlugin, NotificationHandler, LanguageServicePlugin, LanguageServiceEnvironment, createLanguageService, mergeWorkspaceEdits, createLanguage, createUriMap } from '@volar/language-service';
+import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, Language, LanguagePlugin, LanguageServiceEnvironment, LanguageServicePlugin, NotificationHandler, ProjectContext, createLanguage, createLanguageService, createUriMap, mergeWorkspaceEdits } from '@volar/language-service';
+import { TypeScriptProjectHost, createLanguageServiceHost, resolveFileLanguageId } from '@volar/typescript';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { createServiceEnvironment } from './createServiceEnvironment';
-import { asPosix, defaultCompilerOptions, asUri, asFileName } from './utils';
 import { URI } from 'vscode-uri';
-import { TypeScriptProjectHost, createLanguageServiceHost, resolveFileLanguageId } from '@volar/typescript';
+import { createServiceEnvironment } from './createServiceEnvironment';
+import { asFileName, asPosix, asUri, defaultCompilerOptions } from './utils';
 
 export function createTypeScriptChecker(
 	languagePlugins: LanguagePlugin<URI>[],
 	languageServicePlugins: LanguageServicePlugin[],
-	tsconfig: string
+	tsconfig: string,
+	includeProjectReference = false,
+	setup?: (options: {
+		language: Language;
+		project: ProjectContext;
+	}) => void
 ) {
 	const tsconfigPath = asPosix(tsconfig);
-	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, tsconfigPath, env => {
-		return createTypeScriptProjectHost(
-			env,
-			() => {
-				const parsed = ts.parseJsonSourceFileConfigFileContent(
-					ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile),
-					ts.sys,
-					path.dirname(tsconfigPath),
-					undefined,
-					tsconfigPath,
-					undefined,
-					languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat()
-				);
-				parsed.fileNames = parsed.fileNames.map(asPosix);
-				return parsed;
-			}
+	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, tsconfigPath, () => {
+		return ts.parseJsonSourceFileConfigFileContent(
+			ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile),
+			ts.sys,
+			path.dirname(tsconfigPath),
+			undefined,
+			tsconfigPath,
+			undefined,
+			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat()
 		);
-	});
+	}, includeProjectReference, setup);
 }
 
 export function createTypeScriptInferredChecker(
 	languagePlugins: LanguagePlugin<URI>[],
 	languageServicePlugins: LanguageServicePlugin[],
 	getScriptFileNames: () => string[],
-	compilerOptions = defaultCompilerOptions
+	compilerOptions = defaultCompilerOptions,
+	setup?: (options: {
+		language: Language;
+		project: ProjectContext;
+	}) => void
 ) {
-	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, undefined, env => {
-		return createTypeScriptProjectHost(
-			env,
-			() => ({
-				options: compilerOptions,
-				fileNames: getScriptFileNames().map(asPosix),
-			})
-		);
-	});
+	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, undefined, () => {
+		return {
+			options: compilerOptions,
+			fileNames: getScriptFileNames(),
+			errors: [],
+		};
+	}, false, setup);
 }
 
 const fsFileSnapshots = createUriMap<[number | undefined, ts.IScriptSnapshot | undefined]>();
@@ -56,14 +56,17 @@ function createTypeScriptCheckerWorker(
 	languagePlugins: LanguagePlugin<URI>[],
 	languageServicePlugins: LanguageServicePlugin[],
 	configFileName: string | undefined,
-	getProjectHost: (env: LanguageServiceEnvironment) => TypeScriptProjectHost
+	getCommandLine: () => ts.ParsedCommandLine,
+	includeProjectReference: boolean,
+	setup: ((options: {
+		language: Language;
+		project: ProjectContext;
+	}) => void) | undefined
 ) {
-
 	let settings = {};
 
-	const env = createServiceEnvironment(() => settings);
 	const didChangeWatchedFilesCallbacks = new Set<NotificationHandler<DidChangeWatchedFilesParams>>();
-
+	const env = createServiceEnvironment(() => settings);
 	env.onDidChangeWatchedFiles = cb => {
 		didChangeWatchedFilesCallbacks.add(cb);
 		return {
@@ -72,15 +75,16 @@ function createTypeScriptCheckerWorker(
 			},
 		};
 	};
-
 	const language = createLanguage(
 		[
 			...languagePlugins,
 			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
 		],
 		createUriMap(ts.sys.useCaseSensitiveFileNames),
-		uri => {
-			// fs files
+		(uri, includeFsFiles) => {
+			if (!includeFsFiles) {
+				return;
+			}
 			const cache = fsFileSnapshots.get(uri);
 			const fileName = asFileName(uri);
 			const modifiedTime = ts.sys.getModifiedTime?.(fileName)?.valueOf();
@@ -103,36 +107,40 @@ function createTypeScriptCheckerWorker(
 			}
 		}
 	);
-	const projectHost = getProjectHost(env);
-	const languageService = createLanguageService(
-		language,
-		languageServicePlugins,
-		env,
-		{
-			typescript: {
-				configFileName,
-				sys: ts.sys,
-				uriConverter: {
-					asFileName,
-					asUri,
-				},
-				...createLanguageServiceHost(
-					ts,
-					ts.sys,
-					language,
-					asUri,
-					projectHost
-				),
-			},
+	const [projectHost, languageService] = createTypeScriptCheckerLanguageService(env, language, languageServicePlugins, configFileName, getCommandLine, setup);
+	const projectReferenceLanguageServices = new Map<string, ReturnType<typeof createTypeScriptCheckerLanguageService>>();
+
+	if (includeProjectReference) {
+		const tsconfigs = new Set<string>();
+		const tsLs: ts.LanguageService = languageService.context.inject('typescript/languageService');
+		const projectReferences = tsLs.getProgram()?.getResolvedProjectReferences();
+		if (configFileName) {
+			tsconfigs.add(asPosix(configFileName));
 		}
-	);
+		projectReferences?.forEach(visit);
+
+		function visit(ref: ts.ResolvedProjectReference | undefined) {
+			if (ref && !tsconfigs.has(ref.sourceFile.fileName)) {
+				tsconfigs.add(ref.sourceFile.fileName);
+				const projectReferenceLanguageService = createTypeScriptCheckerLanguageService(env, language, languageServicePlugins, ref.sourceFile.fileName, () => ref.commandLine, setup);
+				projectReferenceLanguageServices.set(ref.sourceFile.fileName, projectReferenceLanguageService);
+				ref.references?.forEach(visit);
+			}
+		}
+	}
 
 	return {
 		// apis
 		check,
 		fixErrors,
 		printErrors,
-		projectHost,
+		getRootFileNames: () => {
+			const fileNames = projectHost.getScriptFileNames();
+			for (const [projectHost] of projectReferenceLanguageServices.values()) {
+				fileNames.push(...projectHost.getScriptFileNames());
+			}
+			return [...new Set(fileNames)];
+		},
 		language,
 
 		// settings
@@ -165,12 +173,14 @@ function createTypeScriptCheckerWorker(
 	function check(fileName: string) {
 		fileName = asPosix(fileName);
 		const uri = asUri(fileName);
+		const languageService = getLanguageServiceForFile(fileName);
 		return languageService.getDiagnostics(uri);
 	}
 
 	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
 		fileName = asPosix(fileName);
 		const uri = asUri(fileName);
+		const languageService = getLanguageServiceForFile(fileName);
 		const sourceScript = languageService.context.language.scripts.get(uri);
 		if (sourceScript) {
 			const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
@@ -224,6 +234,7 @@ function createTypeScriptCheckerWorker(
 	function formatErrors(fileName: string, diagnostics: Diagnostic[], rootPath: string) {
 		fileName = asPosix(fileName);
 		const uri = asUri(fileName);
+		const languageService = getLanguageServiceForFile(fileName);
 		const sourceScript = languageService.context.language.scripts.get(uri)!;
 		const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
@@ -241,23 +252,47 @@ function createTypeScriptCheckerWorker(
 		});
 		return text;
 	}
+
+	function getLanguageServiceForFile(fileName: string) {
+		if (!includeProjectReference) {
+			return languageService;
+		}
+		fileName = asPosix(fileName);
+		for (const [_1, languageService] of projectReferenceLanguageServices.values()) {
+			const tsLs: ts.LanguageService = languageService.context.inject('typescript/languageService');
+			if (tsLs.getProgram()?.getSourceFile(fileName)) {
+				return languageService;
+			}
+		}
+		return languageService;
+	}
 }
 
-function createTypeScriptProjectHost(
+function createTypeScriptCheckerLanguageService(
 	env: LanguageServiceEnvironment,
-	createParsedCommandLine: () => Pick<ts.ParsedCommandLine, 'options' | 'fileNames'>
+	language: Language<URI>,
+	languageServicePlugins: LanguageServicePlugin[],
+	configFileName: string | undefined,
+	getCommandLine: () => ts.ParsedCommandLine,
+	setup: ((options: {
+		language: Language;
+		project: ProjectContext;
+	}) => void) | undefined
 ) {
-	let scriptSnapshotsCache: Map<string, ts.IScriptSnapshot | undefined> = new Map();
-	let parsedCommandLine = createParsedCommandLine();
+	let commandLine = getCommandLine();
 	let projectVersion = 0;
 	let shouldCheckRootFiles = false;
 
-	const host: TypeScriptProjectHost = {
+	const resolvedFileNameByCommandLine = new WeakMap<ts.ParsedCommandLine, string[]>();
+	const projectHost: TypeScriptProjectHost = {
 		getCurrentDirectory: () => env.workspaceFolders.length
 			? asFileName(env.workspaceFolders[0])
 			: process.cwd(),
 		getCompilationSettings: () => {
-			return parsedCommandLine.options;
+			return commandLine.options;
+		},
+		getProjectReferences: () => {
+			return commandLine.projectReferences;
 		},
 		getProjectVersion: () => {
 			checkRootFilesUpdate();
@@ -265,57 +300,75 @@ function createTypeScriptProjectHost(
 		},
 		getScriptFileNames: () => {
 			checkRootFilesUpdate();
-			return parsedCommandLine.fileNames;
-		},
-		getScriptSnapshot: fileName => {
-			if (!scriptSnapshotsCache.has(fileName)) {
-				const fileText = ts.sys.readFile(fileName, 'utf8');
-				if (fileText !== undefined) {
-					scriptSnapshotsCache.set(fileName, ts.ScriptSnapshot.fromString(fileText));
-				}
-				else {
-					scriptSnapshotsCache.set(fileName, undefined);
-				}
+			let fileNames = resolvedFileNameByCommandLine.get(commandLine);
+			if (!fileNames) {
+				fileNames = commandLine.fileNames.map(asPosix);
+				resolvedFileNameByCommandLine.set(commandLine, fileNames);
 			}
-			return scriptSnapshotsCache.get(fileName);
+			return fileNames;
 		},
 	};
+	const project: ProjectContext = {
+		typescript: {
+			configFileName,
+			sys: ts.sys,
+			uriConverter: {
+				asFileName,
+				asUri,
+			},
+			...createLanguageServiceHost(
+				ts,
+				ts.sys,
+				language,
+				asUri,
+				projectHost
+			),
+		},
+	};
+	setup?.({ language, project });
+	const languageService = createLanguageService(
+		language,
+		languageServicePlugins,
+		env,
+		project
+	);
 
 	env.onDidChangeWatchedFiles?.(({ changes }) => {
+		const tsLs: ts.LanguageService = languageService.context.inject('typescript/languageService');
+		const program = tsLs.getProgram();
 		for (const change of changes) {
 			const changeUri = URI.parse(change.uri);
 			const fileName = asFileName(changeUri);
 			if (change.type === 2 satisfies typeof FileChangeType.Changed) {
-				if (scriptSnapshotsCache.has(fileName)) {
+				if (program?.getSourceFile(fileName)) {
 					projectVersion++;
-					scriptSnapshotsCache.delete(fileName);
 				}
 			}
 			else if (change.type === 3 satisfies typeof FileChangeType.Deleted) {
-				if (scriptSnapshotsCache.has(fileName)) {
+				if (program?.getSourceFile(fileName)) {
 					projectVersion++;
-					scriptSnapshotsCache.delete(fileName);
-					parsedCommandLine.fileNames = parsedCommandLine.fileNames.filter(name => name !== fileName);
+					shouldCheckRootFiles = true;
+					break;
 				}
 			}
 			else if (change.type === 1 satisfies typeof FileChangeType.Created) {
 				shouldCheckRootFiles = true;
+				break;
 			}
 		}
 	});
 
-	return host;
+	return [projectHost, languageService] as const;
 
 	function checkRootFilesUpdate() {
-
 		if (!shouldCheckRootFiles) {
 			return;
 		}
 		shouldCheckRootFiles = false;
 
-		const newParsedCommandLine = createParsedCommandLine();
-		if (!arrayItemsEqual(newParsedCommandLine.fileNames, parsedCommandLine.fileNames)) {
-			parsedCommandLine.fileNames = newParsedCommandLine.fileNames;
+		const newCommandLine = getCommandLine();
+		if (!arrayItemsEqual(newCommandLine.fileNames, commandLine.fileNames)) {
+			commandLine.fileNames = newCommandLine.fileNames;
 			projectVersion++;
 		}
 	}

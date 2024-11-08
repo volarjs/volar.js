@@ -97,11 +97,15 @@ export interface LanguageServicePlugin<P = any> {
 		documentFormattingProvider?: boolean;
 		referencesProvider?: boolean;
 		implementationProvider?: boolean;
+		declarationProvider?: boolean;
 		definitionProvider?: boolean;
 		typeDefinitionProvider?: boolean;
 		callHierarchyProvider?: boolean;
+		typeHierarchyProvider?: boolean;
 		hoverProvider?: boolean;
 		documentHighlightProvider?: boolean;
+		monikerProvider?: boolean;
+		inlineValueProvider?: boolean;
 		workspaceSymbolProvider?: {
 			resolveProvider?: boolean;
 		};
@@ -140,11 +144,12 @@ export interface LanguageServicePlugin<P = any> {
 			resolveProvider?: boolean;
 		};
 		diagnosticProvider?: {
-			// TODO: interFileDependencies
-			workspaceDiagnostics?: boolean;
+			interFileDependencies: boolean;
+			workspaceDiagnostics: boolean;
 		};
 		fileReferencesProvider?: boolean;
-		fileRenameProvider?: boolean;
+		fileRenameEditsProvider?: boolean;
+		documentDropEditsProvider?: boolean;
 	};
 	create(context: LanguageServiceContext): LanguageServicePluginInstance<P>;
 }
@@ -162,6 +167,7 @@ export interface LanguageServicePluginInstance<P = any> {
 	provideDocumentSymbols?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.DocumentSymbol[]>;
 	provideDocumentHighlights?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.DocumentHighlight[]>;
 	provideLinkedEditingRanges?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.LinkedEditingRanges>;
+	provideDeclaration?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.DeclarationLink[]>;
 	provideDefinition?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.LocationLink[]>;
 	provideTypeDefinition?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.LocationLink[]>;
 	provideImplementation?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.LocationLink[]>;
@@ -180,14 +186,18 @@ export interface LanguageServicePluginInstance<P = any> {
 	provideReferences?(document: TextDocument, position: vscode.Position, context: vscode.ReferenceContext, token: vscode.CancellationToken): NullableProviderResult<vscode.Location[]>;
 	provideSelectionRanges?(document: TextDocument, positions: vscode.Position[], token: vscode.CancellationToken): NullableProviderResult<vscode.SelectionRange[]>;
 	provideInlayHints?(document: TextDocument, range: vscode.Range, token: vscode.CancellationToken): NullableProviderResult<vscode.InlayHint[]>;
+	provideInlineValues?(document: TextDocument, range: vscode.Range, context: vscode.InlineValueContext, token: vscode.CancellationToken): NullableProviderResult<vscode.InlineValue[]>;
 	provideCallHierarchyItems?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.CallHierarchyItem[]>;
 	provideCallHierarchyIncomingCalls?(item: vscode.CallHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.CallHierarchyIncomingCall[]>;
 	provideCallHierarchyOutgoingCalls?(item: vscode.CallHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.CallHierarchyOutgoingCall[]>;
+	provideTypeHierarchyItems?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.TypeHierarchyItem[]>;
+	provideTypeHierarchySupertypes?(item: vscode.TypeHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.TypeHierarchyItem[]>;
+	provideTypeHierarchySubtypes?(item: vscode.TypeHierarchyItem, token: vscode.CancellationToken): ProviderResult<vscode.TypeHierarchyItem[]>;
 	provideDocumentSemanticTokens?(document: TextDocument, range: vscode.Range, legend: vscode.SemanticTokensLegend, token: vscode.CancellationToken): NullableProviderResult<SemanticToken[]>;
 	provideWorkspaceSymbols?(query: string, token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceSymbol[]>;
 	provideDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Diagnostic[]>;
-	provideSemanticDiagnostics?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Diagnostic[]>;
 	provideWorkspaceDiagnostics?(token: vscode.CancellationToken): NullableProviderResult<vscode.WorkspaceDocumentDiagnosticReport[]>;
+	provideMoniker?(document: TextDocument, position: vscode.Position, token: vscode.CancellationToken): NullableProviderResult<vscode.Moniker[]>;
 	provideFileReferences?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Location[]>; // volar specific
 	provideReferencesCodeLensRanges?(document: TextDocument, token: vscode.CancellationToken): NullableProviderResult<vscode.Range[]>; // volar specific
 	provideAutoInsertSnippet?(document: TextDocument, position: vscode.Position, lastChange: { rangeOffset: number; rangeLength: number; text: string; }, token: vscode.CancellationToken): NullableProviderResult<string>; // volar specific

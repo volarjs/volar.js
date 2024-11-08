@@ -1,4 +1,3 @@
-import { shouldReportDiagnostics } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -53,7 +52,7 @@ export function register(context: LanguageServiceContext) {
 							return {
 								...item,
 								items: item.items
-									.map(error => transformDiagnostic(context, error, docs, shouldReportDiagnostics))
+									.map(error => transformDiagnostic(context, error, docs))
 									.filter(error => !!error)
 							};
 						}
@@ -65,7 +64,7 @@ export function register(context: LanguageServiceContext) {
 						return {
 							...item,
 							items: item.items
-								.map(error => transformDiagnostic(context, error, undefined, shouldReportDiagnostics))
+								.map(error => transformDiagnostic(context, error, undefined))
 								.filter(error => !!error)
 						};
 					}

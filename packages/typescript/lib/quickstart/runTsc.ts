@@ -1,3 +1,4 @@
+
 import * as fs from 'fs';
 import type * as ts from 'typescript';
 import type { Language, LanguagePlugin } from '@volar/language-core';
@@ -16,7 +17,6 @@ export function runTsc(
 	},
 	_getLanguagePlugins: typeof getLanguagePlugins
 ) {
-
 	getLanguagePlugins = _getLanguagePlugins;
 
 	const proxyApiPath = require.resolve('../node/proxyCreateProgram');
@@ -28,7 +28,7 @@ export function runTsc(
 
 			let extraSupportedExtensions: string[];
 			let extraExtensionsToRemove: string[];
-			let proxyTypescript: boolean;
+			let proxyTypescript!: boolean;
 			if (Array.isArray(options)) {
 				extraSupportedExtensions = options;
 				extraExtensionsToRemove = [];
@@ -36,45 +36,10 @@ export function runTsc(
 			else {
 				extraSupportedExtensions = options.extraSupportedExtensions;
 				extraExtensionsToRemove = options.extraExtensionsToRemove;
-				proxyTypescript = options.proxyTypescript ?? true;
-			}
-			const needPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
-
-			// Add allow extensions
-			if (extraSupportedExtensions.length) {
-				const extsText = extraSupportedExtensions.map(ext => `"${ext}"`).join(', ');
-				tsc = replace(tsc, /supportedTSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
-				tsc = replace(tsc, /supportedJSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
-				tsc = replace(tsc, /allSupportedExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
-			}
-			// Use to emit basename.xxx to basename.d.ts instead of basename.xxx.d.ts
-			if (extraExtensionsToRemove.length) {
-				const extsText = extraExtensionsToRemove.map(ext => `"${ext}"`).join(', ');
-				tsc = replace(tsc, /extensionsToRemove = .*(?=;)/, s => s + `.concat([${extsText}])`);
-			}
-			// Support for basename.xxx to basename.xxx.d.ts
-			if (needPatchExtenstions.length) {
-				const extsText = needPatchExtenstions.map(ext => `"${ext}"`).join(', ');
-				tsc = replace(tsc, /function changeExtension\(/, s => `function changeExtension(path, newExtension) {
-					return [${extsText}].some(ext => path.endsWith(ext))
-						? path + newExtension
-						: _changeExtension(path, newExtension)
-					}\n` + s.replace('changeExtension', '_changeExtension'));
+				proxyTypescript = options.proxyTypescript;
 			}
 
-			// proxy createProgram
-			tsc = replace(tsc, /function createProgram\(.+\) {/, s =>
-				`var createProgram = require(${JSON.stringify(proxyApiPath)}).proxyCreateProgram(`
-				+ [
-					proxyTypescript ? `new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )` : `require('typescript')`,
-					`_createProgram`,
-					`require(${JSON.stringify(__filename)}).getLanguagePlugins`,
-				].join(', ')
-				+ `);\n`
-				+ s.replace('createProgram', '_createProgram')
-			);
-
-			return tsc;
+			return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, proxyTypescript);
 		}
 		return (readFileSync as any)(...args);
 	};
@@ -85,6 +50,64 @@ export function runTsc(
 		(fs as any).readFileSync = readFileSync;
 		delete require.cache[tscPath];
 	}
+}
+
+/**
+ * Replaces the code of typescript to add support for additional extensions and language plugins.
+ * 
+ * @param tsc - The original code of typescript.
+ * @param proxyApiPath - The path to the proxy API.
+ * @param extraSupportedExtensions - An array of additional supported extensions.
+ * @param extraExtensionsToRemove - An array of extensions to remove.
+ * @param getLanguagePluginsFile - The file to get language plugins from.
+ * @param proxyTypescript - Whether use tsc instead of typescript.
+ * @returns The modified typescript code.
+ */
+export function transformTscContent(
+	tsc: string,
+	proxyApiPath: string,
+	extraSupportedExtensions: string[],
+	extraExtensionsToRemove: string[],
+	getLanguagePluginsFile = __filename,
+	proxyTypescript: boolean = true,
+) {
+	const neededPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
+
+	// Add allow extensions
+	if (extraSupportedExtensions.length) {
+		const extsText = extraSupportedExtensions.map(ext => `"${ext}"`).join(', ');
+		tsc = replace(tsc, /supportedTSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
+		tsc = replace(tsc, /supportedJSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
+		tsc = replace(tsc, /allSupportedExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
+	}
+	// Use to emit basename.xxx to basename.d.ts instead of basename.xxx.d.ts
+	if (extraExtensionsToRemove.length) {
+		const extsText = extraExtensionsToRemove.map(ext => `"${ext}"`).join(', ');
+		tsc = replace(tsc, /extensionsToRemove = .*(?=;)/, s => s + `.concat([${extsText}])`);
+	}
+	// Support for basename.xxx to basename.xxx.d.ts
+	if (neededPatchExtenstions.length) {
+		const extsText = neededPatchExtenstions.map(ext => `"${ext}"`).join(', ');
+		tsc = replace(tsc, /function changeExtension\(/, s => `function changeExtension(path, newExtension) {
+			return [${extsText}].some(ext => path.endsWith(ext))
+				? path + newExtension
+				: _changeExtension(path, newExtension)
+			}\n` + s.replace('changeExtension', '_changeExtension'));
+	}
+
+	// proxy createProgram
+	tsc = replace(tsc, /function createProgram\(.+\) {/, s =>
+		`var createProgram = require(${JSON.stringify(proxyApiPath)}).proxyCreateProgram(`
+		+ [
+			proxyTypescript ? `new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )` : 'require("typescript")',
+			`_createProgram`,
+			`require(${JSON.stringify(getLanguagePluginsFile)}).getLanguagePlugins`,
+		].join(', ')
+		+ `);\n`
+		+ s.replace('createProgram', '_createProgram')
+	);
+
+	return tsc;
 }
 
 function replace(text: string, ...[search, replace]: Parameters<String['replace']>) {

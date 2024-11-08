@@ -1,4 +1,4 @@
-import { FileType, Language, LanguagePlugin, ProjectContext, ProviderResult, UriMap, createUriMap } from '@volar/language-service';
+import { FileType, Language, LanguagePlugin, ProjectContext, ProviderResult, createUriMap } from '@volar/language-service';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
@@ -20,7 +20,7 @@ export function createTypeScriptProject(
 			project: ProjectContext;
 		}): void;
 	}>
-) {
+): LanguageServerProject {
 	let server: LanguageServer;
 	let uriConverter: ReturnType<typeof createUriConverter>;
 
@@ -28,11 +28,12 @@ export function createTypeScriptProject(
 	const inferredProjects = createUriMap<Promise<TypeScriptProjectLS>>();
 	const rootTsConfigs = new Set<string>();
 	const searchedDirs = new Set<string>();
-	const projects: LanguageServerProject = {
+
+	return {
 		setup(_server) {
-			uriConverter = createUriConverter([..._server.workspaceFolders.keys()]);
+			uriConverter = createUriConverter(_server.workspaceFolders.all);
 			server = _server;
-			server.onDidChangeWatchedFiles(({ changes }) => {
+			server.fileWatcher.onDidChangeWatchedFiles(({ changes }) => {
 				const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
 
 				for (const change of tsConfigChanges) {
@@ -51,10 +52,7 @@ export function createTypeScriptProject(
 					}
 				}
 
-				if (tsConfigChanges.length) {
-					server.clearPushDiagnostics();
-				}
-				server.refresh(projects);
+				server.languageFeatures.requestRefresh(!!tsConfigChanges.length);
 			});
 		},
 		async getLanguageService(uri) {
@@ -85,7 +83,6 @@ export function createTypeScriptProject(
 			inferredProjects.clear();
 		},
 	};
-	return projects;
 
 	async function findMatchTSConfig(server: LanguageServer, uri: URI) {
 
@@ -100,18 +97,18 @@ export function createTypeScriptProject(
 			searchedDirs.add(dir);
 			for (const tsConfigName of rootTsConfigNames) {
 				const tsconfigPath = path.join(dir, tsConfigName);
-				if ((await server.fs.stat?.(uriConverter.asUri(tsconfigPath)))?.type === FileType.File) {
+				if ((await server.fileSystem.stat?.(uriConverter.asUri(tsconfigPath)))?.type === FileType.File) {
 					rootTsConfigs.add(tsconfigPath);
 				}
 			}
 			dir = path.dirname(dir);
 		}
 
-		await prepareClosestootParsedCommandLine();
+		await prepareClosestootCommandLine();
 
 		return await findDirectIncludeTsconfig() ?? await findIndirectReferenceTsconfig();
 
-		async function prepareClosestootParsedCommandLine() {
+		async function prepareClosestootCommandLine() {
 
 			let matches: string[] = [];
 
@@ -124,7 +121,7 @@ export function createTypeScriptProject(
 			matches = matches.sort((a, b) => sortTSConfigs(fileName, a, b));
 
 			if (matches.length) {
-				await getParsedCommandLine(matches[0]);
+				await getCommandLine(matches[0]);
 			}
 		}
 		function findIndirectReferenceTsconfig() {
@@ -138,8 +135,8 @@ export function createTypeScriptProject(
 		function findDirectIncludeTsconfig() {
 			return findTSConfig(async tsconfig => {
 				const map = createUriMap<boolean>();
-				const parsedCommandLine = await getParsedCommandLine(tsconfig);
-				for (const fileName of parsedCommandLine?.fileNames ?? []) {
+				const commandLine = await getCommandLine(tsconfig);
+				for (const fileName of commandLine?.fileNames ?? []) {
 					const uri = uriConverter.asUri(fileName);
 					map.set(uri, true);
 				}
@@ -155,7 +152,7 @@ export function createTypeScriptProject(
 				const project = await configProjects.get(tsconfigUri);
 				if (project) {
 
-					let chains = await getReferencesChains(project.getParsedCommandLine(), rootTsConfig, []);
+					let chains = await getReferencesChains(project.getCommandLine(), rootTsConfig, []);
 
 					// This is to be consistent with tsserver behavior
 					chains = chains.reverse();
@@ -177,24 +174,24 @@ export function createTypeScriptProject(
 				}
 			}
 		}
-		async function getReferencesChains(parsedCommandLine: ts.ParsedCommandLine, tsConfig: string, before: string[]) {
+		async function getReferencesChains(commandLine: ts.ParsedCommandLine, tsConfig: string, before: string[]) {
 
-			if (parsedCommandLine.projectReferences?.length) {
+			if (commandLine.projectReferences?.length) {
 
 				const newChains: string[][] = [];
 
-				for (const projectReference of parsedCommandLine.projectReferences) {
+				for (const projectReference of commandLine.projectReferences) {
 
 					let tsConfigPath = projectReference.path.replace(/\\/g, '/');
 
 					// fix https://github.com/johnsoncodehk/volar/issues/712
-					if ((await server.fs.stat?.(uriConverter.asUri(tsConfigPath)))?.type === FileType.File) {
+					if ((await server.fileSystem.stat?.(uriConverter.asUri(tsConfigPath)))?.type === FileType.File) {
 						const newTsConfigPath = path.join(tsConfigPath, 'tsconfig.json');
 						const newJsConfigPath = path.join(tsConfigPath, 'jsconfig.json');
-						if ((await server.fs.stat?.(uriConverter.asUri(newTsConfigPath)))?.type === FileType.File) {
+						if ((await server.fileSystem.stat?.(uriConverter.asUri(newTsConfigPath)))?.type === FileType.File) {
 							tsConfigPath = newTsConfigPath;
 						}
-						else if ((await server.fs.stat?.(uriConverter.asUri(newJsConfigPath)))?.type === FileType.File) {
+						else if ((await server.fileSystem.stat?.(uriConverter.asUri(newJsConfigPath)))?.type === FileType.File) {
 							tsConfigPath = newJsConfigPath;
 						}
 					}
@@ -204,9 +201,9 @@ export function createTypeScriptProject(
 						newChains.push(before.slice(0, Math.max(beforeIndex, 1)));
 					}
 					else {
-						const referenceParsedCommandLine = await getParsedCommandLine(tsConfigPath);
-						if (referenceParsedCommandLine) {
-							for (const chain of await getReferencesChains(referenceParsedCommandLine, tsConfigPath, [...before, tsConfig])) {
+						const referenceCommandLine = await getCommandLine(tsConfigPath);
+						if (referenceCommandLine) {
+							for (const chain of await getReferencesChains(referenceCommandLine, tsConfigPath, [...before, tsConfig])) {
 								newChains.push(chain);
 							}
 						}
@@ -219,9 +216,9 @@ export function createTypeScriptProject(
 				return [[...before, tsConfig]];
 			}
 		}
-		async function getParsedCommandLine(tsConfig: string) {
+		async function getCommandLine(tsConfig: string) {
 			const project = await getOrCreateConfiguredProject(server, tsConfig);
-			return project?.getParsedCommandLine();
+			return project?.getCommandLine();
 		}
 	}
 
@@ -362,7 +359,7 @@ export function isFileInDir(fileName: string, dir: string) {
 	return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
-export function getWorkspaceFolder(uri: URI, workspaceFolders: UriMap<boolean>) {
+export function getWorkspaceFolder(uri: URI, workspaceFolders: { has(uri: URI): boolean; all: URI[]; }) {
 	while (true) {
 		if (workspaceFolders.has(uri)) {
 			return uri;
@@ -374,7 +371,7 @@ export function getWorkspaceFolder(uri: URI, workspaceFolders: UriMap<boolean>) 
 		uri = next;
 	}
 
-	for (const folder of workspaceFolders.keys()) {
+	for (const folder of workspaceFolders.all) {
 		return folder;
 	}
 

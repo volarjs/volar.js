@@ -1,9 +1,8 @@
-import { FileType } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver/browser';
 import { URI } from 'vscode-uri';
-import httpSchemaRequestHandler from './lib/schemaRequestHandlers/http';
+import { handler as httpSchemaRequestHandler } from './lib/fileSystemProviders/http';
 import { createServerBase } from './lib/server';
-import { FsReadDirectoryRequest, FsReadFileRequest, FsStatRequest } from './protocol';
+import { provider as httpFsProvider, listenEditorSettings } from './lib/fileSystemProviders/http';
 
 export * from 'vscode-languageserver/browser';
 export * from './index';
@@ -12,7 +11,6 @@ export * from './lib/project/typescriptProject';
 export * from './lib/server';
 
 export function createConnection() {
-
 	const messageReader = new vscode.BrowserMessageReader(self);
 	const messageWriter = new vscode.BrowserMessageWriter(self);
 	const connection = vscode.createConnection(messageReader, messageWriter);
@@ -21,35 +19,17 @@ export function createConnection() {
 }
 
 export function createServer(connection: vscode.Connection) {
-	return createServerBase(connection, {
-		async stat(uri) {
-			if (uri.scheme === 'http' || uri.scheme === 'https') { // perf
-				const text = await this.readFile(uri);
-				if (text !== undefined) {
-					return {
-						type: FileType.File,
-						size: text.length,
-						ctime: -1,
-						mtime: -1,
-					};
-				}
-				return undefined;
-			}
-			return await connection.sendRequest(FsStatRequest.type, uri.toString());
-		},
-		async readFile(uri) {
-			if (uri.scheme === 'http' || uri.scheme === 'https') { // perf
-				return await httpSchemaRequestHandler(uri);
-			}
-			return await connection.sendRequest(FsReadFileRequest.type, uri.toString()) ?? undefined;
-		},
-		async readDirectory(uri) {
-			if (uri.scheme === 'http' || uri.scheme === 'https') { // perf
-				return [];
-			}
-			return await connection.sendRequest(FsReadDirectoryRequest.type, uri.toString());
+	const server = createServerBase(connection, {
+		timer: {
+			setImmediate: (callback: (...args: any[]) => void, ...args: any[]) => {
+				setTimeout(callback, 0, ...args);
+			},
 		},
 	});
+	server.fileSystem.install('http', httpFsProvider);
+	server.fileSystem.install('https', httpFsProvider);
+	server.onInitialized(() => listenEditorSettings(server));
+	return server;
 }
 
 export async function loadTsdkByUrl(tsdkUrl: string, locale: string | undefined) {
