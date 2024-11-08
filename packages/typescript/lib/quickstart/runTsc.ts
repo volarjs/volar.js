@@ -12,6 +12,7 @@ export function runTsc(
 	options: string[] | {
 		extraSupportedExtensions: string[];
 		extraExtensionsToRemove: string[];
+		proxyTypescript: boolean;
 	},
 	_getLanguagePlugins: typeof getLanguagePlugins
 ) {
@@ -27,6 +28,7 @@ export function runTsc(
 
 			let extraSupportedExtensions: string[];
 			let extraExtensionsToRemove: string[];
+			let proxyTypescript: boolean;
 			if (Array.isArray(options)) {
 				extraSupportedExtensions = options;
 				extraExtensionsToRemove = [];
@@ -34,6 +36,7 @@ export function runTsc(
 			else {
 				extraSupportedExtensions = options.extraSupportedExtensions;
 				extraExtensionsToRemove = options.extraExtensionsToRemove;
+				proxyTypescript = options.proxyTypescript ?? true;
 			}
 			const needPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
 
@@ -63,7 +66,7 @@ export function runTsc(
 			tsc = replace(tsc, /function createProgram\(.+\) {/, s =>
 				`var createProgram = require(${JSON.stringify(proxyApiPath)}).proxyCreateProgram(`
 				+ [
-					`new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )`,
+					proxyTypescript ? `new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )` : `require('typescript')`,
 					`_createProgram`,
 					`require(${JSON.stringify(__filename)}).getLanguagePlugins`,
 				].join(', ')
