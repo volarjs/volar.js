@@ -13,9 +13,9 @@ Params:
 
 Methods:
 
-- `toSourceRange(generatedStart: number, generatedEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean)`: Returns the source start and end offsets for the given generated start and end offsets.
+- `toSourceRange(generatedStart: number, generatedEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean)`: Returns all source start and end offsets for the given generated start and end offsets.
 
-- `toGeneratedRange(sourceStart: number, sourceEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) `: Returns the generated start and end offsets for the given source start and end offsets.
+- `toGeneratedRange(sourceStart: number, sourceEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) `: Returns all generated start and end offsets for the given source start and end offsets.
 
 - `toSourceLocation(generatedOffset: number, filter?: (data: Data) => boolean)`: Returns all source offsets for a given generated offset.
 
