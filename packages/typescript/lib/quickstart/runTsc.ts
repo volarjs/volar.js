@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import type * as ts from 'typescript';
 import type { Language, LanguagePlugin } from '@volar/language-core';
 
@@ -17,12 +18,28 @@ export function runTsc(
 ) {
 	getLanguagePlugins = _getLanguagePlugins;
 
-	const proxyApiPath = require.resolve('../node/proxyCreateProgram');
+	const proxyApiPath = path.resolve(__dirname, '../node/proxyCreateProgram');
 	const readFileSync = fs.readFileSync;
 
 	(fs as any).readFileSync = (...args: any[]) => {
 		if (args[0] === tscPath) {
 			let tsc = (readFileSync as any)(...args) as string;
+
+			// Support the tsc shim used in Typescript v5.7 and up
+			if (!isMainTsc(tsc)) {
+				const requireRegex = /module\.exports\s*=\s*require\((?:"|')(?<path>\.\/\w+\.js)(?:"|')\)/;
+				const requirePath = requireRegex.exec(tsc)?.groups?.path;
+				if (requirePath) {
+					const tscContent: string = ((readFileSync as any)(path.join(path.dirname(tscPath), requirePath)))?.toString?.() ?? '';
+					if (isMainTsc(tscContent)) {
+						tsc = tscContent;
+					} else {
+						throw new Error('Failed to find resolve main tsc module from shim');
+					}
+				} else {
+					throw new Error('Failed to locate tsc module path from shim');
+				}
+			}
 
 			let extraSupportedExtensions: string[];
 			let extraExtensionsToRemove: string[];
@@ -102,6 +119,12 @@ export function transformTscContent(
 	);
 
 	return tsc;
+}
+
+function isMainTsc(tsc: string) {
+	// We assume it's the main tsc module if it has a `version` variable defined with a semver string
+	const versionRegex = /(?:var|const|let)\s+version\s*=\s*(?:"|')\d+\.\d+\.\d+(?:"|')/;
+	return versionRegex.test(tsc);
 }
 
 function replace(text: string, ...[search, replace]: Parameters<String['replace']>) {
