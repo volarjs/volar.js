@@ -12,6 +12,7 @@ export function runTsc(
 	options: string[] | {
 		extraSupportedExtensions: string[];
 		extraExtensionsToRemove: string[];
+		disableProxyTypescript?: boolean;
 	},
 	_getLanguagePlugins: typeof getLanguagePlugins
 ) {
@@ -26,6 +27,7 @@ export function runTsc(
 
 			let extraSupportedExtensions: string[];
 			let extraExtensionsToRemove: string[];
+			let disableProxyTypescript: boolean | undefined;
 			if (Array.isArray(options)) {
 				extraSupportedExtensions = options;
 				extraExtensionsToRemove = [];
@@ -33,9 +35,10 @@ export function runTsc(
 			else {
 				extraSupportedExtensions = options.extraSupportedExtensions;
 				extraExtensionsToRemove = options.extraExtensionsToRemove;
+				disableProxyTypescript = options.disableProxyTypescript;
 			}
 
-			return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove);
+			return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, disableProxyTypescript);
 		}
 		return (readFileSync as any)(...args);
 	};
@@ -56,6 +59,7 @@ export function runTsc(
  * @param extraSupportedExtensions - An array of additional supported extensions.
  * @param extraExtensionsToRemove - An array of extensions to remove.
  * @param getLanguagePluginsFile - The file to get language plugins from.
+ * @param disableProxyTypescript - Disable using tsc to proxy typescript.
  * @returns The modified typescript code.
  */
 export function transformTscContent(
@@ -63,7 +67,8 @@ export function transformTscContent(
 	proxyApiPath: string,
 	extraSupportedExtensions: string[],
 	extraExtensionsToRemove: string[],
-	getLanguagePluginsFile = __filename
+	getLanguagePluginsFile = __filename,
+	disableProxyTypescript?: boolean,
 ) {
 	const neededPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
 
@@ -93,7 +98,7 @@ export function transformTscContent(
 	tsc = replace(tsc, /function createProgram\(.+\) {/, s =>
 		`var createProgram = require(${JSON.stringify(proxyApiPath)}).proxyCreateProgram(`
 		+ [
-			`new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )`,
+			disableProxyTypescript ? `require('typescript')` : `new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )`,
 			`_createProgram`,
 			`require(${JSON.stringify(getLanguagePluginsFile)}).getLanguagePlugins`,
 		].join(', ')
