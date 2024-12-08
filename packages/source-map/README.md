@@ -4,15 +4,22 @@ Provides functionality related to source maps.
 
 ## API
 
-This package exports a `SourceMap` class with the following methods:
+### This package exports a `SourceMap` class with the following methods:
 
-- `getSourceOffset(generatedOffset: number)`: Returns the source offset for a given generated offset.
+Params:
 
-- `getGeneratedOffset(sourceOffset: number)`: Returns the generated offset for a given source offset.
+- `fallbackToAnyMatch`(default: false): allow the start and end offsets to come from different mappings.
+- `filter?: (data: Data) => boolean)`(default: undefined):  according to mapping: Mapping<MyDataType>.data, filter out offsets that do not meet the custom conditions.
 
-- `getSourceOffsets(generatedOffset: number)`: Returns all source offsets for a given generated offset.
+Methods:
 
-- `getGeneratedOffsets(sourceOffset: number)`: Returns all generated offsets for a given source offset.
+- `toSourceRange(generatedStart: number, generatedEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean)`: Returns all source start and end offsets for the given generated start and end offsets.
+
+- `toGeneratedRange(sourceStart: number, sourceEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) `: Returns all generated start and end offsets for the given source start and end offsets.
+
+- `toSourceLocation(generatedOffset: number, filter?: (data: Data) => boolean)`: Returns all source offsets for a given generated offset.
+
+- `toGeneratedLocation(sourceOffset: number, filter?: (data: Data) => boolean)`: Returns all generated offsets for a given source offset.
 
 ## Data Structures
 
