@@ -85,6 +85,10 @@ export function decorateLanguageServiceHost(
 	languageServiceHost.getScriptSnapshot = fileName => {
 		const virtualScript = updateVirtualScript(fileName);
 		if (virtualScript) {
+            if (fileName.endsWith('.ts') || fileName.endsWith(".tsx") || fileName.endsWith(".js") || fileName.endsWith(".jsx")) {
+                // We need to trigger registration of the script file with the project
+                getScriptSnapshot(fileName)
+            }
 			return virtualScript.snapshot;
 		}
 		return getScriptSnapshot(fileName);
