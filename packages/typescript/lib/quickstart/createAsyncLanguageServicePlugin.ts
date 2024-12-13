@@ -40,7 +40,7 @@ export function createAsyncLanguageServicePlugin(
 							if (extensions.some(ext => fileName.endsWith(ext))) {
 								return emptySnapshot;
 							}
-							if (info.project.getScriptInfo(fileName)?.isScriptOpen()) {
+							if (getScriptInfo(fileName)?.isScriptOpen()) {
 								return emptySnapshot;
 							}
 						}
@@ -51,7 +51,7 @@ export function createAsyncLanguageServicePlugin(
 							if (extensions.some(ext => fileName.endsWith(ext))) {
 								return 'initializing...';
 							}
-							if (info.project.getScriptInfo(fileName)?.isScriptOpen()) {
+							if (getScriptInfo(fileName)?.isScriptOpen()) {
 								return getScriptVersion(fileName) + ',initializing...';
 							}
 						}
@@ -92,17 +92,12 @@ export function createAsyncLanguageServicePlugin(
 							],
 							new FileMap(ts.sys.useCaseSensitiveFileNames),
 							fileName => {
-								let snapshot: ts.IScriptSnapshot | undefined;
-
-								try { // getSnapshot could be crashed if the file is too large
-									snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
-									if (!snapshot) {
-										// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
-										info.project.getScriptVersion(fileName);
-										snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
-									}
-								} catch { }
-
+								let snapshot = getScriptInfo(fileName)?.getSnapshot();
+								if (!snapshot) {
+									// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
+									info.project.getScriptVersion(fileName);
+									snapshot = getScriptInfo(fileName)?.getSnapshot();
+								}
 								if (snapshot) {
 									language.scripts.set(fileName, snapshot);
 								}
@@ -124,6 +119,13 @@ export function createAsyncLanguageServicePlugin(
 				}
 
 				return info.languageService;
+
+				function getScriptInfo(fileName: string) {
+					// getSnapshot could be crashed if the file is too large
+					try {
+						return info.project.getScriptInfo(fileName);
+					} catch { }
+				}
 			},
 			getExternalFiles(project, updateLevel = 0) {
 				if (
