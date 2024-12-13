@@ -36,14 +36,24 @@ export function createAsyncLanguageServicePlugin(
 					let initialized = false;
 
 					info.languageServiceHost.getScriptSnapshot = fileName => {
-						if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-							return emptySnapshot;
+						if (!initialized) {
+							if (extensions.some(ext => fileName.endsWith(ext))) {
+								return emptySnapshot;
+							}
+							if (info.project.getScriptInfo(fileName)?.isScriptOpen()) {
+								return emptySnapshot;
+							}
 						}
 						return getScriptSnapshot(fileName);
 					};
 					info.languageServiceHost.getScriptVersion = fileName => {
-						if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-							return 'initializing...';
+						if (!initialized) {
+							if (extensions.some(ext => fileName.endsWith(ext))) {
+								return 'initializing...';
+							}
+							if (info.project.getScriptInfo(fileName)?.isScriptOpen()) {
+								return getScriptVersion(fileName) + ',initializing...';
+							}
 						}
 						return getScriptVersion(fileName);
 					};
@@ -106,10 +116,10 @@ export function createAsyncLanguageServicePlugin(
 						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 						setup?.(language);
 
+						initialized = true;
 						if ('markAsDirty' in info.project && typeof info.project.markAsDirty === 'function') {
 							info.project.markAsDirty();
 						}
-						initialized = true;
 					});
 				}
 
