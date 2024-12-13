@@ -13,7 +13,8 @@ export function runTsc(
 		extraSupportedExtensions: string[];
 		extraExtensionsToRemove: string[];
 	},
-	_getLanguagePlugins: typeof getLanguagePlugins
+	_getLanguagePlugins: typeof getLanguagePlugins,
+	typescriptObject?: string
 ) {
 	getLanguagePlugins = _getLanguagePlugins;
 
@@ -35,7 +36,7 @@ export function runTsc(
 				extraExtensionsToRemove = options.extraExtensionsToRemove;
 			}
 
-			return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove);
+			return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, typescriptObject);
 		}
 		return (readFileSync as any)(...args);
 	};
@@ -56,6 +57,7 @@ export function runTsc(
  * @param extraSupportedExtensions - An array of additional supported extensions.
  * @param extraExtensionsToRemove - An array of extensions to remove.
  * @param getLanguagePluginsFile - The file to get language plugins from.
+ * @param typescriptObject - The object to use as typescript.
  * @returns The modified typescript code.
  */
 export function transformTscContent(
@@ -63,7 +65,8 @@ export function transformTscContent(
 	proxyApiPath: string,
 	extraSupportedExtensions: string[],
 	extraExtensionsToRemove: string[],
-	getLanguagePluginsFile = __filename
+	getLanguagePluginsFile = __filename,
+	typescriptObject = `new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )`
 ) {
 	const neededPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
 
@@ -93,7 +96,7 @@ export function transformTscContent(
 	tsc = replace(tsc, /function createProgram\(.+\) {/, s =>
 		`var createProgram = require(${JSON.stringify(proxyApiPath)}).proxyCreateProgram(`
 		+ [
-			`new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )`,
+			typescriptObject,
 			`_createProgram`,
 			`require(${JSON.stringify(getLanguagePluginsFile)}).getLanguagePlugins`,
 		].join(', ')
