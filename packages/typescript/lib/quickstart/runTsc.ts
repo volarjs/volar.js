@@ -19,36 +19,37 @@ export function runTsc(
 ) {
 	getLanguagePlugins = _getLanguagePlugins;
 
+	let extraSupportedExtensions: string[];
+	let extraExtensionsToRemove: string[];
+
+	if (Array.isArray(options)) {
+		extraSupportedExtensions = options;
+		extraExtensionsToRemove = [];
+	}
+	else {
+		extraSupportedExtensions = options.extraSupportedExtensions;
+		extraExtensionsToRemove = options.extraExtensionsToRemove;
+	}
+
 	const proxyApiPath = require.resolve('../node/proxyCreateProgram');
 	const readFileSync = fs.readFileSync;
 
 	(fs as any).readFileSync = (...args: any[]) => {
 		if (args[0] === tscPath) {
 			let tsc = (readFileSync as any)(...args) as string;
-
-			// Support the tsc shim used in Typescript v5.7 and up
-			if (!isMainTsc(tsc)) {
+			try {
+				return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, typescriptObject);
+			} catch {
+				// Support the tsc shim used in Typescript v5.7 and up
 				const requireRegex = /module\.exports\s*=\s*require\((?:"|')(?<path>\.\/\w+\.js)(?:"|')\)/;
 				const requirePath = requireRegex.exec(tsc)?.groups?.path;
 				if (requirePath) {
 					tsc = readFileSync(path.join(path.dirname(tscPath), requirePath), 'utf8');
+					return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, typescriptObject);
 				} else {
 					throw new Error('Failed to locate tsc module path from shim');
 				}
 			}
-
-			let extraSupportedExtensions: string[];
-			let extraExtensionsToRemove: string[];
-			if (Array.isArray(options)) {
-				extraSupportedExtensions = options;
-				extraExtensionsToRemove = [];
-			}
-			else {
-				extraSupportedExtensions = options.extraSupportedExtensions;
-				extraExtensionsToRemove = options.extraExtensionsToRemove;
-			}
-
-			return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, typescriptObject);
 		}
 		return (readFileSync as any)(...args);
 	};
@@ -119,18 +120,12 @@ export function transformTscContent(
 	return tsc;
 }
 
-function isMainTsc(tsc: string) {
-	// We assume it's the main tsc module if it has a `version` variable defined with a semver string
-	const versionRegex = /(?:var|const|let)\s+version\s*=\s*(?:"|')\d+\.\d+\.\d+(?:"|')/;
-	return versionRegex.test(tsc);
-}
-
 function replace(text: string, ...[search, replace]: Parameters<String['replace']>) {
 	const before = text;
 	text = text.replace(search, replace);
 	const after = text;
 	if (after === before) {
-		throw 'Search string not found: ' + JSON.stringify(search.toString());
+		throw new Error('Failed to replace: ' + search);
 	}
 	return after;
 }
