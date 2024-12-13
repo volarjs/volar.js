@@ -31,7 +31,7 @@ export function runTsc(
 				const requireRegex = /module\.exports\s*=\s*require\((?:"|')(?<path>\.\/\w+\.js)(?:"|')\)/;
 				const requirePath = requireRegex.exec(tsc)?.groups?.path;
 				if (requirePath) {
-					const tscContent: string = ((readFileSync as any)(path.join(path.dirname(tscPath), requirePath)))?.toString?.() ?? '';
+					const tscContent: string = (readFileSync as any)(path.join(path.dirname(tscPath), requirePath))?.toString?.() ?? '';
 					if (isMainTsc(tscContent)) {
 						tsc = tscContent;
 					} else {
