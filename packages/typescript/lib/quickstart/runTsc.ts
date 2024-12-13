@@ -19,7 +19,7 @@ export function runTsc(
 ) {
 	getLanguagePlugins = _getLanguagePlugins;
 
-	const proxyApiPath = path.resolve(__dirname, '../node/proxyCreateProgram');
+	const proxyApiPath = require.resolve('../node/proxyCreateProgram');
 	const readFileSync = fs.readFileSync;
 
 	(fs as any).readFileSync = (...args: any[]) => {
@@ -31,12 +31,7 @@ export function runTsc(
 				const requireRegex = /module\.exports\s*=\s*require\((?:"|')(?<path>\.\/\w+\.js)(?:"|')\)/;
 				const requirePath = requireRegex.exec(tsc)?.groups?.path;
 				if (requirePath) {
-					const tscContent: string = (readFileSync as any)(path.join(path.dirname(tscPath), requirePath))?.toString?.() ?? '';
-					if (isMainTsc(tscContent)) {
-						tsc = tscContent;
-					} else {
-						throw new Error('Failed to find resolve main tsc module from shim');
-					}
+					tsc = readFileSync(path.join(path.dirname(tscPath), requirePath), 'utf8');
 				} else {
 					throw new Error('Failed to locate tsc module path from shim');
 				}
