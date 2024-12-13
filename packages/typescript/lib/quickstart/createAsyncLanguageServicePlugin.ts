@@ -91,12 +91,19 @@ export function createAsyncLanguageServicePlugin(
 								{ getLanguageId: resolveFileLanguageId },
 							],
 							new FileMap(ts.sys.useCaseSensitiveFileNames),
-							fileName => {
-								let snapshot = getScriptInfo(fileName)?.getSnapshot();
-								if (!snapshot) {
-									// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
-									info.project.getScriptVersion(fileName);
+							(fileName, _, shouldRegister) => {
+								let snapshot: ts.IScriptSnapshot | undefined;
+								if (shouldRegister) {
+									// We need to trigger registration of the script file with the project, see #250
+									snapshot = getScriptSnapshot(fileName);
+								}
+								else {
 									snapshot = getScriptInfo(fileName)?.getSnapshot();
+									if (!snapshot) {
+										// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
+										info.project.getScriptVersion(fileName);
+										snapshot = getScriptInfo(fileName)?.getSnapshot();
+									}
 								}
 								if (snapshot) {
 									language.scripts.set(fileName, snapshot);
