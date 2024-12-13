@@ -34,18 +34,26 @@ export function createLanguageServicePlugin(
 						.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 						.flat();
 					projectExternalFileExtensions.set(info.project, extensions);
+					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
 					const language = createLanguage<string>(
 						[
 							...languagePlugins,
 							{ getLanguageId: resolveFileLanguageId },
 						],
 						new FileMap(ts.sys.useCaseSensitiveFileNames),
-						fileName => {
-							let snapshot = getScriptInfo(fileName)?.getSnapshot();
-							if (!snapshot) {
-								// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
-								info.project.getScriptVersion(fileName);
+						(fileName, _, shouldRegister) => {
+							let snapshot: ts.IScriptSnapshot | undefined;
+							if (shouldRegister) {
+								// We need to trigger registration of the script file with the project, see #250
+								snapshot = getScriptSnapshot(fileName);
+							}
+							else {
 								snapshot = getScriptInfo(fileName)?.getSnapshot();
+								if (!snapshot) {
+									// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
+									info.project.getScriptVersion(fileName);
+									snapshot = getScriptInfo(fileName)?.getSnapshot();
+								}
 							}
 							if (snapshot) {
 								language.scripts.set(fileName, snapshot);

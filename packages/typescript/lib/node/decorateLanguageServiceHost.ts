@@ -83,12 +83,8 @@ export function decorateLanguageServiceHost(
 	}
 
 	languageServiceHost.getScriptSnapshot = fileName => {
-		const virtualScript = updateVirtualScript(fileName);
+		const virtualScript = updateVirtualScript(fileName, true);
 		if (virtualScript) {
-			if (fileName.endsWith('.ts') || fileName.endsWith('.tsx') || fileName.endsWith('.js') || fileName.endsWith('.jsx')) {
-				// We need to trigger registration of the script file with the project
-				getScriptSnapshot(fileName);
-			}
 			return virtualScript.snapshot;
 		}
 		return getScriptSnapshot(fileName);
@@ -96,7 +92,7 @@ export function decorateLanguageServiceHost(
 
 	if (getScriptKind) {
 		languageServiceHost.getScriptKind = fileName => {
-			const virtualScript = updateVirtualScript(fileName);
+			const virtualScript = updateVirtualScript(fileName, false);
 			if (virtualScript) {
 				return virtualScript.scriptKind;
 			}
@@ -104,7 +100,7 @@ export function decorateLanguageServiceHost(
 		};
 	}
 
-	function updateVirtualScript(fileName: string) {
+	function updateVirtualScript(fileName: string, shouldRegister: boolean) {
 		if (crashFileNames.has(fileName)) {
 			return;
 		}
@@ -123,7 +119,7 @@ export function decorateLanguageServiceHost(
 		if (!script || script[0] !== version) {
 			script = [version];
 
-			const sourceScript = language.scripts.get(fileName);
+			const sourceScript = language.scripts.get(fileName, undefined, shouldRegister);
 			if (sourceScript?.generated) {
 				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
 				if (serviceScript) {
