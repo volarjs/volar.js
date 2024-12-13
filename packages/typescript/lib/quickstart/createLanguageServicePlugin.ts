@@ -41,20 +41,18 @@ export function createLanguageServicePlugin(
 						],
 						new FileMap(ts.sys.useCaseSensitiveFileNames),
 						fileName => {
-							try { // getSnapshot could be crashed if the file is too large
-								let snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
-								if (!snapshot) {
-									// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
-									info.project.getScriptVersion(fileName);
-									snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
-								}
-								if (snapshot) {
-									language.scripts.set(fileName, snapshot);
-								}
-								else {
-									language.scripts.delete(fileName);
-								}
-							} catch { }
+							let snapshot = getScriptInfo(fileName)?.getSnapshot();
+							if (!snapshot) {
+								// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
+								info.project.getScriptVersion(fileName);
+								snapshot = getScriptInfo(fileName)?.getSnapshot();
+							}
+							if (snapshot) {
+								language.scripts.set(fileName, snapshot);
+							}
+							else {
+								language.scripts.delete(fileName);
+							}
 						}
 					);
 
@@ -66,6 +64,13 @@ export function createLanguageServicePlugin(
 				}
 
 				return info.languageService;
+
+				function getScriptInfo(fileName: string) {
+					// getSnapshot could be crashed if the file is too large
+					try {
+						return info.project.getScriptInfo(fileName);
+					} catch { }
+				}
 			},
 			getExternalFiles(project, updateLevel = 0) {
 				if (
