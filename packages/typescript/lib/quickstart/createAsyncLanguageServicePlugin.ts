@@ -36,14 +36,24 @@ export function createAsyncLanguageServicePlugin(
 					let initialized = false;
 
 					info.languageServiceHost.getScriptSnapshot = fileName => {
-						if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-							return emptySnapshot;
+						if (!initialized) {
+							if (extensions.some(ext => fileName.endsWith(ext))) {
+								return emptySnapshot;
+							}
+							if (getScriptInfo(fileName)?.isScriptOpen()) {
+								return emptySnapshot;
+							}
 						}
 						return getScriptSnapshot(fileName);
 					};
 					info.languageServiceHost.getScriptVersion = fileName => {
-						if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-							return 'initializing...';
+						if (!initialized) {
+							if (extensions.some(ext => fileName.endsWith(ext))) {
+								return 'initializing...';
+							}
+							if (getScriptInfo(fileName)?.isScriptOpen()) {
+								return getScriptVersion(fileName) + ',initializing...';
+							}
 						}
 						return getScriptVersion(fileName);
 					};
@@ -81,21 +91,26 @@ export function createAsyncLanguageServicePlugin(
 								{ getLanguageId: resolveFileLanguageId },
 							],
 							new FileMap(ts.sys.useCaseSensitiveFileNames),
-							fileName => {
-								try { // getSnapshot could be crashed if the file is too large
-									let snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+							(fileName, _, shouldRegister) => {
+								let snapshot: ts.IScriptSnapshot | undefined;
+								if (shouldRegister) {
+									// We need to trigger registration of the script file with the project, see #250
+									snapshot = getScriptSnapshot(fileName);
+								}
+								else {
+									snapshot = getScriptInfo(fileName)?.getSnapshot();
 									if (!snapshot) {
 										// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
 										info.project.getScriptVersion(fileName);
-										snapshot = info.project.getScriptInfo(fileName)?.getSnapshot();
+										snapshot = getScriptInfo(fileName)?.getSnapshot();
 									}
-									if (snapshot) {
-										language.scripts.set(fileName, snapshot);
-									}
-									else {
-										language.scripts.delete(fileName);
-									}
-								} catch { }
+								}
+								if (snapshot) {
+									language.scripts.set(fileName, snapshot);
+								}
+								else {
+									language.scripts.delete(fileName);
+								}
 							}
 						);
 
@@ -103,14 +118,21 @@ export function createAsyncLanguageServicePlugin(
 						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
 						setup?.(language);
 
+						initialized = true;
 						if ('markAsDirty' in info.project && typeof info.project.markAsDirty === 'function') {
 							info.project.markAsDirty();
 						}
-						initialized = true;
 					});
 				}
 
 				return info.languageService;
+
+				function getScriptInfo(fileName: string) {
+					// getSnapshot could be crashed if the file is too large
+					try {
+						return info.project.getScriptInfo(fileName);
+					} catch { }
+				}
 			},
 			getExternalFiles(project, updateLevel = 0) {
 				if (

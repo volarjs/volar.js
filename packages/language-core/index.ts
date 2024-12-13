@@ -22,7 +22,7 @@ export const defaultMapperFactory: MapperFactory = mappings => new SourceMap(map
 export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],
 	scriptRegistry: Map<T, SourceScript<T>>,
-	sync: (id: T, includeFsFiles: boolean) => void
+	sync: (id: T, includeFsFiles: boolean, shouldRegister: boolean) => void
 ) {
 	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode, SourceScript<T>>();
 	const virtualCodeToSourceMap = new WeakMap<IScriptSnapshot, WeakMap<IScriptSnapshot, Mapper>>();
@@ -34,8 +34,8 @@ export function createLanguage<T>(
 			fromVirtualCode(virtualCode) {
 				return virtualCodeToSourceScriptMap.get(virtualCode)!;
 			},
-			get(id, includeFsFiles = true) {
-				sync(id, includeFsFiles);
+			get(id, includeFsFiles = true, shouldRegister = false) {
+				sync(id, includeFsFiles, shouldRegister);
 				const result = scriptRegistry.get(id);
 				// The sync function provider may not always call the set function due to caching, so it is necessary to explicitly check isAssociationDirty.
 				if (result?.isAssociationDirty) {
@@ -220,7 +220,7 @@ export function createLanguage<T>(
 		sourceScript.isAssociationDirty = false;
 		return {
 			getAssociatedScript(id) {
-				sync(id, true);
+				sync(id, true, true);
 				const relatedSourceScript = scriptRegistry.get(id);
 				if (relatedSourceScript) {
 					relatedSourceScript.targetIds.add(sourceScript.id);
