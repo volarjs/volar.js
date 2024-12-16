@@ -16,7 +16,7 @@ importers:
         version: 3.10.1(@types/node@22.10.2)(typescript@5.7.2)
       '@tsslint/cli':
         specifier: latest
-        version: 1.4.0(typescript@5.7.2)
+        version: 1.4.4(typescript@5.7.2)
       typescript:
         specifier: latest
         version: 5.7.2
@@ -927,20 +927,20 @@ packages:
     resolution: {integrity: sha512-8iKx79/F73DKbGfRf7+t4dqrc0bRr0thdPrxAtCKWRm/F0tG71i6O1rvlnScncJLLBZHn3h8M3c1BSUAb9yu8g==}
     engines: {node: ^16.14.0 || >=18.0.0}
 
-  '@tsslint/cli@1.4.0':
-    resolution: {integrity: sha512-L7vU6VfiB+6FnXsifyTiO6C+ybMd5p3c10pjzv9jvo6OABcdrt0LE3/ZkGFFJymkJjvKGPc9tnVj0l52puAItg==}
+  '@tsslint/cli@1.4.4':
+    resolution: {integrity: sha512-Fr9Fb2aLKFX6afUAxHHyyq/vRl3xsNxofZ3tVEF+Q1scf9ai/hVberOUcIDbeKLUTZlEgjchzyMcGxmuuOL51Q==}
     hasBin: true
     peerDependencies:
       typescript: '*'
 
-  '@tsslint/config@1.4.0':
-    resolution: {integrity: sha512-VDEmb8TLUQvfAxVJ453OHFYb/+DZHQZle5yV1DWD+zDPfOzc/xY82xMDjgt6kpo6Zu5kwDnAd7Crx0r4MuMBPg==}
+  '@tsslint/config@1.4.4':
+    resolution: {integrity: sha512-rhfttKNBfJCN3/jhmDT0QlhfAWEwtE1BsG/YdwiM+SM2sIfyupdiu5u9SaJzfGFiAt65M0//m2YmID/Tfc8oFA==}
 
-  '@tsslint/core@1.4.0':
-    resolution: {integrity: sha512-fjs5PqGsETJY71Vf9Zdx0LHM34NjtaisNj7zBJ8fbvndAn23pPR5d9imP2NOEOvvL21EtSm2s7BJADihEZ3pvA==}
+  '@tsslint/core@1.4.4':
+    resolution: {integrity: sha512-cMFgBx2BC3w/IAIgv4FUBwzIzsrmUFhYDIfrSttqtCygjO6oJqIFpfdUXit7M5Jp1mDhpe0RskRIFL7EOGgiPQ==}
 
-  '@tsslint/types@1.4.0':
-    resolution: {integrity: sha512-m05yE8gQ2DSLiZA3GdXeXe1GjTzZGLBVHPpKr6kOyxr9KvpCjo/1SR9xCLnIkYhtavkAalS5qBHUtZkpUKcttA==}
+  '@tsslint/types@1.4.4':
+    resolution: {integrity: sha512-yANo/MUW9rqPuvHYdVtKT5dNNu65jAdbU8qwZ6l0HtcHJ4iqnm3+fGbGqgUHBM1vFU0629CixS/RVqNWs4OH7g==}
 
   '@tufjs/canonical-json@2.0.0':
     resolution: {integrity: sha512-yVtV8zsdo8qFHe+/3kw81dSLyF7D576A5cCFCi4X7B39tWT7SekaEFUnvnWJHz+9qO7qJTah1JbrDjWKqFtdWA==}
@@ -1002,6 +1002,15 @@ packages:
 
   '@vitest/utils@2.1.8':
     resolution: {integrity: sha512-dwSoui6djdwbfFmIgbIjX2ZhIoG7Ex/+xpxyiEgIGzjliY8xGkcpITKTlp6B4MgtGkF2ilvm97cPM96XZaAgcA==}
+
+  '@volar/language-core@2.4.11':
+    resolution: {integrity: sha512-lN2C1+ByfW9/JRPpqScuZt/4OrUUse57GLI6TbLgTIqBVemdl1wNcZ1qYGEo2+Gw8coYLgCy7SuKqn6IrQcQgg==}
+
+  '@volar/source-map@2.4.11':
+    resolution: {integrity: sha512-ZQpmafIGvaZMn/8iuvCFGrW3smeqkq/IIh9F1SdSx9aUl0J4Iurzd6/FhmjNO5g2ejF3rT45dKskgXWiofqlZQ==}
+
+  '@volar/typescript@2.4.11':
+    resolution: {integrity: sha512-2DT+Tdh88Spp5PyPbqhyoYavYCPDsqbHLFwcUI9K1NlY1YgUJvujGdrqUp0zWxnW7KWNTr3xSpMuv2WnaTKDAw==}
 
   '@vscode/vsce-sign-alpine-arm64@2.0.2':
     resolution: {integrity: sha512-E80YvqhtZCLUv3YAf9+tIbbqoinWLCO/B3j03yQPbjT3ZIHCliKZlsy1peNc4XNZ5uIb87Jn0HWx/ZbPXviuAQ==}
@@ -2789,6 +2798,12 @@ packages:
     resolution: {integrity: sha512-gcANaAnd2QDZFmHFEOF4k7uc1J/6a6z3DJMd/QwEyxLoKGiptJRwid582r7QIsFlFMIZ3SnxfS52S4hm2DHkuQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
+  ts-api-utils@2.0.0:
+    resolution: {integrity: sha512-xCt/TOAc+EOHS1XPnijD3/yzpH6qg2xppZO1YDqGoVsNXfQfzHpOdNuXwrwOU8u4ITXJyDCTyt8w5g1sZv9ynQ==}
+    engines: {node: '>=18.12'}
+    peerDependencies:
+      typescript: '>=4.8.4'
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -3880,26 +3895,31 @@ snapshots:
       '@sigstore/core': 1.1.0
       '@sigstore/protobuf-specs': 0.3.2
 
-  '@tsslint/cli@1.4.0(typescript@5.7.2)':
+  '@tsslint/cli@1.4.4(typescript@5.7.2)':
     dependencies:
       '@clack/prompts': 0.8.2
-      '@tsslint/config': 1.4.0
-      '@tsslint/core': 1.4.0
+      '@tsslint/config': 1.4.4(typescript@5.7.2)
+      '@tsslint/core': 1.4.4
+      '@volar/language-core': 2.4.11
+      '@volar/typescript': 2.4.11
       glob: 10.4.5
       typescript: 5.7.2
 
-  '@tsslint/config@1.4.0':
+  '@tsslint/config@1.4.4(typescript@5.7.2)':
     dependencies:
-      '@tsslint/types': 1.4.0
+      '@tsslint/types': 1.4.4
+      ts-api-utils: 2.0.0(typescript@5.7.2)
+    transitivePeerDependencies:
+      - typescript
 
-  '@tsslint/core@1.4.0':
+  '@tsslint/core@1.4.4':
     dependencies:
-      '@tsslint/types': 1.4.0
+      '@tsslint/types': 1.4.4
       error-stack-parser: 2.1.4
       esbuild: 0.24.0
       minimatch: 10.0.1
 
-  '@tsslint/types@1.4.0': {}
+  '@tsslint/types@1.4.4': {}
 
   '@tufjs/canonical-json@2.0.0': {}
 
@@ -3968,6 +3988,18 @@ snapshots:
       '@vitest/pretty-format': 2.1.8
       loupe: 3.1.2
       tinyrainbow: 1.2.0
+
+  '@volar/language-core@2.4.11':
+    dependencies:
+      '@volar/source-map': 2.4.11
+
+  '@volar/source-map@2.4.11': {}
+
+  '@volar/typescript@2.4.11':
+    dependencies:
+      '@volar/language-core': 2.4.11
+      path-browserify: 1.0.1
+      vscode-uri: 3.0.8
 
   '@vscode/vsce-sign-alpine-arm64@2.0.2':
     optional: true
@@ -5878,6 +5910,10 @@ snapshots:
       is-number: 7.0.0
 
   treeverse@3.0.0: {}
+
+  ts-api-utils@2.0.0(typescript@5.7.2):
+    dependencies:
+      typescript: 5.7.2
 
   tslib@2.8.1: {}
 
