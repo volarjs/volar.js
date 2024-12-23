@@ -22,12 +22,16 @@ We assume you already know:
 // my-lang.worker.ts
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
-import { createSimpleWorkerLanguageService, ServiceEnvironment } from '@volar/monaco/worker';
+import type { LanguageServiceEnvironment } from '@volar/language-service';
+import { createSimpleWorkerLanguageService } from '@volar/monaco/worker';
+import { URI } from 'vscode-uri';
 
 self.onmessage = () => {
 	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
-		const env: ServiceEnvironment = {
-			workspaceFolder: 'file:///',
+		const env: LanguageServiceEnvironment = {
+			workspaceFolders: [
+				URI.parse('file:///'),
+			],
 		};
 		return createSimpleWorkerLanguageService({
 			workerContext: ctx,
@@ -48,16 +52,19 @@ self.onmessage = () => {
 ```diff
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
--import { createSimpleWorkerLanguageService, ServiceEnvironment } from '@volar/monaco/worker';
-+import { createTypeScriptWorkerLanguageService, ServiceEnvironment } from '@volar/monaco/worker';
-+import * as ts from 'typescript';
-+import { create as createTypeScriptPlugins } from 'volar-service-typescript';
-+import { URI } from 'vscode-uri';
+import type { LanguageServiceEnvironment } from '@volar/language-service';
+-import { createSimpleWorkerLanguageService } from '@volar/monaco/worker';
++import { createTypeScriptWorkerLanguageService } from '@volar/monaco/worker';
+import { URI } from 'vscode-uri';
++import { create as createTypeScriptServicePlugin } from 'volar-service-typescript';
++import ts from 'typescript';
 
 self.onmessage = () => {
 	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
-		const env: ServiceEnvironment = {
-			workspaceFolder: 'file:///',
+		const env: LanguageServiceEnvironment = {
+			workspaceFolders: [
+				URI.parse('file:///'),
+			],
 		};
 -		return createSimpleWorkerLanguageService({
 +		return createTypeScriptWorkerLanguageService({
@@ -76,7 +83,7 @@ self.onmessage = () => {
 			],
 			languageServicePlugins: [
 				// ...
-+				...createTypeScriptPlugins(ts),
++				...createTypeScriptServicePlugin(ts),
 			],
 		});
 	});
@@ -88,25 +95,29 @@ self.onmessage = () => {
 ```diff
 import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
 import type * as monaco from 'monaco-editor-core';
-import { createTypeScriptWorkerLanguageService, ServiceEnvironment } from '@volar/monaco/worker';
+import type { LanguageServiceEnvironment } from '@volar/language-service';
+import { createTypeScriptWorkerLanguageService } from '@volar/monaco/worker';
+import { URI } from 'vscode-uri';
 +import { createNpmFileSystem } from '@volar/jsdelivr';
-import * as ts from 'typescript';
-import { create as createTypeScriptService } from 'volar-service-typescript';
+import { create as createTypeScriptServicePlugin } from 'volar-service-typescript';
+import ts from 'typescript';
 
 self.onmessage = () => {
 	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
-		const env: ServiceEnvironment = {
-			workspaceFolder: 'file:///',
-			typescript: {
-				uriToFileName: uri => uri.substring('file://'.length),
-				fileNameToUri: fileName => 'file://' + fileName,
-			},
+		const env: LanguageServiceEnvironment = {
+			workspaceFolders: [
+				URI.parse('file:///'),
+			],
 		};
 +		env.fs = createNpmFileSystem();
 		return createTypeScriptWorkerLanguageService({
 			typescript: ts,
 			compilerOptions: {
 				// ...
+			},
+			uriConverter: {
+				asFileName: uri => uri.fsPath,
+				asUri: fileName => URI.file(fileName),
 			},
 			workerContext: ctx,
 			env,
@@ -115,7 +126,7 @@ self.onmessage = () => {
 			],
 			languageServicePlugins: [
 				// ...
-				createTypeScriptService(ts),
+				createTypeScriptServicePlugin(ts),
 			],
 		});
 	});
@@ -141,14 +152,14 @@ import myWorker from './my-lang.worker?worker';
 ### Setup Language Features and Diagnostics
 
 ```ts
-import type { LanguageService } from '@volar/language-service';
+import type { WorkerLanguageService } from '@volar/monaco/worker';
 import { editor, languages, Uri } from 'monaco-editor-core';
 import { activateMarkers, activateAutoInsertion, registerProviders } from '@volar/monaco';
 
 languages.register({ id: 'my-lang', extensions: ['.my-lang'] });
 
 languages.onLanguage('my-lang', () => {
-	const worker = editor.createWebWorker<LanguageService>({
+	const worker = editor.createWebWorker<WorkerLanguageService>({
 		moduleId: 'vs/language/my-lang/myLangWorker',
 		label: 'my-lang',
 	});
@@ -168,7 +179,13 @@ languages.onLanguage('my-lang', () => {
 		() => [Uri.file('/Foo.my-lang'), Uri.file('/Bar.my-lang')],
 		editor
 	);
-	registerProviders(worker, ['my-lang'], languages)
+	registerProviders(
+		worker,
+		['my-lang'],
+		// sync files
+		() => [Uri.file('/Foo.my-lang'), Uri.file('/Bar.my-lang')],
+		languages
+	)
 });
 ```
 
