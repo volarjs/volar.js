@@ -1,4 +1,4 @@
-export type Path = string & { __pathBrand: any };
+export type Path = string & { __pathBrand: any; };
 
 /* @internal */
 export const enum CharacterCodes {

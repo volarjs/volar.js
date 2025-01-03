@@ -23,5 +23,5 @@ describe('translateOffset', () => {
 	});
 	test('start at the end of fromRange with shorter toLength', () => {
 		expect(translateOffset(10, [1], [11], [9], [7])).toEqual(18);
-	})
+	});
 });
