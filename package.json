@@ -9,8 +9,8 @@
 		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
 		"release:next": "npm run release -- --dist-tag next --no-push",
 		"test": "vitest run",
-		"lint": "tsslint --projects '**/tsconfig.json'",
-		"lint:fix": "npm run lint -- --fix"
+		"lint": "tsslint --project '**/tsconfig.json'",
+		"lint:fix": "npm run lint -- --fix --vscode-settings .vscode/settings.json"
 	},
 	"devDependencies": {
 		"@lerna-lite/cli": "latest",
