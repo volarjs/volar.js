@@ -6,7 +6,7 @@ export class FileMap<T> extends Map<string, T> {
 		super();
 	}
 
-	keys() {
+	keys(): IterableIterator<string> {
 		return this.originalFileNames.values();
 	}
 
