@@ -101,7 +101,9 @@ function arrayItemsEqual(a: string[], b: string[]) {
 		}
 	}
 	return true;
-} export function isHasAlreadyDecoratedLanguageService(info: ts.server.PluginCreateInfo) {
+}
+
+export function isHasAlreadyDecoratedLanguageService(info: ts.server.PluginCreateInfo) {
 	if (decoratedLanguageServices.has(info.languageService)
 		|| decoratedLanguageServiceHosts.has(info.languageServiceHost)) {
 		return true;
