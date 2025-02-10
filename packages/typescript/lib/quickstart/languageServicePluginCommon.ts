@@ -1,8 +1,8 @@
-import { VirtualCode, createLanguage, FileMap } from '@volar/language-core';
+import { createLanguage, FileMap } from '@volar/language-core';
 import { Language, LanguagePlugin } from '@volar/language-core/lib/types';
 import type * as ts from 'typescript';
 import { resolveFileLanguageId } from '../common';
-import { searchExternalFiles } from '../node/decorateLanguageServiceHost';
+import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
 
 export const externalFiles = new WeakMap<ts.server.Project, string[]>();
 export const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
@@ -27,15 +27,16 @@ export function makeGetScriptInfoWithLargeFileFailsafe(info: ts.server.PluginCre
 }
 
 export function createLanguageCommon(
-	languagePlugins: LanguagePlugin<string, VirtualCode>[],
+	createPluginResult: createPluginCallbackReturnValue,
 	ts: typeof import('typescript'),
-	info: ts.server.PluginCreateInfo) {
+	info: ts.server.PluginCreateInfo,
+  initializeProxiedLanguageService: (language: Language<string>) => void) {
 	const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
 	const getScriptInfo = makeGetScriptInfoWithLargeFileFailsafe(info);
 
 	const language = createLanguage<string>(
 		[
-			...languagePlugins,
+			...createPluginResult.languagePlugins,
 			{ getLanguageId: resolveFileLanguageId },
 		],
 		new FileMap(ts.sys.useCaseSensitiveFileNames),
@@ -62,7 +63,9 @@ export function createLanguageCommon(
 		}
 	);
 
-	return language;
+	initializeProxiedLanguageService(language);
+	decorateLanguageServiceHost(ts, language, info.languageServiceHost);
+	createPluginResult.setup?.(language);
 }
 
 export const makeGetExternalFiles = (ts: typeof import('typescript')) => (project: ts.server.Project, updateLevel = 0) => {
@@ -98,4 +101,14 @@ function arrayItemsEqual(a: string[], b: string[]) {
 		}
 	}
 	return true;
+} export function isHasAlreadyDecoratedLanguageService(info: ts.server.PluginCreateInfo) {
+	if (decoratedLanguageServices.has(info.languageService)
+		|| decoratedLanguageServiceHosts.has(info.languageServiceHost)) {
+		return true;
+	} else {
+		decoratedLanguageServices.add(info.languageService);
+		decoratedLanguageServiceHosts.add(info.languageServiceHost);
+		return false;
+	}
 }
+

@@ -1,7 +1,6 @@
 import type * as ts from 'typescript';
 import { createProxyLanguageService } from '../node/proxyLanguageService';
-import { decorateLanguageServiceHost } from '../node/decorateLanguageServiceHost';
-import { createLanguageCommon, makeGetScriptInfoWithLargeFileFailsafe, decoratedLanguageServiceHosts, decoratedLanguageServices, makeGetExternalFiles } from './languageServicePluginCommon';
+import { createLanguageCommon, isHasAlreadyDecoratedLanguageService, makeGetExternalFiles, makeGetScriptInfoWithLargeFileFailsafe } from './languageServicePluginCommon';
 import type { createPluginCallbackAsync } from './languageServicePluginCommon';
 
 export function createAsyncLanguageServicePlugin(
@@ -11,83 +10,24 @@ export function createAsyncLanguageServicePlugin(
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
+
 		const pluginModule: ts.server.PluginModule = {
 			create(info) {
-				if (
-					!decoratedLanguageServices.has(info.languageService)
-					&& !decoratedLanguageServiceHosts.has(info.languageServiceHost)
-				) {
-					decoratedLanguageServices.add(info.languageService);
-					decoratedLanguageServiceHosts.add(info.languageServiceHost);
-
-					const emptySnapshot = ts.ScriptSnapshot.fromString('');
-					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
-					const getScriptVersion = info.languageServiceHost.getScriptVersion.bind(info.languageServiceHost);
-					const getScriptKind = info.languageServiceHost.getScriptKind?.bind(info.languageServiceHost);
-					const getProjectVersion = info.languageServiceHost.getProjectVersion?.bind(info.languageServiceHost);
-
-					const getScriptInfo = makeGetScriptInfoWithLargeFileFailsafe(info);
-
-					let initialized = false;
-
-					info.languageServiceHost.getScriptSnapshot = fileName => {
-						if (!initialized) {
-							if (extensions.some(ext => fileName.endsWith(ext))) {
-								return emptySnapshot;
-							}
-							if (getScriptInfo(fileName)?.isScriptOpen()) {
-								return emptySnapshot;
-							}
-						}
-						return getScriptSnapshot(fileName);
-					};
-					info.languageServiceHost.getScriptVersion = fileName => {
-						if (!initialized) {
-							if (extensions.some(ext => fileName.endsWith(ext))) {
-								return 'initializing...';
-							}
-							if (getScriptInfo(fileName)?.isScriptOpen()) {
-								return getScriptVersion(fileName) + ',initializing...';
-							}
-						}
-						return getScriptVersion(fileName);
-					};
-					if (getScriptKind) {
-						info.languageServiceHost.getScriptKind = fileName => {
-							if (!initialized && extensions.some(ext => fileName.endsWith(ext))) {
-								// bypass upstream bug https://github.com/microsoft/TypeScript/issues/57631
-								// TODO: check if the bug is fixed in 5.5
-								if (typeof getScriptKindForExtraExtensions === 'function') {
-									return getScriptKindForExtraExtensions(fileName);
-								}
-								else {
-									return getScriptKindForExtraExtensions;
-								}
-							}
-							return getScriptKind(fileName);
-						};
-					}
-					if (getProjectVersion) {
-						info.languageServiceHost.getProjectVersion = () => {
-							if (!initialized) {
-								return getProjectVersion() + ',initializing...';
-							}
-							return getProjectVersion();
-						};
-					}
+				if (!isHasAlreadyDecoratedLanguageService(info)) {
+					const state = decorateWithAsyncInitializationHandling(ts, info, extensions, getScriptKindForExtraExtensions);
 
 					const { proxy, initialize } = createProxyLanguageService(info.languageService);
 					info.languageService = proxy;
 
-					createPluginCallbackAsync(ts, info).then(({ languagePlugins, setup }) => {
-						const language = createLanguageCommon(languagePlugins, ts, info);
+					createPluginCallbackAsync(ts, info).then((createPluginResult) => {
+						createLanguageCommon(createPluginResult, ts, info, initialize);
 
-						initialize(language);
-						decorateLanguageServiceHost(ts, language, info.languageServiceHost);
-						setup?.(language);
+						state.initialized = true;
 
-						initialized = true;
 						if ('markAsDirty' in info.project && typeof info.project.markAsDirty === 'function') {
+							// This is an attempt to mark the project as dirty so that in case the IDE/tsserver
+							// already finished a first pass of generating diagnostics (or other things), another
+							// pass will be triggered which should hopefully make use of this now-initialized plugin.
 							info.project.markAsDirty();
 						}
 					});
@@ -99,4 +39,64 @@ export function createAsyncLanguageServicePlugin(
 		};
 		return pluginModule;
 	};
+}
+
+function decorateWithAsyncInitializationHandling(ts: typeof import('typescript'), info: ts.server.PluginCreateInfo, extensions: string[], getScriptKindForExtraExtensions: ts.ScriptKind | ((fileName: string) => ts.ScriptKind)) {
+	const emptySnapshot = ts.ScriptSnapshot.fromString('');
+	const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
+	const getScriptVersion = info.languageServiceHost.getScriptVersion.bind(info.languageServiceHost);
+	const getScriptKind = info.languageServiceHost.getScriptKind?.bind(info.languageServiceHost);
+	const getProjectVersion = info.languageServiceHost.getProjectVersion?.bind(info.languageServiceHost);
+
+	const getScriptInfo = makeGetScriptInfoWithLargeFileFailsafe(info);
+
+	const state = { initialized: false };
+
+	info.languageServiceHost.getScriptSnapshot = fileName => {
+		if (!state.initialized) {
+			if (extensions.some(ext => fileName.endsWith(ext))) {
+				return emptySnapshot;
+			}
+			if (getScriptInfo(fileName)?.isScriptOpen()) {
+				return emptySnapshot;
+			}
+		}
+		return getScriptSnapshot(fileName);
+	};
+	info.languageServiceHost.getScriptVersion = fileName => {
+		if (!state.initialized) {
+			if (extensions.some(ext => fileName.endsWith(ext))) {
+				return 'initializing...';
+			}
+			if (getScriptInfo(fileName)?.isScriptOpen()) {
+				return getScriptVersion(fileName) + ',initializing...';
+			}
+		}
+		return getScriptVersion(fileName);
+	};
+	if (getScriptKind) {
+		info.languageServiceHost.getScriptKind = fileName => {
+			if (!state.initialized && extensions.some(ext => fileName.endsWith(ext))) {
+				// bypass upstream bug https://github.com/microsoft/TypeScript/issues/57631
+				// TODO: check if the bug is fixed in 5.5
+				if (typeof getScriptKindForExtraExtensions === 'function') {
+					return getScriptKindForExtraExtensions(fileName);
+				}
+				else {
+					return getScriptKindForExtraExtensions;
+				}
+			}
+			return getScriptKind(fileName);
+		};
+	}
+	if (getProjectVersion) {
+		info.languageServiceHost.getProjectVersion = () => {
+			if (!state.initialized) {
+				return getProjectVersion() + ',initializing...';
+			}
+			return getProjectVersion();
+		};
+	}
+
+	return state;
 }

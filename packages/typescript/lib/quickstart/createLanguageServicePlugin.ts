@@ -1,7 +1,6 @@
 import type * as ts from 'typescript';
 import { createProxyLanguageService } from '../node/proxyLanguageService';
-import { decorateLanguageServiceHost } from '../node/decorateLanguageServiceHost';
-import { createLanguageCommon, decoratedLanguageServiceHosts, decoratedLanguageServices, makeGetExternalFiles, projectExternalFileExtensions } from './languageServicePluginCommon';
+import { createLanguageCommon, isHasAlreadyDecoratedLanguageService, makeGetExternalFiles, projectExternalFileExtensions } from './languageServicePluginCommon';
 import type { createPluginCallbackSync } from './languageServicePluginCommon';
 
 export function createLanguageServicePlugin(
@@ -12,25 +11,17 @@ export function createLanguageServicePlugin(
 
 		const pluginModule: ts.server.PluginModule = {
 			create(info) {
-				if (
-					!decoratedLanguageServices.has(info.languageService)
-					&& !decoratedLanguageServiceHosts.has(info.languageServiceHost)
-				) {
-					decoratedLanguageServices.add(info.languageService);
-					decoratedLanguageServiceHosts.add(info.languageServiceHost);
-
-					const { languagePlugins, setup } = createPluginCallback(ts, info);
-					const extensions = languagePlugins
+				if (!isHasAlreadyDecoratedLanguageService(info)) {
+					const createPluginResult = createPluginCallback(ts, info);
+					const extensions = createPluginResult.languagePlugins
 						.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 						.flat();
 					projectExternalFileExtensions.set(info.project, extensions);
-					const language = createLanguageCommon(languagePlugins, ts, info);
 
 					const { proxy, initialize } = createProxyLanguageService(info.languageService);
 					info.languageService = proxy;
-					initialize(language);
-					decorateLanguageServiceHost(ts, language, info.languageServiceHost);
-					setup?.(language);
+
+					createLanguageCommon(createPluginResult, ts, info, initialize);
 				}
 
 				return info.languageService;
