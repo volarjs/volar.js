@@ -1,8 +1,8 @@
 import { Language, LanguagePlugin } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createProxyLanguageService } from '../node/proxyLanguageService';
-import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { arrayItemsEqual, createLanguageCommon, decoratedLanguageServiceHosts, decoratedLanguageServices, externalFiles, projectExternalFileExtensions } from './languageServicePluginCommon';
+import { decorateLanguageServiceHost } from '../node/decorateLanguageServiceHost';
+import { createLanguageCommon, decoratedLanguageServiceHosts, decoratedLanguageServices, makeGetExternalFiles, projectExternalFileExtensions } from './languageServicePluginCommon';
 
 export function createLanguageServicePlugin(
 	create: (
@@ -15,6 +15,7 @@ export function createLanguageServicePlugin(
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
+
 		const pluginModule: ts.server.PluginModule = {
 			create(info) {
 				if (
@@ -40,21 +41,7 @@ export function createLanguageServicePlugin(
 
 				return info.languageService;
 			},
-			getExternalFiles(project, updateLevel = 0) {
-				if (
-					updateLevel >= (1 satisfies ts.ProgramUpdateLevel.RootNamesAndUpdate)
-					|| !externalFiles.has(project)
-				) {
-					const oldFiles = externalFiles.get(project);
-					const extensions = projectExternalFileExtensions.get(project);
-					const newFiles = extensions?.length ? searchExternalFiles(ts, project, extensions) : [];
-					externalFiles.set(project, newFiles);
-					if (oldFiles && !arrayItemsEqual(oldFiles, newFiles)) {
-						project.refreshDiagnostics();
-					}
-				}
-				return externalFiles.get(project)!;
-			},
+			getExternalFiles: makeGetExternalFiles(ts),
 		};
 		return pluginModule;
 	};

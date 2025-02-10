@@ -1,9 +1,8 @@
 import { Language, LanguagePlugin } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createProxyLanguageService } from '../node/proxyLanguageService';
-import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { arrayItemsEqual, createLanguageCommon } from './languageServicePluginCommon';
-import { decoratedLanguageServiceHosts, decoratedLanguageServices, externalFiles } from './languageServicePluginCommon';
+import { decorateLanguageServiceHost } from '../node/decorateLanguageServiceHost';
+import { createLanguageCommon, makeGetScriptInfoWithLargeFileFailsafe, decoratedLanguageServiceHosts, decoratedLanguageServices, makeGetExternalFiles} from './languageServicePluginCommon';
 
 export function createAsyncLanguageServicePlugin(
 	extensions: string[],
@@ -32,6 +31,8 @@ export function createAsyncLanguageServicePlugin(
 					const getScriptVersion = info.languageServiceHost.getScriptVersion.bind(info.languageServiceHost);
 					const getScriptKind = info.languageServiceHost.getScriptKind?.bind(info.languageServiceHost);
 					const getProjectVersion = info.languageServiceHost.getProjectVersion?.bind(info.languageServiceHost);
+
+					const getScriptInfo = makeGetScriptInfoWithLargeFileFailsafe(info);
 
 					let initialized = false;
 
@@ -99,28 +100,8 @@ export function createAsyncLanguageServicePlugin(
 				}
 
 				return info.languageService;
-
-				function getScriptInfo(fileName: string) {
-					// getSnapshot could be crashed if the file is too large
-					try {
-						return info.project.getScriptInfo(fileName);
-					} catch { }
-				}
 			},
-			getExternalFiles(project, updateLevel = 0) {
-				if (
-					updateLevel >= (1 satisfies ts.ProgramUpdateLevel.RootNamesAndUpdate)
-					|| !externalFiles.has(project)
-				) {
-					const oldFiles = externalFiles.get(project);
-					const newFiles = extensions.length ? searchExternalFiles(ts, project, extensions) : [];
-					externalFiles.set(project, newFiles);
-					if (oldFiles && !arrayItemsEqual(oldFiles, newFiles)) {
-						project.refreshDiagnostics();
-					}
-				}
-				return externalFiles.get(project)!;
-			},
+			getExternalFiles: makeGetExternalFiles(ts),
 		};
 		return pluginModule;
 	};
