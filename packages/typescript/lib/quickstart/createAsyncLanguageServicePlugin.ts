@@ -1,19 +1,13 @@
-import { Language, LanguagePlugin } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createProxyLanguageService } from '../node/proxyLanguageService';
 import { decorateLanguageServiceHost } from '../node/decorateLanguageServiceHost';
-import { createLanguageCommon, makeGetScriptInfoWithLargeFileFailsafe, decoratedLanguageServiceHosts, decoratedLanguageServices, makeGetExternalFiles} from './languageServicePluginCommon';
+import { createLanguageCommon, makeGetScriptInfoWithLargeFileFailsafe, decoratedLanguageServiceHosts, decoratedLanguageServices, makeGetExternalFiles } from './languageServicePluginCommon';
+import type { createPluginCallbackAsync } from './languageServicePluginCommon';
 
 export function createAsyncLanguageServicePlugin(
 	extensions: string[],
 	getScriptKindForExtraExtensions: ts.ScriptKind | ((fileName: string) => ts.ScriptKind),
-	create: (
-		ts: typeof import('typescript'),
-		info: ts.server.PluginCreateInfo
-	) => Promise<{
-		languagePlugins: LanguagePlugin<string>[],
-		setup?: (language: Language<string>) => void;
-	}>
+	createPluginCallbackAsync: createPluginCallbackAsync
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
@@ -85,7 +79,7 @@ export function createAsyncLanguageServicePlugin(
 					const { proxy, initialize } = createProxyLanguageService(info.languageService);
 					info.languageService = proxy;
 
-					create(ts, info).then(({ languagePlugins, setup }) => {
+					createPluginCallbackAsync(ts, info).then(({ languagePlugins, setup }) => {
 						const language = createLanguageCommon(languagePlugins, ts, info);
 
 						initialize(language);

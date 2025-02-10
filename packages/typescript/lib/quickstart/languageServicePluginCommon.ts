@@ -1,5 +1,5 @@
 import { VirtualCode, createLanguage, FileMap } from '@volar/language-core';
-import { LanguagePlugin } from '@volar/language-core/lib/types';
+import { Language, LanguagePlugin } from '@volar/language-core/lib/types';
 import type * as ts from 'typescript';
 import { resolveFileLanguageId } from '../common';
 import { searchExternalFiles } from '../node/decorateLanguageServiceHost';
@@ -8,19 +8,6 @@ export const externalFiles = new WeakMap<ts.server.Project, string[]>();
 export const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
 export const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
 export const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
-
-function arrayItemsEqual(a: string[], b: string[]) {
-	if (a.length !== b.length) {
-		return false;
-	}
-	const set = new Set(a);
-	for (const file of b) {
-		if (!set.has(file)) {
-			return false;
-		}
-	}
-	return true;
-}
 
 /**
  * Wrap `getScriptInfo` to handle large files that may crash the language service.
@@ -92,3 +79,23 @@ export const makeGetExternalFiles = (ts: typeof import('typescript')) => (projec
 	return externalFiles.get(project)!;
 };
 
+export type createPluginCallbackReturnValue = {
+	languagePlugins: LanguagePlugin<string>[];
+	setup?: (language: Language<string>) => void;
+};
+
+export type createPluginCallbackSync = (ts: typeof import('typescript'), info: ts.server.PluginCreateInfo) => createPluginCallbackReturnValue;
+export type createPluginCallbackAsync = (ts: typeof import('typescript'), info: ts.server.PluginCreateInfo) => Promise<createPluginCallbackReturnValue>;
+
+function arrayItemsEqual(a: string[], b: string[]) {
+	if (a.length !== b.length) {
+		return false;
+	}
+	const set = new Set(a);
+	for (const file of b) {
+		if (!set.has(file)) {
+			return false;
+		}
+	}
+	return true;
+}
