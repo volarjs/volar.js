@@ -1,9 +1,9 @@
-import { FileMap, Language, LanguagePlugin, createLanguage } from '@volar/language-core';
+import { Language, LanguagePlugin } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { resolveFileLanguageId } from '../common';
 import { createProxyLanguageService } from '../node/proxyLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-import { arrayItemsEqual, decoratedLanguageServiceHosts, decoratedLanguageServices, externalFiles } from './createLanguageServicePlugin';
+import { arrayItemsEqual, createLanguageCommon } from './languageServicePluginCommon';
+import { decoratedLanguageServiceHosts, decoratedLanguageServices, externalFiles } from './languageServicePluginCommon';
 
 export function createAsyncLanguageServicePlugin(
 	extensions: string[],
@@ -85,34 +85,7 @@ export function createAsyncLanguageServicePlugin(
 					info.languageService = proxy;
 
 					create(ts, info).then(({ languagePlugins, setup }) => {
-						const language = createLanguage<string>(
-							[
-								...languagePlugins,
-								{ getLanguageId: resolveFileLanguageId },
-							],
-							new FileMap(ts.sys.useCaseSensitiveFileNames),
-							(fileName, _, shouldRegister) => {
-								let snapshot: ts.IScriptSnapshot | undefined;
-								if (shouldRegister) {
-									// We need to trigger registration of the script file with the project, see #250
-									snapshot = getScriptSnapshot(fileName);
-								}
-								else {
-									snapshot = getScriptInfo(fileName)?.getSnapshot();
-									if (!snapshot) {
-										// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
-										info.project.getScriptVersion(fileName);
-										snapshot = getScriptInfo(fileName)?.getSnapshot();
-									}
-								}
-								if (snapshot) {
-									language.scripts.set(fileName, snapshot);
-								}
-								else {
-									language.scripts.delete(fileName);
-								}
-							}
-						);
+						const language = createLanguageCommon(languagePlugins, ts, info);
 
 						initialize(language);
 						decorateLanguageServiceHost(ts, language, info.languageServiceHost);

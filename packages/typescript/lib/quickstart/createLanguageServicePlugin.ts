@@ -1,13 +1,8 @@
-import { FileMap, Language, LanguagePlugin, createLanguage } from '@volar/language-core';
+import { Language, LanguagePlugin } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { resolveFileLanguageId } from '../common';
 import { createProxyLanguageService } from '../node/proxyLanguageService';
 import { decorateLanguageServiceHost, searchExternalFiles } from '../node/decorateLanguageServiceHost';
-
-export const externalFiles = new WeakMap<ts.server.Project, string[]>();
-export const projectExternalFileExtensions = new WeakMap<ts.server.Project, string[]>();
-export const decoratedLanguageServices = new WeakSet<ts.LanguageService>();
-export const decoratedLanguageServiceHosts = new WeakSet<ts.LanguageServiceHost>();
+import { arrayItemsEqual, createLanguageCommon, decoratedLanguageServiceHosts, decoratedLanguageServices, externalFiles, projectExternalFileExtensions } from './languageServicePluginCommon';
 
 export function createLanguageServicePlugin(
 	create: (
@@ -34,35 +29,7 @@ export function createLanguageServicePlugin(
 						.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 						.flat();
 					projectExternalFileExtensions.set(info.project, extensions);
-					const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
-					const language = createLanguage<string>(
-						[
-							...languagePlugins,
-							{ getLanguageId: resolveFileLanguageId },
-						],
-						new FileMap(ts.sys.useCaseSensitiveFileNames),
-						(fileName, _, shouldRegister) => {
-							let snapshot: ts.IScriptSnapshot | undefined;
-							if (shouldRegister) {
-								// We need to trigger registration of the script file with the project, see #250
-								snapshot = getScriptSnapshot(fileName);
-							}
-							else {
-								snapshot = getScriptInfo(fileName)?.getSnapshot();
-								if (!snapshot) {
-									// trigger projectService.getOrCreateScriptInfoNotOpenedByClient
-									info.project.getScriptVersion(fileName);
-									snapshot = getScriptInfo(fileName)?.getSnapshot();
-								}
-							}
-							if (snapshot) {
-								language.scripts.set(fileName, snapshot);
-							}
-							else {
-								language.scripts.delete(fileName);
-							}
-						}
-					);
+					const language = createLanguageCommon(languagePlugins, ts, info);
 
 					const { proxy, initialize } = createProxyLanguageService(info.languageService);
 					info.languageService = proxy;
@@ -72,13 +39,6 @@ export function createLanguageServicePlugin(
 				}
 
 				return info.languageService;
-
-				function getScriptInfo(fileName: string) {
-					// getSnapshot could be crashed if the file is too large
-					try {
-						return info.project.getScriptInfo(fileName);
-					} catch { }
-				}
 			},
 			getExternalFiles(project, updateLevel = 0) {
 				if (
@@ -98,17 +58,4 @@ export function createLanguageServicePlugin(
 		};
 		return pluginModule;
 	};
-}
-
-export function arrayItemsEqual(a: string[], b: string[]) {
-	if (a.length !== b.length) {
-		return false;
-	}
-	const set = new Set(a);
-	for (const file of b) {
-		if (!set.has(file)) {
-			return false;
-		}
-	}
-	return true;
 }
