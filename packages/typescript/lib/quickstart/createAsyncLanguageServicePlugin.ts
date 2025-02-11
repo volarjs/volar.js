@@ -11,8 +11,8 @@ import type { createPluginCallbackAsync } from './languageServicePluginCommon';
  * in ESM and get transpiled to CJS, which requires usage of `await import()` to load
  * the necessary dependencies and fully initialize the plugin.
  *
- * To handle the period of time in which the plugin is initializing, stub a number of
- * methods on the LanguageServiceHost to handle the uninitialized state.
+ * To handle the period of time in which the plugin is initializing, this async
+ * variant stubs a number of methods on the LanguageServiceHost to handle the uninitialized state.
  *
  * Additionally, this async variant requires a few extra args pertaining to
  * file extensions intended to be handled by the TS Plugin. In the synchronous variant,
