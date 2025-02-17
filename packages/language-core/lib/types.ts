@@ -72,7 +72,11 @@ export interface CodeInformation {
 	 * - code actions (refactorings, quick fixes,etc.)
 	 */
 	verification?: boolean | {
-		/** when present, `shouldReport` callback is invoked to determine whether a diagnostic raised in the generated code should be propagated back to the original source code */
+		/**
+		 * when present, `shouldReport` callback is invoked to determine whether a diagnostic
+		 * raised in the generated code should be propagated back to the original source code.
+		 * Note that when this callback is present, diagnostic processing (e.g. typechecking) will
+		 * still be performed, but the results will not be reported back to the original source code. */
 		shouldReport?(source: string | undefined, code: string | number | undefined): boolean;
 	};
 	/** virtual code is expected to support assisted completion */
