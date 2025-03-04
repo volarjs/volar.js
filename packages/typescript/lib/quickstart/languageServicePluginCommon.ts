@@ -30,7 +30,7 @@ export function createLanguageCommon(
 	createPluginResult: createPluginCallbackReturnValue,
 	ts: typeof import('typescript'),
 	info: ts.server.PluginCreateInfo,
-  initializeProxiedLanguageService: (language: Language<string>) => void) {
+	initializeProxiedLanguageService: (language: Language<string>) => void) {
 	const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
 	const getScriptInfo = makeGetScriptInfoWithLargeFileFailsafe(info);
 

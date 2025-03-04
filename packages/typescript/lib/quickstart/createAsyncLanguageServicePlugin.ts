@@ -38,7 +38,7 @@ export function createAsyncLanguageServicePlugin(
 					const { proxy, initialize } = createProxyLanguageService(info.languageService);
 					info.languageService = proxy;
 
-					createPluginCallbackAsync(ts, info).then((createPluginResult) => {
+					createPluginCallbackAsync(ts, info).then(createPluginResult => {
 						createLanguageCommon(createPluginResult, ts, info, initialize);
 
 						state.initialized = true;
