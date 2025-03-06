@@ -60,6 +60,17 @@ export function createLanguageCommon(
 			else {
 				language.scripts.delete(fileName);
 			}
+		},
+		targetFileName => {
+			// https://github.com/JetBrains/intellij-plugins/blob/6435723ad88fa296b41144162ebe3b8513f4949b/Angular/src-js/angular-service/src/ngCommands.ts#L88
+			(info.session as any).change({
+				file: targetFileName,
+				line: 1,
+				offset: 1,
+				endLine: 1,
+				endOffset: 1,
+				insertString: '',
+			});
 		}
 	);
 
