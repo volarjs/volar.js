@@ -1,5 +1,35 @@
 # Changelog
 
+## [2.4.12](https://github.com/volarjs/volar.js/compare/v2.4.11...v2.4.12) (2024-03-07)
+
+### Bug Fixes
+
+- fix(language-core): trigger targets dirty when associatedOnly is true
+- fix(typescript): focus update target file version on association dirty (#267)
+- fix(jsdelivr): make params.`getPackageVersion` useful (#266) - Thanks to @wangcch!
+
+### Other Changes
+
+- docs(monaco): update documentation to match the current API status (#255) - Thanks to @elchininet!
+- docs(typescript): clean up and document `createLanguageServicePlugin` and `createAsyncLanguageServicePlugin` (#261) - Thanks to @machty
+
+## [2.4.11](https://github.com/volarjs/volar.js/compare/v2.4.10...v2.4.11) (2024-12-14)
+
+### Features
+
+- feat(typescript): add typescriptObject option to runTsc (#245) - Thanks to @zhiyuanzmj!
+
+### Bug Fixes
+
+- fix(typescript): should not suppressing getLanguageId crashes (#253)
+- fix(typescript): force update the opened script snapshot after the language plugin is ready (#254)
+- fix(typescript): fix issue with transpiled TypeScript files not being registered with a project at all (#250) - Thanks to @piotrtomiak!
+- fix(typescript): resolve the shim used for tsc in Typescript v5.7 and up (#252) - Thanks to @kitsune7!
+
+### Other Changes
+
+- docs(source-map): updated API section based on #207 (#248) - Thanks to @alamhubb!
+
 ## [2.4.10](https://github.com/volarjs/volar.js/compare/v2.4.9...v2.4.10) (2024-11-08)
 
 ### Bug Fixes
