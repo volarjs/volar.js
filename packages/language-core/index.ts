@@ -67,14 +67,20 @@ export function createLanguage<T>(
 					const sourceScript = scriptRegistry.get(id)!;
 					if (sourceScript.languageId !== languageId || sourceScript.associatedOnly !== associatedOnly) {
 						this.delete(id);
+						triggerTargetsDirty(sourceScript);
 						return this.set(id, snapshot, languageId);
 					}
 					else if (associatedOnly) {
-						sourceScript.snapshot = snapshot;
+						if (sourceScript.snapshot !== snapshot) {
+							sourceScript.snapshot = snapshot;
+							triggerTargetsDirty(sourceScript);
+						}
 					}
 					else if (sourceScript.isAssociationDirty || sourceScript.snapshot !== snapshot) {
-						// snapshot updated
-						sourceScript.snapshot = snapshot;
+						if (sourceScript.snapshot !== snapshot) {
+							sourceScript.snapshot = snapshot;
+							triggerTargetsDirty(sourceScript);
+						}
 						const codegenCtx = prepareCreateVirtualCode(sourceScript);
 						if (sourceScript.generated) {
 							const { updateVirtualCode, createVirtualCode } = sourceScript.generated.languagePlugin;
@@ -95,7 +101,6 @@ export function createLanguage<T>(
 								return;
 							}
 						}
-						triggerTargetsDirty(sourceScript);
 					}
 					else {
 						// not changed
