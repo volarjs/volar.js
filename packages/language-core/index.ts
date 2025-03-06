@@ -22,7 +22,8 @@ export const defaultMapperFactory: MapperFactory = mappings => new SourceMap(map
 export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],
 	scriptRegistry: Map<T, SourceScript<T>>,
-	sync: (id: T, includeFsFiles: boolean, shouldRegister: boolean) => void
+	sync: (id: T, includeFsFiles: boolean, shouldRegister: boolean) => void,
+	onAssociationDirty?: (targetId: T) => void
 ) {
 	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode, SourceScript<T>>();
 	const virtualCodeToSourceMap = new WeakMap<IScriptSnapshot, WeakMap<IScriptSnapshot, Mapper>>();
@@ -213,6 +214,7 @@ export function createLanguage<T>(
 			const sourceScript = scriptRegistry.get(id);
 			if (sourceScript) {
 				sourceScript.isAssociationDirty = true;
+				onAssociationDirty?.(sourceScript.id);
 			}
 		});
 	}
