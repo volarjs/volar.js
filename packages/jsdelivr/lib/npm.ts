@@ -149,7 +149,7 @@ export function createNpmFileSystem(
 				if ((await _stat(path))?.type !== 1 satisfies FileType.File) {
 					return;
 				}
-				const text = await fetchText(`https://cdn.jsdelivr.net/npm/${path}`);
+				const text = await fetchText(`https://cdn.jsdelivr.net/npm/${pkgName}@${_version || 'latest'}/${pkgFilePath}`);
 				if (text !== undefined) {
 					onFetch?.(path, text);
 				}
@@ -251,7 +251,7 @@ export function createNpmFileSystem(
 			version = modName.substring(modName.lastIndexOf('@') + 1);
 		}
 		if (!version && getPackageVersion) {
-			getPackageVersion?.(pkgName);
+			version = getPackageVersion?.(pkgName);
 		}
 		return [modName, pkgName, version, path];
 	}
