@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.4.12](https://github.com/volarjs/volar.js/compare/v2.4.11...v2.4.12) (2024-03-07)
+## [2.4.12](https://github.com/volarjs/volar.js/compare/v2.4.11...v2.4.12) (2025-03-07)
 
 ### Bug Fixes
 
