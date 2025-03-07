@@ -51,6 +51,12 @@ export async function activate(context: vscode.ExtensionContext) {
 				const items: VirtualFileItem[] = [];
 				for (const extension of extensions) {
 					for (const client of extension.exports.volarLabs.languageClients) {
+						if (
+							!client.clientOptions.documentSelector
+							|| !vscode.languages.match(client.clientOptions.documentSelector, currentDocument)
+						) {
+							continue;
+						}
 						const virtualFile = await client.sendRequest(
 							extension.exports.volarLabs.languageServerProtocol.GetVirtualFileRequest.type,
 							{
