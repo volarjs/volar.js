@@ -5,13 +5,13 @@
 ### Bug Fixes
 
 - fix(language-core): trigger targets dirty when associatedOnly is true
-- fix(typescript): focus update target file version on association dirty (#267)
+- fix(typescript): force update target file version on association dirty (#267)
 - fix(jsdelivr): make params.`getPackageVersion` useful (#266) - Thanks to @wangcch!
 
 ### Other Changes
 
 - docs(monaco): update documentation to match the current API status (#255) - Thanks to @elchininet!
-- docs(typescript): clean up and document `createLanguageServicePlugin` and `createAsyncLanguageServicePlugin` (#261) - Thanks to @machty
+- docs(typescript): clean up and document `createLanguageServicePlugin` and `createAsyncLanguageServicePlugin` (#261) - Thanks to @machty!
 
 ## [2.4.11](https://github.com/volarjs/volar.js/compare/v2.4.10...v2.4.11) (2024-12-14)
 
