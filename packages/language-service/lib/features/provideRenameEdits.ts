@@ -1,4 +1,4 @@
-import { isRenameEnabled, resolveRenameNewName, type CodeInformation } from '@volar/language-core';
+import { isRenameEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -17,14 +17,10 @@ export function register(context: LanguageServiceContext) {
 			uri,
 			() => ({ position, newName }),
 			function* (docs) {
-				let _data!: CodeInformation;
-				for (const mappedPosition of getGeneratedPositions(docs, position, data => {
-					_data = data;
-					return isRenameEnabled(data);
-				})) {
+				for (const mappedPosition of getGeneratedPositions(docs, position, isRenameEnabled)) {
 					yield {
 						position: mappedPosition,
-						newName: resolveRenameNewName(newName, _data),
+						newName,
 					};
 				};
 			},

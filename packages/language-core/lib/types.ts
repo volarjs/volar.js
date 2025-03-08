@@ -100,8 +100,6 @@ export interface CodeInformation {
 	/** virtual code is expected correctly reflect reference relationships of the source code */
 	navigation?: boolean | {
 		shouldRename?(): boolean;
-		resolveRenameNewName?(newName: string): string;
-		resolveRenameEditText?(newText: string): string;
 	};
 	/** virtual code is expected correctly reflect the structural information of the source code */
 	structure?: boolean;
