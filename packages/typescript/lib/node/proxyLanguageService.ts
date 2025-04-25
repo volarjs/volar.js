@@ -23,6 +23,7 @@ import {
 	getMappingOffset,
 	toGeneratedOffset,
 	toGeneratedOffsets,
+    toGeneratedRange,
 	toGeneratedRanges,
 	toSourceOffset,
 	toSourceRanges,
@@ -177,10 +178,9 @@ function getFormattingEditsForRange(language: Language<string>, getFormattingEdi
 			return [];
 		}
 		if (serviceScript) {
-			const generateStart = toGeneratedOffset(language, serviceScript, sourceScript, start, isFormattingEnabled);
-			const generateEnd = toGeneratedOffset(language, serviceScript, sourceScript, end, isFormattingEnabled);
-			if (generateStart !== undefined && generateEnd !== undefined) {
-				const edits = getFormattingEditsForRange(targetScript.id, generateStart, generateEnd, options);
+			const generatedRange = toGeneratedRange(language, serviceScript, sourceScript, start, end, isFormattingEnabled);
+			if (generatedRange !== undefined) {
+				const edits = getFormattingEditsForRange(targetScript.id, generatedRange[0], generatedRange[1], options);
 				return edits
 					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1])
 					.filter(edit => !!edit);
@@ -580,13 +580,12 @@ function getCodeFixesAtPosition(language: Language<string>, getCodeFixesAtPositi
 			return [];
 		}
 		if (serviceScript) {
-			const generateStart = toGeneratedOffset(language, serviceScript, sourceScript, start, isCodeActionsEnabled);
-			const generateEnd = toGeneratedOffset(language, serviceScript, sourceScript, end, isCodeActionsEnabled);
-			if (generateStart !== undefined && generateEnd !== undefined) {
+			const generateRange = toGeneratedRange(language, serviceScript, sourceScript, start, end, isCodeActionsEnabled);
+			if (generateRange !== undefined) {
 				fixes = getCodeFixesAtPosition(
 					targetScript.id,
-					generateStart,
-					generateEnd,
+					generateRange[0],
+					generateRange[1],
 					errorCodes,
 					formatOptions,
 					preferences

@@ -315,6 +315,19 @@ export function* toSourceOffsets(
 	}
 }
 
+export function toGeneratedRange(
+	language: Language,
+	serviceScript: TypeScriptServiceScript,
+	sourceScript: SourceScript<string>,
+	start: number,
+	end: number,
+	filter: (data: CodeInformation) => boolean
+) {
+	for (const result of toGeneratedRanges(language, serviceScript, sourceScript, start, end, filter)) {
+		return result;
+	}
+}
+
 export function* toGeneratedRanges(
 	language: Language,
 	serviceScript: TypeScriptServiceScript,
