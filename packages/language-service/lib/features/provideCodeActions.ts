@@ -1,9 +1,8 @@
-import { isCodeActionsEnabled } from '@volar/language-core';
+import { findOverlapCodeRange, isCodeActionsEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { findOverlapCodeRange } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
 import { getGeneratedRange, languageFeatureWorker } from '../utils/featureWorkers';
 import { transformLocations, transformWorkspaceEdit } from '../utils/transform';

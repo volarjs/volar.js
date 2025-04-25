@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findOverlapCodeRange } from '../lib/utils/common';
-import { CodeInformation, Mapping, defaultMapperFactory } from '@volar/language-core';
+import { CodeInformation, Mapping, defaultMapperFactory, findOverlapCodeRange } from '../index';
 
 // test code: <html><body><p>Hello</p></body></html>
 

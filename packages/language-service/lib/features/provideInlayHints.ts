@@ -1,9 +1,8 @@
-import { isInlayHintsEnabled } from '@volar/language-core';
+import { findOverlapCodeRange, isInlayHintsEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { findOverlapCodeRange } from '../utils/common';
 import { getSourcePositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 import { transformTextEdit } from '../utils/transform';
 

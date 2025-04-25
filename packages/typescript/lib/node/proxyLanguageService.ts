@@ -1,6 +1,6 @@
 import {
 	CodeInformation,
-	Language,
+	findOverlapCodeRange,
 	isCallHierarchyEnabled,
 	isCodeActionsEnabled,
 	isCompletionEnabled,
@@ -16,6 +16,7 @@ import {
 	isSemanticTokensEnabled,
 	isSignatureHelpEnabled,
 	isTypeDefinitionEnabled,
+	Language,
 } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { dedupeDocumentSpans } from './dedupe';
@@ -613,23 +614,17 @@ function getEncodedSemanticClassifications(language: Language<string>, getEncode
 			};
 		}
 		if (serviceScript) {
-			let start: number | undefined;
-			let end: number | undefined;
 			const map = language.maps.get(serviceScript.code, targetScript);
-			for (const mapping of map.mappings) {
-				// TODO reuse the logic from language service
-				if (isSemanticTokensEnabled(mapping.data) && mapping.sourceOffsets[0] >= span.start && mapping.sourceOffsets[0] <= span.start + span.length) {
-					start ??= mapping.generatedOffsets[0];
-					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + (mapping.generatedLengths ?? mapping.lengths)[mapping.lengths.length - 1];
-					start = Math.min(start, mapping.generatedOffsets[0]);
-					end = Math.max(end, mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + (mapping.generatedLengths ?? mapping.lengths)[mapping.lengths.length - 1]);
-				}
+			const mapped = findOverlapCodeRange(span.start, span.start + span.length, map, isSemanticTokensEnabled);
+			if (!mapped) {
+				return {
+					spans: [],
+					endOfLineState: 0
+				};
 			}
-			start ??= 0;
-			end ??= targetScript.snapshot.getLength();
 			const mappingOffset = getMappingOffset(language, serviceScript);
-			start += mappingOffset;
-			end += mappingOffset;
+			const start = mapped.start + mappingOffset;
+			const end = mapped.end + mappingOffset;
 			const result = getEncodedSemanticClassifications(targetScript.id, { start, length: end - start }, format);
 			const spans: number[] = [];
 			for (let i = 0; i < result.spans.length; i += 3) {
@@ -1085,3 +1080,4 @@ function displayPartsToString(displayParts: ts.SymbolDisplayPart[] | undefined) 
 	}
 	return '';
 }
+
