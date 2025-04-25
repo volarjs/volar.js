@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.4.13](https://github.com/volarjs/volar.js/compare/v2.4.12...v2.4.13) (2025-04-26)
+
+### Bug Fixes
+
+- fix(labs): add document selector check for language clients in virtualFilesView
+- fix(labs): add document selector check for language clients in servicePluginsView
+- fix(typescript): fix issue when mapping ranges are exactly the same as ranges passed to getFixesAtPosition and getFormattingEditsForRange (#270) - Thanks to @piotrtomiak!
+- fix(typescript): robust calculation of generated span for semantic classifications (#271) - Thanks to @KazariEX
+
+### Other Changes
+
+- chore: fix years in changelog (#268) - Thanks to @tomblachut
+
 ## [2.4.12](https://github.com/volarjs/volar.js/compare/v2.4.11...v2.4.12) (2025-03-07)
 
 ### Bug Fixes
