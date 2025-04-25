@@ -617,17 +617,32 @@ function getEncodedSemanticClassifications(language: Language<string>, getEncode
 			let start: number | undefined;
 			let end: number | undefined;
 			const map = language.maps.get(serviceScript.code, targetScript);
+			let generatedSpanStart = 0;
+			let generatedSpanEnd = Infinity;
+			for (const [offset] of map.toGeneratedLocation(span.start)) {
+				generatedSpanStart = offset;
+				break;
+			}
+			for (const [offset] of map.toGeneratedLocation(span.start + span.length)) {
+				generatedSpanEnd = offset;
+				break;
+			}
 			for (const mapping of map.mappings) {
 				// TODO reuse the logic from language service
-				if (isSemanticTokensEnabled(mapping.data) && mapping.sourceOffsets[0] >= span.start && mapping.sourceOffsets[0] <= span.start + span.length) {
-					start ??= mapping.generatedOffsets[0];
-					end ??= mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + (mapping.generatedLengths ?? mapping.lengths)[mapping.lengths.length - 1];
-					start = Math.min(start, mapping.generatedOffsets[0]);
-					end = Math.max(end, mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + (mapping.generatedLengths ?? mapping.lengths)[mapping.lengths.length - 1]);
+				if (!isSemanticTokensEnabled(mapping.data)) {
+					continue;
+				}
+				const sourceStart = mapping.sourceOffsets[0];
+				const sourceEnd = mapping.sourceOffsets[mapping.sourceOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1];
+				if (sourceStart <= span.start + span.length || sourceEnd >= span.start) {
+					const generatedStart = mapping.generatedOffsets[0];
+					const generatedEnd = mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + (mapping.generatedLengths ?? mapping.lengths)[mapping.lengths.length - 1];
+					start = Math.min(start ?? Infinity, generatedStart);
+					end = Math.max(end ?? 0, generatedEnd);
 				}
 			}
-			start ??= 0;
-			end ??= targetScript.snapshot.getLength();
+			start = Math.max(generatedSpanStart, start ?? 0);
+			end = Math.min(generatedSpanEnd, end ?? targetScript.snapshot.getLength());
 			const mappingOffset = getMappingOffset(language, serviceScript);
 			start += mappingOffset;
 			end += mappingOffset;
@@ -1086,3 +1101,4 @@ function displayPartsToString(displayParts: ts.SymbolDisplayPart[] | undefined) 
 	}
 	return '';
 }
+
