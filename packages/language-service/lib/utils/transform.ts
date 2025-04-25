@@ -1,4 +1,4 @@
-import { isDocumentLinkEnabled, isRenameEnabled } from '@volar/language-core';
+import { isDocumentLinkEnabled, isRenameEnabled, resolveRenameEditText, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -373,12 +373,17 @@ export function transformWorkspaceEdit(
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
 
-						const range = getSourceRange(docs, tsEdit.range, isRenameEnabled);
+						let _data!: CodeInformation;
+
+						const range = getSourceRange(docs, tsEdit.range, data => {
+							_data = data;
+							return isRenameEnabled(data);
+						});
 
 						if (range) {
 							sourceResult.changes[sourceDocument.uri] ??= [];
 							sourceResult.changes[sourceDocument.uri].push({
-								newText: tsEdit.newText,
+								newText: resolveRenameEditText(tsEdit.newText, _data),
 								range,
 							});
 							hasResult = true;
@@ -431,11 +436,16 @@ export function transformWorkspaceEdit(
 						} satisfies vscode.TextDocumentEdit;
 						for (const tsEdit of tsDocEdit.edits) {
 							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-								const range = getSourceRange(docs, tsEdit.range, isRenameEnabled);
+								let _data!: CodeInformation;
+								const range = getSourceRange(docs, tsEdit.range, data => {
+									_data = data;
+									// fix https://github.com/johnsoncodehk/volar/issues/1091
+									return isRenameEnabled(data);
+								});
 								if (range) {
 									sourceEdit.edits.push({
 										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
-										newText: tsEdit.newText,
+										newText: resolveRenameEditText(tsEdit.newText, _data),
 										range,
 									});
 								}

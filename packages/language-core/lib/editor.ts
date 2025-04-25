@@ -116,6 +116,20 @@ export function shouldReportDiagnostics(info: CodeInformation, source: string | 
 		: !!info.verification;
 }
 
+//  resolve...
+
+export function resolveRenameNewName(newName: string, info: CodeInformation): string {
+	return typeof info.navigation === 'object'
+		? info.navigation.resolveRenameNewName?.(newName) ?? newName
+		: newName;
+}
+
+export function resolveRenameEditText(text: string, info: CodeInformation): string {
+	return typeof info.navigation === 'object'
+		? info.navigation.resolveRenameEditText?.(text) ?? text
+		: text;
+}
+
 export function findOverlapCodeRange(
 	start: number,
 	end: number,
