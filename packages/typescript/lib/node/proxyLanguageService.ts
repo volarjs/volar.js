@@ -1,6 +1,6 @@
 import {
 	CodeInformation,
-	Language,
+	findOverlapCodeRange,
 	isCallHierarchyEnabled,
 	isCodeActionsEnabled,
 	isCompletionEnabled,
@@ -16,6 +16,7 @@ import {
 	isSemanticTokensEnabled,
 	isSignatureHelpEnabled,
 	isTypeDefinitionEnabled,
+	Language,
 } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { dedupeDocumentSpans } from './dedupe';
@@ -614,35 +615,17 @@ function getEncodedSemanticClassifications(language: Language<string>, getEncode
 			};
 		}
 		if (serviceScript) {
-			let start: number | undefined;
-			let end: number | undefined;
 			const map = language.maps.get(serviceScript.code, targetScript);
-			let generatedSpanStart = 0;
-			let generatedSpanEnd = Infinity;
-			for (const [start, end] of map.toGeneratedRange(span.start, span.start + span.length, true)) {
-				generatedSpanStart = start;
-				generatedSpanEnd = end;
-				break;
+			const mapped = findOverlapCodeRange(span.start, span.start + span.length, map, isSemanticTokensEnabled);
+			if (!mapped) {
+				return {
+					spans: [],
+					endOfLineState: 0
+				};
 			}
-			for (const mapping of map.mappings) {
-				// TODO reuse the logic from language service
-				if (!isSemanticTokensEnabled(mapping.data)) {
-					continue;
-				}
-				const sourceStart = mapping.sourceOffsets[0];
-				const sourceEnd = mapping.sourceOffsets[mapping.sourceOffsets.length - 1] + mapping.lengths[mapping.lengths.length - 1];
-				if (sourceStart <= span.start + span.length || sourceEnd >= span.start) {
-					const generatedStart = mapping.generatedOffsets[0];
-					const generatedEnd = mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + (mapping.generatedLengths ?? mapping.lengths)[mapping.lengths.length - 1];
-					start = Math.min(start ?? Infinity, generatedStart);
-					end = Math.max(end ?? 0, generatedEnd);
-				}
-			}
-			start = Math.max(generatedSpanStart, start ?? 0);
-			end = Math.min(generatedSpanEnd, end ?? targetScript.snapshot.getLength());
 			const mappingOffset = getMappingOffset(language, serviceScript);
-			start += mappingOffset;
-			end += mappingOffset;
+			const start = mapped.start + mappingOffset;
+			const end = mapped.end + mappingOffset;
 			const result = getEncodedSemanticClassifications(targetScript.id, { start, length: end - start }, format);
 			const spans: number[] = [];
 			for (let i = 0; i < result.spans.length; i += 3) {
