@@ -619,12 +619,9 @@ function getEncodedSemanticClassifications(language: Language<string>, getEncode
 			const map = language.maps.get(serviceScript.code, targetScript);
 			let generatedSpanStart = 0;
 			let generatedSpanEnd = Infinity;
-			for (const [offset] of map.toGeneratedLocation(span.start)) {
-				generatedSpanStart = offset;
-				break;
-			}
-			for (const [offset] of map.toGeneratedLocation(span.start + span.length)) {
-				generatedSpanEnd = offset;
+			for (const [start, end] of map.toGeneratedRange(span.start, span.start + span.length, true)) {
+				generatedSpanStart = start;
+				generatedSpanEnd = end;
 				break;
 			}
 			for (const mapping of map.mappings) {
