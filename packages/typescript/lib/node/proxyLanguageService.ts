@@ -23,7 +23,7 @@ import {
 	getMappingOffset,
 	toGeneratedOffset,
 	toGeneratedOffsets,
-    toGeneratedRange,
+	toGeneratedRange,
 	toGeneratedRanges,
 	toSourceOffset,
 	toSourceRanges,
