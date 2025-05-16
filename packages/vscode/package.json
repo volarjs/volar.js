@@ -12,7 +12,6 @@
 		"directory": "packages/vscode"
 	},
 	"dependencies": {
-		"@volar/language-server": "2.4.13",
 		"path-browserify": "^1.0.1",
 		"vscode-languageclient": "^9.0.1",
 		"vscode-nls": "^5.2.0"
@@ -20,6 +19,7 @@
 	"devDependencies": {
 		"@types/node": "latest",
 		"@types/path-browserify": "latest",
-		"@types/vscode": "^1.82.0"
+		"@types/vscode": "^1.82.0",
+		"@volar/language-server": "2.4.13"
 	}
 }

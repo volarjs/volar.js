@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
-import { GetMatchTsConfigRequest } from '@volar/language-server/protocol';
+import { GetMatchTsConfigRequest } from '../../protocol.js';
 import * as path from 'path-browserify';
 
 export function activate(

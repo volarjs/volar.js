@@ -1,4 +1,3 @@
-import { LoadedTSFilesMetaRequest } from '@volar/language-server/protocol';
 import type { LabsInfo } from '@volar/vscode';
 import * as lsp from '@volar/vscode';
 import * as fs from 'fs';
@@ -114,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
 						command: {
 							command: '_volar.action.tsMemoryTreemap',
 							title: '',
-							arguments: [element.client],
+							arguments: [element.client, element.extension.exports.volarLabs.languageServerProtocol],
 						},
 					};
 				}
@@ -179,7 +178,7 @@ export function activate(context: vscode.ExtensionContext) {
 			await client.stop();
 			await client.start();
 		}),
-		vscode.commands.registerCommand('_volar.action.tsMemoryTreemap', async (client: lsp.BaseLanguageClient) => {
+		vscode.commands.registerCommand('_volar.action.tsMemoryTreemap', async (client: lsp.BaseLanguageClient, protocol: typeof import('@volar/vscode/protocol')) => {
 
 			const select = await quickPick([
 				{
@@ -210,7 +209,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 				progress.report({ increment: 0 });
 
-				const meta = await client.sendRequest(LoadedTSFilesMetaRequest.type);
+				const meta = await client.sendRequest(protocol.LoadedTSFilesMetaRequest.type);
 				const { visualizer } = await import('esbuild-visualizer/dist/plugin/index.js');
 				const fileContent = await visualizer(meta as any);
 

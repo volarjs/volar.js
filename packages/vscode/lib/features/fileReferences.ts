@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
 import * as nls from 'vscode-nls';
-import { FindFileReferenceRequest } from '@volar/language-server/protocol';
+import { FindFileReferenceRequest } from '../../protocol.js';
 
 const localize = nls.loadMessageBundle();
 

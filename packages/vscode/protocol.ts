@@ -1,8 +1,7 @@
-import type { CodeMapping } from '@volar/language-core';
-import type { DocumentDropEdit } from '@volar/language-service';
-import * as protocol from 'vscode-languageserver-protocol';
+import type { CodeMapping, DocumentDropEdit } from '@volar/language-server';
+import * as protocol from 'vscode-languageclient';
 
-export * from 'vscode-languageserver-protocol';
+export * from 'vscode-languageclient';
 
 /**
  * Client request server

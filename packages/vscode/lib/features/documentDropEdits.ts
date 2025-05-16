@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
-import { DocumentDropRequest, DocumentDrop_DataTransferItemAsStringRequest, DocumentDrop_DataTransferItemFileDataRequest } from '@volar/language-server/protocol';
+import { DocumentDropRequest, DocumentDrop_DataTransferItemAsStringRequest, DocumentDrop_DataTransferItemFileDataRequest } from '../../protocol.js';
 
 export function activate(selector: vscode.DocumentSelector, client: BaseLanguageClient) {
 

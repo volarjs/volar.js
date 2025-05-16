@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
-import { ReloadProjectNotification } from '@volar/language-server/protocol';
+import { ReloadProjectNotification } from '../../protocol.js';
 
 export function activate(cmd: string, client: BaseLanguageClient) {
 	return vscode.commands.registerCommand(cmd, () => {

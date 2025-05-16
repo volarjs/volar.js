@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
-import { WriteVirtualFilesNotification } from '@volar/language-server/protocol';
+import { WriteVirtualFilesNotification } from '../../protocol.js';
 
 export function activate(cmd: string, client: BaseLanguageClient) {
 	return vscode.commands.registerCommand(cmd, () => {

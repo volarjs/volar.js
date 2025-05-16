@@ -1,5 +1,5 @@
 import type { ExperimentalFeatures } from '@volar/language-server';
-import { AutoInsertRequest } from '@volar/language-server/protocol';
+import { AutoInsertRequest } from '../../protocol.js';
 import * as vscode from 'vscode';
 import type { BaseLanguageClient, ServerCapabilities } from 'vscode-languageclient';
 

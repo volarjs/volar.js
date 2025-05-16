@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as protocol from './protocol.js';
 
 export { activate as activateAutoInsertion } from './lib/features/autoInsertion';
 export { activate as activateDocumentDropEdit } from './lib/features/documentDropEdits';
@@ -80,13 +81,13 @@ export function parseServerCommand(command: vscode.Command) {
 
 export const currentLabsVersion = '2.3.1';
 
-export function createLabsInfo(languageServerProtocol: typeof import('@volar/language-server/protocol')) {
+export function createLabsInfo(_?: typeof import('@volar/language-server/protocol')) {
 	const onDidAddLanguageClientEmitter = new vscode.EventEmitter<BaseLanguageClient>();
 	const extensionExports: LabsInfo = {
 		volarLabs: {
 			version: currentLabsVersion,
 			languageClients: [] as BaseLanguageClient[],
-			languageServerProtocol,
+			languageServerProtocol: protocol,
 			onDidAddLanguageClient: onDidAddLanguageClientEmitter.event,
 		},
 	};
@@ -104,6 +105,6 @@ export interface LabsInfo {
 		version: typeof currentLabsVersion;
 		languageClients: BaseLanguageClient[];
 		onDidAddLanguageClient: vscode.Event<BaseLanguageClient>;
-		languageServerProtocol: typeof import('@volar/language-server/protocol');
+		languageServerProtocol: typeof import('./protocol.js');
 	};
 }
