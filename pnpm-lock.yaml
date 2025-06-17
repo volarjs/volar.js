@@ -180,6 +180,15 @@ importers:
         specifier: latest
         version: 0.52.2
 
+  packages/npmmirror:
+    devDependencies:
+      '@volar/language-service':
+        specifier: 2.4.12
+        version: link:../language-service
+      vscode-uri:
+        specifier: ^3.0.8
+        version: 3.1.0
+
   packages/source-map: {}
 
   packages/test-utils:
