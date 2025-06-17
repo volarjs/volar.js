@@ -148,7 +148,7 @@ export function createNpmFileSystem(
 				return [];
 			}
 
-			const result: [string, FileType][] = data.files.map((file) => {
+			const result: [string, FileType][] = data.files.map(file => {
 				const type =
 					file.type === "directory"
 						? (2 as FileType.Directory)
@@ -168,7 +168,9 @@ export function createNpmFileSystem(
 	}
 
 	function _getNameFromPath(path: string): string {
-		if (!path) return "";
+		if (!path) {
+			return "";
+		}
 
 		const trimmedPath = path.endsWith("/") ? path.slice(0, -1) : path;
 
