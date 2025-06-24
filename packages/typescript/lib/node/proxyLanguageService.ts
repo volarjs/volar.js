@@ -949,39 +949,14 @@ function provideInlayHints(language: Language<string>, provideInlayHints: ts.Lan
 			return [];
 		}
 		if (serviceScript) {
-			let start: number | undefined;
-			let end: number | undefined;
 			const map = language.maps.get(serviceScript.code, sourceScript);
-			for (const mapping of map.mappings) {
-				if (!isInlayHintsEnabled(mapping.data)) {
-					continue;
-				}
-				let mappingStart = mapping.sourceOffsets[0];
-				let genStart: number | undefined;
-				let genEnd: number | undefined;
-				if (mappingStart >= span.start && mappingStart <= span.start + span.length) {
-					genStart = mapping.generatedOffsets[0];
-					genEnd = mapping.generatedOffsets[mapping.generatedOffsets.length - 1]
-						+ (mapping.generatedLengths ?? mapping.lengths)[mapping.generatedOffsets.length - 1];
-				} else if (mappingStart < span.start && span.start < mappingStart + mapping.lengths[0]
-					&& mapping.sourceOffsets.length == 1
-					&& (!mapping.generatedLengths || mapping.generatedLengths[0] === mapping.lengths[0])
-				) {
-					genStart = mapping.generatedOffsets[0] + span.start - mappingStart;
-					genEnd = Math.min(genStart + span.length, mapping.generatedOffsets[0] + mapping.lengths[0]);
-				} else {
-					continue;
-				}
-				start = Math.min(start ?? genStart, genStart);
-				end = Math.max(end ?? genEnd, genEnd);
-			}
-			if (start === undefined || end === undefined) {
-				start = 0;
-				end = 0;
+			const mapped = findOverlapCodeRange(span.start, span.start + span.length, map, isSemanticTokensEnabled);
+			if (!mapped) {
+				return [];
 			}
 			const mappingOffset = getMappingOffset(language, serviceScript);
-			start += mappingOffset;
-			end += mappingOffset;
+			const start = mapped.start + mappingOffset;
+			const end = mapped.end + mappingOffset;
 			const result = provideInlayHints(targetScript.id, { start, length: end - start }, preferences);
 			const hints: ts.InlayHint[] = [];
 			for (const hint of result) {
