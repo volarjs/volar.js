@@ -191,13 +191,14 @@ export function proxyCreateProgram(
 					containingFile,
 					redirectedReference,
 					compilerOptions,
+					containingSourceFile,
 					...rest
 				) => {
 					if (resolveModuleNameLiterals && moduleLiterals.every(name => !extensions.some(ext => name.text.endsWith(ext)))) {
-						return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, compilerOptions, ...rest);
+						return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, compilerOptions, containingSourceFile, ...rest);
 					}
 					return moduleLiterals.map(moduleLiteral => {
-						return resolveModuleName(moduleLiteral.text, containingFile, compilerOptions, moduleResolutionCache, redirectedReference);
+						return resolveModuleName(moduleLiteral.text, containingFile, compilerOptions, moduleResolutionCache, redirectedReference, containingSourceFile.impliedNodeFormat);
 					});
 				};
 				options.host.resolveModuleNames = (
@@ -212,7 +213,7 @@ export function proxyCreateProgram(
 						return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, compilerOptions, containingSourceFile);
 					}
 					return moduleNames.map(moduleName => {
-						return resolveModuleName(moduleName, containingFile, compilerOptions, moduleResolutionCache, redirectedReference).resolvedModule;
+						return resolveModuleName(moduleName, containingFile, compilerOptions, moduleResolutionCache, redirectedReference, containingSourceFile?.impliedNodeFormat).resolvedModule;
 					});
 				};
 			}
