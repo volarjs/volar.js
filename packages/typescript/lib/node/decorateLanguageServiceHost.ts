@@ -53,13 +53,14 @@ export function decorateLanguageServiceHost(
 				containingFile,
 				redirectedReference,
 				options,
+				containingSourceFile,
 				...rest
 			) => {
 				if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
-					return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, options, ...rest);
+					return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, ...rest);
 				}
 				return moduleLiterals.map(moduleLiteral => {
-					return resolveModuleName(moduleLiteral.text, containingFile, options, moduleResolutionCache, redirectedReference);
+					return resolveModuleName(moduleLiteral.text, containingFile, options, moduleResolutionCache, redirectedReference, containingSourceFile.impliedNodeFormat);
 				});
 			};
 		}
@@ -76,7 +77,7 @@ export function decorateLanguageServiceHost(
 					return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, options, containingSourceFile);
 				}
 				return moduleNames.map(moduleName => {
-					return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference).resolvedModule;
+					return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference, containingSourceFile?.impliedNodeFormat).resolvedModule;
 				});
 			};
 		}
