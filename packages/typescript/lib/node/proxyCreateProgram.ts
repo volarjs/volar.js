@@ -198,7 +198,8 @@ export function proxyCreateProgram(
 						return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, compilerOptions, containingSourceFile, ...rest);
 					}
 					return moduleLiterals.map(moduleLiteral => {
-						return resolveModuleName(moduleLiteral.text, containingFile, compilerOptions, moduleResolutionCache, redirectedReference, containingSourceFile.impliedNodeFormat);
+						const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, compilerOptions);
+						return resolveModuleName(moduleLiteral.text, containingFile, compilerOptions, moduleResolutionCache, redirectedReference, mode);
 					});
 				};
 				options.host.resolveModuleNames = (

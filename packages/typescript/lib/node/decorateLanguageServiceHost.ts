@@ -60,7 +60,8 @@ export function decorateLanguageServiceHost(
 					return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, ...rest);
 				}
 				return moduleLiterals.map(moduleLiteral => {
-					return resolveModuleName(moduleLiteral.text, containingFile, options, moduleResolutionCache, redirectedReference, containingSourceFile.impliedNodeFormat);
+					const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, options);
+					return resolveModuleName(moduleLiteral.text, containingFile, options, moduleResolutionCache, redirectedReference, mode);
 				});
 			};
 		}
@@ -77,7 +78,7 @@ export function decorateLanguageServiceHost(
 					return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, options, containingSourceFile);
 				}
 				return moduleNames.map(moduleName => {
-					return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference, containingSourceFile?.impliedNodeFormat).resolvedModule;
+					return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference).resolvedModule;
 				});
 			};
 		}
