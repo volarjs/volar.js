@@ -10,10 +10,10 @@ importers:
     devDependencies:
       '@lerna-lite/cli':
         specifier: latest
-        version: 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)
+        version: 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)
       '@lerna-lite/publish':
         specifier: latest
-        version: 4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0)
+        version: 4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0)
       '@tsslint/cli':
         specifier: latest
         version: 1.5.18(typescript@5.8.3)
@@ -22,27 +22,27 @@ importers:
         version: 5.8.3
       vite:
         specifier: latest
-        version: 7.0.0(@types/node@24.0.8)(yaml@2.8.0)
+        version: 7.0.0(@types/node@24.0.10)(yaml@2.8.0)
       vitest:
         specifier: latest
-        version: 3.2.4(@types/node@24.0.8)(yaml@2.8.0)
+        version: 3.2.4(@types/node@24.0.10)(yaml@2.8.0)
 
   extensions/labs:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 24.0.8
+        version: 24.0.10
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.98.0
       '@volar/language-server':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../../packages/vscode
       '@vscode/vsce':
         specifier: latest
@@ -63,7 +63,7 @@ importers:
         specifier: ^8.56.10
         version: 8.56.12
       '@volar/language-core':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-core
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -72,7 +72,7 @@ importers:
   packages/jsdelivr:
     devDependencies:
       '@volar/language-service':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.8
@@ -81,10 +81,10 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -101,24 +101,24 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 24.0.8
+        version: 24.0.10
 
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../typescript
       path-browserify:
         specifier: ^1.0.1
@@ -146,7 +146,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-core
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -161,10 +161,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.4.0
@@ -185,10 +185,10 @@ importers:
   packages/test-utils:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-core
       '@volar/language-server':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-server
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -199,12 +199,12 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 24.0.8
+        version: 24.0.10
 
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-core
       path-browserify:
         specifier: ^1.0.1
@@ -215,12 +215,12 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 24.0.8
+        version: 24.0.10
       '@types/path-browserify':
         specifier: latest
         version: 1.0.3
       '@volar/language-service':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-service
 
   packages/vscode:
@@ -237,7 +237,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: latest
-        version: 24.0.8
+        version: 24.0.10
       '@types/path-browserify':
         specifier: latest
         version: 1.0.3
@@ -245,7 +245,7 @@ importers:
         specifier: ^1.82.0
         version: 1.98.0
       '@volar/language-server':
-        specifier: 2.4.16
+        specifier: 2.4.17
         version: link:../language-server
 
 packages:
@@ -960,8 +960,8 @@ packages:
   '@types/node@22.15.18':
     resolution: {integrity: sha512-v1DKRfUdyW+jJhZNEI1PYy29S2YRxMV5AOO/x/SjKmW0acCIOqmbj6Haf9eHAhsPmrhlHSxEhv/1WszcLWV4cg==}
 
-  '@types/node@24.0.8':
-    resolution: {integrity: sha512-WytNrFSgWO/esSH9NbpWUfTMGQwCGIKfCmNlmFDNiI5gGhgMmEA+V1AEvKLeBNvvtBnailJtkrEa2OIISwrVAA==}
+  '@types/node@24.0.10':
+    resolution: {integrity: sha512-ENHwaH+JIRTDIEEbDK6QSQntAYGtbvdDXnMXnZaZ6k13Du1dPMmprkEHIL7ok2Wl2aZevetwTAb5S+7yIF+enA==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -3404,10 +3404,10 @@ snapshots:
   '@esbuild/win32-x64@0.25.5':
     optional: true
 
-  '@inquirer/core@10.1.13(@types/node@24.0.8)':
+  '@inquirer/core@10.1.13(@types/node@24.0.10)':
     dependencies:
       '@inquirer/figures': 1.0.12
-      '@inquirer/type': 3.0.7(@types/node@24.0.8)
+      '@inquirer/type': 3.0.7(@types/node@24.0.10)
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
       mute-stream: 2.0.0
@@ -3415,38 +3415,38 @@ snapshots:
       wrap-ansi: 6.2.0
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.0.10
 
-  '@inquirer/expand@4.0.15(@types/node@24.0.8)':
+  '@inquirer/expand@4.0.15(@types/node@24.0.10)':
     dependencies:
-      '@inquirer/core': 10.1.13(@types/node@24.0.8)
-      '@inquirer/type': 3.0.7(@types/node@24.0.8)
+      '@inquirer/core': 10.1.13(@types/node@24.0.10)
+      '@inquirer/type': 3.0.7(@types/node@24.0.10)
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.0.10
 
   '@inquirer/figures@1.0.12': {}
 
-  '@inquirer/input@4.1.12(@types/node@24.0.8)':
+  '@inquirer/input@4.1.12(@types/node@24.0.10)':
     dependencies:
-      '@inquirer/core': 10.1.13(@types/node@24.0.8)
-      '@inquirer/type': 3.0.7(@types/node@24.0.8)
+      '@inquirer/core': 10.1.13(@types/node@24.0.10)
+      '@inquirer/type': 3.0.7(@types/node@24.0.10)
     optionalDependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.0.10
 
-  '@inquirer/select@4.2.3(@types/node@24.0.8)':
+  '@inquirer/select@4.2.3(@types/node@24.0.10)':
     dependencies:
-      '@inquirer/core': 10.1.13(@types/node@24.0.8)
+      '@inquirer/core': 10.1.13(@types/node@24.0.10)
       '@inquirer/figures': 1.0.12
-      '@inquirer/type': 3.0.7(@types/node@24.0.8)
+      '@inquirer/type': 3.0.7(@types/node@24.0.10)
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.0.10
 
-  '@inquirer/type@3.0.7(@types/node@24.0.8)':
+  '@inquirer/type@3.0.7(@types/node@24.0.10)':
     optionalDependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.0.10
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -3465,10 +3465,10 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
-  '@lerna-lite/cli@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)':
+  '@lerna-lite/cli@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)':
     dependencies:
-      '@lerna-lite/core': 4.5.1(@types/node@24.0.8)
-      '@lerna-lite/init': 4.5.1(@types/node@24.0.8)
+      '@lerna-lite/core': 4.5.1(@types/node@24.0.10)
+      '@lerna-lite/init': 4.5.1(@types/node@24.0.10)
       '@lerna-lite/npmlog': 4.1.2
       dedent: 1.6.0
       dotenv: 16.6.1
@@ -3476,18 +3476,18 @@ snapshots:
       load-json-file: 7.0.1
       yargs: 18.0.0
     optionalDependencies:
-      '@lerna-lite/publish': 4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0)
-      '@lerna-lite/version': 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)(conventional-commits-filter@5.0.0)
+      '@lerna-lite/publish': 4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0)
+      '@lerna-lite/version': 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)(conventional-commits-filter@5.0.0)
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
       - supports-color
 
-  '@lerna-lite/core@4.5.1(@types/node@24.0.8)':
+  '@lerna-lite/core@4.5.1(@types/node@24.0.10)':
     dependencies:
-      '@inquirer/expand': 4.0.15(@types/node@24.0.8)
-      '@inquirer/input': 4.1.12(@types/node@24.0.8)
-      '@inquirer/select': 4.2.3(@types/node@24.0.8)
+      '@inquirer/expand': 4.0.15(@types/node@24.0.10)
+      '@inquirer/input': 4.1.12(@types/node@24.0.10)
+      '@inquirer/select': 4.2.3(@types/node@24.0.10)
       '@lerna-lite/npmlog': 4.1.2
       '@npmcli/run-script': 9.1.0
       ci-info: 4.2.0
@@ -3520,9 +3520,9 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  '@lerna-lite/init@4.5.1(@types/node@24.0.8)':
+  '@lerna-lite/init@4.5.1(@types/node@24.0.10)':
     dependencies:
-      '@lerna-lite/core': 4.5.1(@types/node@24.0.8)
+      '@lerna-lite/core': 4.5.1(@types/node@24.0.10)
       fs-extra: 11.3.0
       p-map: 7.0.3
       write-json-file: 6.0.0
@@ -3542,12 +3542,12 @@ snapshots:
       string-width: 7.2.0
       wide-align: 1.1.5
 
-  '@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0)':
+  '@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0)':
     dependencies:
-      '@lerna-lite/cli': 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)
-      '@lerna-lite/core': 4.5.1(@types/node@24.0.8)
+      '@lerna-lite/cli': 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)
+      '@lerna-lite/core': 4.5.1(@types/node@24.0.10)
       '@lerna-lite/npmlog': 4.1.2
-      '@lerna-lite/version': 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)(conventional-commits-filter@5.0.0)
+      '@lerna-lite/version': 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)(conventional-commits-filter@5.0.0)
       '@npmcli/arborist': 9.1.2
       '@npmcli/package-json': 6.2.0
       byte-size: 9.0.1
@@ -3579,11 +3579,11 @@ snapshots:
       - conventional-commits-filter
       - supports-color
 
-  '@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)(conventional-commits-filter@5.0.0)':
+  '@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)(conventional-commits-filter@5.0.0)':
     dependencies:
       '@conventional-changelog/git-client': 2.5.1(conventional-commits-filter@5.0.0)(conventional-commits-parser@6.2.0)
-      '@lerna-lite/cli': 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)(conventional-commits-filter@5.0.0))(@types/node@24.0.8)
-      '@lerna-lite/core': 4.5.1(@types/node@24.0.8)
+      '@lerna-lite/cli': 4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@lerna-lite/version@4.5.1(@lerna-lite/publish@4.5.1(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)(conventional-commits-filter@5.0.0))(@types/node@24.0.10)
+      '@lerna-lite/core': 4.5.1(@types/node@24.0.10)
       '@lerna-lite/npmlog': 4.1.2
       '@octokit/plugin-enterprise-rest': 6.0.1
       '@octokit/rest': 22.0.0
@@ -4088,7 +4088,7 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/node@24.0.8':
+  '@types/node@24.0.10':
     dependencies:
       undici-types: 7.8.0
 
@@ -4110,13 +4110,13 @@ snapshots:
       chai: 5.2.0
       tinyrainbow: 2.0.0
 
-  '@vitest/mocker@3.2.4(vite@7.0.0(@types/node@24.0.8)(yaml@2.8.0))':
+  '@vitest/mocker@3.2.4(vite@7.0.0(@types/node@24.0.10)(yaml@2.8.0))':
     dependencies:
       '@vitest/spy': 3.2.4
       estree-walker: 3.0.3
       magic-string: 0.30.17
     optionalDependencies:
-      vite: 7.0.0(@types/node@24.0.8)(yaml@2.8.0)
+      vite: 7.0.0(@types/node@24.0.10)(yaml@2.8.0)
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -6216,13 +6216,13 @@ snapshots:
 
   version-range@4.14.0: {}
 
-  vite-node@3.2.4(@types/node@24.0.8)(yaml@2.8.0):
+  vite-node@3.2.4(@types/node@24.0.10)(yaml@2.8.0):
     dependencies:
       cac: 6.7.14
       debug: 4.4.1
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 7.0.0(@types/node@24.0.8)(yaml@2.8.0)
+      vite: 7.0.0(@types/node@24.0.10)(yaml@2.8.0)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -6237,7 +6237,7 @@ snapshots:
       - tsx
       - yaml
 
-  vite@7.0.0(@types/node@24.0.8)(yaml@2.8.0):
+  vite@7.0.0(@types/node@24.0.10)(yaml@2.8.0):
     dependencies:
       esbuild: 0.25.5
       fdir: 6.4.6(picomatch@4.0.2)
@@ -6246,15 +6246,15 @@ snapshots:
       rollup: 4.44.1
       tinyglobby: 0.2.14
     optionalDependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.0.10
       fsevents: 2.3.3
       yaml: 2.8.0
 
-  vitest@3.2.4(@types/node@24.0.8)(yaml@2.8.0):
+  vitest@3.2.4(@types/node@24.0.10)(yaml@2.8.0):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
-      '@vitest/mocker': 3.2.4(vite@7.0.0(@types/node@24.0.8)(yaml@2.8.0))
+      '@vitest/mocker': 3.2.4(vite@7.0.0(@types/node@24.0.10)(yaml@2.8.0))
       '@vitest/pretty-format': 3.2.4
       '@vitest/runner': 3.2.4
       '@vitest/snapshot': 3.2.4
@@ -6272,11 +6272,11 @@ snapshots:
       tinyglobby: 0.2.14
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
-      vite: 7.0.0(@types/node@24.0.8)(yaml@2.8.0)
-      vite-node: 3.2.4(@types/node@24.0.8)(yaml@2.8.0)
+      vite: 7.0.0(@types/node@24.0.10)(yaml@2.8.0)
+      vite-node: 3.2.4(@types/node@24.0.10)(yaml@2.8.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.0.10
     transitivePeerDependencies:
       - jiti
       - less
