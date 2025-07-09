@@ -274,6 +274,7 @@ export function createTypeScriptProject(
 export function createUriConverter(rootFolders: URI[]) {
 	const encodeds = new Map<string, URI>();
 	const isFileScheme = rootFolders.every(folder => folder.scheme === 'file');
+	const fragmentPrefix = '/' + encodeURIComponent('#');
 
 	return {
 		asFileName,
@@ -291,7 +292,8 @@ export function createUriConverter(rootFolders: URI[]) {
 		}
 		const encoded = encodeURIComponent(`${parsed.scheme}://${parsed.authority}`);
 		encodeds.set(encoded, parsed);
-		return `/${encoded}${parsed.path}`;
+		const fragment = parsed.fragment ? fragmentPrefix + encodeURIComponent(parsed.fragment) : '';
+		return `/${encoded}${parsed.path}${fragment}`;
 	}
 
 	function asUri(fileName: string) {
@@ -308,7 +310,7 @@ export function createUriConverter(rootFolders: URI[]) {
 					return URI.from({
 						scheme: uri.scheme,
 						authority: uri.authority,
-						path: fileName.substring(prefix.length),
+						...getComponents(fileName, prefix.length),
 					});
 				}
 			}
@@ -317,7 +319,7 @@ export function createUriConverter(rootFolders: URI[]) {
 					return URI.from({
 						scheme: uri.scheme,
 						authority: uri.authority,
-						path: fileName.substring(prefix.length),
+						...getComponents(fileName, prefix.length),
 					});
 				}
 			}
@@ -328,6 +330,22 @@ export function createUriConverter(rootFolders: URI[]) {
 			}
 		}
 		return URI.file(fileName);
+	}
+
+	function getComponents(fileName: string, prefixLength: number) {
+		// Fragment is present when the fileName contains the fragment prefix and is not followed by a slash.
+		const fragmentPosition = fileName.lastIndexOf(fragmentPrefix);
+		if (fragmentPosition >= prefixLength) {
+			if (fileName.indexOf('/', fragmentPosition + fragmentPrefix.length) < 0) {
+				return {
+					path: fileName.substring(prefixLength, fragmentPosition),
+					fragment: decodeURIComponent(fileName.substring(fragmentPosition + fragmentPrefix.length)),
+				};
+			}
+		}
+		return {
+			path: fileName.substring(prefixLength),
+		};
 	}
 }
 
