@@ -23,6 +23,8 @@ export function createLanguageServicePlugin(
 						.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
 						.flat();
 
+					// TODO: this logic does not seem to appear in the async variant
+					// (createAsyncLanguageServicePlugin)... bug?
 					projectExternalFileExtensions.set(info.project, extensions);
 
 					const { proxy, initialize } = createProxyLanguageService(info.languageService);
