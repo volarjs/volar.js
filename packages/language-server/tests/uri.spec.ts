@@ -12,6 +12,9 @@ describe('URI', () => {
 			'file:///c:/a/b/c',
 			'file:///C:/a/b/c',
 			'untitled:Untitled-1',
+			'vscode-notebook-cell:///a/b/c.one.ts',
+			'vscode-notebook-cell:///a/b/c.one.ts#xdf4Gt6/a',
+			'vscode-notebook-cell:///a/b/c.one.ts##a/%/v',
 		];
 
 		for (const uri of cases) {
@@ -26,6 +29,7 @@ describe('URI', () => {
 
 		expect(uriConverter.asFileName(URI.parse('http://a/b'))).toBe('/b');
 		expect(uriConverter.asFileName(URI.parse('https://a/b'))).toBe('/https%3A%2F%2Fa/b');
+		expect(uriConverter.asFileName(URI.parse('https://a/b/##a/%/v'))).toBe('/https%3A%2F%2Fa/b//%23%23a%2F%25%2Fv');
 
 		expect(uriConverter.asUri('/b').toString()).toBe('http://a/b');
 		expect(uriConverter.asUri('/c').toString()).toBe('http://a/c');
