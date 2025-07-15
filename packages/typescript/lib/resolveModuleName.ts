@@ -22,12 +22,16 @@ export function createResolveModuleName<T>(
 			? host.useCaseSensitiveFileNames.bind(host)
 			: host.useCaseSensitiveFileNames,
 		fileExists(fileName) {
+			const result = host.fileExists(fileName);
 			for (const { typescript } of languagePlugins) {
 				if (!typescript) {
 					continue;
 				}
-				for (const { extension } of typescript.extraFileExtensions) {
-					if (fileName.endsWith(`.d.${extension}.ts`)) {
+				if (!result) {
+					for (const { extension } of typescript.extraFileExtensions) {
+						if (!fileName.endsWith(`.d.${extension}.ts`)) {
+							continue;
+						}
 						const sourceFileName = fileName.slice(0, -`.d.${extension}.ts`.length) + `.${extension}`;
 						if (fileExists(sourceFileName)) {
 							const sourceScript = getSourceScript(sourceFileName);
@@ -72,7 +76,7 @@ export function createResolveModuleName<T>(
 					}
 				}
 			}
-			return host.fileExists(fileName);
+			return result;
 		},
 	};
 	return (
