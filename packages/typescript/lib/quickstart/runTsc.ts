@@ -55,7 +55,7 @@ export function runTsc(
 	};
 
 	try {
-		require(tscPath);
+		return require(tscPath);
 	} finally {
 		(fs as any).readFileSync = readFileSync;
 		delete require.cache[tscPath];
