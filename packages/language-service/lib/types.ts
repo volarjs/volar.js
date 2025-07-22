@@ -70,7 +70,7 @@ export interface LanguageServiceContext {
 		documentUri: URI,
 		embeddedCodeId: string,
 	] | undefined;
-	encodeEmbeddedDocumentUri(uri: URI, embeededCodeId: string): URI;
+	encodeEmbeddedDocumentUri(uri: URI, embeddedCodeId: string): URI;
 }
 
 export type ProviderResult<T> = T | Thenable<T>;
