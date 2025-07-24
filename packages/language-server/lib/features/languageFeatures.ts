@@ -389,8 +389,8 @@ export function register(
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.semanticTokensProvider)) {
 			serverCapabilities.semanticTokensProvider = {
+				full: true,
 				range: true,
-				full: false, // TODO: enable it after testing
 				legend: {
 					tokenTypes: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
 					tokenModifiers: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
