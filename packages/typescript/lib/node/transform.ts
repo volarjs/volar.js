@@ -265,24 +265,18 @@ export function* toSourceRanges(
 	filter: (data: CodeInformation) => boolean
 ): Generator<[fileName: string, start: number, end: number]> {
 	if (sourceScript) {
+		if (start > 0 || end > 0) {
+			start -= getMappingOffset(language, serviceScript);
+			end -= getMappingOffset(language, serviceScript);
+		}
 		const map = language.maps.get(serviceScript.code, sourceScript);
-		for (const [sourceStart, sourceEnd] of map.toSourceRange(
-			start - getMappingOffset(language, serviceScript),
-			end - getMappingOffset(language, serviceScript),
-			fallbackToAnyMatch,
-			filter
-		)) {
+		for (const [sourceStart, sourceEnd] of map.toSourceRange(start, end, fallbackToAnyMatch, filter)) {
 			yield [sourceScript.id, sourceStart, sourceEnd];
 		}
 	}
 	else {
 		for (const [sourceScript, map] of language.maps.forEach(serviceScript.code)) {
-			for (const [sourceStart, sourceEnd] of map.toSourceRange(
-				start - getMappingOffset(language, serviceScript),
-				end - getMappingOffset(language, serviceScript),
-				fallbackToAnyMatch,
-				filter
-			)) {
+			for (const [sourceStart, sourceEnd] of map.toSourceRange(start, end, fallbackToAnyMatch, filter)) {
 				yield [sourceScript.id, sourceStart, sourceEnd];
 			}
 		}
