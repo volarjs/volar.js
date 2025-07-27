@@ -962,9 +962,6 @@ packages:
   '@types/eslint@8.56.12':
     resolution: {integrity: sha512-03ruubjWyOHlmljCVoxSuNDdmfZDzsrrz0P2LeJsOXr+ZwFQ+0yQIwNCwt/GYhV7Z31fgtXJTAEs+FYlEL851g==}
 
-  '@types/estree@1.0.6':
-    resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
-
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
@@ -1021,17 +1018,17 @@ packages:
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
 
-  '@volar/language-core@2.4.13':
-    resolution: {integrity: sha512-MnQJ7eKchJx5Oz+YdbqyFUk8BN6jasdJv31n/7r6/WwlOOv7qzvot6B66887l2ST3bUW4Mewml54euzpJWA6bg==}
+  '@volar/language-core@2.4.21':
+    resolution: {integrity: sha512-wZwZR01AECsTJWl+dDG/z7OpQ6JX4Qvw03OhdrTB1UHm1xwrA5FeVPizjDS8oKWaO10x5wyGthkl5eZpFvRjqw==}
 
   '@volar/language-hub@0.0.1':
     resolution: {integrity: sha512-2eOUnlMKTyjtlXIVd+6pfAtcuVugxCOgpNgcLWmlPuncQTG5C1E5mTDL/PUMw7aEnLySUOtMTIp8lT3vk/7w6Q==}
 
-  '@volar/source-map@2.4.13':
-    resolution: {integrity: sha512-l/EBcc2FkvHgz2ZxV+OZK3kMSroMr7nN3sZLF2/f6kWW66q8+tEL4giiYyFjt0BcubqJhBt6soYIrAPhg/Yr+Q==}
+  '@volar/source-map@2.4.21':
+    resolution: {integrity: sha512-75StdrLgYsu9Bi4WFrB21VlAwvfDiPEagvew1MiS5c47yQblSf8otvfDcVBquYaJ4Bp/9pg9swLyK5f/3+oggQ==}
 
-  '@volar/typescript@2.4.13':
-    resolution: {integrity: sha512-Ukz4xv84swJPupZeoFsQoeJEOm7U9pqsEnaGGgt5ni3SCTa22m8oJP5Nng3Wed7Uw5RBELdLxxORX8YhJPyOgQ==}
+  '@volar/typescript@2.4.21':
+    resolution: {integrity: sha512-Lz1Sw5kJtiBXlFzAyjILJCFsYbjHFGcBBlM6JPwygyXuAwcgbyxwA8NfUMMzJrQzlKbugbhRKk1WCydcBaOhzQ==}
 
   '@vscode/vsce-sign-alpine-arm64@2.0.2':
     resolution: {integrity: sha512-E80YvqhtZCLUv3YAf9+tIbbqoinWLCO/B3j03yQPbjT3ZIHCliKZlsy1peNc4XNZ5uIb87Jn0HWx/ZbPXviuAQ==}
@@ -1609,14 +1606,6 @@ packages:
   fd-slicer@1.1.0:
     resolution: {integrity: sha512-cE1qsB/VwyQozZ+q1dGxR8LBYNZeofhEdUNGSMbQD3Gw2lAzX9Zb3uIU6Ebc/Fmyjo9AWWfnn0AUCHqtevs/8g==}
 
-  fdir@6.4.4:
-    resolution: {integrity: sha512-1NZP+GK4GfuAv3PqKvxQRDMjdSRZjnkq7KfhlNrCNNlZ0ygQFpebfrnfnq/W7fpUnAv9aGWmY1zKx7FYL3gwhg==}
-    peerDependencies:
-      picomatch: ^3 || ^4
-    peerDependenciesMeta:
-      picomatch:
-        optional: true
-
   fdir@6.4.6:
     resolution: {integrity: sha512-hiFoqpyZcfNm1yc4u8oWCf9A2c4D3QjCrks3zmoVKVxpQRzmPNar1hUJcBG2RQHvEVGDN+Jm81ZheVLAQMK6+w==}
     peerDependencies:
@@ -2064,18 +2053,11 @@ packages:
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
-  loupe@3.1.3:
-    resolution: {integrity: sha512-kkIp7XSkP78ZxJEsSxW3712C6teJVoeHHwgo9zJ380de7IYyJ2ISlxojcH2pC5OFLewESmnRi/+XCDIEEVyoug==}
-
   loupe@3.1.4:
     resolution: {integrity: sha512-wJzkKwJrheKtknCOKNEtDK4iqg/MxmZheEMtSTYvnzRdEYaZzmgH976nenp8WdJRdx5Vc1X/9MO0Oszl6ezeXg==}
 
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
-
-  lru-cache@11.0.2:
-    resolution: {integrity: sha512-123qHRfJBmo2jXDbo/a5YOQrJoHF/GNQTLzQ5+IdK5pWpceK17yRc6ozlWd25FxvGKQbIUs91fDFkXmDHTKcyA==}
-    engines: {node: 20 || >=22}
 
   lru-cache@11.1.0:
     resolution: {integrity: sha512-QIXZUBJUx+2zHUdQujWejBkcD9+cs94tLn0+YL8UrCh+D5sCXZ4c7LaEH48pNwRY3MLDgqUFyhlCyjJPf1WP0A==}
@@ -2131,10 +2113,6 @@ packages:
   mimic-response@3.1.0:
     resolution: {integrity: sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ==}
     engines: {node: '>=10'}
-
-  minimatch@10.0.1:
-    resolution: {integrity: sha512-ethXTt3SGGR+95gudmqJ1eNhRO7eGEGIgYA9vnPatK4/etz2MEVDno5GMCibdMTuBMyElzIlgxMna3K94XDIDQ==}
-    engines: {node: 20 || >=22}
 
   minimatch@10.0.3:
     resolution: {integrity: sha512-IPZ167aShDZZUMdRk66cyQAW3qr0WzbHkPdMYa8bzZhlHhO3jALbKdxcaak7W9FfT2rZNpQuUu4Od7ILEpXSaw==}
@@ -2459,10 +2437,6 @@ packages:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
 
-  picomatch@4.0.2:
-    resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
-    engines: {node: '>=12'}
-
   picomatch@4.0.3:
     resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
     engines: {node: '>=12'}
@@ -2627,11 +2601,6 @@ packages:
 
   semver@5.7.2:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
-    hasBin: true
-
-  semver@7.7.1:
-    resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
-    engines: {node: '>=10'}
     hasBin: true
 
   semver@7.7.2:
@@ -4049,9 +4018,9 @@ snapshots:
       '@clack/prompts': 0.8.2
       '@tsslint/config': 1.5.18(typescript@5.8.3)
       '@tsslint/core': 1.5.18
-      '@volar/language-core': 2.4.13
+      '@volar/language-core': 2.4.21
       '@volar/language-hub': 0.0.1
-      '@volar/typescript': 2.4.13
+      '@volar/typescript': 2.4.21
       glob: 10.4.5
       json5: 2.2.3
       typescript: 5.8.3
@@ -4068,7 +4037,7 @@ snapshots:
       '@tsslint/types': 1.5.18
       error-stack-parser: 2.1.4
       esbuild: 0.25.8
-      minimatch: 10.0.1
+      minimatch: 10.0.3
 
   '@tsslint/types@1.5.18': {}
 
@@ -4087,10 +4056,8 @@ snapshots:
 
   '@types/eslint@8.56.12':
     dependencies:
-      '@types/estree': 1.0.6
+      '@types/estree': 1.0.8
       '@types/json-schema': 7.0.15
-
-  '@types/estree@1.0.6': {}
 
   '@types/estree@1.0.8': {}
 
@@ -4156,17 +4123,17 @@ snapshots:
       loupe: 3.1.4
       tinyrainbow: 2.0.0
 
-  '@volar/language-core@2.4.13':
+  '@volar/language-core@2.4.21':
     dependencies:
-      '@volar/source-map': 2.4.13
+      '@volar/source-map': 2.4.21
 
   '@volar/language-hub@0.0.1': {}
 
-  '@volar/source-map@2.4.13': {}
+  '@volar/source-map@2.4.21': {}
 
-  '@volar/typescript@2.4.13':
+  '@volar/typescript@2.4.21':
     dependencies:
-      '@volar/language-core': 2.4.13
+      '@volar/language-core': 2.4.21
       path-browserify: 1.0.1
       vscode-uri: 3.1.0
 
@@ -4233,7 +4200,7 @@ snapshots:
       parse-semver: 1.1.1
       read: 1.0.7
       secretlint: 10.1.1
-      semver: 7.7.1
+      semver: 7.7.2
       tmp: 0.2.3
       typed-rest-client: 1.8.11
       url-join: 4.0.1
@@ -4391,7 +4358,7 @@ snapshots:
       assertion-error: 2.0.1
       check-error: 2.1.1
       deep-eql: 5.0.2
-      loupe: 3.1.3
+      loupe: 3.1.4
       pathval: 2.0.0
 
   chalk@4.1.2:
@@ -4711,7 +4678,7 @@ snapshots:
   esbuild-visualizer@0.7.0:
     dependencies:
       open: 8.4.2
-      picomatch: 4.0.2
+      picomatch: 4.0.3
       yargs: 17.7.2
 
   esbuild@0.25.8:
@@ -4749,7 +4716,7 @@ snapshots:
 
   estree-walker@3.0.3:
     dependencies:
-      '@types/estree': 1.0.6
+      '@types/estree': 1.0.8
 
   eventemitter3@5.0.1: {}
 
@@ -4802,10 +4769,6 @@ snapshots:
   fd-slicer@1.1.0:
     dependencies:
       pend: 1.2.0
-
-  fdir@6.4.4(picomatch@4.0.2):
-    optionalDependencies:
-      picomatch: 4.0.2
 
   fdir@6.4.6(picomatch@4.0.3):
     optionalDependencies:
@@ -4924,7 +4887,7 @@ snapshots:
     dependencies:
       foreground-child: 3.3.1
       jackspeak: 4.1.0
-      minimatch: 10.0.1
+      minimatch: 10.0.3
       minipass: 7.1.2
       package-json-from-dist: 1.0.1
       path-scurry: 2.0.0
@@ -5259,13 +5222,9 @@ snapshots:
 
   lodash@4.17.21: {}
 
-  loupe@3.1.3: {}
-
   loupe@3.1.4: {}
 
   lru-cache@10.4.3: {}
-
-  lru-cache@11.0.2: {}
 
   lru-cache@11.1.0: {}
 
@@ -5325,10 +5284,6 @@ snapshots:
 
   mimic-response@3.1.0:
     optional: true
-
-  minimatch@10.0.1:
-    dependencies:
-      brace-expansion: 2.0.1
 
   minimatch@10.0.3:
     dependencies:
@@ -5662,7 +5617,7 @@ snapshots:
 
   path-scurry@2.0.0:
     dependencies:
-      lru-cache: 11.0.2
+      lru-cache: 11.1.0
       minipass: 7.1.2
 
   path-type@4.0.0: {}
@@ -5678,8 +5633,6 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@2.3.1: {}
-
-  picomatch@4.0.2: {}
 
   picomatch@4.0.3: {}
 
@@ -5876,8 +5829,6 @@ snapshots:
       - supports-color
 
   semver@5.7.2: {}
-
-  semver@7.7.1: {}
 
   semver@7.7.2: {}
 
@@ -6124,8 +6075,8 @@ snapshots:
 
   tinyglobby@0.2.14:
     dependencies:
-      fdir: 6.4.4(picomatch@4.0.2)
-      picomatch: 4.0.2
+      fdir: 6.4.6(picomatch@4.0.3)
+      picomatch: 4.0.3
 
   tinypool@1.1.1: {}
 
@@ -6275,7 +6226,7 @@ snapshots:
       expect-type: 1.2.1
       magic-string: 0.30.17
       pathe: 2.0.3
-      picomatch: 4.0.2
+      picomatch: 4.0.3
       std-env: 3.9.0
       tinybench: 2.9.0
       tinyexec: 0.3.2
@@ -6306,7 +6257,7 @@ snapshots:
   vscode-languageclient@9.0.1:
     dependencies:
       minimatch: 5.1.6
-      semver: 7.7.1
+      semver: 7.7.2
       vscode-languageserver-protocol: 3.17.5
 
   vscode-languageserver-protocol@3.17.5:
