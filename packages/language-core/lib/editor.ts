@@ -57,7 +57,9 @@ export function isImplementationEnabled(info: CodeInformation): boolean {
 }
 
 export function isHighlightEnabled(info: CodeInformation): boolean {
-	return !!info.navigation;
+	return typeof info.navigation === 'object'
+		? info.navigation.shouldHighlight?.() ?? true
+		: !!info.navigation;
 }
 
 export function isSymbolsEnabled(info: CodeInformation): boolean {
