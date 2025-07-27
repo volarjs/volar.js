@@ -12,6 +12,8 @@ export function register(
 	documents: ReturnType<typeof import('./textDocuments')['register']>,
 	configurations: ReturnType<typeof import('./configurations')['register']>
 ) {
+	configurations.onDidChange(() => requestRefresh(false));
+
 	// Diagnostics support
 	let refreshReq = 0;
 	let updateDiagnosticsBatchReq = 0;
@@ -687,7 +689,6 @@ export function register(
 				documents.onDidClose(({ document }) => {
 					server.connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 				});
-				configurations.onDidChange(() => requestRefresh(false));
 
 				refreshHandlers.push(async clearDiagnostics => {
 					if (clearDiagnostics) {
