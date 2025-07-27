@@ -99,6 +99,7 @@ export interface CodeInformation {
 	};
 	/** virtual code is expected correctly reflect reference relationships of the source code */
 	navigation?: boolean | {
+		shouldHighlight?(): boolean;
 		shouldRename?(): boolean;
 		resolveRenameNewName?(newName: string): string;
 		resolveRenameEditText?(newText: string): string;
