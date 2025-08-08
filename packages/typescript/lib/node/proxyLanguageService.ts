@@ -341,7 +341,7 @@ function organizeImports(language: Language<string>, organizeImports: ts.Languag
 	};
 }
 function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPosition: ts.LanguageService['getQuickInfoAtPosition']): ts.LanguageService['getQuickInfoAtPosition'] {
-	return (filePath, position) => {
+	return (filePath, position, maximumLength) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
@@ -350,7 +350,7 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 		if (serviceScript) {
 			const infos: ts.QuickInfo[] = [];
 			for (const [generatePosition] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isHoverEnabled)) {
-				const info = getQuickInfoAtPosition(targetScript.id, generatePosition);
+				const info = getQuickInfoAtPosition(targetScript.id, generatePosition, maximumLength);
 				if (info) {
 					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, true, isHoverEnabled)?.[1];
 					if (textSpan) {
@@ -401,7 +401,7 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 			}
 		}
 		else {
-			return getQuickInfoAtPosition(fileName, position);
+			return getQuickInfoAtPosition(fileName, position, maximumLength);
 		}
 	};
 }
