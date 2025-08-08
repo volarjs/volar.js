@@ -340,15 +340,12 @@ function organizeImports(language: Language<string>, organizeImports: ts.Languag
 		return transformFileTextChanges(language, unresolved, false, isCodeActionsEnabled);
 	};
 }
-
-// see: https://github.com/microsoft/TypeScript/blob/dd830711041b7b0cfd3da7937755996b1e1b1c7e/src/services/types.ts#L588
-type TsGetQuickInfoAtPositionInternal = (...args: [
-	...Parameters<ts.LanguageService['getQuickInfoAtPosition']>,
-	verbosityLevel?: number
-]) => ReturnType<ts.LanguageService['getQuickInfoAtPosition']>
-
-function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPosition: TsGetQuickInfoAtPositionInternal): TsGetQuickInfoAtPositionInternal {
-	return (filePath, position, maximumLength, verbosityLevel) => {
+function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPosition: ts.LanguageService['getQuickInfoAtPosition']): ts.LanguageService['getQuickInfoAtPosition'] {
+	/**
+	 * Using `...args` for pass through rest params (including internal `verbosityLevel` param).
+	 * https://github.com/microsoft/TypeScript/blob/dd830711041b7b0cfd3da7937755996b1e1b1c7e/src/services/types.ts#L588
+	 */
+	return (filePath, position, ...args) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
@@ -357,7 +354,7 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 		if (serviceScript) {
 			const infos: ts.QuickInfo[] = [];
 			for (const [generatePosition] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isHoverEnabled)) {
-				const info = getQuickInfoAtPosition(targetScript.id, generatePosition, maximumLength, verbosityLevel);
+				const info = getQuickInfoAtPosition(targetScript.id, generatePosition, ...args);
 				if (info) {
 					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, true, isHoverEnabled)?.[1];
 					if (textSpan) {
@@ -408,7 +405,7 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 			}
 		}
 		else {
-			return getQuickInfoAtPosition(fileName, position, maximumLength, verbosityLevel);
+			return getQuickInfoAtPosition(fileName, position, ...args);
 		}
 	};
 }
