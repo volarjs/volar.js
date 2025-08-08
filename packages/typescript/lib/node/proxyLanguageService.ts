@@ -340,8 +340,15 @@ function organizeImports(language: Language<string>, organizeImports: ts.Languag
 		return transformFileTextChanges(language, unresolved, false, isCodeActionsEnabled);
 	};
 }
-function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPosition: ts.LanguageService['getQuickInfoAtPosition']): ts.LanguageService['getQuickInfoAtPosition'] {
-	return (filePath, position, maximumLength) => {
+
+// see: https://github.com/microsoft/TypeScript/blob/dd830711041b7b0cfd3da7937755996b1e1b1c7e/src/services/types.ts#L588
+type TsGetQuickInfoAtPositionInternal = (...args: [
+	...Parameters<ts.LanguageService['getQuickInfoAtPosition']>,
+	verbosityLevel?: number
+]) => ReturnType<ts.LanguageService['getQuickInfoAtPosition']>
+
+function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPosition: TsGetQuickInfoAtPositionInternal): TsGetQuickInfoAtPositionInternal {
+	return (filePath, position, maximumLength, verbosityLevel) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
@@ -350,7 +357,7 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 		if (serviceScript) {
 			const infos: ts.QuickInfo[] = [];
 			for (const [generatePosition] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isHoverEnabled)) {
-				const info = getQuickInfoAtPosition(targetScript.id, generatePosition, maximumLength);
+				const info = getQuickInfoAtPosition(targetScript.id, generatePosition, maximumLength, verbosityLevel);
 				if (info) {
 					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, true, isHoverEnabled)?.[1];
 					if (textSpan) {
@@ -401,7 +408,7 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 			}
 		}
 		else {
-			return getQuickInfoAtPosition(fileName, position, maximumLength);
+			return getQuickInfoAtPosition(fileName, position, maximumLength, verbosityLevel);
 		}
 	};
 }
