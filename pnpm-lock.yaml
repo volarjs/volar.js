@@ -16,10 +16,10 @@ importers:
         version: 4.6.2(@types/node@24.1.0)(conventional-commits-filter@5.0.0)
       '@tsslint/cli':
         specifier: latest
-        version: 1.5.18(typescript@5.8.3)
+        version: 1.5.18(typescript@5.9.2)
       typescript:
         specifier: latest
-        version: 5.8.3
+        version: 5.9.2
       vite:
         specifier: latest
         version: 7.0.6(@types/node@24.1.0)(yaml@2.8.0)
@@ -91,7 +91,7 @@ importers:
         version: 0.2.2
       typescript:
         specifier: '*'
-        version: 5.8.3
+        version: 5.9.2
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
         version: 1.0.12
@@ -1018,17 +1018,17 @@ packages:
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
 
-  '@volar/language-core@2.4.21':
-    resolution: {integrity: sha512-wZwZR01AECsTJWl+dDG/z7OpQ6JX4Qvw03OhdrTB1UHm1xwrA5FeVPizjDS8oKWaO10x5wyGthkl5eZpFvRjqw==}
+  '@volar/language-core@2.4.22':
+    resolution: {integrity: sha512-gp4M7Di5KgNyIyO903wTClYBavRt6UyFNpc5LWfyZr1lBsTUY+QrVZfmbNF2aCyfklBOVk9YC4p+zkwoyT7ECg==}
 
   '@volar/language-hub@0.0.1':
     resolution: {integrity: sha512-2eOUnlMKTyjtlXIVd+6pfAtcuVugxCOgpNgcLWmlPuncQTG5C1E5mTDL/PUMw7aEnLySUOtMTIp8lT3vk/7w6Q==}
 
-  '@volar/source-map@2.4.21':
-    resolution: {integrity: sha512-75StdrLgYsu9Bi4WFrB21VlAwvfDiPEagvew1MiS5c47yQblSf8otvfDcVBquYaJ4Bp/9pg9swLyK5f/3+oggQ==}
+  '@volar/source-map@2.4.22':
+    resolution: {integrity: sha512-L2nVr/1vei0xKRgO2tYVXtJYd09HTRjaZi418e85Q+QdbbqA8h7bBjfNyPPSsjnrOO4l4kaAo78c8SQUAdHvgA==}
 
-  '@volar/typescript@2.4.21':
-    resolution: {integrity: sha512-Lz1Sw5kJtiBXlFzAyjILJCFsYbjHFGcBBlM6JPwygyXuAwcgbyxwA8NfUMMzJrQzlKbugbhRKk1WCydcBaOhzQ==}
+  '@volar/typescript@2.4.22':
+    resolution: {integrity: sha512-6ZczlJW1/GWTrNnkmZxJp4qyBt/SGVlcTuCWpI5zLrdPdCZsj66Aff9ZsfFaT3TyjG8zVYgBMYPuCm/eRkpcpQ==}
 
   '@vscode/vsce-sign-alpine-arm64@2.0.2':
     resolution: {integrity: sha512-E80YvqhtZCLUv3YAf9+tIbbqoinWLCO/B3j03yQPbjT3ZIHCliKZlsy1peNc4XNZ5uIb87Jn0HWx/ZbPXviuAQ==}
@@ -2881,8 +2881,8 @@ packages:
   typesafe-path@0.2.2:
     resolution: {integrity: sha512-OJabfkAg1WLZSqJAJ0Z6Sdt3utnbzr/jh+NAHoyWHJe8CMSy79Gm085094M9nvTPy22KzTVn5Zq5mbapCI/hPA==}
 
-  typescript@5.8.3:
-    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
+  typescript@5.9.2:
+    resolution: {integrity: sha512-CWBzXQrc/qOkhidw1OzBTQuYRbfyxDXJMVJ1XNwUHGROVmuaeiEm3OslpZ1RV96d7SKKjZKrSJu3+t/xlw3R9A==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -4013,22 +4013,22 @@ snapshots:
     dependencies:
       '@textlint/ast-node-types': 14.8.4
 
-  '@tsslint/cli@1.5.18(typescript@5.8.3)':
+  '@tsslint/cli@1.5.18(typescript@5.9.2)':
     dependencies:
       '@clack/prompts': 0.8.2
-      '@tsslint/config': 1.5.18(typescript@5.8.3)
+      '@tsslint/config': 1.5.18(typescript@5.9.2)
       '@tsslint/core': 1.5.18
-      '@volar/language-core': 2.4.21
+      '@volar/language-core': 2.4.22
       '@volar/language-hub': 0.0.1
-      '@volar/typescript': 2.4.21
+      '@volar/typescript': 2.4.22
       glob: 10.4.5
       json5: 2.2.3
-      typescript: 5.8.3
+      typescript: 5.9.2
 
-  '@tsslint/config@1.5.18(typescript@5.8.3)':
+  '@tsslint/config@1.5.18(typescript@5.9.2)':
     dependencies:
       '@tsslint/types': 1.5.18
-      ts-api-utils: 2.0.1(typescript@5.8.3)
+      ts-api-utils: 2.0.1(typescript@5.9.2)
     transitivePeerDependencies:
       - typescript
 
@@ -4123,17 +4123,17 @@ snapshots:
       loupe: 3.1.4
       tinyrainbow: 2.0.0
 
-  '@volar/language-core@2.4.21':
+  '@volar/language-core@2.4.22':
     dependencies:
-      '@volar/source-map': 2.4.21
+      '@volar/source-map': 2.4.22
 
   '@volar/language-hub@0.0.1': {}
 
-  '@volar/source-map@2.4.21': {}
+  '@volar/source-map@2.4.22': {}
 
-  '@volar/typescript@2.4.21':
+  '@volar/typescript@2.4.22':
     dependencies:
-      '@volar/language-core': 2.4.21
+      '@volar/language-core': 2.4.22
       path-browserify: 1.0.1
       vscode-uri: 3.1.0
 
@@ -6092,9 +6092,9 @@ snapshots:
 
   treeverse@3.0.0: {}
 
-  ts-api-utils@2.0.1(typescript@5.8.3):
+  ts-api-utils@2.0.1(typescript@5.9.2):
     dependencies:
-      typescript: 5.8.3
+      typescript: 5.9.2
 
   tslib@2.8.1: {}
 
@@ -6129,7 +6129,7 @@ snapshots:
 
   typesafe-path@0.2.2: {}
 
-  typescript@5.8.3: {}
+  typescript@5.9.2: {}
 
   uc.micro@2.1.0: {}
 
