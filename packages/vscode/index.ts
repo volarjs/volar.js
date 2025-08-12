@@ -3,7 +3,6 @@ import * as protocol from './protocol.js';
 
 export { activate as activateAutoInsertion } from './lib/features/autoInsertion';
 export { activate as activateDocumentDropEdit } from './lib/features/documentDropEdits';
-export { activate as activateWriteVirtualFiles } from './lib/features/writeVirtualFiles';
 export { activate as activateFindFileReferences } from './lib/features/fileReferences';
 export { activate as activateReloadProjects } from './lib/features/reloadProject';
 export { activate as activateTsConfigStatusItem } from './lib/features/tsconfig';

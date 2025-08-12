@@ -38,10 +38,6 @@ export namespace AutoInsertRequest {
 	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/autoInsert');
 }
 
-export namespace WriteVirtualFilesNotification {
-	export const type = new protocol.NotificationType<protocol.TextDocumentIdentifier>('volar/client/writeVirtualFiles');
-}
-
 export namespace ReloadProjectNotification {
 	export const type = new protocol.NotificationType<protocol.TextDocumentIdentifier>('volar/client/reloadProject');
 }

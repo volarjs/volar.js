@@ -9,7 +9,6 @@ import {
 	GetVirtualFileRequest,
 	UpdateServicePluginStateNotification,
 	UpdateVirtualCodeStateNotification,
-	WriteVirtualFilesNotification
 } from '../../protocol';
 import type { LanguageServerState } from '../types';
 
@@ -69,46 +68,6 @@ export function register(server: LanguageServerState) {
 					content: virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength()),
 					mappings,
 				};
-			}
-		});
-		server.connection.onNotification(WriteVirtualFilesNotification.type, async params => {
-			// webpack compatibility
-			const _require: NodeRequire = eval('require');
-			const fs = _require('fs');
-			const uri = URI.parse(params.uri);
-			const languageService = (await project.getLanguageService(uri));
-			const tsProject = languageService.context.project.typescript;
-
-			if (tsProject) {
-
-				const { languageServiceHost } = tsProject;
-
-				for (const fileName of languageServiceHost.getScriptFileNames()) {
-					if (!fs.existsSync(fileName)) {
-						// global virtual files
-						const snapshot = languageServiceHost.getScriptSnapshot(fileName);
-						if (snapshot) {
-							fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
-						}
-					}
-					else {
-						const uri = tsProject.uriConverter.asUri(fileName);
-						const sourceScript = languageService.context.language.scripts.get(uri);
-						if (sourceScript?.generated) {
-							const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
-							if (serviceScript) {
-								const { snapshot } = serviceScript.code;
-								fs.writeFile(fileName + serviceScript.extension, snapshot.getText(0, snapshot.getLength()), () => { });
-							}
-							if (sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts) {
-								for (const extraServiceScript of sourceScript.generated.languagePlugin.typescript.getExtraServiceScripts(uri.toString(), sourceScript.generated.root)) {
-									const { snapshot } = extraServiceScript.code;
-									fs.writeFile(fileName, snapshot.getText(0, snapshot.getLength()), () => { });
-								}
-							}
-						}
-					}
-				}
 			}
 		});
 		server.connection.onNotification(UpdateVirtualCodeStateNotification.type, async params => {
