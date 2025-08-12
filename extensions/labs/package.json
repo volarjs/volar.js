@@ -56,8 +56,7 @@
 		"prepack": "npm run build -- --minify",
 		"pack": "npm run prepack && vsce package",
 		"release": "npm run prepack && vsce publish",
-		"release:next": "npm run prepack && vsce publish --pre-release",
-		"size": "npm run prepack -- --metafile && esbuild-visualizer --metadata ./meta.json && open ./stats.html"
+		"release:next": "npm run prepack && vsce publish --pre-release"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
@@ -66,8 +65,6 @@
 		"@volar/source-map": "2.4.23",
 		"@volar/vscode": "2.4.23",
 		"@vscode/vsce": "latest",
-		"esbuild": "latest",
-		"esbuild-plugin-copy": "latest",
-		"esbuild-visualizer": "latest"
+		"esbuild": "latest"
 	}
 }

@@ -7,7 +7,6 @@ import {
 	GetServicePluginsRequest,
 	GetVirtualCodeRequest,
 	GetVirtualFileRequest,
-	LoadedTSFilesMetaRequest,
 	UpdateServicePluginStateNotification,
 	UpdateVirtualCodeStateNotification,
 	WriteVirtualFilesNotification
@@ -111,69 +110,6 @@ export function register(server: LanguageServerState) {
 					}
 				}
 			}
-		});
-		server.connection.onRequest(LoadedTSFilesMetaRequest.type, async () => {
-
-			const sourceFilesData = new Map<ts.SourceFile, {
-				projectNames: string[];
-				size: number;
-			}>();
-
-			for (const languageService of await project.getExistingLanguageServices()) {
-				const tsLanguageService: ts.LanguageService | undefined = languageService.context.inject<any>('typescript/languageService');
-				const program = tsLanguageService?.getProgram();
-				const tsProject = languageService.context.project.typescript;
-				if (program && tsProject) {
-					const { languageServiceHost, configFileName } = tsProject;
-					const projectName = configFileName ?? (languageServiceHost.getCurrentDirectory() + '(inferred)');
-					const sourceFiles = program.getSourceFiles() ?? [];
-					for (const sourceFile of sourceFiles) {
-						if (!sourceFilesData.has(sourceFile)) {
-							let nodes = 0;
-							sourceFile.forEachChild(function walk(node) {
-								nodes++;
-								node.forEachChild(walk);
-							});
-							sourceFilesData.set(sourceFile, {
-								projectNames: [],
-								size: nodes * 128,
-							});
-						}
-						sourceFilesData.get(sourceFile)!.projectNames.push(projectName);
-					};
-				}
-			}
-
-			const result: {
-				inputs: {};
-				outputs: Record<string, {
-					imports: string[];
-					exports: string[];
-					entryPoint: string;
-					inputs: Record<string, { bytesInOutput: number; }>;
-					bytes: number;
-				}>;
-			} = {
-				inputs: {},
-				outputs: {},
-			};
-
-			for (const [sourceFile, fileData] of sourceFilesData) {
-				let key = fileData.projectNames.sort().join(', ');
-				if (fileData.projectNames.length >= 2) {
-					key = `Shared in ${fileData.projectNames.length} projects (${key})`;
-				}
-				result.outputs[key] ??= {
-					imports: [],
-					exports: [],
-					entryPoint: '',
-					inputs: {},
-					bytes: 0,
-				};
-				result.outputs[key].inputs[sourceFile.fileName] = { bytesInOutput: fileData.size };
-			}
-
-			return result;
 		});
 		server.connection.onNotification(UpdateVirtualCodeStateNotification.type, async params => {
 			const uri = URI.parse(params.fileUri);

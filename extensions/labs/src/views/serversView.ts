@@ -1,10 +1,6 @@
 import type { LabsInfo } from '@volar/vscode';
 import * as lsp from '@volar/vscode';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
 import * as vscode from 'vscode';
-import { quickPick } from '../common/quickPick';
 import { getIconPath, useVolarExtensions } from '../common/shared';
 
 interface LanguageClientItem {
@@ -17,7 +13,7 @@ interface InvalidLanguageClientItem {
 }
 
 interface LanguageClientFieldItem extends LanguageClientItem {
-	field: 'start' | 'stop' | 'restart' | 'initializationOptions' | 'initializeResult' | 'memory';
+	field: 'start' | 'stop' | 'restart' | 'initializationOptions' | 'initializeResult';
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -56,7 +52,6 @@ export function activate(context: vscode.ExtensionContext) {
 					stats.push({ ...element, field: 'restart' });
 					stats.push({ ...element, field: 'initializationOptions' });
 					stats.push({ ...element, field: 'initializeResult' });
-					stats.push({ ...element, field: 'memory' });
 				}
 				else if (element.client.state === lsp.State.Starting) {
 					stats.push({ ...element, field: 'stop' });
@@ -103,17 +98,6 @@ export function activate(context: vscode.ExtensionContext) {
 							command: '_volar.action.stopServer',
 							title: '',
 							arguments: [element.client],
-						},
-					};
-				}
-				else if (element.field === 'memory') {
-					return {
-						label: 'TS Memory Treemap',
-						collapsibleState: vscode.TreeItemCollapsibleState.None,
-						command: {
-							command: '_volar.action.tsMemoryTreemap',
-							title: '',
-							arguments: [element.client, element.extension.exports.volarLabs.languageServerProtocol],
 						},
 					};
 				}
@@ -177,70 +161,6 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('_volar.action.restartServer', async (client: lsp.BaseLanguageClient) => {
 			await client.stop();
 			await client.start();
-		}),
-		vscode.commands.registerCommand('_volar.action.tsMemoryTreemap', async (client: lsp.BaseLanguageClient, protocol: typeof import('@volar/vscode/protocol')) => {
-
-			const select = await quickPick([
-				{
-					openInBrowser: {
-						label: 'Open in Browser',
-						description: 'Open the TypeScript Memory Treemap in your browser',
-					},
-					showInVSCode: {
-						label: 'Show in VS Code',
-						description: 'Show the html file in VS Code',
-					},
-					saveFile: {
-						label: 'Save File',
-						description: 'Pick a location to save the html file',
-					},
-				}
-			]);
-
-			if (select === undefined) {
-				return; // cancel
-			}
-
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Window,
-				cancellable: false,
-				title: 'Loading Memory Data'
-			}, async progress => {
-
-				progress.report({ increment: 0 });
-
-				const meta = await client.sendRequest(protocol.LoadedTSFilesMetaRequest.type);
-				const { visualizer } = await import('esbuild-visualizer/dist/plugin/index.js');
-				const fileContent = await visualizer(meta as any);
-
-				if (select === 'openInBrowser') {
-					const tmpPath = path.join(os.tmpdir(), 'memory-report.html');
-					fs.writeFileSync(tmpPath, fileContent);
-					await vscode.env.openExternal(vscode.Uri.file(tmpPath));
-				}
-				else if (select === 'showInVSCode') {
-					const doc = await vscode.workspace.openTextDocument({ content: fileContent, language: 'html' });
-					vscode.window.showTextDocument(doc);
-				}
-				else if (select === 'saveFile') {
-					const workspaces = vscode.workspace.workspaceFolders;
-					if (!workspaces?.length) {
-						return;
-					}
-
-					const defaultUri = vscode.Uri.joinPath(workspaces[0].uri, 'stats.html');
-					const pickedUri = await vscode.window.showSaveDialog({ defaultUri });
-
-					if (!pickedUri) {
-						return;
-					}
-
-					await vscode.workspace.fs.writeFile(pickedUri, Buffer.from(fileContent));
-					await vscode.window.showTextDocument(pickedUri);
-				}
-
-				progress.report({ increment: 100 });
-			});
 		}),
 		vscode.commands.registerCommand('volar.action.serverStat.initializationOptions', async (client: lsp.BaseLanguageClient) => {
 			const doc = await vscode.workspace.openTextDocument({ content: JSON.stringify(client.clientOptions.initializationOptions, undefined, '\t'), language: 'json' });

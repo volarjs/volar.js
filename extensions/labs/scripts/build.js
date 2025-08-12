@@ -1,5 +1,4 @@
 // @ts-check
-
 require('esbuild').context({
 	entryPoints: {
 		extension: './src/extension.ts',
@@ -16,30 +15,6 @@ require('esbuild').context({
 	tsconfig: './tsconfig.json',
 	define: { 'process.env.NODE_ENV': '"production"' },
 	minify: process.argv.includes('--minify'),
-	plugins: [
-		require('esbuild-plugin-copy').copy({
-			resolveFrom: 'cwd',
-			assets: {
-				from: ['./node_modules/esbuild-visualizer/dist/lib/**/*'],
-				to: ['./lib'],
-			},
-			// @ts-expect-error
-			keepStructure: true,
-		}),
-		{
-			name: 'meta',
-			setup(build) {
-				build.onEnd((result) => {
-					if (result.metafile && result.errors.length === 0) {
-						require('fs').writeFileSync(
-							require('path').resolve(__dirname, '../meta.json'),
-							JSON.stringify(result.metafile),
-						);
-					}
-				});
-			},
-		},
-	],
 }).then(async ctx => {
 	console.log('building...');
 	if (process.argv.includes('--watch')) {

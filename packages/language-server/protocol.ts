@@ -146,7 +146,3 @@ export namespace GetVirtualCodeRequest {
 	export type ErrorType = never;
 	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFile');
 }
-
-export namespace LoadedTSFilesMetaRequest {
-	export const type = new protocol.RequestType0('volar/client/loadedTsFiles');
-}
