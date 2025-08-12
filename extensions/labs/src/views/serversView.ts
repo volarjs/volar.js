@@ -250,7 +250,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const doc = await vscode.workspace.openTextDocument({ content: JSON.stringify(client.initializeResult, undefined, '\t'), language: 'json' });
 			vscode.window.showTextDocument(doc);
 		}),
-		vscode.window.createTreeView('volar-servers', {
+		vscode.window.createTreeView('volar-extensions', {
 			showCollapseAll: false,
 			treeDataProvider: tree,
 		})

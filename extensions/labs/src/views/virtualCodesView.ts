@@ -123,7 +123,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			};
 		},
 	};
-	const treeView = vscode.window.createTreeView('volar-virtual-files', {
+	const treeView = vscode.window.createTreeView('volar-virtual-codes', {
 		treeDataProvider: tree,
 		showCollapseAll: false,
 		manageCheckboxStateManually: true,

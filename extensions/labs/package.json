@@ -18,11 +18,6 @@
 	"engines": {
 		"vscode": "^1.82.0"
 	},
-	"activationEvents": [
-		"onView:volar-servers",
-		"onView:volar-virtual-files",
-		"onView:volar-service-plugins"
-	],
 	"main": "./dist/extension.js",
 	"contributes": {
 		"viewsContainers": {
@@ -37,18 +32,18 @@
 		"views": {
 			"volarjs-labs": [
 				{
-					"id": "volar-servers",
+					"id": "volar-extensions",
 					"name": "Extensions",
 					"contextualTitle": "Volar.js"
 				},
 				{
-					"id": "volar-virtual-files",
-					"name": "Virtual Files",
+					"id": "volar-virtual-codes",
+					"name": "Virtual Codes",
 					"contextualTitle": "Volar.js"
 				},
 				{
-					"id": "volar-service-plugins",
-					"name": "Service Plugins",
+					"id": "volar-services",
+					"name": "Language Service Plugins",
 					"contextualTitle": "Volar.js"
 				}
 			]

@@ -2,7 +2,7 @@ import type { CodeInformation, HoverParams, SelectionRangeParams } from '@volar/
 import { SourceMap } from '@volar/source-map';
 import { DocumentDiagnosticParams, LabsInfo, TextDocument } from '@volar/vscode';
 import * as vscode from 'vscode';
-import { VOLAR_VIRTUAL_CODE_SCHEME } from '../views/virtualFilesView';
+import { VOLAR_VIRTUAL_CODE_SCHEME } from '../views/virtualCodesView';
 
 const mappingDecorationType = vscode.window.createTextEditorDecorationType({
 	borderWidth: '0.5px',

@@ -3,7 +3,7 @@ import type { BaseLanguageClient, LabsInfo } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { getIconPath, useVolarExtensions } from '../common/shared';
 import { isValidVersion } from './serversView';
-import { VOLAR_VIRTUAL_CODE_SCHEME } from './virtualFilesView';
+import { VOLAR_VIRTUAL_CODE_SCHEME } from './virtualCodesView';
 
 interface ServicePluginItem {
 	extension: vscode.Extension<LabsInfo>;
@@ -61,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 			};
 		},
 	};
-	const treeView = vscode.window.createTreeView('volar-service-plugins', {
+	const treeView = vscode.window.createTreeView('volar-services', {
 		treeDataProvider: tree,
 		showCollapseAll: false,
 		manageCheckboxStateManually: true,
