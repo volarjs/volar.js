@@ -1,5 +1,5 @@
-import { LanguageServicePlugin } from '@volar/language-service';
-import * as vscode from 'vscode-languageserver';
+import { type LanguageServicePlugin } from '@volar/language-service';
+import type * as vscode from 'vscode-languageserver';
 import { register as registerConfigurationSupport } from './features/configurations.js';
 import { register as registerEditorFeaturesSupport } from './features/editorFeatures.js';
 import { register as registerFileSystemSupport } from './features/fileSystem.js';

@@ -1,5 +1,5 @@
 import type { LanguagePlugin, LanguageServiceEnvironment } from '@volar/language-service';
-import { LanguageService, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
+import { type LanguageService, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
 import type { URI } from 'vscode-uri';
 import type { LanguageServer, LanguageServerProject } from '../types';
 

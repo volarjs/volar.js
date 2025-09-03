@@ -47,7 +47,7 @@ export class SourceMap<Data = unknown> {
 
 		const { low: start, high: end } = binarySearch(memo.offsets, offset);
 		const skip = new Set<Mapping>();
-		const toRange: CodeRangeKey = fromRange == 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
+		const toRange: CodeRangeKey = fromRange === 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
 
 		for (let i = start; i <= end; i++) {
 			for (const mapping of memo.mappings[i]) {
@@ -75,7 +75,7 @@ export class SourceMap<Data = unknown> {
 		fromRange: CodeRangeKey,
 		filter?: (data: Data) => boolean
 	): Generator<[mappedStart: number, mappedEnd: number, startMapping: Mapping<Data>, endMapping: Mapping<Data>]> {
-		const toRange: CodeRangeKey = fromRange == 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
+		const toRange: CodeRangeKey = fromRange === 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
 		const mappedStarts: [number, Mapping<Data>][] = [];
 		let hadMatch = false;
 		for (const [mappedStart, mapping] of this.findMatchingOffsets(start, fromRange)) {
@@ -135,5 +135,5 @@ export class SourceMap<Data = unknown> {
 }
 
 function getLengths(mapping: Mapping, key: CodeRangeKey) {
-	return key == 'sourceOffsets' ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths;
+	return key === 'sourceOffsets' ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths;
 }

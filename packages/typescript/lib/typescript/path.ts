@@ -1,5 +1,5 @@
 import { endsWith, equateStringsCaseInsensitive, equateStringsCaseSensitive, lastOrUndefined, some, startsWith, stringContains } from "./core";
-import { CharacterCodes, Path } from "./types";
+import { CharacterCodes, type Path } from "./types";
 
 /**
  * Internally, we represent paths as strings with '/' as the directory separator.

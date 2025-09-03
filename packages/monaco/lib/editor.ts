@@ -1,6 +1,6 @@
 import { fromPosition, toMarkerData, toTextEdit } from 'monaco-languageserver-types';
 import type { CancellationToken, editor, IDisposable, MonacoEditor, Uri } from 'monaco-types';
-import { WorkerLanguageService } from '../worker.js';
+import { type WorkerLanguageService } from '../worker.js';
 import { markers } from './markers.js';
 import { getRequestId } from './requestId.js';
 
@@ -172,7 +172,7 @@ export function activateAutoInsertion(
 		}));
 	}
 
-	async function doAutoInsert(
+	function doAutoInsert(
 		model: editor.ITextModel,
 		lastChange: editor.IModelContentChange
 	) {

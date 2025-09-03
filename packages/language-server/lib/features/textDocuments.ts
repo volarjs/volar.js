@@ -1,6 +1,6 @@
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { LanguageServerState } from '../types';
+import { type LanguageServerState } from '../types';
 import { SnapshotDocument } from '../utils/snapshotDocument';
 
 export function register(server: LanguageServerState) {

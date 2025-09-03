@@ -2,7 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
+import { type DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
 import { transformCompletionItem } from '../utils/transform';
 import type { ServiceCompletionData } from './provideCompletionItems';
 
@@ -51,11 +51,6 @@ export function register(context: LanguageServiceContext) {
 			else {
 				item = await plugin[1].resolveCompletionItem(item, token);
 			}
-		}
-
-		// TODO: monkey fix import ts file icon
-		if (item.detail !== item.detail + '.ts') {
-			item.detail = item.detail;
 		}
 
 		delete item.data;

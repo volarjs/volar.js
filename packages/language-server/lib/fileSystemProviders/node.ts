@@ -1,4 +1,4 @@
-import { FileSystem, FileType } from '@volar/language-service';
+import { type FileSystem, FileType } from '@volar/language-service';
 import * as fs from 'fs';
 
 export const provider: FileSystem = {

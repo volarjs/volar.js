@@ -1,4 +1,4 @@
-import { FileMap, LanguagePlugin, SourceScript, VirtualCode, createLanguage, forEachEmbeddedCode, isDiagnosticsEnabled } from '@volar/language-core';
+import { FileMap, type LanguagePlugin, type SourceScript, type VirtualCode, createLanguage, forEachEmbeddedCode, isDiagnosticsEnabled } from '@volar/language-core';
 import type { Linter } from 'eslint';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 

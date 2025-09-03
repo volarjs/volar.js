@@ -1,11 +1,11 @@
-import { SourceScript, VirtualCode, findOverlapCodeRange, forEachEmbeddedCode, isFormattingEnabled } from '@volar/language-core';
+import { type SourceScript, type VirtualCode, findOverlapCodeRange, forEachEmbeddedCode, isFormattingEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import type { EmbeddedCodeFormattingOptions, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { stringToSnapshot } from '../utils/common';
-import { DocumentsAndMap, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
+import { type DocumentsAndMap, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 

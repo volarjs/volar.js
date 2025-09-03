@@ -1,4 +1,4 @@
-import { createUriMap, FileSystem } from '@volar/language-service';
+import { createUriMap, type FileSystem } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 

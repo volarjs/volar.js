@@ -1,4 +1,4 @@
-import { FileMap, Language, LanguagePlugin, createLanguage } from '@volar/language-core';
+import { FileMap, type Language, type LanguagePlugin, createLanguage } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
 import { decorateProgram } from './decorateProgram';

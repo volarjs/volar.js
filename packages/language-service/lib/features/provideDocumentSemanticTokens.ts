@@ -1,6 +1,6 @@
 import { findOverlapCodeRange, isSemanticTokensEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { URI } from 'vscode-uri';
+import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext, SemanticToken } from '../types';
 import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { NoneCancellationToken } from '../utils/cancellation';

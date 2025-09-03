@@ -17,7 +17,7 @@ interface VirtualFileItem {
 
 export const uriToVirtualCode = new Map<string, { fileUri: string; virtualCodeId: string; }>();
 
-export async function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
 
 	let currentDocument: vscode.TextDocument | undefined;
 
@@ -153,7 +153,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				);
 			}
 		}),
-		await activateShowVirtualFiles(extensions)
+		activateShowVirtualFiles(extensions)
 	);
 
 	useVolarExtensions(

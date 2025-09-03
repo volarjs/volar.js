@@ -1,6 +1,6 @@
 import type { CodeInformation, HoverParams, SelectionRangeParams } from '@volar/language-server';
 import { SourceMap } from '@volar/source-map';
-import { DocumentDiagnosticParams, LabsInfo, TextDocument } from '@volar/vscode';
+import { type DocumentDiagnosticParams, type LabsInfo, TextDocument } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { VOLAR_VIRTUAL_CODE_SCHEME } from '../views/virtualCodesView';
 
@@ -24,7 +24,7 @@ export const sourceDocUriToVirtualDocUris = new Map<string, Set<string>>();
 
 export const virtualDocUriToSourceDocUri = new Map<string, { fileUri: string, virtualCodeId: string; }>();
 
-export async function activate(extensions: vscode.Extension<LabsInfo>[]) {
+export function activate(extensions: vscode.Extension<LabsInfo>[]) {
 
 	const subscriptions: vscode.Disposable[] = [];
 	const docChangeEvent = new vscode.EventEmitter<vscode.Uri>();

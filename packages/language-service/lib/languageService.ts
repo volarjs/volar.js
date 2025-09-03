@@ -41,7 +41,7 @@ import * as inlayHintResolve from './features/resolveInlayHint';
 import * as workspaceSymbolResolve from './features/resolveWorkspaceSymbol';
 import type { LanguageServiceContext, LanguageServiceEnvironment, LanguageServicePlugin, ProjectContext } from './types';
 import { NoneCancellationToken } from './utils/cancellation';
-import { UriMap, createUriMap } from './utils/uriMap';
+import { type UriMap, createUriMap } from './utils/uriMap';
 
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 

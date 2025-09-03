@@ -1,5 +1,5 @@
 import {
-	CodeInformation,
+	type CodeInformation,
 	findOverlapCodeRange,
 	isCallHierarchyEnabled,
 	isCodeActionsEnabled,
@@ -16,7 +16,7 @@ import {
 	isSemanticTokensEnabled,
 	isSignatureHelpEnabled,
 	isTypeDefinitionEnabled,
-	Language,
+	type Language,
 } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { dedupeDocumentSpans } from './dedupe';

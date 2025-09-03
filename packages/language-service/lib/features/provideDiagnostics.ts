@@ -1,4 +1,4 @@
-import { isDiagnosticsEnabled, shouldReportDiagnostics, SourceScript, VirtualCode } from '@volar/language-core';
+import { isDiagnosticsEnabled, shouldReportDiagnostics, type SourceScript, type VirtualCode } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
@@ -7,7 +7,7 @@ import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { sleep } from '../utils/common';
 import * as dedupe from '../utils/dedupe';
-import { documentFeatureWorker, DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
+import { documentFeatureWorker, type DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
 import { createUriMap } from '../utils/uriMap';
 
 export interface ServiceDiagnosticData {

@@ -1,7 +1,7 @@
 import type { InitializeParams, LanguageService, LanguageServicePlugin, ProviderResult, ServerCapabilities } from '@volar/language-service';
-import { Connection } from 'vscode-languageserver';
+import { type Connection } from 'vscode-languageserver';
 import type { URI } from 'vscode-uri';
-import { createServerBase } from './server';
+import { type createServerBase } from './server';
 
 export interface LanguageServerEnvironment {
 	timer: {

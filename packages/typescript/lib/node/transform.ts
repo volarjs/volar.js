@@ -1,5 +1,5 @@
 import type { CodeInformation, SourceScript } from '@volar/language-core';
-import { Language, shouldReportDiagnostics } from '@volar/language-core';
+import { type Language, shouldReportDiagnostics } from '@volar/language-core';
 import type * as ts from 'typescript';
 import type { TextChange } from "typescript";
 import type { TypeScriptServiceScript } from '../..';

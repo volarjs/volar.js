@@ -1,5 +1,5 @@
 import { isFoldingRangesEnabled } from '@volar/language-core';
-import { URI } from 'vscode-uri';
+import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { documentFeatureWorker, getSourceRange } from '../utils/featureWorkers';

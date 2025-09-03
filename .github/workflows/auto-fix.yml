@@ -24,6 +24,10 @@ jobs:
       - name: Auto-fix
         run: npm run lint:fix
 
+      # format
+      - name: Format
+        run: npm run format
+
       # commit
       - name: Commit
         uses: EndBug/add-and-commit@v9

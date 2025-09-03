@@ -1,5 +1,5 @@
 import * as vscode from 'vscode-languageserver';
-import { LanguageServerState } from '../types';
+import type { LanguageServerState } from '../types';
 
 export function register(server: LanguageServerState) {
 	const configurations = new Map<string, Promise<any>>();

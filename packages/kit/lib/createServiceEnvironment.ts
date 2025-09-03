@@ -1,4 +1,4 @@
-import { FileSystem, FileType, LanguageServiceEnvironment } from '@volar/language-service';
+import { type FileSystem, FileType, type LanguageServiceEnvironment } from '@volar/language-service';
 import * as fs from 'fs';
 import { URI } from 'vscode-uri';
 

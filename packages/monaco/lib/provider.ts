@@ -35,7 +35,7 @@ import {
 	toWorkspaceEdit,
 } from 'monaco-languageserver-types';
 import type { Uri, editor, languages } from 'monaco-types';
-import { WorkerLanguageService } from '../worker.js';
+import { type WorkerLanguageService } from '../worker.js';
 import { markers } from './markers.js';
 import { getRequestId } from './requestId.js';
 
@@ -75,15 +75,13 @@ export async function createLanguageFeaturesProvider(
 	const documentLinks = new WeakMap<languages.ILink, DocumentLink>();
 	const inlayHints = new WeakMap<languages.InlayHint, InlayHint>();
 	const languageService = await worker.getProxy();
-	const legend = await languageService.getSemanticTokenLegend();
+	const legend = await (languageService.getSemanticTokenLegend() as unknown as Promise<ReturnType<typeof languageService.getSemanticTokenLegend>>);
 
 	return {
-
-		triggerCharacters: await languageService.getTriggerCharacters(),
-		autoFormatTriggerCharacters: await languageService.getAutoFormatTriggerCharacters(),
-		signatureHelpTriggerCharacters: await languageService.getSignatureHelpTriggerCharacters(),
-		signatureHelpRetriggerCharacters: await languageService.getSignatureHelpRetriggerCharacters(),
-
+		triggerCharacters: await (languageService.getTriggerCharacters() as unknown as Promise<ReturnType<typeof languageService.getTriggerCharacters>>),
+		autoFormatTriggerCharacters: await (languageService.getAutoFormatTriggerCharacters() as unknown as Promise<ReturnType<typeof languageService.getAutoFormatTriggerCharacters>>),
+		signatureHelpTriggerCharacters: await (languageService.getSignatureHelpTriggerCharacters() as unknown as Promise<ReturnType<typeof languageService.getSignatureHelpTriggerCharacters>>),
+		signatureHelpRetriggerCharacters: await (languageService.getSignatureHelpRetriggerCharacters() as unknown as Promise<ReturnType<typeof languageService.getSignatureHelpRetriggerCharacters>>),
 		getLegend() {
 			return legend;
 		},

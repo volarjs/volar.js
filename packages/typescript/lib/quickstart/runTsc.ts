@@ -120,7 +120,7 @@ export function transformTscContent(
 	return tsc;
 }
 
-function replace(text: string, ...[search, replace]: Parameters<String['replace']>) {
+function replace(text: string, search: string | RegExp, replace: (substring: string) => string) {
 	const before = text;
 	text = text.replace(search, replace);
 	const after = text;

@@ -2,7 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { DocumentsAndMap } from '../utils/featureWorkers';
+import { type DocumentsAndMap } from '../utils/featureWorkers';
 import { transformDiagnostic } from './provideDiagnostics';
 
 export function register(context: LanguageServiceContext) {

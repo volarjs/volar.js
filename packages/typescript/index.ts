@@ -8,7 +8,7 @@ export * from './lib/protocol/createSys';
 
 import type { VirtualCode } from '@volar/language-core';
 import type * as ts from 'typescript';
-import { URI } from 'vscode-uri';
+import { type URI } from 'vscode-uri';
 
 declare module '@volar/language-service' {
 	export interface ProjectContext {

@@ -4,7 +4,7 @@ import { URI } from 'vscode-uri';
 import type { LanguageServiceContext, NullableProviderResult } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { documentFeatureWorker, DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
+import { documentFeatureWorker, type DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
 

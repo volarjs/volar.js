@@ -1,7 +1,7 @@
 import { createUriMap } from '@volar/language-service';
-import * as vscode from 'vscode-languageserver';
+import type * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { LanguageServerState } from '../types';
+import { type LanguageServerState } from '../types';
 
 export function register(server: LanguageServerState) {
 	const folders = createUriMap<boolean>();

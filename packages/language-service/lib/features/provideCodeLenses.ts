@@ -1,6 +1,6 @@
 import { isCodeLensEnabled } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
-import { URI } from 'vscode-uri';
+import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { documentFeatureWorker, getSourceRange } from '../utils/featureWorkers';

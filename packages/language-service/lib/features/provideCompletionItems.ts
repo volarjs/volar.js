@@ -1,10 +1,10 @@
-import { isCompletionEnabled, SourceScript, VirtualCode, type CodeInformation } from '@volar/language-core';
+import { isCompletionEnabled, type SourceScript, type VirtualCode, type CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext, LanguageServicePluginInstance } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { DocumentsAndMap, forEachEmbeddedDocument, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
+import { type DocumentsAndMap, forEachEmbeddedDocument, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
 import { transformCompletionList } from '../utils/transform';
 
 export interface ServiceCompletionData {
@@ -172,7 +172,7 @@ export function register(context: LanguageServiceContext) {
 				document: TextDocument,
 				position: vscode.Position,
 				docs?: DocumentsAndMap,
-				codeInfo?: CodeInformation | undefined
+				codeInfo?: CodeInformation  
 			) => {
 
 				for (const plugin of sortedPlugins) {

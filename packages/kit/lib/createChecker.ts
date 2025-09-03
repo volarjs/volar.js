@@ -1,5 +1,5 @@
-import { CodeActionTriggerKind, Diagnostic, DiagnosticSeverity, DidChangeWatchedFilesParams, FileChangeType, Language, LanguagePlugin, LanguageServiceEnvironment, LanguageServicePlugin, NotificationHandler, ProjectContext, createLanguage, createLanguageService, createUriMap, mergeWorkspaceEdits } from '@volar/language-service';
-import { TypeScriptProjectHost, createLanguageServiceHost, resolveFileLanguageId } from '@volar/typescript';
+import { type CodeActionTriggerKind, type Diagnostic, type DiagnosticSeverity, type DidChangeWatchedFilesParams, type FileChangeType, type Language, type LanguagePlugin, type LanguageServiceEnvironment, type LanguageServicePlugin, type NotificationHandler, type ProjectContext, createLanguage, createLanguageService, createUriMap, mergeWorkspaceEdits } from '@volar/language-service';
+import { type TypeScriptProjectHost, createLanguageServiceHost, resolveFileLanguageId } from '@volar/typescript';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';

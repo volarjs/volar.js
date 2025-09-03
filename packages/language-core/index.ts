@@ -54,7 +54,7 @@ export function createLanguage<T>(
 					}
 				}
 				if (!languageId) {
-					console.warn(`languageId not found for ${id}`);
+					console.warn(`languageId not found for ${String(id)}`);
 					return;
 				}
 				let associatedOnly = false;

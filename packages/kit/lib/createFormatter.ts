@@ -1,4 +1,4 @@
-import { FormattingOptions, LanguagePlugin, LanguageServicePlugin, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
+import { type FormattingOptions, type LanguagePlugin, type LanguageServicePlugin, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';

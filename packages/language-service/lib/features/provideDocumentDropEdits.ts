@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode-languageserver-protocol';
-import { URI } from 'vscode-uri';
+import { type URI } from 'vscode-uri';
 import type { DataTransferItem, LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWorkers';

@@ -30,7 +30,7 @@ export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 	locale = locale?.toLowerCase();
 
 	// webpack compatibility
-	const _require: NodeRequire = eval('require');
+	const _require: NodeJS.Require = eval('require');
 
 	return {
 		typescript: loadLib(),

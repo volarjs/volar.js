@@ -1,6 +1,6 @@
-import { Disposable } from '@volar/language-service';
+import { type Disposable } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
-import { LanguageServerState } from '../types';
+import { type LanguageServerState } from '../types';
 
 export function register(server: LanguageServerState) {
 	let watchFilesDisposableCounter = 0;

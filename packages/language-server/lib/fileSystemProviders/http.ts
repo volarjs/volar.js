@@ -1,7 +1,7 @@
-import { FileSystem, FileType } from '@volar/language-service';
-import { configure as configureHttpRequests, getErrorStatusDescription, xhr, XHRResponse } from 'request-light';
+import { type FileSystem, FileType } from '@volar/language-service';
+import { configure as configureHttpRequests, getErrorStatusDescription, xhr, type XHRResponse } from 'request-light';
 import type { URI } from 'vscode-uri';
-import { LanguageServer } from '../types';
+import { type LanguageServer } from '../types';
 
 export const provider: FileSystem = {
 	async stat(uri) {
@@ -41,6 +41,6 @@ export function handler(uri: URI) {
 		}
 		return response.responseText;
 	}, (error: XHRResponse) => {
-		return Promise.reject(error.responseText || getErrorStatusDescription(error.status) || error.toString());
+		return Promise.reject(error.responseText || getErrorStatusDescription(error.status) || error);
 	});
 }

@@ -5,7 +5,7 @@ import type {
 	editor,
 	languages,
 } from 'monaco-types';
-import { WorkerLanguageService } from '../worker.js';
+import { type WorkerLanguageService } from '../worker.js';
 import { createLanguageFeaturesProvider } from './provider.js';
 
 export async function registerProviders(

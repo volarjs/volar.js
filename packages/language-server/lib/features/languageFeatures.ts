@@ -1,9 +1,9 @@
-import { DataTransferItem, decodeEmbeddedDocumentUri, LanguageService, mergeWorkspaceEdits } from '@volar/language-service';
+import { type DataTransferItem, decodeEmbeddedDocumentUri, type LanguageService, mergeWorkspaceEdits } from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 import { AutoInsertRequest, DocumentDrop_DataTransferItemAsStringRequest, DocumentDrop_DataTransferItemFileDataRequest, DocumentDropRequest, FindFileReferenceRequest } from '../../protocol';
 import type { LanguageServerProject, LanguageServerState } from '../types.js';
-import { SnapshotDocument } from '../utils/snapshotDocument';
+import { type SnapshotDocument } from '../utils/snapshotDocument';
 
 const reportedCapabilities = new Set<string>();
 

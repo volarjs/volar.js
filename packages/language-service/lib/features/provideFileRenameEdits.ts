@@ -1,4 +1,4 @@
-import { URI } from 'vscode-uri';
+import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';

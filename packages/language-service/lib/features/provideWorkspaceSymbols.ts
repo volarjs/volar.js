@@ -2,7 +2,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
+import { type DocumentsAndMap, getSourceRange } from '../utils/featureWorkers';
 import { transformWorkspaceSymbol } from '../utils/transform';
 
 export interface WorkspaceSymbolData {

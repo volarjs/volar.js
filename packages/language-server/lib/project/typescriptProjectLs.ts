@@ -1,5 +1,5 @@
-import { Language, LanguagePlugin, LanguageService, LanguageServiceEnvironment, ProjectContext, ProviderResult, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
-import { TypeScriptProjectHost, createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
+import { type Language, type LanguagePlugin, type LanguageService, type LanguageServiceEnvironment, type ProjectContext, type ProviderResult, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
+import { type TypeScriptProjectHost, createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
 import { matchFiles } from '@volar/typescript/lib/typescript/utilities';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
@@ -234,7 +234,7 @@ export async function createTypeScriptLS(
 		while (sysVersion !== newSysVersion) {
 			sysVersion = newSysVersion;
 			try {
-				commandLine = await parseConfigWorker(ts, sys, workspacePath, tsconfig, extraFileExtensions);
+				commandLine = parseConfigWorker(ts, sys, workspacePath, tsconfig, extraFileExtensions);
 			} catch {
 				// will be failed if web fs host first result not ready
 			}

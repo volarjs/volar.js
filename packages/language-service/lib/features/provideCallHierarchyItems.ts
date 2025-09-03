@@ -4,7 +4,7 @@ import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { DocumentsAndMap, getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
+import { type DocumentsAndMap, getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export interface PluginCallHierarchyData {
 	uri: string;

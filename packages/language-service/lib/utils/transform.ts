@@ -3,7 +3,7 @@ import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
-import { DocumentsAndMap, getSourcePositions, getSourceRange } from './featureWorkers';
+import { type DocumentsAndMap, getSourcePositions, getSourceRange } from './featureWorkers';
 
 export function transformDocumentLinkTarget(_target: string, context: LanguageServiceContext) {
 	let target = URI.parse(_target);
