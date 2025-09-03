@@ -21,9 +21,7 @@ export interface ServiceReferencesCodeLensData {
 }
 
 export function register(context: LanguageServiceContext) {
-
 	return async (uri: URI, token = NoneCancellationToken) => {
-
 		return await documentFeatureWorker(
 			context,
 			uri,
@@ -87,7 +85,7 @@ export function register(context: LanguageServiceContext) {
 					})
 					.filter(codeLens => !!codeLens);
 			},
-			arr => arr.flat()
+			arr => arr.flat(),
 		) ?? [];
 	};
 }

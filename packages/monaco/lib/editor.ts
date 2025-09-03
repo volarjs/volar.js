@@ -14,9 +14,8 @@ export function activateMarkers(
 	languages: string[],
 	markersOwn: string,
 	getSyncUris: () => Uri[],
-	editor: MonacoEditor['editor']
+	editor: MonacoEditor['editor'],
 ): IDisposable {
-
 	const disposables: IDisposable[] = [];
 	const listener = new Map<string, IDisposable>();
 
@@ -32,8 +31,8 @@ export function activateMarkers(
 				for (const model of editor.getModels()) {
 					stopHostingMarkers(model);
 				}
-			}
-		}
+			},
+		},
 	);
 
 	for (const model of editor.getModels()) {
@@ -64,7 +63,8 @@ export function activateMarkers(
 		const visibleSubscription = model.onDidChangeAttached(() => {
 			if (model.isAttachedToEditor()) {
 				doValidation(model);
-			} else {
+			}
+			else {
 				editor.setModelMarkers(model, markersOwn, []);
 			}
 		});
@@ -76,8 +76,8 @@ export function activateMarkers(
 					changeSubscription.dispose();
 					visibleSubscription.dispose();
 					clearTimeout(timer);
-				}
-			}
+				},
+			},
 		);
 
 		doValidation(model);
@@ -95,7 +95,7 @@ export function activateMarkers(
 		const token = createTokenForModelChange(model);
 		const diagnostics = await languageService.getDiagnostics(
 			getRequestId(token.token, languageService),
-			model.uri
+			model.uri,
 		);
 		token.dispose();
 		if (token.token.isCancellationRequested) {
@@ -115,9 +115,8 @@ export function activateAutoInsertion(
 	worker: editor.MonacoWebWorker<WorkerLanguageService>,
 	languages: string[],
 	getSyncUris: () => Uri[],
-	editor: MonacoEditor['editor']
+	editor: MonacoEditor['editor'],
 ): IDisposable {
-
 	const disposables: IDisposable[] = [];
 	const listener = new Map<editor.IModel, IDisposable>();
 
@@ -136,8 +135,8 @@ export function activateAutoInsertion(
 					disposable.dispose();
 				}
 				listener.clear();
-			}
-		}
+			},
+		},
 	);
 
 	for (const model of editor.getModels()) {
@@ -157,24 +156,27 @@ export function activateAutoInsertion(
 		if (!languages.includes(model.getLanguageId?.() ?? (model as any).getModeId?.())) {
 			return;
 		}
-		listener.set(model, model.onDidChangeContent(e => {
-			if (model.isDisposed()) {
-				return;
-			}
-			if (!model.isAttachedToEditor()) {
-				return;
-			}
-			if (e.changes.length === 0 || e.isUndoing || e.isRedoing) {
-				return;
-			}
-			const lastChange = e.changes[e.changes.length - 1];
-			doAutoInsert(model, lastChange);
-		}));
+		listener.set(
+			model,
+			model.onDidChangeContent(e => {
+				if (model.isDisposed()) {
+					return;
+				}
+				if (!model.isAttachedToEditor()) {
+					return;
+				}
+				if (e.changes.length === 0 || e.isUndoing || e.isRedoing) {
+					return;
+				}
+				const lastChange = e.changes[e.changes.length - 1];
+				doAutoInsert(model, lastChange);
+			}),
+		);
 	}
 
 	function doAutoInsert(
 		model: editor.ITextModel,
-		lastChange: editor.IModelContentChange
+		lastChange: editor.IModelContentChange,
 	) {
 		if (timeout) {
 			clearTimeout(timeout);
@@ -199,7 +201,7 @@ export function activateAutoInsertion(
 						text: lastChange.text,
 						rangeOffset: lastChange.rangeOffset,
 						rangeLength: lastChange.rangeLength,
-					}
+					},
 				);
 				token.dispose();
 				if (token.token.isCancellationRequested) {

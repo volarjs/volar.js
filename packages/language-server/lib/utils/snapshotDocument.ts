@@ -4,7 +4,6 @@ import { type Range, TextDocument } from 'vscode-languageserver-textdocument';
 import { combineChangeRanges } from './combineChangeRanges';
 
 export class SnapshotDocument implements TextDocument {
-
 	private document: TextDocument;
 	private snapshots: {
 		changeRange: ts.TextChangeRange;
@@ -16,7 +15,7 @@ export class SnapshotDocument implements TextDocument {
 		uri: string,
 		languageId: string,
 		version: number,
-		text: string
+		text: string,
 	) {
 		this.document = TextDocument.create(uri, languageId, version, text);
 		this.resetChanges();
@@ -66,7 +65,7 @@ export class SnapshotDocument implements TextDocument {
 				const length = contentChange.rangeLength ?? this.offsetAt(contentChange.range.end) - start;
 				changeRanges.push({
 					span: { start, length },
-					newLength: contentChange.text.length
+					newLength: contentChange.text.length,
 				});
 				TextDocument.update(this.document, [contentChange], version);
 			}
@@ -83,7 +82,6 @@ export class SnapshotDocument implements TextDocument {
 	}
 
 	getSnapshot() {
-
 		this.clearUnreferencedVersions();
 
 		const lastChange = this.snapshots[this.snapshots.length - 1];
@@ -130,7 +128,7 @@ export class SnapshotDocument implements TextDocument {
 				},
 				version: this.document.version,
 				ref: undefined,
-			}
+			},
 		];
 	}
 

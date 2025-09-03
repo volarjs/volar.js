@@ -6,9 +6,7 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedRanges, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, range: vscode.Range, ivContext: vscode.InlineValueContext, token = NoneCancellationToken) => {
-
 		return languageFeatureWorker(
 			context,
 			uri,
@@ -34,7 +32,7 @@ export function register(context: LanguageServiceContext) {
 					})
 					.filter(item => !!item);
 			},
-			results => results.flat()
+			results => results.flat(),
 		);
 	};
 }

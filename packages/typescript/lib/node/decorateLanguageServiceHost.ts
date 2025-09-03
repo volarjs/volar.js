@@ -5,7 +5,7 @@ import { createResolveModuleName } from '../resolveModuleName';
 export function decorateLanguageServiceHost(
 	ts: typeof import('typescript'),
 	language: Language<string>,
-	languageServiceHost: ts.LanguageServiceHost
+	languageServiceHost: ts.LanguageServiceHost,
 ) {
 	const pluginExtensions = language.plugins
 		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
@@ -40,12 +40,21 @@ export function decorateLanguageServiceHost(
 	}
 
 	if (pluginExtensions.length) {
-
-		const resolveModuleName = createResolveModuleName(ts, ts.sys.getFileSize, languageServiceHost, language.plugins, fileName => language.scripts.get(fileName));
+		const resolveModuleName = createResolveModuleName(
+			ts,
+			ts.sys.getFileSize,
+			languageServiceHost,
+			language.plugins,
+			fileName => language.scripts.get(fileName),
+		);
 		const getCanonicalFileName = languageServiceHost.useCaseSensitiveFileNames?.()
 			? (fileName: string) => fileName
 			: (fileName: string) => fileName.toLowerCase();
-		const moduleResolutionCache = ts.createModuleResolutionCache(languageServiceHost.getCurrentDirectory(), getCanonicalFileName, languageServiceHost.getCompilationSettings());
+		const moduleResolutionCache = ts.createModuleResolutionCache(
+			languageServiceHost.getCurrentDirectory(),
+			getCanonicalFileName,
+			languageServiceHost.getCompilationSettings(),
+		);
 
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
@@ -57,11 +66,25 @@ export function decorateLanguageServiceHost(
 				...rest
 			) => {
 				if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
-					return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, options, containingSourceFile, ...rest);
+					return resolveModuleNameLiterals(
+						moduleLiterals,
+						containingFile,
+						redirectedReference,
+						options,
+						containingSourceFile,
+						...rest,
+					);
 				}
 				return moduleLiterals.map(moduleLiteral => {
 					const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, options);
-					return resolveModuleName(moduleLiteral.text, containingFile, options, moduleResolutionCache, redirectedReference, mode);
+					return resolveModuleName(
+						moduleLiteral.text,
+						containingFile,
+						options,
+						moduleResolutionCache,
+						redirectedReference,
+						mode,
+					);
 				});
 			};
 		}
@@ -72,13 +95,21 @@ export function decorateLanguageServiceHost(
 				reusedNames,
 				redirectedReference,
 				options,
-				containingSourceFile
+				containingSourceFile,
 			) => {
 				if (moduleNames.every(name => !pluginExtensions.some(ext => name.endsWith(ext)))) {
-					return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, options, containingSourceFile);
+					return resolveModuleNames(
+						moduleNames,
+						containingFile,
+						reusedNames,
+						redirectedReference,
+						options,
+						containingSourceFile,
+					);
 				}
 				return moduleNames.map(moduleName => {
-					return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference).resolvedModule;
+					return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference)
+						.resolvedModule;
 				});
 			};
 		}
@@ -109,7 +140,8 @@ export function decorateLanguageServiceHost(
 		let version: string | undefined;
 		try {
 			version = languageServiceHost.getScriptVersion(fileName);
-		} catch {
+		}
+		catch {
 			// fix https://github.com/vuejs/language-tools/issues/4278
 			crashFileNames.add(fileName);
 		}
@@ -123,7 +155,9 @@ export function decorateLanguageServiceHost(
 
 			const sourceScript = language.scripts.get(fileName, undefined, shouldRegister);
 			if (sourceScript?.generated) {
-				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(
+					sourceScript.generated.root,
+				);
 				if (serviceScript) {
 					if (serviceScript.preventLeadingOffset) {
 						script[1] = {

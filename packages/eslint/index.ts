@@ -1,4 +1,12 @@
-import { FileMap, type LanguagePlugin, type SourceScript, type VirtualCode, createLanguage, forEachEmbeddedCode, isDiagnosticsEnabled } from '@volar/language-core';
+import {
+	createLanguage,
+	FileMap,
+	forEachEmbeddedCode,
+	isDiagnosticsEnabled,
+	type LanguagePlugin,
+	type SourceScript,
+	type VirtualCode,
+} from '@volar/language-core';
 import type { Linter } from 'eslint';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -25,9 +33,9 @@ export function createProcessor(
 		'yaml': '.yaml',
 		'markdown': '.md',
 	},
-	supportsAutofix = true
+	supportsAutofix = true,
 ): Linter.Processor {
-	const language = createLanguage<string>(languagePlugins, new FileMap(caseSensitive), () => { });
+	const language = createLanguage<string>(languagePlugins, new FileMap(caseSensitive), () => {});
 	const documents = new FileMap<{
 		sourceScript: SourceScript<string>;
 		sourceDocument: TextDocument;
@@ -64,7 +72,14 @@ export function createProcessor(
 							text: code.snapshot.getText(0, code.snapshot.getLength()),
 						});
 						codes.push(code);
-						embeddedDocuments.push(TextDocument.create(filename + ext, code.languageId, 0, code.snapshot.getText(0, code.snapshot.getLength())));
+						embeddedDocuments.push(
+							TextDocument.create(
+								filename + ext,
+								code.languageId,
+								0,
+								code.snapshot.getText(0, code.snapshot.getLength()),
+							),
+						);
 					}
 				}
 				documents.set(filename, {
@@ -91,7 +106,10 @@ export function createProcessor(
 					const embeddedDocument = embeddedDocuments[i];
 					messagesArr[i] = messagesArr[i].filter(message => {
 						const start = embeddedDocument.offsetAt({ line: message.line - 1, character: message.column - 1 });
-						const end = embeddedDocument.offsetAt({ line: (message.endLine ?? message.line) - 1, character: (message.endColumn ?? message.column) - 1 });
+						const end = embeddedDocument.offsetAt({
+							line: (message.endLine ?? message.line) - 1,
+							character: (message.endColumn ?? message.column) - 1,
+						});
 						for (const [sourceStart, mapping] of map.toSourceLocation(start)) {
 							if (isDiagnosticsEnabled(mapping.data)) {
 								for (const [sourceEnd, mapping] of map.toSourceLocation(end)) {

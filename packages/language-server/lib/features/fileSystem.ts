@@ -4,7 +4,7 @@ import { URI } from 'vscode-uri';
 
 export function register(
 	documents: ReturnType<typeof import('./textDocuments').register>,
-	fileWatcher: ReturnType<typeof import('./fileWatcher').register>
+	fileWatcher: ReturnType<typeof import('./fileWatcher').register>,
 ) {
 	const providers = new Map<string, FileSystem>();
 	const readFileCache = createUriMap<ReturnType<FileSystem['readFile']>>();

@@ -14,15 +14,18 @@ export function createNpmFileSystem(
 		}
 	},
 	getPackageVersion?: (pkgName: string) => string | undefined,
-	onFetch?: (path: string, content: string) => void
+	onFetch?: (path: string, content: string) => void,
 ): FileSystem {
 	const fetchResults = new Map<string, Promise<string | undefined>>();
-	const flatResults = new Map<string, Promise<{
-		name: string;
-		size: number;
-		time: string;
-		hash: string;
-	}[]>>();
+	const flatResults = new Map<
+		string,
+		Promise<{
+			name: string;
+			size: number;
+			time: string;
+			hash: string;
+		}[]>
+	>();
 
 	return {
 		async stat(uri) {
@@ -57,7 +60,6 @@ export function createNpmFileSystem(
 	};
 
 	async function _stat(path: string) {
-
 		const [modName, pkgName, pkgVersion, pkgFilePath] = resolvePackageName(path);
 		if (!pkgName) {
 			if (modName.startsWith('@')) {
@@ -112,7 +114,6 @@ export function createNpmFileSystem(
 	}
 
 	async function _readDirectory(path: string): Promise<[string, FileType][]> {
-
 		const [modName, pkgName, pkgVersion] = resolvePackageName(path);
 		if (!pkgName || !await isValidPackageName(pkgName)) {
 			return [];
@@ -138,23 +139,27 @@ export function createNpmFileSystem(
 	}
 
 	async function _readFile(path: string): Promise<string | undefined> {
-
 		const [_modName, pkgName, _version, pkgFilePath] = resolvePackageName(path);
 		if (!pkgName || !pkgFilePath || !await isValidPackageName(pkgName)) {
 			return;
 		}
 
 		if (!fetchResults.has(path)) {
-			fetchResults.set(path, (async () => {
-				if ((await _stat(path))?.type !== 1 satisfies FileType.File) {
-					return;
-				}
-				const text = await fetchText(`https://cdn.jsdelivr.net/npm/${pkgName}@${_version || 'latest'}/${pkgFilePath}`);
-				if (text !== undefined) {
-					onFetch?.(path, text);
-				}
-				return text;
-			})());
+			fetchResults.set(
+				path,
+				(async () => {
+					if ((await _stat(path))?.type !== 1 satisfies FileType.File) {
+						return;
+					}
+					const text = await fetchText(
+						`https://cdn.jsdelivr.net/npm/${pkgName}@${_version || 'latest'}/${pkgFilePath}`,
+					);
+					if (text !== undefined) {
+						onFetch?.(path, text);
+					}
+					return text;
+				})(),
+			);
 		}
 
 		return await fetchResults.get(path)!;
@@ -165,7 +170,9 @@ export function createNpmFileSystem(
 
 		// resolve latest tag
 		if (version === 'latest') {
-			const data = await fetchJson<{ version: string | null; }>(`https://data.jsdelivr.com/v1/package/resolve/npm/${pkgName}@${version}`);
+			const data = await fetchJson<{ version: string | null }>(
+				`https://data.jsdelivr.com/v1/package/resolve/npm/${pkgName}@${version}`,
+			);
 			if (!data?.version) {
 				return [];
 			}
@@ -259,32 +266,40 @@ export function createNpmFileSystem(
 
 async function fetchText(url: string) {
 	if (!textCache.has(url)) {
-		textCache.set(url, (async () => {
-			try {
-				const res = await fetch(url);
-				if (res.status === 200) {
-					return await res.text();
+		textCache.set(
+			url,
+			(async () => {
+				try {
+					const res = await fetch(url);
+					if (res.status === 200) {
+						return await res.text();
+					}
 				}
-			} catch {
-				// ignore
-			}
-		})());
+				catch {
+					// ignore
+				}
+			})(),
+		);
 	}
 	return await textCache.get(url)!;
 }
 
 async function fetchJson<T>(url: string) {
 	if (!jsonCache.has(url)) {
-		jsonCache.set(url, (async () => {
-			try {
-				const res = await fetch(url);
-				if (res.status === 200) {
-					return await res.json();
+		jsonCache.set(
+			url,
+			(async () => {
+				try {
+					const res = await fetch(url);
+					if (res.status === 200) {
+						return await res.json();
+					}
 				}
-			} catch {
-				// ignore
-			}
-		})());
+				catch {
+					// ignore
+				}
+			})(),
+		);
 	}
 	return await jsonCache.get(url)! as T;
 }

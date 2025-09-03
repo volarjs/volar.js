@@ -8,9 +8,7 @@ import { transformFoldingRanges } from '../utils/transform';
 import type * as _ from 'vscode-languageserver-protocol';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, token = NoneCancellationToken) => {
-
 		return documentFeatureWorker(
 			context,
 			uri,
@@ -27,10 +25,10 @@ export function register(context: LanguageServiceContext) {
 				}
 				return transformFoldingRanges(
 					data,
-					range => getSourceRange(docs, range, isFoldingRangesEnabled)
+					range => getSourceRange(docs, range, isFoldingRangesEnabled),
 				);
 			},
-			arr => arr.flat()
+			arr => arr.flat(),
 		);
 	};
 }

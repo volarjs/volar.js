@@ -1,7 +1,6 @@
 import type { SemanticTokens } from 'vscode-languageserver-protocol';
 
 export class SemanticTokensBuilder {
-
 	private _id!: number;
 
 	private _prevLine!: number;

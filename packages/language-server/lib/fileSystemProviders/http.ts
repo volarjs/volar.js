@@ -28,7 +28,7 @@ export function listenEditorSettings(server: LanguageServer) {
 	updateHttpSettings();
 
 	async function updateHttpSettings() {
-		const httpSettings = await server.configurations.get<{ proxyStrictSSL?: boolean; proxy?: string; }>('http');
+		const httpSettings = await server.configurations.get<{ proxyStrictSSL?: boolean; proxy?: string }>('http');
 		configureHttpRequests(httpSettings?.proxy, httpSettings?.proxyStrictSSL ?? false);
 	}
 }

@@ -1,6 +1,11 @@
 import type * as ts from 'typescript';
 import { createProxyLanguageService } from '../node/proxyLanguageService';
-import { createLanguageCommon, isHasAlreadyDecoratedLanguageService, makeGetExternalFiles, makeGetScriptInfoWithLargeFileFailsafe } from './languageServicePluginCommon';
+import {
+	createLanguageCommon,
+	isHasAlreadyDecoratedLanguageService,
+	makeGetExternalFiles,
+	makeGetScriptInfoWithLargeFileFailsafe,
+} from './languageServicePluginCommon';
 import type { createPluginCallbackAsync } from './languageServicePluginCommon';
 
 /**
@@ -25,7 +30,7 @@ import type { createPluginCallbackAsync } from './languageServicePluginCommon';
 export function createAsyncLanguageServicePlugin(
 	extensions: string[],
 	getScriptKindForExtraExtensions: ts.ScriptKind | ((fileName: string) => ts.ScriptKind),
-	createPluginCallbackAsync: createPluginCallbackAsync
+	createPluginCallbackAsync: createPluginCallbackAsync,
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;
@@ -60,7 +65,12 @@ export function createAsyncLanguageServicePlugin(
 	};
 }
 
-function decorateWithAsyncInitializationHandling(ts: typeof import('typescript'), info: ts.server.PluginCreateInfo, extensions: string[], getScriptKindForExtraExtensions: ts.ScriptKind | ((fileName: string) => ts.ScriptKind)) {
+function decorateWithAsyncInitializationHandling(
+	ts: typeof import('typescript'),
+	info: ts.server.PluginCreateInfo,
+	extensions: string[],
+	getScriptKindForExtraExtensions: ts.ScriptKind | ((fileName: string) => ts.ScriptKind),
+) {
 	const emptySnapshot = ts.ScriptSnapshot.fromString('');
 	const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
 	const getScriptVersion = info.languageServiceHost.getScriptVersion.bind(info.languageServiceHost);

@@ -6,9 +6,7 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { documentFeatureWorker, getSourceRange } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, token = NoneCancellationToken) => {
-
 		return documentFeatureWorker(
 			context,
 			uri,
@@ -35,7 +33,7 @@ export function register(context: LanguageServiceContext) {
 					})
 					.filter(color => !!color);
 			},
-			arr => arr.flat()
+			arr => arr.flat(),
 		);
 	};
 }

@@ -6,14 +6,17 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
-	return (uri: URI, selection: vscode.Position, change: { rangeOffset: number; rangeLength: number; text: string; }, token = NoneCancellationToken) => {
-
+	return (
+		uri: URI,
+		selection: vscode.Position,
+		change: { rangeOffset: number; rangeLength: number; text: string },
+		token = NoneCancellationToken,
+	) => {
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => ({ selection, change }),
-			function* (docs) {
+			function*(docs) {
 				for (const mappedPosition of getGeneratedPositions(docs, selection, isAutoInsertEnabled)) {
 					for (const mapped of docs[2].toGeneratedLocation(change.rangeOffset)) {
 						yield {
@@ -34,7 +37,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return plugin[1].provideAutoInsertSnippet?.(document, args.selection, args.change, token);
 			},
-			snippet => snippet
+			snippet => snippet,
 		);
 	};
 }

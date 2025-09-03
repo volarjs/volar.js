@@ -1,19 +1,19 @@
-export type Path = string & { __pathBrand: any; };
+export type Path = string & { __pathBrand: any };
 
 /* @internal */
 export const enum CharacterCodes {
 	nullCharacter = 0,
 	maxAsciiCharacter = 0x7F,
 
-	lineFeed = 0x0A,              // \n
-	carriageReturn = 0x0D,        // \r
+	lineFeed = 0x0A, // \n
+	carriageReturn = 0x0D, // \r
 	lineSeparator = 0x2028,
 	paragraphSeparator = 0x2029,
 	nextLine = 0x0085,
 
 	// Unicode 3.0 space characters
-	space = 0x0020,   // " "
-	nonBreakingSpace = 0x00A0,   //
+	space = 0x0020, // " "
+	nonBreakingSpace = 0x00A0, //
 	enQuad = 0x2000,
 	emQuad = 0x2001,
 	enSpace = 0x2002,
@@ -99,40 +99,40 @@ export const enum CharacterCodes {
 	Y = 0x59,
 	Z = 0x5a,
 
-	ampersand = 0x26,             // &
-	asterisk = 0x2A,              // *
-	at = 0x40,                    // @
-	backslash = 0x5C,             // \
-	backtick = 0x60,              // `
-	bar = 0x7C,                   // |
-	caret = 0x5E,                 // ^
-	closeBrace = 0x7D,            // }
-	closeBracket = 0x5D,          // ]
-	closeParen = 0x29,            // )
-	colon = 0x3A,                 // :
-	comma = 0x2C,                 // ,
-	dot = 0x2E,                   // .
-	doubleQuote = 0x22,           // "
-	equals = 0x3D,                // =
-	exclamation = 0x21,           // !
-	greaterThan = 0x3E,           // >
-	hash = 0x23,                  // #
-	lessThan = 0x3C,              // <
-	minus = 0x2D,                 // -
-	openBrace = 0x7B,             // {
-	openBracket = 0x5B,           // [
-	openParen = 0x28,             // (
-	percent = 0x25,               // %
-	plus = 0x2B,                  // +
-	question = 0x3F,              // ?
-	semicolon = 0x3B,             // ;
-	singleQuote = 0x27,           // '
-	slash = 0x2F,                 // /
-	tilde = 0x7E,                 // ~
+	ampersand = 0x26, // &
+	asterisk = 0x2A, // *
+	at = 0x40, // @
+	backslash = 0x5C, // \
+	backtick = 0x60, // `
+	bar = 0x7C, // |
+	caret = 0x5E, // ^
+	closeBrace = 0x7D, // }
+	closeBracket = 0x5D, // ]
+	closeParen = 0x29, // )
+	colon = 0x3A, // :
+	comma = 0x2C, // ,
+	dot = 0x2E, // .
+	doubleQuote = 0x22, // "
+	equals = 0x3D, // =
+	exclamation = 0x21, // !
+	greaterThan = 0x3E, // >
+	hash = 0x23, // #
+	lessThan = 0x3C, // <
+	minus = 0x2D, // -
+	openBrace = 0x7B, // {
+	openBracket = 0x5B, // [
+	openParen = 0x28, // (
+	percent = 0x25, // %
+	plus = 0x2B, // +
+	question = 0x3F, // ?
+	semicolon = 0x3B, // ;
+	singleQuote = 0x27, // '
+	slash = 0x2F, // /
+	tilde = 0x7E, // ~
 
-	backspace = 0x08,             // \b
-	formFeed = 0x0C,              // \f
+	backspace = 0x08, // \b
+	formFeed = 0x0C, // \f
 	byteOrderMark = 0xFEFF,
-	tab = 0x09,                   // \t
-	verticalTab = 0x0B,           // \v
+	tab = 0x09, // \t
+	verticalTab = 0x0B, // \v
 }

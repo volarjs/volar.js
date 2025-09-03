@@ -6,20 +6,17 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
-
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => position,
-			function* (docs) {
+			function*(docs) {
 				for (const pos of getGeneratedPositions(docs, position, isLinkedEditingEnabled)) {
 					yield pos;
 				}
 			},
 			(plugin, document, position) => {
-
 				if (token.isCancellationRequested) {
 					return;
 				}
@@ -36,7 +33,7 @@ export function register(context: LanguageServiceContext) {
 						.map(range => getSourceRange(docs, range, isLinkedEditingEnabled))
 						.filter(range => !!range),
 				};
-			}
+			},
 		);
 	};
 }

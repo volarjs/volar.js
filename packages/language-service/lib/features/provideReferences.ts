@@ -5,19 +5,27 @@ import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { type DocumentsAndMap, getGeneratedPositions, getLinkedCodePositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
+import {
+	type DocumentsAndMap,
+	getGeneratedPositions,
+	getLinkedCodePositions,
+	getSourceRange,
+	languageFeatureWorker,
+} from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
-	return (uri: URI, position: vscode.Position, referenceContext: vscode.ReferenceContext, token = NoneCancellationToken) => {
-
+	return (
+		uri: URI,
+		position: vscode.Position,
+		referenceContext: vscode.ReferenceContext,
+		token = NoneCancellationToken,
+	) => {
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => position,
 			docs => getGeneratedPositions(docs, position, isReferencesEnabled),
 			async (plugin, document, position) => {
-
 				if (token.isCancellationRequested) {
 					return;
 				}
@@ -30,7 +38,6 @@ export function register(context: LanguageServiceContext) {
 				return result;
 
 				async function withLinkedCode(document: TextDocument, position: vscode.Position) {
-
 					if (!plugin[1].provideReferences) {
 						return;
 					}
@@ -44,10 +51,12 @@ export function register(context: LanguageServiceContext) {
 					const references = await plugin[1].provideReferences(document, position, referenceContext, token) ?? [];
 
 					for (const reference of references) {
-
 						let foundMirrorPosition = false;
 
-						recursiveChecker.add({ uri: reference.uri, range: { start: reference.range.start, end: reference.range.start } });
+						recursiveChecker.add({
+							uri: reference.uri,
+							range: { start: reference.range.start, end: reference.range.start },
+						});
 
 						const decoded = context.decodeEmbeddedDocumentUri(URI.parse(reference.uri));
 						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
@@ -60,10 +69,9 @@ export function register(context: LanguageServiceContext) {
 							const embeddedDocument = context.documents.get(
 								context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 								virtualCode.languageId,
-								virtualCode.snapshot
+								virtualCode.snapshot,
 							);
 							for (const linkedPos of getLinkedCodePositions(embeddedDocument, linkedCodeMap, reference.range.start)) {
-
 								if (recursiveChecker.has({ uri: embeddedDocument.uri, range: { start: linkedPos, end: linkedPos } })) {
 									continue;
 								}
@@ -81,11 +89,9 @@ export function register(context: LanguageServiceContext) {
 				}
 			},
 			data => {
-
 				const results: vscode.Location[] = [];
 
 				for (const reference of data) {
-
 					const decoded = context.decodeEmbeddedDocumentUri(URI.parse(reference.uri));
 					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
@@ -94,10 +100,14 @@ export function register(context: LanguageServiceContext) {
 						const embeddedDocument = context.documents.get(
 							context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 							virtualCode.languageId,
-							virtualCode.snapshot
+							virtualCode.snapshot,
 						);
 						for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
-							const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
+							const sourceDocument = context.documents.get(
+								sourceScript.id,
+								sourceScript.languageId,
+								sourceScript.snapshot,
+							);
 							const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
 							const range = getSourceRange(docs, reference.range, isReferencesEnabled);
 							if (range) {
@@ -115,7 +125,7 @@ export function register(context: LanguageServiceContext) {
 
 				return results;
 			},
-			arr => dedupe.withLocations(arr.flat())
+			arr => dedupe.withLocations(arr.flat()),
 		);
 	};
 }

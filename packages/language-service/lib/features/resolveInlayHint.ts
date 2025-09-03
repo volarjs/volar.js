@@ -1,12 +1,10 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServiceContext } from '../types';
-import type { InlayHintData } from './provideInlayHints';
 import { NoneCancellationToken } from '../utils/cancellation';
+import type { InlayHintData } from './provideInlayHints';
 
 export function register(context: LanguageServiceContext) {
-
 	return async (item: vscode.InlayHint, token = NoneCancellationToken) => {
-
 		const data: InlayHintData | undefined = item.data;
 		if (data) {
 			const plugin = context.plugins[data.pluginIndex];

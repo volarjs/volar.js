@@ -1,6 +1,29 @@
-import { flatMap, last, map, createGetCanonicalFileName, flatten, sort, compareStringsCaseSensitive, findIndex, getStringComparer, every, indexOfAnyCharCode } from "./core";
-import { getNormalizedPathComponents, removeTrailingDirectorySeparator, directorySeparator, normalizePath, combinePaths, fileExtensionIsOneOf, isRootedDiskPath, containsPath, hasExtension, getDirectoryPath } from "./path";
-import { CharacterCodes } from "./types";
+import {
+	compareStringsCaseSensitive,
+	createGetCanonicalFileName,
+	every,
+	findIndex,
+	flatMap,
+	flatten,
+	getStringComparer,
+	indexOfAnyCharCode,
+	last,
+	map,
+	sort,
+} from './core';
+import {
+	combinePaths,
+	containsPath,
+	directorySeparator,
+	fileExtensionIsOneOf,
+	getDirectoryPath,
+	getNormalizedPathComponents,
+	hasExtension,
+	isRootedDiskPath,
+	normalizePath,
+	removeTrailingDirectorySeparator,
+} from './path';
+import { CharacterCodes } from './types';
 
 // KLUDGE: Don't assume one 'node_modules' links to another. More likely a single directory inside the node_modules is the symlink.
 // ALso, don't assume that an `@foo` directory is linked. More likely the contents of that are linked.
@@ -12,9 +35,9 @@ const reservedCharacterPattern = /[^\w\s\/]/g;
 
 const wildcardCharCodes = [CharacterCodes.asterisk, CharacterCodes.question];
 
-const commonPackageFolders: readonly string[] = ["node_modules", "bower_components", "jspm_packages"];
+const commonPackageFolders: readonly string[] = ['node_modules', 'bower_components', 'jspm_packages'];
 
-const implicitExcludePathRegexPattern = `(?!(${commonPackageFolders.join("|")})(/|$))`;
+const implicitExcludePathRegexPattern = `(?!(${commonPackageFolders.join('|')})(/|$))`;
 
 interface WildcardMatcher {
 	singleAsteriskRegexFragment: string;
@@ -29,56 +52,63 @@ const filesMatcher: WildcardMatcher = {
 	 *  [^./]                   # matches everything up to the first . character (excluding directory separators)
 	 *  (\\.(?!min\\.js$))?     # matches . characters but not if they are part of the .min.js file extension
 	 */
-	singleAsteriskRegexFragment: "([^./]|(\\.(?!min\\.js$))?)*",
+	singleAsteriskRegexFragment: '([^./]|(\\.(?!min\\.js$))?)*',
 	/**
 	 * Regex for the ** wildcard. Matches any number of subdirectories. When used for including
 	 * files or directories, does not match subdirectories that start with a . character
 	 */
 	doubleAsteriskRegexFragment: `(/${implicitExcludePathRegexPattern}[^/.][^/]*)*?`,
-	replaceWildcardCharacter: match => replaceWildcardCharacter(match, filesMatcher.singleAsteriskRegexFragment)
+	replaceWildcardCharacter: match => replaceWildcardCharacter(match, filesMatcher.singleAsteriskRegexFragment),
 };
 
 const directoriesMatcher: WildcardMatcher = {
-	singleAsteriskRegexFragment: "[^/]*",
+	singleAsteriskRegexFragment: '[^/]*',
 	/**
 	 * Regex for the ** wildcard. Matches any number of subdirectories. When used for including
 	 * files or directories, does not match subdirectories that start with a . character
 	 */
 	doubleAsteriskRegexFragment: `(/${implicitExcludePathRegexPattern}[^/.][^/]*)*?`,
-	replaceWildcardCharacter: match => replaceWildcardCharacter(match, directoriesMatcher.singleAsteriskRegexFragment)
+	replaceWildcardCharacter: match => replaceWildcardCharacter(match, directoriesMatcher.singleAsteriskRegexFragment),
 };
 
 const excludeMatcher: WildcardMatcher = {
-	singleAsteriskRegexFragment: "[^/]*",
-	doubleAsteriskRegexFragment: "(/.+?)?",
-	replaceWildcardCharacter: match => replaceWildcardCharacter(match, excludeMatcher.singleAsteriskRegexFragment)
+	singleAsteriskRegexFragment: '[^/]*',
+	doubleAsteriskRegexFragment: '(/.+?)?',
+	replaceWildcardCharacter: match => replaceWildcardCharacter(match, excludeMatcher.singleAsteriskRegexFragment),
 };
 
 const wildcardMatchers = {
 	files: filesMatcher,
 	directories: directoriesMatcher,
-	exclude: excludeMatcher
+	exclude: excludeMatcher,
 };
 
-function getRegularExpressionForWildcard(specs: readonly string[] | undefined, basePath: string, usage: "files" | "directories" | "exclude"): string | undefined {
+function getRegularExpressionForWildcard(
+	specs: readonly string[] | undefined,
+	basePath: string,
+	usage: 'files' | 'directories' | 'exclude',
+): string | undefined {
 	const patterns = getRegularExpressionsForWildcards(specs, basePath, usage);
 	if (!patterns || !patterns.length) {
 		return undefined;
 	}
 
-	const pattern = patterns.map(pattern => `(${pattern})`).join("|");
+	const pattern = patterns.map(pattern => `(${pattern})`).join('|');
 	// If excluding, match "foo/bar/baz...", but if including, only allow "foo".
-	const terminator = usage === "exclude" ? "($|/)" : "$";
+	const terminator = usage === 'exclude' ? '($|/)' : '$';
 	return `^(${pattern})${terminator}`;
 }
 
-function getRegularExpressionsForWildcards(specs: readonly string[] | undefined, basePath: string, usage: "files" | "directories" | "exclude"): readonly string[] | undefined {
+function getRegularExpressionsForWildcards(
+	specs: readonly string[] | undefined,
+	basePath: string,
+	usage: 'files' | 'directories' | 'exclude',
+): readonly string[] | undefined {
 	if (specs === undefined || specs.length === 0) {
 		return undefined;
 	}
 
-	return flatMap(specs, spec =>
-		spec && getSubPatternFromSpec(spec, basePath, usage, wildcardMatchers[usage]));
+	return flatMap(specs, spec => spec && getSubPatternFromSpec(spec, basePath, usage, wildcardMatchers[usage]));
 }
 
 /**
@@ -89,12 +119,17 @@ function isImplicitGlob(lastPathComponent: string): boolean {
 	return !/[.*?]/.test(lastPathComponent);
 }
 
-function getSubPatternFromSpec(spec: string, basePath: string, usage: "files" | "directories" | "exclude", { singleAsteriskRegexFragment, doubleAsteriskRegexFragment, replaceWildcardCharacter }: WildcardMatcher): string | undefined {
-	let subpattern = "";
+function getSubPatternFromSpec(
+	spec: string,
+	basePath: string,
+	usage: 'files' | 'directories' | 'exclude',
+	{ singleAsteriskRegexFragment, doubleAsteriskRegexFragment, replaceWildcardCharacter }: WildcardMatcher,
+): string | undefined {
+	let subpattern = '';
 	let hasWrittenComponent = false;
 	const components = getNormalizedPathComponents(spec, basePath);
 	const lastComponent = last(components);
-	if (usage !== "exclude" && lastComponent === "**") {
+	if (usage !== 'exclude' && lastComponent === '**') {
 		return undefined;
 	}
 
@@ -103,17 +138,17 @@ function getSubPatternFromSpec(spec: string, basePath: string, usage: "files" | 
 	components[0] = removeTrailingDirectorySeparator(components[0]);
 
 	if (isImplicitGlob(lastComponent)) {
-		components.push("**", "*");
+		components.push('**', '*');
 	}
 
 	let optionalCount = 0;
 	for (let component of components) {
-		if (component === "**") {
+		if (component === '**') {
 			subpattern += doubleAsteriskRegexFragment;
 		}
 		else {
-			if (usage === "directories") {
-				subpattern += "(";
+			if (usage === 'directories') {
+				subpattern += '(';
 				optionalCount++;
 			}
 
@@ -121,17 +156,17 @@ function getSubPatternFromSpec(spec: string, basePath: string, usage: "files" | 
 				subpattern += directorySeparator;
 			}
 
-			if (usage !== "exclude") {
-				let componentPattern = "";
+			if (usage !== 'exclude') {
+				let componentPattern = '';
 				// The * and ? wildcards should not match directories or files that start with . if they
 				// appear first in a component. Dotted directories and files can be included explicitly
 				// like so: **/.*/.*
 				if (component.charCodeAt(0) === CharacterCodes.asterisk) {
-					componentPattern += "([^./]" + singleAsteriskRegexFragment + ")?";
+					componentPattern += '([^./]' + singleAsteriskRegexFragment + ')?';
 					component = component.substr(1);
 				}
 				else if (component.charCodeAt(0) === CharacterCodes.question) {
-					componentPattern += "[^./]";
+					componentPattern += '[^./]';
 					component = component.substr(1);
 				}
 
@@ -158,7 +193,7 @@ function getSubPatternFromSpec(spec: string, basePath: string, usage: "files" | 
 	}
 
 	while (optionalCount > 0) {
-		subpattern += ")?";
+		subpattern += ')?';
 		optionalCount--;
 	}
 
@@ -166,7 +201,7 @@ function getSubPatternFromSpec(spec: string, basePath: string, usage: "files" | 
 }
 
 function replaceWildcardCharacter(match: string, singleAsteriskRegexFragment: string) {
-	return match === "*" ? singleAsteriskRegexFragment : match === "?" ? "[^/]" : "\\" + match;
+	return match === '*' ? singleAsteriskRegexFragment : match === '?' ? '[^/]' : '\\' + match;
 }
 
 interface FileSystemEntries {
@@ -185,34 +220,56 @@ interface FileMatcherPatterns {
 }
 
 /** @param path directory of the tsconfig.json */
-function getFileMatcherPatterns(path: string, excludes: readonly string[] | undefined, includes: readonly string[] | undefined, useCaseSensitiveFileNames: boolean, currentDirectory: string): FileMatcherPatterns {
+function getFileMatcherPatterns(
+	path: string,
+	excludes: readonly string[] | undefined,
+	includes: readonly string[] | undefined,
+	useCaseSensitiveFileNames: boolean,
+	currentDirectory: string,
+): FileMatcherPatterns {
 	path = normalizePath(path);
 	currentDirectory = normalizePath(currentDirectory);
 	const absolutePath = combinePaths(currentDirectory, path);
 
 	return {
-		includeFilePatterns: map(getRegularExpressionsForWildcards(includes, absolutePath, "files"), pattern => `^${pattern}$`),
-		includeFilePattern: getRegularExpressionForWildcard(includes, absolutePath, "files"),
-		includeDirectoryPattern: getRegularExpressionForWildcard(includes, absolutePath, "directories"),
-		excludePattern: getRegularExpressionForWildcard(excludes, absolutePath, "exclude"),
-		basePaths: getBasePaths(path, includes, useCaseSensitiveFileNames)
+		includeFilePatterns: map(
+			getRegularExpressionsForWildcards(includes, absolutePath, 'files'),
+			pattern => `^${pattern}$`,
+		),
+		includeFilePattern: getRegularExpressionForWildcard(includes, absolutePath, 'files'),
+		includeDirectoryPattern: getRegularExpressionForWildcard(includes, absolutePath, 'directories'),
+		excludePattern: getRegularExpressionForWildcard(excludes, absolutePath, 'exclude'),
+		basePaths: getBasePaths(path, includes, useCaseSensitiveFileNames),
 	};
 }
 
 function getRegexFromPattern(pattern: string, useCaseSensitiveFileNames: boolean): RegExp {
-	return new RegExp(pattern, useCaseSensitiveFileNames ? "" : "i");
+	return new RegExp(pattern, useCaseSensitiveFileNames ? '' : 'i');
 }
 
 /** @param path directory of the tsconfig.json */
-export function matchFiles(path: string, extensions: readonly string[] | undefined, excludes: readonly string[] | undefined, includes: readonly string[] | undefined, useCaseSensitiveFileNames: boolean, currentDirectory: string, depth: number | undefined, getFileSystemEntries: (path: string) => FileSystemEntries, realpath: (path: string) => string): string[] {
+export function matchFiles(
+	path: string,
+	extensions: readonly string[] | undefined,
+	excludes: readonly string[] | undefined,
+	includes: readonly string[] | undefined,
+	useCaseSensitiveFileNames: boolean,
+	currentDirectory: string,
+	depth: number | undefined,
+	getFileSystemEntries: (path: string) => FileSystemEntries,
+	realpath: (path: string) => string,
+): string[] {
 	path = normalizePath(path);
 	currentDirectory = normalizePath(currentDirectory);
 
 	const patterns = getFileMatcherPatterns(path, excludes, includes, useCaseSensitiveFileNames, currentDirectory);
 
-	const includeFileRegexes = patterns.includeFilePatterns && patterns.includeFilePatterns.map(pattern => getRegexFromPattern(pattern, useCaseSensitiveFileNames));
-	const includeDirectoryRegex = patterns.includeDirectoryPattern && getRegexFromPattern(patterns.includeDirectoryPattern, useCaseSensitiveFileNames);
-	const excludeRegex = patterns.excludePattern && getRegexFromPattern(patterns.excludePattern, useCaseSensitiveFileNames);
+	const includeFileRegexes = patterns.includeFilePatterns
+		&& patterns.includeFilePatterns.map(pattern => getRegexFromPattern(pattern, useCaseSensitiveFileNames));
+	const includeDirectoryRegex = patterns.includeDirectoryPattern
+		&& getRegexFromPattern(patterns.includeDirectoryPattern, useCaseSensitiveFileNames);
+	const excludeRegex = patterns.excludePattern
+		&& getRegexFromPattern(patterns.excludePattern, useCaseSensitiveFileNames);
 
 	// Associate an array of results with each include regex. This keeps results in order of the "include" order.
 	// If there are no "includes", then just put everything in results[0].
@@ -263,8 +320,10 @@ export function matchFiles(path: string, extensions: readonly string[] | undefin
 		for (const current of sort<string>(directories, compareStringsCaseSensitive)) {
 			const name = combinePaths(path, current);
 			const absoluteName = combinePaths(absolutePath, current);
-			if ((!includeDirectoryRegex || includeDirectoryRegex.test(absoluteName)) &&
-				(!excludeRegex || !excludeRegex.test(absoluteName))) {
+			if (
+				(!includeDirectoryRegex || includeDirectoryRegex.test(absoluteName))
+				&& (!excludeRegex || !excludeRegex.test(absoluteName))
+			) {
 				visitDirectory(name, absoluteName, depth);
 			}
 		}
@@ -274,7 +333,11 @@ export function matchFiles(path: string, extensions: readonly string[] | undefin
 /**
  * Computes the unique non-wildcard base paths amongst the provided include patterns.
  */
-function getBasePaths(path: string, includes: readonly string[] | undefined, useCaseSensitiveFileNames: boolean): string[] {
+function getBasePaths(
+	path: string,
+	includes: readonly string[] | undefined,
+	useCaseSensitiveFileNames: boolean,
+): string[] {
 	// Storage for our results in the form of literal paths (e.g. the paths as written by the user).
 	const basePaths: string[] = [path];
 

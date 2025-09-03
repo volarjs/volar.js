@@ -1,8 +1,8 @@
 import * as vscode from 'vscode-languageserver/browser';
 import { URI } from 'vscode-uri';
 import { handler as httpSchemaRequestHandler } from './lib/fileSystemProviders/http';
+import { listenEditorSettings, provider as httpFsProvider } from './lib/fileSystemProviders/http';
 import { createServerBase } from './lib/server';
-import { provider as httpFsProvider, listenEditorSettings } from './lib/fileSystemProviders/http';
 
 export * from 'vscode-languageserver/browser';
 export * from './index';
@@ -46,7 +46,8 @@ export async function loadTsdkByUrl(tsdkUrl: string, locale: string | undefined)
 			globalThis.module = { exports: {} } as typeof originalModule;
 			await import(`${tsdkUrl}/typescript.js`);
 			return globalThis.module.exports as typeof import('typescript');
-		} finally {
+		}
+		finally {
 			globalThis.module = originalModule;
 		}
 	}
@@ -61,6 +62,6 @@ export async function loadTsdkByUrl(tsdkUrl: string, locale: string | undefined)
 				return JSON.parse(json);
 			}
 		}
-		catch { }
+		catch {}
 	}
 }

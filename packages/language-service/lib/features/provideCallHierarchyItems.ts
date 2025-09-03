@@ -4,7 +4,12 @@ import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { type DocumentsAndMap, getGeneratedPositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
+import {
+	type DocumentsAndMap,
+	getGeneratedPositions,
+	getSourceRange,
+	languageFeatureWorker,
+} from '../utils/featureWorkers';
 
 export interface PluginCallHierarchyData {
 	uri: string;
@@ -14,13 +19,11 @@ export interface PluginCallHierarchyData {
 }
 
 export function register(context: LanguageServiceContext) {
-
 	return {
-
 		getCallHierarchyItems(
 			uri: URI,
 			position: vscode.Position,
-			token = NoneCancellationToken
+			token = NoneCancellationToken,
 		) {
 			return languageFeatureWorker(
 				context,
@@ -52,14 +55,14 @@ export function register(context: LanguageServiceContext) {
 						.map(item => transformHierarchyItem(item, [])?.[0])
 						.filter(item => !!item);
 				},
-				arr => dedupe.withLocations(arr.flat())
+				arr => dedupe.withLocations(arr.flat()),
 			);
 		},
 
 		getTypeHierarchyItems(
 			uri: URI,
 			position: vscode.Position,
-			token = NoneCancellationToken
+			token = NoneCancellationToken,
 		) {
 			return languageFeatureWorker(
 				context,
@@ -91,17 +94,15 @@ export function register(context: LanguageServiceContext) {
 						.map(item => transformHierarchyItem(item, [])?.[0])
 						.filter(item => !!item);
 				},
-				arr => dedupe.withLocations(arr.flat())
+				arr => dedupe.withLocations(arr.flat()),
 			);
 		},
 
 		async getCallHierarchyIncomingCalls(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
-
 			const data: PluginCallHierarchyData | undefined = item.data;
 			let incomingItems: vscode.CallHierarchyIncomingCall[] = [];
 
 			if (data) {
-
 				const plugin = context.plugins[data.pluginIndex];
 
 				if (!plugin[1].provideCallHierarchyIncomingCalls) {
@@ -111,15 +112,12 @@ export function register(context: LanguageServiceContext) {
 				Object.assign(item, data.original);
 
 				if (data.embeddedDocumentUri) {
-
 					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(URI.parse(data.embeddedDocumentUri));
 
 					if (isEmbeddedContent) {
-
 						const _calls = await plugin[1].provideCallHierarchyIncomingCalls(item, token);
 
 						for (const _call of _calls) {
-
 							const calls = transformHierarchyItem(_call.from, _call.fromRanges);
 
 							if (!calls) {
@@ -134,11 +132,9 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 				else {
-
 					const _calls = await plugin[1].provideCallHierarchyIncomingCalls(item, token);
 
 					for (const _call of _calls) {
-
 						const calls = transformHierarchyItem(_call.from, _call.fromRanges);
 
 						if (!calls) {
@@ -157,12 +153,10 @@ export function register(context: LanguageServiceContext) {
 		},
 
 		async getCallHierarchyOutgoingCalls(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
-
 			const data: PluginCallHierarchyData | undefined = item.data;
 			let items: vscode.CallHierarchyOutgoingCall[] = [];
 
 			if (data) {
-
 				const plugin = context.plugins[data.pluginIndex];
 
 				if (!plugin[1].provideCallHierarchyOutgoingCalls) {
@@ -172,15 +166,12 @@ export function register(context: LanguageServiceContext) {
 				Object.assign(item, data.original);
 
 				if (data.embeddedDocumentUri) {
-
 					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(URI.parse(data.embeddedDocumentUri));
 
 					if (isEmbeddedContent) {
-
 						const _calls = await plugin[1].provideCallHierarchyOutgoingCalls(item, token);
 
 						for (const call of _calls) {
-
 							const calls = transformHierarchyItem(call.to, call.fromRanges);
 
 							if (!calls) {
@@ -195,11 +186,9 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 				else {
-
 					const _calls = await plugin[1].provideCallHierarchyOutgoingCalls(item, token);
 
 					for (const call of _calls) {
-
 						const calls = transformHierarchyItem(call.to, call.fromRanges);
 
 						if (!calls) {
@@ -218,11 +207,9 @@ export function register(context: LanguageServiceContext) {
 		},
 
 		async getTypeHierarchySupertypes(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
-
 			const data: PluginCallHierarchyData | undefined = item.data;
 
 			if (data) {
-
 				const plugin = context.plugins[data.pluginIndex];
 
 				if (!plugin[1].provideTypeHierarchySupertypes) {
@@ -232,11 +219,9 @@ export function register(context: LanguageServiceContext) {
 				Object.assign(item, data.original);
 
 				if (data.embeddedDocumentUri) {
-
 					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(URI.parse(data.embeddedDocumentUri));
 
 					if (isEmbeddedContent) {
-
 						const items = await plugin[1].provideTypeHierarchySupertypes(item, token);
 
 						return items
@@ -245,7 +230,6 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 				else {
-
 					const items = await plugin[1].provideTypeHierarchySupertypes(item, token);
 
 					return items
@@ -256,11 +240,9 @@ export function register(context: LanguageServiceContext) {
 		},
 
 		async getTypeHierarchySubtypes(item: vscode.CallHierarchyItem, token: vscode.CancellationToken) {
-
 			const data: PluginCallHierarchyData | undefined = item.data;
 
 			if (data) {
-
 				const plugin = context.plugins[data.pluginIndex];
 
 				if (!plugin[1].provideTypeHierarchySubtypes) {
@@ -270,11 +252,9 @@ export function register(context: LanguageServiceContext) {
 				Object.assign(item, data.original);
 
 				if (data.embeddedDocumentUri) {
-
 					const isEmbeddedContent = !!context.decodeEmbeddedDocumentUri(URI.parse(data.embeddedDocumentUri));
 
 					if (isEmbeddedContent) {
-
 						const items = await plugin[1].provideTypeHierarchySubtypes(item, token);
 
 						return items
@@ -283,7 +263,6 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 				else {
-
 					const items = await plugin[1].provideTypeHierarchySubtypes(item, token);
 
 					return items
@@ -294,8 +273,10 @@ export function register(context: LanguageServiceContext) {
 		},
 	};
 
-	function transformHierarchyItem<T extends vscode.CallHierarchyItem | vscode.TypeHierarchyItem>(tsItem: T, tsRanges: vscode.Range[]): [T, vscode.Range[]] | undefined {
-
+	function transformHierarchyItem<T extends vscode.CallHierarchyItem | vscode.TypeHierarchyItem>(
+		tsItem: T,
+		tsRanges: vscode.Range[],
+	): [T, vscode.Range[]] | undefined {
 		const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsItem.uri));
 		const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 		const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
@@ -306,7 +287,7 @@ export function register(context: LanguageServiceContext) {
 		const embeddedDocument = context.documents.get(
 			context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 			virtualCode.languageId,
-			virtualCode.snapshot
+			virtualCode.snapshot,
 		);
 		for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
 			const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);

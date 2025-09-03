@@ -1,4 +1,9 @@
-import { isDocumentLinkEnabled, isRenameEnabled, resolveRenameEditText, type CodeInformation } from '@volar/language-core';
+import {
+	type CodeInformation,
+	isDocumentLinkEnabled,
+	isRenameEnabled,
+	resolveRenameEditText,
+} from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -22,7 +27,7 @@ export function transformDocumentLinkTarget(_target: string, context: LanguageSe
 		const embeddedDocument = context.documents.get(
 			context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 			virtualCode.languageId,
-			virtualCode.snapshot
+			virtualCode.snapshot,
 		);
 		for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
 			if (!map.mappings.some(mapping => isDocumentLinkEnabled(mapping.data))) {
@@ -80,7 +85,7 @@ export function transformCompletionItem<T extends vscode.CompletionItem>(
 	item: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: vscode.TextDocument,
-	context: LanguageServiceContext
+	context: LanguageServiceContext,
 ): T {
 	return {
 		...item,
@@ -90,13 +95,13 @@ export function transformCompletionItem<T extends vscode.CompletionItem>(
 		textEdit: item.textEdit
 			? transformTextEdit(item.textEdit, getOtherRange, document)
 			: undefined,
-		documentation:
-			item.documentation ?
-				typeof item.documentation === 'string' ? transformMarkdown(item.documentation, context) :
-					item.documentation.kind === 'markdown' ?
-						{ kind: 'markdown', value: transformMarkdown(item.documentation.value, context) }
-						: item.documentation
-				: undefined
+		documentation: item.documentation
+			? typeof item.documentation === 'string'
+				? transformMarkdown(item.documentation, context)
+				: item.documentation.kind === 'markdown'
+				? { kind: 'markdown', value: transformMarkdown(item.documentation.value, context) }
+				: item.documentation
+			: undefined,
 	};
 }
 
@@ -104,26 +109,31 @@ export function transformCompletionList<T extends vscode.CompletionList>(
 	completionList: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	document: TextDocument,
-	context: LanguageServiceContext
+	context: LanguageServiceContext,
 ): T {
 	return {
 		isIncomplete: completionList.isIncomplete,
-		itemDefaults: completionList.itemDefaults ? {
-			...completionList.itemDefaults,
-			editRange: completionList.itemDefaults.editRange
-				? 'replace' in completionList.itemDefaults.editRange
-					? {
-						insert: getOtherRange(completionList.itemDefaults.editRange.insert),
-						replace: getOtherRange(completionList.itemDefaults.editRange.replace),
-					}
-					: getOtherRange(completionList.itemDefaults.editRange)
-				: undefined,
-		} : undefined,
+		itemDefaults: completionList.itemDefaults
+			? {
+				...completionList.itemDefaults,
+				editRange: completionList.itemDefaults.editRange
+					? 'replace' in completionList.itemDefaults.editRange
+						? {
+							insert: getOtherRange(completionList.itemDefaults.editRange.insert),
+							replace: getOtherRange(completionList.itemDefaults.editRange.replace),
+						}
+						: getOtherRange(completionList.itemDefaults.editRange)
+					: undefined,
+			}
+			: undefined,
 		items: completionList.items.map(item => transformCompletionItem(item, getOtherRange, document, context)),
 	} as T;
 }
 
-export function transformDocumentSymbol(symbol: vscode.DocumentSymbol, getOtherRange: (range: vscode.Range) => vscode.Range | undefined): vscode.DocumentSymbol | undefined {
+export function transformDocumentSymbol(
+	symbol: vscode.DocumentSymbol,
+	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
+): vscode.DocumentSymbol | undefined {
 	const range = getOtherRange(symbol.range);
 	if (!range) {
 		return;
@@ -142,8 +152,10 @@ export function transformDocumentSymbol(symbol: vscode.DocumentSymbol, getOtherR
 	};
 }
 
-export function transformFoldingRanges(ranges: vscode.FoldingRange[], getOtherRange: (range: vscode.Range) => vscode.Range | undefined): vscode.FoldingRange[] {
-
+export function transformFoldingRanges(
+	ranges: vscode.FoldingRange[],
+	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
+): vscode.FoldingRange[] {
 	const result: vscode.FoldingRange[] = [];
 
 	for (const range of ranges) {
@@ -167,8 +179,10 @@ export function transformFoldingRanges(ranges: vscode.FoldingRange[], getOtherRa
 	return result;
 }
 
-export function transformHover<T extends vscode.Hover>(hover: T, getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T | undefined {
-
+export function transformHover<T extends vscode.Hover>(
+	hover: T,
+	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
+): T | undefined {
 	if (!hover?.range) {
 		return hover;
 	}
@@ -184,8 +198,10 @@ export function transformHover<T extends vscode.Hover>(hover: T, getOtherRange: 
 	};
 }
 
-export function transformLocation<T extends { range: vscode.Range; }>(location: T, getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T | undefined {
-
+export function transformLocation<T extends { range: vscode.Range }>(
+	location: T,
+	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
+): T | undefined {
 	const range = getOtherRange(location.range);
 	if (!range) {
 		return;
@@ -197,14 +213,19 @@ export function transformLocation<T extends { range: vscode.Range; }>(location: 
 	};
 }
 
-export function transformLocations<T extends { range: vscode.Range; }>(locations: T[], getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T[] {
+export function transformLocations<T extends { range: vscode.Range }>(
+	locations: T[],
+	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
+): T[] {
 	return locations
 		.map(location => transformLocation(location, getOtherRange))
 		.filter(location => !!location);
 }
 
-export function transformSelectionRange<T extends vscode.SelectionRange>(location: T, getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T | undefined {
-
+export function transformSelectionRange<T extends vscode.SelectionRange>(
+	location: T,
+	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
+): T | undefined {
 	const range = getOtherRange(location.range);
 	if (!range) {
 		return;
@@ -218,7 +239,10 @@ export function transformSelectionRange<T extends vscode.SelectionRange>(locatio
 	} as T;
 }
 
-export function transformSelectionRanges<T extends vscode.SelectionRange>(locations: T[], getOtherRange: (range: vscode.Range) => vscode.Range | undefined): T[] {
+export function transformSelectionRanges<T extends vscode.SelectionRange>(
+	locations: T[],
+	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
+): T[] {
 	return locations
 		.map(location => transformSelectionRange(location, getOtherRange))
 		.filter(location => !!location);
@@ -227,17 +251,16 @@ export function transformSelectionRanges<T extends vscode.SelectionRange>(locati
 export function transformTextEdit<T extends vscode.TextEdit | vscode.InsertReplaceEdit>(
 	textEdit: T,
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
-	document: vscode.TextDocument
+	document: vscode.TextDocument,
 ): T | undefined {
 	if ('range' in textEdit) {
-
 		let range = getOtherRange(textEdit.range);
 		if (range) {
 			return {
 				...textEdit,
 				range,
 			};
-		};
+		}
 
 		const cover = tryRecoverTextEdit(getOtherRange, textEdit.range, textEdit.newText, document);
 		if (cover) {
@@ -249,7 +272,6 @@ export function transformTextEdit<T extends vscode.TextEdit | vscode.InsertRepla
 		}
 	}
 	else if ('replace' in textEdit && 'insert' in textEdit) {
-
 		const insert = getOtherRange(textEdit.insert);
 		const replace = insert ? getOtherRange(textEdit.replace) : undefined;
 		if (insert && replace) {
@@ -261,7 +283,9 @@ export function transformTextEdit<T extends vscode.TextEdit | vscode.InsertRepla
 		}
 
 		const recoverInsert = tryRecoverTextEdit(getOtherRange, textEdit.insert, textEdit.newText, document);
-		const recoverReplace = recoverInsert ? tryRecoverTextEdit(getOtherRange, textEdit.replace, textEdit.newText, document) : undefined;
+		const recoverReplace = recoverInsert
+			? tryRecoverTextEdit(getOtherRange, textEdit.replace, textEdit.newText, document)
+			: undefined;
 		if (recoverInsert && recoverReplace && recoverInsert.newText === recoverReplace.newText) {
 			return {
 				...textEdit,
@@ -281,10 +305,9 @@ function tryRecoverTextEdit(
 	getOtherRange: (range: vscode.Range) => vscode.Range | undefined,
 	replaceRange: vscode.Range,
 	newText: string,
-	document: vscode.TextDocument
+	document: vscode.TextDocument,
 ): vscode.TextEdit | undefined {
 	if (replaceRange.start.line === replaceRange.end.line && replaceRange.end.character > replaceRange.start.character) {
-
 		let character = replaceRange.start.character;
 
 		while (newText.length && replaceRange.end.character > character) {
@@ -307,7 +330,10 @@ function tryRecoverTextEdit(
 	}
 }
 
-export function transformWorkspaceSymbol(symbol: vscode.WorkspaceSymbol, getOtherLocation: (location: vscode.Location) => vscode.Location | undefined): vscode.WorkspaceSymbol | undefined {
+export function transformWorkspaceSymbol(
+	symbol: vscode.WorkspaceSymbol,
+	getOtherLocation: (location: vscode.Location) => vscode.Location | undefined,
+): vscode.WorkspaceSymbol | undefined {
 	if (!('range' in symbol.location)) {
 		return symbol;
 	}
@@ -325,14 +351,12 @@ export function transformWorkspaceEdit(
 	edit: vscode.WorkspaceEdit,
 	context: LanguageServiceContext,
 	mode: 'fileName' | 'rename' | 'codeAction' | undefined,
-	versions: Record<string, number> = {}
+	versions: Record<string, number> = {},
 ) {
-
 	const sourceResult: vscode.WorkspaceEdit = {};
 	let hasResult = false;
 
 	for (const tsUri in edit.changeAnnotations) {
-
 		sourceResult.changeAnnotations ??= {};
 
 		const tsAnno = edit.changeAnnotations[tsUri];
@@ -353,7 +377,6 @@ export function transformWorkspaceEdit(
 		}
 	}
 	for (const tsUri in edit.changes) {
-
 		sourceResult.changes ??= {};
 
 		const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsUri));
@@ -364,7 +387,7 @@ export function transformWorkspaceEdit(
 			const embeddedDocument = context.documents.get(
 				context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 				virtualCode.languageId,
-				virtualCode.snapshot
+				virtualCode.snapshot,
 			);
 			for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
 				const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
@@ -372,7 +395,6 @@ export function transformWorkspaceEdit(
 				const tsEdits = edit.changes[tsUri];
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-
 						let _data!: CodeInformation;
 
 						const range = getSourceRange(docs, tsEdit.range, data => {
@@ -407,12 +429,10 @@ export function transformWorkspaceEdit(
 	}
 	if (edit.documentChanges) {
 		for (const tsDocEdit of edit.documentChanges) {
-
 			sourceResult.documentChanges ??= [];
 
 			let sourceEdit: typeof tsDocEdit | undefined;
 			if ('textDocument' in tsDocEdit) {
-
 				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsDocEdit.textDocument.uri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
@@ -421,10 +441,14 @@ export function transformWorkspaceEdit(
 					const embeddedDocument = context.documents.get(
 						context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 						virtualCode.languageId,
-						virtualCode.snapshot
+						virtualCode.snapshot,
 					);
 					for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
-						const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
+						const sourceDocument = context.documents.get(
+							sourceScript.id,
+							sourceScript.languageId,
+							sourceScript.snapshot,
+						);
 						const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
 
 						sourceEdit = {
@@ -474,7 +498,6 @@ export function transformWorkspaceEdit(
 				sourceEdit = tsDocEdit; // TODO: remove .ts?
 			}
 			else if (tsDocEdit.kind === 'rename') {
-
 				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsDocEdit.oldUri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
@@ -485,7 +508,7 @@ export function transformWorkspaceEdit(
 						sourceEdit = {
 							kind: 'rename',
 							oldUri: sourceScript.id.toString(),
-							newUri: tsDocEdit.newUri /* TODO: remove .ts? */,
+							newUri: tsDocEdit.newUri, /* TODO: remove .ts? */
 							options: tsDocEdit.options,
 							annotationId: tsDocEdit.annotationId,
 						} satisfies vscode.RenameFile;
@@ -496,7 +519,6 @@ export function transformWorkspaceEdit(
 				}
 			}
 			else if (tsDocEdit.kind === 'delete') {
-
 				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(tsDocEdit.uri));
 				const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 				const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
@@ -527,7 +549,10 @@ export function transformWorkspaceEdit(
 	}
 }
 
-export function pushEditToDocumentChanges(arr: NonNullable<vscode.WorkspaceEdit['documentChanges']>, item: NonNullable<vscode.WorkspaceEdit['documentChanges']>[number]) {
+export function pushEditToDocumentChanges(
+	arr: NonNullable<vscode.WorkspaceEdit['documentChanges']>,
+	item: NonNullable<vscode.WorkspaceEdit['documentChanges']>[number],
+) {
 	const current = arr.find(edit =>
 		'textDocument' in edit
 		&& 'textDocument' in item

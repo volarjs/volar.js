@@ -1,8 +1,8 @@
-import { FileMap, type Language, type LanguagePlugin, createLanguage } from '@volar/language-core';
+import { createLanguage, FileMap, type Language, type LanguagePlugin } from '@volar/language-core';
 import type * as ts from 'typescript';
+import { resolveFileLanguageId } from '../common';
 import { createResolveModuleName } from '../resolveModuleName';
 import { decorateProgram } from './decorateProgram';
-import { resolveFileLanguageId } from '../common';
 
 const arrayEqual = (a: readonly any[], b: readonly any[]) => {
 	if (a.length !== b.length) {
@@ -35,9 +35,11 @@ export function proxyCreateProgram(
 	create: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin<string>[] | {
 		languagePlugins: LanguagePlugin<string>[];
 		setup?(language: Language<string>): void;
-	}
+	},
 ) {
-	const sourceFileSnapshots = new FileMap<[ts.SourceFile | undefined, ts.IScriptSnapshot | undefined]>(ts.sys.useCaseSensitiveFileNames);
+	const sourceFileSnapshots = new FileMap<[ts.SourceFile | undefined, ts.IScriptSnapshot | undefined]>(
+		ts.sys.useCaseSensitiveFileNames,
+	);
 	const parsedSourceFiles = new WeakMap<ts.SourceFile, ts.SourceFile | undefined>();
 
 	let lastOptions: ts.CreateProgramOptions | undefined;
@@ -47,7 +49,6 @@ export function proxyCreateProgram(
 
 	return new Proxy(original, {
 		apply: (target, thisArg, args) => {
-
 			const options = args[0] as ts.CreateProgramOptions;
 			assert(!!options.host, '!!options.host');
 
@@ -58,7 +59,11 @@ export function proxyCreateProgram(
 				|| !arrayEqual(options.rootNames, lastOptions.rootNames)
 				|| !objectEqual(options.options, lastOptions.options)
 			) {
-				moduleResolutionCache = ts.createModuleResolutionCache(options.host.getCurrentDirectory(), options.host.getCanonicalFileName, options.options);
+				moduleResolutionCache = ts.createModuleResolutionCache(
+					options.host.getCurrentDirectory(),
+					options.host.getCanonicalFileName,
+					options.options,
+				);
 				lastOptions = options;
 				const created = create(ts, options);
 				if (Array.isArray(created)) {
@@ -100,7 +105,7 @@ export function proxyCreateProgram(
 						else {
 							language!.scripts.delete(fileName);
 						}
-					}
+					},
 				);
 				if ('setup' in created) {
 					created.setup?.(language);
@@ -117,9 +122,14 @@ export function proxyCreateProgram(
 				fileName,
 				languageVersionOrOptions,
 				onError,
-				shouldCreateNewSourceFile
+				shouldCreateNewSourceFile,
 			) => {
-				const originalSourceFile = originalHost.getSourceFile(fileName, languageVersionOrOptions, onError, shouldCreateNewSourceFile);
+				const originalSourceFile = originalHost.getSourceFile(
+					fileName,
+					languageVersionOrOptions,
+					onError,
+					shouldCreateNewSourceFile,
+				);
 				if (
 					!sourceFileSnapshots.has(fileName)
 					|| sourceFileSnapshots.get(fileName)?.[0] !== originalSourceFile
@@ -165,7 +175,7 @@ export function proxyCreateProgram(
 								virtualContents,
 								languageVersionOrOptions,
 								undefined,
-								serviceScript.scriptKind
+								serviceScript.scriptKind,
 							);
 							// @ts-expect-error
 							parsedSourceFile.version = originalSourceFile.version;
@@ -182,7 +192,13 @@ export function proxyCreateProgram(
 			if (extensions.length) {
 				options.options.allowArbitraryExtensions = true;
 
-				const resolveModuleName = createResolveModuleName(ts, ts.sys.getFileSize, originalHost, language.plugins, fileName => language!.scripts.get(fileName));
+				const resolveModuleName = createResolveModuleName(
+					ts,
+					ts.sys.getFileSize,
+					originalHost,
+					language.plugins,
+					fileName => language!.scripts.get(fileName),
+				);
 				const resolveModuleNameLiterals = originalHost.resolveModuleNameLiterals;
 				const resolveModuleNames = originalHost.resolveModuleNames;
 
@@ -194,12 +210,28 @@ export function proxyCreateProgram(
 					containingSourceFile,
 					...rest
 				) => {
-					if (resolveModuleNameLiterals && moduleLiterals.every(name => !extensions.some(ext => name.text.endsWith(ext)))) {
-						return resolveModuleNameLiterals(moduleLiterals, containingFile, redirectedReference, compilerOptions, containingSourceFile, ...rest);
+					if (
+						resolveModuleNameLiterals && moduleLiterals.every(name => !extensions.some(ext => name.text.endsWith(ext)))
+					) {
+						return resolveModuleNameLiterals(
+							moduleLiterals,
+							containingFile,
+							redirectedReference,
+							compilerOptions,
+							containingSourceFile,
+							...rest,
+						);
 					}
 					return moduleLiterals.map(moduleLiteral => {
 						const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, compilerOptions);
-						return resolveModuleName(moduleLiteral.text, containingFile, compilerOptions, moduleResolutionCache, redirectedReference, mode);
+						return resolveModuleName(
+							moduleLiteral.text,
+							containingFile,
+							compilerOptions,
+							moduleResolutionCache,
+							redirectedReference,
+							mode,
+						);
 					});
 				};
 				options.host.resolveModuleNames = (
@@ -208,13 +240,27 @@ export function proxyCreateProgram(
 					reusedNames,
 					redirectedReference,
 					compilerOptions,
-					containingSourceFile
+					containingSourceFile,
 				) => {
 					if (resolveModuleNames && moduleNames.every(name => !extensions.some(ext => name.endsWith(ext)))) {
-						return resolveModuleNames(moduleNames, containingFile, reusedNames, redirectedReference, compilerOptions, containingSourceFile);
+						return resolveModuleNames(
+							moduleNames,
+							containingFile,
+							reusedNames,
+							redirectedReference,
+							compilerOptions,
+							containingSourceFile,
+						);
 					}
 					return moduleNames.map(moduleName => {
-						return resolveModuleName(moduleName, containingFile, compilerOptions, moduleResolutionCache, redirectedReference, containingSourceFile?.impliedNodeFormat).resolvedModule;
+						return resolveModuleName(
+							moduleName,
+							containingFile,
+							compilerOptions,
+							moduleResolutionCache,
+							redirectedReference,
+							containingSourceFile?.impliedNodeFormat,
+						).resolvedModule;
 					});
 				};
 			}

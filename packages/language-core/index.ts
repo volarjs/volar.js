@@ -14,7 +14,7 @@ import type {
 	Mapper,
 	MapperFactory,
 	SourceScript,
-	VirtualCode
+	VirtualCode,
 } from './lib/types';
 
 export const defaultMapperFactory: MapperFactory = mappings => new SourceMap(mappings);
@@ -23,7 +23,7 @@ export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],
 	scriptRegistry: Map<T, SourceScript<T>>,
 	sync: (id: T, includeFsFiles: boolean, shouldRegister: boolean) => void,
-	onAssociationDirty?: (targetId: T) => void
+	onAssociationDirty?: (targetId: T) => void,
 ) {
 	const virtualCodeToSourceScriptMap = new WeakMap<VirtualCode, SourceScript<T>>();
 	const virtualCodeToSourceMap = new WeakMap<IScriptSnapshot, WeakMap<IScriptSnapshot, Mapper>>();
@@ -116,14 +116,19 @@ export function createLanguage<T>(
 						snapshot,
 						associatedIds: new Set(),
 						targetIds: new Set(),
-						associatedOnly
+						associatedOnly,
 					};
 					scriptRegistry.set(id, sourceScript);
 					if (associatedOnly) {
 						return sourceScript;
 					}
 					for (const languagePlugin of _plugins) {
-						const virtualCode = languagePlugin.createVirtualCode?.(id, languageId, snapshot, prepareCreateVirtualCode(sourceScript));
+						const virtualCode = languagePlugin.createVirtualCode?.(
+							id,
+							languageId,
+							snapshot,
+							prepareCreateVirtualCode(sourceScript),
+						);
 						if (virtualCode) {
 							sourceScript.generated = {
 								root: virtualCode,
@@ -156,14 +161,14 @@ export function createLanguage<T>(
 				if (!mapCache) {
 					virtualCodeToSourceMap.set(
 						virtualCode.snapshot,
-						mapCache = new WeakMap()
+						mapCache = new WeakMap(),
 					);
 				}
 				if (!mapCache.has(sourceScript.snapshot)) {
 					const mappings = virtualCode.associatedScriptMappings?.get(sourceScript.id) ?? virtualCode.mappings;
 					mapCache.set(
 						sourceScript.snapshot,
-						language.mapperFactory(mappings)
+						language.mapperFactory(mappings),
 					);
 				}
 				return mapCache.get(sourceScript.snapshot)!;
@@ -199,7 +204,7 @@ export function createLanguage<T>(
 							virtualCode.linkedCodeMappings
 								? new LinkedCodeMap(virtualCode.linkedCodeMappings)
 								: undefined,
-						]
+						],
 					);
 				}
 				return mapCache[1];

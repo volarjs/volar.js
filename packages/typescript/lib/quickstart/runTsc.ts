@@ -1,11 +1,14 @@
+import type { Language, LanguagePlugin } from '@volar/language-core';
 import * as fs from 'fs';
 import * as path from 'path';
 import type * as ts from 'typescript';
-import type { Language, LanguagePlugin } from '@volar/language-core';
 
-export let getLanguagePlugins: (ts: typeof import('typescript'), options: ts.CreateProgramOptions) => LanguagePlugin<string>[] | {
-	languagePlugins: LanguagePlugin<string>[],
-	setup?(language: Language<string>): void,
+export let getLanguagePlugins: (
+	ts: typeof import('typescript'),
+	options: ts.CreateProgramOptions,
+) => LanguagePlugin<string>[] | {
+	languagePlugins: LanguagePlugin<string>[];
+	setup?(language: Language<string>): void;
 } = () => [];
 
 export function runTsc(
@@ -15,7 +18,7 @@ export function runTsc(
 		extraExtensionsToRemove: string[];
 	},
 	_getLanguagePlugins: typeof getLanguagePlugins,
-	typescriptObject?: string
+	typescriptObject?: string,
 ) {
 	getLanguagePlugins = _getLanguagePlugins;
 
@@ -38,15 +41,31 @@ export function runTsc(
 		if (args[0] === tscPath) {
 			let tsc = (readFileSync as any)(...args) as string;
 			try {
-				return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, typescriptObject);
-			} catch {
+				return transformTscContent(
+					tsc,
+					proxyApiPath,
+					extraSupportedExtensions,
+					extraExtensionsToRemove,
+					__filename,
+					typescriptObject,
+				);
+			}
+			catch {
 				// Support the tsc shim used in Typescript v5.7 and up
 				const requireRegex = /module\.exports\s*=\s*require\((?:"|')(?<path>\.\/\w+\.js)(?:"|')\)/;
 				const requirePath = requireRegex.exec(tsc)?.groups?.path;
 				if (requirePath) {
 					tsc = readFileSync(path.join(path.dirname(tscPath), requirePath), 'utf8');
-					return transformTscContent(tsc, proxyApiPath, extraSupportedExtensions, extraExtensionsToRemove, __filename, typescriptObject);
-				} else {
+					return transformTscContent(
+						tsc,
+						proxyApiPath,
+						extraSupportedExtensions,
+						extraExtensionsToRemove,
+						__filename,
+						typescriptObject,
+					);
+				}
+				else {
 					throw new Error('Failed to locate tsc module path from shim');
 				}
 			}
@@ -56,7 +75,8 @@ export function runTsc(
 
 	try {
 		return require(tscPath);
-	} finally {
+	}
+	finally {
 		(fs as any).readFileSync = readFileSync;
 		delete require.cache[tscPath];
 	}
@@ -64,7 +84,7 @@ export function runTsc(
 
 /**
  * Replaces the code of typescript to add support for additional extensions and language plugins.
- * 
+ *
  * @param tsc - The original code of typescript.
  * @param proxyApiPath - The path to the proxy API.
  * @param extraSupportedExtensions - An array of additional supported extensions.
@@ -79,16 +99,28 @@ export function transformTscContent(
 	extraSupportedExtensions: string[],
 	extraExtensionsToRemove: string[],
 	getLanguagePluginsFile = __filename,
-	typescriptObject = `new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )`
+	typescriptObject = `new Proxy({}, { get(_target, p, _receiver) { return eval(p); } } )`,
 ) {
 	const neededPatchExtenstions = extraSupportedExtensions.filter(ext => !extraExtensionsToRemove.includes(ext));
 
 	// Add allow extensions
 	if (extraSupportedExtensions.length) {
 		const extsText = extraSupportedExtensions.map(ext => `"${ext}"`).join(', ');
-		tsc = replace(tsc, /supportedTSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
-		tsc = replace(tsc, /supportedJSExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
-		tsc = replace(tsc, /allSupportedExtensions = .*(?=;)/, s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`);
+		tsc = replace(
+			tsc,
+			/supportedTSExtensions = .*(?=;)/,
+			s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`,
+		);
+		tsc = replace(
+			tsc,
+			/supportedJSExtensions = .*(?=;)/,
+			s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`,
+		);
+		tsc = replace(
+			tsc,
+			/allSupportedExtensions = .*(?=;)/,
+			s => s + `.map((group, i) => i === 0 ? group.splice(0, 0, ${extsText}) && group : group)`,
+		);
 	}
 	// Use to emit basename.xxx to basename.d.ts instead of basename.xxx.d.ts
 	if (extraExtensionsToRemove.length) {
@@ -98,7 +130,8 @@ export function transformTscContent(
 	// Support for basename.xxx to basename.xxx.d.ts
 	if (neededPatchExtenstions.length) {
 		const extsText = neededPatchExtenstions.map(ext => `"${ext}"`).join(', ');
-		tsc = replace(tsc, /function changeExtension\(/, s => `function changeExtension(path, newExtension) {
+		tsc = replace(tsc, /function changeExtension\(/, s =>
+			`function changeExtension(path, newExtension) {
 			return [${extsText}].some(ext => path.endsWith(ext))
 				? path + newExtension
 				: _changeExtension(path, newExtension)
@@ -106,15 +139,18 @@ export function transformTscContent(
 	}
 
 	// proxy createProgram
-	tsc = replace(tsc, /function createProgram\(.+\) {/, s =>
-		`var createProgram = require(${JSON.stringify(proxyApiPath)}).proxyCreateProgram(`
-		+ [
-			typescriptObject,
-			`_createProgram`,
-			`require(${JSON.stringify(getLanguagePluginsFile)}).getLanguagePlugins`,
-		].join(', ')
-		+ `);\n`
-		+ s.replace('createProgram', '_createProgram')
+	tsc = replace(
+		tsc,
+		/function createProgram\(.+\) {/,
+		s =>
+			`var createProgram = require(${JSON.stringify(proxyApiPath)}).proxyCreateProgram(`
+			+ [
+				typescriptObject,
+				`_createProgram`,
+				`require(${JSON.stringify(getLanguagePluginsFile)}).getLanguagePlugins`,
+			].join(', ')
+			+ `);\n`
+			+ s.replace('createProgram', '_createProgram'),
 	);
 
 	return tsc;

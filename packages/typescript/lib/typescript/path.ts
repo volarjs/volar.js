@@ -1,14 +1,22 @@
-import { endsWith, equateStringsCaseInsensitive, equateStringsCaseSensitive, lastOrUndefined, some, startsWith, stringContains } from "./core";
-import { CharacterCodes, type Path } from "./types";
+import {
+	endsWith,
+	equateStringsCaseInsensitive,
+	equateStringsCaseSensitive,
+	lastOrUndefined,
+	some,
+	startsWith,
+	stringContains,
+} from './core';
+import { CharacterCodes, type Path } from './types';
 
 /**
  * Internally, we represent paths as strings with '/' as the directory separator.
  * When we make system calls (eg: LanguageServiceHost.getDirectory()),
  * we expect the host to correctly handle paths in our specified format.
  */
-export const directorySeparator = "/";
-const altDirectorySeparator = "\\";
-const urlSchemeSeparator = "://";
+export const directorySeparator = '/';
+const altDirectorySeparator = '\\';
+const urlSchemeSeparator = '://';
 const backslashRegExp = /\\/g;
 
 //// Path Tests
@@ -28,9 +36,8 @@ export function isRootedDiskPath(path: string) {
 	return getEncodedRootLength(path) > 0;
 }
 
-
 export function hasExtension(fileName: string): boolean {
-	return stringContains(getBaseFileName(fileName), ".");
+	return stringContains(getBaseFileName(fileName), '.');
 }
 
 function fileExtensionIs(path: string, extension: string): boolean {
@@ -57,8 +64,8 @@ function hasTrailingDirectorySeparator(path: string) {
 //// Path Parsing
 
 function isVolumeCharacter(charCode: number) {
-	return (charCode >= CharacterCodes.a && charCode <= CharacterCodes.z) ||
-		(charCode >= CharacterCodes.A && charCode <= CharacterCodes.Z);
+	return (charCode >= CharacterCodes.a && charCode <= CharacterCodes.z)
+		|| (charCode >= CharacterCodes.A && charCode <= CharacterCodes.Z);
 }
 
 function getFileUrlVolumeSeparatorEnd(url: string, start: number) {
@@ -121,8 +128,10 @@ function getEncodedRootLength(path: string): number {
 			// special case interpreted as "the machine from which the URL is being interpreted".
 			const scheme = path.slice(0, schemeEnd);
 			const authority = path.slice(authorityStart, authorityEnd);
-			if (scheme === "file" && (authority === "" || authority === "localhost") &&
-				isVolumeCharacter(path.charCodeAt(authorityEnd + 1))) {
+			if (
+				scheme === 'file' && (authority === '' || authority === 'localhost')
+				&& isVolumeCharacter(path.charCodeAt(authorityEnd + 1))
+			) {
 				const volumeSeparatorEnd = getFileUrlVolumeSeparatorEnd(path, authorityEnd + 2);
 				if (volumeSeparatorEnd !== -1) {
 					if (path.charCodeAt(volumeSeparatorEnd) === CharacterCodes.slash) {
@@ -291,20 +300,26 @@ function getBaseFileName(path: string, extensions?: string | readonly string[], 
 	// if the path provided is itself the root, then it has not file name.
 	const rootLength = getRootLength(path);
 	if (rootLength === path.length) {
-		return "";
+		return '';
 	}
 
 	// return the trailing portion of the path starting after the last (non-terminal) directory
 	// separator but not including any trailing directory separator.
 	path = removeTrailingDirectorySeparator(path);
 	const name = path.slice(Math.max(getRootLength(path), path.lastIndexOf(directorySeparator) + 1));
-	const extension = extensions !== undefined && ignoreCase !== undefined ? getAnyExtensionFromPath(name, extensions, ignoreCase) : undefined;
+	const extension = extensions !== undefined && ignoreCase !== undefined
+		? getAnyExtensionFromPath(name, extensions, ignoreCase)
+		: undefined;
 	return extension ? name.slice(0, name.length - extension.length) : name;
 }
 
-function tryGetExtensionFromPath(path: string, extension: string, stringEqualityComparer: (a: string, b: string) => boolean) {
-	if (!startsWith(extension, ".")) {
-		extension = "." + extension;
+function tryGetExtensionFromPath(
+	path: string,
+	extension: string,
+	stringEqualityComparer: (a: string, b: string) => boolean,
+) {
+	if (!startsWith(extension, '.')) {
+		extension = '.' + extension;
 	}
 	if (path.length >= extension.length && path.charCodeAt(path.length - extension.length) === CharacterCodes.dot) {
 		const pathExtension = path.slice(path.length - extension.length);
@@ -314,9 +329,13 @@ function tryGetExtensionFromPath(path: string, extension: string, stringEquality
 	}
 }
 
-function getAnyExtensionFromPathWorker(path: string, extensions: string | readonly string[], stringEqualityComparer: (a: string, b: string) => boolean) {
-	if (typeof extensions === "string") {
-		return tryGetExtensionFromPath(path, extensions, stringEqualityComparer) || "";
+function getAnyExtensionFromPathWorker(
+	path: string,
+	extensions: string | readonly string[],
+	stringEqualityComparer: (a: string, b: string) => boolean,
+) {
+	if (typeof extensions === 'string') {
+		return tryGetExtensionFromPath(path, extensions, stringEqualityComparer) || '';
 	}
 	for (const extension of extensions) {
 		const result = tryGetExtensionFromPath(path, extension, stringEqualityComparer);
@@ -324,7 +343,7 @@ function getAnyExtensionFromPathWorker(path: string, extensions: string | readon
 			return result;
 		}
 	}
-	return "";
+	return '';
 }
 
 /**
@@ -352,14 +371,18 @@ function getAnyExtensionFromPath(path: string, extensions?: string | readonly st
 	// Retrieves any string from the final "." onwards from a base file name.
 	// Unlike extensionFromPath, which throws an exception on unrecognized extensions.
 	if (extensions) {
-		return getAnyExtensionFromPathWorker(removeTrailingDirectorySeparator(path), extensions, ignoreCase ? equateStringsCaseInsensitive : equateStringsCaseSensitive);
+		return getAnyExtensionFromPathWorker(
+			removeTrailingDirectorySeparator(path),
+			extensions,
+			ignoreCase ? equateStringsCaseInsensitive : equateStringsCaseSensitive,
+		);
 	}
 	const baseFileName = getBaseFileName(path);
-	const extensionIndex = baseFileName.lastIndexOf(".");
+	const extensionIndex = baseFileName.lastIndexOf('.');
 	if (extensionIndex >= 0) {
 		return baseFileName.substring(extensionIndex);
 	}
-	return "";
+	return '';
 }
 
 function pathComponents(path: string, rootLength: number) {
@@ -401,7 +424,7 @@ function pathComponents(path: string, rootLength: number) {
  * getPathComponents("file:///") === ["file:///"]
  * getPathComponents("file://") === ["file://"]
  */
-function getPathComponents(path: string, currentDirectory = "") {
+function getPathComponents(path: string, currentDirectory = '') {
 	path = combinePaths(currentDirectory, path);
 	return pathComponents(path, getRootLength(path));
 }
@@ -418,7 +441,7 @@ function getPathComponents(path: string, currentDirectory = "") {
  */
 function getPathFromPathComponents(pathComponents: readonly string[]) {
 	if (pathComponents.length === 0) {
-		return "";
+		return '';
 	}
 
 	const root = pathComponents[0] && ensureTrailingDirectorySeparator(pathComponents[0]);
@@ -431,7 +454,7 @@ function getPathFromPathComponents(pathComponents: readonly string[]) {
  * Normalize path separators, converting `\` into `/`.
  */
 function normalizeSlashes(path: string): string {
-	return path.indexOf("\\") !== -1
+	return path.indexOf('\\') !== -1
 		? path.replace(backslashRegExp, directorySeparator)
 		: path;
 }
@@ -450,12 +473,12 @@ function reducePathComponents(components: readonly string[]) {
 		if (!component) {
 			continue;
 		}
-		if (component === ".") {
+		if (component === '.') {
 			continue;
 		}
-		if (component === "..") {
+		if (component === '..') {
 			if (reduced.length > 1) {
-				if (reduced[reduced.length - 1] !== "..") {
+				if (reduced[reduced.length - 1] !== '..') {
 					reduced.pop();
 					continue;
 				}
@@ -520,7 +543,6 @@ export function getNormalizedPathComponents(path: string, currentDirectory: stri
 	return reducePathComponents(getPathComponents(path, currentDirectory));
 }
 
-
 export function normalizePath(path: string): string {
 	path = normalizeSlashes(path);
 	// Most paths don't require normalization
@@ -528,7 +550,7 @@ export function normalizePath(path: string): string {
 		return path;
 	}
 	// Some paths only require cleanup of `/./` or leading `./`
-	const simplified = path.replace(/\/\.\//g, "/").replace(/^\.\//, "");
+	const simplified = path.replace(/\/\.\//g, '/').replace(/^\.\//, '');
 	if (simplified !== path) {
 		path = simplified;
 		if (!relativePathSegmentRegExp.test(path)) {
@@ -589,11 +611,11 @@ const relativePathSegmentRegExp = /(?:\/\/)|(?:^|\/)\.\.?(?:$|\/)/;
 export function containsPath(parent: string, child: string, ignoreCase?: boolean): boolean;
 export function containsPath(parent: string, child: string, currentDirectory: string, ignoreCase?: boolean): boolean;
 export function containsPath(parent: string, child: string, currentDirectory?: string | boolean, ignoreCase?: boolean) {
-	if (typeof currentDirectory === "string") {
+	if (typeof currentDirectory === 'string') {
 		parent = combinePaths(currentDirectory, parent);
 		child = combinePaths(currentDirectory, child);
 	}
-	else if (typeof currentDirectory === "boolean") {
+	else if (typeof currentDirectory === 'boolean') {
 		ignoreCase = currentDirectory;
 	}
 	if (parent === undefined || child === undefined) {

@@ -9,7 +9,6 @@ import { URI } from 'vscode-uri';
 export type LanguageServerHandle = ReturnType<typeof startLanguageServer>;
 
 export function startLanguageServer(serverModule: string, cwd?: string | URL) {
-
 	const childProcess = cp.fork(
 		serverModule,
 		['--stdio', `--clientProcessId=${process.pid.toString()}`],
@@ -18,11 +17,11 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			env: process.env,
 			cwd,
 			stdio: 'pipe',
-		}
+		},
 	);
 	const connection = _.createProtocolConnection(
 		childProcess.stdout!,
-		childProcess.stdin!
+		childProcess.stdin!,
 	);
 	const documentVersions = new Map<string, number>();
 	const openedDocuments = new Map<string, TextDocument>();
@@ -38,7 +37,8 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 	connection.onNotification(_.LogMessageNotification.type, e => {
 		if (e.type === _.MessageType.Error || e.type === _.MessageType.Warning) {
 			console.error(e.message);
-		} else {
+		}
+		else {
 			console.log(e.message);
 		}
 	});
@@ -60,7 +60,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			rootUri: string | _.WorkspaceFolder[],
 			initializationOptions: _._InitializeParams['initializationOptions'],
 			capabilities: _.ClientCapabilities = {},
-			locale?: string
+			locale?: string,
 		) {
 			const result = await connection.sendRequest(
 				_.InitializeRequest.type,
@@ -71,7 +71,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					initializationOptions,
 					capabilities,
 					locale,
-				} satisfies _.InitializeParams
+				} satisfies _.InitializeParams,
 			);
 			await connection.sendNotification(_.InitializedNotification.type, {} satisfies _.InitializedParams);
 			running = true;
@@ -89,7 +89,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					uri,
 					languageId,
 					(documentVersions.get(uri) ?? 0) + 1,
-					fs.readFileSync(fileName, 'utf-8')
+					fs.readFileSync(fileName, 'utf-8'),
 				);
 				documentVersions.set(uri, document.version);
 				openedDocuments.set(uri, document);
@@ -102,7 +102,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 							version: document.version,
 							text: document.getText(),
 						},
-					} satisfies _.DidOpenTextDocumentParams
+					} satisfies _.DidOpenTextDocumentParams,
 				);
 			}
 			return openedDocuments.get(uri)!;
@@ -113,7 +113,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				uri,
 				languageId,
 				(documentVersions.get(uri) ?? 0) + 1,
-				content
+				content,
 			);
 			documentVersions.set(uri, document.version);
 			openedDocuments.set(uri, document);
@@ -126,7 +126,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 						version: document.version,
 						text: document.getText(),
 					},
-				} satisfies _.DidOpenTextDocumentParams
+				} satisfies _.DidOpenTextDocumentParams,
 			);
 			return document;
 		},
@@ -139,7 +139,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				uri,
 				languageId,
 				(documentVersions.get(uri) ?? 0) + 1,
-				content
+				content,
 			);
 			documentVersions.set(uri, document.version);
 			openedDocuments.set(uri, document);
@@ -152,7 +152,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 						version: document.version,
 						text: document.getText(),
 					},
-				} satisfies _.DidOpenTextDocumentParams
+				} satisfies _.DidOpenTextDocumentParams,
 			);
 			return document;
 		},
@@ -163,7 +163,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.DidCloseTextDocumentNotification.type,
 				{
 					textDocument: { uri },
-				} satisfies _.DidCloseTextDocumentParams
+				} satisfies _.DidCloseTextDocumentParams,
 			);
 		},
 		async updateTextDocument(uri: string, edits: _.TextEdit[]) {
@@ -181,7 +181,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 						version: document.version,
 					},
 					contentChanges: [{ text: document.getText() }],
-				} satisfies _.DidChangeTextDocumentParams
+				} satisfies _.DidChangeTextDocumentParams,
 			);
 			return document;
 		},
@@ -190,14 +190,14 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 			if (running) {
 				await connection.sendNotification(
 					_.DidChangeConfigurationNotification.type,
-					{ settings } satisfies _.DidChangeConfigurationParams
+					{ settings } satisfies _.DidChangeConfigurationParams,
 				);
 			}
 		},
 		didChangeWatchedFiles(changes: _.FileEvent[]) {
 			return connection.sendNotification(
 				_.DidChangeWatchedFilesNotification.type,
-				{ changes } satisfies _.DidChangeWatchedFilesParams
+				{ changes } satisfies _.DidChangeWatchedFilesParams,
 			);
 		},
 		async sendCompletionRequest(uri: string, position: _.Position) {
@@ -206,7 +206,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					position,
-				} satisfies _.CompletionParams
+				} satisfies _.CompletionParams,
 			);
 			// @volar/language-server only returns CompletionList
 			assert(!Array.isArray(result));
@@ -215,7 +215,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 		sendCompletionResolveRequest(item: _.CompletionItem) {
 			return connection.sendRequest(
 				_.CompletionResolveRequest.type,
-				item satisfies _.CompletionItem
+				item satisfies _.CompletionItem,
 			);
 		},
 		sendDocumentDiagnosticRequest(uri: string) {
@@ -223,7 +223,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.DocumentDiagnosticRequest.type,
 				{
 					textDocument: { uri },
-				} satisfies _.DocumentDiagnosticParams
+				} satisfies _.DocumentDiagnosticParams,
 			);
 		},
 		sendHoverRequest(uri: string, position: _.Position) {
@@ -232,7 +232,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					position,
-				} satisfies _.HoverParams
+				} satisfies _.HoverParams,
 			);
 		},
 		sendDocumentFormattingRequest(uri: string, options: _.FormattingOptions) {
@@ -241,7 +241,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					options,
-				} satisfies _.DocumentFormattingParams
+				} satisfies _.DocumentFormattingParams,
 			);
 		},
 		sendDocumentRangeFormattingRequestRequest(uri: string, range: _.Range, options: _.FormattingOptions) {
@@ -251,7 +251,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					textDocument: { uri },
 					range,
 					options,
-				} satisfies _.DocumentRangeFormattingParams
+				} satisfies _.DocumentRangeFormattingParams,
 			);
 		},
 		sendRenameRequest(uri: string, position: _.Position, newName: string) {
@@ -261,7 +261,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					textDocument: { uri },
 					position,
 					newName,
-				} satisfies _.RenameParams
+				} satisfies _.RenameParams,
 			);
 		},
 		sendPrepareRenameRequest(uri: string, position: _.Position) {
@@ -270,7 +270,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					position,
-				} satisfies _.PrepareRenameParams
+				} satisfies _.PrepareRenameParams,
 			);
 		},
 		sendFoldingRangesRequest(uri: string) {
@@ -278,7 +278,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.FoldingRangeRequest.type,
 				{
 					textDocument: { uri },
-				} satisfies _.FoldingRangeParams
+				} satisfies _.FoldingRangeParams,
 			);
 		},
 		sendDocumentSymbolRequest(uri: string) {
@@ -286,7 +286,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.DocumentSymbolRequest.type,
 				{
 					textDocument: { uri },
-				} satisfies _.DocumentSymbolParams
+				} satisfies _.DocumentSymbolParams,
 			);
 		},
 		sendDocumentColorRequest(uri: string) {
@@ -294,7 +294,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.DocumentColorRequest.type,
 				{
 					textDocument: { uri },
-				} satisfies _.DocumentColorParams
+				} satisfies _.DocumentColorParams,
 			);
 		},
 		sendDefinitionRequest(uri: string, position: _.Position) {
@@ -303,7 +303,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					position,
-				} satisfies _.DefinitionParams
+				} satisfies _.DefinitionParams,
 			);
 		},
 		sendTypeDefinitionRequest(uri: string, position: _.Position) {
@@ -312,7 +312,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					position,
-				} satisfies _.TypeDefinitionParams
+				} satisfies _.TypeDefinitionParams,
 			);
 		},
 		sendReferencesRequest(uri: string, position: _.Position, context: _.ReferenceContext) {
@@ -322,7 +322,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					textDocument: { uri },
 					position,
 					context,
-				} satisfies _.ReferenceParams
+				} satisfies _.ReferenceParams,
 			);
 		},
 		sendSignatureHelpRequest(uri: string, position: _.Position) {
@@ -331,7 +331,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					position,
-				} satisfies _.SignatureHelpParams
+				} satisfies _.SignatureHelpParams,
 			);
 		},
 		sendSelectionRangesRequest(uri: string, positions: _.Position[]) {
@@ -340,7 +340,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					positions,
-				} satisfies _.SelectionRangeParams
+				} satisfies _.SelectionRangeParams,
 			);
 		},
 		sendCodeActionsRequest(uri: string, range: _.Range, context: _.CodeActionContext) {
@@ -350,13 +350,13 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					textDocument: { uri },
 					range,
 					context,
-				} satisfies _.CodeActionParams
+				} satisfies _.CodeActionParams,
 			);
 		},
 		sendCodeActionResolveRequest(codeAction: _.CodeAction) {
 			return connection.sendRequest(
 				_.CodeActionResolveRequest.type,
-				codeAction satisfies _.CodeAction
+				codeAction satisfies _.CodeAction,
 			);
 		},
 		sendExecuteCommandRequest(command: string, args?: any[]) {
@@ -365,7 +365,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					command,
 					arguments: args,
-				} satisfies _.ExecuteCommandParams
+				} satisfies _.ExecuteCommandParams,
 			);
 		},
 		sendSemanticTokensRequest(uri: string) {
@@ -373,7 +373,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.SemanticTokensRequest.type,
 				{
 					textDocument: { uri },
-				} satisfies _.SemanticTokensParams
+				} satisfies _.SemanticTokensParams,
 			);
 		},
 		sendSemanticTokensRangeRequest(uri: string, range: _.Range) {
@@ -382,7 +382,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					range,
-				} satisfies _.SemanticTokensRangeParams
+				} satisfies _.SemanticTokensRangeParams,
 			);
 		},
 		sendColorPresentationRequest(uri: string, color: _.Color, range: _.Range) {
@@ -392,7 +392,7 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 					textDocument: { uri },
 					color,
 					range,
-				} satisfies _.ColorPresentationParams
+				} satisfies _.ColorPresentationParams,
 			);
 		},
 		sendDocumentLinkRequest(uri: string) {
@@ -400,13 +400,13 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				_.DocumentLinkRequest.type,
 				{
 					textDocument: { uri },
-				} satisfies _.DocumentLinkParams
+				} satisfies _.DocumentLinkParams,
 			);
 		},
 		sendDocumentLinkResolveRequest(link: _.DocumentLink) {
 			return connection.sendRequest(
 				_.DocumentLinkResolveRequest.type,
-				link satisfies _.DocumentLink
+				link satisfies _.DocumentLink,
 			);
 		},
 		sendInlayHintRequest(uri: string, range: _.Range) {
@@ -415,13 +415,13 @@ export function startLanguageServer(serverModule: string, cwd?: string | URL) {
 				{
 					textDocument: { uri },
 					range,
-				} satisfies _.InlayHintParams
+				} satisfies _.InlayHintParams,
 			);
 		},
 		sendInlayHintResolveRequest(hint: _.InlayHint) {
 			return connection.sendRequest(
 				_.InlayHintResolveRequest.type,
-				hint satisfies _.InlayHint
+				hint satisfies _.InlayHint,
 			);
 		},
 	};
@@ -468,9 +468,8 @@ export function* printSnapshot(
 	sourceScript: {
 		snapshot: _.SourceScript<URI>['snapshot'];
 	},
-	file: _.VirtualCode
+	file: _.VirtualCode,
 ) {
-
 	const sourceCode = sourceScript.snapshot.getText(0, sourceScript.snapshot.getLength());
 	const sourceFileDocument = TextDocument.create('', '', 0, sourceCode);
 	const virtualCode = file.snapshot.getText(0, file.snapshot.getLength());
@@ -520,7 +519,10 @@ export function* printSnapshot(
 			const spanText = log.length === 0 ? '^' : '~'.repeat(log.length);
 			const prefix = ' '.repeat(lineHead.length);
 			const sourceLineEnd = sourceFileDocument.offsetAt({ line: sourcePosition.line + 1, character: 0 }) - 1;
-			const sourceLine = sourceFileDocument.getText().substring(sourceFileDocument.offsetAt({ line: sourcePosition.line, character: 0 }), sourceLineEnd + 1);
+			const sourceLine = sourceFileDocument.getText().substring(
+				sourceFileDocument.offsetAt({ line: sourcePosition.line, character: 0 }),
+				sourceLineEnd + 1,
+			);
 			const sourceLineHead = `[${sourcePosition.line + 1}]`;
 			yield [
 				prefix,
@@ -533,8 +535,9 @@ export function* printSnapshot(
 					' '.repeat(log.lineOffset),
 					sourceLineHead,
 					'(exact match)',
-					`(${':' + (sourcePosition.line + 1)
-					+ ':' + (sourcePosition.character + 1)
+					`(${
+						':' + (sourcePosition.line + 1)
+						+ ':' + (sourcePosition.character + 1)
 					})`,
 				].join(' ');
 			}
@@ -544,8 +547,10 @@ export function* printSnapshot(
 					' '.repeat(log.lineOffset),
 					sourceLineHead,
 					normalizeLogText(sourceLine),
-					`(${':' + (sourcePosition.line + 1)
-					+ ':' + (sourcePosition.character + 1)})`,
+					`(${
+						':' + (sourcePosition.line + 1)
+						+ ':' + (sourcePosition.character + 1)
+					})`,
 				].join(' ');
 				yield [
 					prefix,

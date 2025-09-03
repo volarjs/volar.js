@@ -17,7 +17,6 @@ interface LanguageClientFieldItem extends LanguageClientItem {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-
 	const extensions: vscode.Extension<LabsInfo>[] = [];
 	const invalidExtensions: vscode.Extension<LabsInfo>[] = [];
 	const onDidChangeTreeData = new vscode.EventEmitter<void>();
@@ -146,7 +145,9 @@ export function activate(context: vscode.ExtensionContext) {
 				iconPath: new vscode.ThemeIcon('error'),
 				label: element.extension.packageJSON.displayName,
 				collapsibleState: vscode.TreeItemCollapsibleState.None,
-				description: `Extension incompatible: The version is ${JSON.stringify(version)}, required is ${JSON.stringify(lsp.currentLabsVersion)}.`,
+				description: `Extension incompatible: The version is ${JSON.stringify(version)}, required is ${
+					JSON.stringify(lsp.currentLabsVersion)
+				}.`,
 			};
 		},
 	};
@@ -162,18 +163,30 @@ export function activate(context: vscode.ExtensionContext) {
 			await client.stop();
 			await client.start();
 		}),
-		vscode.commands.registerCommand('volar.action.serverStat.initializationOptions', async (client: lsp.BaseLanguageClient) => {
-			const doc = await vscode.workspace.openTextDocument({ content: JSON.stringify(client.clientOptions.initializationOptions, undefined, '\t'), language: 'json' });
-			vscode.window.showTextDocument(doc);
-		}),
-		vscode.commands.registerCommand('volar.action.serverStat.initializeResult', async (client: lsp.BaseLanguageClient) => {
-			const doc = await vscode.workspace.openTextDocument({ content: JSON.stringify(client.initializeResult, undefined, '\t'), language: 'json' });
-			vscode.window.showTextDocument(doc);
-		}),
+		vscode.commands.registerCommand(
+			'volar.action.serverStat.initializationOptions',
+			async (client: lsp.BaseLanguageClient) => {
+				const doc = await vscode.workspace.openTextDocument({
+					content: JSON.stringify(client.clientOptions.initializationOptions, undefined, '\t'),
+					language: 'json',
+				});
+				vscode.window.showTextDocument(doc);
+			},
+		),
+		vscode.commands.registerCommand(
+			'volar.action.serverStat.initializeResult',
+			async (client: lsp.BaseLanguageClient) => {
+				const doc = await vscode.workspace.openTextDocument({
+					content: JSON.stringify(client.initializeResult, undefined, '\t'),
+					language: 'json',
+				});
+				vscode.window.showTextDocument(doc);
+			},
+		),
 		vscode.window.createTreeView('volar-extensions', {
 			showCollapseAll: false,
 			treeDataProvider: tree,
-		})
+		}),
 	);
 
 	useVolarExtensions(
@@ -183,12 +196,12 @@ export function activate(context: vscode.ExtensionContext) {
 			if (isValidVersion(version)) {
 				for (const languageClient of extension.exports.volarLabs.languageClients) {
 					context.subscriptions.push(
-						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+						languageClient.onDidChangeState(() => onDidChangeTreeData.fire()),
 					);
 				}
 				extension.exports.volarLabs.onDidAddLanguageClient(languageClient => {
 					context.subscriptions.push(
-						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+						languageClient.onDidChangeState(() => onDidChangeTreeData.fire()),
 					);
 					onDidChangeTreeData.fire();
 				});
@@ -199,7 +212,7 @@ export function activate(context: vscode.ExtensionContext) {
 				invalidExtensions.push(extension);
 				onDidChangeTreeData.fire();
 			}
-		}
+		},
 	);
 }
 

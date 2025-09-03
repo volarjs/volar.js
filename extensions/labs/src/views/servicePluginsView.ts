@@ -13,13 +13,11 @@ interface ServicePluginItem {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-
 	const extensions: vscode.Extension<LabsInfo>[] = [];
 	const onDidChangeTreeData = new vscode.EventEmitter<void>();
 	const tree: vscode.TreeDataProvider<ServicePluginItem> = {
 		onDidChangeTreeData: onDidChangeTreeData.event,
 		async getChildren(element) {
-
 			const doc = vscode.window.activeTextEditor?.document;
 			if (!doc) {
 				return [];
@@ -35,7 +33,10 @@ export function activate(context: vscode.ExtensionContext) {
 						) {
 							continue;
 						}
-						const servicePlugins = await client.sendRequest(extension.exports.volarLabs.languageServerProtocol.GetServicePluginsRequest.type, { uri: doc.uri.toString() });
+						const servicePlugins = await client.sendRequest(
+							extension.exports.volarLabs.languageServerProtocol.GetServicePluginsRequest.type,
+							{ uri: doc.uri.toString() },
+						);
 						if (servicePlugins) {
 							for (const servicePlugin of servicePlugins) {
 								items.push({
@@ -53,7 +54,9 @@ export function activate(context: vscode.ExtensionContext) {
 		},
 		getTreeItem(element) {
 			return {
-				checkboxState: element.servicePlugin.disabled ? vscode.TreeItemCheckboxState.Unchecked : vscode.TreeItemCheckboxState.Checked,
+				checkboxState: element.servicePlugin.disabled
+					? vscode.TreeItemCheckboxState.Unchecked
+					: vscode.TreeItemCheckboxState.Checked,
 				iconPath: getIconPath(element.extension),
 				label: element.servicePlugin.name ?? `[${element.servicePlugin.id}]`,
 				description: element.servicePlugin.features.join(', '),
@@ -69,7 +72,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(editor => {
-
 			if (!editor) {
 				return;
 			}
@@ -91,10 +93,10 @@ export function activate(context: vscode.ExtensionContext) {
 						uri: item.sourceDocumentUri,
 						serviceId: item.servicePlugin.id,
 						disabled: state === vscode.TreeItemCheckboxState.Unchecked,
-					} satisfies UpdateServicePluginStateNotification.ParamsType
+					} satisfies UpdateServicePluginStateNotification.ParamsType,
 				);
 			}
-		})
+		}),
 	);
 
 	useVolarExtensions(
@@ -104,18 +106,18 @@ export function activate(context: vscode.ExtensionContext) {
 			if (isValidVersion(version)) {
 				for (const languageClient of extension.exports.volarLabs.languageClients) {
 					context.subscriptions.push(
-						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+						languageClient.onDidChangeState(() => onDidChangeTreeData.fire()),
 					);
 				}
 				extension.exports.volarLabs.onDidAddLanguageClient(languageClient => {
 					context.subscriptions.push(
-						languageClient.onDidChangeState(() => onDidChangeTreeData.fire())
+						languageClient.onDidChangeState(() => onDidChangeTreeData.fire()),
 					);
 					onDidChangeTreeData.fire();
 				});
 				extensions.push(extension);
 				onDidChangeTreeData.fire();
 			}
-		}
+		},
 	);
 }

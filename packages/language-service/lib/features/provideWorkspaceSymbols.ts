@@ -11,9 +11,7 @@ export interface WorkspaceSymbolData {
 }
 
 export function register(context: LanguageServiceContext) {
-
 	return async (query: string, token = NoneCancellationToken) => {
-
 		const symbolsList: vscode.WorkspaceSymbol[][] = [];
 
 		for (const plugin of context.plugins) {
@@ -31,31 +29,36 @@ export function register(context: LanguageServiceContext) {
 				continue;
 			}
 			const symbols = embeddedSymbols
-				.map(symbol => transformWorkspaceSymbol(symbol, loc => {
+				.map(symbol =>
+					transformWorkspaceSymbol(symbol, loc => {
+						const decoded = context.decodeEmbeddedDocumentUri(URI.parse(loc.uri));
+						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
+						const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
 
-					const decoded = context.decodeEmbeddedDocumentUri(URI.parse(loc.uri));
-					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
-					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
-
-					if (sourceScript && virtualCode) {
-						const embeddedDocument = context.documents.get(
-							context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
-							virtualCode.languageId,
-							virtualCode.snapshot
-						);
-						for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
-							const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
-							const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
-							const range = getSourceRange(docs, loc.range);
-							if (range) {
-								return { uri: sourceDocument.uri, range };
+						if (sourceScript && virtualCode) {
+							const embeddedDocument = context.documents.get(
+								context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+								virtualCode.languageId,
+								virtualCode.snapshot,
+							);
+							for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
+								const sourceDocument = context.documents.get(
+									sourceScript.id,
+									sourceScript.languageId,
+									sourceScript.snapshot,
+								);
+								const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
+								const range = getSourceRange(docs, loc.range);
+								if (range) {
+									return { uri: sourceDocument.uri, range };
+								}
 							}
 						}
-					}
-					else {
-						return loc;
-					}
-				}))
+						else {
+							return loc;
+						}
+					})
+				)
 				.filter(symbol => !!symbol);
 
 			symbols?.forEach(symbol => {

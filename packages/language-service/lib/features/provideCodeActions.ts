@@ -16,8 +16,12 @@ export interface ServiceCodeActionData {
 }
 
 export function register(context: LanguageServiceContext) {
-
-	return async (uri: URI, range: vscode.Range, codeActionContext: vscode.CodeActionContext, token = NoneCancellationToken) => {
+	return async (
+		uri: URI,
+		range: vscode.Range,
+		codeActionContext: vscode.CodeActionContext,
+		token = NoneCancellationToken,
+	) => {
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
 			return;
@@ -29,11 +33,11 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => ({ range, codeActionContext }),
-			function* (docs) {
+			function*(docs) {
 				const _codeActionContext: vscode.CodeActionContext = {
 					diagnostics: transformLocations(
 						codeActionContext.diagnostics,
-						range => getGeneratedRange(docs, range)
+						range => getGeneratedRange(docs, range),
 					),
 					only: codeActionContext.only,
 				};
@@ -41,7 +45,7 @@ export function register(context: LanguageServiceContext) {
 					docs[0].offsetAt(range.start),
 					docs[0].offsetAt(range.end),
 					docs[2],
-					isCodeActionsEnabled
+					isCodeActionsEnabled,
 				);
 				if (mapped) {
 					yield {
@@ -106,29 +110,29 @@ export function register(context: LanguageServiceContext) {
 
 				return codeActions;
 			},
-			actions => actions
-				.map(action => {
-
-					if (transformedCodeActions.has(action)) {
-						return action;
-					}
-
-					if (action.edit) {
-						const edit = transformWorkspaceEdit(
-							action.edit,
-							context,
-							'codeAction'
-						);
-						if (!edit) {
-							return;
+			actions =>
+				actions
+					.map(action => {
+						if (transformedCodeActions.has(action)) {
+							return action;
 						}
-						action.edit = edit;
-					}
 
-					return action;
-				})
-				.filter(action => !!action),
-			arr => dedupe.withCodeAction(arr.flat())
+						if (action.edit) {
+							const edit = transformWorkspaceEdit(
+								action.edit,
+								context,
+								'codeAction',
+							);
+							if (!edit) {
+								return;
+							}
+							action.edit = edit;
+						}
+
+						return action;
+					})
+					.filter(action => !!action),
+			arr => dedupe.withCodeAction(arr.flat()),
 		);
 	};
 }

@@ -10,7 +10,8 @@ describe('sourceMap', () => {
 					//  ^^^^
 				],
 				generatedOffsets: [
-					`(null as any ? ((null as any ? ((null as any ? (this.|data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					`(null as any ? ((null as any ? ((null as any ? (this.|data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+						.indexOf('|'),
 					//                                                     ^^^^
 				],
 				lengths: [
@@ -24,7 +25,8 @@ describe('sourceMap', () => {
 					//        ^^^^
 				],
 				generatedOffsets: [
-					`(null as any ? ((null as any ? ((null as any ? (this.data)!.|icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.|icon : undefined)!.toString : undefined))!() : undefined)`
+						.indexOf('|'),
 					//                                                            ^^^^
 				],
 				lengths: [
@@ -38,7 +40,8 @@ describe('sourceMap', () => {
 					//              ^^^^^^^^
 				],
 				generatedOffsets: [
-					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.|toString : undefined))!() : undefined)`.indexOf('|'),
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.|toString : undefined))!() : undefined)`
+						.indexOf('|'),
 					//                                                                               ^^^^^^^^
 				],
 				lengths: [
@@ -52,7 +55,8 @@ describe('sourceMap', () => {
 					//                      ^^
 				],
 				generatedOffsets: [
-					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!|() : undefined)`.indexOf('|'),
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!|() : undefined)`
+						.indexOf('|'),
 					//                                                                                                      ^^
 				],
 				lengths: [
@@ -68,9 +72,11 @@ describe('sourceMap', () => {
 					//           ^
 				],
 				generatedOffsets: [
-					`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+						.indexOf('|'),
 					//                               ^
-					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`.indexOf('|'),
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`
+						.indexOf('|'),
 					//                                                                            ^
 				],
 				lengths: [0, 0],
@@ -84,9 +90,11 @@ describe('sourceMap', () => {
 					//                     ^
 				],
 				generatedOffsets: [
-					`(null as any ? (|(null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					`(null as any ? (|(null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+						.indexOf('|'),
 					//               ^
-					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))|!() : undefined)`.indexOf('|'),
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))|!() : undefined)`
+						.indexOf('|'),
 					//                                                                                                    ^
 				],
 				lengths: [0, 0],
@@ -101,7 +109,8 @@ describe('sourceMap', () => {
 				],
 				generatedOffsets: [
 					0,
-					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.length,
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+						.length,
 				],
 				lengths: [0, 0],
 				data: {},
@@ -111,12 +120,14 @@ describe('sourceMap', () => {
 		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data|?.icon?.toString()}}`.indexOf('|'),
-			false
+			false,
 		)].map(mapped => mapped.slice(0, 2))).toEqual([
 			[
-				`(null as any ? ((null as any ? ((null as any ? (this.|data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				`(null as any ? ((null as any ? ((null as any ? (this.|data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+					.indexOf('|'),
 				//                                                    ^
-				`(null as any ? ((null as any ? ((null as any ? (this.data|)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				`(null as any ? ((null as any ? ((null as any ? (this.data|)!.icon : undefined)!.toString : undefined))!() : undefined)`
+					.indexOf('|'),
 				//                                                        ^
 			],
 		]);
@@ -124,18 +135,20 @@ describe('sourceMap', () => {
 		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.ic|on?.toString()}}`.indexOf('|'),
-			false
+			false,
 		)].map(mapped => mapped.slice(0, 2))).toEqual([]);
 
 		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon|?.toString()}}`.indexOf('|'),
-			false
+			false,
 		)].map(mapped => mapped.slice(0, 2))).toEqual([
 			[
-				`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+					.indexOf('|'),
 				//                               ^
-				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`.indexOf('|'),
+				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`
+					.indexOf('|'),
 				//                                                                            ^
 			],
 		]);
@@ -143,12 +156,14 @@ describe('sourceMap', () => {
 		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon?.toString|()}}`.indexOf('|'),
-			false
+			false,
 		)].map(mapped => mapped.slice(0, 2))).toEqual([
 			[
-				`(null as any ? (|(null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				`(null as any ? (|(null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+					.indexOf('|'),
 				//               ^
-				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))|!() : undefined)`.indexOf('|'),
+				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))|!() : undefined)`
+					.indexOf('|'),
 				//                                                                                                    ^
 			],
 		]);
@@ -156,11 +171,12 @@ describe('sourceMap', () => {
 		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon?.toString()|}}`.indexOf('|'),
-			false
+			false,
 		)].map(mapped => mapped.slice(0, 2))).toEqual([
 			[
 				0,
-				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.length,
+				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+					.length,
 			],
 		]);
 	});
@@ -173,7 +189,8 @@ describe('sourceMap', () => {
 					// ^
 				],
 				generatedOffsets: [
-					`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+					`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+						.indexOf('|'),
 					//                               ^
 				],
 				lengths: [0, 0],
@@ -185,7 +202,8 @@ describe('sourceMap', () => {
 					//           ^
 				],
 				generatedOffsets: [
-					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`.indexOf('|'),
+					`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`
+						.indexOf('|'),
 					//                                                                            ^
 				],
 				lengths: [0, 0],
@@ -196,18 +214,20 @@ describe('sourceMap', () => {
 		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon|?.toString()}}`.indexOf('|'),
-			false
+			false,
 		)].map(mapped => mapped.slice(0, 2))).toEqual([]);
 
 		expect([...map.toGeneratedRange(
 			`{{|data?.icon?.toString()}}`.indexOf('|'),
 			`{{data?.icon|?.toString()}}`.indexOf('|'),
-			true
+			true,
 		)].map(mapped => mapped.slice(0, 2))).toEqual([
 			[
-				`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`.indexOf('|'),
+				`(null as any ? ((null as any ? (|(null as any ? (this.data)!.icon : undefined)!.toString : undefined))!() : undefined)`
+					.indexOf('|'),
 				//                               ^
-				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`.indexOf('|'),
+				`(null as any ? ((null as any ? ((null as any ? (this.data)!.icon : undefined)|!.toString : undefined))!() : undefined)`
+					.indexOf('|'),
 				//                                                                            ^
 			],
 		]);

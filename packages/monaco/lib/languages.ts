@@ -1,10 +1,4 @@
-import type {
-	IDisposable,
-	MonacoEditor,
-	Uri,
-	editor,
-	languages,
-} from 'monaco-types';
+import type { editor, IDisposable, languages, MonacoEditor, Uri } from 'monaco-types';
 import { type WorkerLanguageService } from '../worker.js';
 import { createLanguageFeaturesProvider } from './provider.js';
 
@@ -12,9 +6,8 @@ export async function registerProviders(
 	worker: editor.MonacoWebWorker<WorkerLanguageService>,
 	language: languages.LanguageSelector,
 	getSyncUris: () => Uri[],
-	languages: MonacoEditor['languages']
+	languages: MonacoEditor['languages'],
 ): Promise<IDisposable> {
-
 	const provider = await createLanguageFeaturesProvider(worker, getSyncUris);
 	const disposables: IDisposable[] = [
 		languages.registerHoverProvider(language, provider),

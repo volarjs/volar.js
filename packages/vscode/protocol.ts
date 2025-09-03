@@ -18,7 +18,7 @@ export namespace FindFileReferenceRequest {
 
 export namespace GetMatchTsConfigRequest {
 	export type ParamsType = protocol.TextDocumentIdentifier;
-	export type ResponseType = { uri: string; } | null | undefined;
+	export type ResponseType = { uri: string } | null | undefined;
 	export type ErrorType = never;
 	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/tsconfig');
 }
@@ -68,7 +68,9 @@ export namespace DocumentDrop_DataTransferItemAsStringRequest {
 	};
 	export type ResponseType = string;
 	export type ErrorType = never;
-	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/documentDrop/asString');
+	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>(
+		'volar/client/documentDrop/asString',
+	);
 }
 
 export namespace DocumentDrop_DataTransferItemFileDataRequest {
@@ -77,7 +79,9 @@ export namespace DocumentDrop_DataTransferItemFileDataRequest {
 	};
 	export type ResponseType = Uint8Array;
 	export type ErrorType = never;
-	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/documentDrop/fileData');
+	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>(
+		'volar/client/documentDrop/fileData',
+	);
 }
 
 /**
@@ -104,12 +108,15 @@ export namespace UpdateServicePluginStateNotification {
 
 export namespace GetServicePluginsRequest {
 	export type ParamsType = protocol.TextDocumentIdentifier;
-	export type ResponseType = {
-		id: number;
-		name?: string;
-		features: string[];
-		disabled: boolean;
-	}[] | null | undefined;
+	export type ResponseType =
+		| {
+			id: number;
+			name?: string;
+			features: string[];
+			disabled: boolean;
+		}[]
+		| null
+		| undefined;
 	export type ErrorType = never;
 	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/servicePlugins');
 }

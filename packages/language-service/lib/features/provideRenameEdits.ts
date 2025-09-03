@@ -1,4 +1,4 @@
-import { isRenameEnabled, resolveRenameNewName, type CodeInformation } from '@volar/language-core';
+import { type CodeInformation, isRenameEnabled, resolveRenameNewName } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -9,27 +9,26 @@ import { getGeneratedPositions, getLinkedCodePositions, languageFeatureWorker } 
 import { pushEditToDocumentChanges, transformWorkspaceEdit } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, position: vscode.Position, newName: string, token = NoneCancellationToken) => {
-
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => ({ position, newName }),
-			function* (docs) {
+			function*(docs) {
 				let _data!: CodeInformation;
-				for (const mappedPosition of getGeneratedPositions(docs, position, data => {
-					_data = data;
-					return isRenameEnabled(data);
-				})) {
+				for (
+					const mappedPosition of getGeneratedPositions(docs, position, data => {
+						_data = data;
+						return isRenameEnabled(data);
+					})
+				) {
 					yield {
 						position: mappedPosition,
 						newName: resolveRenameNewName(newName, _data),
 					};
-				};
+				}
 			},
 			async (plugin, document, params) => {
-
 				if (token.isCancellationRequested) {
 					return;
 				}
@@ -42,7 +41,6 @@ export function register(context: LanguageServiceContext) {
 				return result;
 
 				async function withLinkedCode(document: TextDocument, position: vscode.Position, newName: string) {
-
 					if (!plugin[1].provideRenameEdits) {
 						return;
 					}
@@ -64,16 +62,16 @@ export function register(context: LanguageServiceContext) {
 					}
 
 					if (workspaceEdit.changes) {
-
 						for (const editUri in workspaceEdit.changes) {
-
 							const textEdits = workspaceEdit.changes[editUri];
 
 							for (const textEdit of textEdits) {
-
 								let foundMirrorPosition = false;
 
-								recursiveChecker.add({ uri: editUri, range: { start: textEdit.range.start, end: textEdit.range.start } });
+								recursiveChecker.add({
+									uri: editUri,
+									range: { start: textEdit.range.start, end: textEdit.range.start },
+								});
 
 								const decoded = context.decodeEmbeddedDocumentUri(URI.parse(editUri));
 								const sourceScript = decoded && context.language.scripts.get(decoded[0]);
@@ -86,11 +84,14 @@ export function register(context: LanguageServiceContext) {
 									const embeddedDocument = context.documents.get(
 										context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 										virtualCode.languageId,
-										virtualCode.snapshot
+										virtualCode.snapshot,
 									);
-									for (const linkedPos of getLinkedCodePositions(embeddedDocument, linkedCodeMap, textEdit.range.start)) {
-
-										if (recursiveChecker.has({ uri: embeddedDocument.uri, range: { start: linkedPos, end: linkedPos } })) {
+									for (
+										const linkedPos of getLinkedCodePositions(embeddedDocument, linkedCodeMap, textEdit.range.start)
+									) {
+										if (
+											recursiveChecker.has({ uri: embeddedDocument.uri, range: { start: linkedPos, end: linkedPos } })
+										) {
 											continue;
 										}
 
@@ -101,7 +102,6 @@ export function register(context: LanguageServiceContext) {
 								}
 
 								if (!foundMirrorPosition) {
-
 									if (!result.changes) {
 										result.changes = {};
 									}
@@ -117,9 +117,7 @@ export function register(context: LanguageServiceContext) {
 					}
 
 					if (workspaceEdit.changeAnnotations) {
-
 						for (const uri in workspaceEdit.changeAnnotations) {
-
 							if (!result.changeAnnotations) {
 								result.changeAnnotations = {};
 							}
@@ -129,7 +127,6 @@ export function register(context: LanguageServiceContext) {
 					}
 
 					if (workspaceEdit.documentChanges) {
-
 						if (!result.documentChanges) {
 							result.documentChanges = [];
 						}
@@ -142,11 +139,10 @@ export function register(context: LanguageServiceContext) {
 				return transformWorkspaceEdit(
 					data,
 					context,
-					'rename'
+					'rename',
 				);
 			},
 			workspaceEdits => {
-
 				const mainEdit = workspaceEdits[0];
 				const otherEdits = workspaceEdits.slice(1);
 
@@ -159,7 +155,7 @@ export function register(context: LanguageServiceContext) {
 				}
 
 				return workspaceEdits[0];
-			}
+			},
 		);
 	};
 }

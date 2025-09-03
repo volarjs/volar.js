@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { CodeInformation, Mapping, defaultMapperFactory, findOverlapCodeRange } from '../index';
+import { CodeInformation, defaultMapperFactory, findOverlapCodeRange, Mapping } from '../index';
 
 // test code: <html><body><p>Hello</p></body></html>
 
 describe(`Test findOverlapCodeRange()`, () => {
-
 	it('signal mapping', () => {
 		const mappings: Mapping<CodeInformation>[] = [
 			{

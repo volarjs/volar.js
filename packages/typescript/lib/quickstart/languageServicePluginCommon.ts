@@ -22,7 +22,8 @@ export function makeGetScriptInfoWithLargeFileFailsafe(info: ts.server.PluginCre
 		// getSnapshot could be crashed if the file is too large
 		try {
 			return info.project.getScriptInfo(fileName);
-		} catch { }
+		}
+		catch {}
 	};
 }
 
@@ -30,7 +31,8 @@ export function createLanguageCommon(
 	createPluginResult: createPluginCallbackReturnValue,
 	ts: typeof import('typescript'),
 	info: ts.server.PluginCreateInfo,
-	initializeProxiedLanguageService: (language: Language<string>) => void) {
+	initializeProxiedLanguageService: (language: Language<string>) => void,
+) {
 	const getScriptSnapshot = info.languageServiceHost.getScriptSnapshot.bind(info.languageServiceHost);
 	const getScriptInfo = makeGetScriptInfoWithLargeFileFailsafe(info);
 
@@ -71,7 +73,7 @@ export function createLanguageCommon(
 				endOffset: 1,
 				insertString: '',
 			});
-		}
+		},
 	);
 
 	initializeProxiedLanguageService(language);
@@ -79,27 +81,36 @@ export function createLanguageCommon(
 	createPluginResult.setup?.(language);
 }
 
-export const makeGetExternalFiles = (ts: typeof import('typescript')) => (project: ts.server.Project, updateLevel = 0) => {
-	if (updateLevel >= (1 satisfies ts.ProgramUpdateLevel.RootNamesAndUpdate)
-		|| !externalFiles.has(project)) {
-		const oldFiles = externalFiles.get(project);
-		const extensions = projectExternalFileExtensions.get(project);
-		const newFiles = extensions?.length ? searchExternalFiles(ts, project, extensions) : [];
-		externalFiles.set(project, newFiles);
-		if (oldFiles && !arrayItemsEqual(oldFiles, newFiles)) {
-			project.refreshDiagnostics();
+export const makeGetExternalFiles =
+	(ts: typeof import('typescript')) => (project: ts.server.Project, updateLevel = 0) => {
+		if (
+			updateLevel >= (1 satisfies ts.ProgramUpdateLevel.RootNamesAndUpdate)
+			|| !externalFiles.has(project)
+		) {
+			const oldFiles = externalFiles.get(project);
+			const extensions = projectExternalFileExtensions.get(project);
+			const newFiles = extensions?.length ? searchExternalFiles(ts, project, extensions) : [];
+			externalFiles.set(project, newFiles);
+			if (oldFiles && !arrayItemsEqual(oldFiles, newFiles)) {
+				project.refreshDiagnostics();
+			}
 		}
-	}
-	return externalFiles.get(project)!;
-};
+		return externalFiles.get(project)!;
+	};
 
 export type createPluginCallbackReturnValue = {
 	languagePlugins: LanguagePlugin<string>[];
 	setup?: (language: Language<string>) => void;
 };
 
-export type createPluginCallbackSync = (ts: typeof import('typescript'), info: ts.server.PluginCreateInfo) => createPluginCallbackReturnValue;
-export type createPluginCallbackAsync = (ts: typeof import('typescript'), info: ts.server.PluginCreateInfo) => Promise<createPluginCallbackReturnValue>;
+export type createPluginCallbackSync = (
+	ts: typeof import('typescript'),
+	info: ts.server.PluginCreateInfo,
+) => createPluginCallbackReturnValue;
+export type createPluginCallbackAsync = (
+	ts: typeof import('typescript'),
+	info: ts.server.PluginCreateInfo,
+) => Promise<createPluginCallbackReturnValue>;
 
 function arrayItemsEqual(a: string[], b: string[]) {
 	if (a.length !== b.length) {
@@ -115,13 +126,15 @@ function arrayItemsEqual(a: string[], b: string[]) {
 }
 
 export function isHasAlreadyDecoratedLanguageService(info: ts.server.PluginCreateInfo) {
-	if (decoratedLanguageServices.has(info.languageService)
-		|| decoratedLanguageServiceHosts.has(info.languageServiceHost)) {
+	if (
+		decoratedLanguageServices.has(info.languageService)
+		|| decoratedLanguageServiceHosts.has(info.languageServiceHost)
+	) {
 		return true;
-	} else {
+	}
+	else {
 		decoratedLanguageServices.add(info.languageService);
 		decoratedLanguageServiceHosts.add(info.languageServiceHost);
 		return false;
 	}
 }
-

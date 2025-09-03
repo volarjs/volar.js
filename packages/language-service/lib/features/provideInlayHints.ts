@@ -13,7 +13,6 @@ export interface InlayHintData {
 }
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, range: vscode.Range, token = NoneCancellationToken) => {
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
@@ -24,12 +23,12 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => range,
-			function* (docs) {
+			function*(docs) {
 				const mapped = findOverlapCodeRange(
 					docs[0].offsetAt(range.start),
 					docs[0].offsetAt(range.end),
 					docs[2],
-					isInlayHintsEnabled
+					isInlayHintsEnabled,
 				);
 				if (mapped) {
 					yield {
@@ -80,7 +79,7 @@ export function register(context: LanguageServiceContext) {
 					})
 					.filter(hint => !!hint);
 			},
-			arr => arr.flat()
+			arr => arr.flat(),
 		);
 	};
 }

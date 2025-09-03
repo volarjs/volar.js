@@ -17,17 +17,26 @@ interface MappingMemo<Data> {
 }
 
 export class SourceMap<Data = unknown> {
-
 	private sourceCodeOffsetsMemo: MappingMemo<Data> | undefined;
 	private generatedCodeOffsetsMemo: MappingMemo<Data> | undefined;
 
-	constructor(public readonly mappings: Mapping<Data>[]) { }
+	constructor(public readonly mappings: Mapping<Data>[]) {}
 
-	toSourceRange(generatedStart: number, generatedEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) {
+	toSourceRange(
+		generatedStart: number,
+		generatedEnd: number,
+		fallbackToAnyMatch: boolean,
+		filter?: (data: Data) => boolean,
+	) {
 		return this.findMatchingStartEnd(generatedStart, generatedEnd, fallbackToAnyMatch, 'generatedOffsets', filter);
 	}
 
-	toGeneratedRange(sourceStart: number, sourceEnd: number, fallbackToAnyMatch: boolean, filter?: (data: Data) => boolean) {
+	toGeneratedRange(
+		sourceStart: number,
+		sourceEnd: number,
+		fallbackToAnyMatch: boolean,
+		filter?: (data: Data) => boolean,
+	) {
 		return this.findMatchingStartEnd(sourceStart, sourceEnd, fallbackToAnyMatch, 'sourceOffsets', filter);
 	}
 
@@ -39,7 +48,7 @@ export class SourceMap<Data = unknown> {
 		return this.findMatchingOffsets(sourceOffset, 'sourceOffsets', filter);
 	}
 
-	* findMatchingOffsets(offset: number, fromRange: CodeRangeKey, filter?: (data: Data) => boolean) {
+	*findMatchingOffsets(offset: number, fromRange: CodeRangeKey, filter?: (data: Data) => boolean) {
 		const memo = this.getMemoBasedOnRange(fromRange);
 		if (memo.offsets.length === 0) {
 			return;
@@ -60,7 +69,13 @@ export class SourceMap<Data = unknown> {
 					continue;
 				}
 
-				const mapped = translateOffset(offset, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
+				const mapped = translateOffset(
+					offset,
+					mapping[fromRange],
+					mapping[toRange],
+					getLengths(mapping, fromRange),
+					getLengths(mapping, toRange),
+				);
 				if (mapped !== undefined) {
 					yield [mapped, mapping] as const;
 				}
@@ -68,12 +83,12 @@ export class SourceMap<Data = unknown> {
 		}
 	}
 
-	* findMatchingStartEnd(
+	*findMatchingStartEnd(
 		start: number,
 		end: number,
 		fallbackToAnyMatch: boolean,
 		fromRange: CodeRangeKey,
-		filter?: (data: Data) => boolean
+		filter?: (data: Data) => boolean,
 	): Generator<[mappedStart: number, mappedEnd: number, startMapping: Mapping<Data>, endMapping: Mapping<Data>]> {
 		const toRange: CodeRangeKey = fromRange === 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
 		const mappedStarts: [number, Mapping<Data>][] = [];
@@ -83,7 +98,13 @@ export class SourceMap<Data = unknown> {
 				continue;
 			}
 			mappedStarts.push([mappedStart, mapping]);
-			const mappedEnd = translateOffset(end, mapping[fromRange], mapping[toRange], getLengths(mapping, fromRange), getLengths(mapping, toRange));
+			const mappedEnd = translateOffset(
+				end,
+				mapping[fromRange],
+				mapping[toRange],
+				getLengths(mapping, fromRange),
+				getLengths(mapping, toRange),
+			);
 			if (mappedEnd !== undefined) {
 				hadMatch = true;
 				yield [mappedStart, mappedEnd, mapping, mapping] as const;
@@ -97,7 +118,7 @@ export class SourceMap<Data = unknown> {
 					}
 					yield [mappedStart, mappedEnd, mappingStart, mappingEnd] as const;
 					break;
-				};
+				}
 			}
 		}
 	}

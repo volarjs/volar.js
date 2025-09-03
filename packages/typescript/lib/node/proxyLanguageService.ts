@@ -60,41 +60,76 @@ export function createProxyLanguageService(languageService: ts.LanguageService) 
 		initialize(language: Language<string>) {
 			getProxyMethod = (target, p) => {
 				switch (p) {
-					case 'getNavigationTree': return getNavigationTree(language, target[p]);
-					case 'getOutliningSpans': return getOutliningSpans(language, target[p]);
-					case 'getFormattingEditsForDocument': return getFormattingEditsForDocument(language, target[p]);
-					case 'getFormattingEditsForRange': return getFormattingEditsForRange(language, target[p]);
-					case 'getFormattingEditsAfterKeystroke': return getFormattingEditsAfterKeystroke(language, target[p]);
-					case 'getEditsForFileRename': return getEditsForFileRename(language, target[p]);
-					case 'getLinkedEditingRangeAtPosition': return getLinkedEditingRangeAtPosition(language, target[p]);
-					case 'prepareCallHierarchy': return prepareCallHierarchy(language, target[p]);
-					case 'provideCallHierarchyIncomingCalls': return provideCallHierarchyIncomingCalls(language, target[p]);
-					case 'provideCallHierarchyOutgoingCalls': return provideCallHierarchyOutgoingCalls(language, target[p]);
-					case 'organizeImports': return organizeImports(language, target[p]);
-					case 'getQuickInfoAtPosition': return getQuickInfoAtPosition(language, target[p]);
-					case 'getSignatureHelpItems': return getSignatureHelpItems(language, target[p]);
-					case 'getDocumentHighlights': return getDocumentHighlights(language, target[p]);
-					case 'getApplicableRefactors': return getApplicableRefactors(language, target[p]);
-					case 'getEditsForRefactor': return getEditsForRefactor(language, target[p]);
-					case 'getCombinedCodeFix': return getCombinedCodeFix(language, target[p]);
-					case 'getRenameInfo': return getRenameInfo(language, target[p]);
-					case 'getCodeFixesAtPosition': return getCodeFixesAtPosition(language, target[p]);
-					case 'getEncodedSemanticClassifications': return getEncodedSemanticClassifications(language, target[p]);
-					case 'getSyntacticDiagnostics': return getSyntacticDiagnostics(language, languageService, target[p]);
-					case 'getSemanticDiagnostics': return getSemanticDiagnostics(language, languageService, target[p]);
-					case 'getSuggestionDiagnostics': return getSuggestionDiagnostics(language, languageService, target[p]);
-					case 'getDefinitionAndBoundSpan': return getDefinitionAndBoundSpan(language, target[p]);
-					case 'findReferences': return findReferences(language, target[p]);
-					case 'getDefinitionAtPosition': return getDefinitionAtPosition(language, target[p]);
-					case 'getTypeDefinitionAtPosition': return getTypeDefinitionAtPosition(language, target[p]);
-					case 'getImplementationAtPosition': return getImplementationAtPosition(language, target[p]);
-					case 'findRenameLocations': return findRenameLocations(language, target[p]);
-					case 'getReferencesAtPosition': return getReferencesAtPosition(language, target[p]);
-					case 'getCompletionsAtPosition': return getCompletionsAtPosition(language, target[p]);
-					case 'getCompletionEntryDetails': return getCompletionEntryDetails(language, target[p]);
-					case 'provideInlayHints': return provideInlayHints(language, target[p]);
-					case 'getFileReferences': return getFileReferences(language, target[p]);
-					case 'getNavigateToItems': return getNavigateToItems(language, target[p]);
+					case 'getNavigationTree':
+						return getNavigationTree(language, target[p]);
+					case 'getOutliningSpans':
+						return getOutliningSpans(language, target[p]);
+					case 'getFormattingEditsForDocument':
+						return getFormattingEditsForDocument(language, target[p]);
+					case 'getFormattingEditsForRange':
+						return getFormattingEditsForRange(language, target[p]);
+					case 'getFormattingEditsAfterKeystroke':
+						return getFormattingEditsAfterKeystroke(language, target[p]);
+					case 'getEditsForFileRename':
+						return getEditsForFileRename(language, target[p]);
+					case 'getLinkedEditingRangeAtPosition':
+						return getLinkedEditingRangeAtPosition(language, target[p]);
+					case 'prepareCallHierarchy':
+						return prepareCallHierarchy(language, target[p]);
+					case 'provideCallHierarchyIncomingCalls':
+						return provideCallHierarchyIncomingCalls(language, target[p]);
+					case 'provideCallHierarchyOutgoingCalls':
+						return provideCallHierarchyOutgoingCalls(language, target[p]);
+					case 'organizeImports':
+						return organizeImports(language, target[p]);
+					case 'getQuickInfoAtPosition':
+						return getQuickInfoAtPosition(language, target[p]);
+					case 'getSignatureHelpItems':
+						return getSignatureHelpItems(language, target[p]);
+					case 'getDocumentHighlights':
+						return getDocumentHighlights(language, target[p]);
+					case 'getApplicableRefactors':
+						return getApplicableRefactors(language, target[p]);
+					case 'getEditsForRefactor':
+						return getEditsForRefactor(language, target[p]);
+					case 'getCombinedCodeFix':
+						return getCombinedCodeFix(language, target[p]);
+					case 'getRenameInfo':
+						return getRenameInfo(language, target[p]);
+					case 'getCodeFixesAtPosition':
+						return getCodeFixesAtPosition(language, target[p]);
+					case 'getEncodedSemanticClassifications':
+						return getEncodedSemanticClassifications(language, target[p]);
+					case 'getSyntacticDiagnostics':
+						return getSyntacticDiagnostics(language, languageService, target[p]);
+					case 'getSemanticDiagnostics':
+						return getSemanticDiagnostics(language, languageService, target[p]);
+					case 'getSuggestionDiagnostics':
+						return getSuggestionDiagnostics(language, languageService, target[p]);
+					case 'getDefinitionAndBoundSpan':
+						return getDefinitionAndBoundSpan(language, target[p]);
+					case 'findReferences':
+						return findReferences(language, target[p]);
+					case 'getDefinitionAtPosition':
+						return getDefinitionAtPosition(language, target[p]);
+					case 'getTypeDefinitionAtPosition':
+						return getTypeDefinitionAtPosition(language, target[p]);
+					case 'getImplementationAtPosition':
+						return getImplementationAtPosition(language, target[p]);
+					case 'findRenameLocations':
+						return findRenameLocations(language, target[p]);
+					case 'getReferencesAtPosition':
+						return getReferencesAtPosition(language, target[p]);
+					case 'getCompletionsAtPosition':
+						return getCompletionsAtPosition(language, target[p]);
+					case 'getCompletionEntryDetails':
+						return getCompletionEntryDetails(language, target[p]);
+					case 'provideInlayHints':
+						return provideInlayHints(language, target[p]);
+					case 'getFileReferences':
+						return getFileReferences(language, target[p]);
+					case 'getNavigateToItems':
+						return getNavigateToItems(language, target[p]);
 				}
 			};
 		},
@@ -120,7 +155,10 @@ export function createProxyLanguageService(languageService: ts.LanguageService) 
 
 // ignored methods
 
-function getNavigationTree(language: Language<string>, getNavigationTree: ts.LanguageService['getNavigationTree']): ts.LanguageService['getNavigationTree'] {
+function getNavigationTree(
+	language: Language<string>,
+	getNavigationTree: ts.LanguageService['getNavigationTree'],
+): ts.LanguageService['getNavigationTree'] {
 	return filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript] = getServiceScript(language, fileName);
@@ -134,7 +172,10 @@ function getNavigationTree(language: Language<string>, getNavigationTree: ts.Lan
 		}
 	};
 }
-function getOutliningSpans(language: Language<string>, getOutliningSpans: ts.LanguageService['getOutliningSpans']): ts.LanguageService['getOutliningSpans'] {
+function getOutliningSpans(
+	language: Language<string>,
+	getOutliningSpans: ts.LanguageService['getOutliningSpans'],
+): ts.LanguageService['getOutliningSpans'] {
 	return filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript] = getServiceScript(language, fileName);
@@ -149,7 +190,10 @@ function getOutliningSpans(language: Language<string>, getOutliningSpans: ts.Lan
 
 // proxy methods
 
-function getFormattingEditsForDocument(language: Language<string>, getFormattingEditsForDocument: ts.LanguageService['getFormattingEditsForDocument']): ts.LanguageService['getFormattingEditsForDocument'] {
+function getFormattingEditsForDocument(
+	language: Language<string>,
+	getFormattingEditsForDocument: ts.LanguageService['getFormattingEditsForDocument'],
+): ts.LanguageService['getFormattingEditsForDocument'] {
 	return (filePath, options) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -171,7 +215,10 @@ function getFormattingEditsForDocument(language: Language<string>, getFormatting
 		}
 	};
 }
-function getFormattingEditsForRange(language: Language<string>, getFormattingEditsForRange: ts.LanguageService['getFormattingEditsForRange']): ts.LanguageService['getFormattingEditsForRange'] {
+function getFormattingEditsForRange(
+	language: Language<string>,
+	getFormattingEditsForRange: ts.LanguageService['getFormattingEditsForRange'],
+): ts.LanguageService['getFormattingEditsForRange'] {
 	return (filePath, start, end, options) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -183,7 +230,9 @@ function getFormattingEditsForRange(language: Language<string>, getFormattingEdi
 			if (generatedRange !== undefined) {
 				const edits = getFormattingEditsForRange(targetScript.id, generatedRange[0], generatedRange[1], options);
 				return edits
-					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1])
+					.map(edit =>
+						transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1]
+					)
 					.filter(edit => !!edit);
 			}
 			return [];
@@ -193,7 +242,10 @@ function getFormattingEditsForRange(language: Language<string>, getFormattingEdi
 		}
 	};
 }
-function getFormattingEditsAfterKeystroke(language: Language<string>, getFormattingEditsAfterKeystroke: ts.LanguageService['getFormattingEditsAfterKeystroke']): ts.LanguageService['getFormattingEditsAfterKeystroke'] {
+function getFormattingEditsAfterKeystroke(
+	language: Language<string>,
+	getFormattingEditsAfterKeystroke: ts.LanguageService['getFormattingEditsAfterKeystroke'],
+): ts.LanguageService['getFormattingEditsAfterKeystroke'] {
 	return (filePath, position, key, options) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -205,7 +257,9 @@ function getFormattingEditsAfterKeystroke(language: Language<string>, getFormatt
 			if (generatePosition !== undefined) {
 				const edits = getFormattingEditsAfterKeystroke(targetScript.id, generatePosition, key, options);
 				return edits
-					.map(edit => transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1])
+					.map(edit =>
+						transformTextChange(sourceScript, language, serviceScript, edit, false, isFormattingEnabled)?.[1]
+					)
 					.filter(edit => !!edit);
 			}
 			return [];
@@ -215,13 +269,19 @@ function getFormattingEditsAfterKeystroke(language: Language<string>, getFormatt
 		}
 	};
 }
-function getEditsForFileRename(language: Language<string>, getEditsForFileRename: ts.LanguageService['getEditsForFileRename']): ts.LanguageService['getEditsForFileRename'] {
+function getEditsForFileRename(
+	language: Language<string>,
+	getEditsForFileRename: ts.LanguageService['getEditsForFileRename'],
+): ts.LanguageService['getEditsForFileRename'] {
 	return (oldFilePath, newFilePath, formatOptions, preferences) => {
 		const edits = getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences);
 		return transformFileTextChanges(language, edits, false, isRenameEnabled);
 	};
 }
-function getLinkedEditingRangeAtPosition(language: Language<string>, getLinkedEditingRangeAtPosition: ts.LanguageService['getLinkedEditingRangeAtPosition']): ts.LanguageService['getLinkedEditingRangeAtPosition'] {
+function getLinkedEditingRangeAtPosition(
+	language: Language<string>,
+	getLinkedEditingRangeAtPosition: ts.LanguageService['getLinkedEditingRangeAtPosition'],
+): ts.LanguageService['getLinkedEditingRangeAtPosition'] {
 	return (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -229,13 +289,21 @@ function getLinkedEditingRangeAtPosition(language: Language<string>, getLinkedEd
 			return undefined;
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isLinkedEditingEnabled);
+			const generatePosition = toGeneratedOffset(
+				language,
+				serviceScript,
+				sourceScript,
+				position,
+				isLinkedEditingEnabled,
+			);
 			if (generatePosition !== undefined) {
 				const info = getLinkedEditingRangeAtPosition(targetScript.id, generatePosition);
 				if (info) {
 					return {
 						ranges: info.ranges
-							.map(span => transformTextSpan(sourceScript, language, serviceScript, span, false, isLinkedEditingEnabled)?.[1])
+							.map(span =>
+								transformTextSpan(sourceScript, language, serviceScript, span, false, isLinkedEditingEnabled)?.[1]
+							)
 							.filter(span => !!span),
 						wordPattern: info.wordPattern,
 					};
@@ -247,7 +315,10 @@ function getLinkedEditingRangeAtPosition(language: Language<string>, getLinkedEd
 		}
 	};
 }
-function prepareCallHierarchy(language: Language<string>, prepareCallHierarchy: ts.LanguageService['prepareCallHierarchy']): ts.LanguageService['prepareCallHierarchy'] {
+function prepareCallHierarchy(
+	language: Language<string>,
+	prepareCallHierarchy: ts.LanguageService['prepareCallHierarchy'],
+): ts.LanguageService['prepareCallHierarchy'] {
 	return (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -255,7 +326,13 @@ function prepareCallHierarchy(language: Language<string>, prepareCallHierarchy: 
 			return undefined;
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isCallHierarchyEnabled);
+			const generatePosition = toGeneratedOffset(
+				language,
+				serviceScript,
+				sourceScript,
+				position,
+				isCallHierarchyEnabled,
+			);
 			if (generatePosition !== undefined) {
 				const item = prepareCallHierarchy(targetScript.id, generatePosition);
 				if (Array.isArray(item)) {
@@ -271,7 +348,10 @@ function prepareCallHierarchy(language: Language<string>, prepareCallHierarchy: 
 		}
 	};
 }
-function provideCallHierarchyIncomingCalls(language: Language<string>, provideCallHierarchyIncomingCalls: ts.LanguageService['provideCallHierarchyIncomingCalls']): ts.LanguageService['provideCallHierarchyIncomingCalls'] {
+function provideCallHierarchyIncomingCalls(
+	language: Language<string>,
+	provideCallHierarchyIncomingCalls: ts.LanguageService['provideCallHierarchyIncomingCalls'],
+): ts.LanguageService['provideCallHierarchyIncomingCalls'] {
 	return (filePath, position) => {
 		let calls: ts.CallHierarchyIncomingCall[] = [];
 		const fileName = filePath.replace(windowsPathReg, '/');
@@ -280,7 +360,13 @@ function provideCallHierarchyIncomingCalls(language: Language<string>, provideCa
 			return [];
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isCallHierarchyEnabled);
+			const generatePosition = toGeneratedOffset(
+				language,
+				serviceScript,
+				sourceScript,
+				position,
+				isCallHierarchyEnabled,
+			);
 			if (generatePosition !== undefined) {
 				calls = provideCallHierarchyIncomingCalls(targetScript.id, generatePosition);
 			}
@@ -301,7 +387,10 @@ function provideCallHierarchyIncomingCalls(language: Language<string>, provideCa
 			});
 	};
 }
-function provideCallHierarchyOutgoingCalls(language: Language<string>, provideCallHierarchyOutgoingCalls: ts.LanguageService['provideCallHierarchyOutgoingCalls']): ts.LanguageService['provideCallHierarchyOutgoingCalls'] {
+function provideCallHierarchyOutgoingCalls(
+	language: Language<string>,
+	provideCallHierarchyOutgoingCalls: ts.LanguageService['provideCallHierarchyOutgoingCalls'],
+): ts.LanguageService['provideCallHierarchyOutgoingCalls'] {
 	return (filePath, position) => {
 		let calls: ts.CallHierarchyOutgoingCall[] = [];
 		const fileName = filePath.replace(windowsPathReg, '/');
@@ -310,7 +399,13 @@ function provideCallHierarchyOutgoingCalls(language: Language<string>, provideCa
 			return [];
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isCallHierarchyEnabled);
+			const generatePosition = toGeneratedOffset(
+				language,
+				serviceScript,
+				sourceScript,
+				position,
+				isCallHierarchyEnabled,
+			);
 			if (generatePosition !== undefined) {
 				calls = provideCallHierarchyOutgoingCalls(targetScript.id, generatePosition);
 			}
@@ -322,9 +417,10 @@ function provideCallHierarchyOutgoingCalls(language: Language<string>, provideCa
 			.map(call => {
 				const to = transformCallHierarchyItem(language, call.to, true, isCallHierarchyEnabled);
 				const fromSpans = call.fromSpans
-					.map(span => serviceScript
-						? transformTextSpan(sourceScript, language, serviceScript, span, true, isCallHierarchyEnabled)?.[1]
-						: span
+					.map(span =>
+						serviceScript
+							? transformTextSpan(sourceScript, language, serviceScript, span, true, isCallHierarchyEnabled)?.[1]
+							: span
 					)
 					.filter(span => !!span);
 				return {
@@ -334,13 +430,19 @@ function provideCallHierarchyOutgoingCalls(language: Language<string>, provideCa
 			});
 	};
 }
-function organizeImports(language: Language<string>, organizeImports: ts.LanguageService['organizeImports']): ts.LanguageService['organizeImports'] {
+function organizeImports(
+	language: Language<string>,
+	organizeImports: ts.LanguageService['organizeImports'],
+): ts.LanguageService['organizeImports'] {
 	return (args, formatOptions, preferences) => {
 		const unresolved = organizeImports(args, formatOptions, preferences);
 		return transformFileTextChanges(language, unresolved, false, isCodeActionsEnabled);
 	};
 }
-function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPosition: ts.LanguageService['getQuickInfoAtPosition']): ts.LanguageService['getQuickInfoAtPosition'] {
+function getQuickInfoAtPosition(
+	language: Language<string>,
+	getQuickInfoAtPosition: ts.LanguageService['getQuickInfoAtPosition'],
+): ts.LanguageService['getQuickInfoAtPosition'] {
 	/**
 	 * Using `...args` for pass through rest params (including internal `verbosityLevel` param).
 	 * https://github.com/microsoft/TypeScript/blob/dd830711041b7b0cfd3da7937755996b1e1b1c7e/src/services/types.ts#L588
@@ -353,10 +455,13 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 		}
 		if (serviceScript) {
 			const infos: ts.QuickInfo[] = [];
-			for (const [generatePosition] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isHoverEnabled)) {
+			for (
+				const [generatePosition] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isHoverEnabled)
+			) {
 				const info = getQuickInfoAtPosition(targetScript.id, generatePosition, ...args);
 				if (info) {
-					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, true, isHoverEnabled)?.[1];
+					const textSpan = transformTextSpan(sourceScript, language, serviceScript, info.textSpan, true, isHoverEnabled)
+						?.[1];
 					if (textSpan) {
 						infos.push({
 							...info,
@@ -409,7 +514,10 @@ function getQuickInfoAtPosition(language: Language<string>, getQuickInfoAtPositi
 		}
 	};
 }
-function getSignatureHelpItems(language: Language<string>, getSignatureHelpItems: ts.LanguageService['getSignatureHelpItems']): ts.LanguageService['getSignatureHelpItems'] {
+function getSignatureHelpItems(
+	language: Language<string>,
+	getSignatureHelpItems: ts.LanguageService['getSignatureHelpItems'],
+): ts.LanguageService['getSignatureHelpItems'] {
 	return (filePath, position, options) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -417,11 +525,24 @@ function getSignatureHelpItems(language: Language<string>, getSignatureHelpItems
 			return undefined;
 		}
 		if (serviceScript) {
-			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isSignatureHelpEnabled);
+			const generatePosition = toGeneratedOffset(
+				language,
+				serviceScript,
+				sourceScript,
+				position,
+				isSignatureHelpEnabled,
+			);
 			if (generatePosition !== undefined) {
 				const result = getSignatureHelpItems(targetScript.id, generatePosition, options);
 				if (result) {
-					const applicableSpan = transformTextSpan(sourceScript, language, serviceScript, result.applicableSpan, true, isSignatureHelpEnabled)?.[1];
+					const applicableSpan = transformTextSpan(
+						sourceScript,
+						language,
+						serviceScript,
+						result.applicableSpan,
+						true,
+						isSignatureHelpEnabled,
+					)?.[1];
 					if (applicableSpan) {
 						return {
 							...result,
@@ -436,7 +557,10 @@ function getSignatureHelpItems(language: Language<string>, getSignatureHelpItems
 		}
 	};
 }
-function getDocumentHighlights(language: Language<string>, getDocumentHighlights: ts.LanguageService['getDocumentHighlights']): ts.LanguageService['getDocumentHighlights'] {
+function getDocumentHighlights(
+	language: Language<string>,
+	getDocumentHighlights: ts.LanguageService['getDocumentHighlights'],
+): ts.LanguageService['getDocumentHighlights'] {
 	return (filePath, position, filesToSearch) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = linkedCodeFeatureWorker(
@@ -445,13 +569,13 @@ function getDocumentHighlights(language: Language<string>, getDocumentHighlights
 			position,
 			isHighlightEnabled,
 			(fileName, position) => getDocumentHighlights(fileName, position, filesToSearch),
-			function* (result) {
+			function*(result) {
 				for (const ref of result) {
 					for (const reference of ref.highlightSpans) {
 						yield [reference.fileName ?? ref.fileName, reference.textSpan.start];
 					}
 				}
-			}
+			},
 		);
 		const resolved = unresolved
 			.flat()
@@ -460,11 +584,19 @@ function getDocumentHighlights(language: Language<string>, getDocumentHighlights
 					...highlights,
 					highlightSpans: highlights.highlightSpans
 						.map(span => {
-							const { textSpan } = transformSpan(language, span.fileName ?? highlights.fileName, span.textSpan, false, isHighlightEnabled) ?? {};
+							const { textSpan } =
+								transformSpan(language, span.fileName ?? highlights.fileName, span.textSpan, false, isHighlightEnabled)
+									?? {};
 							if (textSpan) {
 								return {
 									...span,
-									contextSpan: transformSpan(language, span.fileName ?? highlights.fileName, span.contextSpan, false, isHighlightEnabled)?.textSpan,
+									contextSpan: transformSpan(
+										language,
+										span.fileName ?? highlights.fileName,
+										span.contextSpan,
+										false,
+										isHighlightEnabled,
+									)?.textSpan,
 									textSpan,
 								};
 							}
@@ -475,7 +607,10 @@ function getDocumentHighlights(language: Language<string>, getDocumentHighlights
 		return resolved;
 	};
 }
-function getApplicableRefactors(language: Language<string>, getApplicableRefactors: ts.LanguageService['getApplicableRefactors']): ts.LanguageService['getApplicableRefactors'] {
+function getApplicableRefactors(
+	language: Language<string>,
+	getApplicableRefactors: ts.LanguageService['getApplicableRefactors'],
+): ts.LanguageService['getApplicableRefactors'] {
 	return (filePath, positionOrRange, preferences, triggerReason, kind, includeInteractiveActions) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -484,25 +619,72 @@ function getApplicableRefactors(language: Language<string>, getApplicableRefacto
 		}
 		if (serviceScript) {
 			if (typeof positionOrRange === 'number') {
-				const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, positionOrRange, isCodeActionsEnabled);
+				const generatePosition = toGeneratedOffset(
+					language,
+					serviceScript,
+					sourceScript,
+					positionOrRange,
+					isCodeActionsEnabled,
+				);
 				if (generatePosition !== undefined) {
-					return getApplicableRefactors(targetScript.id, generatePosition, preferences, triggerReason, kind, includeInteractiveActions);
+					return getApplicableRefactors(
+						targetScript.id,
+						generatePosition,
+						preferences,
+						triggerReason,
+						kind,
+						includeInteractiveActions,
+					);
 				}
 			}
 			else {
-				for (const [generatedStart, generatedEnd] of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange.pos, positionOrRange.end, isCodeActionsEnabled)) {
-					return getApplicableRefactors(targetScript.id, { pos: generatedStart, end: generatedEnd }, preferences, triggerReason, kind, includeInteractiveActions);
+				for (
+					const [generatedStart, generatedEnd] of toGeneratedRanges(
+						language,
+						serviceScript,
+						sourceScript,
+						positionOrRange.pos,
+						positionOrRange.end,
+						isCodeActionsEnabled,
+					)
+				) {
+					return getApplicableRefactors(
+						targetScript.id,
+						{ pos: generatedStart, end: generatedEnd },
+						preferences,
+						triggerReason,
+						kind,
+						includeInteractiveActions,
+					);
 				}
 			}
 			return [];
 		}
 		else {
-			return getApplicableRefactors(fileName, positionOrRange, preferences, triggerReason, kind, includeInteractiveActions);
+			return getApplicableRefactors(
+				fileName,
+				positionOrRange,
+				preferences,
+				triggerReason,
+				kind,
+				includeInteractiveActions,
+			);
 		}
 	};
 }
-function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts.LanguageService['getEditsForRefactor']): ts.LanguageService['getEditsForRefactor'] {
-	return (filePath, formatOptions, positionOrRange, refactorName, actionName, preferences, interactiveRefactorArguments) => {
+function getEditsForRefactor(
+	language: Language<string>,
+	getEditsForRefactor: ts.LanguageService['getEditsForRefactor'],
+): ts.LanguageService['getEditsForRefactor'] {
+	return (
+		filePath,
+		formatOptions,
+		positionOrRange,
+		refactorName,
+		actionName,
+		preferences,
+		interactiveRefactorArguments,
+	) => {
 		let edits: ts.RefactorEditInfo | undefined;
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -511,19 +693,58 @@ function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts
 		}
 		if (serviceScript) {
 			if (typeof positionOrRange === 'number') {
-				const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, positionOrRange, isCodeActionsEnabled);
+				const generatePosition = toGeneratedOffset(
+					language,
+					serviceScript,
+					sourceScript,
+					positionOrRange,
+					isCodeActionsEnabled,
+				);
 				if (generatePosition !== undefined) {
-					edits = getEditsForRefactor(targetScript.id, formatOptions, generatePosition, refactorName, actionName, preferences, interactiveRefactorArguments);
+					edits = getEditsForRefactor(
+						targetScript.id,
+						formatOptions,
+						generatePosition,
+						refactorName,
+						actionName,
+						preferences,
+						interactiveRefactorArguments,
+					);
 				}
 			}
 			else {
-				for (const [generatedStart, generatedEnd] of toGeneratedRanges(language, serviceScript, sourceScript, positionOrRange.pos, positionOrRange.end, isCodeActionsEnabled)) {
-					edits = getEditsForRefactor(targetScript.id, formatOptions, { pos: generatedStart, end: generatedEnd }, refactorName, actionName, preferences, interactiveRefactorArguments);
+				for (
+					const [generatedStart, generatedEnd] of toGeneratedRanges(
+						language,
+						serviceScript,
+						sourceScript,
+						positionOrRange.pos,
+						positionOrRange.end,
+						isCodeActionsEnabled,
+					)
+				) {
+					edits = getEditsForRefactor(
+						targetScript.id,
+						formatOptions,
+						{ pos: generatedStart, end: generatedEnd },
+						refactorName,
+						actionName,
+						preferences,
+						interactiveRefactorArguments,
+					);
 				}
 			}
 		}
 		else {
-			edits = getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences, interactiveRefactorArguments);
+			edits = getEditsForRefactor(
+				fileName,
+				formatOptions,
+				positionOrRange,
+				refactorName,
+				actionName,
+				preferences,
+				interactiveRefactorArguments,
+			);
 		}
 		if (edits) {
 			edits.edits = transformFileTextChanges(language, edits.edits, false, isCodeActionsEnabled);
@@ -531,29 +752,44 @@ function getEditsForRefactor(language: Language<string>, getEditsForRefactor: ts
 		}
 	};
 }
-function getCombinedCodeFix(language: Language<string>, getCombinedCodeFix: ts.LanguageService['getCombinedCodeFix']): ts.LanguageService['getCombinedCodeFix'] {
+function getCombinedCodeFix(
+	language: Language<string>,
+	getCombinedCodeFix: ts.LanguageService['getCombinedCodeFix'],
+): ts.LanguageService['getCombinedCodeFix'] {
 	return (...args) => {
 		const codeActions = getCombinedCodeFix(...args);
 		codeActions.changes = transformFileTextChanges(language, codeActions.changes, false, isCodeActionsEnabled);
 		return codeActions;
 	};
 }
-function getRenameInfo(language: Language<string>, getRenameInfo: ts.LanguageService['getRenameInfo']): ts.LanguageService['getRenameInfo'] {
+function getRenameInfo(
+	language: Language<string>,
+	getRenameInfo: ts.LanguageService['getRenameInfo'],
+): ts.LanguageService['getRenameInfo'] {
 	return (filePath, position, options) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return {
 				canRename: false,
-				localizedErrorMessage: "Cannot rename"
+				localizedErrorMessage: 'Cannot rename',
 			};
 		}
 		if (serviceScript) {
 			let failed: ts.RenameInfoFailure | undefined;
-			for (const [generateOffset] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isRenameEnabled)) {
+			for (
+				const [generateOffset] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isRenameEnabled)
+			) {
 				const info = getRenameInfo(targetScript.id, generateOffset, options);
 				if (info.canRename) {
-					const span = transformTextSpan(sourceScript, language, serviceScript, info.triggerSpan, false, isRenameEnabled)?.[1];
+					const span = transformTextSpan(
+						sourceScript,
+						language,
+						serviceScript,
+						info.triggerSpan,
+						false,
+						isRenameEnabled,
+					)?.[1];
 					if (span) {
 						info.triggerSpan = span;
 						return info;
@@ -576,7 +812,10 @@ function getRenameInfo(language: Language<string>, getRenameInfo: ts.LanguageSer
 		}
 	};
 }
-function getCodeFixesAtPosition(language: Language<string>, getCodeFixesAtPosition: ts.LanguageService['getCodeFixesAtPosition']): ts.LanguageService['getCodeFixesAtPosition'] {
+function getCodeFixesAtPosition(
+	language: Language<string>,
+	getCodeFixesAtPosition: ts.LanguageService['getCodeFixesAtPosition'],
+): ts.LanguageService['getCodeFixesAtPosition'] {
 	return (filePath, start, end, errorCodes, formatOptions, preferences) => {
 		let fixes: readonly ts.CodeFixAction[] = [];
 		const fileName = filePath.replace(windowsPathReg, '/');
@@ -593,7 +832,7 @@ function getCodeFixesAtPosition(language: Language<string>, getCodeFixesAtPositi
 					generateRange[1],
 					errorCodes,
 					formatOptions,
-					preferences
+					preferences,
 				);
 			}
 		}
@@ -607,14 +846,17 @@ function getCodeFixesAtPosition(language: Language<string>, getCodeFixesAtPositi
 		return fixes;
 	};
 }
-function getEncodedSemanticClassifications(language: Language<string>, getEncodedSemanticClassifications: ts.LanguageService['getEncodedSemanticClassifications']): ts.LanguageService['getEncodedSemanticClassifications'] {
+function getEncodedSemanticClassifications(
+	language: Language<string>,
+	getEncodedSemanticClassifications: ts.LanguageService['getEncodedSemanticClassifications'],
+): ts.LanguageService['getEncodedSemanticClassifications'] {
 	return (filePath, span, format) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
 		if (targetScript?.associatedOnly) {
 			return {
 				spans: [],
-				endOfLineState: 0
+				endOfLineState: 0,
 			};
 		}
 		if (serviceScript) {
@@ -623,7 +865,7 @@ function getEncodedSemanticClassifications(language: Language<string>, getEncode
 			if (!mapped) {
 				return {
 					spans: [],
-					endOfLineState: 0
+					endOfLineState: 0,
 				};
 			}
 			const mappingOffset = getMappingOffset(language, serviceScript);
@@ -632,11 +874,21 @@ function getEncodedSemanticClassifications(language: Language<string>, getEncode
 			const result = getEncodedSemanticClassifications(targetScript.id, { start, length: end - start }, format);
 			const spans: number[] = [];
 			for (let i = 0; i < result.spans.length; i += 3) {
-				for (const [_, sourceStart, sourceEnd] of toSourceRanges(sourceScript, language, serviceScript, result.spans[i], result.spans[i] + result.spans[i + 1], false, isSemanticTokensEnabled)) {
+				for (
+					const [_, sourceStart, sourceEnd] of toSourceRanges(
+						sourceScript,
+						language,
+						serviceScript,
+						result.spans[i],
+						result.spans[i] + result.spans[i + 1],
+						false,
+						isSemanticTokensEnabled,
+					)
+				) {
 					spans.push(
 						sourceStart,
 						sourceEnd - sourceStart,
-						result.spans[i + 2]
+						result.spans[i + 2],
 					);
 					break;
 				}
@@ -649,7 +901,11 @@ function getEncodedSemanticClassifications(language: Language<string>, getEncode
 		}
 	};
 }
-function getSyntacticDiagnostics(language: Language<string>, languageService: ts.LanguageService, getSyntacticDiagnostics: ts.LanguageService['getSyntacticDiagnostics']): ts.LanguageService['getSyntacticDiagnostics'] {
+function getSyntacticDiagnostics(
+	language: Language<string>,
+	languageService: ts.LanguageService,
+	getSyntacticDiagnostics: ts.LanguageService['getSyntacticDiagnostics'],
+): ts.LanguageService['getSyntacticDiagnostics'] {
 	return filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -662,7 +918,11 @@ function getSyntacticDiagnostics(language: Language<string>, languageService: ts
 			.filter(d => !serviceScript || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 }
-function getSemanticDiagnostics(language: Language<string>, languageService: ts.LanguageService, getSemanticDiagnostics: ts.LanguageService['getSemanticDiagnostics']): ts.LanguageService['getSemanticDiagnostics'] {
+function getSemanticDiagnostics(
+	language: Language<string>,
+	languageService: ts.LanguageService,
+	getSemanticDiagnostics: ts.LanguageService['getSemanticDiagnostics'],
+): ts.LanguageService['getSemanticDiagnostics'] {
 	return filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -675,7 +935,11 @@ function getSemanticDiagnostics(language: Language<string>, languageService: ts.
 			.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 }
-function getSuggestionDiagnostics(language: Language<string>, languageService: ts.LanguageService, getSuggestionDiagnostics: ts.LanguageService['getSuggestionDiagnostics']): ts.LanguageService['getSuggestionDiagnostics'] {
+function getSuggestionDiagnostics(
+	language: Language<string>,
+	languageService: ts.LanguageService,
+	getSuggestionDiagnostics: ts.LanguageService['getSuggestionDiagnostics'],
+): ts.LanguageService['getSuggestionDiagnostics'] {
 	return filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -688,7 +952,10 @@ function getSuggestionDiagnostics(language: Language<string>, languageService: t
 			.filter(d => !serviceScript || !d.file || language.scripts.get(d.file.fileName) === sourceScript);
 	};
 }
-function getDefinitionAndBoundSpan(language: Language<string>, getDefinitionAndBoundSpan: ts.LanguageService['getDefinitionAndBoundSpan']): ts.LanguageService['getDefinitionAndBoundSpan'] {
+function getDefinitionAndBoundSpan(
+	language: Language<string>,
+	getDefinitionAndBoundSpan: ts.LanguageService['getDefinitionAndBoundSpan'],
+): ts.LanguageService['getDefinitionAndBoundSpan'] {
 	return (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = linkedCodeFeatureWorker(
@@ -697,11 +964,11 @@ function getDefinitionAndBoundSpan(language: Language<string>, getDefinitionAndB
 			position,
 			isDefinitionEnabled,
 			(fileName, position) => getDefinitionAndBoundSpan(fileName, position),
-			function* (result) {
+			function*(result) {
 				for (const ref of result.definitions ?? []) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			}
+			},
 		);
 		const textSpan = unresolved
 			.map(s => transformSpan(language, fileName, s.textSpan, true, isDefinitionEnabled)?.textSpan)
@@ -710,10 +977,11 @@ function getDefinitionAndBoundSpan(language: Language<string>, getDefinitionAndB
 			return;
 		}
 		const definitions = unresolved
-			.map(s => s.definitions
-				?.map(s => transformDocumentSpan(language, s, true, isDefinitionEnabled, s.fileName !== fileName))
-				.filter(s => !!s)
-				?? []
+			.map(s =>
+				s.definitions
+					?.map(s => transformDocumentSpan(language, s, true, isDefinitionEnabled, s.fileName !== fileName))
+					.filter(s => !!s)
+					?? []
 			)
 			.flat();
 		return {
@@ -722,7 +990,10 @@ function getDefinitionAndBoundSpan(language: Language<string>, getDefinitionAndB
 		};
 	};
 }
-function findReferences(language: Language<string>, findReferences: ts.LanguageService['findReferences']): ts.LanguageService['findReferences'] {
+function findReferences(
+	language: Language<string>,
+	findReferences: ts.LanguageService['findReferences'],
+): ts.LanguageService['findReferences'] {
 	return (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = linkedCodeFeatureWorker(
@@ -731,13 +1002,13 @@ function findReferences(language: Language<string>, findReferences: ts.LanguageS
 			position,
 			isReferencesEnabled,
 			(fileName, position) => findReferences(fileName, position),
-			function* (result) {
+			function*(result) {
 				for (const ref of result) {
 					for (const reference of ref.references) {
 						yield [reference.fileName, reference.textSpan.start];
 					}
 				}
-			}
+			},
 		);
 		const resolved: ts.ReferencedSymbol[] = unresolved
 			.flat()
@@ -753,7 +1024,10 @@ function findReferences(language: Language<string>, findReferences: ts.LanguageS
 		return resolved;
 	};
 }
-function getDefinitionAtPosition(language: Language<string>, getDefinitionAtPosition: ts.LanguageService['getDefinitionAtPosition']): ts.LanguageService['getDefinitionAtPosition'] {
+function getDefinitionAtPosition(
+	language: Language<string>,
+	getDefinitionAtPosition: ts.LanguageService['getDefinitionAtPosition'],
+): ts.LanguageService['getDefinitionAtPosition'] {
 	return (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = linkedCodeFeatureWorker(
@@ -762,11 +1036,11 @@ function getDefinitionAtPosition(language: Language<string>, getDefinitionAtPosi
 			position,
 			isDefinitionEnabled,
 			(fileName, position) => getDefinitionAtPosition(fileName, position),
-			function* (result) {
+			function*(result) {
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			}
+			},
 		);
 		const resolved = unresolved
 			.flat()
@@ -775,7 +1049,10 @@ function getDefinitionAtPosition(language: Language<string>, getDefinitionAtPosi
 		return dedupeDocumentSpans(resolved);
 	};
 }
-function getTypeDefinitionAtPosition(language: Language<string>, getTypeDefinitionAtPosition: ts.LanguageService['getTypeDefinitionAtPosition']): ts.LanguageService['getTypeDefinitionAtPosition'] {
+function getTypeDefinitionAtPosition(
+	language: Language<string>,
+	getTypeDefinitionAtPosition: ts.LanguageService['getTypeDefinitionAtPosition'],
+): ts.LanguageService['getTypeDefinitionAtPosition'] {
 	return (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = linkedCodeFeatureWorker(
@@ -784,11 +1061,11 @@ function getTypeDefinitionAtPosition(language: Language<string>, getTypeDefiniti
 			position,
 			isTypeDefinitionEnabled,
 			(fileName, position) => getTypeDefinitionAtPosition(fileName, position),
-			function* (result) {
+			function*(result) {
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			}
+			},
 		);
 		const resolved = unresolved
 			.flat()
@@ -797,7 +1074,10 @@ function getTypeDefinitionAtPosition(language: Language<string>, getTypeDefiniti
 		return dedupeDocumentSpans(resolved);
 	};
 }
-function getImplementationAtPosition(language: Language<string>, getImplementationAtPosition: ts.LanguageService['getImplementationAtPosition']): ts.LanguageService['getImplementationAtPosition'] {
+function getImplementationAtPosition(
+	language: Language<string>,
+	getImplementationAtPosition: ts.LanguageService['getImplementationAtPosition'],
+): ts.LanguageService['getImplementationAtPosition'] {
 	return (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = linkedCodeFeatureWorker(
@@ -806,11 +1086,11 @@ function getImplementationAtPosition(language: Language<string>, getImplementati
 			position,
 			isImplementationEnabled,
 			(fileName, position) => getImplementationAtPosition(fileName, position),
-			function* (result) {
+			function*(result) {
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			}
+			},
 		);
 		const resolved = unresolved
 			.flat()
@@ -819,7 +1099,10 @@ function getImplementationAtPosition(language: Language<string>, getImplementati
 		return dedupeDocumentSpans(resolved);
 	};
 }
-function findRenameLocations(language: Language<string>, findRenameLocations: ts.LanguageService['findRenameLocations']): ts.LanguageService['findRenameLocations'] {
+function findRenameLocations(
+	language: Language<string>,
+	findRenameLocations: ts.LanguageService['findRenameLocations'],
+): ts.LanguageService['findRenameLocations'] {
 	return (filePath, position, findInStrings, findInComments, preferences) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = linkedCodeFeatureWorker(
@@ -827,12 +1110,13 @@ function findRenameLocations(language: Language<string>, findRenameLocations: ts
 			fileName,
 			position,
 			isRenameEnabled,
-			(fileName, position) => findRenameLocations(fileName, position, findInStrings, findInComments, preferences as ts.UserPreferences),
-			function* (result) {
+			(fileName, position) =>
+				findRenameLocations(fileName, position, findInStrings, findInComments, preferences as ts.UserPreferences),
+			function*(result) {
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			}
+			},
 		);
 		const resolved = unresolved
 			.flat()
@@ -841,7 +1125,10 @@ function findRenameLocations(language: Language<string>, findRenameLocations: ts
 		return dedupeDocumentSpans(resolved);
 	};
 }
-function getReferencesAtPosition(language: Language<string>, getReferencesAtPosition: ts.LanguageService['getReferencesAtPosition']): ts.LanguageService['getReferencesAtPosition'] {
+function getReferencesAtPosition(
+	language: Language<string>,
+	getReferencesAtPosition: ts.LanguageService['getReferencesAtPosition'],
+): ts.LanguageService['getReferencesAtPosition'] {
 	return (filePath, position) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = linkedCodeFeatureWorker(
@@ -850,11 +1137,11 @@ function getReferencesAtPosition(language: Language<string>, getReferencesAtPosi
 			position,
 			isReferencesEnabled,
 			(fileName, position) => getReferencesAtPosition(fileName, position),
-			function* (result) {
+			function*(result) {
 				for (const ref of result) {
 					yield [ref.fileName, ref.textSpan.start];
 				}
-			}
+			},
 		);
 		const resolved = unresolved
 			.flat()
@@ -863,7 +1150,10 @@ function getReferencesAtPosition(language: Language<string>, getReferencesAtPosi
 		return dedupeDocumentSpans(resolved);
 	};
 }
-function getCompletionsAtPosition(language: Language<string>, getCompletionsAtPosition: ts.LanguageService['getCompletionsAtPosition']): ts.LanguageService['getCompletionsAtPosition'] {
+function getCompletionsAtPosition(
+	language: Language<string>,
+	getCompletionsAtPosition: ts.LanguageService['getCompletionsAtPosition'],
+): ts.LanguageService['getCompletionsAtPosition'] {
 	return (filePath, position, options, formattingSettings) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -874,7 +1164,15 @@ function getCompletionsAtPosition(language: Language<string>, getCompletionsAtPo
 			let mainResult: ts.CompletionInfo | undefined;
 			const additionalResults: ts.CompletionInfo[] = [];
 
-			for (const [generatedOffset, mapping] of toGeneratedOffsets(language, serviceScript, sourceScript, position, isCompletionEnabled)) {
+			for (
+				const [generatedOffset, mapping] of toGeneratedOffsets(
+					language,
+					serviceScript,
+					sourceScript,
+					position,
+					isCompletionEnabled,
+				)
+			) {
 				const isAdditional = typeof mapping.data.completion === 'object' && mapping.data.completion.isAdditional;
 				if (!isAdditional && mainResult?.entries.length) {
 					continue;
@@ -887,10 +1185,25 @@ function getCompletionsAtPosition(language: Language<string>, getCompletionsAtPo
 					result.entries = result.entries.filter(entry => !!entry.sourceDisplay);
 				}
 				for (const entry of result.entries) {
-					entry.replacementSpan = entry.replacementSpan && transformTextSpan(sourceScript, language, serviceScript, entry.replacementSpan, false, isCompletionEnabled)?.[1];
+					entry.replacementSpan = entry.replacementSpan
+						&& transformTextSpan(
+							sourceScript,
+							language,
+							serviceScript,
+							entry.replacementSpan,
+							false,
+							isCompletionEnabled,
+						)?.[1];
 				}
 				result.optionalReplacementSpan = result.optionalReplacementSpan
-					&& transformTextSpan(sourceScript, language, serviceScript, result.optionalReplacementSpan, false, isCompletionEnabled)?.[1];
+					&& transformTextSpan(
+						sourceScript,
+						language,
+						serviceScript,
+						result.optionalReplacementSpan,
+						false,
+						isCompletionEnabled,
+					)?.[1];
 				if (isAdditional) {
 					additionalResults.push(result);
 				}
@@ -916,9 +1229,11 @@ function getCompletionsAtPosition(language: Language<string>, getCompletionsAtPo
 		}
 	};
 }
-function getCompletionEntryDetails(language: Language<string>, getCompletionEntryDetails: ts.LanguageService['getCompletionEntryDetails']): ts.LanguageService['getCompletionEntryDetails'] {
+function getCompletionEntryDetails(
+	language: Language<string>,
+	getCompletionEntryDetails: ts.LanguageService['getCompletionEntryDetails'],
+): ts.LanguageService['getCompletionEntryDetails'] {
 	return (filePath, position, entryName, formatOptions, source, preferences, data) => {
-
 		let details: ts.CompletionEntryDetails | undefined;
 
 		const fileName = filePath.replace(windowsPathReg, '/');
@@ -929,7 +1244,15 @@ function getCompletionEntryDetails(language: Language<string>, getCompletionEntr
 		if (serviceScript) {
 			const generatePosition = toGeneratedOffset(language, serviceScript, sourceScript, position, isCompletionEnabled);
 			if (generatePosition !== undefined) {
-				details = getCompletionEntryDetails(targetScript.id, generatePosition, entryName, formatOptions, source, preferences, data);
+				details = getCompletionEntryDetails(
+					targetScript.id,
+					generatePosition,
+					entryName,
+					formatOptions,
+					source,
+					preferences,
+					data,
+				);
 			}
 		}
 		else {
@@ -945,7 +1268,10 @@ function getCompletionEntryDetails(language: Language<string>, getCompletionEntr
 		return details;
 	};
 }
-function provideInlayHints(language: Language<string>, provideInlayHints: ts.LanguageService['provideInlayHints']): ts.LanguageService['provideInlayHints'] {
+function provideInlayHints(
+	language: Language<string>,
+	provideInlayHints: ts.LanguageService['provideInlayHints'],
+): ts.LanguageService['provideInlayHints'] {
 	return (filePath, span, preferences) => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const [serviceScript, targetScript, sourceScript] = getServiceScript(language, fileName);
@@ -964,7 +1290,13 @@ function provideInlayHints(language: Language<string>, provideInlayHints: ts.Lan
 			const result = provideInlayHints(targetScript.id, { start, length: end - start }, preferences);
 			const hints: ts.InlayHint[] = [];
 			for (const hint of result) {
-				const sourcePosition = toSourceOffset(sourceScript, language, serviceScript, hint.position, isInlayHintsEnabled);
+				const sourcePosition = toSourceOffset(
+					sourceScript,
+					language,
+					serviceScript,
+					hint.position,
+					isInlayHintsEnabled,
+				);
 				if (sourcePosition !== undefined) {
 					hints.push({
 						...hint,
@@ -979,7 +1311,10 @@ function provideInlayHints(language: Language<string>, provideInlayHints: ts.Lan
 		}
 	};
 }
-function getFileReferences(language: Language<string>, getFileReferences: ts.LanguageService['getFileReferences']): ts.LanguageService['getFileReferences'] {
+function getFileReferences(
+	language: Language<string>,
+	getFileReferences: ts.LanguageService['getFileReferences'],
+): ts.LanguageService['getFileReferences'] {
 	return filePath => {
 		const fileName = filePath.replace(windowsPathReg, '/');
 		const unresolved = getFileReferences(fileName);
@@ -989,7 +1324,10 @@ function getFileReferences(language: Language<string>, getFileReferences: ts.Lan
 		return dedupeDocumentSpans(resolved);
 	};
 }
-function getNavigateToItems(language: Language<string>, getNavigateToItems: ts.LanguageService['getNavigateToItems']): ts.LanguageService['getNavigateToItems'] {
+function getNavigateToItems(
+	language: Language<string>,
+	getNavigateToItems: ts.LanguageService['getNavigateToItems'],
+): ts.LanguageService['getNavigateToItems'] {
 	return (...args) => {
 		const unresolved = getNavigateToItems(...args);
 		const resolved = unresolved
@@ -1005,7 +1343,7 @@ function linkedCodeFeatureWorker<T>(
 	position: number,
 	filter: (data: CodeInformation) => boolean,
 	worker: (fileName: string, position: number) => T | undefined,
-	getLinkedCodes: (result: T) => Generator<[fileName: string, position: number]>
+	getLinkedCodes: (result: T) => Generator<[fileName: string, position: number]>,
 ) {
 	const results: T[] = [];
 	const processedFilePositions = new Set<string>();
@@ -1032,7 +1370,6 @@ function linkedCodeFeatureWorker<T>(
 		}
 		results.push(result);
 		for (const ref of getLinkedCodes(result)) {
-
 			processedFilePositions.add(ref[0] + ':' + ref[1]);
 
 			const [serviceScript] = getServiceScript(language, ref[0]);
@@ -1059,4 +1396,3 @@ function displayPartsToString(displayParts: ts.SymbolDisplayPart[] | undefined) 
 	}
 	return '';
 }
-

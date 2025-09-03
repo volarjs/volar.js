@@ -6,14 +6,17 @@ import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWo
 import { transformWorkspaceEdit } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
-
-	return (uri: URI, position: vscode.Position, dataTransfer: Map<string, DataTransferItem>, token = NoneCancellationToken) => {
-
+	return (
+		uri: URI,
+		position: vscode.Position,
+		dataTransfer: Map<string, DataTransferItem>,
+		token = NoneCancellationToken,
+	) => {
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => position,
-			function* (docs) {
+			function*(docs) {
 				for (const mappedPosition of getGeneratedPositions(docs, position)) {
 					yield mappedPosition;
 				}
@@ -29,11 +32,11 @@ export function register(context: LanguageServiceContext) {
 					edit.additionalEdit = transformWorkspaceEdit(
 						edit.additionalEdit,
 						context,
-						undefined
+						undefined,
 					);
 				}
 				return edit;
-			}
+			},
 		);
 	};
 }

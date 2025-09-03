@@ -1,6 +1,11 @@
 import type * as ts from 'typescript';
 import { createProxyLanguageService } from '../node/proxyLanguageService';
-import { createLanguageCommon, isHasAlreadyDecoratedLanguageService, makeGetExternalFiles, projectExternalFileExtensions } from './languageServicePluginCommon';
+import {
+	createLanguageCommon,
+	isHasAlreadyDecoratedLanguageService,
+	makeGetExternalFiles,
+	projectExternalFileExtensions,
+} from './languageServicePluginCommon';
 import type { createPluginCallbackSync } from './languageServicePluginCommon';
 
 /**
@@ -10,7 +15,7 @@ import type { createPluginCallbackSync } from './languageServicePluginCommon';
  * more information.
  */
 export function createLanguageServicePlugin(
-	createPluginCallback: createPluginCallbackSync
+	createPluginCallback: createPluginCallbackSync,
 ): ts.server.PluginModuleFactory {
 	return modules => {
 		const { typescript: ts } = modules;

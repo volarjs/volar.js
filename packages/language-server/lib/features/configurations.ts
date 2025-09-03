@@ -47,6 +47,7 @@ export function register(server: LanguageServerState) {
 	}
 
 	async function getConfigurationWorker(section: string, scopeUri?: string) {
-		return (await server.connection.workspace.getConfiguration({ scopeUri, section })) ?? undefined /* replace null to undefined */;
+		return (await server.connection.workspace.getConfiguration({ scopeUri, section }))
+			?? undefined /* replace null to undefined */;
 	}
 }

@@ -1,6 +1,6 @@
 // WARNING: The script `configurePrerelease.ts` uses a regexp to parse out these values.
 // If changing the text in this section, be sure to test `configurePrerelease` too.
-export const versionMajorMinor = "4.9";
+export const versionMajorMinor = '4.9';
 // The following is baselined as a literal template type without intervention
 /** The version of the TypeScript compiler release */
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
@@ -16,11 +16,11 @@ export interface MapLike<T> {
 }
 
 export interface SortedReadonlyArray<T> extends ReadonlyArray<T> {
-	" __sortedArrayBrand": any;
+	' __sortedArrayBrand': any;
 }
 
 export interface SortedArray<T> extends Array<T> {
-	" __sortedArrayBrand": any;
+	' __sortedArrayBrand': any;
 }
 
 /** Common read methods for ES6 Map/Set. */
@@ -64,7 +64,7 @@ export interface Map<T> extends ESMap<string, T> {
 /* @internal */
 export interface MapConstructor {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	new <K, V>(iterable?: readonly (readonly [K, V])[] | ReadonlyESMap<K, V>): ESMap<K, V>;
+	new<K, V>(iterable?: readonly (readonly [K, V])[] | ReadonlyESMap<K, V>): ESMap<K, V>;
 }
 
 /** ES6 Set interface, only read methods included. */
@@ -84,18 +84,18 @@ export interface Set<T> extends ReadonlySet<T>, Collection<T> {
 /* @internal */
 export interface SetConstructor {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	new <T>(iterable?: readonly T[] | ReadonlySet<T>): Set<T>;
+	new<T>(iterable?: readonly T[] | ReadonlySet<T>): Set<T>;
 }
 
 /** ES6 Iterator type. */
 export interface Iterator<T> {
-	next(): { value: T, done?: false; } | { value: void, done: true; };
+	next(): { value: T; done?: false } | { value: void; done: true };
 }
 
 /** Array that is only intended to be pushed to, never read. */
 export interface Push<T> {
 	push(...values: T[]): void;
-        /* @internal*/ readonly length: number;
+	/* @internal*/ readonly length: number;
 }
 
 /* @internal */
@@ -108,18 +108,22 @@ export type Comparer<T> = (a: T, b: T) => Comparison;
 export const enum Comparison {
 	LessThan = -1,
 	EqualTo = 0,
-	GreaterThan = 1
+	GreaterThan = 1,
 }
 
 /* @internal */
 namespace NativeCollections {
 	declare const self: any;
 
-	const globals = typeof globalThis !== "undefined" ? globalThis :
+	const globals = typeof globalThis !== 'undefined'
+		? globalThis
 		// @ts-ignore node global
-		typeof global !== "undefined" ? global :
-			typeof self !== "undefined" ? self :
-				undefined;
+		: typeof global !== 'undefined'
+		// @ts-ignore node global
+		? global
+		: typeof self !== 'undefined'
+		? self
+		: undefined;
 
 	/**
 	 * Returns the native Map implementation if it is available and compatible (i.e. supports iteration).
@@ -128,9 +132,11 @@ namespace NativeCollections {
 		// Internet Explorer's Map doesn't support iteration, so don't use it.
 		const gMap = globals?.Map;
 		// eslint-disable-next-line local/no-in-operator
-		const constructor = typeof gMap !== "undefined" && "entries" in gMap.prototype && new gMap([[0, 0]]).size === 1 ? gMap : undefined;
+		const constructor = typeof gMap !== 'undefined' && 'entries' in gMap.prototype && new gMap([[0, 0]]).size === 1
+			? gMap
+			: undefined;
 		if (!constructor) {
-			throw new Error("No compatible Map implementation found.");
+			throw new Error('No compatible Map implementation found.');
 		}
 		return constructor;
 	}
@@ -142,9 +148,11 @@ namespace NativeCollections {
 		// Internet Explorer's Set doesn't support iteration, so don't use it.
 		const gSet = globals?.Set;
 		// eslint-disable-next-line local/no-in-operator
-		const constructor = typeof gSet !== "undefined" && "entries" in gSet.prototype && new gSet([0]).size === 1 ? gSet : undefined;
+		const constructor = typeof gSet !== 'undefined' && 'entries' in gSet.prototype && new gSet([0]).size === 1
+			? gSet
+			: undefined;
 		if (!constructor) {
-			throw new Error("No compatible Set implementation found.");
+			throw new Error('No compatible Set implementation found.');
 		}
 		return constructor;
 	}

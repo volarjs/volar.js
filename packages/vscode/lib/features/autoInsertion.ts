@@ -1,10 +1,9 @@
 import type { ExperimentalFeatures } from '@volar/language-server';
-import { AutoInsertRequest } from '../../protocol.js';
 import * as vscode from 'vscode';
 import type { BaseLanguageClient, ServerCapabilities } from 'vscode-languageclient';
+import { AutoInsertRequest } from '../../protocol.js';
 
 export function activate(selector: vscode.DocumentSelector, client: BaseLanguageClient) {
-
 	let isEnabled = false;
 	let timeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -31,7 +30,10 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 	}
 
 	function onDidChangeTextDocument({ document, contentChanges, reason }: vscode.TextDocumentChangeEvent) {
-		if (!isEnabled || contentChanges.length === 0 || reason === vscode.TextDocumentChangeReason.Undo || reason === vscode.TextDocumentChangeReason.Redo) {
+		if (
+			!isEnabled || contentChanges.length === 0 || reason === vscode.TextDocumentChangeReason.Undo
+			|| reason === vscode.TextDocumentChangeReason.Redo
+		) {
 			return;
 		}
 		const activeDocument = vscode.window.activeTextEditor?.document;
@@ -93,8 +95,8 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 				lastChange.range.start,
 				document.positionAt(
 					document.offsetAt(lastChange.range.start)
-					+ lastChange.text.length
-				)
+						+ lastChange.text.length,
+				),
 			);
 			const selection = activeEditor.selections.find(selection => newTextRange.contains(selection.active))?.active;
 			if (!selection) {

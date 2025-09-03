@@ -1,5 +1,4 @@
 export class FileMap<T> extends Map<string, T> {
-
 	private originalFileNames = new Map<string, string>();
 
 	constructor(private caseSensitive: boolean) {

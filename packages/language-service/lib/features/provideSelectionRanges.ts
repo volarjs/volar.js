@@ -8,14 +8,12 @@ import { getGeneratedPositions, getSourceRange, languageFeatureWorker } from '..
 import { transformSelectionRanges } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, positions: vscode.Position[], token = NoneCancellationToken) => {
-
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => positions,
-			function* (docs) {
+			function*(docs) {
 				const result = positions
 					.map(position => {
 						for (const mappedPosition of getGeneratedPositions(docs, position, isSelectionRangesEnabled)) {
@@ -28,14 +26,18 @@ export function register(context: LanguageServiceContext) {
 				}
 			},
 			async (plugin, document, positions) => {
-
 				if (token.isCancellationRequested) {
 					return;
 				}
 
 				const selectionRanges = await plugin[1].provideSelectionRanges?.(document, positions, token);
 				if (selectionRanges && selectionRanges.length !== positions.length) {
-					console.error('Selection ranges count should be equal to positions count:', plugin[0].name, selectionRanges.length, positions.length);
+					console.error(
+						'Selection ranges count should be equal to positions count:',
+						plugin[0].name,
+						selectionRanges.length,
+						positions.length,
+					);
 					return;
 				}
 
@@ -47,7 +49,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return transformSelectionRanges(
 					data,
-					range => getSourceRange(docs, range, isSelectionRangesEnabled)
+					range => getSourceRange(docs, range, isSelectionRangesEnabled),
 				);
 			},
 			results => {
@@ -69,7 +71,10 @@ export function register(context: LanguageServiceContext) {
 					for (let j = 1; j < pluginResults.length; j++) {
 						let top = pluginResults[j - 1];
 						const parent = pluginResults[j];
-						while (top.parent && isInsideRange(parent.range, top.parent.range) && !isEqualRange(parent.range, top.parent.range)) {
+						while (
+							top.parent && isInsideRange(parent.range, top.parent.range)
+							&& !isEqualRange(parent.range, top.parent.range)
+						) {
 							top = top.parent;
 						}
 						if (top) {
@@ -79,7 +84,7 @@ export function register(context: LanguageServiceContext) {
 					result.push(pluginResults[0]);
 				}
 				return result;
-			}
+			},
 		);
 	};
 }

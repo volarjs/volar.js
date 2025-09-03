@@ -1,6 +1,12 @@
 let warned = false;
 
-export function translateOffset(start: number, fromOffsets: number[], toOffsets: number[], fromLengths: number[], toLengths: number[] = fromLengths): number | undefined {
+export function translateOffset(
+	start: number,
+	fromOffsets: number[],
+	toOffsets: number[],
+	fromLengths: number[],
+	toLengths: number[] = fromLengths,
+): number | undefined {
 	const isSorted = fromOffsets.every((value, index) => index === 0 || fromOffsets[index - 1] <= value);
 	if (!isSorted) {
 		for (let i = 0; i < fromOffsets.length; i++) {
@@ -32,9 +38,11 @@ export function translateOffset(start: number, fromOffsets: number[], toOffsets:
 			const toOffset = toOffsets[mid];
 			let rangeOffset = Math.min(start - fromOffset, toLength);
 			return toOffset + rangeOffset;
-		} else if (start < fromOffset) {
+		}
+		else if (start < fromOffset) {
 			high = mid - 1;
-		} else {
+		}
+		else {
 			low = mid + 1;
 		}
 	}

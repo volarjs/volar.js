@@ -7,9 +7,7 @@ import { transformWorkspaceEdit } from '../utils/transform';
 import type * as _ from 'vscode-languageserver-protocol';
 
 export function register(context: LanguageServiceContext) {
-
 	return async (oldUri: URI, newUri: URI, token = NoneCancellationToken) => {
-
 		for (const plugin of context.plugins) {
 			if (context.disabledServicePlugins.has(plugin[1])) {
 				continue;
@@ -26,11 +24,10 @@ export function register(context: LanguageServiceContext) {
 			const workspaceEdit = await plugin[1].provideFileRenameEdits(oldUri, newUri, token);
 
 			if (workspaceEdit) {
-
 				const result = transformWorkspaceEdit(
 					workspaceEdit,
 					context,
-					'fileName'
+					'fileName',
 				);
 
 				if (result?.documentChanges) {

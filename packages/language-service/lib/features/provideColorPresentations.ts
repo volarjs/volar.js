@@ -6,14 +6,12 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedRanges, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, color: vscode.Color, range: vscode.Range, token = NoneCancellationToken) => {
-
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => range,
-			function* (docs) {
+			function*(docs) {
 				for (const mappedRange of getGeneratedRanges(docs, range, isColorEnabled)) {
 					yield mappedRange;
 				}
@@ -49,7 +47,7 @@ export function register(context: LanguageServiceContext) {
 						return colorPresentation;
 					})
 					.filter(colorPresentation => !!colorPresentation);
-			}
+			},
 		);
 	};
 }

@@ -1,4 +1,9 @@
-import { isDefinitionEnabled, isImplementationEnabled, isTypeDefinitionEnabled, type Language } from '@volar/language-core';
+import {
+	isDefinitionEnabled,
+	isImplementationEnabled,
+	isTypeDefinitionEnabled,
+	type Language,
+} from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -23,9 +28,9 @@ import * as fileRename from './features/provideFileRenameEdits';
 import * as foldingRanges from './features/provideFoldingRanges';
 import * as hover from './features/provideHover';
 import * as inlayHints from './features/provideInlayHints';
-import * as moniker from './features/provideMoniker';
 import * as inlineValue from './features/provideInlineValue';
 import * as linkedEditing from './features/provideLinkedEditingRanges';
+import * as moniker from './features/provideMoniker';
 import * as references from './features/provideReferences';
 import * as rename from './features/provideRenameEdits';
 import * as renamePrepare from './features/provideRenameRange';
@@ -39,9 +44,14 @@ import * as completionResolve from './features/resolveCompletionItem';
 import * as documentLinkResolve from './features/resolveDocumentLink';
 import * as inlayHintResolve from './features/resolveInlayHint';
 import * as workspaceSymbolResolve from './features/resolveWorkspaceSymbol';
-import type { LanguageServiceContext, LanguageServiceEnvironment, LanguageServicePlugin, ProjectContext } from './types';
+import type {
+	LanguageServiceContext,
+	LanguageServiceEnvironment,
+	LanguageServicePlugin,
+	ProjectContext,
+} from './types';
 import { NoneCancellationToken } from './utils/cancellation';
-import { type UriMap, createUriMap } from './utils/uriMap';
+import { createUriMap, type UriMap } from './utils/uriMap';
 
 export type LanguageService = ReturnType<typeof createLanguageServiceBase>;
 
@@ -51,7 +61,7 @@ export function createLanguageService(
 	language: Language<URI>,
 	plugins: LanguageServicePlugin[],
 	env: LanguageServiceEnvironment,
-	project: ProjectContext
+	project: ProjectContext,
 ) {
 	const documentVersions = createUriMap<number>();
 	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, UriMap<TextDocument>>();
@@ -68,12 +78,15 @@ export function createLanguageService(
 				if (!map.has(uri)) {
 					const version = documentVersions.get(uri) ?? 0;
 					documentVersions.set(uri, version + 1);
-					map.set(uri, TextDocument.create(
-						uri.toString(),
-						languageId,
-						version,
-						snapshot.getText(0, snapshot.getLength())
-					));
+					map.set(
+						uri,
+						TextDocument.create(
+							uri.toString(),
+							languageId,
+							version,
+							snapshot.getText(0, snapshot.getLength()),
+						),
+					);
 				}
 				return map.get(uri)!;
 			},
@@ -182,9 +195,10 @@ export function encodeEmbeddedDocumentUri(documentUri: URI, embeddedContentId: s
 
 function createLanguageServiceBase(
 	plugins: LanguageServicePlugin[],
-	context: LanguageServiceContext
+	context: LanguageServiceContext,
 ) {
-	const tokenModifiers = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat();
+	const tokenModifiers = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? [])
+		.flat();
 	const tokenTypes = plugins.map(plugin => plugin.capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat();
 	return {
 		semanticTokenLegend: {
@@ -193,9 +207,15 @@ function createLanguageServiceBase(
 		},
 		commands: plugins.map(plugin => plugin.capabilities.executeCommandProvider?.commands ?? []).flat(),
 		triggerCharacters: plugins.map(plugin => plugin.capabilities.completionProvider?.triggerCharacters ?? []).flat(),
-		autoFormatTriggerCharacters: plugins.map(plugin => plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat(),
-		signatureHelpTriggerCharacters: plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat(),
-		signatureHelpRetriggerCharacters: plugins.map(plugin => plugin.capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat(),
+		autoFormatTriggerCharacters: plugins.map(plugin =>
+			plugin.capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []
+		).flat(),
+		signatureHelpTriggerCharacters: plugins.map(plugin =>
+			plugin.capabilities.signatureHelpProvider?.triggerCharacters ?? []
+		).flat(),
+		signatureHelpRetriggerCharacters: plugins.map(plugin =>
+			plugin.capabilities.signatureHelpProvider?.retriggerCharacters ?? []
+		).flat(),
 
 		executeCommand(command: string, args: any[], token = NoneCancellationToken) {
 			for (const plugin of context.plugins) {

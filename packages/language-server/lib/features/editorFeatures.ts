@@ -20,7 +20,7 @@ export function register(server: LanguageServerState) {
 
 		server.connection.onRequest(GetMatchTsConfigRequest.type, async params => {
 			const uri = URI.parse(params.uri);
-			const languageService = (await project.getLanguageService(uri));
+			const languageService = await project.getLanguageService(uri);
 			const tsProject = languageService.context.project.typescript;
 			if (tsProject?.configFileName) {
 				const { configFileName, uriConverter } = tsProject;
@@ -29,7 +29,7 @@ export function register(server: LanguageServerState) {
 		});
 		server.connection.onRequest(GetVirtualFileRequest.type, async document => {
 			const uri = URI.parse(document.uri);
-			const languageService = (await project.getLanguageService(uri));
+			const languageService = await project.getLanguageService(uri);
 			const documentUri = URI.parse(document.uri);
 			const sourceScript = languageService.context.language.scripts.get(documentUri);
 			if (sourceScript?.generated) {
@@ -56,7 +56,7 @@ export function register(server: LanguageServerState) {
 		});
 		server.connection.onRequest(GetVirtualCodeRequest.type, async params => {
 			const uri = URI.parse(params.fileUri);
-			const languageService = (await project.getLanguageService(uri));
+			const languageService = await project.getLanguageService(uri);
 			const sourceScript = languageService.context.language.scripts.get(URI.parse(params.fileUri));
 			const virtualCode = sourceScript?.generated?.embeddedCodes.get(params.virtualCodeId);
 			if (virtualCode) {
@@ -73,7 +73,10 @@ export function register(server: LanguageServerState) {
 		server.connection.onNotification(UpdateVirtualCodeStateNotification.type, async params => {
 			const uri = URI.parse(params.fileUri);
 			const languageService = await project.getLanguageService(uri);
-			const virtualFileUri = languageService.context.encodeEmbeddedDocumentUri(URI.parse(params.fileUri), params.virtualCodeId);
+			const virtualFileUri = languageService.context.encodeEmbeddedDocumentUri(
+				URI.parse(params.fileUri),
+				params.virtualCodeId,
+			);
 			if (params.disabled) {
 				languageService.context.disabledEmbeddedDocumentUris.set(virtualFileUri, true);
 			}

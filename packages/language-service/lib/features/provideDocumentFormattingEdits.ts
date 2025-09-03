@@ -1,4 +1,10 @@
-import { type SourceScript, type VirtualCode, findOverlapCodeRange, forEachEmbeddedCode, isFormattingEnabled } from '@volar/language-core';
+import {
+	findOverlapCodeRange,
+	forEachEmbeddedCode,
+	isFormattingEnabled,
+	type SourceScript,
+	type VirtualCode,
+} from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -8,16 +14,15 @@ import { stringToSnapshot } from '../utils/common';
 import { type DocumentsAndMap, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
 	return async (
 		uri: URI,
 		options: vscode.FormattingOptions,
 		range: vscode.Range | undefined,
 		onTypeParams: {
-			ch: string,
-			position: vscode.Position,
+			ch: string;
+			position: vscode.Position;
 		} | undefined,
-		token = NoneCancellationToken
+		token = NoneCancellationToken,
 	) => {
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
@@ -33,11 +38,12 @@ export function register(context: LanguageServiceContext) {
 
 		if (!sourceScript.generated) {
 			return onTypeParams
-				? (await tryFormat(document, document, sourceScript, undefined, 0, onTypeParams.position, onTypeParams.ch))?.edits
+				? (await tryFormat(document, document, sourceScript, undefined, 0, onTypeParams.position, onTypeParams.ch))
+					?.edits
 				: (await tryFormat(document, document, sourceScript, undefined, 0, range, undefined))?.edits;
 		}
 
-		const embeddedRanges = new Map<string, { start: number, end: number; }>(); // TODO: Formatting of upper-level virtual code may cause offset of lower-level selection range
+		const embeddedRanges = new Map<string, { start: number; end: number }>(); // TODO: Formatting of upper-level virtual code may cause offset of lower-level selection range
 		const startOffset = document.offsetAt(range.start);
 		const endOffset = document.offsetAt(range.end);
 
@@ -50,7 +56,11 @@ export function register(context: LanguageServiceContext) {
 						embeddedRange.start = 0;
 					}
 					const lastMapping = map.mappings[map.mappings.length - 1];
-					if (embeddedRange.end === lastMapping.generatedOffsets[lastMapping.generatedOffsets.length - 1] + (lastMapping.generatedLengths ?? lastMapping.lengths)[lastMapping.lengths.length - 1]) {
+					if (
+						embeddedRange.end
+							=== lastMapping.generatedOffsets[lastMapping.generatedOffsets.length - 1]
+								+ (lastMapping.generatedLengths ?? lastMapping.lengths)[lastMapping.lengths.length - 1]
+					) {
 						embeddedRange.end = code.snapshot.getLength();
 					}
 					embeddedRanges.set(code.id, embeddedRange);
@@ -62,19 +72,26 @@ export function register(context: LanguageServiceContext) {
 			const originalDocument = document;
 
 			let tempSourceSnapshot = sourceScript.snapshot;
-			let tempVirtualFile = context.language.scripts.set(URI.parse(sourceScript.id.toString() + '.tmp'), sourceScript.snapshot, sourceScript.languageId, [sourceScript.generated.languagePlugin])?.generated?.root;
+			let tempVirtualFile = context.language.scripts.set(
+				URI.parse(sourceScript.id.toString() + '.tmp'),
+				sourceScript.snapshot,
+				sourceScript.languageId,
+				[sourceScript.generated.languagePlugin],
+			)?.generated?.root;
 			if (!tempVirtualFile) {
 				return;
 			}
 
 			let currentCodes: VirtualCode[] = [];
 
-			for (let depth = 0; (currentCodes = getNestedEmbeddedFiles(context, sourceScript.id, tempVirtualFile, depth)).length > 0; depth++) {
-
+			for (
+				let depth = 0;
+				(currentCodes = getNestedEmbeddedFiles(context, sourceScript.id, tempVirtualFile, depth)).length > 0;
+				depth++
+			) {
 				let edits: vscode.TextEdit[] = [];
 
 				for (const code of currentCodes) {
-
 					if (!code.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
 						continue;
 					}
@@ -100,7 +117,7 @@ export function register(context: LanguageServiceContext) {
 						context.documents.get(
 							context.encodeEmbeddedDocumentUri(uri, code.id),
 							code.languageId,
-							code.snapshot
+							code.snapshot,
 						),
 						context.language.mapperFactory(code.mappings),
 					];
@@ -116,7 +133,7 @@ export function register(context: LanguageServiceContext) {
 								code,
 								depth,
 								embeddedPosition,
-								onTypeParams.ch
+								onTypeParams.ch,
 							);
 							break;
 						}
@@ -131,7 +148,7 @@ export function register(context: LanguageServiceContext) {
 							{
 								start: docs[1].positionAt(currentRange.start),
 								end: docs[1].positionAt(currentRange.end),
-							}
+							},
 						);
 					}
 
@@ -154,7 +171,12 @@ export function register(context: LanguageServiceContext) {
 					const newText = TextDocument.applyEdits(document, edits);
 					document = TextDocument.create(document.uri, document.languageId, document.version + 1, newText);
 					tempSourceSnapshot = stringToSnapshot(newText);
-					tempVirtualFile = context.language.scripts.set(URI.parse(sourceScript.id.toString() + '.tmp'), tempSourceSnapshot, sourceScript.languageId, [sourceScript.generated.languagePlugin])?.generated?.root;
+					tempVirtualFile = context.language.scripts.set(
+						URI.parse(sourceScript.id.toString() + '.tmp'),
+						tempSourceSnapshot,
+						sourceScript.languageId,
+						[sourceScript.generated.languagePlugin],
+					)?.generated?.root;
 					if (!tempVirtualFile) {
 						break;
 					}
@@ -175,7 +197,8 @@ export function register(context: LanguageServiceContext) {
 			};
 
 			return [textEdit];
-		} finally {
+		}
+		finally {
 			context.language.scripts.delete(URI.parse(sourceScript.id.toString() + '.tmp'));
 		}
 
@@ -186,9 +209,8 @@ export function register(context: LanguageServiceContext) {
 			virtualCode: VirtualCode | undefined,
 			embeddedLevel: number,
 			rangeOrPosition: vscode.Range | vscode.Position,
-			ch?: string
+			ch?: string,
 		) {
-
 			if (context.disabledEmbeddedDocumentUris.get(URI.parse(document.uri))) {
 				return;
 			}
@@ -212,14 +234,16 @@ export function register(context: LanguageServiceContext) {
 					codeOptions.initialIndentLevel = computeInitialIndent(
 						sourceDocument.getText(),
 						sourceDocument.offsetAt({ line: startPosition.line, character: 0 }),
-						options
+						options,
 					);
 				}
 				for (const plugin of context.plugins) {
 					if (context.disabledServicePlugins.has(plugin[1])) {
 						continue;
 					}
-					codeOptions = await plugin[1].resolveEmbeddedCodeFormattingOptions?.(sourceScript, virtualCode, codeOptions, token) ?? codeOptions;
+					codeOptions =
+						await plugin[1].resolveEmbeddedCodeFormattingOptions?.(sourceScript, virtualCode, codeOptions, token)
+							?? codeOptions;
 				}
 			}
 
@@ -237,11 +261,24 @@ export function register(context: LanguageServiceContext) {
 				try {
 					if (ch !== undefined && rangeOrPosition && 'line' in rangeOrPosition && 'character' in rangeOrPosition) {
 						if (plugin[0].capabilities.documentOnTypeFormattingProvider?.triggerCharacters?.includes(ch)) {
-							edits = await plugin[1].provideOnTypeFormattingEdits?.(document, rangeOrPosition, ch, options, codeOptions, token);
+							edits = await plugin[1].provideOnTypeFormattingEdits?.(
+								document,
+								rangeOrPosition,
+								ch,
+								options,
+								codeOptions,
+								token,
+							);
 						}
 					}
 					else if (ch === undefined && rangeOrPosition && 'start' in rangeOrPosition && 'end' in rangeOrPosition) {
-						edits = await plugin[1].provideDocumentFormattingEdits?.(document, rangeOrPosition, options, codeOptions, token);
+						edits = await plugin[1].provideDocumentFormattingEdits?.(
+							document,
+							rangeOrPosition,
+							options,
+							codeOptions,
+							token,
+						);
 					}
 				}
 				catch (err) {
@@ -288,9 +325,11 @@ function computeInitialIndent(content: string, i: number, options: vscode.Format
 		const ch = content.charAt(i);
 		if (ch === ' ') {
 			nChars++;
-		} else if (ch === '\t') {
+		}
+		else if (ch === '\t') {
 			nChars += tabSize;
-		} else {
+		}
+		else {
 			break;
 		}
 		i++;

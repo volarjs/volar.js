@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 
-export function quickPick<T extends { [K: string]: vscode.QuickPickItem | undefined; }>(groups: T | T[], placeholder?: string) {
+export function quickPick<T extends { [K: string]: vscode.QuickPickItem | undefined }>(
+	groups: T | T[],
+	placeholder?: string,
+) {
 	return new Promise<keyof T | undefined>(resolve => {
 		const quickPick = vscode.window.createQuickPick();
 		const items: vscode.QuickPickItem[] = [];

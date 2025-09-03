@@ -1,4 +1,11 @@
-import { FileType, type Language, type LanguagePlugin, type ProjectContext, type ProviderResult, createUriMap } from '@volar/language-service';
+import {
+	createUriMap,
+	FileType,
+	type Language,
+	type LanguagePlugin,
+	type ProjectContext,
+	type ProviderResult,
+} from '@volar/language-service';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import * as vscode from 'vscode-languageserver';
@@ -6,7 +13,7 @@ import { URI } from 'vscode-uri';
 import type { LanguageServer, LanguageServerProject } from '../types';
 import { getInferredCompilerOptions } from './inferredCompilerOptions';
 import { createLanguageServiceEnvironment } from './simpleProject';
-import { type ProjectExposeContext, createTypeScriptLS, type TypeScriptProjectLS } from './typescriptProjectLs';
+import { createTypeScriptLS, type ProjectExposeContext, type TypeScriptProjectLS } from './typescriptProjectLs';
 
 const rootTsConfigNames = ['tsconfig.json', 'jsconfig.json'];
 
@@ -19,7 +26,7 @@ export function createTypeScriptProject(
 			language: Language;
 			project: ProjectContext;
 		}): void;
-	}>
+	}>,
 ): LanguageServerProject {
 	let server: LanguageServer;
 	let uriConverter: ReturnType<typeof createUriConverter>;
@@ -34,7 +41,9 @@ export function createTypeScriptProject(
 			uriConverter = createUriConverter(_server.workspaceFolders.all);
 			server = _server;
 			server.fileWatcher.onDidChangeWatchedFiles(({ changes }) => {
-				const tsConfigChanges = changes.filter(change => rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1)));
+				const tsConfigChanges = changes.filter(change =>
+					rootTsConfigNames.includes(change.uri.substring(change.uri.lastIndexOf('/') + 1))
+				);
 
 				for (const change of tsConfigChanges) {
 					const changeUri = URI.parse(change.uri);
@@ -42,7 +51,10 @@ export function createTypeScriptProject(
 					if (change.type === vscode.FileChangeType.Created) {
 						rootTsConfigs.add(changeFileName);
 					}
-					else if ((change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Deleted) && configProjects.has(changeUri)) {
+					else if (
+						(change.type === vscode.FileChangeType.Changed || change.type === vscode.FileChangeType.Deleted)
+						&& configProjects.has(changeUri)
+					) {
 						if (change.type === vscode.FileChangeType.Deleted) {
 							rootTsConfigs.delete(changeFileName);
 						}
@@ -73,10 +85,12 @@ export function createTypeScriptProject(
 			return projects.map(project => project.languageService);
 		},
 		reload() {
-			for (const project of [
-				...configProjects.values() ?? [],
-				...inferredProjects.values() ?? [],
-			]) {
+			for (
+				const project of [
+					...configProjects.values() ?? [],
+					...inferredProjects.values() ?? [],
+				]
+			) {
 				project.then(p => p.dispose());
 			}
 			configProjects.clear();
@@ -85,7 +99,6 @@ export function createTypeScriptProject(
 	};
 
 	async function findMatchTSConfig(server: LanguageServer, uri: URI) {
-
 		const fileName = uriConverter.asFileName(uri);
 
 		let dir = path.dirname(fileName);
@@ -109,7 +122,6 @@ export function createTypeScriptProject(
 		return await findDirectIncludeTsconfig() ?? await findIndirectReferenceTsconfig();
 
 		async function prepareClosestootCommandLine() {
-
 			let matches: string[] = [];
 
 			for (const rootTsConfig of rootTsConfigs) {
@@ -128,7 +140,9 @@ export function createTypeScriptProject(
 			return findTSConfig(async tsconfig => {
 				const tsconfigUri = uriConverter.asUri(tsconfig);
 				const project = await configProjects.get(tsconfigUri);
-				const languageService: ts.LanguageService | undefined = project?.languageService.context.inject('typescript/languageService');
+				const languageService: ts.LanguageService | undefined = project?.languageService.context.inject(
+					'typescript/languageService',
+				);
 				return !!languageService?.getProgram()?.getSourceFile(fileName);
 			});
 		}
@@ -144,14 +158,12 @@ export function createTypeScriptProject(
 			});
 		}
 		async function findTSConfig(match: (tsconfig: string) => Promise<boolean> | boolean) {
-
 			const checked = new Set<string>();
 
 			for (const rootTsConfig of [...rootTsConfigs].sort((a, b) => sortTSConfigs(fileName, a, b))) {
 				const tsconfigUri = uriConverter.asUri(rootTsConfig);
 				const project = await configProjects.get(tsconfigUri);
 				if (project) {
-
 					let chains = await getReferencesChains(project.getCommandLine(), rootTsConfig, []);
 
 					// This is to be consistent with tsserver behavior
@@ -175,13 +187,10 @@ export function createTypeScriptProject(
 			}
 		}
 		async function getReferencesChains(commandLine: ts.ParsedCommandLine, tsConfig: string, before: string[]) {
-
 			if (commandLine.projectReferences?.length) {
-
 				const newChains: string[][] = [];
 
 				for (const projectReference of commandLine.projectReferences) {
-
 					let tsConfigPath = projectReference.path.replace(/\\/g, '/');
 
 					// fix https://github.com/johnsoncodehk/volar/issues/712
@@ -203,7 +212,9 @@ export function createTypeScriptProject(
 					else {
 						const referenceCommandLine = await getCommandLine(tsConfigPath);
 						if (referenceCommandLine) {
-							for (const chain of await getReferencesChains(referenceCommandLine, tsConfigPath, [...before, tsConfig])) {
+							for (
+								const chain of await getReferencesChains(referenceCommandLine, tsConfigPath, [...before, tsConfig])
+							) {
 								newChains.push(chain);
 							}
 						}
@@ -237,7 +248,7 @@ export function createTypeScriptProject(
 				serviceEnv,
 				workspaceFolder,
 				uriConverter,
-				create
+				create,
 			);
 			configProjects.set(tsconfigUri, projectPromise);
 		}
@@ -245,22 +256,24 @@ export function createTypeScriptProject(
 	}
 
 	async function getOrCreateInferredProject(server: LanguageServer, uri: URI, workspaceFolder: URI) {
-
 		if (!inferredProjects.has(workspaceFolder)) {
-			inferredProjects.set(workspaceFolder, (async () => {
-				const inferOptions = await getInferredCompilerOptions(server);
-				const serviceEnv = createLanguageServiceEnvironment(server, [workspaceFolder]);
-				return createTypeScriptLS(
-					ts,
-					tsLocalized,
-					inferOptions,
-					server,
-					serviceEnv,
-					workspaceFolder,
-					uriConverter,
-					create
-				);
-			})());
+			inferredProjects.set(
+				workspaceFolder,
+				(async () => {
+					const inferOptions = await getInferredCompilerOptions(server);
+					const serviceEnv = createLanguageServiceEnvironment(server, [workspaceFolder]);
+					return createTypeScriptLS(
+						ts,
+						tsLocalized,
+						inferOptions,
+						server,
+						serviceEnv,
+						workspaceFolder,
+						uriConverter,
+						create,
+					);
+				})(),
+			);
 		}
 
 		const project = await inferredProjects.get(workspaceFolder)!;
@@ -350,7 +363,6 @@ export function createUriConverter(rootFolders: URI[]) {
 }
 
 export function sortTSConfigs(file: string, a: string, b: string) {
-
 	const inA = isFileInDir(file, path.dirname(a));
 	const inB = isFileInDir(file, path.dirname(b));
 
@@ -377,7 +389,7 @@ export function isFileInDir(fileName: string, dir: string) {
 	return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
-export function getWorkspaceFolder(uri: URI, workspaceFolders: { has(uri: URI): boolean; all: URI[]; }) {
+export function getWorkspaceFolder(uri: URI, workspaceFolders: { has(uri: URI): boolean; all: URI[] }) {
 	while (true) {
 		if (workspaceFolders.has(uri)) {
 			return uri;

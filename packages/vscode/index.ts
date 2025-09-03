@@ -68,10 +68,17 @@ export function parseServerCommand(command: vscode.Command) {
 			arguments: [
 				vscode.Uri.parse(command.arguments[0]),
 				new vscode.Position(command.arguments[1].line, command.arguments[1].character),
-				command.arguments[2].map((ref: any) => new vscode.Location(
-					vscode.Uri.parse(ref.uri),
-					new vscode.Range(ref.range.start.line, ref.range.start.character, ref.range.end.line, ref.range.end.character),
-				)),
+				command.arguments[2].map((ref: any) =>
+					new vscode.Location(
+						vscode.Uri.parse(ref.uri),
+						new vscode.Range(
+							ref.range.start.line,
+							ref.range.start.character,
+							ref.range.end.line,
+							ref.range.end.character,
+						),
+					)
+				),
 			],
 		};
 	}

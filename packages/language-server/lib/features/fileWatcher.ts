@@ -33,22 +33,22 @@ export function register(server: LanguageServerState) {
 						if (watchFilesDisposableCounter === 0) {
 							watchFilesDisposable?.dispose();
 						}
-					}
-				}
+					},
+				},
 			);
 		}
 		if (didChangeWatchedFiles?.dynamicRegistration) {
 			disposables.push(
 				await server.connection.client.register(vscode.DidChangeWatchedFilesNotification.type, {
 					watchers: patterns.map(pattern => ({ globPattern: pattern })),
-				})
+				}),
 			);
 		}
 		if (fileOperations?.dynamicRegistration && fileOperations.willRename) {
 			disposables.push(
 				await server.connection.client.register(vscode.WillRenameFilesRequest.type, {
 					filters: patterns.map(pattern => ({ pattern: { glob: pattern } })),
-				})
+				}),
 			);
 		}
 

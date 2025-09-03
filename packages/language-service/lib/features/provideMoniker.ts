@@ -6,9 +6,7 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
-
 		return languageFeatureWorker(
 			context,
 			uri,
@@ -21,7 +19,7 @@ export function register(context: LanguageServiceContext) {
 				return plugin[1].provideMoniker?.(document, position, token);
 			},
 			result => result,
-			results => results.flat()
+			results => results.flat(),
 		);
 	};
 }

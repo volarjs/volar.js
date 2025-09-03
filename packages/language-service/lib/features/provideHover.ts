@@ -9,9 +9,7 @@ import { transformMarkdown } from '../utils/transform';
 import { errorMarkups } from './provideDiagnostics';
 
 export function register(context: LanguageServiceContext) {
-
 	return async (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
-
 		let hover = await languageFeatureWorker(
 			context,
 			uri,
@@ -35,8 +33,10 @@ export function register(context: LanguageServiceContext) {
 					kind: 'markdown' satisfies typeof vscode.MarkupKind.Markdown,
 					value: hovers.map(getHoverTexts).flat().join('\n\n---\n\n'),
 				},
-				range: hovers.find(hover => hover.range && isInsideRange(hover.range, { start: position, end: position }))?.range ?? hovers[0].range,
-			})
+				range:
+					hovers.find(hover => hover.range && isInsideRange(hover.range, { start: position, end: position }))?.range
+						?? hovers[0].range,
+			}),
 		);
 
 		const markups = errorMarkups.get(uri);

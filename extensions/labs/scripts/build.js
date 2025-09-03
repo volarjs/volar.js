@@ -20,7 +20,8 @@ require('esbuild').context({
 	if (process.argv.includes('--watch')) {
 		await ctx.watch();
 		console.log('watching...');
-	} else {
+	}
+	else {
 		await ctx.rebuild();
 		await ctx.dispose();
 		console.log('finished.');

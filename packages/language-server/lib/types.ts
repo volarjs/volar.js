@@ -1,4 +1,10 @@
-import type { InitializeParams, LanguageService, LanguageServicePlugin, ProviderResult, ServerCapabilities } from '@volar/language-service';
+import type {
+	InitializeParams,
+	LanguageService,
+	LanguageServicePlugin,
+	ProviderResult,
+	ServerCapabilities,
+} from '@volar/language-service';
 import { type Connection } from 'vscode-languageserver';
 import type { URI } from 'vscode-uri';
 import { type createServerBase } from './server';

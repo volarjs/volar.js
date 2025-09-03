@@ -102,10 +102,14 @@ describe('SnapshotDocument', () => {
 	it('allows GC of unreferenced snapshots', () => {
 		const _WeakRef = globalThis.WeakRef;
 
-		(globalThis as any).WeakRef = class <T> {
-			constructor(public ref: T) { }
-			deref() { return this.ref; }
-			clear() { this.ref = undefined as any; }
+		(globalThis as any).WeakRef = class<T> {
+			constructor(public ref: T) {}
+			deref() {
+				return this.ref;
+			}
+			clear() {
+				this.ref = undefined as any;
+			}
 		};
 
 		// create snapshot

@@ -6,7 +6,7 @@ export function createResolveModuleName<T>(
 	getFileSize: ((fileName: string) => number) | undefined,
 	host: ts.ModuleResolutionHost,
 	languagePlugins: LanguagePlugin<any>[],
-	getSourceScript: (fileName: string) => SourceScript<T> | undefined
+	getSourceScript: (fileName: string) => SourceScript<T> | undefined,
 ) {
 	const toSourceFileInfo = new Map<string, {
 		sourceFileName: string;
@@ -36,10 +36,14 @@ export function createResolveModuleName<T>(
 						if (fileExists(sourceFileName)) {
 							const sourceScript = getSourceScript(sourceFileName);
 							if (sourceScript?.generated) {
-								const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+								const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(
+									sourceScript.generated.root,
+								);
 								if (serviceScript) {
 									const dtsPath = sourceFileName + '.d.ts';
-									if ((serviceScript.extension === '.js' || serviceScript.extension === '.jsx') && fileExists(dtsPath)) {
+									if (
+										(serviceScript.extension === '.js' || serviceScript.extension === '.jsx') && fileExists(dtsPath)
+									) {
 										toSourceFileInfo.set(fileName, {
 											sourceFileName: dtsPath,
 											extension: '.ts',
@@ -63,7 +67,9 @@ export function createResolveModuleName<T>(
 						if (fileExists(sourceFileName)) {
 							const sourceScript = getSourceScript(sourceFileName);
 							if (sourceScript?.generated) {
-								const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+								const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(
+									sourceScript.generated.root,
+								);
 								if (serviceScript) {
 									toSourceFileInfo.set(fileName, {
 										sourceFileName,
@@ -85,7 +91,7 @@ export function createResolveModuleName<T>(
 		compilerOptions: ts.CompilerOptions,
 		cache?: ts.ModuleResolutionCache,
 		redirectedReference?: ts.ResolvedProjectReference,
-		resolutionMode?: ts.ResolutionMode
+		resolutionMode?: ts.ResolutionMode,
 	) => {
 		const result = ts.resolveModuleName(
 			moduleName,
@@ -94,7 +100,7 @@ export function createResolveModuleName<T>(
 			moduleResolutionHost,
 			cache,
 			redirectedReference,
-			resolutionMode
+			resolutionMode,
 		);
 		if (result.resolvedModule) {
 			const sourceFileInfo = toSourceFileInfo.get(result.resolvedModule.resolvedFileName);

@@ -13,15 +13,12 @@ export interface DocumentLinkData {
 }
 
 export function register(context: LanguageServiceContext) {
-
 	return async (uri: URI, token = NoneCancellationToken) => {
-
 		return await documentFeatureWorker(
 			context,
 			uri,
 			docs => docs[2].mappings.some(mapping => isDocumentLinkEnabled(mapping.data)),
 			async (plugin, document) => {
-
 				if (token.isCancellationRequested) {
 					return;
 				}
@@ -66,7 +63,7 @@ export function register(context: LanguageServiceContext) {
 					})
 					.filter(link => !!link);
 			},
-			arr => arr.flat()
+			arr => arr.flat(),
 		) ?? [];
 	};
 }

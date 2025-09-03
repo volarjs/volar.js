@@ -2,18 +2,17 @@ import { findOverlapCodeRange, isSemanticTokensEnabled } from '@volar/language-c
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext, SemanticToken } from '../types';
-import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 import { NoneCancellationToken } from '../utils/cancellation';
 import { getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
+import { SemanticTokensBuilder } from '../utils/SemanticTokensBuilder';
 
 export function register(context: LanguageServiceContext) {
-
 	return async (
 		uri: URI,
 		range: vscode.Range | undefined,
 		legend: vscode.SemanticTokensLegend,
 		_reportProgress?: (tokens: vscode.SemanticTokens) => void, // TODO
-		token = NoneCancellationToken
+		token = NoneCancellationToken,
 	): Promise<vscode.SemanticTokens | undefined> => {
 		const sourceScript = context.language.scripts.get(uri);
 		if (!sourceScript) {
@@ -32,12 +31,12 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => range,
-			function* (docs) {
+			function*(docs) {
 				const mapped = findOverlapCodeRange(
 					docs[0].offsetAt(range.start),
 					docs[0].offsetAt(range.end),
 					docs[2],
-					isSemanticTokensEnabled
+					isSemanticTokensEnabled,
 				);
 				if (mapped) {
 					yield {
@@ -47,7 +46,6 @@ export function register(context: LanguageServiceContext) {
 				}
 			},
 			(plugin, document, range) => {
-
 				if (token?.isCancellationRequested) {
 					return;
 				}
@@ -56,7 +54,7 @@ export function register(context: LanguageServiceContext) {
 					document,
 					range,
 					legend,
-					token
+					token,
 				);
 			},
 			(tokens, docs) => {
@@ -70,12 +68,18 @@ export function register(context: LanguageServiceContext) {
 							end: { line: _token[0], character: _token[1] + _token[2] },
 						}, isSemanticTokensEnabled);
 						if (range) {
-							return [range.start.line, range.start.character, range.end.character - range.start.character, _token[3], _token[4]];
+							return [
+								range.start.line,
+								range.start.character,
+								range.end.character - range.start.character,
+								_token[3],
+								_token[4],
+							];
 						}
 					})
 					.filter(token => !!token);
 			},
-			tokens => tokens.flat()
+			tokens => tokens.flat(),
 			// tokens => reportProgress?.(buildTokens(tokens)), // TODO: this has no effect with LSP
 		);
 		if (tokens) {

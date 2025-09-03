@@ -1,12 +1,10 @@
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { LanguageServiceContext } from '../types';
-import type { WorkspaceSymbolData } from './provideWorkspaceSymbols';
 import { NoneCancellationToken } from '../utils/cancellation';
+import type { WorkspaceSymbolData } from './provideWorkspaceSymbols';
 
 export function register(context: LanguageServiceContext) {
-
 	return async (item: vscode.WorkspaceSymbol, token = NoneCancellationToken) => {
-
 		const data: WorkspaceSymbolData | undefined = item.data;
 		if (data) {
 			const plugin = context.plugins[data.pluginIndex];

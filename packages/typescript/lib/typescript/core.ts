@@ -1,4 +1,4 @@
-import { type Comparer, Comparison, type EqualityComparer, type SortedReadonlyArray } from "./corePublic";
+import { type Comparer, Comparison, type EqualityComparer, type SortedReadonlyArray } from './corePublic';
 
 const emptyArray: never[] = [] as never[];
 
@@ -20,7 +20,11 @@ export function every<T>(array: readonly T[] | undefined, callback: (element: T,
 }
 
 /** Works like Array.prototype.findIndex, returning `-1` if no element satisfying the predicate is found. */
-export function findIndex<T>(array: readonly T[] | undefined, predicate: (element: T, index: number) => boolean, startIndex?: number): number {
+export function findIndex<T>(
+	array: readonly T[] | undefined,
+	predicate: (element: T, index: number) => boolean,
+	startIndex?: number,
+): number {
 	if (array === undefined) {
 		return -1;
 	}
@@ -32,8 +36,11 @@ export function findIndex<T>(array: readonly T[] | undefined, predicate: (elemen
 	return -1;
 }
 
-
-function contains<T>(array: readonly T[] | undefined, value: T, equalityComparer: EqualityComparer<T> = equateValues): boolean {
+function contains<T>(
+	array: readonly T[] | undefined,
+	value: T,
+	equalityComparer: EqualityComparer<T> = equateValues,
+): boolean {
 	if (array) {
 		for (const v of array) {
 			if (equalityComparer(v, value)) {
@@ -44,7 +51,6 @@ function contains<T>(array: readonly T[] | undefined, value: T, equalityComparer
 	return false;
 }
 
-
 export function indexOfAnyCharCode(text: string, charCodes: readonly number[], start?: number): number {
 	for (let i = start || 0; i < text.length; i++) {
 		if (contains(charCodes, text.charCodeAt(i))) {
@@ -53,7 +59,6 @@ export function indexOfAnyCharCode(text: string, charCodes: readonly number[], s
 	}
 	return -1;
 }
-
 
 export function map<T, U>(array: readonly T[], f: (x: T, i: number) => U): U[];
 export function map<T, U>(array: readonly T[] | undefined, f: (x: T, i: number) => U): U[] | undefined;
@@ -94,7 +99,10 @@ export function flatten<T>(array: T[][] | readonly (T | readonly T[] | undefined
  * @param array The array to map.
  * @param mapfn The callback used to map the result into one or more values.
  */
-export function flatMap<T, U>(array: readonly T[] | undefined, mapfn: (x: T, i: number) => U | readonly U[] | undefined): readonly U[] {
+export function flatMap<T, U>(
+	array: readonly T[] | undefined,
+	mapfn: (x: T, i: number) => U | readonly U[] | undefined,
+): readonly U[] {
 	let result: U[] | undefined;
 	if (array) {
 		for (let i = 0; i < array.length; i++) {
@@ -111,7 +119,6 @@ export function flatMap<T, U>(array: readonly T[] | undefined, mapfn: (x: T, i: 
 	}
 	return result || emptyArray;
 }
-
 
 export function some<T>(array: readonly T[] | undefined): array is readonly T[];
 export function some<T>(array: readonly T[] | undefined, predicate: (value: T) => boolean): boolean;
@@ -139,7 +146,10 @@ export function some<T>(array: readonly T[] | undefined, predicate?: (value: T) 
  * @param value The value to append to the array. If `value` is `undefined`, nothing is
  * appended.
  */
-function append<TArray extends any[] | undefined, TValue extends NonNullable<TArray>[number] | undefined>(to: TArray, value: TValue): [undefined, undefined] extends [TArray, TValue] ? TArray : NonNullable<TArray>[number][];
+function append<TArray extends any[] | undefined, TValue extends NonNullable<TArray>[number] | undefined>(
+	to: TArray,
+	value: TValue,
+): [undefined, undefined] extends [TArray, TValue] ? TArray : NonNullable<TArray>[number][];
 function append<T>(to: T[], value: T | undefined): T[];
 // function append<T>(to: T[] | undefined, value: T): T[];
 // function append<T>(to: T[] | undefined, value: T | undefined): T[] | undefined;
@@ -174,8 +184,18 @@ function toOffset(array: readonly any[], offset: number) {
  * @param end The offset in `from` at which to stop copying values (non-inclusive).
  */
 function addRange<T>(to: T[], from: readonly T[] | undefined, start?: number, end?: number): T[];
-function addRange<T>(to: T[] | undefined, from: readonly T[] | undefined, start?: number, end?: number): T[] | undefined;
-function addRange<T>(to: T[] | undefined, from: readonly T[] | undefined, start?: number, end?: number): T[] | undefined {
+function addRange<T>(
+	to: T[] | undefined,
+	from: readonly T[] | undefined,
+	start?: number,
+	end?: number,
+): T[] | undefined;
+function addRange<T>(
+	to: T[] | undefined,
+	from: readonly T[] | undefined,
+	start?: number,
+	end?: number,
+): T[] | undefined {
 	if (from === undefined || from.length === 0) {
 		return to;
 	}
@@ -263,11 +283,10 @@ const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
  * So for this function purpose, we go ahead and assume character I with dot on top it as case sensitive since its very unlikely to use lower case form of that special character
  */
 function toFileNameLowerCase(x: string) {
-	return fileNameLowerCaseRegExp.test(x) ?
-		x.replace(fileNameLowerCaseRegExp, toLowerCase) :
-		x;
+	return fileNameLowerCaseRegExp.test(x)
+		? x.replace(fileNameLowerCaseRegExp, toLowerCase)
+		: x;
 }
-
 
 function equateValues<T>(a: T, b: T) {
 	return a === b;
@@ -284,8 +303,8 @@ function equateValues<T>(a: T, b: T) {
 export function equateStringsCaseInsensitive(a: string, b: string) {
 	return a === b
 		|| a !== undefined
-		&& b !== undefined
-		&& a.toUpperCase() === b.toUpperCase();
+			&& b !== undefined
+			&& a.toUpperCase() === b.toUpperCase();
 }
 
 /**
@@ -301,11 +320,15 @@ export function equateStringsCaseSensitive(a: string, b: string) {
 function compareComparableValues(a: string | undefined, b: string | undefined): Comparison;
 function compareComparableValues(a: number | undefined, b: number | undefined): Comparison;
 function compareComparableValues(a: string | number | undefined, b: string | number | undefined) {
-	return a === b ? Comparison.EqualTo :
-		a === undefined ? Comparison.LessThan :
-			b === undefined ? Comparison.GreaterThan :
-				a < b ? Comparison.LessThan :
-					Comparison.GreaterThan;
+	return a === b
+		? Comparison.EqualTo
+		: a === undefined
+		? Comparison.LessThan
+		: b === undefined
+		? Comparison.GreaterThan
+		: a < b
+		? Comparison.LessThan
+		: Comparison.GreaterThan;
 }
 
 /**
@@ -353,23 +376,19 @@ export function getStringComparer(ignoreCase?: boolean) {
 	return ignoreCase ? compareStringsCaseInsensitive : compareStringsCaseSensitive;
 }
 
-
 export function endsWith(str: string, suffix: string): boolean {
 	const expectedPos = str.length - suffix.length;
 	return expectedPos >= 0 && str.indexOf(suffix, expectedPos) === expectedPos;
 }
 
-
 export function stringContains(str: string, substring: string): boolean {
 	return str.indexOf(substring) !== -1;
 }
-
 
 type GetCanonicalFileName = (fileName: string) => string;
 export function createGetCanonicalFileName(useCaseSensitiveFileNames: boolean): GetCanonicalFileName {
 	return useCaseSensitiveFileNames ? identity : toFileNameLowerCase;
 }
-
 
 export function startsWith(str: string, prefix: string): boolean {
 	return str.lastIndexOf(prefix, 0) === 0;

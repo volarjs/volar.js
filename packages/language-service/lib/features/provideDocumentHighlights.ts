@@ -5,19 +5,21 @@ import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
 import * as dedupe from '../utils/dedupe';
-import { getGeneratedPositions, getLinkedCodePositions, getSourceRange, languageFeatureWorker } from '../utils/featureWorkers';
+import {
+	getGeneratedPositions,
+	getLinkedCodePositions,
+	getSourceRange,
+	languageFeatureWorker,
+} from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
-
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => position,
 			docs => getGeneratedPositions(docs, position, isHighlightEnabled),
 			async (plugin, document, position) => {
-
 				if (token.isCancellationRequested) {
 					return;
 				}
@@ -30,7 +32,6 @@ export function register(context: LanguageServiceContext) {
 				return result;
 
 				async function withLinkedCode(document: TextDocument, position: vscode.Position) {
-
 					if (!plugin[1].provideDocumentHighlights) {
 						return;
 					}
@@ -44,10 +45,12 @@ export function register(context: LanguageServiceContext) {
 					const references = await plugin[1].provideDocumentHighlights(document, position, token) ?? [];
 
 					for (const reference of references) {
-
 						let foundMirrorPosition = false;
 
-						recursiveChecker.add({ uri: document.uri, range: { start: reference.range.start, end: reference.range.start } });
+						recursiveChecker.add({
+							uri: document.uri,
+							range: { start: reference.range.start, end: reference.range.start },
+						});
 
 						const decoded = context.decodeEmbeddedDocumentUri(URI.parse(document.uri));
 						const sourceScript = decoded && context.language.scripts.get(decoded[0]);
@@ -60,10 +63,9 @@ export function register(context: LanguageServiceContext) {
 							const embeddedDocument = context.documents.get(
 								context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 								virtualCode.languageId,
-								virtualCode.snapshot
+								virtualCode.snapshot,
 							);
 							for (const linkedPos of getLinkedCodePositions(embeddedDocument, linkedCodeMap, reference.range.start)) {
-
 								if (recursiveChecker.has({ uri: embeddedDocument.uri, range: { start: linkedPos, end: linkedPos } })) {
 									continue;
 								}
@@ -80,21 +82,22 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 			},
-			(data, docs) => data
-				.map(highlight => {
-					if (!docs) {
-						return highlight;
-					}
-					const range = getSourceRange(docs, highlight.range, isHighlightEnabled);
-					if (range) {
-						return {
-							...highlight,
-							range,
-						};
-					}
-				})
-				.filter(highlight => !!highlight),
-			arr => arr.flat()
+			(data, docs) =>
+				data
+					.map(highlight => {
+						if (!docs) {
+							return highlight;
+						}
+						const range = getSourceRange(docs, highlight.range, isHighlightEnabled);
+						if (range) {
+							return {
+								...highlight,
+								range,
+							};
+						}
+					})
+					.filter(highlight => !!highlight),
+			arr => arr.flat(),
 		);
 	};
 }

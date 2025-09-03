@@ -3,7 +3,6 @@ import { URI } from 'vscode-uri';
 import { createUriConverter } from '../lib/project/typescriptProject';
 
 describe('URI', () => {
-
 	test('recoverable', () => {
 		const uriConverter = createUriConverter([URI.parse('file:///')]);
 		const cases = [

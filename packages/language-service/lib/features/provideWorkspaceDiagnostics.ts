@@ -6,9 +6,7 @@ import { type DocumentsAndMap } from '../utils/featureWorkers';
 import { transformDiagnostic } from './provideDiagnostics';
 
 export function register(context: LanguageServiceContext) {
-
 	return async (token = NoneCancellationToken) => {
-
 		const allItems: vscode.WorkspaceDocumentDiagnosticReport[] = [];
 
 		for (const plugin of context.plugins) {
@@ -45,7 +43,7 @@ export function register(context: LanguageServiceContext) {
 								context.documents.get(
 									context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 									virtualCode.languageId,
-									virtualCode.snapshot
+									virtualCode.snapshot,
 								),
 								map,
 							];
@@ -53,7 +51,7 @@ export function register(context: LanguageServiceContext) {
 								...item,
 								items: item.items
 									.map(error => transformDiagnostic(context, error, docs))
-									.filter(error => !!error)
+									.filter(error => !!error),
 							};
 						}
 					}
@@ -65,7 +63,7 @@ export function register(context: LanguageServiceContext) {
 							...item,
 							items: item.items
 								.map(error => transformDiagnostic(context, error, undefined))
-								.filter(error => !!error)
+								.filter(error => !!error),
 						};
 					}
 				});

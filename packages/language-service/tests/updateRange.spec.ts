@@ -2,35 +2,38 @@ import { describe, expect, it } from 'vitest';
 import { updateRange } from '../lib/features/provideDiagnostics';
 
 describe(`Test updateRange()`, () => {
-
 	// No change
 
-	it(`
+	it(
+		`
 123
 ^^^
 -----
 123x
 ^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 3 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 0, character: 0 },
 					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 0, character: 4 },
-			}
-		)).toEqual({
-			start: { line: 0, character: 0 },
-			end: { line: 0, character: 3 },
-		});
-	});
+				{
+					range: {
+						start: { line: 0, character: 3 },
+						end: { line: 0, character: 3 },
+					},
+					newEnd: { line: 0, character: 4 },
+				},
+			)).toEqual({
+				start: { line: 0, character: 0 },
+				end: { line: 0, character: 3 },
+			});
+		},
+	);
 
-	it(`
+	it(
+		`
 x
 123
 ^^^
@@ -38,355 +41,394 @@ x
 xx
 123
 ^^^
-	`, () => {
-		expect(updateRange(
-			{
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 1, character: 0 },
+					end: { line: 1, character: 3 },
+				},
+				{
+					range: {
+						start: { line: 0, character: 1 },
+						end: { line: 0, character: 1 },
+					},
+					newEnd: { line: 0, character: 2 },
+				},
+			)).toEqual({
 				start: { line: 1, character: 0 },
 				end: { line: 1, character: 3 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 1 },
-					end: { line: 0, character: 1 },
-				},
-				newEnd: { line: 0, character: 2 },
-			}
-		)).toEqual({
-			start: { line: 1, character: 0 },
-			end: { line: 1, character: 3 },
-		});
-	});
+			});
+		},
+	);
 
-	it(`
+	it(
+		`
 123
 ^^^
 -----
 1xxxx
 ^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 1 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 0, character: 0 },
 					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 0, character: 5 },
-			}
-		)).toEqual({
-			start: { line: 0, character: 0 },
-			end: { line: 0, character: 3 },
-		});
-	});
+				{
+					range: {
+						start: { line: 0, character: 1 },
+						end: { line: 0, character: 3 },
+					},
+					newEnd: { line: 0, character: 5 },
+				},
+			)).toEqual({
+				start: { line: 0, character: 0 },
+				end: { line: 0, character: 3 },
+			});
+		},
+	);
 
 	// Single line change
 
-	it(`
+	it(
+		`
 123
 ^^^
 -----
 x123
  ^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
+	`,
+		() => {
+			expect(updateRange(
+				{
 					start: { line: 0, character: 0 },
-					end: { line: 0, character: 0 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 0, character: 1 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 1 },
-				end: { line: 0, character: 4 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 0 },
+						end: { line: 0, character: 0 },
+					},
+					newEnd: { line: 0, character: 1 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 1 },
+					end: { line: 0, character: 4 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 x123
  ^^^
 -----
 123
 ^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 1 },
-				end: { line: 0, character: 4 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 0 },
-					end: { line: 0, character: 1 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 0, character: 1 },
+					end: { line: 0, character: 4 },
 				},
-				newEnd: { line: 0, character: 0 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 0 },
+						end: { line: 0, character: 1 },
+					},
+					newEnd: { line: 0, character: 0 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 3 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 123
 ^^^
 -----
 1x23
 ^^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 1 },
-					end: { line: 0, character: 1 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 0, character: 2 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 4 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 1 },
+						end: { line: 0, character: 1 },
+					},
+					newEnd: { line: 0, character: 2 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 4 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 123
 ^^^
 -----
 xxx23
 ^^^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
+	`,
+		() => {
+			expect(updateRange(
+				{
 					start: { line: 0, character: 0 },
-					end: { line: 0, character: 1 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 0, character: 3 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 5 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 0 },
+						end: { line: 0, character: 1 },
+					},
+					newEnd: { line: 0, character: 3 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 5 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 123xxx
 ^^^
 -----
 12xx
 ^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 2 },
-					end: { line: 0, character: 4 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 0, character: 2 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 2 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 2 },
+						end: { line: 0, character: 4 },
+					},
+					newEnd: { line: 0, character: 2 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 2 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 x12x
  ^^
 -----
 xx
  ^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 1 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
+	`,
+		() => {
+			expect(updateRange(
+				{
 					start: { line: 0, character: 1 },
 					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 0, character: 1 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 1 },
-				end: { line: 0, character: 2 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 1 },
+						end: { line: 0, character: 3 },
+					},
+					newEnd: { line: 0, character: 1 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 1 },
+					end: { line: 0, character: 2 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 xx12x
   ^^
 -----
 xx
  ^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 2 },
-				end: { line: 0, character: 4 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 1 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 0, character: 2 },
 					end: { line: 0, character: 4 },
 				},
-				newEnd: { line: 0, character: 1 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 1 },
-				end: { line: 0, character: 2 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 1 },
+						end: { line: 0, character: 4 },
+					},
+					newEnd: { line: 0, character: 1 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 1 },
+					end: { line: 0, character: 2 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 1
 |
 -----
 1x
  |
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 1 },
-				end: { line: 0, character: 1 },
-			},
-			{
-				range: {
+	`,
+		() => {
+			expect(updateRange(
+				{
 					start: { line: 0, character: 1 },
 					end: { line: 0, character: 1 },
 				},
-				newEnd: { line: 0, character: 2 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 2 },
-				end: { line: 0, character: 2 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 1 },
+						end: { line: 0, character: 1 },
+					},
+					newEnd: { line: 0, character: 2 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 2 },
+					end: { line: 0, character: 2 },
+				},
+			);
+		},
+	);
 
 	// Multiple lines
 
-	it(`
+	it(
+		`
 123
 ^^^
 -----
 x
 123
 ^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
+	`,
+		() => {
+			expect(updateRange(
+				{
 					start: { line: 0, character: 0 },
-					end: { line: 0, character: 0 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 1, character: 0 },
-			}
-		)).toEqual(
-			{
-				start: { line: 1, character: 0 },
-				end: { line: 1, character: 3 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 0 },
+						end: { line: 0, character: 0 },
+					},
+					newEnd: { line: 1, character: 0 },
+				},
+			)).toEqual(
+				{
+					start: { line: 1, character: 0 },
+					end: { line: 1, character: 3 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 123
 ^^^
 -----
 x
 x123
  ^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
+	`,
+		() => {
+			expect(updateRange(
+				{
 					start: { line: 0, character: 0 },
-					end: { line: 0, character: 0 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 1, character: 1 },
-			}
-		)).toEqual(
-			{
-				start: { line: 1, character: 1 },
-				end: { line: 1, character: 4 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 0 },
+						end: { line: 0, character: 0 },
+					},
+					newEnd: { line: 1, character: 1 },
+				},
+			)).toEqual(
+				{
+					start: { line: 1, character: 1 },
+					end: { line: 1, character: 4 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 x
 123
 ^^^
 -----
 123
 ^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 1, character: 0 },
-				end: { line: 1, character: 3 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 0 },
-					end: { line: 1, character: 0 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 1, character: 0 },
+					end: { line: 1, character: 3 },
 				},
-				newEnd: { line: 0, character: 0 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 0 },
+						end: { line: 1, character: 0 },
+					},
+					newEnd: { line: 0, character: 0 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 3 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 123
 ^^^
 -----
@@ -394,28 +436,31 @@ x
 ^^
 3
 ^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 2 },
-					end: { line: 0, character: 2 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 1, character: 0 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 1, character: 1 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 2 },
+						end: { line: 0, character: 2 },
+					},
+					newEnd: { line: 1, character: 0 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 1, character: 1 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 123
 ^^^
 -----
@@ -423,136 +468,150 @@ x
 ^^
 x3
 ^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 2 },
-					end: { line: 0, character: 2 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 1, character: 1 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 1, character: 2 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 2 },
+						end: { line: 0, character: 2 },
+					},
+					newEnd: { line: 1, character: 1 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 1, character: 2 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 123
 ^^^
 xxxxx
 -----
 xxxxx
 ^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
+	`,
+		() => {
+			expect(updateRange(
+				{
 					start: { line: 0, character: 0 },
-					end: { line: 1, character: 0 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 0, character: 0 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 1 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 0 },
+						end: { line: 1, character: 0 },
+					},
+					newEnd: { line: 0, character: 0 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 1 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 xxx
 xx123
   ^^^
 -----
 xx
   ^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 1, character: 2 },
-				end: { line: 1, character: 5 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 2 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 1, character: 2 },
 					end: { line: 1, character: 5 },
 				},
-				newEnd: { line: 0, character: 2 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 2 },
-				end: { line: 0, character: 3 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 2 },
+						end: { line: 1, character: 5 },
+					},
+					newEnd: { line: 0, character: 2 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 2 },
+					end: { line: 0, character: 3 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 xxx
 123
 ^^^
 -----
 xxx123
    ^^^
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 1, character: 0 },
-				end: { line: 1, character: 3 },
-			},
-			{
-				range: {
-					start: { line: 0, character: 3 },
-					end: { line: 1, character: 0 },
+	`,
+		() => {
+			expect(updateRange(
+				{
+					start: { line: 1, character: 0 },
+					end: { line: 1, character: 3 },
 				},
-				newEnd: { line: 0, character: 3 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 3 },
-				end: { line: 0, character: 6 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 3 },
+						end: { line: 1, character: 0 },
+					},
+					newEnd: { line: 0, character: 3 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 3 },
+					end: { line: 0, character: 6 },
+				},
+			);
+		},
+	);
 
-	it(`
+	it(
+		`
 123
 ^^^
 xxx
 -----
 xxx
 |
-	`, () => {
-		expect(updateRange(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 3 },
-			},
-			{
-				range: {
+	`,
+		() => {
+			expect(updateRange(
+				{
 					start: { line: 0, character: 0 },
-					end: { line: 1, character: 0 },
+					end: { line: 0, character: 3 },
 				},
-				newEnd: { line: 0, character: 0 },
-			}
-		)).toEqual(
-			{
-				start: { line: 0, character: 0 },
-				end: { line: 0, character: 1 },
-			}
-		);
-	});
+				{
+					range: {
+						start: { line: 0, character: 0 },
+						end: { line: 1, character: 0 },
+					},
+					newEnd: { line: 0, character: 0 },
+				},
+			)).toEqual(
+				{
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 1 },
+				},
+			);
+		},
+	);
 });

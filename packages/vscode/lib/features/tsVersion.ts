@@ -11,9 +11,8 @@ export function activate(
 	cmd: string,
 	context: vscode.ExtensionContext,
 	resolveStatusText: (text: string) => string,
-	onRestart?: () => void
+	onRestart?: () => void,
 ) {
-
 	const subscriptions: vscode.Disposable[] = [];
 	const statusBar = vscode.languages.createLanguageStatusItem(cmd, selector);
 	statusBar.command = {
@@ -32,7 +31,6 @@ export function activate(
 	return vscode.Disposable.from(...subscriptions);
 
 	async function onCommand() {
-
 		const tsdk = await getTsdk(context);
 		const configTsdkPath = getConfigTsdkPath();
 		const vscodeTsdk = await getVSCodeTsdk();
@@ -42,7 +40,10 @@ export function activate(
 		const useDefaultWorkspaceTsdk = configTsdkPath !== defaultTsdkPath && !vscodeTsdk?.isWeb;
 
 		if (!useVSCodeTsdk && !useConfigWorkspaceTsdk && !useDefaultWorkspaceTsdk) { // found no usable TypeScript version
-			const messageResult = await vscode.window.showErrorMessage(`Could not find any TypeScript version. Please point your \`${tsdkSetting}\` setting to a valid TypeScript distribution.`, 'Open Settings');
+			const messageResult = await vscode.window.showErrorMessage(
+				`Could not find any TypeScript version. Please point your \`${tsdkSetting}\` setting to a valid TypeScript distribution.`,
+				'Open Settings',
+			);
 			if (messageResult === 'Open Settings') {
 				vscode.commands.executeCommand('workbench.action.openSettings', tsdkSetting);
 			}
@@ -51,21 +52,29 @@ export function activate(
 
 		const select = await quickPick([
 			{
-				useVSCodeTsdk: useVSCodeTsdk ? {
-					label: (!tsdk?.isWorkspacePath ? '• ' : '') + "Use VS Code's Version",
-					description: vscodeTsdk.version,
-					detail: vscodeTsdk.isWeb ? vscodeTsdk.path : undefined,
-				} : undefined,
-				useConfigWorkspaceTsdk: useConfigWorkspaceTsdk ? {
-					label: (tsdk?.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',
-					description: await getTsVersion(await resolveWorkspaceTsdk(configTsdkPath) ?? '/') ?? 'Could not load the TypeScript version at this path',
-					detail: configTsdkPath,
-				} : undefined,
-				useDefaultWorkspaceTsdk: useDefaultWorkspaceTsdk ? {
-					label: (tsdk?.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',
-					description: await getTsVersion(await resolveWorkspaceTsdk(defaultTsdkPath) ?? '/') ?? 'Could not load the TypeScript version at this path',
-					detail: defaultTsdkPath,
-				} : undefined,
+				useVSCodeTsdk: useVSCodeTsdk
+					? {
+						label: (!tsdk?.isWorkspacePath ? '• ' : '') + "Use VS Code's Version",
+						description: vscodeTsdk.version,
+						detail: vscodeTsdk.isWeb ? vscodeTsdk.path : undefined,
+					}
+					: undefined,
+				useConfigWorkspaceTsdk: useConfigWorkspaceTsdk
+					? {
+						label: (tsdk?.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',
+						description: await getTsVersion(await resolveWorkspaceTsdk(configTsdkPath) ?? '/')
+							?? 'Could not load the TypeScript version at this path',
+						detail: configTsdkPath,
+					}
+					: undefined,
+				useDefaultWorkspaceTsdk: useDefaultWorkspaceTsdk
+					? {
+						label: (tsdk?.isWorkspacePath ? '• ' : '') + 'Use Workspace Version',
+						description: await getTsVersion(await resolveWorkspaceTsdk(defaultTsdkPath) ?? '/')
+							?? 'Could not load the TypeScript version at this path',
+						detail: defaultTsdkPath,
+					}
+					: undefined,
 			},
 		]);
 
@@ -114,11 +123,13 @@ export async function getTsdk(context: vscode.ExtensionContext) {
 		}
 	}
 	const tsdk = await getVSCodeTsdk();
-	return tsdk ? {
-		tsdk: tsdk.path,
-		version: tsdk.version,
-		isWorkspacePath: false,
-	} : undefined;
+	return tsdk
+		? {
+			tsdk: tsdk.path,
+			version: tsdk.version,
+			isWorkspacePath: false,
+		}
+		: undefined;
 }
 
 async function resolveWorkspaceTsdk(tsdk: string) {
@@ -142,32 +153,35 @@ async function resolveWorkspaceTsdk(tsdk: string) {
 }
 
 async function getVSCodeTsdk() {
-
 	const nightly = vscode.extensions.getExtension('ms-vscode.vscode-typescript-next');
 	if (nightly) {
 		const libPath = path.join(
 			nightly.extensionPath.replace(/\\/g, '/'),
-			'node_modules/typescript/lib'
+			'node_modules/typescript/lib',
 		);
 		const version = await getTsVersion(libPath);
-		return version ? {
-			path: libPath,
-			version: version,
-			isWeb: false,
-		} : undefined;
+		return version
+			? {
+				path: libPath,
+				version: version,
+				isWeb: false,
+			}
+			: undefined;
 	}
 
 	if (vscode.env.appRoot) {
 		const libPath = path.join(
 			vscode.env.appRoot.replace(/\\/g, '/'),
-			'extensions/node_modules/typescript/lib'
+			'extensions/node_modules/typescript/lib',
 		);
 		const version = await getTsVersion(libPath);
-		return version ? {
-			path: libPath,
-			version: version,
-			isWeb: false,
-		} : undefined;
+		return version
+			? {
+				path: libPath,
+				version: version,
+				isWeb: false,
+			}
+			: undefined;
 	}
 
 	// web
@@ -188,7 +202,6 @@ function isUseWorkspaceTsdk(context: vscode.ExtensionContext) {
 }
 
 async function getTsVersion(libPath: string): Promise<string | undefined> {
-
 	const p = libPath.toString().split('/');
 	const p2 = p.slice(0, -1);
 	const modulePath = p2.join('/');
@@ -206,7 +219,8 @@ async function getTsVersion(libPath: string): Promise<string | undefined> {
 		}
 
 		return desc.version;
-	} catch {
+	}
+	catch {
 		return;
 	}
 }

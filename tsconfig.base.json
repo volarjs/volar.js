@@ -3,7 +3,7 @@
 		"target": "ES2021",
 		"lib": [
 			"WebWorker",
-			"ES2021",
+			"ES2021"
 		],
 		"module": "Node16",
 		"sourceMap": true,
@@ -13,7 +13,7 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"esModuleInterop": false,
-		"forceConsistentCasingInFileNames": true,
+		"forceConsistentCasingInFileNames": true
 	},
-	"include": [ ],
+	"include": []
 }

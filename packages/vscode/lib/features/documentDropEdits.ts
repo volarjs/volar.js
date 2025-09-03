@@ -1,9 +1,12 @@
 import * as vscode from 'vscode';
 import type { BaseLanguageClient } from 'vscode-languageclient';
-import { DocumentDropRequest, DocumentDrop_DataTransferItemAsStringRequest, DocumentDrop_DataTransferItemFileDataRequest } from '../../protocol.js';
+import {
+	DocumentDrop_DataTransferItemAsStringRequest,
+	DocumentDrop_DataTransferItemFileDataRequest,
+	DocumentDropRequest,
+} from '../../protocol.js';
 
 export function activate(selector: vscode.DocumentSelector, client: BaseLanguageClient) {
-
 	let lastDataTransfer: vscode.DataTransfer;
 
 	return vscode.Disposable.from(
@@ -19,7 +22,6 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 			selector,
 			{
 				async provideDocumentDropEdits(document, position, dataTransfer) {
-
 					lastDataTransfer = dataTransfer;
 
 					const result = await client.sendRequest(DocumentDropRequest.type, {
@@ -30,16 +32,22 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 							return {
 								mimeType,
 								value: item.value,
-								file: file ? {
-									name: file.name,
-									uri: file.uri ? client.code2ProtocolConverter.asUri(file.uri) : undefined,
-								} : undefined,
+								file: file
+									? {
+										name: file.name,
+										uri: file.uri ? client.code2ProtocolConverter.asUri(file.uri) : undefined,
+									}
+									: undefined,
 							};
-						})
+						}),
 					});
 
 					if (result) {
-						const edit = new vscode.DocumentDropEdit(result.insertTextFormat === 2 /* InsertTextMode.Snippet */ ? new vscode.SnippetString(result.insertText) : result.insertText);
+						const edit = new vscode.DocumentDropEdit(
+							result.insertTextFormat === 2 /* InsertTextMode.Snippet */
+								? new vscode.SnippetString(result.insertText)
+								: result.insertText,
+						);
 						if (result.additionalEdit) {
 							edit.additionalEdit = await client.protocol2CodeConverter.asWorkspaceEdit(result.additionalEdit);
 						}
@@ -54,7 +62,7 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 											ignoreIfExists: create.options?.ignoreIfExists,
 											overwrite: create.options?.overwrite,
 											contents: await file.data(),
-										}
+										},
 									);
 								}
 							}
@@ -62,7 +70,7 @@ export function activate(selector: vscode.DocumentSelector, client: BaseLanguage
 						return edit;
 					}
 				},
-			}
-		)
+			},
+		),
 	);
 }

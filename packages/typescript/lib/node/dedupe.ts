@@ -1,11 +1,12 @@
 import type * as ts from 'typescript';
 
 export function dedupeDocumentSpans<T extends ts.DocumentSpan>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.fileName,
-		item.textSpan.start,
-		item.textSpan.length,
-	].join(':'));
+	return dedupe(items, item =>
+		[
+			item.fileName,
+			item.textSpan.start,
+			item.textSpan.length,
+		].join(':'));
 }
 
 function dedupe<T>(items: T[], getKey: (item: T) => string): T[] {

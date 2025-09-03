@@ -1,5 +1,5 @@
 import type { LanguagePlugin, LanguageServiceEnvironment } from '@volar/language-service';
-import { type LanguageService, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
+import { createLanguage, createLanguageService, createUriMap, type LanguageService } from '@volar/language-service';
 import type { URI } from 'vscode-uri';
 import type { LanguageServer, LanguageServerProject } from '../types';
 
@@ -24,13 +24,13 @@ export function createSimpleProject(languagePlugins: LanguagePlugin<URI>[]): Lan
 					else {
 						language.scripts.delete(uri);
 					}
-				}
+				},
 			);
 			languageService = createLanguageService(
 				language,
 				server.languageServicePlugins,
 				createLanguageServiceEnvironment(server, server.workspaceFolders.all),
-				{}
+				{},
 			);
 		},
 		getLanguageService() {
@@ -46,7 +46,10 @@ export function createSimpleProject(languagePlugins: LanguagePlugin<URI>[]): Lan
 	};
 }
 
-export function createLanguageServiceEnvironment(server: LanguageServer, workspaceFolders: URI[]): LanguageServiceEnvironment {
+export function createLanguageServiceEnvironment(
+	server: LanguageServer,
+	workspaceFolders: URI[],
+): LanguageServiceEnvironment {
 	return {
 		workspaceFolders,
 		fs: server.fileSystem,

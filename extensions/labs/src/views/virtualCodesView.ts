@@ -2,7 +2,11 @@ import type { GetVirtualFileRequest, UpdateVirtualCodeStateNotification } from '
 import type { BaseLanguageClient, LabsInfo } from '@volar/vscode';
 import * as vscode from 'vscode';
 import { useVolarExtensions } from '../common/shared';
-import { activate as activateShowVirtualFiles, sourceDocUriToVirtualDocUris, virtualDocUriToSourceDocUri } from '../common/showVirtualFile';
+import {
+	activate as activateShowVirtualFiles,
+	sourceDocUriToVirtualDocUris,
+	virtualDocUriToSourceDocUri,
+} from '../common/showVirtualFile';
 import { isValidVersion } from './serversView';
 
 export const VOLAR_VIRTUAL_CODE_SCHEME = 'volar_virtual_code';
@@ -15,10 +19,9 @@ interface VirtualFileItem {
 	isRoot: boolean;
 }
 
-export const uriToVirtualCode = new Map<string, { fileUri: string; virtualCodeId: string; }>();
+export const uriToVirtualCode = new Map<string, { fileUri: string; virtualCodeId: string }>();
 
 export function activate(context: vscode.ExtensionContext) {
-
 	let currentDocument: vscode.TextDocument | undefined;
 
 	const languageIdToFileExtension = new Map<string, string>();
@@ -36,7 +39,8 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				}
 			}
-		} catch { }
+		}
+		catch {}
 	}
 
 	const extensions: vscode.Extension<LabsInfo>[] = [];
@@ -61,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 							extension.exports.volarLabs.languageServerProtocol.GetVirtualFileRequest.type,
 							{
 								uri: currentDocument.uri.toString(),
-							} satisfies GetVirtualFileRequest.ParamsType
+							} satisfies GetVirtualFileRequest.ParamsType,
 						);
 						if (virtualFile) {
 							items.push({
@@ -77,12 +81,12 @@ export function activate(context: vscode.ExtensionContext) {
 				return items;
 			}
 			else {
-				return element.generated.embeddedCodes.map((code => ({
+				return element.generated.embeddedCodes.map(code => ({
 					...element,
 					generated: code,
 					sourceDocumentUri: currentDocument!.uri.toString(),
 					isRoot: false,
-				})));
+				}));
 			}
 		},
 		getTreeItem(element) {
@@ -109,11 +113,15 @@ export function activate(context: vscode.ExtensionContext) {
 				description += ` (${element.client.name})`;
 			}
 			return {
-				checkboxState: element.generated.disabled ? vscode.TreeItemCheckboxState.Unchecked : vscode.TreeItemCheckboxState.Checked,
+				checkboxState: element.generated.disabled
+					? vscode.TreeItemCheckboxState.Unchecked
+					: vscode.TreeItemCheckboxState.Checked,
 				iconPath: new vscode.ThemeIcon('file'),
 				label: element.generated.virtualCodeId,
 				description,
-				collapsibleState: element.generated.embeddedCodes.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None,
+				collapsibleState: element.generated.embeddedCodes.length
+					? vscode.TreeItemCollapsibleState.Expanded
+					: vscode.TreeItemCollapsibleState.None,
 				resourceUri: uri,
 				command: {
 					command: '_volar.action.openVirtualFile',
@@ -149,11 +157,11 @@ export function activate(context: vscode.ExtensionContext) {
 						fileUri: item.sourceDocumentUri,
 						virtualCodeId: item.generated.virtualCodeId,
 						disabled: state === vscode.TreeItemCheckboxState.Unchecked,
-					} satisfies UpdateVirtualCodeStateNotification.ParamsType
+					} satisfies UpdateVirtualCodeStateNotification.ParamsType,
 				);
 			}
 		}),
-		activateShowVirtualFiles(extensions)
+		activateShowVirtualFiles(extensions),
 	);
 
 	useVolarExtensions(
@@ -163,19 +171,19 @@ export function activate(context: vscode.ExtensionContext) {
 			if (isValidVersion(version)) {
 				for (const languageClient of extension.exports.volarLabs.languageClients) {
 					context.subscriptions.push(
-						languageClient.onDidChangeState(tryUpdateTreeView)
+						languageClient.onDidChangeState(tryUpdateTreeView),
 					);
 				}
 				extension.exports.volarLabs.onDidAddLanguageClient(languageClient => {
 					context.subscriptions.push(
-						languageClient.onDidChangeState(tryUpdateTreeView)
+						languageClient.onDidChangeState(tryUpdateTreeView),
 					);
 					tryUpdateTreeView();
 				});
 				extensions.push(extension);
 				tryUpdateTreeView();
 			}
-		}
+		},
 	);
 
 	function tryUpdateTreeView() {

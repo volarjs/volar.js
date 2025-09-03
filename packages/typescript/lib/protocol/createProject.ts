@@ -1,19 +1,21 @@
-import { FileMap, type Language, forEachEmbeddedCode } from '@volar/language-core';
+import { FileMap, forEachEmbeddedCode, type Language } from '@volar/language-core';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import type { TypeScriptExtraServiceScript } from '../..';
 import { createResolveModuleName } from '../resolveModuleName';
 import type { createSys } from './createSys';
 
-export interface TypeScriptProjectHost extends Pick<
-	ts.LanguageServiceHost,
-	'getLocalizedDiagnosticMessages'
-	| 'getCurrentDirectory'
-	| 'getCompilationSettings'
-	| 'getProjectReferences'
-	| 'getScriptFileNames'
-	| 'getProjectVersion'
-> { }
+export interface TypeScriptProjectHost extends
+	Pick<
+		ts.LanguageServiceHost,
+		| 'getLocalizedDiagnosticMessages'
+		| 'getCurrentDirectory'
+		| 'getCompilationSettings'
+		| 'getProjectReferences'
+		| 'getScriptFileNames'
+		| 'getProjectVersion'
+	>
+{}
 
 declare module 'typescript' {
 	interface LanguageServiceHost {
@@ -29,9 +31,11 @@ export function createLanguageServiceHost<T>(
 	sys: ReturnType<typeof createSys> | ts.System,
 	language: Language<T>,
 	asScriptId: (fileName: string) => T,
-	projectHost: TypeScriptProjectHost
+	projectHost: TypeScriptProjectHost,
 ) {
-	const scriptVersions = new FileMap<{ lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number>; }>(sys.useCaseSensitiveFileNames);
+	const scriptVersions = new FileMap<{ lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number> }>(
+		sys.useCaseSensitiveFileNames,
+	);
 
 	let lastProjectVersion: number | string | undefined;
 	let tsProjectVersion = 0;
@@ -82,7 +86,8 @@ export function createLanguageServiceHost<T>(
 		getDefaultLibFileName: options => {
 			try {
 				return ts.getDefaultLibFilePath(options);
-			} catch {
+			}
+			catch {
 				// web
 				return `/node_modules/typescript/lib/${ts.getDefaultLibFileName(options)}`;
 			}
@@ -112,7 +117,6 @@ export function createLanguageServiceHost<T>(
 			return [...tsFileRegistry.keys()];
 		},
 		getScriptKind(fileName) {
-
 			sync();
 
 			if (extraScriptRegistry.has(fileName)) {
@@ -121,7 +125,9 @@ export function createLanguageServiceHost<T>(
 
 			const sourceScript = language.scripts.get(asScriptId(fileName));
 			if (sourceScript?.generated) {
-				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(
+					sourceScript.generated.root,
+				);
 				if (serviceScript) {
 					return serviceScript.scriptKind;
 				}
@@ -156,14 +162,19 @@ export function createLanguageServiceHost<T>(
 	}
 
 	if (language.plugins.some(plugin => plugin.typescript?.extraFileExtensions.length)) {
-
 		// TODO: can this share between monorepo packages?
 		const moduleCache = ts.createModuleResolutionCache(
 			languageServiceHost.getCurrentDirectory(),
 			languageServiceHost.useCaseSensitiveFileNames?.() ? s => s : s => s.toLowerCase(),
-			languageServiceHost.getCompilationSettings()
+			languageServiceHost.getCompilationSettings(),
 		);
-		const resolveModuleName = createResolveModuleName(ts, sys.getFileSize, languageServiceHost, language.plugins, fileName => language.scripts.get(asScriptId(fileName)));
+		const resolveModuleName = createResolveModuleName(
+			ts,
+			sys.getFileSize,
+			languageServiceHost,
+			language.plugins,
+			fileName => language.scripts.get(asScriptId(fileName)),
+		);
 
 		let lastSysVersion = 'version' in sys ? sys.version : undefined;
 
@@ -172,14 +183,21 @@ export function createLanguageServiceHost<T>(
 			containingFile,
 			redirectedReference,
 			options,
-			sourceFile
+			sourceFile,
 		) => {
 			if ('version' in sys && lastSysVersion !== sys.version) {
 				lastSysVersion = sys.version;
 				moduleCache.clear();
 			}
 			return moduleLiterals.map(moduleLiteral => {
-				return resolveModuleName(moduleLiteral.text, containingFile, options, moduleCache, redirectedReference, sourceFile.impliedNodeFormat);
+				return resolveModuleName(
+					moduleLiteral.text,
+					containingFile,
+					options,
+					moduleCache,
+					redirectedReference,
+					sourceFile.impliedNodeFormat,
+				);
 			});
 		};
 		languageServiceHost.resolveModuleNames = (
@@ -187,7 +205,7 @@ export function createLanguageServiceHost<T>(
 			containingFile,
 			_reusedNames,
 			redirectedReference,
-			options
+			options,
 		) => {
 			if ('version' in sys && lastSysVersion !== sys.version) {
 				lastSysVersion = sys.version;
@@ -212,7 +230,6 @@ export function createLanguageServiceHost<T>(
 	}
 
 	function sync() {
-
 		const newProjectVersion = projectHost.getProjectVersion?.();
 		const shouldUpdate = newProjectVersion === undefined || newProjectVersion !== lastProjectVersion;
 		if (!shouldUpdate) {
@@ -229,12 +246,19 @@ export function createLanguageServiceHost<T>(
 		for (const fileName of projectHost.getScriptFileNames()) {
 			const sourceScript = language.scripts.get(asScriptId(fileName));
 			if (sourceScript?.generated) {
-				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+				const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(
+					sourceScript.generated.root,
+				);
 				if (serviceScript) {
 					newTsVirtualFileSnapshots.add(serviceScript.code.snapshot);
 					tsFileNamesSet.add(fileName);
 				}
-				for (const extraServiceScript of sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts?.(fileName, sourceScript.generated.root) ?? []) {
+				for (
+					const extraServiceScript of sourceScript.generated.languagePlugin.typescript?.getExtraServiceScripts?.(
+						fileName,
+						sourceScript.generated.root,
+					) ?? []
+				) {
 					newTsVirtualFileSnapshots.add(extraServiceScript.code.snapshot);
 					tsFileNamesSet.add(extraServiceScript.fileName);
 					extraScriptRegistry.set(extraServiceScript.fileName, extraServiceScript);
@@ -272,7 +296,6 @@ export function createLanguageServiceHost<T>(
 	}
 
 	function getScriptSnapshot(fileName: string) {
-
 		sync();
 
 		if (extraScriptRegistry.has(fileName)) {
@@ -282,7 +305,9 @@ export function createLanguageServiceHost<T>(
 		const sourceScript = language.scripts.get(asScriptId(fileName));
 
 		if (sourceScript?.generated) {
-			const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+			const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(
+				sourceScript.generated.root,
+			);
 			if (serviceScript) {
 				return serviceScript.code.snapshot;
 			}
@@ -293,7 +318,6 @@ export function createLanguageServiceHost<T>(
 	}
 
 	function getScriptVersion(fileName: string): string {
-
 		sync();
 
 		if (!scriptVersions.has(fileName)) {
@@ -313,7 +337,9 @@ export function createLanguageServiceHost<T>(
 		const sourceScript = language.scripts.get(asScriptId(fileName));
 
 		if (sourceScript?.generated) {
-			const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(sourceScript.generated.root);
+			const serviceScript = sourceScript.generated.languagePlugin.typescript?.getServiceScript(
+				sourceScript.generated.root,
+			);
 			if (serviceScript) {
 				if (!version.map.has(serviceScript.code.snapshot)) {
 					version.map.set(serviceScript.code.snapshot, version.lastVersion++);

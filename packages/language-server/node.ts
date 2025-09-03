@@ -1,5 +1,5 @@
 import * as vscode from 'vscode-languageserver/node';
-import { provider as httpFsProvider, listenEditorSettings } from './lib/fileSystemProviders/http';
+import { listenEditorSettings, provider as httpFsProvider } from './lib/fileSystemProviders/http';
 import { provider as nodeFsProvider } from './lib/fileSystemProviders/node';
 import { createServerBase } from './lib/server';
 
@@ -41,13 +41,15 @@ export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 		for (const name of ['./typescript.js', './tsserverlibrary.js']) {
 			try {
 				return _require(_require.resolve(name, { paths: [tsdk] }));
-			} catch { }
+			}
+			catch {}
 		}
 		// for bun
 		for (const name of ['typescript.js', 'tsserverlibrary.js']) {
 			try {
 				return _require(tsdk + '/' + name);
-			} catch { }
+			}
+			catch {}
 		}
 		throw new Error(`Can't find typescript.js or tsserverlibrary.js in ${JSON.stringify(tsdk)}`);
 	}
@@ -59,6 +61,7 @@ export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 		try {
 			const path = _require.resolve(`./${locale}/diagnosticMessages.generated.json`, { paths: [tsdk] });
 			return _require(path);
-		} catch { }
+		}
+		catch {}
 	}
 }

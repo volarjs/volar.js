@@ -1,4 +1,9 @@
-import { isDiagnosticsEnabled, shouldReportDiagnostics, type SourceScript, type VirtualCode } from '@volar/language-core';
+import {
+	isDiagnosticsEnabled,
+	shouldReportDiagnostics,
+	type SourceScript,
+	type VirtualCode,
+} from '@volar/language-core';
 import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
@@ -30,23 +35,22 @@ type CacheMap = Map<
 	Map<
 		string,
 		{
-			documentVersion: number,
-			errors: vscode.Diagnostic[],
+			documentVersion: number;
+			errors: vscode.Diagnostic[];
 		}
 	>
 >;
 
 export const errorMarkups = createUriMap<{
-	error: vscode.Diagnostic,
-	markup: vscode.MarkupContent,
+	error: vscode.Diagnostic;
+	markup: vscode.MarkupContent;
 }[]>();
 
 export function register(context: LanguageServiceContext) {
-
 	const lastResponses = createUriMap<
 		{
-			semantic: Cache,
-			syntactic: Cache,
+			semantic: Cache;
+			syntactic: Cache;
 		}
 	>();
 	const cacheMaps = {
@@ -63,9 +67,8 @@ export function register(context: LanguageServiceContext) {
 	return async (
 		uri: URI,
 		response?: (result: vscode.Diagnostic[]) => void,
-		token = NoneCancellationToken
+		token = NoneCancellationToken,
 	) => {
-
 		let langaugeIdAndSnapshot: SourceScript<URI> | VirtualCode | undefined;
 
 		const decoded = context.decodeEmbeddedDocumentUri(uri);
@@ -90,7 +93,6 @@ export function register(context: LanguageServiceContext) {
 		let lastCheckCancelAt = 0;
 
 		for (const cache of Object.values(lastResponse)) {
-
 			const oldSnapshot = cache.snapshot;
 			const oldDocument = cache.document;
 			const change = oldSnapshot ? langaugeIdAndSnapshot.snapshot.getChangeRange(oldSnapshot) : undefined;
@@ -135,7 +137,7 @@ export function register(context: LanguageServiceContext) {
 		async function worker(
 			kind: 'syntactic' | 'semantic',
 			cacheMap: CacheMap,
-			cache: Cache
+			cache: Cache,
 		) {
 			const result = await documentFeatureWorker(
 				context,
@@ -192,7 +194,7 @@ export function register(context: LanguageServiceContext) {
 						.map(error => transformDiagnostic(context, error, map))
 						.filter(error => !!error);
 				},
-				arr => dedupe.withDiagnostics(arr.flat())
+				arr => dedupe.withDiagnostics(arr.flat()),
 			);
 			if (result) {
 				cache.errors = result;
@@ -205,7 +207,7 @@ export function register(context: LanguageServiceContext) {
 export function transformDiagnostic(
 	context: LanguageServiceContext,
 	error: vscode.Diagnostic,
-	docs: DocumentsAndMap | undefined
+	docs: DocumentsAndMap | undefined,
 ) {
 	// clone it to avoid modify cache
 	let _error: vscode.Diagnostic = { ...error };
@@ -219,11 +221,9 @@ export function transformDiagnostic(
 	}
 
 	if (_error.relatedInformation) {
-
 		const relatedInfos: vscode.DiagnosticRelatedInformation[] = [];
 
 		for (const info of _error.relatedInformation) {
-
 			const decoded = context.decodeEmbeddedDocumentUri(URI.parse(info.location.uri));
 			const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 			const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
@@ -232,12 +232,16 @@ export function transformDiagnostic(
 				const embeddedDocument = context.documents.get(
 					context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 					virtualCode.languageId,
-					virtualCode.snapshot
+					virtualCode.snapshot,
 				);
 				for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
 					const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
 					const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
-					const range = getSourceRange(docs, info.location.range, data => shouldReportDiagnostics(data, undefined, undefined));
+					const range = getSourceRange(
+						docs,
+						info.location.range,
+						data => shouldReportDiagnostics(data, undefined, undefined),
+					);
 					if (range) {
 						relatedInfos.push({
 							location: {
@@ -263,9 +267,9 @@ export function transformDiagnostic(
 export function updateRange(
 	range: vscode.Range,
 	change: {
-		range: vscode.Range,
+		range: vscode.Range;
 		newEnd: vscode.Position;
-	}
+	},
 ) {
 	if (!updatePosition(range.start, change, false)) {
 		return;
@@ -282,10 +286,10 @@ export function updateRange(
 function updatePosition(
 	position: vscode.Position,
 	change: {
-		range: vscode.Range,
+		range: vscode.Range;
 		newEnd: vscode.Position;
 	},
-	isEnd: boolean
+	isEnd: boolean,
 ) {
 	if (change.range.end.line > position.line) {
 		if (change.newEnd.line > position.line) {
@@ -310,7 +314,11 @@ function updatePosition(
 				position.character = change.newEnd.character + position.character - change.range.end.character;
 			}
 			else {
-				if (isEnd ? change.range.end.character < position.character : change.range.end.character <= position.character) {
+				if (
+					isEnd
+						? change.range.end.character < position.character
+						: change.range.end.character <= position.character
+				) {
 					position.character += characterDiff;
 				}
 				else {

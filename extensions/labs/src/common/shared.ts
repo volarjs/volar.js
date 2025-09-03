@@ -3,16 +3,15 @@ import * as vscode from 'vscode';
 
 export function useVolarExtensions(
 	context: vscode.ExtensionContext,
-	addExtension: (extension: vscode.Extension<LabsInfo>) => void
+	addExtension: (extension: vscode.Extension<LabsInfo>) => void,
 ) {
-
 	const checked = new Set<string>();
 
 	let updateTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	context.subscriptions.push(
 		vscode.extensions.onDidChange(update),
-		vscode.window.onDidChangeActiveTextEditor(update)
+		vscode.window.onDidChangeActiveTextEditor(update),
 	);
 
 	update();

@@ -7,10 +7,13 @@ export const provider: FileSystem = {
 			const stats = fs.statSync(uri.fsPath, { throwIfNoEntry: false });
 			if (stats) {
 				return {
-					type: stats.isFile() ? FileType.File
-						: stats.isDirectory() ? FileType.Directory
-							: stats.isSymbolicLink() ? FileType.SymbolicLink
-								: FileType.Unknown,
+					type: stats.isFile()
+						? FileType.File
+						: stats.isDirectory()
+						? FileType.Directory
+						: stats.isSymbolicLink()
+						? FileType.SymbolicLink
+						: FileType.Unknown,
 					ctime: stats.ctimeMs,
 					mtime: stats.mtimeMs,
 					size: stats.size,
@@ -33,10 +36,16 @@ export const provider: FileSystem = {
 		try {
 			const files = fs.readdirSync(uri.fsPath, { withFileTypes: true });
 			return files.map<[string, FileType]>(file => {
-				return [file.name, file.isFile() ? FileType.File
-					: file.isDirectory() ? FileType.Directory
-						: file.isSymbolicLink() ? FileType.SymbolicLink
-							: FileType.Unknown];
+				return [
+					file.name,
+					file.isFile()
+						? FileType.File
+						: file.isDirectory()
+						? FileType.Directory
+						: file.isSymbolicLink()
+						? FileType.SymbolicLink
+						: FileType.Unknown,
+				];
 			});
 		}
 		catch {

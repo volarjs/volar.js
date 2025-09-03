@@ -7,13 +7,11 @@ const localize = nls.loadMessageBundle();
 
 export function activate(cmd: string, client: BaseLanguageClient) {
 	return vscode.commands.registerCommand(cmd, async (uri?: vscode.Uri) => {
-
 		// https://github.com/microsoft/vscode/blob/main/extensions/typescript-language-features/src/languageFeatures/fileReferences.ts
 		await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,
-			title: localize('progress.title', "Finding file references")
+			title: localize('progress.title', 'Finding file references'),
 		}, async _progress => {
-
 			if (!uri) {
 				const editor = vscode.window.activeTextEditor;
 				if (!editor) {
@@ -23,7 +21,9 @@ export function activate(cmd: string, client: BaseLanguageClient) {
 				uri = editor.document.uri;
 			}
 
-			const response = await client.sendRequest(FindFileReferenceRequest.type, { textDocument: { uri: uri.toString() } });
+			const response = await client.sendRequest(FindFileReferenceRequest.type, {
+				textDocument: { uri: uri.toString() },
+			});
 			if (!response) {
 				return;
 			}
@@ -35,8 +35,12 @@ export function activate(cmd: string, client: BaseLanguageClient) {
 			await config.update('preferredLocation', 'view');
 			try {
 				await vscode.commands.executeCommand('editor.action.showReferences', uri, new vscode.Position(0, 0), locations);
-			} finally {
-				await config.update('preferredLocation', existingSetting?.workspaceFolderValue ?? existingSetting?.workspaceValue);
+			}
+			finally {
+				await config.update(
+					'preferredLocation',
+					existingSetting?.workspaceFolderValue ?? existingSetting?.workspaceValue,
+				);
 			}
 		});
 	});

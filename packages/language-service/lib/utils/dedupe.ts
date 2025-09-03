@@ -30,78 +30,86 @@ export function createLocationSet() {
 }
 
 export function withCodeAction<T extends vscode.CodeAction>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.title
-	].join(':'));
+	return dedupe(items, item =>
+		[
+			item.title,
+		].join(':'));
 }
 export function withTextEdits<T extends vscode.TextEdit>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.range.start.line,
-		item.range.start.character,
-		item.range.end.line,
-		item.range.end.character,
-		item.newText,
-	].join(':'));
+	return dedupe(items, item =>
+		[
+			item.range.start.line,
+			item.range.start.character,
+			item.range.end.line,
+			item.range.end.character,
+			item.newText,
+		].join(':'));
 }
 export function withDocumentChanges(items: NonNullable<vscode.WorkspaceEdit['documentChanges']>) {
 	return dedupe(items, item => JSON.stringify(item)); // TODO: improve this
 }
 export function withDiagnostics<T extends vscode.Diagnostic>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.range.start.line,
-		item.range.start.character,
-		item.range.end.line,
-		item.range.end.character,
-		item.source,
-		item.code,
-		item.severity,
-		item.message,
-	].join(':'));
+	return dedupe(items, item =>
+		[
+			item.range.start.line,
+			item.range.start.character,
+			item.range.end.line,
+			item.range.end.character,
+			item.source,
+			item.code,
+			item.severity,
+			item.message,
+		].join(':'));
 }
 export function withLocations<T extends vscode.Location>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.uri,
-		item.range.start.line,
-		item.range.start.character,
-		item.range.end.line,
-		item.range.end.character,
-	].join(':'));
+	return dedupe(items, item =>
+		[
+			item.uri,
+			item.range.start.line,
+			item.range.start.character,
+			item.range.end.line,
+			item.range.end.character,
+		].join(':'));
 }
 export function withLocationLinks<T extends vscode.LocationLink>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.targetUri,
-		item.targetSelectionRange.start.line,
-		item.targetSelectionRange.start.character,
-		item.targetSelectionRange.end.line,
-		item.targetSelectionRange.end.character,
-		// ignore difference targetRange
-	].join(':'));
+	return dedupe(items, item =>
+		[
+			item.targetUri,
+			item.targetSelectionRange.start.line,
+			item.targetSelectionRange.start.character,
+			item.targetSelectionRange.end.line,
+			item.targetSelectionRange.end.character,
+			// ignore difference targetRange
+		].join(':'));
 }
 export function withCallHierarchyIncomingCalls<T extends vscode.CallHierarchyIncomingCall>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.from.uri,
-		item.from.range.start.line,
-		item.from.range.start.character,
-		item.from.range.end.line,
-		item.from.range.end.character,
-	].join(':'));
+	return dedupe(items, item =>
+		[
+			item.from.uri,
+			item.from.range.start.line,
+			item.from.range.start.character,
+			item.from.range.end.line,
+			item.from.range.end.character,
+		].join(':'));
 }
 export function withCallHierarchyOutgoingCalls<T extends vscode.CallHierarchyOutgoingCall>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.to.uri,
-		item.to.range.start.line,
-		item.to.range.start.character,
-		item.to.range.end.line,
-		item.to.range.end.character,
-	].join(':'));
+	return dedupe(items, item =>
+		[
+			item.to.uri,
+			item.to.range.start.line,
+			item.to.range.start.character,
+			item.to.range.end.line,
+			item.to.range.end.character,
+		].join(':'));
 }
 export function withRanges<T extends vscode.Range>(items: T[]): T[] {
-	return dedupe(items, item => [
-		item.start.line,
-		item.start.character,
-		item.end.line,
-		item.end.character,
-	].join(':'));
+	return dedupe(items, item =>
+		[
+			item.start.line,
+			item.start.character,
+			item.end.line,
+			item.end.character,
+		].join(':'));
 }
 function dedupe<T>(items: T[], getKey: (item: T) => string): T[] {
 	const map = new Map<string, T>();

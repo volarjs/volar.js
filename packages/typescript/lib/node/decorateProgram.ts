@@ -4,7 +4,6 @@ import { fillSourceFileText, transformDiagnostic } from './transform';
 import { getServiceScript } from './utils';
 
 export function decorateProgram(language: Language<string>, program: ts.Program) {
-
 	const emit = program.emit;
 
 	// for tsc --noEmit

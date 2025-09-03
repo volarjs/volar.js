@@ -5,9 +5,7 @@ import { transformDocumentLinkTarget } from '../utils/transform';
 import type { DocumentLinkData } from './provideDocumentLinks';
 
 export function register(context: LanguageServiceContext) {
-
 	return async (item: vscode.DocumentLink, token = NoneCancellationToken) => {
-
 		const data: DocumentLinkData | undefined = item.data;
 		if (data) {
 			const plugin = context.plugins[data.pluginIndex];

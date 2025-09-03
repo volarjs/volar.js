@@ -1,5 +1,21 @@
-import { type CodeActionTriggerKind, type Diagnostic, type DiagnosticSeverity, type DidChangeWatchedFilesParams, type FileChangeType, type Language, type LanguagePlugin, type LanguageServiceEnvironment, type LanguageServicePlugin, type NotificationHandler, type ProjectContext, createLanguage, createLanguageService, createUriMap, mergeWorkspaceEdits } from '@volar/language-service';
-import { type TypeScriptProjectHost, createLanguageServiceHost, resolveFileLanguageId } from '@volar/typescript';
+import {
+	type CodeActionTriggerKind,
+	createLanguage,
+	createLanguageService,
+	createUriMap,
+	type Diagnostic,
+	type DiagnosticSeverity,
+	type DidChangeWatchedFilesParams,
+	type FileChangeType,
+	type Language,
+	type LanguagePlugin,
+	type LanguageServiceEnvironment,
+	type LanguageServicePlugin,
+	mergeWorkspaceEdits,
+	type NotificationHandler,
+	type ProjectContext,
+} from '@volar/language-service';
+import { createLanguageServiceHost, resolveFileLanguageId, type TypeScriptProjectHost } from '@volar/typescript';
 import * as path from 'typesafe-path/posix';
 import * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -15,20 +31,27 @@ export function createTypeScriptChecker(
 	setup?: (options: {
 		language: Language;
 		project: ProjectContext;
-	}) => void
+	}) => void,
 ) {
 	const tsconfigPath = asPosix(tsconfig);
-	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, tsconfigPath, () => {
-		return ts.parseJsonSourceFileConfigFileContent(
-			ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile),
-			ts.sys,
-			path.dirname(tsconfigPath),
-			undefined,
-			tsconfigPath,
-			undefined,
-			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat()
-		);
-	}, includeProjectReference, setup);
+	return createTypeScriptCheckerWorker(
+		languagePlugins,
+		languageServicePlugins,
+		tsconfigPath,
+		() => {
+			return ts.parseJsonSourceFileConfigFileContent(
+				ts.readJsonConfigFile(tsconfigPath, ts.sys.readFile),
+				ts.sys,
+				path.dirname(tsconfigPath),
+				undefined,
+				tsconfigPath,
+				undefined,
+				languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
+			);
+		},
+		includeProjectReference,
+		setup,
+	);
 }
 
 export function createTypeScriptInferredChecker(
@@ -39,15 +62,22 @@ export function createTypeScriptInferredChecker(
 	setup?: (options: {
 		language: Language;
 		project: ProjectContext;
-	}) => void
+	}) => void,
 ) {
-	return createTypeScriptCheckerWorker(languagePlugins, languageServicePlugins, undefined, () => {
-		return {
-			options: compilerOptions,
-			fileNames: getScriptFileNames(),
-			errors: [],
-		};
-	}, false, setup);
+	return createTypeScriptCheckerWorker(
+		languagePlugins,
+		languageServicePlugins,
+		undefined,
+		() => {
+			return {
+				options: compilerOptions,
+				fileNames: getScriptFileNames(),
+				errors: [],
+			};
+		},
+		false,
+		setup,
+	);
 }
 
 const fsFileSnapshots = createUriMap<[number | undefined, ts.IScriptSnapshot | undefined]>();
@@ -58,10 +88,12 @@ function createTypeScriptCheckerWorker(
 	configFileName: string | undefined,
 	getCommandLine: () => ts.ParsedCommandLine,
 	includeProjectReference: boolean,
-	setup: ((options: {
-		language: Language;
-		project: ProjectContext;
-	}) => void) | undefined
+	setup:
+		| ((options: {
+			language: Language;
+			project: ProjectContext;
+		}) => void)
+		| undefined,
 ) {
 	let settings = {};
 
@@ -105,9 +137,16 @@ function createTypeScriptCheckerWorker(
 			else {
 				language.scripts.delete(uri);
 			}
-		}
+		},
 	);
-	const [projectHost, languageService] = createTypeScriptCheckerLanguageService(env, language, languageServicePlugins, configFileName, getCommandLine, setup);
+	const [projectHost, languageService] = createTypeScriptCheckerLanguageService(
+		env,
+		language,
+		languageServicePlugins,
+		configFileName,
+		getCommandLine,
+		setup,
+	);
 	const projectReferenceLanguageServices = new Map<string, ReturnType<typeof createTypeScriptCheckerLanguageService>>();
 
 	if (includeProjectReference) {
@@ -122,7 +161,14 @@ function createTypeScriptCheckerWorker(
 		function visit(ref: ts.ResolvedProjectReference | undefined) {
 			if (ref && !tsconfigs.has(ref.sourceFile.fileName)) {
 				tsconfigs.add(ref.sourceFile.fileName);
-				const projectReferenceLanguageService = createTypeScriptCheckerLanguageService(env, language, languageServicePlugins, ref.sourceFile.fileName, () => ref.commandLine, setup);
+				const projectReferenceLanguageService = createTypeScriptCheckerLanguageService(
+					env,
+					language,
+					languageServicePlugins,
+					ref.sourceFile.fileName,
+					() => ref.commandLine,
+					setup,
+				);
 				projectReferenceLanguageServices.set(ref.sourceFile.fileName, projectReferenceLanguageService);
 				ref.references?.forEach(visit);
 			}
@@ -177,7 +223,12 @@ function createTypeScriptCheckerWorker(
 		return languageService.getDiagnostics(uri);
 	}
 
-	async function fixErrors(fileName: string, diagnostics: Diagnostic[], only: string[] | undefined, writeFile: (fileName: string, newText: string) => Promise<void>) {
+	async function fixErrors(
+		fileName: string,
+		diagnostics: Diagnostic[],
+		only: string[] | undefined,
+		writeFile: (fileName: string, newText: string) => Promise<void>,
+	) {
 		fileName = asPosix(fileName);
 		const uri = asUri(fileName);
 		const languageService = getLanguageServiceForFile(fileName);
@@ -185,12 +236,18 @@ function createTypeScriptCheckerWorker(
 		if (sourceScript) {
 			const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 			const range = { start: document.positionAt(0), end: document.positionAt(document.getText().length) };
-			const codeActions = await languageService.getCodeActions(uri, range, { diagnostics, only, triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked });
+			const codeActions = await languageService.getCodeActions(uri, range, {
+				diagnostics,
+				only,
+				triggerKind: 1 satisfies typeof CodeActionTriggerKind.Invoked,
+			});
 			if (codeActions) {
 				for (let i = 0; i < codeActions.length; i++) {
 					codeActions[i] = await languageService.resolveCodeAction(codeActions[i]);
 				}
-				const edits = codeActions.map(codeAction => codeAction.edit).filter((edit): edit is NonNullable<typeof edit> => !!edit);
+				const edits = codeActions.map(codeAction => codeAction.edit).filter((edit): edit is NonNullable<typeof edit> =>
+					!!edit
+				);
 				if (edits.length) {
 					const rootEdit = edits[0];
 					mergeWorkspaceEdits(rootEdit, ...edits.slice(1));
@@ -200,7 +257,11 @@ function createTypeScriptCheckerWorker(
 							const parsedUri = URI.parse(uri);
 							const editFile = languageService.context.language.scripts.get(parsedUri);
 							if (editFile) {
-								const editDocument = languageService.context.documents.get(parsedUri, editFile.languageId, editFile.snapshot);
+								const editDocument = languageService.context.documents.get(
+									parsedUri,
+									editFile.languageId,
+									editFile.snapshot,
+								);
 								const newString = TextDocument.applyEdits(editDocument, edits);
 								await writeFile(asFileName(parsedUri), newString);
 							}
@@ -211,7 +272,11 @@ function createTypeScriptCheckerWorker(
 							const changeUri = URI.parse(change.textDocument.uri);
 							const editFile = languageService.context.language.scripts.get(changeUri);
 							if (editFile) {
-								const editDocument = languageService.context.documents.get(changeUri, editFile.languageId, editFile.snapshot);
+								const editDocument = languageService.context.documents.get(
+									changeUri,
+									editFile.languageId,
+									editFile.snapshot,
+								);
 								const newString = TextDocument.applyEdits(editDocument, change.edits);
 								await writeFile(asFileName(changeUri), newString);
 							}
@@ -226,7 +291,10 @@ function createTypeScriptCheckerWorker(
 	function printErrors(fileName: string, diagnostics: Diagnostic[], rootPath = process.cwd()) {
 		let text = formatErrors(fileName, diagnostics, rootPath);
 		for (const diagnostic of diagnostics) {
-			text = text.replace(`TS${diagnostic.code}`, (diagnostic.source ?? '') + (diagnostic.code ? `(${diagnostic.code})` : ''));
+			text = text.replace(
+				`TS${diagnostic.code}`,
+				(diagnostic.source ?? '') + (diagnostic.code ? `(${diagnostic.code})` : ''),
+			);
 		}
 		return text;
 	}
@@ -238,7 +306,9 @@ function createTypeScriptCheckerWorker(
 		const sourceScript = languageService.context.language.scripts.get(uri)!;
 		const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
-			category: diagnostic.severity === 1 satisfies typeof DiagnosticSeverity.Error ? ts.DiagnosticCategory.Error : ts.DiagnosticCategory.Warning,
+			category: diagnostic.severity === 1 satisfies typeof DiagnosticSeverity.Error
+				? ts.DiagnosticCategory.Error
+				: ts.DiagnosticCategory.Warning,
 			code: diagnostic.code as number,
 			file: ts.createSourceFile(fileName, document.getText(), ts.ScriptTarget.JSON),
 			start: document.offsetAt(diagnostic.range.start),
@@ -274,10 +344,12 @@ function createTypeScriptCheckerLanguageService(
 	languageServicePlugins: LanguageServicePlugin[],
 	configFileName: string | undefined,
 	getCommandLine: () => ts.ParsedCommandLine,
-	setup: ((options: {
-		language: Language;
-		project: ProjectContext;
-	}) => void) | undefined
+	setup:
+		| ((options: {
+			language: Language;
+			project: ProjectContext;
+		}) => void)
+		| undefined,
 ) {
 	let commandLine = getCommandLine();
 	let projectVersion = 0;
@@ -285,9 +357,10 @@ function createTypeScriptCheckerLanguageService(
 
 	const resolvedFileNameByCommandLine = new WeakMap<ts.ParsedCommandLine, string[]>();
 	const projectHost: TypeScriptProjectHost = {
-		getCurrentDirectory: () => env.workspaceFolders.length
-			? asFileName(env.workspaceFolders[0])
-			: process.cwd(),
+		getCurrentDirectory: () =>
+			env.workspaceFolders.length
+				? asFileName(env.workspaceFolders[0])
+				: process.cwd(),
 		getCompilationSettings: () => {
 			return commandLine.options;
 		},
@@ -321,7 +394,7 @@ function createTypeScriptCheckerLanguageService(
 				ts.sys,
 				language,
 				asUri,
-				projectHost
+				projectHost,
 			),
 		},
 	};
@@ -330,7 +403,7 @@ function createTypeScriptCheckerLanguageService(
 		language,
 		languageServicePlugins,
 		env,
-		project
+		project,
 	);
 
 	env.onDidChangeWatchedFiles?.(({ changes }) => {

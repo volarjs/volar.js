@@ -1,10 +1,15 @@
-import { isCompletionEnabled, type SourceScript, type VirtualCode, type CodeInformation } from '@volar/language-core';
+import { type CodeInformation, isCompletionEnabled, type SourceScript, type VirtualCode } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext, LanguageServicePluginInstance } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
-import { type DocumentsAndMap, forEachEmbeddedDocument, getGeneratedPositions, getSourceRange } from '../utils/featureWorkers';
+import {
+	type DocumentsAndMap,
+	forEachEmbeddedDocument,
+	getGeneratedPositions,
+	getSourceRange,
+} from '../utils/featureWorkers';
 import { transformCompletionList } from '../utils/transform';
 
 export interface ServiceCompletionData {
@@ -15,7 +20,6 @@ export interface ServiceCompletionData {
 }
 
 export function register(context: LanguageServiceContext) {
-
 	let lastResult: {
 		uri: URI;
 		results: {
@@ -28,8 +32,10 @@ export function register(context: LanguageServiceContext) {
 	return async (
 		uri: URI,
 		position: vscode.Position,
-		completionContext: vscode.CompletionContext = { triggerKind: 1 satisfies typeof vscode.CompletionTriggerKind.Invoked, },
-		token = NoneCancellationToken
+		completionContext: vscode.CompletionContext = {
+			triggerKind: 1 satisfies typeof vscode.CompletionTriggerKind.Invoked,
+		},
+		token = NoneCancellationToken,
 	) => {
 		let langaugeIdAndSnapshot: SourceScript<URI> | VirtualCode | undefined;
 		let sourceScript: SourceScript<URI> | undefined;
@@ -53,9 +59,7 @@ export function register(context: LanguageServiceContext) {
 			completionContext?.triggerKind === 3 satisfies typeof vscode.CompletionTriggerKind.TriggerForIncompleteCompletions
 			&& lastResult?.uri.toString() === uri.toString()
 		) {
-
 			for (const cacheData of lastResult.results) {
-
 				if (!cacheData.list?.isIncomplete) {
 					continue;
 				}
@@ -63,7 +67,6 @@ export function register(context: LanguageServiceContext) {
 				const pluginIndex = context.plugins.findIndex(plugin => plugin[1] === cacheData.plugin);
 
 				if (cacheData.embeddedDocumentUri) {
-
 					const decoded = context.decodeEmbeddedDocumentUri(cacheData.embeddedDocumentUri);
 					const sourceScript = decoded && context.language.scripts.get(decoded[0]);
 					const virtualCode = decoded && sourceScript?.generated?.embeddedCodes.get(decoded[1]);
@@ -75,19 +78,27 @@ export function register(context: LanguageServiceContext) {
 					const embeddedDocument = context.documents.get(
 						context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
 						virtualCode.languageId,
-						virtualCode.snapshot
+						virtualCode.snapshot,
 					);
 					for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
-						const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
+						const sourceDocument = context.documents.get(
+							sourceScript.id,
+							sourceScript.languageId,
+							sourceScript.snapshot,
+						);
 						const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
 
 						for (const mapped of getGeneratedPositions(docs, position, data => isCompletionEnabled(data))) {
-
 							if (!cacheData.plugin.provideCompletionItems) {
 								continue;
 							}
 
-							cacheData.list = await cacheData.plugin.provideCompletionItems(embeddedDocument, mapped, completionContext, token);
+							cacheData.list = await cacheData.plugin.provideCompletionItems(
+								embeddedDocument,
+								mapped,
+								completionContext,
+								token,
+							);
 
 							if (!cacheData.list) {
 								continue;
@@ -115,13 +126,12 @@ export function register(context: LanguageServiceContext) {
 								cacheData.list,
 								range => getSourceRange(docs, range),
 								embeddedDocument,
-								context
+								context,
 							);
 						}
 					}
 				}
 				else {
-
 					if (!cacheData.plugin.provideCompletionItems) {
 						continue;
 					}
@@ -154,7 +164,6 @@ export function register(context: LanguageServiceContext) {
 			}
 		}
 		else {
-
 			lastResult = {
 				uri,
 				results: [],
@@ -172,11 +181,9 @@ export function register(context: LanguageServiceContext) {
 				document: TextDocument,
 				position: vscode.Position,
 				docs?: DocumentsAndMap,
-				codeInfo?: CodeInformation  
+				codeInfo?: CodeInformation,
 			) => {
-
 				for (const plugin of sortedPlugins) {
-
 					if (token.isCancellationRequested) {
 						break;
 					}
@@ -189,11 +196,17 @@ export function register(context: LanguageServiceContext) {
 						continue;
 					}
 
-					if (completionContext?.triggerCharacter && !plugin[0].capabilities.completionProvider?.triggerCharacters?.includes(completionContext.triggerCharacter)) {
+					if (
+						completionContext?.triggerCharacter
+						&& !plugin[0].capabilities.completionProvider?.triggerCharacters?.includes(
+							completionContext.triggerCharacter,
+						)
+					) {
 						continue;
 					}
 
-					const isAdditional = (codeInfo && typeof codeInfo.completion === 'object' && codeInfo.completion.isAdditional) || plugin[1].isAdditionalCompletion;
+					const isAdditional = (codeInfo && typeof codeInfo.completion === 'object' && codeInfo.completion.isAdditional)
+						|| plugin[1].isAdditionalCompletion;
 
 					if (mainCompletionUri && (!isAdditional || mainCompletionUri !== document.uri)) {
 						continue;
@@ -243,7 +256,7 @@ export function register(context: LanguageServiceContext) {
 							completionList,
 							range => getSourceRange(docs, range, isCompletionEnabled),
 							document,
-							context
+							context,
 						);
 					}
 
@@ -258,21 +271,20 @@ export function register(context: LanguageServiceContext) {
 			};
 
 			if (sourceScript?.generated) {
-
 				for (const docs of forEachEmbeddedDocument(context, sourceScript, sourceScript.generated.root)) {
-
 					let _data: CodeInformation | undefined;
 
-					for (const mappedPosition of getGeneratedPositions(docs, position, data => {
-						_data = data;
-						return isCompletionEnabled(data);
-					})) {
+					for (
+						const mappedPosition of getGeneratedPositions(docs, position, data => {
+							_data = data;
+							return isCompletionEnabled(data);
+						})
+					) {
 						await worker(docs[1], mappedPosition, docs, _data);
 					}
 				}
 			}
 			else {
-
 				const document = context.documents.get(uri, langaugeIdAndSnapshot.languageId, langaugeIdAndSnapshot.snapshot);
 
 				await worker(document, position);

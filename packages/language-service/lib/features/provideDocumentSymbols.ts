@@ -8,9 +8,7 @@ import { documentFeatureWorker, getSourceRange } from '../utils/featureWorkers';
 import { transformDocumentSymbol } from '../utils/transform';
 
 export function register(context: LanguageServiceContext) {
-
 	return (uri: URI, token = NoneCancellationToken): Promise<vscode.DocumentSymbol[] | undefined> => {
-
 		return documentFeatureWorker(
 			context,
 			uri,
@@ -26,10 +24,12 @@ export function register(context: LanguageServiceContext) {
 					return data;
 				}
 				return data
-					.map(symbol => transformDocumentSymbol(
-						symbol,
-						range => getSourceRange(docs, range, isSymbolsEnabled)
-					))
+					.map(symbol =>
+						transformDocumentSymbol(
+							symbol,
+							range => getSourceRange(docs, range, isSymbolsEnabled),
+						)
+					)
 					.filter(symbol => !!symbol);
 			},
 			results => {
@@ -51,7 +51,7 @@ export function register(context: LanguageServiceContext) {
 					}
 				}
 				return results.flat();
-			}
+			},
 		);
 	};
 }

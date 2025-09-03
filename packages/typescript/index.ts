@@ -1,8 +1,8 @@
 export * from './lib/common';
-export * from './lib/node/proxyLanguageService';
 export * from './lib/node/decorateLanguageServiceHost';
 export * from './lib/node/decorateProgram';
 export * from './lib/node/proxyCreateProgram';
+export * from './lib/node/proxyLanguageService';
 export * from './lib/protocol/createProject';
 export * from './lib/protocol/createSys';
 

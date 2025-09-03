@@ -34,39 +34,39 @@ import {
 	toTextEdit,
 	toWorkspaceEdit,
 } from 'monaco-languageserver-types';
-import type { Uri, editor, languages } from 'monaco-types';
+import type { editor, languages, Uri } from 'monaco-types';
 import { type WorkerLanguageService } from '../worker.js';
 import { markers } from './markers.js';
 import { getRequestId } from './requestId.js';
 
 export async function createLanguageFeaturesProvider(
 	worker: editor.MonacoWebWorker<WorkerLanguageService>,
-	getSyncUris: () => Uri[]
+	getSyncUris: () => Uri[],
 ): Promise<
-	languages.HoverProvider &
-	languages.DocumentSymbolProvider &
-	languages.DocumentHighlightProvider &
-	languages.LinkedEditingRangeProvider &
-	languages.DefinitionProvider &
-	languages.TypeDefinitionProvider &
-	languages.ImplementationProvider &
-	languages.CodeLensProvider &
-	languages.CodeActionProvider &
-	languages.DocumentFormattingEditProvider &
-	languages.DocumentRangeFormattingEditProvider &
-	languages.OnTypeFormattingEditProvider &
-	languages.LinkProvider &
-	languages.CompletionItemProvider &
-	languages.DocumentColorProvider &
-	languages.FoldingRangeProvider &
-	languages.DeclarationProvider &
-	languages.SignatureHelpProvider &
-	languages.RenameProvider &
-	languages.ReferenceProvider &
-	languages.SelectionRangeProvider &
-	languages.InlayHintsProvider &
-	languages.DocumentSemanticTokensProvider &
-	languages.DocumentRangeSemanticTokensProvider
+	& languages.HoverProvider
+	& languages.DocumentSymbolProvider
+	& languages.DocumentHighlightProvider
+	& languages.LinkedEditingRangeProvider
+	& languages.DefinitionProvider
+	& languages.TypeDefinitionProvider
+	& languages.ImplementationProvider
+	& languages.CodeLensProvider
+	& languages.CodeActionProvider
+	& languages.DocumentFormattingEditProvider
+	& languages.DocumentRangeFormattingEditProvider
+	& languages.OnTypeFormattingEditProvider
+	& languages.LinkProvider
+	& languages.CompletionItemProvider
+	& languages.DocumentColorProvider
+	& languages.FoldingRangeProvider
+	& languages.DeclarationProvider
+	& languages.SignatureHelpProvider
+	& languages.RenameProvider
+	& languages.ReferenceProvider
+	& languages.SelectionRangeProvider
+	& languages.InlayHintsProvider
+	& languages.DocumentSemanticTokensProvider
+	& languages.DocumentRangeSemanticTokensProvider
 > {
 	const completionItems = new WeakMap<languages.CompletionItem, CompletionItem>();
 	const codeLens = new WeakMap<languages.CodeLens, CodeLens>();
@@ -75,13 +75,24 @@ export async function createLanguageFeaturesProvider(
 	const documentLinks = new WeakMap<languages.ILink, DocumentLink>();
 	const inlayHints = new WeakMap<languages.InlayHint, InlayHint>();
 	const languageService = await worker.getProxy();
-	const legend = await (languageService.getSemanticTokenLegend() as unknown as Promise<ReturnType<typeof languageService.getSemanticTokenLegend>>);
+	const legend = await (languageService.getSemanticTokenLegend() as unknown as Promise<
+		ReturnType<typeof languageService.getSemanticTokenLegend>
+	>);
 
 	return {
-		triggerCharacters: await (languageService.getTriggerCharacters() as unknown as Promise<ReturnType<typeof languageService.getTriggerCharacters>>),
-		autoFormatTriggerCharacters: await (languageService.getAutoFormatTriggerCharacters() as unknown as Promise<ReturnType<typeof languageService.getAutoFormatTriggerCharacters>>),
-		signatureHelpTriggerCharacters: await (languageService.getSignatureHelpTriggerCharacters() as unknown as Promise<ReturnType<typeof languageService.getSignatureHelpTriggerCharacters>>),
-		signatureHelpRetriggerCharacters: await (languageService.getSignatureHelpRetriggerCharacters() as unknown as Promise<ReturnType<typeof languageService.getSignatureHelpRetriggerCharacters>>),
+		triggerCharacters: await (languageService.getTriggerCharacters() as unknown as Promise<
+			ReturnType<typeof languageService.getTriggerCharacters>
+		>),
+		autoFormatTriggerCharacters: await (languageService.getAutoFormatTriggerCharacters() as unknown as Promise<
+			ReturnType<typeof languageService.getAutoFormatTriggerCharacters>
+		>),
+		signatureHelpTriggerCharacters: await (languageService.getSignatureHelpTriggerCharacters() as unknown as Promise<
+			ReturnType<typeof languageService.getSignatureHelpTriggerCharacters>
+		>),
+		signatureHelpRetriggerCharacters:
+			await (languageService.getSignatureHelpRetriggerCharacters() as unknown as Promise<
+				ReturnType<typeof languageService.getSignatureHelpRetriggerCharacters>
+			>),
 		getLegend() {
 			return legend;
 		},
@@ -91,7 +102,7 @@ export async function createLanguageFeaturesProvider(
 				getRequestId(token, languageService),
 				model.uri,
 				undefined,
-				legend
+				legend,
 			);
 			if (codeResult) {
 				return toSemanticTokens(codeResult);
@@ -103,18 +114,18 @@ export async function createLanguageFeaturesProvider(
 				getRequestId(token, languageService),
 				model.uri,
 				fromRange(range),
-				legend
+				legend,
 			);
 			if (codeResult) {
 				return toSemanticTokens(codeResult);
 			}
 		},
-		releaseDocumentSemanticTokens() { },
+		releaseDocumentSemanticTokens() {},
 		async provideDocumentSymbols(model, token) {
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getDocumentSymbols(
 				getRequestId(token, languageService),
-				model.uri
+				model.uri,
 			);
 			if (codeResult) {
 				return codeResult.map(toDocumentSymbol);
@@ -125,7 +136,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.getDocumentHighlights(
 				getRequestId(token, languageService),
 				model.uri,
-				fromPosition(position)
+				fromPosition(position),
 			);
 			if (codeResult) {
 				return codeResult.map(toDocumentHighlight);
@@ -136,7 +147,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.getLinkedEditingRanges(
 				getRequestId(token, languageService),
 				model.uri,
-				fromPosition(position)
+				fromPosition(position),
 			);
 			if (codeResult) {
 				return toLinkedEditingRanges(codeResult);
@@ -147,7 +158,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.getDefinition(
 				getRequestId(token, languageService),
 				model.uri,
-				fromPosition(position)
+				fromPosition(position),
 			);
 			if (codeResult) {
 				return codeResult.map(toLocationLink);
@@ -158,7 +169,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.getImplementations(
 				getRequestId(token, languageService),
 				model.uri,
-				fromPosition(position)
+				fromPosition(position),
 			);
 			if (codeResult) {
 				return codeResult.map(toLocationLink);
@@ -169,7 +180,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.getTypeDefinition(
 				getRequestId(token, languageService),
 				model.uri,
-				fromPosition(position)
+				fromPosition(position),
 			);
 			if (codeResult) {
 				return codeResult.map(toLocationLink);
@@ -179,7 +190,7 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getCodeLenses(
 				getRequestId(token, languageService),
-				model.uri
+				model.uri,
 			);
 			if (codeResult) {
 				const monacoResult = codeResult.map(toCodeLens);
@@ -188,7 +199,7 @@ export async function createLanguageFeaturesProvider(
 				}
 				return {
 					lenses: monacoResult,
-					dispose: () => { },
+					dispose: () => {},
 				};
 			}
 		},
@@ -198,7 +209,7 @@ export async function createLanguageFeaturesProvider(
 				const languageService = await worker.withSyncedResources(getSyncUris());
 				codeResult = await languageService.resolveCodeLens(
 					getRequestId(token, languageService),
-					codeResult
+					codeResult,
 				);
 				if (codeResult) {
 					monacoResult = toCodeLens(codeResult);
@@ -225,7 +236,7 @@ export async function createLanguageFeaturesProvider(
 				{
 					diagnostics: diagnostics,
 					only: context.only ? [context.only] : undefined,
-				}
+				},
 			);
 
 			if (codeResult) {
@@ -235,7 +246,7 @@ export async function createLanguageFeaturesProvider(
 				}
 				return {
 					actions: monacoResult,
-					dispose: () => { },
+					dispose: () => {},
 				};
 			}
 		},
@@ -245,7 +256,7 @@ export async function createLanguageFeaturesProvider(
 				const languageService = await worker.withSyncedResources(getSyncUris());
 				codeResult = await languageService.resolveCodeAction(
 					getRequestId(token, languageService),
-					codeResult
+					codeResult,
 				);
 				if (codeResult) {
 					monacoResult = toCodeAction(codeResult);
@@ -261,7 +272,7 @@ export async function createLanguageFeaturesProvider(
 				model.uri,
 				fromFormattingOptions(options),
 				undefined,
-				undefined
+				undefined,
 			);
 			if (codeResult) {
 				return codeResult.map(toTextEdit);
@@ -274,7 +285,7 @@ export async function createLanguageFeaturesProvider(
 				model.uri,
 				fromFormattingOptions(options),
 				fromRange(range),
-				undefined
+				undefined,
 			);
 			if (codeResult) {
 				return codeResult.map(toTextEdit);
@@ -290,7 +301,7 @@ export async function createLanguageFeaturesProvider(
 				{
 					ch: ch,
 					position: fromPosition(position),
-				}
+				},
 			);
 			if (codeResult) {
 				return codeResult.map(toTextEdit);
@@ -300,7 +311,7 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getDocumentLinks(
 				getRequestId(token, languageService),
-				model.uri
+				model.uri,
 			);
 			if (codeResult) {
 				return {
@@ -317,7 +328,7 @@ export async function createLanguageFeaturesProvider(
 			if (codeResult) {
 				codeResult = await languageService.resolveDocumentLink(
 					getRequestId(token, languageService),
-					codeResult
+					codeResult,
 				);
 				return toLink(codeResult);
 			}
@@ -329,7 +340,7 @@ export async function createLanguageFeaturesProvider(
 				getRequestId(token, languageService),
 				model.uri,
 				fromPosition(position),
-				fromCompletionContext(context)
+				fromCompletionContext(context),
 			);
 			const wordInfo = model.getWordUntilPosition(position);
 			const monacoResult = toCompletionList(codeResult, {
@@ -338,12 +349,12 @@ export async function createLanguageFeaturesProvider(
 					startLineNumber: position.lineNumber,
 					endColumn: position.column,
 					endLineNumber: position.lineNumber,
-				}
+				},
 			});
 			for (let i = 0; i < codeResult.items.length; i++) {
 				completionItems.set(
 					monacoResult.suggestions[i],
-					codeResult.items[i]
+					codeResult.items[i],
 				);
 			}
 			return monacoResult;
@@ -354,10 +365,10 @@ export async function createLanguageFeaturesProvider(
 				const languageService = await worker.withSyncedResources(getSyncUris());
 				codeItem = await languageService.resolveCompletionItem(
 					getRequestId(token, languageService),
-					codeItem
+					codeItem,
 				);
 				monacoItem = toCompletionItem(codeItem, {
-					range: 'replace' in monacoItem.range ? monacoItem.range.replace : monacoItem.range
+					range: 'replace' in monacoItem.range ? monacoItem.range.replace : monacoItem.range,
 				});
 				completionItems.set(monacoItem, codeItem);
 			}
@@ -367,7 +378,7 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getDocumentColors(
 				getRequestId(token, languageService),
-				model.uri
+				model.uri,
 			);
 			if (codeResult) {
 				return codeResult.map(toColorInformation);
@@ -384,9 +395,9 @@ export async function createLanguageFeaturesProvider(
 					{
 						start: fromPosition(model.getPositionAt(0)),
 						end: fromPosition(
-							model.getPositionAt(model.getValueLength())
+							model.getPositionAt(model.getValueLength()),
 						),
-					}
+					},
 				);
 				if (codeColors) {
 					return codeColors.map(toColorPresentation);
@@ -397,7 +408,7 @@ export async function createLanguageFeaturesProvider(
 			const languageService = await worker.withSyncedResources(getSyncUris());
 			const codeResult = await languageService.getFoldingRanges(
 				getRequestId(token, languageService),
-				model.uri
+				model.uri,
 			);
 			if (codeResult) {
 				return codeResult.map(toFoldingRange);
@@ -408,7 +419,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.getDefinition(
 				getRequestId(token, languageService),
 				model.uri,
-				fromPosition(position)
+				fromPosition(position),
 			);
 			if (codeResult) {
 				return codeResult.map(toLocationLink);
@@ -419,7 +430,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResults = await languageService.getSelectionRanges(
 				getRequestId(token, languageService),
 				model.uri,
-				positions.map(fromPosition)
+				positions.map(fromPosition),
 			);
 			return codeResults?.map(toSelectionRanges);
 		},
@@ -429,12 +440,12 @@ export async function createLanguageFeaturesProvider(
 				getRequestId(token, languageService),
 				model.uri,
 				fromPosition(position),
-				fromSignatureHelpContext(context)
+				fromSignatureHelpContext(context),
 			);
 			if (codeResult) {
 				return {
 					value: toSignatureHelp(codeResult),
-					dispose: () => { },
+					dispose: () => {},
 				};
 			}
 		},
@@ -444,7 +455,7 @@ export async function createLanguageFeaturesProvider(
 				getRequestId(token, languageService),
 				model.uri,
 				fromPosition(position),
-				newName
+				newName,
 			);
 			if (codeResult) {
 				return toWorkspaceEdit(codeResult);
@@ -456,7 +467,7 @@ export async function createLanguageFeaturesProvider(
 				getRequestId(token, languageService),
 				model.uri,
 				fromPosition(position),
-				context
+				context,
 			);
 			if (codeResult) {
 				return codeResult.map(toLocation);
@@ -467,7 +478,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.getInlayHints(
 				getRequestId(token, languageService),
 				model.uri,
-				fromRange(range)
+				fromRange(range),
 			);
 			if (codeResult) {
 				return {
@@ -476,7 +487,7 @@ export async function createLanguageFeaturesProvider(
 						inlayHints.set(monacoHint, hint);
 						return monacoHint;
 					}),
-					dispose: () => { },
+					dispose: () => {},
 				};
 			}
 		},
@@ -486,7 +497,7 @@ export async function createLanguageFeaturesProvider(
 			if (codeHint) {
 				const resolvedCodeHint = await languageService.resolveInlayHint(
 					getRequestId(token, languageService),
-					codeHint
+					codeHint,
 				);
 				return toInlayHint(resolvedCodeHint);
 			}
@@ -497,7 +508,7 @@ export async function createLanguageFeaturesProvider(
 			const codeResult = await languageService.getHover(
 				getRequestId(token, languageService),
 				model.uri,
-				fromPosition(position)
+				fromPosition(position),
 			);
 			if (codeResult) {
 				return toHover(codeResult);

@@ -1,7 +1,18 @@
-import { type DataTransferItem, decodeEmbeddedDocumentUri, type LanguageService, mergeWorkspaceEdits } from '@volar/language-service';
+import {
+	type DataTransferItem,
+	decodeEmbeddedDocumentUri,
+	type LanguageService,
+	mergeWorkspaceEdits,
+} from '@volar/language-service';
 import * as vscode from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
-import { AutoInsertRequest, DocumentDrop_DataTransferItemAsStringRequest, DocumentDrop_DataTransferItemFileDataRequest, DocumentDropRequest, FindFileReferenceRequest } from '../../protocol';
+import {
+	AutoInsertRequest,
+	DocumentDrop_DataTransferItemAsStringRequest,
+	DocumentDrop_DataTransferItemFileDataRequest,
+	DocumentDropRequest,
+	FindFileReferenceRequest,
+} from '../../protocol';
 import type { LanguageServerProject, LanguageServerState } from '../types.js';
 import { type SnapshotDocument } from '../utils/snapshotDocument';
 
@@ -10,7 +21,7 @@ const reportedCapabilities = new Set<string>();
 export function register(
 	server: LanguageServerState,
 	documents: ReturnType<typeof import('./textDocuments')['register']>,
-	configurations: ReturnType<typeof import('./configurations')['register']>
+	configurations: ReturnType<typeof import('./configurations')['register']>,
 ) {
 	configurations.onDidChange(() => requestRefresh(false));
 
@@ -347,8 +358,20 @@ export function register(
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.signatureHelpProvider)) {
 			serverCapabilities.signatureHelpProvider = {
-				triggerCharacters: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.signatureHelpProvider?.triggerCharacters ?? []).flat())],
-				retriggerCharacters: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.signatureHelpProvider?.retriggerCharacters ?? []).flat())],
+				triggerCharacters: [
+					...new Set(
+						languageServicePlugins.map(({ capabilities }) =>
+							capabilities.signatureHelpProvider?.triggerCharacters ?? []
+						).flat(),
+					),
+				],
+				retriggerCharacters: [
+					...new Set(
+						languageServicePlugins.map(({ capabilities }) =>
+							capabilities.signatureHelpProvider?.retriggerCharacters ?? []
+						).flat(),
+					),
+				],
 			};
 			server.connection.onSignatureHelp(async (params, token) => {
 				const uri = URI.parse(params.textDocument.uri);
@@ -360,7 +383,12 @@ export function register(
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.completionProvider)) {
 			serverCapabilities.completionProvider = {
-				triggerCharacters: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.completionProvider?.triggerCharacters ?? []).flat())],
+				triggerCharacters: [
+					...new Set(
+						languageServicePlugins.map(({ capabilities }) => capabilities.completionProvider?.triggerCharacters ?? [])
+							.flat(),
+					),
+				],
 			};
 			server.connection.onCompletion(async (params, token) => {
 				const uri = URI.parse(params.textDocument.uri);
@@ -371,7 +399,7 @@ export function register(
 						uri,
 						params.position,
 						params.context,
-						token
+						token,
 					);
 					list.items = list.items.map(item => handleCompletionItem(initializeParams, item));
 					return list;
@@ -394,8 +422,20 @@ export function register(
 				full: true,
 				range: true,
 				legend: {
-					tokenTypes: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []).flat())],
-					tokenModifiers: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []).flat())],
+					tokenTypes: [
+						...new Set(
+							languageServicePlugins.map(({ capabilities }) =>
+								capabilities.semanticTokensProvider?.legend?.tokenTypes ?? []
+							).flat(),
+						),
+					],
+					tokenModifiers: [
+						...new Set(
+							languageServicePlugins.map(({ capabilities }) =>
+								capabilities.semanticTokensProvider?.legend?.tokenModifiers ?? []
+							).flat(),
+						),
+					],
 				},
 			};
 			server.connection.languages.semanticTokens.on(async (params, token, _, resultProgress) => {
@@ -406,7 +446,7 @@ export function register(
 						undefined,
 						serverCapabilities.semanticTokensProvider!.legend,
 						tokens => resultProgress?.report(tokens),
-						token
+						token,
 					);
 				}) ?? { data: [] };
 			});
@@ -418,7 +458,7 @@ export function register(
 						params.range,
 						serverCapabilities.semanticTokensProvider!.legend,
 						tokens => resultProgress?.report(tokens),
-						token
+						token,
 					);
 				}) ?? { data: [] };
 			});
@@ -435,8 +475,15 @@ export function register(
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.codeActionProvider)) {
 			serverCapabilities.codeActionProvider = {
-				codeActionKinds: languageServicePlugins.some(({ capabilities }) => capabilities.codeActionProvider?.codeActionKinds)
-					? [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.codeActionProvider?.codeActionKinds ?? []).flat())]
+				codeActionKinds: languageServicePlugins.some(({ capabilities }) =>
+						capabilities.codeActionProvider?.codeActionKinds
+					)
+					? [
+						...new Set(
+							languageServicePlugins.map(({ capabilities }) => capabilities.codeActionProvider?.codeActionKinds ?? [])
+								.flat(),
+						),
+					]
 					: undefined,
 			};
 			server.connection.onCodeAction(async (params, token) => {
@@ -472,8 +519,20 @@ export function register(
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.documentOnTypeFormattingProvider)) {
 			serverCapabilities.documentOnTypeFormattingProvider = {
-				firstTriggerCharacter: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())][0],
-				moreTriggerCharacter: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []).flat())].slice(1),
+				firstTriggerCharacter: [
+					...new Set(
+						languageServicePlugins.map(({ capabilities }) =>
+							capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []
+						).flat(),
+					),
+				][0],
+				moreTriggerCharacter: [
+					...new Set(
+						languageServicePlugins.map(({ capabilities }) =>
+							capabilities.documentOnTypeFormattingProvider?.triggerCharacters ?? []
+						).flat(),
+					),
+				].slice(1),
 			};
 			server.connection.onDocumentOnTypeFormatting(async (params, token) => {
 				const uri = URI.parse(params.textDocument.uri);
@@ -485,7 +544,12 @@ export function register(
 
 		if (languageServicePlugins.some(({ capabilities }) => capabilities.executeCommandProvider)) {
 			serverCapabilities.executeCommandProvider = {
-				commands: [...new Set(languageServicePlugins.map(({ capabilities }) => capabilities.executeCommandProvider?.commands ?? []).flat())],
+				commands: [
+					...new Set(
+						languageServicePlugins.map(({ capabilities }) => capabilities.executeCommandProvider?.commands ?? [])
+							.flat(),
+					),
+				],
 			};
 			server.connection.onExecuteCommand(async (params, token) => {
 				let languageServices = await project.getExistingLanguageServices();
@@ -499,7 +563,8 @@ export function register(
 					if (languageService.executeCommand && languageService.commands.includes(params.command)) {
 						try {
 							return await languageService.executeCommand(params.command, params.arguments ?? [], token);
-						} catch { }
+						}
+						catch {}
 					}
 				}
 			});
@@ -620,14 +685,15 @@ export function register(
 			serverCapabilities.experimental ??= {};
 			serverCapabilities.experimental.documentDropEditsProvider = true;
 			server.connection.onRequest(DocumentDropRequest.type, async ({ textDocument, position, dataTransfer }, token) => {
-
 				const dataTransferMap = new Map<string, DataTransferItem>();
 
 				for (const item of dataTransfer) {
 					dataTransferMap.set(item.mimeType, {
 						value: item.value,
 						asString() {
-							return server.connection.sendRequest(DocumentDrop_DataTransferItemAsStringRequest.type, { mimeType: item.mimeType });
+							return server.connection.sendRequest(DocumentDrop_DataTransferItemAsStringRequest.type, {
+								mimeType: item.mimeType,
+							});
 						},
 						asFile() {
 							if (item.file) {
@@ -635,7 +701,9 @@ export function register(
 									name: item.file.name,
 									uri: item.file.uri,
 									data() {
-										return server.connection.sendRequest(DocumentDrop_DataTransferItemFileDataRequest.type, { mimeType: item.mimeType });
+										return server.connection.sendRequest(DocumentDrop_DataTransferItemFileDataRequest.type, {
+											mimeType: item.mimeType,
+										});
 									},
 								};
 							}
@@ -644,7 +712,7 @@ export function register(
 				}
 
 				const uri = URI.parse(textDocument.uri);
-				const languageService = (await project.getLanguageService(uri));
+				const languageService = await project.getLanguageService(uri);
 				return languageService.getDocumentDropEdits(uri, position, dataTransferMap, token);
 			});
 		}
@@ -652,8 +720,12 @@ export function register(
 		// Diagnostic support
 		const supportsDiagnosticPull = !!initializeParams.capabilities.workspace?.diagnostics;
 		const diagnosticProvider = languageServicePlugins.some(({ capabilities }) => !!capabilities.diagnosticProvider);
-		const interFileDependencies = languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.interFileDependencies);
-		const workspaceDiagnostics = languageServicePlugins.some(({ capabilities }) => capabilities.diagnosticProvider?.workspaceDiagnostics);
+		const interFileDependencies = languageServicePlugins.some(({ capabilities }) =>
+			capabilities.diagnosticProvider?.interFileDependencies
+		);
+		const workspaceDiagnostics = languageServicePlugins.some(({ capabilities }) =>
+			capabilities.diagnosticProvider?.workspaceDiagnostics
+		);
 
 		if (diagnosticProvider) {
 			if (supportsDiagnosticPull && !interFileDependencies) {
@@ -699,30 +771,32 @@ export function register(
 					await updateDiagnosticsBatch(project, [...documents.all()]);
 				});
 			}
-			server.connection.languages.diagnostics.on(async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
-				const uri = URI.parse(params.textDocument.uri);
-				const result = await worker(uri, token, languageService => {
-					return languageService.getDiagnostics(
-						uri,
-						errors => {
-							// resultProgressReporter is undefined in vscode
-							resultProgressReporter?.report({
-								relatedDocuments: {
-									[params.textDocument.uri]: {
-										kind: vscode.DocumentDiagnosticReportKind.Full,
-										items: errors,
+			server.connection.languages.diagnostics.on(
+				async (params, token, _workDoneProgressReporter, resultProgressReporter) => {
+					const uri = URI.parse(params.textDocument.uri);
+					const result = await worker(uri, token, languageService => {
+						return languageService.getDiagnostics(
+							uri,
+							errors => {
+								// resultProgressReporter is undefined in vscode
+								resultProgressReporter?.report({
+									relatedDocuments: {
+										[params.textDocument.uri]: {
+											kind: vscode.DocumentDiagnosticReportKind.Full,
+											items: errors,
+										},
 									},
-								},
-							});
-						},
-						token
-					);
-				});
-				return {
-					kind: vscode.DocumentDiagnosticReportKind.Full,
-					items: result ?? [],
-				};
-			});
+								});
+							},
+							token,
+						);
+					});
+					return {
+						kind: vscode.DocumentDiagnosticReportKind.Full,
+						items: result ?? [],
+					};
+				},
+			);
 		}
 
 		if (workspaceDiagnostics) {
@@ -779,12 +853,17 @@ export function register(
 		}
 	}
 
-	async function updateDiagnostics(project: LanguageServerProject, uri: URI, version: number, token: vscode.CancellationToken) {
+	async function updateDiagnostics(
+		project: LanguageServerProject,
+		uri: URI,
+		version: number,
+		token: vscode.CancellationToken,
+	) {
 		const languageService = await project.getLanguageService(uri);
 		const diagnostics = await languageService.getDiagnostics(
 			uri,
 			diagnostics => server.connection.sendDiagnostics({ uri: uri.toString(), diagnostics, version }),
-			token
+			token,
 		);
 		if (!token.isCancellationRequested) {
 			server.connection.sendDiagnostics({ uri: uri.toString(), diagnostics, version });
@@ -798,7 +877,7 @@ export function register(
 					resolve(undefined);
 					return;
 				}
-				const languageService = (await server.project.getLanguageService(decodeEmbeddedDocumentUri(uri)?.[0] ?? uri));
+				const languageService = await server.project.getLanguageService(decodeEmbeddedDocumentUri(uri)?.[0] ?? uri);
 				const result = await cb(languageService);
 				if (token.isCancellationRequested) {
 					resolve(undefined);
@@ -810,8 +889,10 @@ export function register(
 	}
 
 	function handleCompletionItem(initializeParams: vscode.InitializeParams, item: vscode.CompletionItem) {
-		const snippetSupport = initializeParams.capabilities.textDocument?.completion?.completionItem?.snippetSupport ?? false;
-		const insertReplaceSupport = initializeParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;
+		const snippetSupport = initializeParams.capabilities.textDocument?.completion?.completionItem?.snippetSupport
+			?? false;
+		const insertReplaceSupport =
+			initializeParams.capabilities.textDocument?.completion?.completionItem?.insertReplaceSupport ?? false;
 		if (!snippetSupport && item.insertTextFormat === vscode.InsertTextFormat.Snippet) {
 			item.insertTextFormat = vscode.InsertTextFormat.PlainText;
 			if (item.insertText) {
@@ -827,7 +908,11 @@ export function register(
 		return item;
 	}
 
-	function handleDefinitions(initializeParams: vscode.InitializeParams, type: 'declaration' | 'definition' | 'typeDefinition' | 'implementation', items: vscode.LocationLink[]) {
+	function handleDefinitions(
+		initializeParams: vscode.InitializeParams,
+		type: 'declaration' | 'definition' | 'typeDefinition' | 'implementation',
+		items: vscode.LocationLink[],
+	) {
 		const linkSupport = initializeParams.capabilities.textDocument?.[type]?.linkSupport ?? false;
 		if (!linkSupport) {
 			wranCapabilitiesNotSupported(`textDocument.${type}.linkSupport`);

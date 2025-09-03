@@ -1,7 +1,7 @@
 import type { CodeInformation, SourceScript } from '@volar/language-core';
 import { type Language, shouldReportDiagnostics } from '@volar/language-core';
 import type * as ts from 'typescript';
-import type { TextChange } from "typescript";
+import type { TextChange } from 'typescript';
 import type { TypeScriptServiceScript } from '../..';
 import { getServiceScript } from './utils';
 
@@ -18,7 +18,7 @@ export function transformCallHierarchyItem(
 	language: Language<string>,
 	item: ts.CallHierarchyItem,
 	fallbackToAnyMatch: boolean,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ): ts.CallHierarchyItem {
 	const span = transformSpan(language, item.file, item.span, fallbackToAnyMatch, filter);
 	const selectionSpan = transformSpan(language, item.file, item.selectionSpan, fallbackToAnyMatch, filter);
@@ -34,7 +34,7 @@ export function transformDiagnostic<T extends ts.Diagnostic>(
 	language: Language<string>,
 	diagnostic: T,
 	program: ts.Program | undefined,
-	isTsc: boolean
+	isTsc: boolean,
 ): T | undefined {
 	if (!transformedDiagnostics.has(diagnostic)) {
 		transformedDiagnostics.set(diagnostic, undefined);
@@ -59,10 +59,10 @@ export function transformDiagnostic<T extends ts.Diagnostic>(
 					serviceScript,
 					{
 						start: diagnostic.start,
-						length: diagnostic.length
+						length: diagnostic.length,
 					},
 					true,
-					data => shouldReportDiagnostics(data, String(diagnostic.source), String(diagnostic.code))
+					data => shouldReportDiagnostics(data, String(diagnostic.source), String(diagnostic.code)),
 				) ?? [];
 				const actualDiagnosticFile = sourceSpanFileName
 					? diagnostic.file.fileName === sourceSpanFileName
@@ -110,22 +110,23 @@ export function transformFileTextChanges(
 	language: Language<string>,
 	changes: readonly ts.FileTextChanges[],
 	fallbackToAnyMatch: boolean,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ): ts.FileTextChanges[] {
-	const changesPerFile: { [fileName: string]: TextChange[]; } = {};
+	const changesPerFile: { [fileName: string]: TextChange[] } = {};
 	const newFiles = new Set<string>();
 	for (const fileChanges of changes) {
 		const [_, source] = getServiceScript(language, fileChanges.fileName);
 		if (source) {
 			fileChanges.textChanges.forEach(c => {
-				const { fileName, textSpan } = transformSpan(language, fileChanges.fileName, c.span, fallbackToAnyMatch, filter) ?? {};
+				const { fileName, textSpan } = transformSpan(language, fileChanges.fileName, c.span, fallbackToAnyMatch, filter)
+					?? {};
 				if (fileName && textSpan) {
 					(changesPerFile[fileName] ?? (changesPerFile[fileName] = [])).push({ ...c, span: textSpan });
 				}
 			});
-
-		} else {
-			const list = (changesPerFile[fileChanges.fileName] ?? (changesPerFile[fileChanges.fileName] = []));
+		}
+		else {
+			const list = changesPerFile[fileChanges.fileName] ?? (changesPerFile[fileChanges.fileName] = []);
 			fileChanges.textChanges.forEach(c => {
 				list.push(c);
 			});
@@ -139,7 +140,7 @@ export function transformFileTextChanges(
 		result.push({
 			fileName,
 			isNewFile: newFiles.has(fileName),
-			textChanges: changesPerFile[fileName]
+			textChanges: changesPerFile[fileName],
 		});
 	}
 	return result;
@@ -150,7 +151,7 @@ export function transformDocumentSpan<T extends ts.DocumentSpan>(
 	documentSpan: T,
 	fallbackToAnyMatch: boolean,
 	filter: (data: CodeInformation) => boolean,
-	shouldFallback?: boolean
+	shouldFallback?: boolean,
 ): T | undefined {
 	let textSpan = transformSpan(language, documentSpan.fileName, documentSpan.textSpan, fallbackToAnyMatch, filter);
 	if (!textSpan && shouldFallback) {
@@ -162,9 +163,27 @@ export function transformDocumentSpan<T extends ts.DocumentSpan>(
 	if (!textSpan) {
 		return;
 	}
-	const contextSpan = transformSpan(language, documentSpan.fileName, documentSpan.contextSpan, fallbackToAnyMatch, filter);
-	const originalTextSpan = transformSpan(language, documentSpan.originalFileName, documentSpan.originalTextSpan, fallbackToAnyMatch, filter);
-	const originalContextSpan = transformSpan(language, documentSpan.originalFileName, documentSpan.originalContextSpan, fallbackToAnyMatch, filter);
+	const contextSpan = transformSpan(
+		language,
+		documentSpan.fileName,
+		documentSpan.contextSpan,
+		fallbackToAnyMatch,
+		filter,
+	);
+	const originalTextSpan = transformSpan(
+		language,
+		documentSpan.originalFileName,
+		documentSpan.originalTextSpan,
+		fallbackToAnyMatch,
+		filter,
+	);
+	const originalContextSpan = transformSpan(
+		language,
+		documentSpan.originalFileName,
+		documentSpan.originalContextSpan,
+		fallbackToAnyMatch,
+		filter,
+	);
 	return {
 		...documentSpan,
 		fileName: textSpan.fileName,
@@ -181,7 +200,7 @@ export function transformSpan(
 	fileName: string | undefined,
 	textSpan: ts.TextSpan | undefined,
 	fallbackToAnyMatch: boolean,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ): {
 	fileName: string;
 	textSpan: ts.TextSpan;
@@ -191,7 +210,8 @@ export function transformSpan(
 	}
 	const [serviceScript] = getServiceScript(language, fileName);
 	if (serviceScript) {
-		const [sourceSpanFileName, sourceSpan] = transformTextSpan(undefined, language, serviceScript, textSpan, fallbackToAnyMatch, filter) ?? [];
+		const [sourceSpanFileName, sourceSpan] =
+			transformTextSpan(undefined, language, serviceScript, textSpan, fallbackToAnyMatch, filter) ?? [];
 		if (sourceSpan && sourceSpanFileName) {
 			return {
 				fileName: sourceSpanFileName,
@@ -213,9 +233,10 @@ export function transformTextChange(
 	serviceScript: TypeScriptServiceScript,
 	textChange: ts.TextChange,
 	fallbackToAnyMatch: boolean,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ): [string, ts.TextChange] | undefined {
-	const [sourceSpanFileName, sourceSpan] = transformTextSpan(sourceScript, language, serviceScript, textChange.span, fallbackToAnyMatch, filter) ?? [];
+	const [sourceSpanFileName, sourceSpan] =
+		transformTextSpan(sourceScript, language, serviceScript, textChange.span, fallbackToAnyMatch, filter) ?? [];
 	if (sourceSpan && sourceSpanFileName) {
 		return [sourceSpanFileName, {
 			newText: textChange.newText,
@@ -231,11 +252,21 @@ export function transformTextSpan(
 	serviceScript: TypeScriptServiceScript,
 	textSpan: ts.TextSpan,
 	fallbackToAnyMatch: boolean,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ): [string, ts.TextSpan] | undefined {
 	const start = textSpan.start;
 	const end = textSpan.start + textSpan.length;
-	for (const [fileName, sourceStart, sourceEnd] of toSourceRanges(sourceScript, language, serviceScript, start, end, fallbackToAnyMatch, filter)) {
+	for (
+		const [fileName, sourceStart, sourceEnd] of toSourceRanges(
+			sourceScript,
+			language,
+			serviceScript,
+			start,
+			end,
+			fallbackToAnyMatch,
+			filter,
+		)
+	) {
 		return [fileName, {
 			start: sourceStart,
 			length: sourceEnd - sourceStart,
@@ -248,7 +279,7 @@ export function toSourceOffset(
 	language: Language<string>,
 	serviceScript: TypeScriptServiceScript,
 	position: number,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ) {
 	for (const source of toSourceOffsets(sourceScript, language, serviceScript, position, filter)) {
 		return source;
@@ -262,27 +293,31 @@ export function* toSourceRanges(
 	start: number,
 	end: number,
 	fallbackToAnyMatch: boolean,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ): Generator<[fileName: string, start: number, end: number]> {
 	if (sourceScript) {
 		const map = language.maps.get(serviceScript.code, sourceScript);
-		for (const [sourceStart, sourceEnd] of map.toSourceRange(
-			start - getMappingOffset(language, serviceScript),
-			end - getMappingOffset(language, serviceScript),
-			fallbackToAnyMatch,
-			filter
-		)) {
+		for (
+			const [sourceStart, sourceEnd] of map.toSourceRange(
+				start - getMappingOffset(language, serviceScript),
+				end - getMappingOffset(language, serviceScript),
+				fallbackToAnyMatch,
+				filter,
+			)
+		) {
 			yield [sourceScript.id, sourceStart, sourceEnd];
 		}
 	}
 	else {
 		for (const [sourceScript, map] of language.maps.forEach(serviceScript.code)) {
-			for (const [sourceStart, sourceEnd] of map.toSourceRange(
-				start - getMappingOffset(language, serviceScript),
-				end - getMappingOffset(language, serviceScript),
-				fallbackToAnyMatch,
-				filter
-			)) {
+			for (
+				const [sourceStart, sourceEnd] of map.toSourceRange(
+					start - getMappingOffset(language, serviceScript),
+					end - getMappingOffset(language, serviceScript),
+					fallbackToAnyMatch,
+					filter,
+				)
+			) {
 				yield [sourceScript.id, sourceStart, sourceEnd];
 			}
 		}
@@ -294,7 +329,7 @@ export function* toSourceOffsets(
 	language: Language<string>,
 	serviceScript: TypeScriptServiceScript,
 	position: number,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ): Generator<[fileName: string, offset: number]> {
 	if (sourceScript) {
 		const map = language.maps.get(serviceScript.code, sourceScript);
@@ -306,7 +341,9 @@ export function* toSourceOffsets(
 	}
 	else {
 		for (const [sourceScript, map] of language.maps.forEach(serviceScript.code)) {
-			for (const [sourceOffset, mapping] of map.toSourceLocation(position - getMappingOffset(language, serviceScript))) {
+			for (
+				const [sourceOffset, mapping] of map.toSourceLocation(position - getMappingOffset(language, serviceScript))
+			) {
 				if (filter(mapping.data)) {
 					yield [sourceScript.id, sourceOffset];
 				}
@@ -321,7 +358,7 @@ export function toGeneratedRange(
 	sourceScript: SourceScript<string>,
 	start: number,
 	end: number,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ) {
 	for (const result of toGeneratedRanges(language, serviceScript, sourceScript, start, end, filter)) {
 		return result;
@@ -334,7 +371,7 @@ export function* toGeneratedRanges(
 	sourceScript: SourceScript<string>,
 	start: number,
 	end: number,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ) {
 	const map = language.maps.get(serviceScript.code, sourceScript);
 	for (const [generateStart, generateEnd] of map.toGeneratedRange(start, end, true, filter)) {
@@ -350,7 +387,7 @@ export function toGeneratedOffset(
 	serviceScript: TypeScriptServiceScript,
 	sourceScript: SourceScript<string>,
 	position: number,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ) {
 	for (const [generateOffset] of toGeneratedOffsets(language, serviceScript, sourceScript, position, filter)) {
 		return generateOffset;
@@ -362,7 +399,7 @@ export function* toGeneratedOffsets(
 	serviceScript: TypeScriptServiceScript,
 	sourceScript: SourceScript<string>,
 	position: number,
-	filter: (data: CodeInformation) => boolean
+	filter: (data: CodeInformation) => boolean,
 ) {
 	const map = language.maps.get(serviceScript.code, sourceScript);
 	for (const [generateOffset, mapping] of map.toGeneratedLocation(position)) {

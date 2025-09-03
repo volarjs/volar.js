@@ -1,5 +1,20 @@
-import { type Language, type LanguagePlugin, type LanguageService, type LanguageServiceEnvironment, type ProjectContext, type ProviderResult, createLanguage, createLanguageService, createUriMap } from '@volar/language-service';
-import { type TypeScriptProjectHost, createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
+import {
+	createLanguage,
+	createLanguageService,
+	createUriMap,
+	type Language,
+	type LanguagePlugin,
+	type LanguageService,
+	type LanguageServiceEnvironment,
+	type ProjectContext,
+	type ProviderResult,
+} from '@volar/language-service';
+import {
+	createLanguageServiceHost,
+	createSys,
+	resolveFileLanguageId,
+	type TypeScriptProjectHost,
+} from '@volar/typescript';
 import { matchFiles } from '@volar/typescript/lib/typescript/utilities';
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
@@ -45,7 +60,7 @@ export async function createTypeScriptLS(
 			language: Language;
 			project: ProjectContext;
 		}): void;
-	}>
+	}>,
 ): Promise<TypeScriptProjectLS> {
 	let commandLine: ts.ParsedCommandLine;
 	let projectVersion = 0;
@@ -152,7 +167,7 @@ export async function createTypeScriptLS(
 			else {
 				language.scripts.delete(uri);
 			}
-		}
+		},
 	);
 	const project: ProjectContext = {
 		typescript: {
@@ -164,7 +179,7 @@ export async function createTypeScriptLS(
 				sys,
 				language,
 				s => uriConverter.asUri(s),
-				projectHost
+				projectHost,
 			),
 		},
 	};
@@ -173,7 +188,7 @@ export async function createTypeScriptLS(
 		language,
 		server.languageServicePlugins,
 		serviceEnv,
-		project
+		project,
 	);
 
 	return {
@@ -209,7 +224,7 @@ export async function createTypeScriptLS(
 			sys,
 			uriConverter.asFileName(workspaceFolder),
 			tsconfig,
-			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat()
+			languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat(),
 		);
 		const newFileNames = new Set(commandLine.fileNames);
 		if (oldFileNames.size !== newFileNames.size || [...oldFileNames].some(fileName => !newFileNames.has(fileName))) {
@@ -222,7 +237,7 @@ export async function createTypeScriptLS(
 		sys: ReturnType<typeof createSys>,
 		workspacePath: string,
 		tsconfig: string | ts.CompilerOptions,
-		extraFileExtensions: ts.FileExtensionInfo[]
+		extraFileExtensions: ts.FileExtensionInfo[],
 	) {
 		let commandLine: ts.ParsedCommandLine = {
 			errors: [],
@@ -235,7 +250,8 @@ export async function createTypeScriptLS(
 			sysVersion = newSysVersion;
 			try {
 				commandLine = parseConfigWorker(ts, sys, workspacePath, tsconfig, extraFileExtensions);
-			} catch {
+			}
+			catch {
 				// will be failed if web fs host first result not ready
 			}
 			newSysVersion = await sys.sync();
@@ -248,7 +264,7 @@ export async function createTypeScriptLS(
 		_host: ts.ParseConfigHost,
 		workspacePath: string,
 		tsconfig: string | ts.CompilerOptions,
-		extraFileExtensions: ts.FileExtensionInfo[]
+		extraFileExtensions: ts.FileExtensionInfo[],
 	) {
 		let content: ts.ParsedCommandLine = {
 			errors: [],
@@ -297,7 +313,7 @@ export async function createTypeScriptLS(
 							directories: dirs,
 						};
 					},
-					path => path
+					path => path,
 				);
 				if (!unsavedFiles.length) {
 					return fsFiles;
@@ -307,10 +323,26 @@ export async function createTypeScriptLS(
 		};
 		if (typeof tsconfig === 'string') {
 			const config = ts.readJsonConfigFile(tsconfig, host.readFile);
-			content = ts.parseJsonSourceFileConfigFileContent(config, host, path.dirname(tsconfig), {}, tsconfig, undefined, extraFileExtensions);
+			content = ts.parseJsonSourceFileConfigFileContent(
+				config,
+				host,
+				path.dirname(tsconfig),
+				{},
+				tsconfig,
+				undefined,
+				extraFileExtensions,
+			);
 		}
 		else {
-			content = ts.parseJsonConfigFileContent({ files: [] }, host, workspacePath, tsconfig, workspacePath + '/jsconfig.json', undefined, extraFileExtensions);
+			content = ts.parseJsonConfigFileContent(
+				{ files: [] },
+				host,
+				workspacePath,
+				tsconfig,
+				workspacePath + '/jsconfig.json',
+				undefined,
+				extraFileExtensions,
+			);
 		}
 		// fix https://github.com/johnsoncodehk/volar/issues/1786
 		// https://github.com/microsoft/TypeScript/issues/30457

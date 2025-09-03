@@ -6,7 +6,6 @@ import { NoneCancellationToken } from '../utils/cancellation';
 import { getGeneratedPositions, languageFeatureWorker } from '../utils/featureWorkers';
 
 export function register(context: LanguageServiceContext) {
-
 	return (
 		uri: URI,
 		position: vscode.Position,
@@ -14,9 +13,8 @@ export function register(context: LanguageServiceContext) {
 			triggerKind: 1 satisfies typeof vscode.SignatureHelpTriggerKind.Invoked,
 			isRetrigger: false,
 		},
-		token = NoneCancellationToken
+		token = NoneCancellationToken,
 	) => {
-
 		return languageFeatureWorker(
 			context,
 			uri,
@@ -39,7 +37,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return plugin[1].provideSignatureHelp?.(document, position, signatureHelpContext, token);
 			},
-			data => data
+			data => data,
 		);
 	};
 }

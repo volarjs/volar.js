@@ -1,8 +1,14 @@
-import type { FileChangeType, FileType, LanguageServiceEnvironment, Disposable, FileStat } from '@volar/language-service';
-import type * as ts from 'typescript';
+import type {
+	Disposable,
+	FileChangeType,
+	FileStat,
+	FileType,
+	LanguageServiceEnvironment,
+} from '@volar/language-service';
 import * as path from 'path-browserify';
-import { matchFiles } from '../typescript/utilities';
+import type * as ts from 'typescript';
 import { URI } from 'vscode-uri';
+import { matchFiles } from '../typescript/utilities';
 
 interface File {
 	name: string;
@@ -29,7 +35,7 @@ export function createSys(
 	uriConverter: {
 		asUri(fileName: string): URI;
 		asFileName(uri: URI): string;
-	}
+	},
 ): ts.System & {
 	version: number;
 	sync(): Promise<number>;
@@ -54,23 +60,28 @@ export function createSys(
 			const fileExists = change.type === 1 satisfies typeof FileChangeType.Created
 				|| change.type === 2 satisfies typeof FileChangeType.Changed;
 			const dir = getDir(dirName, fileExists);
-			dir.files.set(normalizeFileId(baseName), fileExists ? {
-				name: baseName,
-				stat: {
-					type: 1 satisfies FileType.File,
-					ctime: Date.now(),
-					mtime: Date.now(),
-					size: -1,
-				},
-				requestedStat: false,
-				requestedText: false,
-			} : {
-				name: baseName,
-				stat: undefined,
-				text: undefined,
-				requestedStat: true,
-				requestedText: true,
-			});
+			dir.files.set(
+				normalizeFileId(baseName),
+				fileExists
+					? {
+						name: baseName,
+						stat: {
+							type: 1 satisfies FileType.File,
+							ctime: Date.now(),
+							mtime: Date.now(),
+							size: -1,
+						},
+						requestedStat: false,
+						requestedText: false,
+					}
+					: {
+						name: baseName,
+						stat: undefined,
+						text: undefined,
+						requestedStat: true,
+						requestedText: true,
+					},
+			);
 		}
 	});
 
@@ -82,10 +93,10 @@ export function createSys(
 		newLine: sys?.newLine ?? '\n',
 		useCaseSensitiveFileNames: caseSensitive,
 		realpath: sys?.realpath,
-		write: sys?.write ?? (() => { }),
-		writeFile: sys?.writeFile ?? (() => { }),
-		createDirectory: sys?.createDirectory ?? (() => { }),
-		exit: sys?.exit ?? (() => { }),
+		write: sys?.write ?? (() => {}),
+		writeFile: sys?.writeFile ?? (() => {}),
+		createDirectory: sys?.createDirectory ?? (() => {}),
+		exit: sys?.exit ?? (() => {}),
 		getExecutingFilePath: sys?.getExecutingFilePath ?? (() => getCurrentDirectory + '/__fake__.js'),
 		getCurrentDirectory,
 		getModifiedTime,
@@ -118,7 +129,8 @@ export function createSys(
 					try {
 						// @ts-ignore
 						process.chdir(currentDirectory);
-					} catch { }
+					}
+					catch {}
 				}
 			}
 			return sys.resolvePath(fsPath).replace(/\\/g, '/');
@@ -127,7 +139,6 @@ export function createSys(
 	}
 
 	function readFile(fileName: string, encoding?: string) {
-
 		fileName = resolvePath(fileName);
 		const dirPath = path.dirname(fileName);
 		const dir = getDir(dirPath);
@@ -138,7 +149,6 @@ export function createSys(
 	}
 
 	function directoryExists(dirName: string): boolean {
-
 		dirName = resolvePath(dirName);
 
 		const dir = getDir(dirName);
@@ -206,7 +216,6 @@ export function createSys(
 	}
 
 	function getFile(fileName: string) {
-
 		fileName = resolvePath(fileName);
 
 		const dirPath = path.dirname(fileName);
@@ -214,11 +223,14 @@ export function createSys(
 		const dir = getDir(dirPath);
 		let file = dir.files.get(normalizeFileId(baseName));
 		if (!file) {
-			dir.files.set(normalizeFileId(baseName), file = {
-				name: baseName,
-				requestedStat: false,
-				requestedText: false,
-			});
+			dir.files.set(
+				normalizeFileId(baseName),
+				file = {
+					name: baseName,
+					requestedStat: false,
+					requestedText: false,
+				},
+			);
 		}
 
 		return file;
@@ -239,7 +251,7 @@ export function createSys(
 		extensions?: readonly string[],
 		excludes?: readonly string[],
 		includes?: readonly string[],
-		depth?: number
+		depth?: number,
 	) {
 		dirName = resolvePath(dirName);
 		const currentDirectory = getCurrentDirectory();
@@ -265,22 +277,24 @@ export function createSys(
 						.map(dir => dir.name),
 				};
 			},
-			sys?.realpath ? (path => sys.realpath!(path)) : (path => path)
+			sys?.realpath ? (path => sys.realpath!(path)) : (path => path),
 		);
 		return [...new Set(matches)];
 	}
 
 	function readFileWorker(fileName: string, encoding: string | undefined, dir: Dir) {
-
 		const name = path.basename(fileName);
 
 		let file = dir.files.get(normalizeFileId(name));
 		if (!file) {
-			dir.files.set(normalizeFileId(name), file = {
-				name,
-				requestedStat: false,
-				requestedText: false,
-			});
+			dir.files.set(
+				normalizeFileId(name),
+				file = {
+					name,
+					requestedStat: false,
+					requestedText: false,
+				},
+			);
 		}
 
 		if (file.requestedText) {
@@ -311,7 +325,6 @@ export function createSys(
 	}
 
 	function readDirectoryWorker(dirName: string) {
-
 		const dir = getDir(dirName);
 		if (dir.requestedRead) {
 			return;
@@ -336,7 +349,6 @@ export function createSys(
 	}
 
 	function onReadDirectoryResult(dirName: string, dir: Dir, result: [string, FileType][]) {
-
 		// See https://github.com/microsoft/TypeScript/blob/e1a9290051a3b0cbdfbadc3adbcc155a4641522a/src/compiler/sys.ts#L1853-L1857
 		result = result.filter(([name]) => name !== '.' && name !== '..');
 
@@ -353,11 +365,14 @@ export function createSys(
 						if (stat?.type === 1 satisfies FileType.File) {
 							let file = dir.files.get(normalizeFileId(name));
 							if (!file) {
-								dir.files.set(normalizeFileId(name), file = {
-									name,
-									requestedStat: false,
-									requestedText: false,
-								});
+								dir.files.set(
+									normalizeFileId(name),
+									file = {
+										name,
+										requestedStat: false,
+										requestedText: false,
+									},
+								);
 							}
 							if (stat.type !== file.stat?.type || stat.mtime !== file.stat?.mtime) {
 								version++;
@@ -381,11 +396,14 @@ export function createSys(
 			if (fileType === 1 satisfies FileType.File) {
 				let file = dir.files.get(normalizeFileId(name));
 				if (!file) {
-					dir.files.set(normalizeFileId(name), file = {
-						name,
-						requestedStat: false,
-						requestedText: false,
-					});
+					dir.files.set(
+						normalizeFileId(name),
+						file = {
+							name,
+							requestedStat: false,
+							requestedText: false,
+						},
+					);
 				}
 				if (!file.stat) {
 					file.stat = {
@@ -409,7 +427,6 @@ export function createSys(
 	}
 
 	function getDir(dirName: string, markExists = false) {
-
 		const dirNames: string[] = [];
 
 		let currentDirPath = dirName;
@@ -440,11 +457,14 @@ export function createSys(
 	function getDirFromDir(dir: Dir, name: string) {
 		let target = dir.dirs.get(normalizeFileId(name));
 		if (!target) {
-			dir.dirs.set(normalizeFileId(name), target = {
-				name,
-				dirs: new Map(),
-				files: new Map(),
-			});
+			dir.dirs.set(
+				normalizeFileId(name),
+				target = {
+					name,
+					dirs: new Map(),
+					files: new Map(),
+				},
+			);
 		}
 		return target;
 	}
