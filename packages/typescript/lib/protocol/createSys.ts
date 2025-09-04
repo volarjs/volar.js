@@ -180,7 +180,7 @@ export function createSys(
 			file.requestedStat = true;
 			handleStat(fileName, file);
 		}
-		return file.stat ? new Date(file.stat.mtime) : new Date(0);
+		return file.stat ? new Date(file.stat.mtime) : new Date(-1);
 	}
 
 	function fileExists(fileName: string): boolean {
