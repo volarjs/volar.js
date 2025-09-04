@@ -224,7 +224,7 @@ export class WorkerLanguageService {
 	pendingRequests = new Map<number, undefined | Set<(e: any) => any>>();
 
 	constructor(
-		private languageService: LanguageService,
+		public languageService: LanguageService,
 	) {}
 
 	getSemanticTokenLegend() {
