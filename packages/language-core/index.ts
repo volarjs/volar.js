@@ -17,8 +17,34 @@ import type {
 	VirtualCode,
 } from './lib/types';
 
+/**
+ * Default mapper factory that creates a SourceMap instance from mappings.
+ */
 export const defaultMapperFactory: MapperFactory = mappings => new SourceMap(mappings);
 
+/**
+ * Creates a Language instance for managing language processing.
+ *
+ * @template T - Script identifier type (typically URI)
+ * @param plugins - Array of language plugins to use for code generation
+ * @param scriptRegistry - Map to store source scripts (will be populated by the language instance)
+ * @param sync - Function called to synchronize scripts (e.g., load from file system). Called with (id, includeFsFiles, shouldRegister)
+ * @param onAssociationDirty - Optional callback when associations become dirty (called with targetId)
+ * @returns Language instance with script registry, mapping system, and plugin execution
+ *
+ * @example
+ * ```typescript
+ * const scriptRegistry = new Map<URI, SourceScript<URI>>();
+ * const language = createLanguage(
+ *   [myLanguagePlugin],
+ *   scriptRegistry,
+ *   (uri) => {
+ *     const content = fs.readFileSync(uri.fsPath, 'utf-8');
+ *     language.scripts.set(uri, createSnapshot(content), 'typescript');
+ *   }
+ * );
+ * ```
+ */
 export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],
 	scriptRegistry: Map<T, SourceScript<T>>,
@@ -244,6 +270,20 @@ export function createLanguage<T>(
 	}
 }
 
+/**
+ * Recursively iterates over all embedded codes in a virtual code.
+ * Yields the root virtual code first, then all nested embedded codes.
+ *
+ * @param virtualCode - Virtual code to iterate
+ * @returns Generator yielding all embedded codes (including the root)
+ *
+ * @example
+ * ```typescript
+ * for (const code of forEachEmbeddedCode(virtualCode)) {
+ *   console.log(`Found embedded code: ${code.id} (${code.languageId})`);
+ * }
+ * ```
+ */
 export function* forEachEmbeddedCode(virtualCode: VirtualCode): Generator<VirtualCode> {
 	yield virtualCode;
 	if (virtualCode.embeddedCodes) {
