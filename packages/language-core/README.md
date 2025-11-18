@@ -364,6 +364,18 @@ const virtualCode: VirtualCode = {
 };
 ```
 
+## Comprehensive Guides
+
+For detailed guides on LanguagePlugin and VirtualCode:
+
+- **[Language Plugin Complete Guide](../../docs/guides/language-plugin-complete-guide.md)** - Complete LanguagePlugin reference with all methods and lifecycle
+- **[VirtualCode Complete Reference](../../docs/guides/virtualcode-complete-reference.md)** - Complete VirtualCode reference covering all properties, creation, usage, and updates
+- **[Mapping System Guide](../../docs/guides/mapping-system-guide.md)** - Understanding Mapping structure, CodeInformation, and Mapper usage
+- **[Script Snapshot Guide](../../docs/guides/script-snapshot-guide.md)** - Working with IScriptSnapshot and incremental updates
+- **[SourceScript and Language System](../../docs/guides/source-script-language-system.md)** - Script registry, lifecycle, and association system
+- **[Advanced Patterns](../../docs/guides/advanced-patterns.md)** - Advanced patterns including embedded codes, multi-file plugins, and TypeScript integration
+- **[Integration Guide](../../docs/guides/integration-guide.md)** - How LanguagePlugin, VirtualCode, and LanguageServicePlugin work together
+
 ## Related Documentation
 
 - [Architecture Guide](../../docs/ARCHITECTURE.md) - System architecture overview

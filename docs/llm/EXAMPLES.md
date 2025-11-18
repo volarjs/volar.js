@@ -4,6 +4,8 @@ Complete, copy-paste ready code examples for common Volar.js use cases.
 
 ## Creating a LanguagePlugin
 
+### Basic Plugin
+
 ```typescript
 import type {
   LanguagePlugin,
@@ -40,7 +42,74 @@ const myPlugin: LanguagePlugin<URI> = {
             verification: true,
             navigation: true,
             completion: true,
+            semantic: true,
+            structure: true,
+            format: true,
           },
+        },
+      ],
+    };
+  },
+};
+```
+
+### Plugin with Incremental Updates
+
+```typescript
+const myPlugin: LanguagePlugin<URI> = {
+  createVirtualCode(uri, languageId, snapshot, ctx) {
+    // Full creation
+    return this.generateVirtualCode(uri, languageId, snapshot, ctx);
+  },
+
+  updateVirtualCode(uri, virtualCode, newSnapshot, ctx) {
+    const changeRange = virtualCode.snapshot.getChangeRange(newSnapshot);
+    
+    if (!changeRange) {
+      // Fall back to full recreation
+      return this.createVirtualCode(uri, 'my-lang', newSnapshot, ctx);
+    }
+
+    // Incremental update
+    return this.updateIncrementally(virtualCode, changeRange, newSnapshot, ctx);
+  },
+
+  disposeVirtualCode(uri, virtualCode) {
+    // Clean up resources
+    this.parserCache.delete(uri.fsPath);
+  },
+};
+```
+
+### Plugin with Embedded Codes
+
+```typescript
+const multiFilePlugin: LanguagePlugin<URI> = {
+  createVirtualCode(uri, languageId, snapshot, ctx) {
+    const source = snapshot.getText(0, snapshot.getLength());
+    
+    // Extract parts
+    const script = extractScript(source);
+    const template = extractTemplate(source);
+    const style = extractStyle(source);
+
+    return {
+      id: "root",
+      languageId: "typescript",
+      snapshot: createSnapshot(transformScript(script)),
+      mappings: createScriptMappings(source, script),
+      embeddedCodes: [
+        {
+          id: "template",
+          languageId: "html",
+          snapshot: createSnapshot(transformTemplate(template)),
+          mappings: createTemplateMappings(source, template),
+        },
+        {
+          id: "style",
+          languageId: "css",
+          snapshot: createSnapshot(transformStyle(style)),
+          mappings: createStyleMappings(source, style),
         },
       ],
     };
@@ -89,19 +158,68 @@ import { createLanguage } from "@volar/language-core";
 import { createLanguageService } from "@volar/language-service";
 import { URI } from "vscode-uri";
 
-const scriptRegistry = new Map();
-const language = createLanguage([myLanguagePlugin], scriptRegistry, (uri) => {
-  // Sync function
-  const content = fs.readFileSync(uri.fsPath, "utf-8");
-  language.scripts.set(uri, createSnapshot(content), "typescript");
-});
+// Create script registry
+const scriptRegistry = new Map<URI, SourceScript<URI>>();
 
+// Create language instance
+const language = createLanguage(
+  [myLanguagePlugin],
+  scriptRegistry,
+  (uri, includeFsFiles, shouldRegister) => {
+    // Sync function - loads files from file system
+    if (includeFsFiles && fs.existsSync(uri.fsPath)) {
+      const content = fs.readFileSync(uri.fsPath, "utf-8");
+      const snapshot = createSnapshot(content);
+      language.scripts.set(uri, snapshot);
+    }
+  }
+);
+
+// Create language service
 const languageService = createLanguageService(
   language,
   [myServicePlugin],
   { workspaceFolders: [URI.parse("file:///")] },
   {}
 );
+
+// Use language service
+const hover = await languageService.getHover(uri, { line: 10, character: 5 });
+const completions = await languageService.getCompletionItems(uri, { line: 10, character: 5 });
+```
+
+## Working with VirtualCode
+
+```typescript
+// Get source script
+const sourceScript = language.scripts.get(uri);
+
+if (sourceScript?.generated) {
+  // Access root virtual code
+  const virtualCode = sourceScript.generated.root;
+  
+  // Access embedded codes
+  const embeddedCodes = sourceScript.generated.embeddedCodes;
+  const templateCode = embeddedCodes.get('template');
+  
+  // Get mapper
+  const mapper = language.maps.get(virtualCode, sourceScript);
+  
+  // Map source position to virtual position
+  const sourceOffset = 50;
+  for (const [virtualOffset, mapping] of mapper.toGeneratedLocation(
+    sourceOffset,
+    (data) => data.semantic === true
+  )) {
+    console.log(`Source ${sourceOffset} → Virtual ${virtualOffset}`);
+  }
+  
+  // Iterate over all embedded codes
+  import { forEachEmbeddedCode } from '@volar/language-core';
+  for (const code of forEachEmbeddedCode(virtualCode)) {
+    console.log(`${code.id}: ${code.languageId}`);
+  }
+}
 ```
 
 ## Creating an LSP Server

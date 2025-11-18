@@ -395,6 +395,18 @@ const diagnosticsPlugin: LanguageServicePlugin = {
 };
 ```
 
+## Comprehensive Guides
+
+For in-depth coverage of LanguagePlugin and VirtualCode, see the comprehensive guides:
+
+- **[Language Plugin Complete Guide](guides/language-plugin-complete-guide.md)** - Complete LanguagePlugin reference
+- **[VirtualCode Complete Reference](guides/virtualcode-complete-reference.md)** - Complete VirtualCode reference
+- **[Mapping System Guide](guides/mapping-system-guide.md)** - Understanding mappings and CodeInformation
+- **[Script Snapshot Guide](guides/script-snapshot-guide.md)** - Working with IScriptSnapshot
+- **[SourceScript and Language System](guides/source-script-language-system.md)** - Script registry and lifecycle
+- **[Advanced Patterns](guides/advanced-patterns.md)** - Advanced plugin patterns
+- **[Integration Guide](guides/integration-guide.md)** - How components work together
+
 ## Related Documentation
 
 - [Architecture Guide](ARCHITECTURE.md) - System architecture

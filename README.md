@@ -284,6 +284,23 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[API Reference](docs/API.md)** - Complete API documentation
 - **[Examples](docs/examples/)** - Usage examples and guides
 - **[LLM Documentation](docs/llm/)** - Documentation optimized for LLM consumption
+  - [Types](docs/llm/TYPES.md) - Type definitions
+  - [Architecture](docs/llm/ARCHITECTURE.md) - System architecture
+  - [Examples](docs/llm/EXAMPLES.md) - Code examples
+  - [VirtualCode Guide](docs/llm/VIRTUALCODE_GUIDE.md) - VirtualCode reference
+  - [Package Overviews](docs/llm/PACKAGE_OVERVIEWS.md) - Package summaries
+
+### Comprehensive Guides
+
+In-depth guides covering LanguagePlugin and VirtualCode:
+
+- **[Language Plugin Complete Guide](docs/guides/language-plugin-complete-guide.md)** - Complete LanguagePlugin reference
+- **[VirtualCode Complete Reference](docs/guides/virtualcode-complete-reference.md)** - Complete VirtualCode reference
+- **[Mapping System Guide](docs/guides/mapping-system-guide.md)** - Understanding mappings and CodeInformation
+- **[Script Snapshot Guide](docs/guides/script-snapshot-guide.md)** - Working with IScriptSnapshot
+- **[SourceScript and Language System](docs/guides/source-script-language-system.md)** - Script registry and lifecycle
+- **[Advanced Patterns](docs/guides/advanced-patterns.md)** - Advanced plugin patterns
+- **[Integration Guide](docs/guides/integration-guide.md)** - How components work together
 
 ### Package Documentation
 
