@@ -2,7 +2,7 @@ import { FileMap, forEachEmbeddedCode, type Language } from '@volar/language-cor
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import type { TypeScriptExtraServiceScript } from '../..';
-import { createGetModeForUsageLocation } from '../node/utils';
+import { lookupNodeFormatFromPackageJson } from '../node/utils';
 import { createResolveModuleName } from '../resolveModuleName';
 import type { createSys } from './createSys';
 
@@ -165,7 +165,7 @@ export function createLanguageServiceHost<T>(
 
 	if (pluginExtensions.length) {
 		// TODO: can this share between monorepo packages?
-		const moduleCache = ts.createModuleResolutionCache(
+		const moduleResolutionCache = ts.createModuleResolutionCache(
 			languageServiceHost.getCurrentDirectory(),
 			languageServiceHost.useCaseSensitiveFileNames?.() ? s => s : s => s.toLowerCase(),
 			languageServiceHost.getCompilationSettings(),
@@ -177,7 +177,6 @@ export function createLanguageServiceHost<T>(
 			language.plugins,
 			fileName => language.scripts.get(asScriptId(fileName)),
 		);
-		const getModeForUsageLocation = createGetModeForUsageLocation(ts, pluginExtensions);
 
 		let lastSysVersion = 'version' in sys ? sys.version : undefined;
 
@@ -186,30 +185,41 @@ export function createLanguageServiceHost<T>(
 			containingFile,
 			redirectedReference,
 			options,
-			sourceFile,
+			containingSourceFile,
 		) => {
-			if ('version' in sys && lastSysVersion !== sys.version) {
-				lastSysVersion = sys.version;
-				moduleCache.clear();
+			const fixed = containingSourceFile.impliedNodeFormat === undefined
+				&& pluginExtensions.some(ext => containingFile.endsWith(ext));
+			if (fixed) {
+				containingSourceFile.impliedNodeFormat = lookupNodeFormatFromPackageJson(
+					ts,
+					containingFile,
+					moduleResolutionCache.getPackageJsonInfoCache(),
+					languageServiceHost,
+					options,
+				);
 			}
-			return moduleLiterals.map(moduleLiteral => {
-				const mode = getModeForUsageLocation(
-					containingFile,
-					sourceFile,
-					moduleLiteral,
-					options,
-					moduleCache.getPackageJsonInfoCache(),
-					sys,
-				);
-				return resolveModuleName(
-					moduleLiteral.text,
-					containingFile,
-					options,
-					moduleCache,
-					redirectedReference,
-					mode,
-				);
-			});
+			try {
+				if ('version' in sys && lastSysVersion !== sys.version) {
+					lastSysVersion = sys.version;
+					moduleResolutionCache.clear();
+				}
+				return moduleLiterals.map(moduleLiteral => {
+					const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, options);
+					return resolveModuleName(
+						moduleLiteral.text,
+						containingFile,
+						options,
+						moduleResolutionCache,
+						redirectedReference,
+						mode,
+					);
+				});
+			}
+			finally {
+				if (fixed) {
+					containingSourceFile.impliedNodeFormat = undefined;
+				}
+			}
 		};
 		languageServiceHost.resolveModuleNames = (
 			moduleNames,
@@ -220,14 +230,15 @@ export function createLanguageServiceHost<T>(
 		) => {
 			if ('version' in sys && lastSysVersion !== sys.version) {
 				lastSysVersion = sys.version;
-				moduleCache.clear();
+				moduleResolutionCache.clear();
 			}
 			return moduleNames.map(moduleName => {
-				return resolveModuleName(moduleName, containingFile, options, moduleCache, redirectedReference).resolvedModule;
+				return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference)
+					.resolvedModule;
 			});
 		};
 
-		languageServiceHost.getModuleResolutionCache = () => moduleCache;
+		languageServiceHost.getModuleResolutionCache = () => moduleResolutionCache;
 	}
 
 	return {

@@ -1,7 +1,7 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
-import { createGetModeForUsageLocation } from './utils';
+import { lookupNodeFormatFromPackageJson } from './utils';
 
 export function decorateLanguageServiceHost(
 	ts: typeof import('typescript'),
@@ -56,7 +56,6 @@ export function decorateLanguageServiceHost(
 			getCanonicalFileName,
 			languageServiceHost.getCompilationSettings(),
 		);
-		const getModeForUsageLocation = createGetModeForUsageLocation(ts, pluginExtensions);
 
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
@@ -67,34 +66,45 @@ export function decorateLanguageServiceHost(
 				containingSourceFile,
 				...rest
 			) => {
-				if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
-					return resolveModuleNameLiterals(
-						moduleLiterals,
+				const fixed = containingSourceFile.impliedNodeFormat === undefined
+					&& pluginExtensions.some(ext => containingFile.endsWith(ext));
+				if (fixed) {
+					containingSourceFile.impliedNodeFormat = lookupNodeFormatFromPackageJson(
+						ts,
 						containingFile,
-						redirectedReference,
-						options,
-						containingSourceFile,
-						...rest,
-					);
-				}
-				return moduleLiterals.map(moduleLiteral => {
-					const mode = getModeForUsageLocation(
-						containingFile,
-						containingSourceFile,
-						moduleLiteral,
-						options,
 						moduleResolutionCache.getPackageJsonInfoCache(),
 						languageServiceHost,
-					);
-					return resolveModuleName(
-						moduleLiteral.text,
-						containingFile,
 						options,
-						moduleResolutionCache,
-						redirectedReference,
-						mode,
 					);
-				});
+				}
+				try {
+					if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
+						return resolveModuleNameLiterals(
+							moduleLiterals,
+							containingFile,
+							redirectedReference,
+							options,
+							containingSourceFile,
+							...rest,
+						);
+					}
+					return moduleLiterals.map(moduleLiteral => {
+						const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, options);
+						return resolveModuleName(
+							moduleLiteral.text,
+							containingFile,
+							options,
+							moduleResolutionCache,
+							redirectedReference,
+							mode,
+						);
+					});
+				}
+				finally {
+					if (fixed) {
+						containingSourceFile.impliedNodeFormat = undefined;
+					}
+				}
 			};
 		}
 		if (resolveModuleNames) {
