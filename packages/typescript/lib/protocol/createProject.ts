@@ -34,6 +34,9 @@ export function createLanguageServiceHost<T>(
 	asScriptId: (fileName: string) => T,
 	projectHost: TypeScriptProjectHost,
 ) {
+	const pluginExtensions = language.plugins
+		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
+		.flat();
 	const scriptVersions = new FileMap<{ lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number> }>(
 		sys.useCaseSensitiveFileNames,
 	);
@@ -64,17 +67,15 @@ export function createLanguageServiceHost<T>(
 		},
 		readDirectory(dirName, extensions, excludes, includes, depth) {
 			const exts = new Set(extensions);
-			for (const languagePlugin of language.plugins) {
-				for (const ext of languagePlugin.typescript?.extraFileExtensions ?? []) {
-					exts.add('.' + ext.extension);
-				}
+			for (const ext of pluginExtensions) {
+				exts.add(ext);
 			}
 			extensions = [...exts];
 			return sys.readDirectory(dirName, extensions, excludes, includes, depth);
 		},
 		getCompilationSettings() {
 			const options = projectHost.getCompilationSettings();
-			if (language.plugins.some(language => language.typescript?.extraFileExtensions.length)) {
+			if (pluginExtensions.length) {
 				options.allowNonTsExtensions ??= true;
 				if (!options.allowNonTsExtensions) {
 					console.warn('`allowNonTsExtensions` must be `true`.');
@@ -162,7 +163,7 @@ export function createLanguageServiceHost<T>(
 		}
 	}
 
-	if (language.plugins.some(plugin => plugin.typescript?.extraFileExtensions.length)) {
+	if (pluginExtensions.length) {
 		// TODO: can this share between monorepo packages?
 		const moduleCache = ts.createModuleResolutionCache(
 			languageServiceHost.getCurrentDirectory(),
@@ -176,12 +177,7 @@ export function createLanguageServiceHost<T>(
 			language.plugins,
 			fileName => language.scripts.get(asScriptId(fileName)),
 		);
-		const getModeForUsageLocation = createGetModeForUsageLocation(
-			ts,
-			language.plugins
-				.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
-				.flat(),
-		);
+		const getModeForUsageLocation = createGetModeForUsageLocation(ts, pluginExtensions);
 
 		let lastSysVersion = 'version' in sys ? sys.version : undefined;
 
