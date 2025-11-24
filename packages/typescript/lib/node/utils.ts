@@ -42,11 +42,7 @@ export function createGetModeForUsageLocation(ts: typeof import('typescript'), p
 		usage: ts.StringLiteralLike,
 		compilerOptions: ts.CompilerOptions,
 	) => {
-		if (
-			!file
-			|| file.impliedNodeFormat !== undefined
-			|| !pluginExtensions.some(ext => containingFile.endsWith(ext))
-		) {
+		if (file.impliedNodeFormat !== undefined || !pluginExtensions.some(ext => containingFile.endsWith(ext))) {
 			return ts.getModeForUsageLocation(file, usage, compilerOptions);
 		}
 		const before = file.impliedNodeFormat;
