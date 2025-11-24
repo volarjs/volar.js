@@ -12,6 +12,9 @@ export function createResolveModuleName<T>(
 		sourceFileName: string;
 		extension: string;
 	}>();
+	const pluginExtensions = languagePlugins.map(plugin =>
+		plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? []
+	).flat();
 	const moduleResolutionHost: ts.ModuleResolutionHost = {
 		readFile: host.readFile.bind(host),
 		directoryExists: host.directoryExists?.bind(host),
@@ -100,7 +103,7 @@ export function createResolveModuleName<T>(
 			moduleResolutionHost,
 			cache,
 			redirectedReference,
-			resolutionMode,
+			resolutionMode ?? fallbackResolutionMode(containingFile),
 		);
 		if (result.resolvedModule) {
 			const sourceFileInfo = toSourceFileInfo.get(result.resolvedModule.resolvedFileName);
@@ -120,5 +123,13 @@ export function createResolveModuleName<T>(
 			return fileSize < 4 * 1024 * 1024;
 		}
 		return false;
+	}
+
+	// fix https://github.com/vuejs/language-tools/issues/5644
+	function fallbackResolutionMode(
+		fileName: string,
+		fallback: ts.ResolutionMode = ts.ModuleKind.ESNext,
+	): ts.ResolutionMode {
+		return pluginExtensions.some(ext => fileName.endsWith(ext)) ? fallback : undefined;
 	}
 }
