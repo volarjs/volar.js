@@ -1,6 +1,7 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
+import { createGetModeForUsageLocation } from './utils';
 
 export function decorateLanguageServiceHost(
 	ts: typeof import('typescript'),
@@ -55,6 +56,7 @@ export function decorateLanguageServiceHost(
 			getCanonicalFileName,
 			languageServiceHost.getCompilationSettings(),
 		);
+		const getModeForUsageLocation = createGetModeForUsageLocation(ts, pluginExtensions);
 
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
@@ -76,7 +78,7 @@ export function decorateLanguageServiceHost(
 					);
 				}
 				return moduleLiterals.map(moduleLiteral => {
-					const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, options);
+					const mode = getModeForUsageLocation(containingFile, containingSourceFile, moduleLiteral, options);
 					return resolveModuleName(
 						moduleLiteral.text,
 						containingFile,

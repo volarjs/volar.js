@@ -1,4 +1,5 @@
 import type { Language, SourceScript } from '@volar/language-core';
+import type * as ts from 'typescript';
 import type { TypeScriptServiceScript } from '../..';
 
 export function getServiceScript(language: Language<string>, fileName: string):
@@ -32,4 +33,29 @@ export function getServiceScript(language: Language<string>, fileName: string):
 		}
 	}
 	return [undefined, undefined, undefined];
+}
+
+export function createGetModeForUsageLocation(ts: typeof import('typescript'), pluginExtensions: string[]) {
+	return (
+		containingFile: string,
+		file: ts.SourceFile,
+		usage: ts.StringLiteralLike,
+		compilerOptions: ts.CompilerOptions,
+	) => {
+		if (
+			!file
+			|| file.impliedNodeFormat !== undefined
+			|| !pluginExtensions.some(ext => containingFile.endsWith(ext))
+		) {
+			return ts.getModeForUsageLocation(file, usage, compilerOptions);
+		}
+		const before = file.impliedNodeFormat;
+		try {
+			file.impliedNodeFormat = ts.ModuleKind.ESNext;
+			return ts.getModeForUsageLocation(file, usage, compilerOptions);
+		}
+		finally {
+			file.impliedNodeFormat = before;
+		}
+	};
 }

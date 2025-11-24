@@ -3,6 +3,7 @@ import type * as ts from 'typescript';
 import { resolveFileLanguageId } from '../common';
 import { createResolveModuleName } from '../resolveModuleName';
 import { decorateProgram } from './decorateProgram';
+import { createGetModeForUsageLocation } from './utils';
 
 const arrayEqual = (a: readonly any[], b: readonly any[]) => {
 	if (a.length !== b.length) {
@@ -116,6 +117,7 @@ export function proxyCreateProgram(
 			const extensions = languagePlugins
 				.map(plugin => plugin.typescript?.extraFileExtensions.map(({ extension }) => `.${extension}`) ?? [])
 				.flat();
+			const getModeForUsageLocation = createGetModeForUsageLocation(ts, extensions);
 
 			options.host = { ...originalHost };
 			options.host.getSourceFile = (
@@ -223,7 +225,7 @@ export function proxyCreateProgram(
 						);
 					}
 					return moduleLiterals.map(moduleLiteral => {
-						const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, compilerOptions);
+						const mode = getModeForUsageLocation(containingFile, containingSourceFile, moduleLiteral, compilerOptions);
 						return resolveModuleName(
 							moduleLiteral.text,
 							containingFile,
