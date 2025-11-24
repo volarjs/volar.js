@@ -193,7 +193,14 @@ export function createLanguageServiceHost<T>(
 				moduleCache.clear();
 			}
 			return moduleLiterals.map(moduleLiteral => {
-				const mode = getModeForUsageLocation(containingFile, sourceFile, moduleLiteral, options);
+				const mode = getModeForUsageLocation(
+					containingFile,
+					sourceFile,
+					moduleLiteral,
+					options,
+					moduleCache.getPackageJsonInfoCache(),
+					sys,
+				);
 				return resolveModuleName(
 					moduleLiteral.text,
 					containingFile,

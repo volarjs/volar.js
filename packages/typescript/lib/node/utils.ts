@@ -41,17 +41,42 @@ export function createGetModeForUsageLocation(ts: typeof import('typescript'), p
 		file: ts.SourceFile,
 		usage: ts.StringLiteralLike,
 		compilerOptions: ts.CompilerOptions,
+		packageJsonInfoCache: ts.PackageJsonInfoCache,
+		host: ts.ModuleResolutionHost,
 	) => {
 		if (file.impliedNodeFormat !== undefined || !pluginExtensions.some(ext => containingFile.endsWith(ext))) {
 			return ts.getModeForUsageLocation(file, usage, compilerOptions);
 		}
-		const before = file.impliedNodeFormat;
 		try {
-			file.impliedNodeFormat = ts.ModuleKind.ESNext;
+			file.impliedNodeFormat = lookupFromPackageJson(
+				containingFile,
+				packageJsonInfoCache,
+				host,
+				compilerOptions,
+			);
 			return ts.getModeForUsageLocation(file, usage, compilerOptions);
 		}
 		finally {
-			file.impliedNodeFormat = before;
+			file.impliedNodeFormat = undefined;
 		}
 	};
+
+	// https://github.com/microsoft/TypeScript/blob/669c25c091ad4d32298d0f33b0e4e681d46de3ea/src/compiler/program.ts#L1357
+	function lookupFromPackageJson(
+		fileName: string,
+		packageJsonInfoCache: ts.PackageJsonInfoCache,
+		host: ts.ModuleResolutionHost,
+		options: ts.CompilerOptions,
+	): ts.ResolutionMode {
+		const { getTemporaryModuleResolutionState, getPackageScopeForPath, getDirectoryPath } = ts as any;
+		const state = getTemporaryModuleResolutionState(packageJsonInfoCache, host, options);
+		const packageJsonLocations: string[] = [];
+		state.failedLookupLocations = packageJsonLocations;
+		state.affectingLocations = packageJsonLocations;
+		const packageJsonScope = getPackageScopeForPath(getDirectoryPath(fileName), state);
+		const impliedNodeFormat = packageJsonScope?.contents.packageJsonContent.type === 'module'
+			? ts.ModuleKind.ESNext
+			: ts.ModuleKind.CommonJS;
+		return impliedNodeFormat;
+	}
 }

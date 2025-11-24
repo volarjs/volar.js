@@ -78,7 +78,14 @@ export function decorateLanguageServiceHost(
 					);
 				}
 				return moduleLiterals.map(moduleLiteral => {
-					const mode = getModeForUsageLocation(containingFile, containingSourceFile, moduleLiteral, options);
+					const mode = getModeForUsageLocation(
+						containingFile,
+						containingSourceFile,
+						moduleLiteral,
+						options,
+						moduleResolutionCache.getPackageJsonInfoCache(),
+						languageServiceHost,
+					);
 					return resolveModuleName(
 						moduleLiteral.text,
 						containingFile,

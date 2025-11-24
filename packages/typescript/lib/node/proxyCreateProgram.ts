@@ -225,7 +225,14 @@ export function proxyCreateProgram(
 						);
 					}
 					return moduleLiterals.map(moduleLiteral => {
-						const mode = getModeForUsageLocation(containingFile, containingSourceFile, moduleLiteral, compilerOptions);
+						const mode = getModeForUsageLocation(
+							containingFile,
+							containingSourceFile,
+							moduleLiteral,
+							compilerOptions,
+							moduleResolutionCache.getPackageJsonInfoCache(),
+							originalHost,
+						);
 						return resolveModuleName(
 							moduleLiteral.text,
 							containingFile,
