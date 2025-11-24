@@ -2,6 +2,7 @@ import { FileMap, forEachEmbeddedCode, type Language } from '@volar/language-cor
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import type { TypeScriptExtraServiceScript } from '../..';
+import { createGetModeForUsageLocation } from '../node/utils';
 import { createResolveModuleName } from '../resolveModuleName';
 import type { createSys } from './createSys';
 
@@ -175,6 +176,12 @@ export function createLanguageServiceHost<T>(
 			language.plugins,
 			fileName => language.scripts.get(asScriptId(fileName)),
 		);
+		const getModeForUsageLocation = createGetModeForUsageLocation(
+			ts,
+			language.plugins
+				.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
+				.flat(),
+		);
 
 		let lastSysVersion = 'version' in sys ? sys.version : undefined;
 
@@ -190,13 +197,14 @@ export function createLanguageServiceHost<T>(
 				moduleCache.clear();
 			}
 			return moduleLiterals.map(moduleLiteral => {
+				const mode = getModeForUsageLocation(containingFile, sourceFile, moduleLiteral, options);
 				return resolveModuleName(
 					moduleLiteral.text,
 					containingFile,
 					options,
 					moduleCache,
 					redirectedReference,
-					sourceFile.impliedNodeFormat,
+					mode,
 				);
 			});
 		};
