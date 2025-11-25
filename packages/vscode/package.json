@@ -1,6 +1,6 @@
 {
 	"name": "@volar/vscode",
-	"version": "2.4.24",
+	"version": "2.4.25",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
@@ -19,6 +19,6 @@
 	"devDependencies": {
 		"@types/path-browserify": "latest",
 		"@types/vscode": "^1.82.0",
-		"@volar/language-server": "2.4.24"
+		"@volar/language-server": "2.4.25"
 	}
 }

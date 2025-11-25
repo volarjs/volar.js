@@ -45,13 +45,13 @@ importers:
         specifier: ^1.82.0
         version: 1.98.0
       '@volar/language-server':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../../packages/vscode
       '@vscode/vsce':
         specifier: latest
@@ -66,7 +66,7 @@ importers:
         specifier: ^8.56.10
         version: 8.56.12
       '@volar/language-core':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-core
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -75,7 +75,7 @@ importers:
   packages/jsdelivr:
     devDependencies:
       '@volar/language-service':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.8
@@ -84,10 +84,10 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -105,19 +105,19 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../typescript
       path-browserify:
         specifier: ^1.0.1
@@ -145,7 +145,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-core
       vscode-languageserver-protocol:
         specifier: ^3.17.5
@@ -160,10 +160,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.4.0
@@ -184,10 +184,10 @@ importers:
   packages/test-utils:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-core
       '@volar/language-server':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-server
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -199,7 +199,7 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-core
       path-browserify:
         specifier: ^1.0.1
@@ -212,7 +212,7 @@ importers:
         specifier: latest
         version: 1.0.3
       '@volar/language-service':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-service
 
   packages/vscode:
@@ -234,7 +234,7 @@ importers:
         specifier: ^1.82.0
         version: 1.98.0
       '@volar/language-server':
-        specifier: 2.4.24
+        specifier: 2.4.25
         version: link:../language-server
 
 packages:
