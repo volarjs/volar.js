@@ -1,7 +1,7 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
-import { lookupNodeFormatFromPackageJson } from './utils';
+import { fixupImpliedNodeFormatForFile } from './utils';
 
 export function decorateLanguageServiceHost(
 	ts: typeof import('typescript'),
@@ -66,17 +66,14 @@ export function decorateLanguageServiceHost(
 				containingSourceFile,
 				...rest
 			) => {
-				const fixed = containingSourceFile.impliedNodeFormat === undefined
-					&& pluginExtensions.some(ext => containingFile.endsWith(ext));
-				if (fixed) {
-					containingSourceFile.impliedNodeFormat = lookupNodeFormatFromPackageJson(
-						ts,
-						containingFile,
-						moduleResolutionCache.getPackageJsonInfoCache(),
-						languageServiceHost,
-						options,
-					);
-				}
+				const disposeFixup = fixupImpliedNodeFormatForFile(
+					ts,
+					pluginExtensions,
+					containingSourceFile,
+					moduleResolutionCache.getPackageJsonInfoCache(),
+					languageServiceHost,
+					options,
+				);
 				try {
 					if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
 						return resolveModuleNameLiterals(
@@ -101,9 +98,7 @@ export function decorateLanguageServiceHost(
 					});
 				}
 				finally {
-					if (fixed) {
-						containingSourceFile.impliedNodeFormat = undefined;
-					}
+					disposeFixup?.();
 				}
 			};
 		}

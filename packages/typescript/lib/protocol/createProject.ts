@@ -2,7 +2,7 @@ import { FileMap, forEachEmbeddedCode, type Language } from '@volar/language-cor
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import type { TypeScriptExtraServiceScript } from '../..';
-import { lookupNodeFormatFromPackageJson } from '../node/utils';
+import { fixupImpliedNodeFormatForFile } from '../node/utils';
 import { createResolveModuleName } from '../resolveModuleName';
 import type { createSys } from './createSys';
 
@@ -187,17 +187,14 @@ export function createLanguageServiceHost<T>(
 			options,
 			containingSourceFile,
 		) => {
-			const fixed = containingSourceFile.impliedNodeFormat === undefined
-				&& pluginExtensions.some(ext => containingFile.endsWith(ext));
-			if (fixed) {
-				containingSourceFile.impliedNodeFormat = lookupNodeFormatFromPackageJson(
-					ts,
-					containingFile,
-					moduleResolutionCache.getPackageJsonInfoCache(),
-					languageServiceHost,
-					options,
-				);
-			}
+			const disposeFixup = fixupImpliedNodeFormatForFile(
+				ts,
+				pluginExtensions,
+				containingSourceFile,
+				moduleResolutionCache.getPackageJsonInfoCache(),
+				languageServiceHost,
+				options,
+			);
 			try {
 				if ('version' in sys && lastSysVersion !== sys.version) {
 					lastSysVersion = sys.version;
@@ -216,9 +213,7 @@ export function createLanguageServiceHost<T>(
 				});
 			}
 			finally {
-				if (fixed) {
-					containingSourceFile.impliedNodeFormat = undefined;
-				}
+				disposeFixup?.();
 			}
 		};
 		languageServiceHost.resolveModuleNames = (

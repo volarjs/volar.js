@@ -3,7 +3,7 @@ import type * as ts from 'typescript';
 import { resolveFileLanguageId } from '../common';
 import { createResolveModuleName } from '../resolveModuleName';
 import { decorateProgram } from './decorateProgram';
-import { lookupNodeFormatFromPackageJson } from './utils';
+import { fixupImpliedNodeFormatForFile } from './utils';
 
 const arrayEqual = (a: readonly any[], b: readonly any[]) => {
 	if (a.length !== b.length) {
@@ -211,17 +211,14 @@ export function proxyCreateProgram(
 					containingSourceFile,
 					...rest
 				) => {
-					const fixed = containingSourceFile.impliedNodeFormat === undefined
-						&& pluginExtensions.some(ext => containingFile.endsWith(ext));
-					if (fixed) {
-						containingSourceFile.impliedNodeFormat = lookupNodeFormatFromPackageJson(
-							ts,
-							containingFile,
-							moduleResolutionCache.getPackageJsonInfoCache(),
-							originalHost,
-							compilerOptions,
-						);
-					}
+					const disposeFixup = fixupImpliedNodeFormatForFile(
+						ts,
+						pluginExtensions,
+						containingSourceFile,
+						moduleResolutionCache.getPackageJsonInfoCache(),
+						originalHost,
+						compilerOptions,
+					);
 					try {
 						if (
 							resolveModuleNameLiterals
@@ -249,9 +246,7 @@ export function proxyCreateProgram(
 						});
 					}
 					finally {
-						if (fixed) {
-							containingSourceFile.impliedNodeFormat = undefined;
-						}
+						disposeFixup?.();
 					}
 				};
 				options.host.resolveModuleNames = (
