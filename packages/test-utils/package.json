@@ -11,9 +11,6 @@
 		"url": "https://github.com/volarjs/volar.js.git",
 		"directory": "packages/test-utils"
 	},
-	"devDependencies": {
-		"@types/node": "latest"
-	},
 	"dependencies": {
 		"@volar/language-core": "2.4.24",
 		"@volar/language-server": "2.4.24",

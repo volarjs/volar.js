@@ -19,6 +19,7 @@
 		"@tsslint/cli": "^2.0.4",
 		"@tsslint/config": "^2.0.4",
 		"@tsslint/eslint": "^2.0.4",
+		"@types/node": "latest",
 		"@typescript-eslint/eslint-plugin": "^8.19.0",
 		"dprint": "^0.50.0",
 		"typescript": "latest",
