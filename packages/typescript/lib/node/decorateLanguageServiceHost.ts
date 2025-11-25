@@ -1,6 +1,7 @@
 import type { Language } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { createResolveModuleName } from '../resolveModuleName';
+import { fixupImpliedNodeFormatForFile } from './utils';
 
 export function decorateLanguageServiceHost(
 	ts: typeof import('typescript'),
@@ -65,27 +66,40 @@ export function decorateLanguageServiceHost(
 				containingSourceFile,
 				...rest
 			) => {
-				if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
-					return resolveModuleNameLiterals(
-						moduleLiterals,
-						containingFile,
-						redirectedReference,
-						options,
-						containingSourceFile,
-						...rest,
-					);
+				const disposeFixup = fixupImpliedNodeFormatForFile(
+					ts,
+					pluginExtensions,
+					containingSourceFile,
+					moduleResolutionCache.getPackageJsonInfoCache(),
+					languageServiceHost,
+					options,
+				);
+				try {
+					if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
+						return resolveModuleNameLiterals(
+							moduleLiterals,
+							containingFile,
+							redirectedReference,
+							options,
+							containingSourceFile,
+							...rest,
+						);
+					}
+					return moduleLiterals.map(moduleLiteral => {
+						const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, options);
+						return resolveModuleName(
+							moduleLiteral.text,
+							containingFile,
+							options,
+							moduleResolutionCache,
+							redirectedReference,
+							mode,
+						);
+					});
 				}
-				return moduleLiterals.map(moduleLiteral => {
-					const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, options);
-					return resolveModuleName(
-						moduleLiteral.text,
-						containingFile,
-						options,
-						moduleResolutionCache,
-						redirectedReference,
-						mode,
-					);
-				});
+				finally {
+					disposeFixup?.();
+				}
 			};
 		}
 		if (resolveModuleNames) {

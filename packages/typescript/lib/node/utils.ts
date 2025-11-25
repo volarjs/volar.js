@@ -1,4 +1,5 @@
 import type { Language, SourceScript } from '@volar/language-core';
+import type * as ts from 'typescript';
 import type { TypeScriptServiceScript } from '../..';
 
 export function getServiceScript(language: Language<string>, fileName: string):
@@ -32,4 +33,25 @@ export function getServiceScript(language: Language<string>, fileName: string):
 		}
 	}
 	return [undefined, undefined, undefined];
+}
+
+export function fixupImpliedNodeFormatForFile(
+	ts: typeof import('typescript'),
+	pluginExtensions: string[],
+	sourceFile: ts.SourceFile,
+	packageJsonInfoCache: ts.PackageJsonInfoCache,
+	host: ts.ModuleResolutionHost,
+	options: ts.CompilerOptions,
+) {
+	if (sourceFile.impliedNodeFormat !== undefined || !pluginExtensions.some(ext => sourceFile.fileName.endsWith(ext))) {
+		return;
+	}
+	// https://github.com/microsoft/TypeScript/blob/669c25c091ad4d32298d0f33b0e4e681d46de3ea/src/compiler/program.ts#L1354
+	const validExts = [ts.Extension.Dts, ts.Extension.Ts, ts.Extension.Tsx, ts.Extension.Js, ts.Extension.Jsx];
+	if (validExts.some(ext => sourceFile.fileName.endsWith(ext))) {
+		return;
+	}
+	const asTs = sourceFile.fileName + ts.Extension.Ts;
+	sourceFile.impliedNodeFormat = ts.getImpliedNodeFormatForFile?.(asTs, packageJsonInfoCache, host, options);
+	return () => sourceFile.impliedNodeFormat = undefined;
 }

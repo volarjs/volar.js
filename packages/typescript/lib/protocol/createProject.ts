@@ -2,6 +2,7 @@ import { FileMap, forEachEmbeddedCode, type Language } from '@volar/language-cor
 import * as path from 'path-browserify';
 import type * as ts from 'typescript';
 import type { TypeScriptExtraServiceScript } from '../..';
+import { fixupImpliedNodeFormatForFile } from '../node/utils';
 import { createResolveModuleName } from '../resolveModuleName';
 import type { createSys } from './createSys';
 
@@ -33,6 +34,9 @@ export function createLanguageServiceHost<T>(
 	asScriptId: (fileName: string) => T,
 	projectHost: TypeScriptProjectHost,
 ) {
+	const pluginExtensions = language.plugins
+		.map(plugin => plugin.typescript?.extraFileExtensions.map(ext => '.' + ext.extension) ?? [])
+		.flat();
 	const scriptVersions = new FileMap<{ lastVersion: number; map: WeakMap<ts.IScriptSnapshot, number> }>(
 		sys.useCaseSensitiveFileNames,
 	);
@@ -63,17 +67,15 @@ export function createLanguageServiceHost<T>(
 		},
 		readDirectory(dirName, extensions, excludes, includes, depth) {
 			const exts = new Set(extensions);
-			for (const languagePlugin of language.plugins) {
-				for (const ext of languagePlugin.typescript?.extraFileExtensions ?? []) {
-					exts.add('.' + ext.extension);
-				}
+			for (const ext of pluginExtensions) {
+				exts.add(ext);
 			}
 			extensions = [...exts];
 			return sys.readDirectory(dirName, extensions, excludes, includes, depth);
 		},
 		getCompilationSettings() {
 			const options = projectHost.getCompilationSettings();
-			if (language.plugins.some(language => language.typescript?.extraFileExtensions.length)) {
+			if (pluginExtensions.length) {
 				options.allowNonTsExtensions ??= true;
 				if (!options.allowNonTsExtensions) {
 					console.warn('`allowNonTsExtensions` must be `true`.');
@@ -161,9 +163,9 @@ export function createLanguageServiceHost<T>(
 		}
 	}
 
-	if (language.plugins.some(plugin => plugin.typescript?.extraFileExtensions.length)) {
+	if (pluginExtensions.length) {
 		// TODO: can this share between monorepo packages?
-		const moduleCache = ts.createModuleResolutionCache(
+		const moduleResolutionCache = ts.createModuleResolutionCache(
 			languageServiceHost.getCurrentDirectory(),
 			languageServiceHost.useCaseSensitiveFileNames?.() ? s => s : s => s.toLowerCase(),
 			languageServiceHost.getCompilationSettings(),
@@ -183,22 +185,36 @@ export function createLanguageServiceHost<T>(
 			containingFile,
 			redirectedReference,
 			options,
-			sourceFile,
+			containingSourceFile,
 		) => {
-			if ('version' in sys && lastSysVersion !== sys.version) {
-				lastSysVersion = sys.version;
-				moduleCache.clear();
+			const disposeFixup = fixupImpliedNodeFormatForFile(
+				ts,
+				pluginExtensions,
+				containingSourceFile,
+				moduleResolutionCache.getPackageJsonInfoCache(),
+				languageServiceHost,
+				options,
+			);
+			try {
+				if ('version' in sys && lastSysVersion !== sys.version) {
+					lastSysVersion = sys.version;
+					moduleResolutionCache.clear();
+				}
+				return moduleLiterals.map(moduleLiteral => {
+					const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, options);
+					return resolveModuleName(
+						moduleLiteral.text,
+						containingFile,
+						options,
+						moduleResolutionCache,
+						redirectedReference,
+						mode,
+					);
+				});
 			}
-			return moduleLiterals.map(moduleLiteral => {
-				return resolveModuleName(
-					moduleLiteral.text,
-					containingFile,
-					options,
-					moduleCache,
-					redirectedReference,
-					sourceFile.impliedNodeFormat,
-				);
-			});
+			finally {
+				disposeFixup?.();
+			}
 		};
 		languageServiceHost.resolveModuleNames = (
 			moduleNames,
@@ -209,14 +225,15 @@ export function createLanguageServiceHost<T>(
 		) => {
 			if ('version' in sys && lastSysVersion !== sys.version) {
 				lastSysVersion = sys.version;
-				moduleCache.clear();
+				moduleResolutionCache.clear();
 			}
 			return moduleNames.map(moduleName => {
-				return resolveModuleName(moduleName, containingFile, options, moduleCache, redirectedReference).resolvedModule;
+				return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference)
+					.resolvedModule;
 			});
 		};
 
-		languageServiceHost.getModuleResolutionCache = () => moduleCache;
+		languageServiceHost.getModuleResolutionCache = () => moduleResolutionCache;
 	}
 
 	return {

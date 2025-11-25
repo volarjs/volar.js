@@ -3,6 +3,7 @@ import type * as ts from 'typescript';
 import { resolveFileLanguageId } from '../common';
 import { createResolveModuleName } from '../resolveModuleName';
 import { decorateProgram } from './decorateProgram';
+import { fixupImpliedNodeFormatForFile } from './utils';
 
 const arrayEqual = (a: readonly any[], b: readonly any[]) => {
 	if (a.length !== b.length) {
@@ -113,7 +114,7 @@ export function proxyCreateProgram(
 			}
 
 			const originalHost = options.host;
-			const extensions = languagePlugins
+			const pluginExtensions = languagePlugins
 				.map(plugin => plugin.typescript?.extraFileExtensions.map(({ extension }) => `.${extension}`) ?? [])
 				.flat();
 
@@ -189,7 +190,7 @@ export function proxyCreateProgram(
 				return parsedSourceFiles.get(originalSourceFile) ?? originalSourceFile;
 			};
 
-			if (extensions.length) {
+			if (pluginExtensions.length) {
 				options.options.allowArbitraryExtensions = true;
 
 				const resolveModuleName = createResolveModuleName(
@@ -210,29 +211,43 @@ export function proxyCreateProgram(
 					containingSourceFile,
 					...rest
 				) => {
-					if (
-						resolveModuleNameLiterals && moduleLiterals.every(name => !extensions.some(ext => name.text.endsWith(ext)))
-					) {
-						return resolveModuleNameLiterals(
-							moduleLiterals,
-							containingFile,
-							redirectedReference,
-							compilerOptions,
-							containingSourceFile,
-							...rest,
-						);
+					const disposeFixup = fixupImpliedNodeFormatForFile(
+						ts,
+						pluginExtensions,
+						containingSourceFile,
+						moduleResolutionCache.getPackageJsonInfoCache(),
+						originalHost,
+						compilerOptions,
+					);
+					try {
+						if (
+							resolveModuleNameLiterals
+							&& moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))
+						) {
+							return resolveModuleNameLiterals(
+								moduleLiterals,
+								containingFile,
+								redirectedReference,
+								compilerOptions,
+								containingSourceFile,
+								...rest,
+							);
+						}
+						return moduleLiterals.map(moduleLiteral => {
+							const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, compilerOptions);
+							return resolveModuleName(
+								moduleLiteral.text,
+								containingFile,
+								compilerOptions,
+								moduleResolutionCache,
+								redirectedReference,
+								mode,
+							);
+						});
 					}
-					return moduleLiterals.map(moduleLiteral => {
-						const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, compilerOptions);
-						return resolveModuleName(
-							moduleLiteral.text,
-							containingFile,
-							compilerOptions,
-							moduleResolutionCache,
-							redirectedReference,
-							mode,
-						);
-					});
+					finally {
+						disposeFixup?.();
+					}
 				};
 				options.host.resolveModuleNames = (
 					moduleNames,
@@ -242,7 +257,7 @@ export function proxyCreateProgram(
 					compilerOptions,
 					containingSourceFile,
 				) => {
-					if (resolveModuleNames && moduleNames.every(name => !extensions.some(ext => name.endsWith(ext)))) {
+					if (resolveModuleNames && moduleNames.every(name => !pluginExtensions.some(ext => name.endsWith(ext)))) {
 						return resolveModuleNames(
 							moduleNames,
 							containingFile,
