@@ -23,6 +23,9 @@ importers:
       '@tsslint/eslint':
         specifier: ^2.0.4
         version: 2.0.4(typescript@5.9.3)
+      '@types/node':
+        specifier: latest
+        version: 24.10.1
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.19.0
         version: 8.42.0(@typescript-eslint/parser@8.42.0(eslint@9.27.0)(typescript@5.9.3))(eslint@9.27.0)(typescript@5.9.3)
@@ -38,9 +41,6 @@ importers:
 
   extensions/labs:
     devDependencies:
-      '@types/node':
-        specifier: latest
-        version: 24.10.1
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.98.0
@@ -101,10 +101,6 @@ importers:
       vscode-uri:
         specifier: ^3.0.8
         version: 3.1.0
-    devDependencies:
-      '@types/node':
-        specifier: latest
-        version: 24.10.1
 
   packages/language-core:
     dependencies:
@@ -199,10 +195,6 @@ importers:
       vscode-uri:
         specifier: ^3.0.8
         version: 3.1.0
-    devDependencies:
-      '@types/node':
-        specifier: latest
-        version: 24.10.1
 
   packages/typescript:
     dependencies:
@@ -216,9 +208,6 @@ importers:
         specifier: ^3.0.8
         version: 3.1.0
     devDependencies:
-      '@types/node':
-        specifier: latest
-        version: 24.10.1
       '@types/path-browserify':
         specifier: latest
         version: 1.0.3
@@ -238,9 +227,6 @@ importers:
         specifier: ^5.2.0
         version: 5.2.0
     devDependencies:
-      '@types/node':
-        specifier: latest
-        version: 24.10.1
       '@types/path-browserify':
         specifier: latest
         version: 1.0.3
