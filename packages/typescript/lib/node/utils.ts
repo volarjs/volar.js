@@ -47,11 +47,21 @@ export function fixupImpliedNodeFormatForFile(
 		return;
 	}
 	// https://github.com/microsoft/TypeScript/blob/669c25c091ad4d32298d0f33b0e4e681d46de3ea/src/compiler/program.ts#L1354
-	const validExts = [ts.Extension.Dts, ts.Extension.Ts, ts.Extension.Tsx, ts.Extension.Js, ts.Extension.Jsx];
+	const validExts = ['.d.ts', '.ts', '.tsx', '.js', '.jsx'];
 	if (validExts.some(ext => sourceFile.fileName.endsWith(ext))) {
 		return;
 	}
-	const asTs = sourceFile.fileName + ts.Extension.Ts;
-	sourceFile.impliedNodeFormat = ts.getImpliedNodeFormatForFile?.(asTs, packageJsonInfoCache, host, options);
+	const asTs = sourceFile.fileName + '.ts';
+	// Use getImpliedNodeFormatForFileWorker instead of getImpliedNodeFormatForFile for runTsc() compatibility
+	const impliedNodeFormat = (ts as any).getImpliedNodeFormatForFileWorker?.(
+		asTs,
+		packageJsonInfoCache,
+		host,
+		options,
+	)?.impliedNodeFormat;
+	if (impliedNodeFormat === undefined) {
+		return;
+	}
+	sourceFile.impliedNodeFormat = impliedNodeFormat;
 	return () => sourceFile.impliedNodeFormat = undefined;
 }
