@@ -57,6 +57,15 @@ export function decorateLanguageServiceHost(
 			languageServiceHost.getCompilationSettings(),
 		);
 
+		let moduleResolutionProjectVersion: string | undefined;
+		const tryClearModuleResolutionCache = () => {
+			const projectVersion = languageServiceHost.getProjectVersion?.();
+			if (projectVersion === undefined || projectVersion !== moduleResolutionProjectVersion) {
+				moduleResolutionCache.clear();
+				moduleResolutionProjectVersion = projectVersion;
+			}
+		};
+
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
 				moduleLiterals,
@@ -75,6 +84,7 @@ export function decorateLanguageServiceHost(
 					options,
 				);
 				try {
+					tryClearModuleResolutionCache();
 					if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
 						return resolveModuleNameLiterals(
 							moduleLiterals,
@@ -111,6 +121,7 @@ export function decorateLanguageServiceHost(
 				options,
 				containingSourceFile,
 			) => {
+				tryClearModuleResolutionCache();
 				if (moduleNames.every(name => !pluginExtensions.some(ext => name.endsWith(ext)))) {
 					return resolveModuleNames(
 						moduleNames,
