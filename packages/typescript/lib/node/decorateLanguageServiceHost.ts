@@ -25,6 +25,7 @@ export function decorateLanguageServiceHost(
 	const resolveModuleNames = languageServiceHost.resolveModuleNames?.bind(languageServiceHost);
 	const getScriptSnapshot = languageServiceHost.getScriptSnapshot.bind(languageServiceHost);
 	const getScriptKind = languageServiceHost.getScriptKind?.bind(languageServiceHost);
+	const getScriptFileNames = languageServiceHost.getScriptFileNames?.bind(languageServiceHost);
 
 	// path completion
 	if (readDirectory) {
@@ -58,12 +59,34 @@ export function decorateLanguageServiceHost(
 		);
 
 		let moduleResolutionProjectVersion: string | undefined;
+		let moduleResolutionProjectFileNames: Set<string> | undefined;
 		const tryClearModuleResolutionCache = () => {
 			const projectVersion = languageServiceHost.getProjectVersion?.();
-			if (projectVersion === undefined || projectVersion !== moduleResolutionProjectVersion) {
-				moduleResolutionCache.clear();
-				moduleResolutionProjectVersion = projectVersion;
+			const scriptFileNames = getScriptFileNames?.();
+			const canonicalScriptFileNames = scriptFileNames?.map(getCanonicalFileName);
+			const filesUnchanged = Boolean(
+				canonicalScriptFileNames
+					&& moduleResolutionProjectFileNames
+					&& canonicalScriptFileNames.length === moduleResolutionProjectFileNames.size
+					&& canonicalScriptFileNames.every(name => moduleResolutionProjectFileNames?.has(name)),
+			);
+
+			if (projectVersion === moduleResolutionProjectVersion && (!scriptFileNames || filesUnchanged)) {
+				return;
 			}
+
+			moduleResolutionProjectVersion = projectVersion;
+
+			if (!scriptFileNames) {
+				moduleResolutionProjectFileNames = undefined;
+				moduleResolutionCache.clear();
+				return;
+			}
+
+			if (!filesUnchanged) {
+				moduleResolutionCache.clear();
+			}
+			moduleResolutionProjectFileNames = new Set(canonicalScriptFileNames ?? []);
 		};
 
 		if (resolveModuleNameLiterals) {
