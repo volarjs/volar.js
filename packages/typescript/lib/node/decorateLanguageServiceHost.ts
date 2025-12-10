@@ -25,7 +25,6 @@ export function decorateLanguageServiceHost(
 	const resolveModuleNames = languageServiceHost.resolveModuleNames?.bind(languageServiceHost);
 	const getScriptSnapshot = languageServiceHost.getScriptSnapshot.bind(languageServiceHost);
 	const getScriptKind = languageServiceHost.getScriptKind?.bind(languageServiceHost);
-	const getScriptFileNames = languageServiceHost.getScriptFileNames?.bind(languageServiceHost);
 
 	// path completion
 	if (readDirectory) {
@@ -49,45 +48,7 @@ export function decorateLanguageServiceHost(
 			language.plugins,
 			fileName => language.scripts.get(fileName),
 		);
-		const getCanonicalFileName = languageServiceHost.useCaseSensitiveFileNames?.()
-			? (fileName: string) => fileName
-			: (fileName: string) => fileName.toLowerCase();
-		const moduleResolutionCache = ts.createModuleResolutionCache(
-			languageServiceHost.getCurrentDirectory(),
-			getCanonicalFileName,
-			languageServiceHost.getCompilationSettings(),
-		);
-
-		let moduleResolutionProjectVersion: string | undefined;
-		let moduleResolutionProjectFileNames: Set<string> | undefined;
-		const tryClearModuleResolutionCache = () => {
-			const projectVersion = languageServiceHost.getProjectVersion?.();
-			const scriptFileNames = getScriptFileNames?.();
-			const canonicalScriptFileNames = scriptFileNames?.map(getCanonicalFileName);
-			const filesUnchanged = Boolean(
-				canonicalScriptFileNames
-					&& moduleResolutionProjectFileNames
-					&& canonicalScriptFileNames.length === moduleResolutionProjectFileNames.size
-					&& canonicalScriptFileNames.every(name => moduleResolutionProjectFileNames?.has(name)),
-			);
-
-			if (projectVersion === moduleResolutionProjectVersion && (!scriptFileNames || filesUnchanged)) {
-				return;
-			}
-
-			moduleResolutionProjectVersion = projectVersion;
-
-			if (!scriptFileNames) {
-				moduleResolutionProjectFileNames = undefined;
-				moduleResolutionCache.clear();
-				return;
-			}
-
-			if (!filesUnchanged) {
-				moduleResolutionCache.clear();
-			}
-			moduleResolutionProjectFileNames = new Set(canonicalScriptFileNames ?? []);
-		};
+		const moduleResolutionCache = languageServiceHost.getModuleResolutionCache?.();
 
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
@@ -102,12 +63,11 @@ export function decorateLanguageServiceHost(
 					ts,
 					pluginExtensions,
 					containingSourceFile,
-					moduleResolutionCache.getPackageJsonInfoCache(),
+					moduleResolutionCache?.getPackageJsonInfoCache(),
 					languageServiceHost,
 					options,
 				);
 				try {
-					tryClearModuleResolutionCache();
 					if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
 						return resolveModuleNameLiterals(
 							moduleLiterals,
@@ -144,7 +104,6 @@ export function decorateLanguageServiceHost(
 				options,
 				containingSourceFile,
 			) => {
-				tryClearModuleResolutionCache();
 				if (moduleNames.every(name => !pluginExtensions.some(ext => name.endsWith(ext)))) {
 					return resolveModuleNames(
 						moduleNames,
