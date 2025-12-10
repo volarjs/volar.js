@@ -39,7 +39,7 @@ export function fixupImpliedNodeFormatForFile(
 	ts: typeof import('typescript'),
 	pluginExtensions: string[],
 	sourceFile: ts.SourceFile,
-	packageJsonInfoCache: ts.PackageJsonInfoCache,
+	packageJsonInfoCache: ts.PackageJsonInfoCache | undefined,
 	host: ts.ModuleResolutionHost,
 	options: ts.CompilerOptions,
 ) {

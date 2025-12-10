@@ -48,14 +48,7 @@ export function decorateLanguageServiceHost(
 			language.plugins,
 			fileName => language.scripts.get(fileName),
 		);
-		const getCanonicalFileName = languageServiceHost.useCaseSensitiveFileNames?.()
-			? (fileName: string) => fileName
-			: (fileName: string) => fileName.toLowerCase();
-		const moduleResolutionCache = ts.createModuleResolutionCache(
-			languageServiceHost.getCurrentDirectory(),
-			getCanonicalFileName,
-			languageServiceHost.getCompilationSettings(),
-		);
+		const moduleResolutionCache = languageServiceHost.getModuleResolutionCache?.();
 
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
@@ -70,7 +63,7 @@ export function decorateLanguageServiceHost(
 					ts,
 					pluginExtensions,
 					containingSourceFile,
-					moduleResolutionCache.getPackageJsonInfoCache(),
+					moduleResolutionCache?.getPackageJsonInfoCache(),
 					languageServiceHost,
 					options,
 				);
