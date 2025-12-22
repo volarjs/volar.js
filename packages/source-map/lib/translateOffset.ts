@@ -17,12 +17,12 @@ export function translateOffset(
 				const toLength = toLengths[i];
 				const toOffset = toOffsets[i];
 				let rangeOffset: number;
-				const actualFromLength = start - fromOffset;
-				if (preferEnd && toLength > actualFromLength) {
+				const relativePos = start - fromOffset;
+				if (preferEnd && toLength > fromLength && relativePos === fromLength) {
 					rangeOffset = toLength;
 				}
 				else {
-					rangeOffset = Math.min(actualFromLength, toLength);
+					rangeOffset = Math.min(relativePos, toLength);
 				}
 				return toOffset + rangeOffset;
 			}
@@ -45,12 +45,12 @@ export function translateOffset(
 			const toLength = toLengths[mid];
 			const toOffset = toOffsets[mid];
 			let rangeOffset: number;
-			const actualFromLength = start - fromOffset;
-			if (preferEnd && toLength > actualFromLength) {
+			const relativePos = start - fromOffset;
+			if (preferEnd && toLength > fromLength && relativePos === fromLength) {
 				rangeOffset = toLength;
 			}
 			else {
-				rangeOffset = Math.min(actualFromLength, toLength);
+				rangeOffset = Math.min(relativePos, toLength);
 			}
 			return toOffset + rangeOffset;
 		}
