@@ -6,6 +6,7 @@ export function translateOffset(
 	toOffsets: number[],
 	fromLengths: number[],
 	toLengths: number[] = fromLengths,
+	preferEnd: boolean = false,
 ): number | undefined {
 	const isSorted = fromOffsets.every((value, index) => index === 0 || fromOffsets[index - 1] <= value);
 	if (!isSorted) {
@@ -15,7 +16,14 @@ export function translateOffset(
 			if (start >= fromOffset && start <= fromOffset + fromLength) {
 				const toLength = toLengths[i];
 				const toOffset = toOffsets[i];
-				let rangeOffset = Math.min(start - fromOffset, toLength);
+				let rangeOffset: number;
+				const relativePos = start - fromOffset;
+				if (preferEnd && toLength > fromLength && relativePos === fromLength) {
+					rangeOffset = toLength;
+				}
+				else {
+					rangeOffset = Math.min(relativePos, toLength);
+				}
 				return toOffset + rangeOffset;
 			}
 		}
@@ -36,7 +44,14 @@ export function translateOffset(
 		if (start >= fromOffset && start <= fromOffset + fromLength) {
 			const toLength = toLengths[mid];
 			const toOffset = toOffsets[mid];
-			let rangeOffset = Math.min(start - fromOffset, toLength);
+			let rangeOffset: number;
+			const relativePos = start - fromOffset;
+			if (preferEnd && toLength > fromLength && relativePos === fromLength) {
+				rangeOffset = toLength;
+			}
+			else {
+				rangeOffset = Math.min(relativePos, toLength);
+			}
 			return toOffset + rangeOffset;
 		}
 		else if (start < fromOffset) {

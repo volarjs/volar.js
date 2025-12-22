@@ -24,4 +24,10 @@ describe('translateOffset', () => {
 	test('start at the end of fromRange with shorter toLength', () => {
 		expect(translateOffset(10, [1], [11], [9], [7])).toEqual(18);
 	});
+	test('start at the end of fromRange with longer toLength and preferEnd true', () => {
+		expect(translateOffset(10, [1], [11], [9], [11], true)).toEqual(22);
+	});
+	test('start at the end of fromRange with longer toLength and preferEnd set to false by default', () => {
+		expect(translateOffset(10, [1], [11], [9], [11])).toEqual(20);
+	});
 });
