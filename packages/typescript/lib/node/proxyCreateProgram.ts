@@ -180,6 +180,8 @@ export function proxyCreateProgram(
 							);
 							// @ts-expect-error
 							parsedSourceFile.version = originalSourceFile.version;
+							// @ts-expect-error
+              originalSourceFile.scriptKind = serviceScript.scriptKind;
 							parsedSourceFiles.set(originalSourceFile, parsedSourceFile);
 						}
 						if (getExtraServiceScripts) {
