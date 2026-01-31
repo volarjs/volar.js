@@ -1,6 +1,6 @@
 {
 	"name": "@volar/jsdelivr",
-	"version": "2.4.27",
+	"version": "2.4.28",
 	"license": "MIT",
 	"files": [
 		"**/*.js",
@@ -12,7 +12,7 @@
 		"directory": "packages/jsdelivr"
 	},
 	"devDependencies": {
-		"@volar/language-service": "2.4.27",
+		"@volar/language-service": "2.4.28",
 		"vscode-uri": "^3.0.8"
 	}
 }
