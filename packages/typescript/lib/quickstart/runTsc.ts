@@ -153,6 +153,17 @@ export function transformTscContent(
 			+ s.replace('createProgram', '_createProgram'),
 	);
 
+	tsc = replace(tsc, /switch \(originalExtension\) {/, () => {
+		return [
+			'switch (originalExtension) {',
+			...extraSupportedExtensions.map(ext => [
+				'\x20'.repeat(4) + `case "${ext}":`,
+				'\x20'.repeat(6)
+				+ `return extensions & 1 /* TypeScript */ && tryExtension("${ext}", /* resolvedUsingTsExtension */ true) || void 0;`,
+			]).flat(),
+		].join('\n');
+	});
+
 	return tsc;
 }
 
