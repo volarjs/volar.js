@@ -29,10 +29,11 @@ export function createResolveModuleName<T>(
 				}
 				if (!result) {
 					for (const { extension } of typescript.extraFileExtensions) {
-						if (!fileName.endsWith(`.d.${extension}.ts`)) {
+						const dtsExtension = ts.version >= "5" ? `.d.${extension}.ts` : `.${extension}.d.ts`;
+						if (!fileName.endsWith(dtsExtension)) {
 							continue;
 						}
-						const sourceFileName = fileName.slice(0, -`.d.${extension}.ts`.length) + `.${extension}`;
+						const sourceFileName = fileName.slice(0, -dtsExtension.length) + `.${extension}`;
 						if (fileExists(sourceFileName)) {
 							const sourceScript = getSourceScript(sourceFileName);
 							if (sourceScript?.generated) {
