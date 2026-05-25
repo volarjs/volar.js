@@ -1,5 +1,6 @@
 import type { Language, LanguagePlugin } from '@volar/language-core';
 import * as fs from 'fs';
+import { Module } from 'module';
 import * as path from 'path';
 import type * as ts from 'typescript';
 
@@ -35,51 +36,47 @@ export function runTsc(
 	}
 
 	const proxyApiPath = require.resolve('../node/proxyCreateProgram');
-	const readFileSync = fs.readFileSync;
 
-	(fs as any).readFileSync = (...args: any[]) => {
-		if (args[0] === tscPath) {
-			let tsc = (readFileSync as any)(...args) as string;
-			try {
-				return transformTscContent(
-					tsc,
-					proxyApiPath,
-					extraSupportedExtensions,
-					extraExtensionsToRemove,
-					__filename,
-					typescriptObject,
-				);
-			}
-			catch {
-				// Support the tsc shim used in Typescript v5.7 and up
-				const requireRegex = /module\.exports\s*=\s*require\((?:"|')(?<path>\.\/\w+\.js)(?:"|')\)/;
-				const requirePath = requireRegex.exec(tsc)?.groups?.path;
-				if (requirePath) {
-					tsc = readFileSync(path.join(path.dirname(tscPath), requirePath), 'utf8');
-					return transformTscContent(
-						tsc,
-						proxyApiPath,
-						extraSupportedExtensions,
-						extraExtensionsToRemove,
-						__filename,
-						typescriptObject,
-					);
-				}
-				else {
-					throw new Error('Failed to locate tsc module path from shim');
-				}
-			}
-		}
-		return (readFileSync as any)(...args);
-	};
+	// Mirror the TS v5.7+ tsc shim behavior: enable the V8/JSC bytecode cache
+	// so the (huge) transformed tsc source is compiled once and reused on
+	// subsequent invocations. Supported by Node 22+; no-op on Bun.
+	try { Module.enableCompileCache?.(); } catch {}
 
-	try {
-		return require(tscPath);
+	// Detect the tsc shim used in TypeScript v5.7+: a tiny preamble that
+	// re-exports the actual compiler from a sibling file. Resolve through it
+	// up front so transformTscContent operates on the real source.
+	const shimRegex = /module\.exports\s*=\s*require\(["'](?<path>\.\/\w+\.js)["']\)/;
+	let compilePath = tscPath;
+	let tsc = fs.readFileSync(tscPath, 'utf8');
+	const shimMatch = shimRegex.exec(tsc);
+	if (shimMatch?.groups?.path) {
+		compilePath = path.join(path.dirname(tscPath), shimMatch.groups.path);
+		tsc = fs.readFileSync(compilePath, 'utf8');
 	}
-	finally {
-		(fs as any).readFileSync = readFileSync;
-		delete require.cache[tscPath];
+
+	let transformed = transformTscContent(
+		tsc,
+		proxyApiPath,
+		extraSupportedExtensions,
+		extraExtensionsToRemove,
+		__filename,
+		typescriptObject,
+	);
+	// Strip UTF-8 BOM — Node's Module._extensions['.js'] does this before
+	// compiling; we bypass that wrapper so we replicate it here.
+	if (transformed.charCodeAt(0) === 0xFEFF) {
+		transformed = transformed.slice(1);
 	}
+
+	// Avoid monkey-patching `fs.readFileSync` to inject the transformed source:
+	// Bun's module loader does not read source through the JS `fs` API, so the
+	// patch is silently ignored. Compile the transformed source directly via
+	// the (private but widely-used) Module#_compile, which is honored by both
+	// Node and Bun. See https://github.com/oven-sh/bun/issues/4754.
+	const m = new Module(compilePath);
+	m.filename = compilePath;
+	m.paths = (Module as any)._nodeModulePaths(path.dirname(compilePath));
+	(m as any)._compile(transformed, compilePath);
 }
 
 /**
