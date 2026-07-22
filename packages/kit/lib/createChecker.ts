@@ -156,6 +156,7 @@ function createTypeScriptCheckerWorker(
 		if (configFileName) {
 			tsconfigs.add(asPosix(configFileName));
 		}
+		const extraFileExtensions = languagePlugins.map(plugin => plugin.typescript?.extraFileExtensions ?? []).flat();
 		projectReferences?.forEach(visit);
 
 		function visit(ref: ts.ResolvedProjectReference | undefined) {
@@ -166,7 +167,20 @@ function createTypeScriptCheckerWorker(
 					language,
 					languageServicePlugins,
 					ref.sourceFile.fileName,
-					() => ref.commandLine,
+					() => {
+						// Re-parse the referenced tsconfig with extraFileExtensions so that
+						// non-TS files (e.g. .astro) are included. TypeScript's resolved
+						// ref.commandLine does not include extra extensions.
+						return ts.parseJsonSourceFileConfigFileContent(
+							ts.readJsonConfigFile(ref.sourceFile.fileName, ts.sys.readFile),
+							ts.sys,
+							path.dirname(ref.sourceFile.fileName),
+							undefined,
+							ref.sourceFile.fileName,
+							undefined,
+							extraFileExtensions,
+						);
+					},
 					setup,
 				);
 				projectReferenceLanguageServices.set(ref.sourceFile.fileName, projectReferenceLanguageService);
