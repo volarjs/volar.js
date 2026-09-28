@@ -37,6 +37,10 @@ export function register(context: LanguageServiceContext) {
 		},
 		token = NoneCancellationToken,
 	) => {
+		// The results of this request. `lastResult` is only a cache for the
+		// TriggerForIncompleteCompletions case; requests that overlap must not
+		// push into each other's list.
+		let currentResult: NonNullable<typeof lastResult>;
 		let langaugeIdAndSnapshot: SourceScript<URI> | VirtualCode | undefined;
 		let sourceScript: SourceScript<URI> | undefined;
 
@@ -59,7 +63,8 @@ export function register(context: LanguageServiceContext) {
 			completionContext?.triggerKind === 3 satisfies typeof vscode.CompletionTriggerKind.TriggerForIncompleteCompletions
 			&& lastResult?.uri.toString() === uri.toString()
 		) {
-			for (const cacheData of lastResult.results) {
+			currentResult = lastResult;
+			for (const cacheData of currentResult.results) {
 				if (!cacheData.list?.isIncomplete) {
 					continue;
 				}
@@ -164,7 +169,7 @@ export function register(context: LanguageServiceContext) {
 			}
 		}
 		else {
-			lastResult = {
+			currentResult = lastResult = {
 				uri,
 				results: [],
 			};
@@ -213,7 +218,7 @@ export function register(context: LanguageServiceContext) {
 					}
 
 					// avoid duplicate items with .vue and .vue.html
-					if (plugin[1].isAdditionalCompletion && lastResult?.results.some(data => data.plugin === plugin[1])) {
+					if (plugin[1].isAdditionalCompletion && currentResult.results.some(data => data.plugin === plugin[1])) {
 						continue;
 					}
 
@@ -260,7 +265,7 @@ export function register(context: LanguageServiceContext) {
 						);
 					}
 
-					lastResult?.results.push({
+					currentResult.results.push({
 						embeddedDocumentUri: docs ? URI.parse(document.uri) : undefined,
 						plugin: plugin[1],
 						list: completionList,
@@ -291,7 +296,7 @@ export function register(context: LanguageServiceContext) {
 			}
 		}
 
-		return combineCompletionList(lastResult.results.map(cacheData => cacheData.list));
+		return combineCompletionList(currentResult.results.map(cacheData => cacheData.list));
 
 		function sortServices(a: LanguageServicePluginInstance, b: LanguageServicePluginInstance) {
 			return (b.isAdditionalCompletion ? -1 : 1) - (a.isAdditionalCompletion ? -1 : 1);
