@@ -2,6 +2,7 @@ import type { Language, LanguagePlugin } from '@volar/language-core';
 import * as fs from 'fs';
 import * as path from 'path';
 import type * as ts from 'typescript';
+import { registerModuleTransform } from '../node/registerModuleTransform';
 
 export let getLanguagePlugins: (
 	ts: typeof import('typescript'),
@@ -35,12 +36,23 @@ export function runTsc(
 	}
 
 	const proxyApiPath = require.resolve('../node/proxyCreateProgram');
-	const readFileSync = fs.readFileSync;
-
-	(fs as any).readFileSync = (...args: any[]) => {
-		if (args[0] === tscPath) {
-			let tsc = (readFileSync as any)(...args) as string;
-			try {
+	const unregister = registerModuleTransform(tscPath, tsc => {
+		try {
+			return transformTscContent(
+				tsc,
+				proxyApiPath,
+				extraSupportedExtensions,
+				extraExtensionsToRemove,
+				__filename,
+				typescriptObject,
+			);
+		}
+		catch {
+			// Support the tsc shim used in Typescript v5.7 and up
+			const requireRegex = /module\.exports\s*=\s*require\((?:"|')(?<path>\.\/\w+\.js)(?:"|')\)/;
+			const requirePath = requireRegex.exec(tsc)?.groups?.path;
+			if (requirePath) {
+				tsc = fs.readFileSync(path.join(path.dirname(tscPath), requirePath), 'utf8');
 				return transformTscContent(
 					tsc,
 					proxyApiPath,
@@ -50,34 +62,17 @@ export function runTsc(
 					typescriptObject,
 				);
 			}
-			catch {
-				// Support the tsc shim used in Typescript v5.7 and up
-				const requireRegex = /module\.exports\s*=\s*require\((?:"|')(?<path>\.\/\w+\.js)(?:"|')\)/;
-				const requirePath = requireRegex.exec(tsc)?.groups?.path;
-				if (requirePath) {
-					tsc = readFileSync(path.join(path.dirname(tscPath), requirePath), 'utf8');
-					return transformTscContent(
-						tsc,
-						proxyApiPath,
-						extraSupportedExtensions,
-						extraExtensionsToRemove,
-						__filename,
-						typescriptObject,
-					);
-				}
-				else {
-					throw new Error('Failed to locate tsc module path from shim');
-				}
+			else {
+				throw new Error('Failed to locate tsc module path from shim');
 			}
 		}
-		return (readFileSync as any)(...args);
-	};
+	});
 
 	try {
 		return require(tscPath);
 	}
 	finally {
-		(fs as any).readFileSync = readFileSync;
+		unregister();
 		delete require.cache[tscPath];
 	}
 }
