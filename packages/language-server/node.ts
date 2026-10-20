@@ -29,8 +29,8 @@ export function createServer(connection: vscode.Connection) {
 export function loadTsdkByPath(tsdk: string, locale: string | undefined) {
 	locale = locale?.toLowerCase();
 
-	// webpack compatibility
-	const _require: NodeJS.Require = eval('require');
+	// webpack compatibility (avoid direct eval warnings)
+	const _require: NodeJS.Require = (0, eval)('require');
 
 	return {
 		typescript: loadLib(),
