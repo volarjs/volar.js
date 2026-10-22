@@ -133,6 +133,15 @@ export interface CodeInformation {
 
 export interface LanguagePlugin<T = unknown, K extends VirtualCode = VirtualCode> {
 	/**
+	 * The file extensions this plugin handles, including the leading dot (e.g. `['.vue', '.vue.md']`), filled in by the host.
+	 *
+	 * When set, a script is routed to this plugin only if its longest extension matched by any plugin of the language
+	 * is one of these; plugins that list the same extension keep their order. Script IDs are matched by `String(scriptId)`.
+	 *
+	 * When omitted, the plugin is offered every script and decides for itself in `getLanguageId` / `createVirtualCode`.
+	 */
+	extensions?: string[];
+	/**
 	 * For files that are not opened in the IDE, the language ID will not be synchronized to the language server, so a hook is needed to parse the language ID of files that are known extension but not opened in the IDE.
 	 */
 	getLanguageId(scriptId: T): string | undefined;
