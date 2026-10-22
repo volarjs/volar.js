@@ -1,10 +1,7 @@
 import { readFileSync } from 'fs';
-import { createRequire } from 'module';
 import * as path from 'path';
 import { describe, expect, it } from 'vitest';
 import { transformTscContent } from '../lib/quickstart/runTsc';
-
-const require = createRequire(import.meta.url);
 
 // Reads the real tsc source the way `runTsc` does, transparently following the
 // thin shim that TypeScript >= 5.7 ships (`module.exports = require("./_tsc.js")`).
