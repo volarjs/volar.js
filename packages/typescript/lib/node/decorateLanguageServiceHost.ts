@@ -49,6 +49,7 @@ export function decorateLanguageServiceHost(
 			fileName => language.scripts.get(fileName),
 		);
 		const moduleResolutionCache = languageServiceHost.getModuleResolutionCache?.();
+		const hasPluginExtension = (moduleName: string) => pluginExtensions.some(ext => moduleName.endsWith(ext));
 
 		if (resolveModuleNameLiterals) {
 			languageServiceHost.resolveModuleNameLiterals = (
@@ -68,26 +69,37 @@ export function decorateLanguageServiceHost(
 					options,
 				);
 				try {
-					if (moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))) {
-						return resolveModuleNameLiterals(
-							moduleLiterals,
+					// Literals without a plugin extension go to the host's resolver first, so resolvers
+					// patched in by other TypeScript plugins keep working; the ones it cannot resolve
+					// are retried with Volar's, which also handles `resolveHiddenExtensions`.
+					const hostLiterals = moduleLiterals.filter(literal => !hasPluginExtension(literal.text));
+					const hostResults = hostLiterals.length
+						? resolveModuleNameLiterals(
+							hostLiterals,
 							containingFile,
 							redirectedReference,
 							options,
 							containingSourceFile,
 							...rest,
-						);
-					}
+						)
+						: [];
+					const hostResultMap = new Map(hostLiterals.map((literal, i) => [literal, hostResults[i]]));
 					return moduleLiterals.map(moduleLiteral => {
+						const hostResult = hostResultMap.get(moduleLiteral);
+						if (hostResult?.resolvedModule) {
+							return hostResult;
+						}
 						const mode = ts.getModeForUsageLocation(containingSourceFile, moduleLiteral, options);
-						return resolveModuleName(
+						const result = resolveModuleName(
 							moduleLiteral.text,
 							containingFile,
 							options,
-							moduleResolutionCache,
+							// The host's failed resolution may already be in the shared cache.
+							hostResult ? undefined : moduleResolutionCache,
 							redirectedReference,
 							mode,
 						);
+						return hostResult && !result.resolvedModule ? hostResult : result;
 					});
 				}
 				finally {
@@ -104,19 +116,27 @@ export function decorateLanguageServiceHost(
 				options,
 				containingSourceFile,
 			) => {
-				if (moduleNames.every(name => !pluginExtensions.some(ext => name.endsWith(ext)))) {
-					return resolveModuleNames(
-						moduleNames,
+				const hostNames = moduleNames.filter(name => !hasPluginExtension(name));
+				const hostResults = hostNames.length
+					? resolveModuleNames(
+						hostNames,
 						containingFile,
 						reusedNames,
 						redirectedReference,
 						options,
 						containingSourceFile,
-					);
-				}
+					)
+					: [];
+				const hostResultMap = new Map(hostNames.map((name, i) => [name, hostResults[i]]));
 				return moduleNames.map(moduleName => {
-					return resolveModuleName(moduleName, containingFile, options, moduleResolutionCache, redirectedReference)
-						.resolvedModule;
+					return hostResultMap.get(moduleName)
+						?? resolveModuleName(
+							moduleName,
+							containingFile,
+							options,
+							hostResultMap.has(moduleName) ? undefined : moduleResolutionCache,
+							redirectedReference,
+						).resolvedModule;
 				});
 			};
 		}
