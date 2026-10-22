@@ -5,9 +5,8 @@ import { describe, expect, test } from 'vitest';
 
 const packagesDir = path.resolve(__dirname, '../..');
 const builtinModules = new Set(require('module').builtinModules as string[]);
-// `vscode` is provided by the extension host; the others are still devDependencies of these packages.
+// `vscode` is provided by the extension host; `@volar/language-server` is still a devDependency.
 const knownUndeclared: Record<string, string[]> = {
-	'@volar/jsdelivr': ['@volar/language-service', 'vscode-uri'],
 	'@volar/vscode': ['vscode', '@volar/language-server'],
 };
 

@@ -73,7 +73,7 @@ importers:
         version: 1.0.12
 
   packages/jsdelivr:
-    devDependencies:
+    dependencies:
       '@volar/language-service':
         specifier: 2.4.28
         version: link:../language-service
