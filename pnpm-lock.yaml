@@ -45,13 +45,13 @@ importers:
         specifier: ^1.82.0
         version: 1.109.0
       '@volar/language-server':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../../packages/language-server
       '@volar/source-map':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../../packages/source-map
       '@volar/vscode':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../../packages/vscode
       '@vscode/vsce':
         specifier: ~3.7.1
@@ -66,7 +66,7 @@ importers:
         specifier: ^8.56.10
         version: 8.56.12
       '@volar/language-core':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-core
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -75,7 +75,7 @@ importers:
   packages/jsdelivr:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-service
       vscode-uri:
         specifier: ^3.0.8
@@ -84,10 +84,10 @@ importers:
   packages/kit:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../typescript
       typesafe-path:
         specifier: ^0.2.2
@@ -105,19 +105,19 @@ importers:
   packages/language-core:
     dependencies:
       '@volar/source-map':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../source-map
 
   packages/language-server:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../typescript
       path-browserify:
         specifier: ^1.0.1
@@ -148,7 +148,7 @@ importers:
   packages/language-service:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-core
       typescript:
         specifier: '*'
@@ -166,10 +166,10 @@ importers:
   packages/monaco:
     dependencies:
       '@volar/language-service':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-service
       '@volar/typescript':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.4.0
@@ -193,10 +193,10 @@ importers:
   packages/test-utils:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-core
       '@volar/language-server':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-server
       vscode-languageserver-textdocument:
         specifier: ^1.0.11
@@ -208,10 +208,10 @@ importers:
   packages/typescript:
     dependencies:
       '@volar/language-core':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-core
       '@volar/language-service':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-service
       path-browserify:
         specifier: ^1.0.1
@@ -246,7 +246,7 @@ importers:
         specifier: ^1.82.0
         version: 1.109.0
       '@volar/language-server':
-        specifier: 2.4.28
+        specifier: 2.4.29
         version: link:../language-server
 
 packages:
@@ -1655,6 +1655,7 @@ packages:
   eslint@9.27.0:
     resolution: {integrity: sha512-ixRawFQuMB9DZ7fjU3iGGganFDp3+45bPOdaRurcFHSXO1e/sYwUX/FtQZpLZJR6SjMoJH8hR2pPEAfDyCoU2Q==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -2921,6 +2922,7 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   validate-npm-package-license@3.0.4:
