@@ -33,7 +33,7 @@ importers:
         specifier: latest
         version: 0.52.0
       typescript:
-        specifier: latest
+        specifier: ~5.9.3
         version: 5.9.3
       vitest:
         specifier: latest

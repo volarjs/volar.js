@@ -22,7 +22,7 @@
 		"@types/node": "latest",
 		"@typescript-eslint/eslint-plugin": "latest",
 		"dprint": "latest",
-		"typescript": "latest",
+		"typescript": "~5.9.3",
 		"vitest": "latest"
 	}
 }
