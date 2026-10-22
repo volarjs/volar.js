@@ -20,6 +20,9 @@ jobs:
 
       - run: pnpm install
 
+      # tsslint loads the workspace @volar/* packages
+      - run: pnpm run build
+
       # lint
       - name: Auto-fix
         run: npm run lint:fix
