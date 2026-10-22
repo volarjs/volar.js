@@ -63,7 +63,7 @@
 		"@volar/language-server": "2.4.28",
 		"@volar/source-map": "2.4.28",
 		"@volar/vscode": "2.4.28",
-		"@vscode/vsce": "latest",
-		"esbuild": "latest"
+		"@vscode/vsce": "~3.7.1",
+		"esbuild": "~0.27.3"
 	}
 }

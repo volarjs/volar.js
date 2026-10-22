@@ -9,34 +9,34 @@ importers:
   .:
     devDependencies:
       '@lerna-lite/cli':
-        specifier: latest
+        specifier: ~4.11.3
         version: 4.11.3(@lerna-lite/publish@4.11.3(@types/node@25.3.3)(conventional-commits-filter@5.0.0))(@lerna-lite/version@4.11.3(@lerna-lite/publish@4.11.3(@types/node@25.3.3)(conventional-commits-filter@5.0.0))(@types/node@25.3.3)(conventional-commits-filter@5.0.0))(@types/node@25.3.3)
       '@lerna-lite/publish':
-        specifier: latest
+        specifier: ~4.11.3
         version: 4.11.3(@types/node@25.3.3)(conventional-commits-filter@5.0.0)
       '@tsslint/cli':
-        specifier: latest
+        specifier: ~3.0.2
         version: 3.0.2(@tsslint/compat-eslint@3.0.2(typescript@5.9.3))(typescript@5.9.3)
       '@tsslint/compat-eslint':
-        specifier: latest
+        specifier: ~3.0.2
         version: 3.0.2(typescript@5.9.3)
       '@tsslint/config':
-        specifier: latest
+        specifier: ~3.0.2
         version: 3.0.2(@tsslint/compat-eslint@3.0.2(typescript@5.9.3))(typescript@5.9.3)
       '@types/node':
-        specifier: latest
+        specifier: ~25.3.3
         version: 25.3.3
       '@typescript-eslint/eslint-plugin':
-        specifier: latest
+        specifier: ~8.56.1
         version: 8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.27.0)(typescript@5.9.3))(eslint@9.27.0)(typescript@5.9.3)
       dprint:
-        specifier: latest
+        specifier: ~0.52.0
         version: 0.52.0
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
       vitest:
-        specifier: latest
+        specifier: ~4.0.18
         version: 4.0.18(@types/node@25.3.3)(yaml@2.8.2)
 
   extensions/labs:
@@ -54,10 +54,10 @@ importers:
         specifier: 2.4.28
         version: link:../../packages/vscode
       '@vscode/vsce':
-        specifier: latest
+        specifier: ~3.7.1
         version: 3.7.1
       esbuild:
-        specifier: latest
+        specifier: ~0.27.3
         version: 0.27.3
 
   packages/eslint:
@@ -176,7 +176,7 @@ importers:
         version: 3.1.0
     devDependencies:
       monaco-editor-core:
-        specifier: latest
+        specifier: ~0.55.1
         version: 0.55.1
 
   packages/source-map: {}

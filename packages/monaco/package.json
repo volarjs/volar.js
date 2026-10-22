@@ -20,6 +20,6 @@
 		"vscode-uri": "^3.0.8"
 	},
 	"devDependencies": {
-		"monaco-editor-core": "latest"
+		"monaco-editor-core": "~0.55.1"
 	}
 }

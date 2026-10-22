@@ -14,15 +14,15 @@
 		"lint:fix": "npm run lint -- --fix"
 	},
 	"devDependencies": {
-		"@lerna-lite/cli": "latest",
-		"@lerna-lite/publish": "latest",
-		"@tsslint/cli": "latest",
-		"@tsslint/config": "latest",
-		"@tsslint/compat-eslint": "latest",
-		"@types/node": "latest",
-		"@typescript-eslint/eslint-plugin": "latest",
-		"dprint": "latest",
+		"@lerna-lite/cli": "~4.11.3",
+		"@lerna-lite/publish": "~4.11.3",
+		"@tsslint/cli": "~3.0.2",
+		"@tsslint/config": "~3.0.2",
+		"@tsslint/compat-eslint": "~3.0.2",
+		"@types/node": "~25.3.3",
+		"@typescript-eslint/eslint-plugin": "~8.56.1",
+		"dprint": "~0.52.0",
 		"typescript": "~5.9.3",
-		"vitest": "latest"
+		"vitest": "~4.0.18"
 	}
 }
