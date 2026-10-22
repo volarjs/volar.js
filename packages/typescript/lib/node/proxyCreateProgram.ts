@@ -135,7 +135,9 @@ export function proxyCreateProgram(
 				.map(plugin => plugin.typescript?.extraFileExtensions.map(({ extension }) => `.${extension}`) ?? [])
 				.flat();
 
-			options.host = { ...originalHost };
+			// TypeScript prefers `getSourceFileByPath` over `getSourceFile` when reusing an old
+			// program (e.g. `tsc --watch`), which would bypass the wrapper below.
+			options.host = { ...originalHost, getSourceFileByPath: undefined };
 			options.host.getSourceFile = (
 				fileName,
 				languageVersionOrOptions,
