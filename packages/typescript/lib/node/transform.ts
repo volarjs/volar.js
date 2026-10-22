@@ -111,19 +111,39 @@ export function transformFileTextChanges(
 	changes: readonly ts.FileTextChanges[],
 	fallbackToAnyMatch: boolean,
 	filter: (data: CodeInformation) => boolean,
-): ts.FileTextChanges[] {
+): ts.FileTextChanges[];
+/**
+ * With `allOrNothing`, returns `undefined` when any change cannot be mapped to a source file.
+ */
+export function transformFileTextChanges(
+	language: Language<string>,
+	changes: readonly ts.FileTextChanges[],
+	fallbackToAnyMatch: boolean,
+	filter: (data: CodeInformation) => boolean,
+	allOrNothing: true,
+): ts.FileTextChanges[] | undefined;
+export function transformFileTextChanges(
+	language: Language<string>,
+	changes: readonly ts.FileTextChanges[],
+	fallbackToAnyMatch: boolean,
+	filter: (data: CodeInformation) => boolean,
+	allOrNothing = false,
+): ts.FileTextChanges[] | undefined {
 	const changesPerFile: { [fileName: string]: TextChange[] } = {};
 	const newFiles = new Set<string>();
 	for (const fileChanges of changes) {
 		const [_, source] = getServiceScript(language, fileChanges.fileName);
 		if (source) {
-			fileChanges.textChanges.forEach(c => {
+			for (const c of fileChanges.textChanges) {
 				const { fileName, textSpan } = transformSpan(language, fileChanges.fileName, c.span, fallbackToAnyMatch, filter)
 					?? {};
 				if (fileName && textSpan) {
 					(changesPerFile[fileName] ?? (changesPerFile[fileName] = [])).push({ ...c, span: textSpan });
 				}
-			});
+				else if (allOrNothing) {
+					return;
+				}
+			}
 		}
 		else {
 			const list = changesPerFile[fileChanges.fileName] ?? (changesPerFile[fileChanges.fileName] = []);

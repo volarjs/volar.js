@@ -354,6 +354,9 @@ export function transformWorkspaceEdit(
 	versions: Record<string, number> = {},
 ) {
 	const sourceResult: vscode.WorkspaceEdit = {};
+	// A code action applied partially can leave the document broken, so it is dropped
+	// as a whole when any of its edits has no source range.
+	const unmappedEdits = new Set<vscode.TextEdit>();
 	let hasResult = false;
 
 	for (const tsUri in edit.changeAnnotations) {
@@ -389,10 +392,13 @@ export function transformWorkspaceEdit(
 				virtualCode.languageId,
 				virtualCode.snapshot,
 			);
+			const tsEdits = edit.changes[tsUri];
+			for (const tsEdit of tsEdits) {
+				unmappedEdits.add(tsEdit);
+			}
 			for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
 				const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
 				const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
-				const tsEdits = edit.changes[tsUri];
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
 						let _data!: CodeInformation;
@@ -403,6 +409,7 @@ export function transformWorkspaceEdit(
 						});
 
 						if (range) {
+							unmappedEdits.delete(tsEdit);
 							sourceResult.changes[sourceDocument.uri] ??= [];
 							sourceResult.changes[sourceDocument.uri].push({
 								newText: resolveRenameEditText(tsEdit.newText, _data),
@@ -414,6 +421,7 @@ export function transformWorkspaceEdit(
 					else {
 						const range = getSourceRange(docs, tsEdit.range);
 						if (range) {
+							unmappedEdits.delete(tsEdit);
 							sourceResult.changes[sourceDocument.uri] ??= [];
 							sourceResult.changes[sourceDocument.uri].push({ newText: tsEdit.newText, range });
 							hasResult = true;
@@ -443,6 +451,9 @@ export function transformWorkspaceEdit(
 						virtualCode.languageId,
 						virtualCode.snapshot,
 					);
+					for (const tsEdit of tsDocEdit.edits) {
+						unmappedEdits.add(tsEdit);
+					}
 					for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
 						const sourceDocument = context.documents.get(
 							sourceScript.id,
@@ -467,6 +478,7 @@ export function transformWorkspaceEdit(
 									return isRenameEnabled(data);
 								});
 								if (range) {
+									unmappedEdits.delete(tsEdit);
 									sourceEdit.edits.push({
 										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
 										newText: resolveRenameEditText(tsEdit.newText, _data),
@@ -477,6 +489,7 @@ export function transformWorkspaceEdit(
 							else {
 								const range = getSourceRange(docs, tsEdit.range);
 								if (range) {
+									unmappedEdits.delete(tsEdit);
 									sourceEdit.edits.push({
 										annotationId: 'annotationId' in tsEdit ? tsEdit.annotationId : undefined,
 										newText: tsEdit.newText,
@@ -543,6 +556,9 @@ export function transformWorkspaceEdit(
 				hasResult = true;
 			}
 		}
+	}
+	if (mode === 'codeAction' && unmappedEdits.size) {
+		return;
 	}
 	if (hasResult) {
 		return sourceResult;

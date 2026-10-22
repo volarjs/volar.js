@@ -436,7 +436,7 @@ function organizeImports(
 ): ts.LanguageService['organizeImports'] {
 	return (args, formatOptions, preferences) => {
 		const unresolved = organizeImports(args, formatOptions, preferences);
-		return transformFileTextChanges(language, unresolved, false, isCodeActionsEnabled);
+		return transformFileTextChanges(language, unresolved, false, isCodeActionsEnabled, true) ?? [];
 	};
 }
 function getQuickInfoAtPosition(
@@ -747,8 +747,11 @@ function getEditsForRefactor(
 			);
 		}
 		if (edits) {
-			edits.edits = transformFileTextChanges(language, edits.edits, false, isCodeActionsEnabled);
-			return edits;
+			const transformed = transformFileTextChanges(language, edits.edits, false, isCodeActionsEnabled, true);
+			if (transformed) {
+				edits.edits = transformed;
+				return edits;
+			}
 		}
 	};
 }
@@ -758,7 +761,8 @@ function getCombinedCodeFix(
 ): ts.LanguageService['getCombinedCodeFix'] {
 	return (...args) => {
 		const codeActions = getCombinedCodeFix(...args);
-		codeActions.changes = transformFileTextChanges(language, codeActions.changes, false, isCodeActionsEnabled);
+		codeActions.changes = transformFileTextChanges(language, codeActions.changes, false, isCodeActionsEnabled, true)
+			?? [];
 		return codeActions;
 	};
 }
@@ -839,11 +843,14 @@ function getCodeFixesAtPosition(
 		else {
 			fixes = getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences);
 		}
-		fixes = fixes.map(fix => {
-			fix.changes = transformFileTextChanges(language, fix.changes, false, isCodeActionsEnabled);
-			return fix;
+		return fixes.filter(fix => {
+			const changes = transformFileTextChanges(language, fix.changes, false, isCodeActionsEnabled, true);
+			if (changes) {
+				fix.changes = changes;
+				return true;
+			}
+			return false;
 		});
-		return fixes;
 	};
 }
 function getEncodedSemanticClassifications(
