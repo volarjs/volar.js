@@ -22,12 +22,11 @@ export function register(context: LanguageServiceContext) {
 					item.edit
 						? {
 							...item,
-							edit: transformWorkspaceEdit(
-								item.edit,
-								context,
-								'codeAction',
-								{ [data.uri]: data.version },
-							),
+							// No `versions`: `data.version` is the service's own document counter
+							// (see `context.documents.get`), not the version the client sent. Reporting
+							// it makes strict clients reject the edit as stale, so leave it `null`, as
+							// `provideCodeActions` already does.
+							edit: transformWorkspaceEdit(item.edit, context, 'codeAction'),
 						}
 						: item
 				);
