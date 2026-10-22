@@ -40,7 +40,10 @@ export function runTsc(
 	// Mirror the TS v5.7+ tsc shim behavior: enable the V8/JSC bytecode cache
 	// so the (huge) transformed tsc source is compiled once and reused on
 	// subsequent invocations. Supported by Node 22+; no-op on Bun.
-	try { Module.enableCompileCache?.(); } catch {}
+	try {
+		Module.enableCompileCache?.();
+	}
+	catch {}
 
 	// Detect the tsc shim used in TypeScript v5.7+: a tiny preamble that
 	// re-exports the actual compiler from a sibling file. Resolve through it
