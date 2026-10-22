@@ -18,7 +18,8 @@ describe('createResolveModuleName', () => {
 	let root: string;
 
 	beforeAll(() => {
-		root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'volar-resolve-'))).replace(/\\/g, '/');
+		// Match ts.sys.realpath, which also expands Windows 8.3 short names such as RUNNER~1.
+		root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'volar-resolve-'))).replace(/\\/g, '/');
 		fs.mkdirSync(`${root}/packages/ui/src`, { recursive: true });
 		fs.writeFileSync(`${root}/packages/ui/package.json`, JSON.stringify({ name: '@acme/ui' }));
 		fs.writeFileSync(`${root}/packages/ui/src/Header.vue`, '');
