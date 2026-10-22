@@ -45,8 +45,9 @@ export function createLanguage<T>(
 				return scriptRegistry.get(id);
 			},
 			set(id, snapshot, languageId, _plugins = plugins) {
+				const scriptPlugins = filterPluginsByExtension(id, plugins);
 				if (!languageId) {
-					for (const plugin of plugins) {
+					for (const plugin of scriptPlugins) {
 						languageId = plugin.getLanguageId?.(id);
 						if (languageId) {
 							break;
@@ -58,7 +59,7 @@ export function createLanguage<T>(
 					return;
 				}
 				let associatedOnly = false;
-				for (const plugin of plugins) {
+				for (const plugin of scriptPlugins) {
 					if (plugin.isAssociatedFileOnly?.(id, languageId)) {
 						associatedOnly = true;
 						break;
@@ -122,7 +123,7 @@ export function createLanguage<T>(
 					if (associatedOnly) {
 						return sourceScript;
 					}
-					for (const languagePlugin of _plugins) {
+					for (const languagePlugin of filterPluginsByExtension(id, _plugins)) {
 						const virtualCode = languagePlugin.createVirtualCode?.(
 							id,
 							languageId,
@@ -242,6 +243,21 @@ export function createLanguage<T>(
 			},
 		};
 	}
+}
+
+function filterPluginsByExtension<T>(id: T, plugins: LanguagePlugin<T>[]) {
+	const fileName = String(id);
+	let longestExtension: string | undefined;
+	for (const plugin of plugins) {
+		for (const extension of plugin.extensions ?? []) {
+			if (fileName.endsWith(extension) && extension.length > (longestExtension?.length ?? -1)) {
+				longestExtension = extension;
+			}
+		}
+	}
+	return plugins.filter(plugin =>
+		!plugin.extensions || (longestExtension !== undefined && plugin.extensions.includes(longestExtension))
+	);
 }
 
 export function* forEachEmbeddedCode(virtualCode: VirtualCode): Generator<VirtualCode> {
