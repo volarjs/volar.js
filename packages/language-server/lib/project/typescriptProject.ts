@@ -194,7 +194,7 @@ export function createTypeScriptProject(
 					let tsConfigPath = projectReference.path.replace(/\\/g, '/');
 
 					// fix https://github.com/johnsoncodehk/volar/issues/712
-					if ((await server.fileSystem.stat?.(uriConverter.asUri(tsConfigPath)))?.type === FileType.File) {
+					if ((await server.fileSystem.stat?.(uriConverter.asUri(tsConfigPath)))?.type === FileType.Directory) {
 						const newTsConfigPath = path.join(tsConfigPath, 'tsconfig.json');
 						const newJsConfigPath = path.join(tsConfigPath, 'jsconfig.json');
 						if ((await server.fileSystem.stat?.(uriConverter.asUri(newTsConfigPath)))?.type === FileType.File) {
