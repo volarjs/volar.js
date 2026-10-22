@@ -126,6 +126,21 @@ export function transformTscContent(
 	if (extraExtensionsToRemove.length) {
 		const extsText = extraExtensionsToRemove.map(ext => `"${ext}"`).join(', ');
 		tsc = replace(tsc, /extensionsToRemove = .*(?=;)/, s => s + `.concat([${extsText}])`);
+		// These extensions are stripped on emit, so (like .ts -> .js) the JS file
+		// they produce ends in .js. Teach tryGetJSExtensionForFile that mapping,
+		// otherwise build mode (tsc -b) declaration emit calls getJSExtensionForFile
+		// and Debug.fail()s with "Extension .xxx is unsupported" when it computes a
+		// module specifier to one of these files with a "js" ending preference.
+		tsc = replace(
+			tsc,
+			/function tryGetJSExtensionForFile\(/,
+			s =>
+				`function tryGetJSExtensionForFile(fileName, options) {
+			return [${extsText}].some(ext => fileName.endsWith(ext))
+				? ".js"
+				: _tryGetJSExtensionForFile(fileName, options)
+			}\n` + s.replace('tryGetJSExtensionForFile', '_tryGetJSExtensionForFile'),
+		);
 	}
 	// Support for basename.xxx to basename.xxx.d.ts
 	if (neededPatchExtenstions.length) {
