@@ -2,7 +2,12 @@
 # branch to release:
 #
 # - master: `version` patch, minor, major or X.Y.Z, `dist-tag` latest.
-# - any branch: `version` prerelease or X.Y.Z-alpha.N, `dist-tag` next.
+# - any branch, master included: `version` prerelease or X.Y.Z-alpha.N,
+#   `dist-tag` next.
+# - `version` from-package republishes the release at the branch HEAD, which
+#   must carry its `v<lerna.json version>` tag, without bumping anything;
+#   versions already on npm are skipped, and a prerelease only goes to next.
+#   Use it when a release was pushed but publishing failed part way.
 #
 # lerna-lite bumps every package, syncs pnpm-lock.yaml, then commits, tags
 # `vX.Y.Z` and pushes to the selected branch; a failed push stops before
@@ -19,7 +24,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'patch, minor, major, prerelease, or an exact version'
+        description: 'patch, minor, major, prerelease, an exact version, or from-package'
         required: true
         default: patch
       dist-tag:
@@ -30,13 +35,12 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: release
-  cancel-in-progress: false
-
 jobs:
   release:
     if: github.triggering_actor == 'johnsoncodehk'
+    concurrency:
+      group: release
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       contents: write # push the version commit and tag
@@ -56,9 +60,12 @@ jobs:
               echo "::error::dist-tag latest is only published from master"
               exit 1
             fi
-            pattern='^(patch|minor|major|[0-9]+\.[0-9]+\.[0-9]+)$'
+            pattern='^(patch|minor|major|from-package|[0-9]+\.[0-9]+\.[0-9]+)$'
+          elif [[ "$DIST_TAG" == next ]]; then
+            pattern='^(prerelease|from-package|[0-9]+\.[0-9]+\.[0-9]+-alpha\.[0-9]+)$'
           else
-            pattern='^(prerelease|[0-9]+\.[0-9]+\.[0-9]+-alpha\.[0-9]+)$'
+            echo "::error::dist-tag must be latest or next, not '$DIST_TAG'"
+            exit 1
           fi
           if [[ ! "$VERSION" =~ $pattern ]]; then
             echo "::error::version '$VERSION' does not fit dist-tag $DIST_TAG"
@@ -89,13 +96,25 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           NPM_CONFIG_PROVENANCE: 'true'
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git config http.https://github.com/.extraheader "AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
-          pnpm exec lerna version "$VERSION" \
-            --exact \
-            --force-publish \
-            --sync-workspace-lock \
-            --yes
+          if [[ "$VERSION" == from-package ]]; then
+            package_version="$(node -p "require('./lerna.json').version")"
+            if ! git tag --points-at HEAD | grep -qxF "v$package_version"; then
+              echo "::error::from-package needs HEAD to be tagged v$package_version"
+              exit 1
+            fi
+            if [[ "$DIST_TAG" == latest && "$package_version" == *-* ]] || [[ "$DIST_TAG" == next && "$package_version" != *-* ]]; then
+              echo "::error::version $package_version does not fit dist-tag $DIST_TAG"
+              exit 1
+            fi
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git config http.https://github.com/.extraheader "AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+            pnpm exec lerna version "$VERSION" \
+              --exact \
+              --force-publish \
+              --sync-workspace-lock \
+              --yes
+          fi
           pnpm -r publish --tag "$DIST_TAG" --no-git-checks
           echo "Published \`$(node -p "require('./lerna.json').version")\` with dist-tag \`$DIST_TAG\`." >> "$GITHUB_STEP_SUMMARY"
