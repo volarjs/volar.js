@@ -2,9 +2,9 @@ import * as path from 'path-browserify';
 import * as vscode from 'vscode';
 import { quickPick } from '../common';
 import * as fs from '../fs';
+import { getWritableTsdkSetting, legacyTsdkSetting, readTsdkSetting, unifiedTsdkSetting } from './tsdkSetting';
 
 const defaultTsdkPath = 'node_modules/typescript/lib';
-const tsdkSetting = 'typescript.tsdk';
 
 export function activate(
 	selector: vscode.DocumentSelector,
@@ -40,6 +40,7 @@ export function activate(
 		const useDefaultWorkspaceTsdk = configTsdkPath !== defaultTsdkPath && !vscodeTsdk?.isWeb;
 
 		if (!useVSCodeTsdk && !useConfigWorkspaceTsdk && !useDefaultWorkspaceTsdk) { // found no usable TypeScript version
+			const tsdkSetting = getWritableTsdkSetting(vscode.version).id;
 			const messageResult = await vscode.window.showErrorMessage(
 				`Could not find any TypeScript version. Please point your \`${tsdkSetting}\` setting to a valid TypeScript distribution.`,
 				'Open Settings',
@@ -82,7 +83,8 @@ export function activate(
 			return; // cancel
 		}
 		if (select === 'useDefaultWorkspaceTsdk') {
-			await vscode.workspace.getConfiguration('typescript').update('tsdk', defaultTsdkPath);
+			const { section, key } = getWritableTsdkSetting(vscode.version);
+			await vscode.workspace.getConfiguration(section).update(key, defaultTsdkPath);
 		}
 		const useWorkspaceTsdk = select === 'useConfigWorkspaceTsdk' || select === 'useDefaultWorkspaceTsdk';
 		if (useWorkspaceTsdk !== isUseWorkspaceTsdk(context)) {
@@ -93,7 +95,10 @@ export function activate(
 	}
 
 	function onDidChangeConfiguration(e: vscode.ConfigurationChangeEvent) {
-		if (e.affectsConfiguration(tsdkSetting) && isUseWorkspaceTsdk(context)) {
+		const affectsTsdk = [unifiedTsdkSetting, legacyTsdkSetting].some(({ section, key }) =>
+			e.affectsConfiguration(`${section}.${key}`)
+		);
+		if (affectsTsdk && isUseWorkspaceTsdk(context)) {
 			onRestart?.();
 		}
 	}
@@ -194,7 +199,7 @@ async function getVSCodeTsdk() {
 }
 
 function getConfigTsdkPath() {
-	return vscode.workspace.getConfiguration('typescript').get<string>('tsdk')?.replace(/\\/g, '/');
+	return readTsdkSetting(vscode.workspace);
 }
 
 function isUseWorkspaceTsdk(context: vscode.ExtensionContext) {
