@@ -14,6 +14,7 @@ import {
 	FindFileReferenceRequest,
 } from '../../protocol';
 import type { LanguageServerProject, LanguageServerState } from '../types.js';
+import { getLanguageService } from '../utils/getLanguageService';
 import { type SnapshotDocument } from '../utils/snapshotDocument';
 
 const reportedCapabilities = new Set<string>();
@@ -233,7 +234,7 @@ export function register(
 				let languageServices = await project.getExistingLanguageServices();
 				if (!languageServices.length) {
 					for (const document of documents.all()) {
-						await project.getLanguageService(URI.parse(document.uri));
+						await getLanguageService(server.connection, project, URI.parse(document.uri));
 					}
 					languageServices = await project.getExistingLanguageServices();
 				}
@@ -555,7 +556,7 @@ export function register(
 				let languageServices = await project.getExistingLanguageServices();
 				if (!languageServices.length) {
 					for (const document of documents.all()) {
-						await project.getLanguageService(URI.parse(document.uri));
+						await getLanguageService(server.connection, project, URI.parse(document.uri));
 					}
 					languageServices = await project.getExistingLanguageServices();
 				}
@@ -712,8 +713,8 @@ export function register(
 				}
 
 				const uri = URI.parse(textDocument.uri);
-				const languageService = await project.getLanguageService(uri);
-				return languageService.getDocumentDropEdits(uri, position, dataTransferMap, token);
+				const languageService = await getLanguageService(server.connection, project, uri);
+				return languageService?.getDocumentDropEdits(uri, position, dataTransferMap, token);
 			});
 		}
 
@@ -804,7 +805,7 @@ export function register(
 				let languageServices = await project.getExistingLanguageServices();
 				if (!languageServices.length) {
 					for (const document of documents.all()) {
-						await project.getLanguageService(URI.parse(document.uri));
+						await getLanguageService(server.connection, project, URI.parse(document.uri));
 					}
 					languageServices = await project.getExistingLanguageServices();
 				}
@@ -859,7 +860,10 @@ export function register(
 		version: number,
 		token: vscode.CancellationToken,
 	) {
-		const languageService = await project.getLanguageService(uri);
+		const languageService = await getLanguageService(server.connection, project, uri);
+		if (!languageService) {
+			return;
+		}
 		const diagnostics = await languageService.getDiagnostics(
 			uri,
 			diagnostics => server.connection.sendDiagnostics({ uri: uri.toString(), diagnostics, version }),
@@ -877,7 +881,15 @@ export function register(
 					resolve(undefined);
 					return;
 				}
-				const languageService = await server.project.getLanguageService(decodeEmbeddedDocumentUri(uri)?.[0] ?? uri);
+				const languageService = await getLanguageService(
+					server.connection,
+					server.project,
+					decodeEmbeddedDocumentUri(uri)?.[0] ?? uri,
+				);
+				if (!languageService) {
+					resolve(undefined);
+					return;
+				}
 				const result = await cb(languageService);
 				if (token.isCancellationRequested) {
 					resolve(undefined);
