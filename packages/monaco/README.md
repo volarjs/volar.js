@@ -20,14 +20,14 @@ We assume you already know:
 
 ```ts
 // my-lang.worker.ts
-import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
+import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker.start';
 import type * as monaco from 'monaco-editor-core';
 import type { LanguageServiceEnvironment } from '@volar/language-service';
 import { createSimpleWorkerLanguageService } from '@volar/monaco/worker';
 import { URI } from 'vscode-uri';
 
 self.onmessage = () => {
-	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
+	worker.start((ctx: monaco.worker.IWorkerContext) => {
 		const env: LanguageServiceEnvironment = {
 			workspaceFolders: [
 				URI.parse('file:///'),
@@ -47,10 +47,24 @@ self.onmessage = () => {
 };
 ```
 
+`monaco-editor-core` does not ship type declarations for `editor.worker.start`, so declare the module yourself (e.g. in `env.d.ts`):
+
+```ts
+declare module 'monaco-editor-core/esm/vs/editor/editor.worker.start' {
+	import type { worker } from 'monaco-editor-core';
+
+	export function start<THost extends object, TClient extends object>(
+		createClient: (ctx: worker.IWorkerContext<THost>) => TClient,
+	): TClient;
+}
+```
+
+If you use `monaco-editor` instead, import `start` from `monaco-editor/editor/editor.worker.start` and declare that module (with `worker` imported from `monaco-editor`).
+
 #### Add TypeScript Support
 
 ```diff
-import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
+import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker.start';
 import type * as monaco from 'monaco-editor-core';
 import type { LanguageServiceEnvironment } from '@volar/language-service';
 -import { createSimpleWorkerLanguageService } from '@volar/monaco/worker';
@@ -60,7 +74,7 @@ import { URI } from 'vscode-uri';
 +import ts from 'typescript';
 
 self.onmessage = () => {
-	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
+	worker.start((ctx: monaco.worker.IWorkerContext) => {
 		const env: LanguageServiceEnvironment = {
 			workspaceFolders: [
 				URI.parse('file:///'),
@@ -93,7 +107,7 @@ self.onmessage = () => {
 #### Add ATA Support for TypeScript
 
 ```diff
-import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker';
+import * as worker from 'monaco-editor-core/esm/vs/editor/editor.worker.start';
 import type * as monaco from 'monaco-editor-core';
 import type { LanguageServiceEnvironment } from '@volar/language-service';
 import { createTypeScriptWorkerLanguageService } from '@volar/monaco/worker';
@@ -103,7 +117,7 @@ import { create as createTypeScriptServicePlugin } from 'volar-service-typescrip
 import ts from 'typescript';
 
 self.onmessage = () => {
-	worker.initialize((ctx: monaco.worker.IWorkerContext) => {
+	worker.start((ctx: monaco.worker.IWorkerContext) => {
 		const env: LanguageServiceEnvironment = {
 			workspaceFolders: [
 				URI.parse('file:///'),
@@ -136,14 +150,10 @@ self.onmessage = () => {
 ### Add worker loader to global env
 
 ```ts
-import editorWorker from 'monaco-editor-core/esm/vs/editor/editor.worker?worker';
-import myWorker from './my-lang.worker?worker';
+import editorWorker from 'monaco-editor-core/esm/vs/editor/common/services/editorWebWorkerMain?worker';
 
 (self as any).MonacoEnvironment = {
-	getWorker(_: any, label: string) {
-		if (label === 'my-lang') {
-			return new myWorker();
-		}
+	getWorker() {
 		return new editorWorker();
 	}
 }
@@ -155,13 +165,13 @@ import myWorker from './my-lang.worker?worker';
 import type { WorkerLanguageService } from '@volar/monaco/worker';
 import { editor, languages, Uri } from 'monaco-editor-core';
 import { activateMarkers, activateAutoInsertion, registerProviders } from '@volar/monaco';
+import myWorker from './my-lang.worker?worker';
 
 languages.register({ id: 'my-lang', extensions: ['.my-lang'] });
 
 languages.onLanguage('my-lang', () => {
 	const worker = editor.createWebWorker<WorkerLanguageService>({
-		moduleId: 'vs/language/my-lang/myLangWorker',
-		label: 'my-lang',
+		worker: new myWorker(),
 	});
 	activateMarkers(
 		worker,
