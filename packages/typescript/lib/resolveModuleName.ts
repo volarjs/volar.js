@@ -102,16 +102,39 @@ export function createResolveModuleName<T>(
 			redirectedReference,
 			resolutionMode,
 		);
-		if (result.resolvedModule) {
-			const sourceFileInfo = toSourceFileInfo.get(result.resolvedModule.resolvedFileName);
+		const resolvedModule: (ts.ResolvedModuleFull & { originalPath?: string }) | undefined = result.resolvedModule;
+		if (resolvedModule) {
+			const sourceFileInfo = toSourceFileInfo.get(resolvedModule.resolvedFileName);
 			if (sourceFileInfo) {
-				result.resolvedModule.resolvedFileName = sourceFileInfo.sourceFileName;
-				result.resolvedModule.extension = sourceFileInfo.extension;
+				resolvedModule.resolvedFileName = sourceFileInfo.sourceFileName;
+				resolvedModule.extension = sourceFileInfo.extension;
+				// TypeScript could not realpath the virtual file name, so do it for the source file
+				// under the same conditions TypeScript applies to node_modules lookups.
+				if (
+					!compilerOptions.preserveSymlinks
+					&& host.realpath
+					&& resolvedModule.isExternalLibraryImport
+					&& !resolvedModule.originalPath
+					&& !ts.isExternalModuleNameRelative(moduleName)
+				) {
+					const realPath = host.realpath(sourceFileInfo.sourceFileName).replace(/\\/g, '/');
+					if (!isSamePath(realPath, sourceFileInfo.sourceFileName)) {
+						resolvedModule.originalPath = sourceFileInfo.sourceFileName;
+						resolvedModule.resolvedFileName = realPath;
+					}
+				}
 			}
 		}
 		toSourceFileInfo.clear();
 		return result;
 	};
+
+	function isSamePath(a: string, b: string) {
+		const useCaseSensitiveFileNames = typeof host.useCaseSensitiveFileNames === 'function'
+			? host.useCaseSensitiveFileNames()
+			: host.useCaseSensitiveFileNames;
+		return useCaseSensitiveFileNames ? a === b : a.toLowerCase() === b.toLowerCase();
+	}
 
 	// fix https://github.com/vuejs/language-tools/issues/3332
 	function fileExists(fileName: string) {
