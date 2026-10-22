@@ -23,6 +23,6 @@
 		"vscode-uri": "^3.0.8"
 	},
 	"devDependencies": {
-		"@types/path-browserify": "latest"
+		"@types/path-browserify": "~1.0.3"
 	}
 }

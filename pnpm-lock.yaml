@@ -139,7 +139,7 @@ importers:
         version: 3.1.0
     devDependencies:
       '@types/path-browserify':
-        specifier: latest
+        specifier: ~1.0.3
         version: 1.0.3
 
   packages/language-service:
@@ -209,7 +209,7 @@ importers:
         version: 3.1.0
     devDependencies:
       '@types/path-browserify':
-        specifier: latest
+        specifier: ~1.0.3
         version: 1.0.3
       '@volar/language-service':
         specifier: 2.4.28
@@ -228,7 +228,7 @@ importers:
         version: 5.2.0
     devDependencies:
       '@types/path-browserify':
-        specifier: latest
+        specifier: ~1.0.3
         version: 1.0.3
       '@types/vscode':
         specifier: ^1.82.0
