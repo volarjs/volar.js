@@ -83,13 +83,13 @@ export function register(
 				const uri = URI.parse(params.textDocument.uri);
 				return await worker(uri, token, languageService => {
 					return languageService.getDocumentColors(uri, token);
-				});
+				}) ?? [];
 			});
 			server.connection.onColorPresentation(async (params, token) => {
 				const uri = URI.parse(params.textDocument.uri);
 				return await worker(uri, token, languageService => {
 					return languageService.getColorPresentations(uri, params.color, params.range, token);
-				});
+				}) ?? [];
 			});
 		}
 
