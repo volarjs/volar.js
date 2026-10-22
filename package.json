@@ -5,9 +5,6 @@
 		"build": "tsc -b",
 		"watch": "tsc -b -w",
 		"watch:labs": "cd extensions/labs && npm run watch",
-		"prerelease": "npm run build && npm run test",
-		"release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
-		"release:next": "npm run release -- --dist-tag next --no-push",
 		"test": "vitest run",
 		"format": "dprint fmt",
 		"lint": "tsslint --project */*/tsconfig.json",
@@ -15,7 +12,7 @@
 	},
 	"devDependencies": {
 		"@lerna-lite/cli": "~4.11.3",
-		"@lerna-lite/publish": "~4.11.3",
+		"@lerna-lite/version": "~4.11.3",
 		"@tsslint/cli": "~3.0.2",
 		"@tsslint/config": "~3.0.2",
 		"@tsslint/compat-eslint": "~3.0.2",

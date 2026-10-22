@@ -1,0 +1,101 @@
+# Publishes every public package to npm. Run it from the Actions tab on the
+# branch to release:
+#
+# - master: `version` patch, minor, major or X.Y.Z, `dist-tag` latest.
+# - any branch: `version` prerelease or X.Y.Z-alpha.N, `dist-tag` next.
+#
+# lerna-lite bumps every package, syncs pnpm-lock.yaml, then commits, tags
+# `vX.Y.Z` and pushes to the selected branch; a failed push stops before
+# anything is published. `pnpm publish` hands each tarball to the npm CLI,
+# which authenticates with npm trusted publishing (OIDC) and adds provenance.
+#
+# The npm trusted publisher is bound to this filename, and a dispatch runs the
+# workflow file of the selected branch, so every release branch carries this
+# same file.
+
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'patch, minor, major, prerelease, or an exact version'
+        required: true
+        default: patch
+      dist-tag:
+        description: 'npm dist-tag (latest only from master)'
+        type: choice
+        options: [latest, next]
+        default: latest
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.triggering_actor == 'johnsoncodehk'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the version commit and tag
+      id-token: write # npm trusted publishing / provenance
+    steps:
+      - name: Validate inputs
+        env:
+          VERSION: ${{ inputs.version }}
+          DIST_TAG: ${{ inputs.dist-tag }}
+        run: |
+          if [[ "$GITHUB_REF" != refs/heads/* ]]; then
+            echo "::error::Run this workflow on a branch, not $GITHUB_REF"
+            exit 1
+          fi
+          if [[ "$DIST_TAG" == latest ]]; then
+            if [[ "$GITHUB_REF" != refs/heads/master ]]; then
+              echo "::error::dist-tag latest is only published from master"
+              exit 1
+            fi
+            pattern='^(patch|minor|major|[0-9]+\.[0-9]+\.[0-9]+)$'
+          else
+            pattern='^(prerelease|[0-9]+\.[0-9]+\.[0-9]+-alpha\.[0-9]+)$'
+          fi
+          if [[ ! "$VERSION" =~ $pattern ]]; then
+            echo "::error::version '$VERSION' does not fit dist-tag $DIST_TAG"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # lerna reads the previous release tag
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run build
+
+      - run: pnpm run test
+
+      - name: Publish
+        env:
+          VERSION: ${{ inputs.version }}
+          DIST_TAG: ${{ inputs.dist-tag }}
+          GH_TOKEN: ${{ github.token }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config http.https://github.com/.extraheader "AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          pnpm exec lerna version "$VERSION" \
+            --exact \
+            --force-publish \
+            --sync-workspace-lock \
+            --yes
+          pnpm -r publish --tag "$DIST_TAG" --no-git-checks
+          echo "Published \`$(node -p "require('./lerna.json').version")\` with dist-tag \`$DIST_TAG\`." >> "$GITHUB_STEP_SUMMARY"
