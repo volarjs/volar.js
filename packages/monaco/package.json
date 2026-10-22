@@ -23,7 +23,7 @@
 		"monaco-editor-core": "~0.55.1"
 	},
 	"peerDependencies": {
-		"typescript": "*"
+		"typescript": "<7"
 	},
 	"peerDependenciesMeta": {
 		"typescript": {
