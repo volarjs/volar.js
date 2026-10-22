@@ -13,11 +13,19 @@
 	},
 	"dependencies": {
 		"@volar/language-core": "2.4.28",
+		"@volar/language-service": "2.4.28",
 		"path-browserify": "^1.0.1",
 		"vscode-uri": "^3.0.8"
 	},
 	"devDependencies": {
-		"@types/path-browserify": "~1.0.3",
-		"@volar/language-service": "2.4.28"
+		"@types/path-browserify": "~1.0.3"
+	},
+	"peerDependencies": {
+		"typescript": "*"
+	},
+	"peerDependenciesMeta": {
+		"typescript": {
+			"optional": true
+		}
 	}
 }

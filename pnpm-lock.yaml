@@ -125,6 +125,9 @@ importers:
       request-light:
         specifier: ^0.7.0
         version: 0.7.0
+      typescript:
+        specifier: '*'
+        version: 5.9.3
       vscode-languageserver:
         specifier: ^9.0.1
         version: 9.0.1
@@ -147,6 +150,9 @@ importers:
       '@volar/language-core':
         specifier: 2.4.28
         version: link:../language-core
+      typescript:
+        specifier: '*'
+        version: 5.9.3
       vscode-languageserver-protocol:
         specifier: ^3.17.5
         version: 3.17.5
@@ -171,6 +177,9 @@ importers:
       monaco-types:
         specifier: ^0.1.0
         version: 0.1.2
+      typescript:
+        specifier: '*'
+        version: 5.9.3
       vscode-uri:
         specifier: ^3.0.8
         version: 3.1.0
@@ -201,9 +210,15 @@ importers:
       '@volar/language-core':
         specifier: 2.4.28
         version: link:../language-core
+      '@volar/language-service':
+        specifier: 2.4.28
+        version: link:../language-service
       path-browserify:
         specifier: ^1.0.1
         version: 1.0.1
+      typescript:
+        specifier: '*'
+        version: 5.9.3
       vscode-uri:
         specifier: ^3.0.8
         version: 3.1.0
@@ -211,9 +226,6 @@ importers:
       '@types/path-browserify':
         specifier: ~1.0.3
         version: 1.0.3
-      '@volar/language-service':
-        specifier: 2.4.28
-        version: link:../language-service
 
   packages/vscode:
     dependencies:

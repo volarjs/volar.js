@@ -21,5 +21,13 @@
 	},
 	"devDependencies": {
 		"monaco-editor-core": "~0.55.1"
+	},
+	"peerDependencies": {
+		"typescript": "*"
+	},
+	"peerDependenciesMeta": {
+		"typescript": {
+			"optional": true
+		}
 	}
 }
