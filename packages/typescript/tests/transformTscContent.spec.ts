@@ -38,6 +38,15 @@ describe('transformTscContent', () => {
 		expect(() => new Function(transformed)).not.toThrow();
 	});
 
+	it('releases per-project state when the build order of the solution builder changes', () => {
+		const transformed = transformTscContent(loadTscSource(), PROXY_API_PATH, ['.vue'], []);
+
+		expect(transformed).toMatch(
+			/mutateMapSkippingNewValues\(state\.builderPrograms, currentProjects, noopOnDelete\);\s*require\(".+"\)\.releaseRemovedProjects\?\.\(createProgram, configFilePath => currentProjects\.has\(configFilePath\)\);/,
+		);
+		expect(() => new Function(transformed)).not.toThrow();
+	});
+
 	it('leaves tryGetJSExtensionForFile untouched when no extensions are stripped', () => {
 		// e.g. Vue keeps `.vue` (foo.vue -> foo.vue.d.ts), so there is nothing to map.
 		const transformed = transformTscContent(loadTscSource(), PROXY_API_PATH, ['.vue'], []);

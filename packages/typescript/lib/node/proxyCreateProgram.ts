@@ -30,6 +30,16 @@ const objectEqual = (a: any, b: any) => {
 	return true;
 };
 
+interface ProgramState {
+	options: ts.CreateProgramOptions;
+	languagePlugins: LanguagePlugin<string>[];
+	language: Language<string>;
+	moduleResolutionCache: ts.ModuleResolutionCache;
+	fileSetVersion: number;
+}
+
+const projectStateReleasers = new WeakMap<object, (isActiveProject: (configFilePath: string) => boolean) => void>();
+
 export function proxyCreateProgram(
 	ts: typeof import('typescript'),
 	original: typeof ts['createProgram'],
@@ -43,37 +53,37 @@ export function proxyCreateProgram(
 	);
 	const parsedSourceFiles = new WeakMap<ts.SourceFile, ts.SourceFile | undefined>();
 
-	let lastOptions: ts.CreateProgramOptions | undefined;
-	let languagePlugins: LanguagePlugin<string>[] | undefined;
-	let language: Language<string> | undefined;
-	let moduleResolutionCache: ts.ModuleResolutionCache;
+	// Keyed by the canonical `configFilePath`, so the projects of a solution builder
+	// (`tsc -b`) don't evict each other's state; programs without one share a slot.
+	const states = new Map<string | undefined, ProgramState>();
+	// Bumped whenever a program's root files or options change. A kept module resolution
+	// cache may hold lookups that a file added or removed since then invalidates, so the
+	// other projects recreate theirs before they are built again.
+	let fileSetVersion = 0;
 
-	return new Proxy(original, {
+	const proxy = new Proxy(original, {
 		apply: (target, thisArg, args) => {
 			const options = args[0] as ts.CreateProgramOptions;
 			assert(!!options.host, '!!options.host');
 
+			const configFilePath = options.options.configFilePath;
+			const stateKey = typeof configFilePath === 'string'
+				? options.host.getCanonicalFileName(configFilePath)
+				: undefined;
+			let state = states.get(stateKey);
+
 			if (
-				!lastOptions
-				|| !languagePlugins
-				|| !language
-				|| !arrayEqual(options.rootNames, lastOptions.rootNames)
-				|| !objectEqual(options.options, lastOptions.options)
+				!state
+				|| !arrayEqual(options.rootNames, state.options.rootNames)
+				|| !objectEqual(options.options, state.options.options)
 			) {
-				moduleResolutionCache = ts.createModuleResolutionCache(
-					options.host.getCurrentDirectory(),
-					options.host.getCanonicalFileName,
-					options.options,
-				);
-				lastOptions = options;
+				if (state) {
+					fileSetVersion++;
+				}
+				const moduleResolutionCache = createModuleResolutionCache(options.host, options.options);
 				const created = create(ts, options);
-				if (Array.isArray(created)) {
-					languagePlugins = created;
-				}
-				else {
-					languagePlugins = created.languagePlugins;
-				}
-				language = createLanguage<string>(
+				const languagePlugins = Array.isArray(created) ? created : created.languagePlugins;
+				const language = createLanguage<string>(
 					[
 						...languagePlugins,
 						{ getLanguageId: resolveFileLanguageId },
@@ -101,18 +111,25 @@ export function proxyCreateProgram(
 						}
 						const snapshot = sourceFileSnapshots.get(fileName)?.[1];
 						if (snapshot) {
-							language!.scripts.set(fileName, snapshot);
+							language.scripts.set(fileName, snapshot);
 						}
 						else {
-							language!.scripts.delete(fileName);
+							language.scripts.delete(fileName);
 						}
 					},
 				);
 				if ('setup' in created) {
 					created.setup?.(language);
 				}
+				state = { options, languagePlugins, language, moduleResolutionCache, fileSetVersion };
+				states.set(stateKey, state);
+			}
+			else if (state.fileSetVersion !== fileSetVersion) {
+				state.moduleResolutionCache = createModuleResolutionCache(options.host, options.options);
+				state.fileSetVersion = fileSetVersion;
 			}
 
+			const { languagePlugins, language, moduleResolutionCache } = state;
 			const originalHost = options.host;
 			const pluginExtensions = languagePlugins
 				.map(plugin => plugin.typescript?.extraFileExtensions.map(({ extension }) => `.${extension}`) ?? [])
@@ -156,7 +173,7 @@ export function proxyCreateProgram(
 					return;
 				}
 				if (!parsedSourceFiles.has(originalSourceFile)) {
-					const sourceScript = language!.scripts.get(fileName);
+					const sourceScript = language.scripts.get(fileName);
 					assert(!!sourceScript, '!!sourceScript');
 					parsedSourceFiles.set(originalSourceFile, undefined);
 					if (sourceScript.generated?.languagePlugin.typescript) {
@@ -200,7 +217,7 @@ export function proxyCreateProgram(
 					ts.sys.getFileSize,
 					originalHost,
 					language.plugins,
-					fileName => language!.scripts.get(fileName),
+					fileName => language.scripts.get(fileName),
 				);
 				const resolveModuleNameLiterals = originalHost.resolveModuleNameLiterals;
 				const resolveModuleNames = originalHost.resolveModuleNames;
@@ -305,6 +322,31 @@ export function proxyCreateProgram(
 			return program;
 		},
 	});
+
+	function createModuleResolutionCache(host: ts.CompilerHost, options: ts.CompilerOptions) {
+		return ts.createModuleResolutionCache(host.getCurrentDirectory(), host.getCanonicalFileName, options);
+	}
+
+	projectStateReleasers.set(proxy, isActiveProject => {
+		for (const key of states.keys()) {
+			if (key !== undefined && !isActiveProject(key)) {
+				states.delete(key);
+			}
+		}
+	});
+
+	return proxy;
+}
+
+/**
+ * Drops the state kept for projects that the solution builder no longer builds.
+ * `isActiveProject` receives the canonical path of a project's config file.
+ */
+export function releaseRemovedProjects(
+	createProgram: object,
+	isActiveProject: (configFilePath: string) => boolean,
+) {
+	projectStateReleasers.get(createProgram)?.(isActiveProject);
 }
 
 function assert(condition: unknown, message: string): asserts condition {

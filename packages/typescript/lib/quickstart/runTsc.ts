@@ -168,6 +168,17 @@ export function transformTscContent(
 			+ s.replace('createProgram', '_createProgram'),
 	);
 
+	// Release per-project state when a project leaves the solution builder's build order.
+	// Not applying this only costs memory, so a missing match is not an error.
+	tsc = tsc.replace(
+		/mutateMapSkippingNewValues\(state\.builderPrograms, currentProjects, noopOnDelete\);/,
+		s =>
+			s
+			+ `\nrequire(${
+				JSON.stringify(proxyApiPath)
+			}).releaseRemovedProjects?.(createProgram, configFilePath => currentProjects.has(configFilePath));`,
+	);
+
 	return tsc;
 }
 
