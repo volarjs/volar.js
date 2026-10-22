@@ -204,6 +204,17 @@ export function proxyCreateProgram(
 				);
 				const resolveModuleNameLiterals = originalHost.resolveModuleNameLiterals;
 				const resolveModuleNames = originalHost.resolveModuleNames;
+				// When any plugin opts in to `resolveHiddenExtensions`, the volar-aware
+				// resolver above is what makes extensionless imports of plugin-extension
+				// files resolvable (it answers `fileExists('Foo.d.ts')` as `true` when
+				// `Foo.<ext>` is on disk). If the host already has a `resolveModuleNameLiterals`
+				// — e.g. `tsc --watch` installs `resolutionCache.resolveModuleNameLiterals` —
+				// the original fast-path delegates extensionless imports to it, bypassing
+				// the wrapper and surfacing TS2307. Force the volar-aware resolver in
+				// that case.
+				const hasResolveHiddenExtensions = languagePlugins.some(
+					plugin => plugin.typescript?.resolveHiddenExtensions,
+				);
 
 				options.host.resolveModuleNameLiterals = (
 					moduleLiterals,
@@ -224,6 +235,7 @@ export function proxyCreateProgram(
 					try {
 						if (
 							resolveModuleNameLiterals
+							&& !hasResolveHiddenExtensions
 							&& moduleLiterals.every(name => !pluginExtensions.some(ext => name.text.endsWith(ext)))
 						) {
 							return resolveModuleNameLiterals(
@@ -259,7 +271,11 @@ export function proxyCreateProgram(
 					compilerOptions,
 					containingSourceFile,
 				) => {
-					if (resolveModuleNames && moduleNames.every(name => !pluginExtensions.some(ext => name.endsWith(ext)))) {
+					if (
+						resolveModuleNames
+						&& !hasResolveHiddenExtensions
+						&& moduleNames.every(name => !pluginExtensions.some(ext => name.endsWith(ext)))
+					) {
 						return resolveModuleNames(
 							moduleNames,
 							containingFile,
