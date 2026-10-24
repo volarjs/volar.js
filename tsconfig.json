@@ -7,7 +7,6 @@
 	"include": ["packages/*/tests"],
 	"references": [
 		{ "path": "./packages/jsdelivr/tsconfig.json" },
-		{ "path": "./packages/typescript/tsconfig.json" },
 		{ "path": "./packages/vscode/tsconfig.json" },
 		{ "path": "./packages/monaco/tsconfig.json" },
 		{ "path": "./packages/test-utils/tsconfig.json" }

@@ -1,10 +1,10 @@
 import {
+	type IScriptSnapshot,
 	isDefinitionEnabled,
 	isImplementationEnabled,
 	isTypeDefinitionEnabled,
 	type Language,
 } from '@volar/language-core';
-import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -64,7 +64,7 @@ export function createLanguageService(
 	project: ProjectContext,
 ) {
 	const documentVersions = createUriMap<number>();
-	const snapshot2Doc = new WeakMap<ts.IScriptSnapshot, UriMap<TextDocument>>();
+	const snapshot2Doc = new WeakMap<IScriptSnapshot, UriMap<TextDocument>>();
 	const context: LanguageServiceContext = {
 		language,
 		project,

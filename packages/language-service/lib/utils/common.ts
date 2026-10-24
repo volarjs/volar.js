@@ -1,4 +1,4 @@
-import type * as ts from 'typescript';
+import type { IScriptSnapshot } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 
 export function isInsideRange(parent: vscode.Range, child: vscode.Range) {
@@ -24,7 +24,7 @@ export function isEqualRange(a: vscode.Range, b: vscode.Range) {
 		&& a.end.character === b.end.character;
 }
 
-export function stringToSnapshot(str: string): ts.IScriptSnapshot {
+export function stringToSnapshot(str: string): IScriptSnapshot {
 	return {
 		getText: (start, end) => str.substring(start, end),
 		getLength: () => str.length,

@@ -107,9 +107,6 @@ importers:
       '@volar/language-core':
         specifier: 2.4.30
         version: link:../language-core
-      typescript:
-        specifier: <7
-        version: 5.9.3
       vscode-languageserver-protocol:
         specifier: ^3.17.5
         version: 3.17.5
@@ -155,28 +152,6 @@ importers:
       vscode-uri:
         specifier: ^3.0.8
         version: 3.1.0
-
-  packages/typescript:
-    dependencies:
-      '@volar/language-core':
-        specifier: 2.4.30
-        version: link:../language-core
-      '@volar/language-service':
-        specifier: 2.4.30
-        version: link:../language-service
-      path-browserify:
-        specifier: ^1.0.1
-        version: 1.0.1
-      typescript:
-        specifier: <7
-        version: 5.9.3
-      vscode-uri:
-        specifier: ^3.0.8
-        version: 3.1.0
-    devDependencies:
-      '@types/path-browserify':
-        specifier: ~1.0.3
-        version: 1.0.3
 
   packages/vscode:
     dependencies:
@@ -1008,9 +983,6 @@ packages:
     resolution: {integrity: sha512-EULJ8LApcVEPbrfND0cRQqutIOdiIgJ1Mgrhpy755r14xMohPTEpkV/k28SJvuOs9bHRFW8x+KeDAEPiGQPB9Q==}
     deprecated: This is a stub types definition. parse-path provides its own type definitions, so you do not need this installed.
 
-  '@types/path-browserify@1.0.3':
-    resolution: {integrity: sha512-ZmHivEbNCBtAfcrFeBCiTjdIc2dey0l7oCGNGpSuRTy8jP6UVND7oUowlvDujBy8r2Hoa8bfFUOCiPWfmtkfxw==}
-
   '@types/sarif@2.1.7':
     resolution: {integrity: sha512-kRz0VEkJqWLf1LLVN4pT1cg1Z9wAuvI6L97V3m2f5B76Tg8d413ddvLBPTEHAZJlnn4XSvu0FkZtViCQGVyrXQ==}
 
@@ -1114,6 +1086,14 @@ packages:
 
   '@volar/language-hub@0.0.1':
     resolution: {integrity: sha512-2eOUnlMKTyjtlXIVd+6pfAtcuVugxCOgpNgcLWmlPuncQTG5C1E5mTDL/PUMw7aEnLySUOtMTIp8lT3vk/7w6Q==}
+
+  '@volar/typescript@2.4.30':
+    resolution: {integrity: sha512-/DgA5tgYFPfrLFuSjIMXMGHk1LQv2+P8eny6+BhGNzFJELWIW7UZlc56ZLIRFhLsPpMfIFxM8/HvOPBggrjTZg==}
+    peerDependencies:
+      typescript: <7
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   '@vscode/vsce-sign-alpine-arm64@2.0.6':
     resolution: {integrity: sha512-wKkJBsvKF+f0GfsUuGT0tSW0kZL87QggEiqNqK6/8hvqsXvpx8OsTEc3mnE1kejkh5r+qUyQ7PtF8jZYN0mo8Q==}
@@ -3889,7 +3869,7 @@ snapshots:
       '@tsslint/core': 3.0.2
       '@volar/language-core': link:packages/language-core
       '@volar/language-hub': 0.0.1
-      '@volar/typescript': link:packages/typescript
+      '@volar/typescript': 2.4.30(typescript@5.9.3)
       minimatch: 10.2.4
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -3943,8 +3923,6 @@ snapshots:
   '@types/parse-path@7.1.0':
     dependencies:
       parse-path: 7.1.0
-
-  '@types/path-browserify@1.0.3': {}
 
   '@types/sarif@2.1.7': {}
 
@@ -4092,6 +4070,15 @@ snapshots:
       tinyrainbow: 3.0.3
 
   '@volar/language-hub@0.0.1': {}
+
+  '@volar/typescript@2.4.30(typescript@5.9.3)':
+    dependencies:
+      '@volar/language-core': link:packages/language-core
+      '@volar/language-service': link:packages/language-service
+      path-browserify: 1.0.1
+      vscode-uri: 3.1.0
+    optionalDependencies:
+      typescript: 5.9.3
 
   '@vscode/vsce-sign-alpine-arm64@2.0.6':
     optional: true

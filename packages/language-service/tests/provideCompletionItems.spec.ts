@@ -1,4 +1,4 @@
-import type * as ts from 'typescript';
+import type { IScriptSnapshot } from '@volar/language-core';
 import { describe, expect, it } from 'vitest';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -6,7 +6,7 @@ import { URI } from 'vscode-uri';
 import { register } from '../lib/features/provideCompletionItems';
 import type { LanguageServiceContext, LanguageServicePlugin, LanguageServicePluginInstance } from '../lib/types';
 
-function snapshotOf(text: string): ts.IScriptSnapshot {
+function snapshotOf(text: string): IScriptSnapshot {
 	return {
 		getText: (start, end) => text.slice(start, end),
 		getLength: () => text.length,
@@ -26,7 +26,7 @@ function createContext(plugins: LanguageServicePluginInstance[]): LanguageServic
 			},
 		},
 		documents: {
-			get: (uri: URI, languageId: string, snap: ts.IScriptSnapshot) =>
+			get: (uri: URI, languageId: string, snap: IScriptSnapshot) =>
 				TextDocument.create(uri.toString(), languageId, 1, snap.getText(0, snap.getLength())),
 		},
 		plugins: plugins.map(instance => [plugin, instance] as [LanguageServicePlugin, LanguageServicePluginInstance]),

@@ -1,5 +1,4 @@
-import type { LanguagePlugin, VirtualCode } from '@volar/language-core';
-import type * as ts from 'typescript';
+import type { IScriptSnapshot, LanguagePlugin, VirtualCode } from '@volar/language-core';
 import { describe, expect, it } from 'vitest';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
@@ -15,7 +14,7 @@ const features = {
 	format: true,
 };
 
-function snapshotOf(text: string): ts.IScriptSnapshot {
+function snapshotOf(text: string): IScriptSnapshot {
 	return {
 		getText: (start, end) => text.slice(start, end),
 		getLength: () => text.length,

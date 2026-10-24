@@ -1,10 +1,10 @@
 import {
+	type IScriptSnapshot,
 	isDiagnosticsEnabled,
 	shouldReportDiagnostics,
 	type SourceScript,
 	type VirtualCode,
 } from '@volar/language-core';
-import type * as ts from 'typescript';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -25,7 +25,7 @@ export interface ServiceDiagnosticData {
 }
 
 interface Cache {
-	snapshot?: ts.IScriptSnapshot;
+	snapshot?: IScriptSnapshot;
 	document?: TextDocument;
 	errors: vscode.Diagnostic[];
 }

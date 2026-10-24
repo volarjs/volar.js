@@ -3,7 +3,6 @@
 	"include": ["*", "lib/**/*"],
 	"exclude": ["tests"],
 	"references": [
-		{ "path": "../language-service/tsconfig.json" },
-		{ "path": "../typescript/tsconfig.json" }
+		{ "path": "../language-service/tsconfig.json" }
 	]
 }

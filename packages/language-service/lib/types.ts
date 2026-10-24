@@ -1,5 +1,4 @@
-import type { Language, SourceScript, VirtualCode } from '@volar/language-core';
-import type * as ts from 'typescript';
+import type { IScriptSnapshot, Language, SourceScript, VirtualCode } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { URI } from 'vscode-uri';
@@ -61,7 +60,7 @@ export interface LanguageServiceContext {
 		setSelection: LanguageServiceCommand<[position: vscode.Position]>;
 	};
 	documents: {
-		get(uri: URI, languageId: string, snapshot: ts.IScriptSnapshot): TextDocument;
+		get(uri: URI, languageId: string, snapshot: IScriptSnapshot): TextDocument;
 	};
 	plugins: [LanguageServicePlugin, LanguageServicePluginInstance][];
 	disabledEmbeddedDocumentUris: UriMap<boolean>;
