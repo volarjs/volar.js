@@ -14,20 +14,11 @@
 	},
 	"dependencies": {
 		"@volar/language-service": "2.4.30",
-		"@volar/typescript": "2.4.30",
 		"monaco-languageserver-types": "^0.4.0",
 		"monaco-types": "^0.1.0",
 		"vscode-uri": "^3.0.8"
 	},
 	"devDependencies": {
 		"monaco-editor-core": "~0.55.1"
-	},
-	"peerDependencies": {
-		"typescript": "<7"
-	},
-	"peerDependenciesMeta": {
-		"typescript": {
-			"optional": true
-		}
 	}
 }

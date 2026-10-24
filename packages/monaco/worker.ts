@@ -3,6 +3,7 @@ import {
 	createLanguage,
 	createLanguageService,
 	createUriMap,
+	type IScriptSnapshot,
 	type Language,
 	type LanguagePlugin,
 	type LanguageService,
@@ -11,14 +12,10 @@ import {
 	type ProjectContext,
 	type ProviderResult,
 } from '@volar/language-service';
-import { createLanguageServiceHost, createSys, resolveFileLanguageId } from '@volar/typescript';
 import type * as monaco from 'monaco-types';
-import type * as ts from 'typescript';
 import { URI } from 'vscode-uri';
 
 export * from '@volar/language-service';
-
-const fsFileSnapshots = createUriMap<[number | undefined, ts.IScriptSnapshot | undefined]>();
 
 export function createSimpleWorkerLanguageService({
 	env,
@@ -36,7 +33,7 @@ export function createSimpleWorkerLanguageService({
 		project: ProjectContext;
 	}): void;
 }) {
-	const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
+	const snapshots = new Map<monaco.worker.IMirrorModel, readonly [number, IScriptSnapshot]>();
 	const language = createLanguage<URI>(
 		languagePlugins,
 		createUriMap(false),
@@ -48,7 +45,7 @@ export function createSimpleWorkerLanguageService({
 					return;
 				}
 				const text = model.getValue();
-				const snapshot: ts.IScriptSnapshot = {
+				const snapshot: IScriptSnapshot = {
 					getText: (start, end) => text.substring(start, end),
 					getLength: () => text.length,
 					getChangeRange: () => undefined,
@@ -62,144 +59,6 @@ export function createSimpleWorkerLanguageService({
 		},
 	);
 	const project: ProjectContext = {};
-	setup?.({ language, project });
-
-	return new WorkerLanguageService(
-		createLanguageService(
-			language,
-			languageServicePlugins,
-			env,
-			project,
-		),
-	);
-}
-
-export function createTypeScriptWorkerLanguageService({
-	typescript: ts,
-	compilerOptions,
-	env,
-	uriConverter,
-	workerContext,
-	languagePlugins,
-	languageServicePlugins,
-	setup,
-}: {
-	typescript: typeof import('typescript');
-	compilerOptions: ts.CompilerOptions;
-	env: LanguageServiceEnvironment;
-	uriConverter: {
-		asUri(fileName: string): URI;
-		asFileName(uri: URI): string;
-	};
-	workerContext: monaco.worker.IWorkerContext<any>;
-	languagePlugins: LanguagePlugin<URI>[];
-	languageServicePlugins: LanguageServicePlugin[];
-	setup?(options: {
-		language: Language<URI>;
-		project: ProjectContext;
-	}): void;
-}) {
-	let projectVersion = 0;
-
-	const modelSnapshot = new WeakMap<monaco.worker.IMirrorModel, readonly [number, ts.IScriptSnapshot]>();
-	const modelVersions = new Map<monaco.worker.IMirrorModel, number>();
-	const sys = createSys(
-		ts.sys,
-		env,
-		() => {
-			if (env.workspaceFolders.length) {
-				return uriConverter.asFileName(env.workspaceFolders[0]);
-			}
-			return '';
-		},
-		uriConverter,
-	);
-	const language = createLanguage<URI>(
-		[
-			...languagePlugins,
-			{ getLanguageId: uri => resolveFileLanguageId(uri.path) },
-		],
-		createUriMap(sys.useCaseSensitiveFileNames),
-		(uri, includeFsFiles) => {
-			let snapshot: ts.IScriptSnapshot | undefined;
-
-			const model = workerContext.getMirrorModels().find(model => model.uri.toString() === uri.toString());
-			if (model) {
-				const cache = modelSnapshot.get(model);
-				if (cache && cache[0] === model.version) {
-					return cache[1];
-				}
-				const text = model.getValue();
-				modelSnapshot.set(model, [model.version, {
-					getText: (start, end) => text.substring(start, end),
-					getLength: () => text.length,
-					getChangeRange: () => undefined,
-				}]);
-				snapshot = modelSnapshot.get(model)?.[1];
-			}
-			else if (includeFsFiles) {
-				const cache = fsFileSnapshots.get(uri);
-				const fileName = uriConverter.asFileName(uri);
-				const modifiedTime = sys.getModifiedTime?.(fileName)?.valueOf();
-				if (!cache || cache[0] !== modifiedTime) {
-					if (sys.fileExists(fileName)) {
-						const text = sys.readFile(fileName);
-						const snapshot = text !== undefined ? ts.ScriptSnapshot.fromString(text) : undefined;
-						fsFileSnapshots.set(uri, [modifiedTime, snapshot]);
-					}
-					else {
-						fsFileSnapshots.set(uri, [modifiedTime, undefined]);
-					}
-				}
-				snapshot = fsFileSnapshots.get(uri)?.[1];
-			}
-
-			if (snapshot) {
-				language.scripts.set(uri, snapshot);
-			}
-			else {
-				language.scripts.delete(uri);
-			}
-		},
-	);
-	const project: ProjectContext = {
-		typescript: {
-			configFileName: undefined,
-			sys,
-			uriConverter,
-			...createLanguageServiceHost(
-				ts,
-				sys,
-				language,
-				s => uriConverter.asUri(s),
-				{
-					getCurrentDirectory() {
-						return sys.getCurrentDirectory();
-					},
-					getScriptFileNames() {
-						return workerContext.getMirrorModels().map(model => uriConverter.asFileName(URI.from(model.uri)));
-					},
-					getProjectVersion() {
-						const models = workerContext.getMirrorModels();
-						if (modelVersions.size === workerContext.getMirrorModels().length) {
-							if (models.every(model => modelVersions.get(model) === model.version)) {
-								return projectVersion.toString();
-							}
-						}
-						modelVersions.clear();
-						for (const model of workerContext.getMirrorModels()) {
-							modelVersions.set(model, model.version);
-						}
-						projectVersion++;
-						return projectVersion.toString();
-					},
-					getCompilationSettings() {
-						return compilerOptions;
-					},
-				},
-			),
-		},
-	};
 	setup?.({ language, project });
 
 	return new WorkerLanguageService(

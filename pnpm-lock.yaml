@@ -135,18 +135,12 @@ importers:
       '@volar/language-service':
         specifier: 2.4.30
         version: link:../language-service
-      '@volar/typescript':
-        specifier: 2.4.30
-        version: link:../typescript
       monaco-languageserver-types:
         specifier: ^0.4.0
         version: 0.4.0
       monaco-types:
         specifier: ^0.1.0
         version: 0.1.2
-      typescript:
-        specifier: <7
-        version: 5.9.3
       vscode-uri:
         specifier: ^3.0.8
         version: 3.1.0
