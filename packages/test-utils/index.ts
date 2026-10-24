@@ -1,6 +1,6 @@
 import { defaultMapperFactory, forEachEmbeddedCode } from '@volar/language-core';
 import * as _ from '@volar/language-server/node';
-import * as assert from 'assert';
+import { ok as assert } from 'assert';
 import * as cp from 'child_process';
 import * as fs from 'fs';
 import { TextDocument } from 'vscode-languageserver-textdocument';
