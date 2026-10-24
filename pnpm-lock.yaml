@@ -83,12 +83,6 @@ importers:
       '@volar/language-service':
         specifier: 2.4.30
         version: link:../language-service
-      '@volar/typescript':
-        specifier: 2.4.30
-        version: link:../typescript
-      path-browserify:
-        specifier: ^1.0.1
-        version: 1.0.1
       request-light:
         specifier: ^0.7.0
         version: 0.7.0
@@ -107,10 +101,6 @@ importers:
       vscode-uri:
         specifier: ^3.0.8
         version: 3.1.0
-    devDependencies:
-      '@types/path-browserify':
-        specifier: ~1.0.3
-        version: 1.0.3
 
   packages/language-service:
     dependencies:

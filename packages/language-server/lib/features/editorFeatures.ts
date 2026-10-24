@@ -3,7 +3,6 @@ import { createUriMap } from '@volar/language-service';
 import type * as ts from 'typescript';
 import { URI } from 'vscode-uri';
 import {
-	GetMatchTsConfigRequest,
 	GetServicePluginsRequest,
 	GetVirtualCodeRequest,
 	GetVirtualFileRequest,
@@ -19,18 +18,6 @@ export function register(server: LanguageServerState) {
 		const scriptVersions = createUriMap<number>();
 		const scriptVersionSnapshots = new WeakSet<ts.IScriptSnapshot>();
 
-		server.connection.onRequest(GetMatchTsConfigRequest.type, async params => {
-			const uri = URI.parse(params.uri);
-			const languageService = await getLanguageService(server.connection, project, uri);
-			if (!languageService) {
-				return;
-			}
-			const tsProject = languageService.context.project.typescript;
-			if (tsProject?.configFileName) {
-				const { configFileName, uriConverter } = tsProject;
-				return { uri: uriConverter.asUri(configFileName).toString() };
-			}
-		});
 		server.connection.onRequest(GetVirtualFileRequest.type, async document => {
 			const uri = URI.parse(document.uri);
 			const languageService = await getLanguageService(server.connection, project, uri);
