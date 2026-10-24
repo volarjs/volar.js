@@ -190,9 +190,6 @@ importers:
 
   packages/vscode:
     dependencies:
-      path-browserify:
-        specifier: ^1.0.1
-        version: 1.0.1
       vscode-languageclient:
         specifier: ^9.0.1
         version: 9.0.1
@@ -200,9 +197,6 @@ importers:
         specifier: ^5.2.0
         version: 5.2.0
     devDependencies:
-      '@types/path-browserify':
-        specifier: ~1.0.3
-        version: 1.0.3
       '@types/vscode':
         specifier: ^1.82.0
         version: 1.109.0

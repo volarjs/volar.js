@@ -16,13 +16,6 @@ export namespace FindFileReferenceRequest {
 	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/findFileReference');
 }
 
-export namespace GetMatchTsConfigRequest {
-	export type ParamsType = protocol.TextDocumentIdentifier;
-	export type ResponseType = { uri: string } | null | undefined;
-	export type ErrorType = never;
-	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/tsconfig');
-}
-
 export namespace AutoInsertRequest {
 	export type ParamsType = {
 		textDocument: protocol.TextDocumentIdentifier;
@@ -36,10 +29,6 @@ export namespace AutoInsertRequest {
 	export type ResponseType = string | null | undefined;
 	export type ErrorType = never;
 	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/autoInsert');
-}
-
-export namespace ReloadProjectNotification {
-	export const type = new protocol.NotificationType<protocol.TextDocumentIdentifier>('volar/client/reloadProject');
 }
 
 /**
