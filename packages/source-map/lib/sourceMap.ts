@@ -1,57 +1,50 @@
 import { binarySearch } from './binarySearch';
+import type { Mapping } from './spanMap';
 import { translateOffset } from './translateOffset';
 
-type CodeRangeKey = 'sourceOffsets' | 'generatedOffsets';
+type CodeRangeKey = 'source' | 'generated';
 
-export interface Mapping<Data = unknown> {
-	sourceOffsets: number[];
-	generatedOffsets: number[];
-	lengths: number[];
-	generatedLengths?: number[];
-	data: Data;
-}
-
-interface MappingMemo<Data> {
+interface MappingMemo {
 	offsets: number[];
-	mappings: Set<Mapping<Data>>[];
+	mappings: Set<Mapping>[];
 }
 
-export class SourceMap<Data = unknown> {
-	private sourceCodeOffsetsMemo: MappingMemo<Data> | undefined;
-	private generatedCodeOffsetsMemo: MappingMemo<Data> | undefined;
+export class SourceMap {
+	private sourceCodeOffsetsMemo: MappingMemo | undefined;
+	private generatedCodeOffsetsMemo: MappingMemo | undefined;
 
-	constructor(public readonly mappings: Mapping<Data>[]) {}
+	constructor(public readonly mappings: Mapping[]) {}
 
 	toSourceRange(
 		generatedStart: number,
 		generatedEnd: number,
 		fallbackToAnyMatch: boolean,
-		filter?: (data: Data) => boolean,
+		filter?: (features: number) => boolean,
 	) {
-		return this.findMatchingStartEnd(generatedStart, generatedEnd, fallbackToAnyMatch, 'generatedOffsets', filter);
+		return this.findMatchingStartEnd(generatedStart, generatedEnd, fallbackToAnyMatch, 'generated', filter);
 	}
 
 	toGeneratedRange(
 		sourceStart: number,
 		sourceEnd: number,
 		fallbackToAnyMatch: boolean,
-		filter?: (data: Data) => boolean,
+		filter?: (features: number) => boolean,
 	) {
-		return this.findMatchingStartEnd(sourceStart, sourceEnd, fallbackToAnyMatch, 'sourceOffsets', filter);
+		return this.findMatchingStartEnd(sourceStart, sourceEnd, fallbackToAnyMatch, 'source', filter);
 	}
 
-	toSourceLocation(generatedOffset: number, filter?: (data: Data) => boolean) {
-		return this.findMatchingOffsets(generatedOffset, 'generatedOffsets', filter);
+	toSourceLocation(generatedOffset: number, filter?: (features: number) => boolean) {
+		return this.findMatchingOffsets(generatedOffset, 'generated', filter);
 	}
 
-	toGeneratedLocation(sourceOffset: number, filter?: (data: Data) => boolean) {
-		return this.findMatchingOffsets(sourceOffset, 'sourceOffsets', filter);
+	toGeneratedLocation(sourceOffset: number, filter?: (features: number) => boolean) {
+		return this.findMatchingOffsets(sourceOffset, 'source', filter);
 	}
 
 	*findMatchingOffsets(
 		offset: number,
 		fromRange: CodeRangeKey,
-		filter?: (data: Data) => boolean,
+		filter?: (features: number) => boolean,
 		preferEnd: boolean = false,
 	) {
 		const memo = this.getMemoBasedOnRange(fromRange);
@@ -61,7 +54,6 @@ export class SourceMap<Data = unknown> {
 
 		const { low: start, high: end } = binarySearch(memo.offsets, offset);
 		const skip = new Set<Mapping>();
-		const toRange: CodeRangeKey = fromRange === 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
 
 		for (let i = start; i <= end; i++) {
 			for (const mapping of memo.mappings[i]) {
@@ -70,18 +62,11 @@ export class SourceMap<Data = unknown> {
 				}
 				skip.add(mapping);
 
-				if (filter && !filter(mapping.data)) {
+				if (filter && !filter(mapping[5])) {
 					continue;
 				}
 
-				const mapped = translateOffset(
-					offset,
-					mapping[fromRange],
-					mapping[toRange],
-					getLengths(mapping, fromRange),
-					getLengths(mapping, toRange),
-					preferEnd,
-				);
+				const mapped = translate(offset, mapping, fromRange, preferEnd);
 				if (mapped !== undefined) {
 					yield [mapped, mapping] as const;
 				}
@@ -94,25 +79,16 @@ export class SourceMap<Data = unknown> {
 		end: number,
 		fallbackToAnyMatch: boolean,
 		fromRange: CodeRangeKey,
-		filter?: (data: Data) => boolean,
-	): Generator<[mappedStart: number, mappedEnd: number, startMapping: Mapping<Data>, endMapping: Mapping<Data>]> {
-		const toRange: CodeRangeKey = fromRange === 'sourceOffsets' ? 'generatedOffsets' : 'sourceOffsets';
-		const preferEnd = toRange === 'sourceOffsets';
-		const mappedStarts: [number, Mapping<Data>][] = [];
+		filter?: (features: number) => boolean,
+	): Generator<[mappedStart: number, mappedEnd: number, startMapping: Mapping, endMapping: Mapping]> {
+		const mappedStarts: [number, Mapping][] = [];
 		let hadMatch = false;
 		for (const [mappedStart, mapping] of this.findMatchingOffsets(start, fromRange)) {
-			if (filter && !filter(mapping.data)) {
+			if (filter && !filter(mapping[5])) {
 				continue;
 			}
 			mappedStarts.push([mappedStart, mapping]);
-			const mappedEnd = translateOffset(
-				end,
-				mapping[fromRange],
-				mapping[toRange],
-				getLengths(mapping, fromRange),
-				getLengths(mapping, toRange),
-				preferEnd,
-			);
+			const mappedEnd = translate(end, mapping, fromRange, true);
 			if (mappedEnd !== undefined) {
 				hadMatch = true;
 				yield [mappedStart, mappedEnd, mapping, mapping] as const;
@@ -120,8 +96,8 @@ export class SourceMap<Data = unknown> {
 		}
 		if (!hadMatch && fallbackToAnyMatch) {
 			for (const [mappedStart, mappingStart] of mappedStarts) {
-				for (const [mappedEnd, mappingEnd] of this.findMatchingOffsets(end, fromRange, undefined, preferEnd)) {
-					if (filter && !filter(mappingEnd.data) || mappedEnd < mappedStart) {
+				for (const [mappedEnd, mappingEnd] of this.findMatchingOffsets(end, fromRange, undefined, true)) {
+					if (filter && !filter(mappingEnd[5]) || mappedEnd < mappedStart) {
 						continue;
 					}
 					yield [mappedStart, mappedEnd, mappingStart, mappingEnd] as const;
@@ -132,30 +108,27 @@ export class SourceMap<Data = unknown> {
 	}
 
 	private getMemoBasedOnRange(fromRange: CodeRangeKey) {
-		return fromRange === 'sourceOffsets'
-			? this.sourceCodeOffsetsMemo ??= this.createMemo('sourceOffsets')
-			: this.generatedCodeOffsetsMemo ??= this.createMemo('generatedOffsets');
+		return fromRange === 'source'
+			? this.sourceCodeOffsetsMemo ??= this.createMemo('source')
+			: this.generatedCodeOffsetsMemo ??= this.createMemo('generated');
 	}
 
-	private createMemo(key: CodeRangeKey): MappingMemo<Data> {
+	private createMemo(key: CodeRangeKey): MappingMemo {
+		const startIndex = key === 'source' ? 2 : 0;
 		const offsetsSet = new Set<number>();
 		for (const mapping of this.mappings) {
-			for (let i = 0; i < mapping[key].length; i++) {
-				offsetsSet.add(mapping[key][i]);
-				offsetsSet.add(mapping[key][i] + getLengths(mapping, key)[i]);
-			}
+			offsetsSet.add(mapping[startIndex]);
+			offsetsSet.add(mapping[startIndex] + mapping[startIndex + 1]);
 		}
 
 		const offsets = [...offsetsSet].sort((a, b) => a - b);
-		const mappings = offsets.map(() => new Set<Mapping<Data>>());
+		const mappings = offsets.map(() => new Set<Mapping>());
 
 		for (const mapping of this.mappings) {
-			for (let i = 0; i < mapping[key].length; i++) {
-				const startIndex = binarySearch(offsets, mapping[key][i]).match!;
-				const endIndex = binarySearch(offsets, mapping[key][i] + getLengths(mapping, key)[i]).match!;
-				for (let i = startIndex; i <= endIndex; i++) {
-					mappings[i].add(mapping);
-				}
+			const startOffset = binarySearch(offsets, mapping[startIndex]).match!;
+			const endOffset = binarySearch(offsets, mapping[startIndex] + mapping[startIndex + 1]).match!;
+			for (let i = startOffset; i <= endOffset; i++) {
+				mappings[i].add(mapping);
 			}
 		}
 
@@ -163,6 +136,9 @@ export class SourceMap<Data = unknown> {
 	}
 }
 
-function getLengths(mapping: Mapping, key: CodeRangeKey) {
-	return key === 'sourceOffsets' ? mapping.lengths : mapping.generatedLengths ?? mapping.lengths;
+function translate(offset: number, mapping: Mapping, fromRange: CodeRangeKey, preferEnd: boolean) {
+	const [generatedStart, generatedLength, sourceStart, sourceLength, kind] = mapping;
+	return fromRange === 'source'
+		? translateOffset(offset, sourceStart, sourceLength, generatedStart, generatedLength, kind, preferEnd)
+		: translateOffset(offset, generatedStart, generatedLength, sourceStart, sourceLength, kind, preferEnd);
 }

@@ -1,4 +1,4 @@
-export { Mapping, SourceMap } from '@volar/source-map';
+export { Mapping, SourceMap, SpanMapFeature, SpanMapKind } from '@volar/source-map';
 export * from './lib/editor';
 export * from './lib/linkedCodeMap';
 export * from './lib/types';

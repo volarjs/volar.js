@@ -52,14 +52,12 @@ export function register(context: LanguageServiceContext) {
 			if (map) {
 				const embeddedRange = findOverlapCodeRange(startOffset, endOffset, map, isFormattingEnabled);
 				if (embeddedRange) {
-					if (embeddedRange.start === map.mappings[0].generatedOffsets[0]) {
+					if (embeddedRange.start === map.mappings[0][0]) {
 						embeddedRange.start = 0;
 					}
 					const lastMapping = map.mappings[map.mappings.length - 1];
 					if (
-						embeddedRange.end
-							=== lastMapping.generatedOffsets[lastMapping.generatedOffsets.length - 1]
-								+ (lastMapping.generatedLengths ?? lastMapping.lengths)[lastMapping.lengths.length - 1]
+						embeddedRange.end === lastMapping[0] + lastMapping[1]
 					) {
 						embeddedRange.end = code.snapshot.getLength();
 					}
@@ -92,7 +90,7 @@ export function register(context: LanguageServiceContext) {
 				let edits: vscode.TextEdit[] = [];
 
 				for (const code of currentCodes) {
-					if (!code.mappings.some(mapping => isFormattingEnabled(mapping.data))) {
+					if (!code.mappings.some(mapping => isFormattingEnabled(mapping[5]))) {
 						continue;
 					}
 
@@ -229,7 +227,7 @@ export function register(context: LanguageServiceContext) {
 				};
 				if (virtualCode.mappings.length) {
 					const firstMapping = virtualCode.mappings[0];
-					const startOffset = firstMapping.sourceOffsets[0];
+					const startOffset = firstMapping[2];
 					const startPosition = sourceDocument.positionAt(startOffset);
 					codeOptions.initialIndentLevel = computeInitialIndent(
 						sourceDocument.getText(),

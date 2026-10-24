@@ -1,179 +1,141 @@
-import type { CodeInformation, Mapper } from './types';
+import { SpanMapFeature, SpanMapKind } from '@volar/source-map';
+import type { Mapper } from './types';
 
-export function isHoverEnabled(info: CodeInformation): boolean {
-	return !!info.semantic;
+export function isHoverEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.Hover);
 }
 
-export function isInlayHintsEnabled(info: CodeInformation): boolean {
-	return !!info.semantic;
+export function isInlayHintsEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.InlayHints);
 }
 
-export function isCodeLensEnabled(info: CodeInformation): boolean {
-	return !!info.semantic;
+export function isCodeLensEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.CodeLens);
 }
 
-export function isMonikerEnabled(info: CodeInformation): boolean {
-	return !!info.semantic;
+export function isMonikerEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.References);
 }
 
-export function isInlineValueEnabled(info: CodeInformation): boolean {
-	return !!info.semantic;
+export function isInlineValueEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.Hover);
 }
 
-export function isSemanticTokensEnabled(info: CodeInformation): boolean {
-	return typeof info.semantic === 'object'
-		? info.semantic.shouldHighlight?.() ?? true
-		: !!info.semantic;
+export function isSemanticTokensEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.SemanticTokens);
 }
 
-export function isCallHierarchyEnabled(info: CodeInformation): boolean {
-	return !!info.navigation;
+export function isCallHierarchyEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.CallHierarchy);
 }
 
-export function isTypeHierarchyEnabled(info: CodeInformation): boolean {
-	return !!info.navigation;
+export function isTypeHierarchyEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.CallHierarchy);
 }
 
-export function isRenameEnabled(info: CodeInformation): boolean {
-	return typeof info.navigation === 'object'
-		? info.navigation.shouldRename?.() ?? true
-		: !!info.navigation;
+export function isRenameEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.Rename);
 }
 
-export function isDefinitionEnabled(info: CodeInformation): boolean {
-	return !!info.navigation;
+export function isDefinitionEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.Definition);
 }
 
-export function isTypeDefinitionEnabled(info: CodeInformation): boolean {
-	return !!info.navigation;
+export function isTypeDefinitionEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.TypeDefinition);
 }
 
-export function isReferencesEnabled(info: CodeInformation): boolean {
-	return !!info.navigation;
+export function isReferencesEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.References);
 }
 
-export function isImplementationEnabled(info: CodeInformation): boolean {
-	return !!info.navigation;
+export function isImplementationEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.Implementation);
 }
 
-export function isHighlightEnabled(info: CodeInformation): boolean {
-	return typeof info.navigation === 'object'
-		? info.navigation.shouldHighlight?.() ?? true
-		: !!info.navigation;
+export function isHighlightEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.DocumentHighlights);
 }
 
-export function isSymbolsEnabled(info: CodeInformation): boolean {
-	return !!info.structure;
+export function isSymbolsEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.DocumentSymbols);
 }
 
-export function isFoldingRangesEnabled(info: CodeInformation): boolean {
-	return !!info.structure;
+export function isFoldingRangesEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.FoldingRanges);
 }
 
-export function isSelectionRangesEnabled(info: CodeInformation): boolean {
-	return !!info.structure;
+export function isSelectionRangesEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.SelectionRanges);
 }
 
-export function isLinkedEditingEnabled(info: CodeInformation): boolean {
-	return !!info.structure;
+export function isLinkedEditingEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.LinkedEditing);
 }
 
-export function isColorEnabled(info: CodeInformation): boolean {
-	return !!info.structure;
+export function isColorEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.DocumentSymbols);
 }
 
-export function isDocumentLinkEnabled(info: CodeInformation): boolean {
-	return !!info.structure;
+export function isDocumentLinkEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.DocumentSymbols);
 }
 
-export function isDiagnosticsEnabled(info: CodeInformation): boolean {
-	return !!info.verification;
+export function isDiagnosticsEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.Verification);
 }
 
-export function isCodeActionsEnabled(info: CodeInformation): boolean {
-	return !!info.verification;
+export function isCodeActionsEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.CodeActions);
 }
 
-export function isFormattingEnabled(info: CodeInformation): boolean {
-	return !!info.format;
+export function isFormattingEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.Formatting);
 }
 
-export function isCompletionEnabled(info: CodeInformation): boolean {
-	return !!info.completion;
+export function isCompletionEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.Completion);
 }
 
-export function isAutoInsertEnabled(info: CodeInformation): boolean {
-	return !!info.completion;
+export function isAutoInsertEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.AutoInsert);
 }
 
-export function isSignatureHelpEnabled(info: CodeInformation): boolean {
-	return !!info.completion;
-}
-
-// should...
-
-export function shouldReportDiagnostics(
-	info: CodeInformation,
-	source: string | undefined,
-	code: string | number | undefined,
-): boolean {
-	return typeof info.verification === 'object'
-		? info.verification.shouldReport?.(source, code) ?? true
-		: !!info.verification;
-}
-
-//  resolve...
-
-export function resolveRenameNewName(newName: string, info: CodeInformation): string {
-	return typeof info.navigation === 'object'
-		? info.navigation.resolveRenameNewName?.(newName) ?? newName
-		: newName;
-}
-
-export function resolveRenameEditText(text: string, info: CodeInformation): string {
-	return typeof info.navigation === 'object'
-		? info.navigation.resolveRenameEditText?.(text) ?? text
-		: text;
+export function isSignatureHelpEnabled(features: number): boolean {
+	return !!(features & SpanMapFeature.SignatureHelp);
 }
 
 export function findOverlapCodeRange(
 	start: number,
 	end: number,
 	map: Mapper,
-	filter: (data: CodeInformation) => boolean,
+	filter: (features: number) => boolean,
 ) {
 	let mappedStart: number | undefined;
 	let mappedEnd: number | undefined;
 
 	for (const [mapped, mapping] of map.toGeneratedLocation(start)) {
-		if (filter(mapping.data)) {
+		if (filter(mapping[5])) {
 			mappedStart = mapped;
 			break;
 		}
 	}
 	for (const [mapped, mapping] of map.toGeneratedLocation(end)) {
-		if (filter(mapping.data)) {
+		if (filter(mapping[5])) {
 			mappedEnd = mapped;
 			break;
 		}
 	}
 
 	if (mappedStart === undefined || mappedEnd === undefined) {
-		for (const mapping of map.mappings) {
-			if (filter(mapping.data)) {
-				const mappingStart = mapping.sourceOffsets[0];
-				const mappingEnd = mapping.sourceOffsets[mapping.sourceOffsets.length - 1]
-					+ mapping.lengths[mapping.lengths.length - 1];
-				const overlap = getOverlapRange(start, end, mappingStart, mappingEnd);
+		for (const [generatedStart, generatedLength, sourceStart, sourceLength, kind, features] of map.mappings) {
+			if (filter(features)) {
+				const overlap = getOverlapRange(start, end, sourceStart, sourceStart + sourceLength);
 				if (overlap) {
-					const curMappedStart = (overlap.start - mappingStart) + mapping.generatedOffsets[0];
-					const lastGeneratedLength =
-						(mapping.generatedLengths ?? mapping.lengths)[mapping.generatedOffsets.length - 1];
-					const curMappedEndOffset = Math.min(
-						overlap.end - mapping.sourceOffsets[mapping.sourceOffsets.length - 1],
-						lastGeneratedLength,
-					);
-					const curMappedEnd = mapping.generatedOffsets[mapping.generatedOffsets.length - 1] + curMappedEndOffset;
+					const verbatim = kind === SpanMapKind.Verbatim;
+					const curMappedStart = verbatim ? (overlap.start - sourceStart) + generatedStart : generatedStart;
+					const curMappedEnd = generatedStart
+						+ (verbatim ? Math.min(overlap.end - sourceStart, generatedLength) : generatedLength);
 
 					mappedStart = mappedStart === undefined ? curMappedStart : Math.min(mappedStart, curMappedStart);
 					mappedEnd = mappedEnd === undefined ? curMappedEnd : Math.max(mappedEnd, curMappedEnd);

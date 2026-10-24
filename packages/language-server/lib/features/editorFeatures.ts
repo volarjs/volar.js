@@ -1,4 +1,4 @@
-import type { CodeMapping, VirtualCode } from '@volar/language-core';
+import type { Mapping, VirtualCode } from '@volar/language-core';
 import { createUriMap } from '@volar/language-service';
 import type * as ts from 'typescript';
 import { URI } from 'vscode-uri';
@@ -57,7 +57,7 @@ export function register(server: LanguageServerState) {
 			const sourceScript = languageService.context.language.scripts.get(URI.parse(params.fileUri));
 			const virtualCode = sourceScript?.generated?.embeddedCodes.get(params.virtualCodeId);
 			if (virtualCode) {
-				const mappings: Record<string, CodeMapping[]> = {};
+				const mappings: Record<string, Mapping[]> = {};
 				for (const [sourceScript, map] of languageService.context.language.maps.forEach(virtualCode)) {
 					mappings[sourceScript.id.toString()] = map.mappings;
 				}

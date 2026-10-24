@@ -1,4 +1,4 @@
-import { type CodeInformation, isCompletionEnabled, type SourceScript, type VirtualCode } from '@volar/language-core';
+import { isCompletionEnabled, type SourceScript, type VirtualCode } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -186,7 +186,6 @@ export function register(context: LanguageServiceContext) {
 				document: TextDocument,
 				position: vscode.Position,
 				docs?: DocumentsAndMap,
-				codeInfo?: CodeInformation,
 			) => {
 				for (const plugin of sortedPlugins) {
 					if (token.isCancellationRequested) {
@@ -210,8 +209,7 @@ export function register(context: LanguageServiceContext) {
 						continue;
 					}
 
-					const isAdditional = (codeInfo && typeof codeInfo.completion === 'object' && codeInfo.completion.isAdditional)
-						|| plugin[1].isAdditionalCompletion;
+					const isAdditional = plugin[1].isAdditionalCompletion;
 
 					if (mainCompletionUri && (!isAdditional || mainCompletionUri !== document.uri)) {
 						continue;
@@ -226,10 +224,6 @@ export function register(context: LanguageServiceContext) {
 
 					if (!completionList || !completionList.items.length) {
 						continue;
-					}
-
-					if (typeof codeInfo?.completion === 'object' && codeInfo.completion.onlyImport) {
-						completionList.items = completionList.items.filter(item => !!item.labelDetails);
 					}
 
 					if (!isAdditional) {
@@ -277,15 +271,8 @@ export function register(context: LanguageServiceContext) {
 
 			if (sourceScript?.generated) {
 				for (const docs of forEachEmbeddedDocument(context, sourceScript, sourceScript.generated.root)) {
-					let _data: CodeInformation | undefined;
-
-					for (
-						const mappedPosition of getGeneratedPositions(docs, position, data => {
-							_data = data;
-							return isCompletionEnabled(data);
-						})
-					) {
-						await worker(docs[1], mappedPosition, docs, _data);
+					for (const mappedPosition of getGeneratedPositions(docs, position, isCompletionEnabled)) {
+						await worker(docs[1], mappedPosition, docs);
 					}
 				}
 			}

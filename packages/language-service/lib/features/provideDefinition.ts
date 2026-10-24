@@ -1,4 +1,3 @@
-import type { CodeInformation } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -17,7 +16,7 @@ import {
 export function register(
 	context: LanguageServiceContext,
 	apiName: 'provideDeclaration' | 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
-	isValidPosition: (data: CodeInformation) => boolean,
+	isValidPosition: (features: number) => boolean,
 ) {
 	return (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
 		return languageFeatureWorker(

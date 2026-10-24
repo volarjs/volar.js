@@ -17,7 +17,7 @@ export function register(context: LanguageServiceContext) {
 		return await documentFeatureWorker(
 			context,
 			uri,
-			docs => docs[2].mappings.some(mapping => isDocumentLinkEnabled(mapping.data)),
+			docs => docs[2].mappings.some(mapping => isDocumentLinkEnabled(mapping[5])),
 			async (plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;

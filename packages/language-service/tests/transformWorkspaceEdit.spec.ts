@@ -1,18 +1,17 @@
-import type { IScriptSnapshot, LanguagePlugin, VirtualCode } from '@volar/language-core';
+import {
+	type IScriptSnapshot,
+	type LanguagePlugin,
+	type Mapping,
+	SpanMapKind,
+	type VirtualCode,
+} from '@volar/language-core';
 import { describe, expect, it } from 'vitest';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import { createLanguage, createLanguageService, createUriMap } from '../index';
 import { transformWorkspaceEdit } from '../lib/utils/transform';
 
-const features = {
-	verification: true,
-	completion: true,
-	semantic: true,
-	navigation: true,
-	structure: true,
-	format: true,
-};
+const features = (1 << 21) - 1;
 
 function snapshotOf(text: string): IScriptSnapshot {
 	return {
@@ -24,7 +23,7 @@ function snapshotOf(text: string): IScriptSnapshot {
 
 // The embedded code appends a line that has no source mapping.
 function createVirtualCode(text: string): VirtualCode {
-	const mappings = [{ sourceOffsets: [0], generatedOffsets: [0], lengths: [text.length], data: features }];
+	const mappings: Mapping[] = [[0, text.length, 0, text.length, SpanMapKind.Verbatim, features]];
 	return {
 		id: 'root',
 		languageId: 'test',

@@ -488,7 +488,7 @@ export function* printSnapshot(
 		const lineHead = `[${i + 1}]`;
 		yield [lineHead, normalizeLogText(line)].join(' ');
 		const logs: {
-			mapping: _.CodeMapping;
+			mapping: _.Mapping;
 			line: string;
 			lineOffset: number;
 			sourceOffset: number;

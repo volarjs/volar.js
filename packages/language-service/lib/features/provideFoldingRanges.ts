@@ -12,7 +12,7 @@ export function register(context: LanguageServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			docs => docs[2].mappings.some(mapping => isFoldingRangesEnabled(mapping.data)),
+			docs => docs[2].mappings.some(mapping => isFoldingRangesEnabled(mapping[5])),
 			(plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
