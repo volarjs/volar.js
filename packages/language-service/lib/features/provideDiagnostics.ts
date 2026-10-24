@@ -1,4 +1,4 @@
-import { type IScriptSnapshot, isDiagnosticsEnabled, type SourceScript, type VirtualCode } from '@volar/language-core';
+import { type IScriptSnapshot, type SourceScript, type VirtualCode } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -136,7 +136,7 @@ export function register(context: LanguageServiceContext) {
 			const result = await documentFeatureWorker(
 				context,
 				uri,
-				docs => docs[2].mappings.some(mapping => isDiagnosticsEnabled(mapping[5])),
+				docs => docs[2].mappings.length > 0,
 				async (plugin, document) => {
 					const interFileDependencies = plugin[0].capabilities.diagnosticProvider?.interFileDependencies;
 					if (kind === 'semantic' !== interFileDependencies) {
@@ -207,7 +207,7 @@ export function transformDiagnostic(
 	let _error: vscode.Diagnostic = { ...error };
 
 	if (docs) {
-		const range = getSourceRange(docs, error.range, isDiagnosticsEnabled);
+		const range = getSourceRange(docs, error.range);
 		if (!range) {
 			return;
 		}
@@ -231,7 +231,7 @@ export function transformDiagnostic(
 				for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
 					const sourceDocument = context.documents.get(sourceScript.id, sourceScript.languageId, sourceScript.snapshot);
 					const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
-					const range = getSourceRange(docs, info.location.range, isDiagnosticsEnabled);
+					const range = getSourceRange(docs, info.location.range);
 					if (range) {
 						relatedInfos.push({
 							location: {

@@ -25,8 +25,6 @@ export enum SpanMapFeature {
 	AutoInsert = 1 << 17,
 	DocumentSymbols = 1 << 18,
 	CodeLens = 1 << 19,
-	/** Not part of the content mapper protocol, which has no diagnostics feature. */
-	Verification = 1 << 20,
 }
 
 export type Mapping = [

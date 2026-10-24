@@ -40,7 +40,7 @@ type Mapping = [
 
 - `SpanMapKind.Verbatim`: both spans have the same length and offsets inside them map 1:1.
 - `SpanMapKind.Atom` / `SpanMapKind.Alias`: the spans map as a whole; offsets inside them clamp to the edges, and a range inside one maps to the whole other span.
-- `features`: `SpanMapFeature` bit flags selecting the language features the mapping takes part in. `SpanMapFeature.Verification` is a Volar extension that enables diagnostics.
+- `features`: `SpanMapFeature` bit flags selecting the language features the mapping takes part in.
 
 ```ts
 const mapping: Mapping = [30, 10, 10, 10, SpanMapKind.Verbatim, SpanMapFeature.Hover | SpanMapFeature.Completion];

@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { URI } from 'vscode-uri';
 import { createLanguage, createLanguageService, createUriMap, type LanguageServicePlugin } from '../index';
 
-const features = (1 << 21) - 1;
+const features = (1 << 20) - 1;
 
 function snapshotOf(text: string): IScriptSnapshot {
 	return {

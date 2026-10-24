@@ -11,7 +11,7 @@ import { URI } from 'vscode-uri';
 import { createLanguage, createLanguageService, createUriMap } from '../index';
 import { transformWorkspaceEdit } from '../lib/utils/transform';
 
-const features = (1 << 21) - 1;
+const features = (1 << 20) - 1;
 
 function snapshotOf(text: string): IScriptSnapshot {
 	return {

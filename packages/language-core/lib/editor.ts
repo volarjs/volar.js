@@ -81,10 +81,6 @@ export function isDocumentLinkEnabled(features: number): boolean {
 	return !!(features & SpanMapFeature.DocumentSymbols);
 }
 
-export function isDiagnosticsEnabled(features: number): boolean {
-	return !!(features & SpanMapFeature.Verification);
-}
-
 export function isCodeActionsEnabled(features: number): boolean {
 	return !!(features & SpanMapFeature.CodeActions);
 }
