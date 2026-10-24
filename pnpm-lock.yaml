@@ -60,18 +60,6 @@ importers:
         specifier: ~0.27.3
         version: 0.27.3
 
-  packages/eslint:
-    dependencies:
-      '@types/eslint':
-        specifier: ^8.56.10
-        version: 8.56.12
-      '@volar/language-core':
-        specifier: 2.4.30
-        version: link:../language-core
-      vscode-languageserver-textdocument:
-        specifier: ^1.0.11
-        version: 1.0.12
-
   packages/jsdelivr:
     dependencies:
       '@volar/language-service':
@@ -1046,9 +1034,6 @@ packages:
 
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
-
-  '@types/eslint@8.56.12':
-    resolution: {integrity: sha512-03ruubjWyOHlmljCVoxSuNDdmfZDzsrrz0P2LeJsOXr+ZwFQ+0yQIwNCwt/GYhV7Z31fgtXJTAEs+FYlEL851g==}
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
@@ -3990,11 +3975,6 @@ snapshots:
       assertion-error: 2.0.1
 
   '@types/deep-eql@4.0.2': {}
-
-  '@types/eslint@8.56.12':
-    dependencies:
-      '@types/estree': 1.0.8
-      '@types/json-schema': 7.0.15
 
   '@types/estree@1.0.8': {}
 
