@@ -69,27 +69,6 @@ importers:
         specifier: ^3.0.8
         version: 3.1.0
 
-  packages/kit:
-    dependencies:
-      '@volar/language-service':
-        specifier: 2.4.30
-        version: link:../language-service
-      '@volar/typescript':
-        specifier: 2.4.30
-        version: link:../typescript
-      typesafe-path:
-        specifier: ^0.2.2
-        version: 0.2.2
-      typescript:
-        specifier: <7
-        version: 5.9.3
-      vscode-languageserver-textdocument:
-        specifier: ^1.0.11
-        version: 1.0.12
-      vscode-uri:
-        specifier: ^3.0.8
-        version: 3.1.0
-
   packages/language-core:
     dependencies:
       '@volar/source-map':
@@ -2833,9 +2812,6 @@ packages:
 
   typed-rest-client@1.8.11:
     resolution: {integrity: sha512-5UvfMpd1oelmUPRbbaVnq+rHP7ng2cE4qoQkQeAqxRL6PklkxsM0g32/HL0yfvruK6ojQ5x8EE+HF4YV6DtuCA==}
-
-  typesafe-path@0.2.2:
-    resolution: {integrity: sha512-OJabfkAg1WLZSqJAJ0Z6Sdt3utnbzr/jh+NAHoyWHJe8CMSy79Gm085094M9nvTPy22KzTVn5Zq5mbapCI/hPA==}
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -5935,8 +5911,6 @@ snapshots:
       qs: 6.15.0
       tunnel: 0.0.6
       underscore: 1.13.8
-
-  typesafe-path@0.2.2: {}
 
   typescript@5.9.3: {}
 

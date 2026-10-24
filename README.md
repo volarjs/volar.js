@@ -11,8 +11,6 @@
         |     |
         |     |--- @volar/vscode (as a client to the language server)
         |
-        |--- @volar/kit (encapsulates @volar/language-service for Node.js applications)
-        |
         |--- @volar/monaco (integrates @volar/language-service into Monaco Editor)
 ```
 
@@ -31,10 +29,6 @@ This module acts as a language server, utilizing the language services provided 
 ### @volar/vscode
 
 This module acts as a Language Server Protocol (LSP) language client. Its primary responsibility is to communicate with the `@volar/language-server` module (acting as an LSP server) and integrate the language services provided by the server into the VS Code editor. This architecture allows for the reuse of language services across different editors and IDEs, with the implementation of the corresponding LSP client. In this case, `@volar/vscode` is the LSP client implementation for VS Code.
-
-### @volar/kit
-
-`@volar/kit` is a module that encapsulates `@volar/language-service`. It provides a simplified interface for using Volar's diagnostic and formatting features within Node.js applications.
 
 ### @volar/monaco
 
