@@ -1,4 +1,4 @@
-import type * as ts from 'typescript';
+import type { IScriptSnapshot, TextChangeRange } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type Range, TextDocument } from 'vscode-languageserver-textdocument';
 import { combineChangeRanges } from './combineChangeRanges';
@@ -6,9 +6,9 @@ import { combineChangeRanges } from './combineChangeRanges';
 export class SnapshotDocument implements TextDocument {
 	private document: TextDocument;
 	private snapshots: {
-		changeRange: ts.TextChangeRange;
+		changeRange: TextChangeRange;
 		version: number;
-		ref: WeakRef<ts.IScriptSnapshot> | undefined;
+		ref: WeakRef<IScriptSnapshot> | undefined;
 	}[] = [];
 
 	constructor(
@@ -56,7 +56,7 @@ export class SnapshotDocument implements TextDocument {
 	 */
 	update(contentChanges: vscode.TextDocumentContentChangeEvent[], version: number) {
 		if (contentChanges.every(change => 'range' in change)) {
-			let changeRanges: ts.TextChangeRange[] = [];
+			let changeRanges: TextChangeRange[] = [];
 			for (const contentChange of contentChanges) {
 				if (!('range' in contentChange)) {
 					continue;
@@ -87,8 +87,8 @@ export class SnapshotDocument implements TextDocument {
 		const lastChange = this.snapshots[this.snapshots.length - 1];
 		if (!lastChange.ref) {
 			const text = this.document.getText();
-			const changeRangeCache = new WeakMap<ts.IScriptSnapshot, ts.TextChangeRange | undefined>();
-			const snapshot: ts.IScriptSnapshot = {
+			const changeRangeCache = new WeakMap<IScriptSnapshot, TextChangeRange | undefined>();
+			const snapshot: IScriptSnapshot = {
 				getText: (start, end) => text.substring(start, end),
 				getLength: () => text.length,
 				getChangeRange: oldSnapshot => {

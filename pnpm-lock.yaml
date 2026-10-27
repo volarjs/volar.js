@@ -86,9 +86,6 @@ importers:
       request-light:
         specifier: ^0.7.0
         version: 0.7.0
-      typescript:
-        specifier: <7
-        version: 5.9.3
       vscode-languageserver:
         specifier: ^9.0.1
         version: 9.0.1
