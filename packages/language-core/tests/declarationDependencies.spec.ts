@@ -1,7 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as ts from 'typescript';
-import { describe, expect, test } from 'vitest';
+import type * as TypeScriptAST from 'typescript-7/ast' with { 'resolution-mode': 'import' };
+import type { API } from 'typescript-7/sync' with { 'resolution-mode': 'import' };
+import { afterAll, describe, expect, test } from 'vitest';
+
+const ts: typeof TypeScriptAST = require('typescript-7/ast');
+const { API: TypeScriptAPI }: { API: typeof API } = require('typescript-7/sync');
 
 const packagesDir = path.resolve(__dirname, '../..');
 const builtinModules = new Set(require('module').builtinModules as string[]);
@@ -25,12 +29,47 @@ function* walkDeclarations(dir: string): Generator<string> {
 	}
 }
 
+/** The modules that a declaration file imports, exports from, imports types of, or augments. */
+function getImportedModules(api: API, fileName: string, text: string) {
+	const retained = api.createSourceFile(fileName, text);
+	const moduleNames: string[] = [];
+	visit(retained.sourceFile);
+	retained.dispose();
+	return moduleNames;
+
+	function visit(node: TypeScriptAST.Node) {
+		const specifier = getModuleSpecifier(node);
+		if (specifier && ts.isStringLiteral(specifier)) {
+			moduleNames.push(specifier.text);
+		}
+		node.forEachChild(visit);
+	}
+
+	function getModuleSpecifier(node: TypeScriptAST.Node) {
+		if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
+			return node.moduleSpecifier;
+		}
+		if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) {
+			return node.moduleReference.expression;
+		}
+		if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument)) {
+			return node.argument.literal;
+		}
+		if (ts.isModuleDeclaration(node)) {
+			return node.name;
+		}
+	}
+}
+
 function toPackageName(specifier: string) {
 	const parts = specifier.split('/');
 	return specifier.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
 }
 
 describe('published declarations', () => {
+	const api = new TypeScriptAPI();
+	afterAll(() => api.close());
+
 	for (const name of fs.readdirSync(packagesDir)) {
 		const packageDir = path.join(packagesDir, name);
 		const packageJsonPath = path.join(packageDir, 'package.json');
@@ -59,8 +98,7 @@ describe('published declarations', () => {
 
 			const undeclared = new Set<string>();
 			for (const file of files) {
-				const { importedFiles } = ts.preProcessFile(fs.readFileSync(file, 'utf8'), true, true);
-				for (const { fileName } of importedFiles) {
+				for (const fileName of getImportedModules(api, file, fs.readFileSync(file, 'utf8'))) {
 					if (fileName.startsWith('.') || fileName.startsWith('node:') || builtinModules.has(fileName)) {
 						continue;
 					}
