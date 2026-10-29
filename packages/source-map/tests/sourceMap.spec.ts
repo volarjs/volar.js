@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { SourceMap } from '../lib/sourceMap';
-import { type Mapping, SpanMapFeature, SpanMapKind } from '../lib/spanMap';
+import { type Mapping, mapping, SpanMapFeature, SpanMapKind } from '../lib/spanMap';
 
 const source = `{{data?.icon?.toString()}}`;
 const generated =
@@ -13,7 +13,7 @@ function at(text: string, marked: string) {
 }
 
 function verbatim(sourceStart: number, generatedStart: number, length: number, features = 0): Mapping {
-	return [generatedStart, length, sourceStart, length, SpanMapKind.Verbatim, features];
+	return mapping(generatedStart, length, sourceStart, length, features);
 }
 
 function atom(sourceStart: number, sourceEnd: number, generatedStart: number, generatedEnd: number): Mapping {
