@@ -1,4 +1,4 @@
-import { isSymbolsEnabled } from '@volar/language-core';
+import { isSymbolsEnabled, SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -12,7 +12,7 @@ export function register(context: LanguageServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			docs => docs[2].mappings.some(mapping => isSymbolsEnabled(mapping[5])),
+			docs => docs[2].segments.some(segment => isSymbolsEnabled(segment.features)),
 			(plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -27,7 +27,7 @@ export function register(context: LanguageServiceContext) {
 					.map(symbol =>
 						transformDocumentSymbol(
 							symbol,
-							range => getSourceRange(docs, range, isSymbolsEnabled),
+							range => getSourceRange(docs, range, SpanMapFeature.DocumentSymbols),
 						)
 					)
 					.filter(symbol => !!symbol);

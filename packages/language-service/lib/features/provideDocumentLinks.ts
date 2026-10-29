@@ -1,4 +1,4 @@
-import { isDocumentLinkEnabled } from '@volar/language-core';
+import { isDocumentLinkEnabled, SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -17,7 +17,7 @@ export function register(context: LanguageServiceContext) {
 		return await documentFeatureWorker(
 			context,
 			uri,
-			docs => docs[2].mappings.some(mapping => isDocumentLinkEnabled(mapping[5])),
+			docs => docs[2].segments.some(segment => isDocumentLinkEnabled(segment.features)),
 			async (plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -48,7 +48,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return links
 					.map(link => {
-						const range = getSourceRange(docs, link.range, isDocumentLinkEnabled);
+						const range = getSourceRange(docs, link.range, SpanMapFeature.DocumentSymbols);
 						if (!range) {
 							return;
 						}

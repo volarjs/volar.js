@@ -1,4 +1,4 @@
-import type { IScriptSnapshot, Mapping, VirtualCode } from '@volar/language-core';
+import type { IScriptSnapshot, NormalizedSpanMapSegment, VirtualCode } from '@volar/language-core';
 import { createUriMap } from '@volar/language-service';
 import { URI } from 'vscode-uri';
 import {
@@ -56,9 +56,9 @@ export function register(server: LanguageServerState) {
 			const sourceScript = languageService.context.language.scripts.get(URI.parse(params.fileUri));
 			const virtualCode = sourceScript?.generated?.embeddedCodes.get(params.virtualCodeId);
 			if (virtualCode) {
-				const mappings: Record<string, Mapping[]> = {};
+				const mappings: Record<string, readonly NormalizedSpanMapSegment[]> = {};
 				for (const [sourceScript, map] of languageService.context.language.maps.forEach(virtualCode)) {
-					mappings[sourceScript.id.toString()] = map.mappings;
+					mappings[sourceScript.id.toString()] = map.segments;
 				}
 				return {
 					content: virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength()),

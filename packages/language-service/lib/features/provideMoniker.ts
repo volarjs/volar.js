@@ -1,4 +1,4 @@
-import { isMonikerEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -11,7 +11,7 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			docs => getGeneratedPositions(docs, position, isMonikerEnabled),
+			docs => getGeneratedPositions(docs, position, SpanMapFeature.References),
 			(plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;

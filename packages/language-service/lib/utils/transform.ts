@@ -1,4 +1,4 @@
-import { isDocumentLinkEnabled, isRenameEnabled } from '@volar/language-core';
+import { isDocumentLinkEnabled, SpanMapFeature, SpanMapFidelity } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -25,7 +25,7 @@ export function transformDocumentLinkTarget(_target: string, context: LanguageSe
 			virtualCode.snapshot,
 		);
 		for (const [sourceScript, map] of context.language.maps.forEach(virtualCode)) {
-			if (!map.mappings.some(mapping => isDocumentLinkEnabled(mapping[5]))) {
+			if (!map.segments.some(segment => isDocumentLinkEnabled(segment.features))) {
 				continue;
 			}
 
@@ -396,7 +396,7 @@ export function transformWorkspaceEdit(
 				const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
 				for (const tsEdit of tsEdits) {
 					if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
-						const range = getSourceRange(docs, tsEdit.range, isRenameEnabled);
+						const range = getSourceRange(docs, tsEdit.range, SpanMapFeature.Rename, SpanMapFidelity.Atom);
 
 						if (range) {
 							unmappedEdits.delete(tsEdit);
@@ -462,7 +462,7 @@ export function transformWorkspaceEdit(
 						for (const tsEdit of tsDocEdit.edits) {
 							if (mode === 'rename' || mode === 'fileName' || mode === 'codeAction') {
 								// fix https://github.com/johnsoncodehk/volar/issues/1091
-								const range = getSourceRange(docs, tsEdit.range, isRenameEnabled);
+								const range = getSourceRange(docs, tsEdit.range, SpanMapFeature.Rename, SpanMapFidelity.Atom);
 								if (range) {
 									unmappedEdits.delete(tsEdit);
 									sourceEdit.edits.push({

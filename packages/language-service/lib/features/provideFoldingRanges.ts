@@ -1,4 +1,4 @@
-import { isFoldingRangesEnabled } from '@volar/language-core';
+import { isFoldingRangesEnabled, SpanMapFeature } from '@volar/language-core';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
 import { NoneCancellationToken } from '../utils/cancellation';
@@ -12,7 +12,7 @@ export function register(context: LanguageServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			docs => docs[2].mappings.some(mapping => isFoldingRangesEnabled(mapping[5])),
+			docs => docs[2].segments.some(segment => isFoldingRangesEnabled(segment.features)),
 			(plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -25,7 +25,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return transformFoldingRanges(
 					data,
-					range => getSourceRange(docs, range, isFoldingRangesEnabled),
+					range => getSourceRange(docs, range, SpanMapFeature.FoldingRanges),
 				);
 			},
 			arr => arr.flat(),

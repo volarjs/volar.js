@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { SourceMap } from '../lib/sourceMap';
-import { type Mapping, SpanMapFeature, SpanMapKind } from '../lib/spanMap';
+import { SpanMap, SpanMapFeature, SpanMapFidelity, SpanMapKind, type SpanMapSegment } from '../lib/spanMap';
 
 const source = `{{data?.icon?.toString()}}`;
 const generated =
@@ -12,17 +11,28 @@ function at(text: string, marked: string) {
 	return offset;
 }
 
-function verbatim(sourceStart: number, generatedStart: number, length: number, features = 0): Mapping {
-	return [generatedStart, length, sourceStart, length, SpanMapKind.Verbatim, features];
+function verbatim(originalStart: number, virtualStart: number, length: number, features = 0): SpanMapSegment {
+	return {
+		virtualStart,
+		virtualEnd: virtualStart + length,
+		originalStart,
+		originalEnd: originalStart + length,
+		kind: SpanMapKind.Verbatim,
+		features,
+	};
 }
 
-function atom(sourceStart: number, sourceEnd: number, generatedStart: number, generatedEnd: number): Mapping {
-	return [generatedStart, generatedEnd - generatedStart, sourceStart, sourceEnd - sourceStart, SpanMapKind.Atom, 0];
+function atom(originalStart: number, originalEnd: number, virtualStart: number, virtualEnd: number): SpanMapSegment {
+	return { virtualStart, virtualEnd, originalStart, originalEnd, kind: SpanMapKind.Atom, features: 0 };
 }
 
-describe('sourceMap', () => {
+function ranges(mapped: { start: number; end: number }[]) {
+	return mapped.map(({ start, end }) => [start, end]);
+}
+
+describe('SpanMap', () => {
 	test('Angular template', () => {
-		const map = new SourceMap([
+		const map = new SpanMap([
 			verbatim(
 				at(source, `{{|data?.icon?.toString()}}`),
 				at(
@@ -87,11 +97,12 @@ describe('sourceMap', () => {
 			),
 		]);
 
-		expect([...map.toGeneratedRange(
-			at(source, `{{|data?.icon?.toString()}}`),
-			at(source, `{{data|?.icon?.toString()}}`),
-			false,
-		)].map(mapped => mapped.slice(0, 2))).toEqual([
+		expect(ranges(
+			map.originalToVirtualSpans(
+				at(source, `{{|data?.icon?.toString()}}`),
+				at(source, `{{data|?.icon?.toString()}}`),
+			).filter(mapped => mapped.fidelity !== SpanMapFidelity.Approximate),
+		)).toEqual([
 			[
 				at(
 					generated,
@@ -125,11 +136,12 @@ describe('sourceMap', () => {
 			[0, generated.length],
 		]);
 
-		expect([...map.toGeneratedRange(
-			at(source, `{{|data?.icon?.toString()}}`),
-			at(source, `{{data?.icon|?.toString()}}`),
-			false,
-		)].map(mapped => mapped.slice(0, 2))).toEqual([
+		expect(ranges(
+			map.originalToVirtualSpans(
+				at(source, `{{|data?.icon?.toString()}}`),
+				at(source, `{{data?.icon|?.toString()}}`),
+			).filter(mapped => mapped.fidelity !== SpanMapFidelity.Approximate),
+		)).toEqual([
 			[
 				at(
 					generated,
@@ -153,17 +165,18 @@ describe('sourceMap', () => {
 			[0, generated.length],
 		]);
 
-		expect([...map.toGeneratedRange(
-			at(source, `{{|data?.icon?.toString()}}`),
-			at(source, `{{data?.icon?.toString()|}}`),
-			false,
-		)].map(mapped => mapped.slice(0, 2))).toEqual([
+		expect(ranges(
+			map.originalToVirtualSpans(
+				at(source, `{{|data?.icon?.toString()}}`),
+				at(source, `{{data?.icon?.toString()|}}`),
+			).filter(mapped => mapped.fidelity !== SpanMapFidelity.Approximate),
+		)).toEqual([
 			[0, generated.length],
 		]);
 	});
 
-	test('Angular template - fallbackToAnyMatch', () => {
-		const map = new SourceMap([
+	test('Angular template - approximate', () => {
+		const map = new SpanMap([
 			verbatim(
 				at(source, `{{|data?.icon?.toString()}}`),
 				at(
@@ -182,17 +195,17 @@ describe('sourceMap', () => {
 			),
 		]);
 
-		expect([...map.toGeneratedRange(
-			at(source, `{{|data?.icon?.toString()}}`),
-			at(source, `{{data?.icon|?.toString()}}`),
-			false,
-		)].map(mapped => mapped.slice(0, 2))).toEqual([]);
+		expect(ranges(
+			map.originalToVirtualSpans(
+				at(source, `{{|data?.icon?.toString()}}`),
+				at(source, `{{data?.icon|?.toString()}}`),
+			).filter(mapped => mapped.fidelity !== SpanMapFidelity.Approximate),
+		)).toEqual([]);
 
-		expect([...map.toGeneratedRange(
+		expect(ranges(map.originalToVirtualSpans(
 			at(source, `{{|data?.icon?.toString()}}`),
 			at(source, `{{data?.icon|?.toString()}}`),
-			true,
-		)].map(mapped => mapped.slice(0, 2))).toEqual([
+		))).toEqual([
 			[
 				at(
 					generated,
@@ -207,24 +220,59 @@ describe('sourceMap', () => {
 	});
 
 	test('atom points clamp to the edges', () => {
-		const map = new SourceMap([[10, 6, 0, 7, SpanMapKind.Atom, SpanMapFeature.Hover]]);
+		const map = new SpanMap([
+			{ virtualStart: 10, virtualEnd: 16, originalStart: 0, originalEnd: 7, kind: SpanMapKind.Atom },
+		]);
+		const positions = (mapped: { position: number }[]) => mapped.map(({ position }) => position);
 
-		expect([...map.toGeneratedLocation(0)].map(mapped => mapped[0])).toEqual([10]);
-		expect([...map.toGeneratedLocation(3)].map(mapped => mapped[0])).toEqual([10]);
-		expect([...map.toGeneratedLocation(7)].map(mapped => mapped[0])).toEqual([16]);
-		expect([...map.toSourceLocation(13)].map(mapped => mapped[0])).toEqual([0]);
-		expect([...map.toSourceRange(11, 13, false)].map(mapped => mapped.slice(0, 2))).toEqual([[0, 7]]);
-		expect([...map.toGeneratedRange(2, 2, false)].map(mapped => mapped.slice(0, 2))).toEqual([[10, 16]]);
+		expect(positions(map.originalToVirtualPositions(0))).toEqual([10]);
+		expect(positions(map.originalToVirtualPositions(3))).toEqual([10]);
+		expect(positions(map.originalToVirtualPositions(7))).toEqual([16]);
+		expect(positions(map.virtualToOriginalPositions(13))).toEqual([0]);
+		expect(map.virtualToOriginalPositions(13)[0]!.fidelity).toBe(SpanMapFidelity.Atom);
+		expect(ranges(map.virtualToOriginalSpans(11, 13))).toEqual([[0, 7]]);
+		expect(ranges(map.originalToVirtualSpans(2, 2))).toEqual([[10, 16]]);
+	});
+
+	test('maps an alias as an atom', () => {
+		const map = new SpanMap([
+			{ virtualStart: 11, virtualEnd: 14, originalStart: 1, originalEnd: 10, kind: SpanMapKind.Alias },
+		]);
+		expect(map.originalToVirtualPositions(5).map(({ position }) => position)).toEqual([11]);
+		expect(ranges(map.originalToVirtualSpans(5, 6))).toEqual([[11, 14]]);
+	});
+
+	test('maps a verbatim position exactly, clamped to the other span', () => {
+		const map = new SpanMap([
+			{ virtualStart: 11, virtualEnd: 20, originalStart: 1, originalEnd: 10, kind: SpanMapKind.Verbatim },
+			{ virtualStart: 30, virtualEnd: 32, originalStart: 20, originalEnd: 25, kind: SpanMapKind.Verbatim },
+		]);
+		expect(map.originalToVirtualPositions(5)).toMatchObject([{ position: 15, fidelity: SpanMapFidelity.Exact }]);
+		expect(map.originalToVirtualPositions(1).map(({ position }) => position)).toEqual([11]);
+		expect(map.originalToVirtualPositions(10).map(({ position }) => position)).toEqual([20]);
+		expect(map.originalToVirtualPositions(24).map(({ position }) => position)).toEqual([32]);
+	});
+
+	test('maps a gap to nothing', () => {
+		const map = new SpanMap([
+			{ virtualStart: 0, virtualEnd: 3, originalStart: 0, originalEnd: 3, kind: SpanMapKind.Verbatim },
+			{ virtualStart: 10, virtualEnd: 13, originalStart: 5, originalEnd: 8, kind: SpanMapKind.Verbatim },
+		]);
+		expect(map.virtualToOriginalPositions(5)).toEqual([]);
+		expect(map.originalToVirtualPositions(4)).toEqual([]);
+		expect(new SpanMap([]).originalToVirtualPositions(0)).toEqual([]);
 	});
 
 	test('filters by features', () => {
-		const map = new SourceMap([
+		const map = new SpanMap([
 			verbatim(0, 0, 5, SpanMapFeature.Hover),
 			verbatim(0, 10, 5, SpanMapFeature.Rename),
+			{ virtualStart: 20, virtualEnd: 25, originalStart: 0, originalEnd: 5, kind: SpanMapKind.Verbatim },
 		]);
 
-		expect([...map.toGeneratedLocation(2, features => !!(features & SpanMapFeature.Rename))].map(mapped => mapped[0]))
-			.toEqual([12]);
-		expect([...map.toGeneratedLocation(2)].map(mapped => mapped[0])).toEqual([2, 12]);
+		expect(map.originalToVirtualPositions(2, SpanMapFeature.Rename).map(({ position }) => position))
+			.toEqual([12, 22]);
+		expect(map.originalToVirtualPositions(2).map(({ position }) => position)).toEqual([2, 12, 22]);
+		expect(map.segments[2]!.features).toBe(SpanMapFeature.All);
 	});
 });

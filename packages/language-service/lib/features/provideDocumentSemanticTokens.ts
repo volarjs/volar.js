@@ -1,4 +1,4 @@
-import { findOverlapCodeRange, isSemanticTokensEnabled } from '@volar/language-core';
+import { findOverlapCodeRange, SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext, SemanticToken } from '../types';
@@ -36,7 +36,7 @@ export function register(context: LanguageServiceContext) {
 					docs[0].offsetAt(range.start),
 					docs[0].offsetAt(range.end),
 					docs[2],
-					isSemanticTokensEnabled,
+					SpanMapFeature.SemanticTokens,
 				);
 				if (mapped) {
 					yield {
@@ -66,7 +66,7 @@ export function register(context: LanguageServiceContext) {
 						const range = getSourceRange(docs, {
 							start: { line: _token[0], character: _token[1] },
 							end: { line: _token[0], character: _token[1] + _token[2] },
-						}, isSemanticTokensEnabled);
+						}, SpanMapFeature.SemanticTokens);
 						if (range) {
 							return [
 								range.start.line,

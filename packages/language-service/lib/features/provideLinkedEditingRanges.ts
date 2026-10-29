@@ -1,4 +1,4 @@
-import { isLinkedEditingEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -12,7 +12,7 @@ export function register(context: LanguageServiceContext) {
 			uri,
 			() => position,
 			function*(docs) {
-				for (const pos of getGeneratedPositions(docs, position, isLinkedEditingEnabled)) {
+				for (const pos of getGeneratedPositions(docs, position, SpanMapFeature.LinkedEditing)) {
 					yield pos;
 				}
 			},
@@ -30,7 +30,7 @@ export function register(context: LanguageServiceContext) {
 				return {
 					wordPattern: ranges.wordPattern,
 					ranges: ranges.ranges
-						.map(range => getSourceRange(docs, range, isLinkedEditingEnabled))
+						.map(range => getSourceRange(docs, range, SpanMapFeature.LinkedEditing))
 						.filter(range => !!range),
 				};
 			},

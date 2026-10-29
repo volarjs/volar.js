@@ -3,6 +3,7 @@ import {
 	forEachEmbeddedCode,
 	isFormattingEnabled,
 	type SourceScript,
+	SpanMapFeature,
 	type VirtualCode,
 } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
@@ -50,14 +51,14 @@ export function register(context: LanguageServiceContext) {
 		for (const code of forEachEmbeddedCode(sourceScript.generated.root)) {
 			const map = context.language.maps.get(code, sourceScript);
 			if (map) {
-				const embeddedRange = findOverlapCodeRange(startOffset, endOffset, map, isFormattingEnabled);
+				const embeddedRange = findOverlapCodeRange(startOffset, endOffset, map, SpanMapFeature.Formatting);
 				if (embeddedRange) {
-					if (embeddedRange.start === map.mappings[0][0]) {
+					if (embeddedRange.start === map.segments[0]!.virtualStart) {
 						embeddedRange.start = 0;
 					}
-					const lastMapping = map.mappings[map.mappings.length - 1];
+					const lastSegment = map.segments[map.segments.length - 1]!;
 					if (
-						embeddedRange.end === lastMapping[0] + lastMapping[1]
+						embeddedRange.end === lastSegment.virtualEnd
 					) {
 						embeddedRange.end = code.snapshot.getLength();
 					}
@@ -90,7 +91,7 @@ export function register(context: LanguageServiceContext) {
 				let edits: vscode.TextEdit[] = [];
 
 				for (const code of currentCodes) {
-					if (!code.mappings.some(mapping => isFormattingEnabled(mapping[5]))) {
+					if (!code.mappings.some(segment => isFormattingEnabled(segment.features ?? SpanMapFeature.All))) {
 						continue;
 					}
 
@@ -226,8 +227,8 @@ export function register(context: LanguageServiceContext) {
 					initialIndentLevel: 0,
 				};
 				if (virtualCode.mappings.length) {
-					const firstMapping = virtualCode.mappings[0];
-					const startOffset = firstMapping[2];
+					const firstSegment = virtualCode.mappings[0]!;
+					const startOffset = firstSegment.originalStart;
 					const startPosition = sourceDocument.positionAt(startOffset);
 					codeOptions.initialIndentLevel = computeInitialIndent(
 						sourceDocument.getText(),

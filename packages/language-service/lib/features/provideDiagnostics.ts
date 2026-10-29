@@ -136,7 +136,7 @@ export function register(context: LanguageServiceContext) {
 			const result = await documentFeatureWorker(
 				context,
 				uri,
-				docs => docs[2].mappings.length > 0,
+				docs => docs[2].segments.length > 0,
 				async (plugin, document) => {
 					const interFileDependencies = plugin[0].capabilities.diagnosticProvider?.interFileDependencies;
 					if (kind === 'semantic' !== interFileDependencies) {

@@ -1,4 +1,4 @@
-import { isColorEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -12,7 +12,7 @@ export function register(context: LanguageServiceContext) {
 			uri,
 			() => range,
 			function*(docs) {
-				for (const mappedRange of getGeneratedRanges(docs, range, isColorEnabled)) {
+				for (const mappedRange of getGeneratedRanges(docs, range, SpanMapFeature.DocumentSymbols)) {
 					yield mappedRange;
 				}
 			},

@@ -1,10 +1,4 @@
-import {
-	type IScriptSnapshot,
-	isDefinitionEnabled,
-	isImplementationEnabled,
-	isTypeDefinitionEnabled,
-	type Language,
-} from '@volar/language-core';
+import { type IScriptSnapshot, type Language, SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -240,10 +234,10 @@ function createLanguageServiceBase(
 		getWorkspaceDiagnostics: workspaceDiagnostics.register(context),
 		getReferences: references.register(context),
 		getFileReferences: fileReferences.register(context),
-		getDeclaration: definition.register(context, 'provideDeclaration', isDefinitionEnabled),
-		getDefinition: definition.register(context, 'provideDefinition', isDefinitionEnabled),
-		getTypeDefinition: definition.register(context, 'provideTypeDefinition', isTypeDefinitionEnabled),
-		getImplementations: definition.register(context, 'provideImplementation', isImplementationEnabled),
+		getDeclaration: definition.register(context, 'provideDeclaration', SpanMapFeature.Definition),
+		getDefinition: definition.register(context, 'provideDefinition', SpanMapFeature.Definition),
+		getTypeDefinition: definition.register(context, 'provideTypeDefinition', SpanMapFeature.TypeDefinition),
+		getImplementations: definition.register(context, 'provideImplementation', SpanMapFeature.Implementation),
 		getRenameRange: renamePrepare.register(context),
 		getRenameEdits: rename.register(context),
 		getFileRenameEdits: fileRename.register(context),

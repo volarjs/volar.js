@@ -1,10 +1,10 @@
-export { Mapping, SourceMap, SpanMapFeature, SpanMapKind } from '@volar/source-map';
+export { SpanMap, SpanMapFeature, SpanMapFidelity, SpanMapKind } from '@volar/source-map';
 export * from './lib/editor';
 export * from './lib/linkedCodeMap';
 export * from './lib/types';
 export * from './lib/utils';
 
-import { SourceMap } from '@volar/source-map';
+import { SpanMap } from '@volar/source-map';
 import { LinkedCodeMap } from './lib/linkedCodeMap';
 import type {
 	CodegenContext,
@@ -17,7 +17,7 @@ import type {
 	VirtualCode,
 } from './lib/types';
 
-export const defaultMapperFactory: MapperFactory = mappings => new SourceMap(mappings);
+export const defaultMapperFactory: MapperFactory = segments => new SpanMap(segments);
 
 export function createLanguage<T>(
 	plugins: LanguagePlugin<T>[],

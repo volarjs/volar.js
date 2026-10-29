@@ -1,4 +1,4 @@
-import { isCodeLensEnabled } from '@volar/language-core';
+import { isCodeLensEnabled, SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -25,7 +25,7 @@ export function register(context: LanguageServiceContext) {
 		return await documentFeatureWorker(
 			context,
 			uri,
-			docs => docs[2].mappings.some(mapping => isCodeLensEnabled(mapping[5])),
+			docs => docs[2].segments.some(segment => isCodeLensEnabled(segment.features)),
 			async (plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -75,7 +75,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return data
 					.map(codeLens => {
-						const range = getSourceRange(docs, codeLens.range, isCodeLensEnabled);
+						const range = getSourceRange(docs, codeLens.range, SpanMapFeature.CodeLens);
 						if (range) {
 							return {
 								...codeLens,

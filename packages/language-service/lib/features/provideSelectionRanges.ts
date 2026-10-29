@@ -1,4 +1,4 @@
-import { isSelectionRangesEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -16,7 +16,7 @@ export function register(context: LanguageServiceContext) {
 			function*(docs) {
 				const result = positions
 					.map(position => {
-						for (const mappedPosition of getGeneratedPositions(docs, position, isSelectionRangesEnabled)) {
+						for (const mappedPosition of getGeneratedPositions(docs, position, SpanMapFeature.SelectionRanges)) {
 							return mappedPosition;
 						}
 					})
@@ -49,7 +49,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return transformSelectionRanges(
 					data,
-					range => getSourceRange(docs, range, isSelectionRangesEnabled),
+					range => getSourceRange(docs, range, SpanMapFeature.SelectionRanges),
 				);
 			},
 			results => {

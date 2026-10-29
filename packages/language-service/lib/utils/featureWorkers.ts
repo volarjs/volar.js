@@ -1,4 +1,11 @@
-import type { LinkedCodeMap, Mapper, SourceScript, VirtualCode } from '@volar/language-core';
+import {
+	type LinkedCodeMap,
+	type Mapper,
+	type SourceScript,
+	SpanMapFeature,
+	SpanMapFidelity,
+	type VirtualCode,
+} from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { URI } from 'vscode-uri';
@@ -190,77 +197,87 @@ export function* forEachEmbeddedDocument(
 	}
 }
 
+/** The first source range of `range`, through a single segment, or approximate unless `fidelity` is stricter. */
 export function getSourceRange(
 	docs: DocumentsAndMap,
 	range: vscode.Range,
-	filter?: (features: number) => boolean,
+	feature?: SpanMapFeature,
+	fidelity = SpanMapFidelity.Approximate,
 ) {
-	for (const result of getSourceRanges(docs, range, filter)) {
-		return result;
+	for (const result of getSourceRanges(docs, range, feature)) {
+		if (result.fidelity <= fidelity) {
+			return { start: result.start, end: result.end };
+		}
 	}
 }
 
 export function getGeneratedRange(
 	docs: DocumentsAndMap,
 	range: vscode.Range,
-	filter?: (features: number) => boolean,
+	feature?: SpanMapFeature,
 ) {
-	for (const result of getGeneratedRanges(docs, range, filter)) {
-		return result;
+	for (const result of getGeneratedRanges(docs, range, feature)) {
+		return { start: result.start, end: result.end };
 	}
 }
 
 export function* getSourceRanges(
 	[sourceDocument, embeddedDocument, map]: DocumentsAndMap,
 	range: vscode.Range,
-	filter?: (features: number) => boolean,
+	feature?: SpanMapFeature,
 ) {
 	for (
-		const [mappedStart, mappedEnd] of map.toSourceRange(
+		const mapped of map.virtualToOriginalSpans(
 			embeddedDocument.offsetAt(range.start),
 			embeddedDocument.offsetAt(range.end),
-			true,
-			filter,
+			feature,
 		)
 	) {
-		yield { start: sourceDocument.positionAt(mappedStart), end: sourceDocument.positionAt(mappedEnd) };
+		yield {
+			start: sourceDocument.positionAt(mapped.start),
+			end: sourceDocument.positionAt(mapped.end),
+			fidelity: mapped.fidelity,
+		};
 	}
 }
 
 export function* getGeneratedRanges(
 	[sourceDocument, embeddedDocument, map]: DocumentsAndMap,
 	range: vscode.Range,
-	filter?: (features: number) => boolean,
+	feature?: SpanMapFeature,
 ) {
 	for (
-		const [mappedStart, mappedEnd] of map.toGeneratedRange(
+		const mapped of map.originalToVirtualSpans(
 			sourceDocument.offsetAt(range.start),
 			sourceDocument.offsetAt(range.end),
-			true,
-			filter,
+			feature,
 		)
 	) {
-		yield { start: embeddedDocument.positionAt(mappedStart), end: embeddedDocument.positionAt(mappedEnd) };
+		yield {
+			start: embeddedDocument.positionAt(mapped.start),
+			end: embeddedDocument.positionAt(mapped.end),
+			fidelity: mapped.fidelity,
+		};
 	}
 }
 
 export function* getSourcePositions(
 	[sourceDocument, embeddedDocument, map]: DocumentsAndMap,
 	position: vscode.Position,
-	filter: (features: number) => boolean = () => true,
+	feature?: SpanMapFeature,
 ) {
-	for (const mapped of map.toSourceLocation(embeddedDocument.offsetAt(position), filter)) {
-		yield sourceDocument.positionAt(mapped[0]);
+	for (const mapped of map.virtualToOriginalPositions(embeddedDocument.offsetAt(position), feature)) {
+		yield sourceDocument.positionAt(mapped.position);
 	}
 }
 
 export function* getGeneratedPositions(
 	[sourceDocument, embeddedDocument, map]: DocumentsAndMap,
 	position: vscode.Position,
-	filter: (features: number) => boolean = () => true,
+	feature?: SpanMapFeature,
 ) {
-	for (const mapped of map.toGeneratedLocation(sourceDocument.offsetAt(position), filter)) {
-		yield embeddedDocument.positionAt(mapped[0]);
+	for (const mapped of map.originalToVirtualPositions(sourceDocument.offsetAt(position), feature)) {
+		yield embeddedDocument.positionAt(mapped.position);
 	}
 }
 

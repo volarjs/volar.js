@@ -1,4 +1,4 @@
-import type { Mapping } from '@volar/language-core';
+import type { NormalizedSpanMapSegment } from '@volar/language-core';
 import type { DocumentDropEdit } from '@volar/language-service';
 import * as protocol from 'vscode-languageserver-protocol';
 
@@ -133,7 +133,7 @@ export namespace GetVirtualCodeRequest {
 	};
 	export type ResponseType = {
 		content: string;
-		mappings: Record<string, Mapping[]>;
+		mappings: Record<string, readonly NormalizedSpanMapSegment[]>;
 	};
 	export type ErrorType = never;
 	export const type = new protocol.RequestType<ParamsType, ResponseType, ErrorType>('volar/client/virtualFile');

@@ -1,4 +1,4 @@
-import { isCallHierarchyEnabled, isTypeHierarchyEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -29,7 +29,7 @@ export function register(context: LanguageServiceContext) {
 				context,
 				uri,
 				() => position,
-				docs => getGeneratedPositions(docs, position, isCallHierarchyEnabled),
+				docs => getGeneratedPositions(docs, position, SpanMapFeature.CallHierarchy),
 				async (plugin, document, position, map) => {
 					if (token.isCancellationRequested) {
 						return;
@@ -68,7 +68,7 @@ export function register(context: LanguageServiceContext) {
 				context,
 				uri,
 				() => position,
-				docs => getGeneratedPositions(docs, position, isTypeHierarchyEnabled),
+				docs => getGeneratedPositions(docs, position, SpanMapFeature.CallHierarchy),
 				async (plugin, document, position, map) => {
 					if (token.isCancellationRequested) {
 						return;
