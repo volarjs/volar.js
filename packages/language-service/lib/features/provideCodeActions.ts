@@ -1,4 +1,4 @@
-import { findOverlapCodeRange, isCodeActionsEnabled } from '@volar/language-core';
+import { findOverlapCodeRange, SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -45,7 +45,7 @@ export function register(context: LanguageServiceContext) {
 					docs[0].offsetAt(range.start),
 					docs[0].offsetAt(range.end),
 					docs[2],
-					isCodeActionsEnabled,
+					SpanMapFeature.CodeActions,
 				);
 				if (mapped) {
 					yield {

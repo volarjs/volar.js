@@ -1,4 +1,4 @@
-import { isColorEnabled } from '@volar/language-core';
+import { isColorEnabled, SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -10,7 +10,7 @@ export function register(context: LanguageServiceContext) {
 		return documentFeatureWorker(
 			context,
 			uri,
-			docs => docs[2].mappings.some(mapping => isColorEnabled(mapping[5])),
+			docs => docs[2].segments.some(segment => isColorEnabled(segment.features)),
 			(plugin, document) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -23,7 +23,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return data
 					.map<vscode.ColorInformation | undefined>(color => {
-						const range = getSourceRange(docs, color.range, isColorEnabled);
+						const range = getSourceRange(docs, color.range, SpanMapFeature.DocumentSymbols);
 						if (range) {
 							return {
 								range,

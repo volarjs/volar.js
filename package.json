@@ -2,8 +2,8 @@
 	"private": true,
 	"packageManager": "pnpm@9.4.0",
 	"scripts": {
-		"build": "tsc -b",
-		"watch": "tsc -b -w",
+		"build": "node node_modules/typescript-7/bin/tsc -b",
+		"watch": "node node_modules/typescript-7/bin/tsc -b -w",
 		"watch:labs": "cd extensions/labs && npm run watch",
 		"test": "vitest run",
 		"format": "dprint fmt",
@@ -20,6 +20,7 @@
 		"@typescript-eslint/eslint-plugin": "~8.56.1",
 		"dprint": "~0.52.0",
 		"typescript": "~5.9.3",
+		"typescript-7": "npm:typescript@7.1.0-beta",
 		"vitest": "~4.0.18"
 	}
 }

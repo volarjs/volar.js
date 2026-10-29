@@ -1,50 +1,61 @@
 # @volar/source-map
 
-Provides functionality related to source maps.
+Maps positions and ranges between virtual (generated) and original (source) text, in the span map model of
+TypeScript 7.1: `SpanMapSegment`, `SpanMapKind`, `SpanMapFeature` and `SpanMapFidelity` have the shape and values
+of their counterparts in `typescript/ast`.
 
-## API
-
-### This package exports a `SourceMap` class with the following methods:
-
-Params:
-
-- `fallbackToAnyMatch`(default: false): allow the start and end offsets to come from different mappings.
-- `filter?: (features: number) => boolean`(default: undefined): filter out mappings by their `SpanMapFeature` bits.
-
-Methods:
-
-- `toSourceRange(generatedStart: number, generatedEnd: number, fallbackToAnyMatch: boolean, filter?: (features: number) => boolean)`: Returns all source start and end offsets for the given generated start and end offsets.
-
-- `toGeneratedRange(sourceStart: number, sourceEnd: number, fallbackToAnyMatch: boolean, filter?: (features: number) => boolean)`: Returns all generated start and end offsets for the given source start and end offsets.
-
-- `toSourceLocation(generatedOffset: number, filter?: (features: number) => boolean)`: Returns all source offsets for a given generated offset.
-
-- `toGeneratedLocation(sourceOffset: number, filter?: (features: number) => boolean)`: Returns all generated offsets for a given source offset.
-
-## Data Structures
-
-### `Mapping`
-
-A `Mapping` uses the span mapping format of TypeScript 7 content mappers:
+## `SpanMapSegment`
 
 ```ts
-type Mapping = [
-	generatedStart: number,
-	generatedLength: number,
-	sourceStart: number,
-	sourceLength: number,
-	kind: SpanMapKind,
-	features: number,
-];
+interface SpanMapSegment {
+	virtualStart: number;
+	virtualEnd: number;
+	originalStart: number;
+	originalEnd: number;
+	kind: SpanMapKind;
+	features?: SpanMapFeature; // SpanMapFeature.All if omitted
+}
 ```
 
-- `SpanMapKind.Verbatim`: both spans have the same length and offsets inside them map 1:1.
-- `SpanMapKind.Atom` / `SpanMapKind.Alias`: the spans map as a whole; offsets inside them clamp to the edges, and a range inside one maps to the whole other span.
-- `features`: `SpanMapFeature` bit flags selecting the language features the mapping takes part in.
+Ranges are half-open (`[start, end)`).
+
+- `SpanMapKind.Verbatim`: offsets inside the spans map 1:1, clamped to the other span.
+- `SpanMapKind.Atom`: the spans map as a whole. An edge maps to the edge; an offset inside maps to the start, or to
+  the end for the end of a range; a range inside one maps to the whole other span.
+- `SpanMapKind.Alias`: maps as `Atom`. It exists for parity with TS.
+- `features`: the `SpanMapFeature` bits of the language features that the segment takes part in.
 
 ```ts
-const mapping: Mapping = [30, 10, 10, 10, SpanMapKind.Verbatim, SpanMapFeature.Hover | SpanMapFeature.Completion];
+const segment: SpanMapSegment = {
+	virtualStart: 30,
+	virtualEnd: 40,
+	originalStart: 10,
+	originalEnd: 20,
+	kind: SpanMapKind.Verbatim,
+	features: SpanMapFeature.Hover | SpanMapFeature.Completion,
+};
 ```
+
+## `SpanMap`
+
+```ts
+const map = new SpanMap(segments);
+map.virtualToOriginalPositions(position, feature?): MappedPosition[];
+map.originalToVirtualPositions(position, feature?): MappedPosition[];
+map.virtualToOriginalSpans(start, end, feature?): MappedRange[];
+map.originalToVirtualSpans(start, end, feature?): MappedRange[];
+```
+
+- Every method returns every candidate, in segment order. Text outside every segment maps to nothing.
+- A position maps through each segment that contains it, its end included.
+- A range maps through each segment that contains it, with the fidelity `Exact` (verbatim) or `Atom`. If no segment
+  contains it, it maps from a segment of its start to the nearest segment of its end, with the fidelity
+  `Approximate`; callers that edit text (rename) reject `Approximate`.
+- `feature` selects the segments that share one of its bits; every segment if it is omitted.
+- `map.segments` are the segments with omitted `features` as `SpanMapFeature.All`.
+
+Unlike `SpanMap` of TS, `virtualToOriginal*` return every candidate rather than one, and a gap maps to nothing
+rather than to an insertion point.
 
 ## License
 

@@ -105,33 +105,23 @@ export function findOverlapCodeRange(
 	start: number,
 	end: number,
 	map: Mapper,
-	filter: (features: number) => boolean,
+	feature: SpanMapFeature,
 ) {
-	let mappedStart: number | undefined;
-	let mappedEnd: number | undefined;
-
-	for (const [mapped, mapping] of map.toGeneratedLocation(start)) {
-		if (filter(mapping[5])) {
-			mappedStart = mapped;
-			break;
-		}
-	}
-	for (const [mapped, mapping] of map.toGeneratedLocation(end)) {
-		if (filter(mapping[5])) {
-			mappedEnd = mapped;
-			break;
-		}
-	}
+	let mappedStart = map.originalToVirtualPositions(start, feature)[0]?.position;
+	let mappedEnd = map.originalToVirtualPositions(end, feature)[0]?.position;
 
 	if (mappedStart === undefined || mappedEnd === undefined) {
-		for (const [generatedStart, generatedLength, sourceStart, sourceLength, kind, features] of map.mappings) {
-			if (filter(features)) {
-				const overlap = getOverlapRange(start, end, sourceStart, sourceStart + sourceLength);
+		for (const segment of map.segments) {
+			if (segment.features & feature) {
+				const overlap = getOverlapRange(start, end, segment.originalStart, segment.originalEnd);
 				if (overlap) {
-					const verbatim = kind === SpanMapKind.Verbatim;
-					const curMappedStart = verbatim ? (overlap.start - sourceStart) + generatedStart : generatedStart;
-					const curMappedEnd = generatedStart
-						+ (verbatim ? Math.min(overlap.end - sourceStart, generatedLength) : generatedLength);
+					const verbatim = segment.kind === SpanMapKind.Verbatim;
+					const curMappedStart = verbatim
+						? overlap.start - segment.originalStart + segment.virtualStart
+						: segment.virtualStart;
+					const curMappedEnd = verbatim
+						? Math.min(overlap.end - segment.originalStart + segment.virtualStart, segment.virtualEnd)
+						: segment.virtualEnd;
 
 					mappedStart = mappedStart === undefined ? curMappedStart : Math.min(mappedStart, curMappedStart);
 					mappedEnd = mappedEnd === undefined ? curMappedEnd : Math.max(mappedEnd, curMappedEnd);

@@ -1,4 +1,4 @@
-import { isHighlightEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -18,7 +18,7 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			docs => getGeneratedPositions(docs, position, isHighlightEnabled),
+			docs => getGeneratedPositions(docs, position, SpanMapFeature.DocumentHighlights),
 			async (plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -88,7 +88,7 @@ export function register(context: LanguageServiceContext) {
 						if (!docs) {
 							return highlight;
 						}
-						const range = getSourceRange(docs, highlight.range, isHighlightEnabled);
+						const range = getSourceRange(docs, highlight.range, SpanMapFeature.DocumentHighlights);
 						if (range) {
 							return {
 								...highlight,

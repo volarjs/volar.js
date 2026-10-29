@@ -1,4 +1,4 @@
-import { isAutoInsertEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -17,13 +17,13 @@ export function register(context: LanguageServiceContext) {
 			uri,
 			() => ({ selection, change }),
 			function*(docs) {
-				for (const mappedPosition of getGeneratedPositions(docs, selection, isAutoInsertEnabled)) {
-					for (const mapped of docs[2].toGeneratedLocation(change.rangeOffset)) {
+				for (const mappedPosition of getGeneratedPositions(docs, selection, SpanMapFeature.AutoInsert)) {
+					for (const mapped of docs[2].originalToVirtualPositions(change.rangeOffset)) {
 						yield {
 							selection: mappedPosition,
 							change: {
 								text: change.text,
-								rangeOffset: mapped[0],
+								rangeOffset: mapped.position,
 								rangeLength: change.rangeLength,
 							},
 						};

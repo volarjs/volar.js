@@ -1,7 +1,7 @@
-import type * as ts from 'typescript';
+import type { TextChangeRange } from '@volar/language-core';
 
-export function combineChangeRanges(...changeRanges: ts.TextChangeRange[]) {
-	let changeRange: ts.TextChangeRange = changeRanges[0];
+export function combineChangeRanges(...changeRanges: TextChangeRange[]) {
+	let changeRange: TextChangeRange = changeRanges[0];
 	for (let i = 1; i < changeRanges.length; i++) {
 		const nextChangeRange = changeRanges[i];
 		changeRange = combineTwoChanges(changeRange, nextChangeRange);
@@ -10,7 +10,7 @@ export function combineChangeRanges(...changeRanges: ts.TextChangeRange[]) {
 }
 
 // https://tsplay.dev/mMldVN - @browsnet
-function combineTwoChanges(a: ts.TextChangeRange, b: ts.TextChangeRange): ts.TextChangeRange {
+function combineTwoChanges(a: TextChangeRange, b: TextChangeRange): TextChangeRange {
 	const aStart = a.span.start;
 	const aEnd = a.span.start + a.span.length;
 	const aDiff = a.newLength - a.span.length;

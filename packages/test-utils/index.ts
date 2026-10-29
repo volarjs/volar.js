@@ -488,7 +488,7 @@ export function* printSnapshot(
 		const lineHead = `[${i + 1}]`;
 		yield [lineHead, normalizeLogText(line)].join(' ');
 		const logs: {
-			mapping: _.Mapping;
+			mapping: _.NormalizedSpanMapSegment;
 			line: string;
 			lineOffset: number;
 			sourceOffset: number;
@@ -496,7 +496,7 @@ export function* printSnapshot(
 			length: number;
 		}[] = [];
 		for (let offset = 0; offset < line.length; offset++) {
-			for (const [sourceOffset, mapping] of map.toSourceLocation(lineOffset + offset)) {
+			for (const { position: sourceOffset, segment: mapping } of map.virtualToOriginalPositions(lineOffset + offset)) {
 				let log = logs.find(log => log.mapping === mapping && log.lineOffset + log.length + 1 === offset);
 				if (log) {
 					log.length++;

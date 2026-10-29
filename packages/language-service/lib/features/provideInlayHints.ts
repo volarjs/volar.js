@@ -1,4 +1,4 @@
-import { findOverlapCodeRange, isInlayHintsEnabled } from '@volar/language-core';
+import { findOverlapCodeRange, SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -28,7 +28,7 @@ export function register(context: LanguageServiceContext) {
 					docs[0].offsetAt(range.start),
 					docs[0].offsetAt(range.end),
 					docs[2],
-					isInlayHintsEnabled,
+					SpanMapFeature.InlayHints,
 				);
 				if (mapped) {
 					yield {
@@ -69,7 +69,7 @@ export function register(context: LanguageServiceContext) {
 							?.map(textEdit => transformTextEdit(textEdit, range => getSourceRange(docs, range), docs[1]))
 							.filter(textEdit => !!textEdit);
 
-						for (const position of getSourcePositions(docs, _inlayHint.position, isInlayHintsEnabled)) {
+						for (const position of getSourcePositions(docs, _inlayHint.position, SpanMapFeature.InlayHints)) {
 							return {
 								..._inlayHint,
 								position,

@@ -1,4 +1,4 @@
-import { isHoverEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -14,7 +14,7 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			docs => getGeneratedPositions(docs, position, isHoverEnabled),
+			docs => getGeneratedPositions(docs, position, SpanMapFeature.Hover),
 			(plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -25,7 +25,7 @@ export function register(context: LanguageServiceContext) {
 				if (!docs || !item.range) {
 					return item;
 				}
-				item.range = getSourceRange(docs, item.range, isHoverEnabled);
+				item.range = getSourceRange(docs, item.range, SpanMapFeature.Hover);
 				return item;
 			},
 			(hovers): vscode.Hover => ({

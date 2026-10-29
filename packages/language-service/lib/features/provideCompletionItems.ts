@@ -1,4 +1,4 @@
-import { isCompletionEnabled, type SourceScript, type VirtualCode } from '@volar/language-core';
+import { type SourceScript, SpanMapFeature, type VirtualCode } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -93,7 +93,7 @@ export function register(context: LanguageServiceContext) {
 						);
 						const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
 
-						for (const mapped of getGeneratedPositions(docs, position, data => isCompletionEnabled(data))) {
+						for (const mapped of getGeneratedPositions(docs, position, SpanMapFeature.Completion)) {
 							if (!cacheData.plugin.provideCompletionItems) {
 								continue;
 							}
@@ -253,7 +253,7 @@ export function register(context: LanguageServiceContext) {
 					if (docs) {
 						completionList = transformCompletionList(
 							completionList,
-							range => getSourceRange(docs, range, isCompletionEnabled),
+							range => getSourceRange(docs, range, SpanMapFeature.Completion),
 							document,
 							context,
 						);
@@ -271,7 +271,7 @@ export function register(context: LanguageServiceContext) {
 
 			if (sourceScript?.generated) {
 				for (const docs of forEachEmbeddedDocument(context, sourceScript, sourceScript.generated.root)) {
-					for (const mappedPosition of getGeneratedPositions(docs, position, isCompletionEnabled)) {
+					for (const mappedPosition of getGeneratedPositions(docs, position, SpanMapFeature.Completion)) {
 						await worker(docs[1], mappedPosition, docs);
 					}
 				}

@@ -1,4 +1,4 @@
-import { isReferencesEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -24,7 +24,7 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => position,
-			docs => getGeneratedPositions(docs, position, isReferencesEnabled),
+			docs => getGeneratedPositions(docs, position, SpanMapFeature.References),
 			async (plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -109,7 +109,7 @@ export function register(context: LanguageServiceContext) {
 								sourceScript.snapshot,
 							);
 							const docs: DocumentsAndMap = [sourceDocument, embeddedDocument, map];
-							const range = getSourceRange(docs, reference.range, isReferencesEnabled);
+							const range = getSourceRange(docs, reference.range, SpanMapFeature.References);
 							if (range) {
 								results.push({
 									uri: sourceDocument.uri,

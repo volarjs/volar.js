@@ -1,4 +1,4 @@
-import { isInlineValueEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import { type URI } from 'vscode-uri';
 import type { LanguageServiceContext } from '../types';
@@ -11,7 +11,7 @@ export function register(context: LanguageServiceContext) {
 			context,
 			uri,
 			() => range,
-			docs => getGeneratedRanges(docs, range, isInlineValueEnabled),
+			docs => getGeneratedRanges(docs, range, SpanMapFeature.Hover),
 			(plugin, document, range) => {
 				if (token.isCancellationRequested) {
 					return;
@@ -24,7 +24,7 @@ export function register(context: LanguageServiceContext) {
 				}
 				return items
 					.map(item => {
-						const mappedRange = getSourceRange(docs, item.range, isInlineValueEnabled);
+						const mappedRange = getSourceRange(docs, item.range, SpanMapFeature.Hover);
 						if (mappedRange) {
 							item.range = mappedRange;
 							return item;

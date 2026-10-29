@@ -1,3 +1,4 @@
+import type { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -16,14 +17,14 @@ import {
 export function register(
 	context: LanguageServiceContext,
 	apiName: 'provideDeclaration' | 'provideDefinition' | 'provideTypeDefinition' | 'provideImplementation',
-	isValidPosition: (features: number) => boolean,
+	feature: SpanMapFeature,
 ) {
 	return (uri: URI, position: vscode.Position, token = NoneCancellationToken) => {
 		return languageFeatureWorker(
 			context,
 			uri,
 			() => position,
-			docs => getGeneratedPositions(docs, position, isValidPosition),
+			docs => getGeneratedPositions(docs, position, feature),
 			async (plugin, document, position) => {
 				if (token.isCancellationRequested) {
 					return;

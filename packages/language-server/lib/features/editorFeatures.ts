@@ -1,6 +1,5 @@
-import type { Mapping, VirtualCode } from '@volar/language-core';
+import type { IScriptSnapshot, NormalizedSpanMapSegment, VirtualCode } from '@volar/language-core';
 import { createUriMap } from '@volar/language-service';
-import type * as ts from 'typescript';
 import { URI } from 'vscode-uri';
 import {
 	GetServicePluginsRequest,
@@ -16,7 +15,7 @@ export function register(server: LanguageServerState) {
 	server.onInitialize(() => {
 		const { project } = server;
 		const scriptVersions = createUriMap<number>();
-		const scriptVersionSnapshots = new WeakSet<ts.IScriptSnapshot>();
+		const scriptVersionSnapshots = new WeakSet<IScriptSnapshot>();
 
 		server.connection.onRequest(GetVirtualFileRequest.type, async document => {
 			const uri = URI.parse(document.uri);
@@ -57,9 +56,9 @@ export function register(server: LanguageServerState) {
 			const sourceScript = languageService.context.language.scripts.get(URI.parse(params.fileUri));
 			const virtualCode = sourceScript?.generated?.embeddedCodes.get(params.virtualCodeId);
 			if (virtualCode) {
-				const mappings: Record<string, Mapping[]> = {};
+				const mappings: Record<string, readonly NormalizedSpanMapSegment[]> = {};
 				for (const [sourceScript, map] of languageService.context.language.maps.forEach(virtualCode)) {
-					mappings[sourceScript.id.toString()] = map.mappings;
+					mappings[sourceScript.id.toString()] = map.segments;
 				}
 				return {
 					content: virtualCode.snapshot.getText(0, virtualCode.snapshot.getLength()),

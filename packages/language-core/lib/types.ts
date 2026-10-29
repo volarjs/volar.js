@@ -1,33 +1,18 @@
-import type { Mapping } from '@volar/source-map';
+import type { SpanMap, SpanMapSegment } from '@volar/source-map';
 import type { LinkedCodeMap } from './linkedCodeMap';
 
-export type { Mapping };
+export type { MappedPosition, MappedRange, NormalizedSpanMapSegment, SpanMapSegment } from '@volar/source-map';
 
-export interface Mapper {
-	mappings: Mapping[];
-	toSourceRange(
-		start: number,
-		end: number,
-		fallbackToAnyMatch: boolean,
-		filter?: (features: number) => boolean,
-	): Generator<readonly [number, number, Mapping, Mapping]>;
-	toGeneratedRange(
-		start: number,
-		end: number,
-		fallbackToAnyMatch: boolean,
-		filter?: (features: number) => boolean,
-	): Generator<readonly [number, number, Mapping, Mapping]>;
-	toSourceLocation(
-		generatedOffset: number,
-		filter?: (features: number) => boolean,
-	): Generator<readonly [number, Mapping]>;
-	toGeneratedLocation(
-		sourceOffset: number,
-		filter?: (features: number) => boolean,
-	): Generator<readonly [number, Mapping]>;
-}
+export type Mapper = Pick<
+	SpanMap,
+	| 'segments'
+	| 'virtualToOriginalPositions'
+	| 'originalToVirtualPositions'
+	| 'virtualToOriginalSpans'
+	| 'originalToVirtualSpans'
+>;
 
-export type MapperFactory = (mappings: Mapping[]) => Mapper;
+export type MapperFactory = (segments: readonly SpanMapSegment[]) => Mapper;
 
 export interface Language<T = unknown> {
 	mapperFactory: MapperFactory;
@@ -71,10 +56,10 @@ export interface VirtualCode {
 	id: string;
 	languageId: string;
 	snapshot: IScriptSnapshot;
-	mappings: Mapping[];
-	associatedScriptMappings?: Map<unknown, Mapping[]>;
+	mappings: SpanMapSegment[];
+	associatedScriptMappings?: Map<unknown, SpanMapSegment[]>;
 	embeddedCodes?: VirtualCode[];
-	linkedCodeMappings?: Mapping[];
+	linkedCodeMappings?: SpanMapSegment[];
 }
 
 export interface LanguagePlugin<T = unknown, K extends VirtualCode = VirtualCode> {

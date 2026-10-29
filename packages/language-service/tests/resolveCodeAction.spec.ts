@@ -1,8 +1,8 @@
 import {
 	type IScriptSnapshot,
 	type LanguagePlugin,
-	type Mapping,
 	SpanMapKind,
+	type SpanMapSegment,
 	type VirtualCode,
 } from '@volar/language-core';
 import { describe, expect, it } from 'vitest';
@@ -21,7 +21,16 @@ function snapshotOf(text: string): IScriptSnapshot {
 
 function createVirtualCode(text: string): VirtualCode {
 	const snapshot = snapshotOf(text);
-	const mappings: Mapping[] = [[0, text.length, 0, text.length, SpanMapKind.Verbatim, features]];
+	const mappings: SpanMapSegment[] = [
+		{
+			virtualStart: 0,
+			virtualEnd: text.length,
+			originalStart: 0,
+			originalEnd: text.length,
+			kind: SpanMapKind.Verbatim,
+			features,
+		},
+	];
 	return {
 		id: 'root',
 		languageId: 'test',

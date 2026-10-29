@@ -1,4 +1,4 @@
-import { isRenameEnabled } from '@volar/language-core';
+import { SpanMapFeature } from '@volar/language-core';
 import type * as vscode from 'vscode-languageserver-protocol';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -15,7 +15,7 @@ export function register(context: LanguageServiceContext) {
 			uri,
 			() => ({ position, newName }),
 			function*(docs) {
-				for (const mappedPosition of getGeneratedPositions(docs, position, isRenameEnabled)) {
+				for (const mappedPosition of getGeneratedPositions(docs, position, SpanMapFeature.Rename)) {
 					yield {
 						position: mappedPosition,
 						newName,
