@@ -43,7 +43,14 @@ type Mapping = [
 - `features`: `SpanMapFeature` bit flags selecting the language features the mapping takes part in.
 
 ```ts
-const mapping: Mapping = [30, 10, 10, 10, SpanMapKind.Verbatim, SpanMapFeature.Hover | SpanMapFeature.Completion];
+const verbatim: Mapping = [30, 10, 10, 10, SpanMapKind.Verbatim, SpanMapFeature.Hover | SpanMapFeature.Completion];
+```
+
+`mapping(generatedStart, generatedLength, sourceStart, sourceLength, features, kind?)` builds a `Mapping`, of `SpanMapKind.Verbatim` if `kind` is omitted:
+
+```ts
+mapping(30, 10, 10, 10, SpanMapFeature.Hover | SpanMapFeature.Completion); // the mapping above
+mapping(30, 12, 10, 4, 0, SpanMapKind.Atom);
 ```
 
 ## License
