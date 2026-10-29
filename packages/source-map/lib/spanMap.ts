@@ -1,7 +1,7 @@
 export enum SpanMapKind {
-	Verbatim,
-	Atom,
-	Alias,
+	Verbatim = 0,
+	Atom = 1,
+	Alias = 2,
 }
 
 export enum SpanMapFeature {
