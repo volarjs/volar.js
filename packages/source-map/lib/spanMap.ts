@@ -25,6 +25,26 @@ export enum SpanMapFeature {
 	AutoInsert = 1 << 17,
 	DocumentSymbols = 1 << 18,
 	CodeLens = 1 << 19,
+	None = 0,
+	All = (1 << 20) - 1,
+}
+
+export enum SpanMapFidelity {
+	Exact = 0,
+	Atom = 1,
+	Approximate = 2,
+	None = 3,
+}
+
+/** A half-open virtual range mapped to a half-open original range, as `SpanMapSegment` of TS 7.1. */
+export interface SpanMapSegment {
+	readonly virtualStart: number;
+	readonly virtualEnd: number;
+	readonly originalStart: number;
+	readonly originalEnd: number;
+	readonly kind: SpanMapKind;
+	/** `SpanMapFeature.All` if omitted. */
+	readonly features?: SpanMapFeature;
 }
 
 export type Mapping = [
