@@ -35,15 +35,3 @@ export type Mapping = [
 	kind: SpanMapKind,
 	features: number,
 ];
-
-/** A `Mapping`, `SpanMapKind.Verbatim` if `kind` is omitted. */
-export function mapping(
-	generatedStart: number,
-	generatedLength: number,
-	sourceStart: number,
-	sourceLength: number,
-	features: number,
-	kind: SpanMapKind = SpanMapKind.Verbatim,
-): Mapping {
-	return [generatedStart, generatedLength, sourceStart, sourceLength, kind, features];
-}
