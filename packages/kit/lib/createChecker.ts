@@ -319,12 +319,15 @@ function createTypeScriptCheckerWorker(
 		const languageService = getLanguageServiceForFile(fileName);
 		const sourceScript = languageService.context.language.scripts.get(uri)!;
 		const document = languageService.context.documents.get(uri, sourceScript.languageId, sourceScript.snapshot);
+		const file = diagnostics.length
+			? ts.createSourceFile(fileName, document.getText(), ts.ScriptTarget.JSON)
+			: undefined;
 		const errors: ts.Diagnostic[] = diagnostics.map<ts.Diagnostic>(diagnostic => ({
 			category: diagnostic.severity === 1 satisfies typeof DiagnosticSeverity.Error
 				? ts.DiagnosticCategory.Error
 				: ts.DiagnosticCategory.Warning,
 			code: diagnostic.code as number,
-			file: ts.createSourceFile(fileName, document.getText(), ts.ScriptTarget.JSON),
+			file,
 			start: document.offsetAt(diagnostic.range.start),
 			length: document.offsetAt(diagnostic.range.end) - document.offsetAt(diagnostic.range.start),
 			messageText: diagnostic.message,
