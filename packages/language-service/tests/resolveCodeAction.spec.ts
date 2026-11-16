@@ -99,7 +99,7 @@ describe(`Test resolveCodeAction()`, () => {
 			start: { line: 0, character: 0 },
 			end: { line: 0, character: 1 },
 		}, { diagnostics: [] });
-		expect(actions).toHaveLength(1);
+		expect(actions).toHaveLength(2);
 
 		const resolved = await service.resolveCodeAction(actions![0]);
 		const change = resolved.edit!.documentChanges![0] as { textDocument: { uri: string; version: number | null } };

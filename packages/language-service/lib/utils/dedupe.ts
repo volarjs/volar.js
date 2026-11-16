@@ -33,6 +33,7 @@ export function withCodeAction<T extends vscode.CodeAction>(items: T[]): T[] {
 	return dedupe(items, item =>
 		[
 			item.title,
+			JSON.stringify(item.data),
 		].join(':'));
 }
 export function withTextEdits<T extends vscode.TextEdit>(items: T[]): T[] {

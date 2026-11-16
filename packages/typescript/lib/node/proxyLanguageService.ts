@@ -147,6 +147,7 @@ export function createProxyLanguageService(languageService: ts.LanguageService) 
 				return Reflect.get(target, p, receiver);
 			},
 			set(target, p, value, receiver) {
+				proxyCache.delete(p);
 				return Reflect.set(target, p, value, receiver);
 			},
 		}),
